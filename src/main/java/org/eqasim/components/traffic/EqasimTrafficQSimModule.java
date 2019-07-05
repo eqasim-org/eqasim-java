@@ -3,7 +3,7 @@ package org.eqasim.components.traffic;
 import org.eqasim.components.config.EqasimConfigGroup;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.qnetsimengine.ConfigurableQNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.linkspeedcalculator.DefaultLinkSpeedCalculator;
@@ -11,9 +11,10 @@ import org.matsim.core.mobsim.qsim.qnetsimengine.linkspeedcalculator.DefaultLink
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
-public class EqasimTrafficModule extends AbstractModule {
+public class EqasimTrafficQSimModule extends AbstractQSimModule {
 	@Override
-	public void install() {
+	protected void configureQSim() {
+
 	}
 
 	@Provides

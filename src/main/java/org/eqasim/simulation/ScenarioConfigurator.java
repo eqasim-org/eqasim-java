@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.eqasim.components.config.EqasimConfigGroup;
-import org.eqasim.components.traffic.EqasimTrafficModule;
+import org.eqasim.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.components.transit.EqasimTransitModule;
 import org.eqasim.components.transit.EqasimTransitQSimModule;
 import org.eqasim.components.transit.routing.DefaultEnrichedTransitRoute;
@@ -36,14 +36,14 @@ public class ScenarioConfigurator {
 		return Arrays.asList( //
 				new SwissRailRaptorModule(), //
 				new EqasimTransitModule(), //
-				new EqasimTrafficModule(), //
 				new DiscreteModeChoiceModule() //
 		);
 	}
 
 	static public List<AbstractQSimModule> getQSimModules() {
 		return Arrays.asList( //
-				new EqasimTransitQSimModule() //
+				new EqasimTransitQSimModule(), //
+				new EqasimTrafficQSimModule() //
 		);
 	}
 
