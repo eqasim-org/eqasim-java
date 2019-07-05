@@ -16,7 +16,7 @@ public class AdjustLinkLength {
 
 			double updatedFreespeed = originalFreespeed;
 
-			if (!Double.isInfinite(originalFreespeed)) {
+			if (Double.isInfinite(originalFreespeed)) {
 				updatedFreespeed = 85.0;
 				infiniteSpeedCount++;
 			}
