@@ -25,6 +25,7 @@ public class RunPopulationRouting {
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		cmd.applyConfiguration(config);
 
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(10);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
