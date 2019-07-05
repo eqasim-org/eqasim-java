@@ -57,6 +57,12 @@
 			<artifactId>matsim-sbb-extensions</artifactId>
 			<version>${swiss_rail.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>ch.ethz.matsim</groupId>
+			<artifactId>discrete_mode_choice</artifactId>
+			<version>11.0.6</version>
+		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>

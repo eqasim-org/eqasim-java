@@ -2,7 +2,9 @@ package org.eqasim.simulation.transit.departure;
 
 import java.util.Arrays;
 
-import org.eqasim.simulation.transit.departure.DepartureFinder.NoDepartureFoundException;
+import org.eqasim.components.transit.departure.DefaultDepartureFinder;
+import org.eqasim.components.transit.departure.DepartureFinder;
+import org.eqasim.components.transit.departure.DepartureFinder.NoDepartureFoundException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;

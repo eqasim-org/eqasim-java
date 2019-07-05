@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.eqasim.Constants;
+import org.eqasim.misc.Constants;
 import org.eqasim.misc.ParallelProgress;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;

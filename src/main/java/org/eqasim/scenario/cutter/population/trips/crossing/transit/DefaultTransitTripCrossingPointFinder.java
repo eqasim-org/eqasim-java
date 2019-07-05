@@ -4,8 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.eqasim.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.scenario.cutter.population.trips.crossing.teleportation.TeleportationCrossingPointFinder;
-import org.eqasim.simulation.transit.routing.EnrichedTransitRoute;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;

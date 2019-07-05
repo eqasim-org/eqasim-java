@@ -3,7 +3,7 @@ package org.eqasim.scenario.cutter.population;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.eqasim.Constants;
+import org.eqasim.misc.Constants;
 import org.eqasim.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.scenario.cutter.population.trips.TripProcessor;
 import org.matsim.api.core.v01.population.Activity;

@@ -2,9 +2,12 @@ package org.eqasim.simulation.transit.connection;
 
 import java.util.Arrays;
 
-import org.eqasim.simulation.transit.connection.TransitConnectionFinder.NoConnectionFoundException;
-import org.eqasim.simulation.transit.departure.DefaultDepartureFinder;
-import org.eqasim.simulation.transit.departure.DepartureFinder;
+import org.eqasim.components.transit.connection.DefaultTransitConnectionFinder;
+import org.eqasim.components.transit.connection.TransitConnection;
+import org.eqasim.components.transit.connection.TransitConnectionFinder;
+import org.eqasim.components.transit.connection.TransitConnectionFinder.NoConnectionFoundException;
+import org.eqasim.components.transit.departure.DefaultDepartureFinder;
+import org.eqasim.components.transit.departure.DepartureFinder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;

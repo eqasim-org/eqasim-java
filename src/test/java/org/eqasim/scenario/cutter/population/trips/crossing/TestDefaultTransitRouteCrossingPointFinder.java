@@ -3,12 +3,12 @@ package org.eqasim.scenario.cutter.population.trips.crossing;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eqasim.components.transit.routing.DefaultEnrichedTransitRoute;
+import org.eqasim.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.scenario.cutter.population.trips.crossing.transit.DefaultTransitRouteCrossingPointFinder;
 import org.eqasim.scenario.cutter.population.trips.crossing.transit.TransitRouteCrossingPoint;
 import org.eqasim.scenario.cutter.population.trips.crossing.transit.TransitRouteCrossingPointFinder;
-import org.eqasim.simulation.transit.routing.DefaultEnrichedTransitRoute;
-import org.eqasim.simulation.transit.routing.EnrichedTransitRoute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.matsim.api.core.v01.Coord;

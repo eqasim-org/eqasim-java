@@ -3,8 +3,8 @@ package org.eqasim.scenario.cutter.population.trips.crossing.transit;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eqasim.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.scenario.cutter.extent.ScenarioExtent;
-import org.eqasim.simulation.transit.routing.EnrichedTransitRoute;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;

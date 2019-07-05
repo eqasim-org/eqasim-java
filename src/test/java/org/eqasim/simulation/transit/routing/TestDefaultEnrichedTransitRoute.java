@@ -2,6 +2,7 @@ package org.eqasim.simulation.transit.routing;
 
 import java.io.IOException;
 
+import org.eqasim.components.transit.routing.DefaultEnrichedTransitRoute;
 import org.junit.Assert;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
