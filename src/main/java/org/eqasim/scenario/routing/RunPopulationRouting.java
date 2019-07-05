@@ -41,16 +41,6 @@ public class RunPopulationRouting {
 			}
 		}
 
-		// TODO: Brign this to the pipeline
-		for (Link link : scenario.getNetwork().getLinks().values()) {
-			if (link.getAllowedModes().contains("car")) {
-				Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
-				allowedModes.add("car_passenger");
-				allowedModes.add("truck");
-				link.setAllowedModes(allowedModes);
-			}
-		}
-
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(ScenarioConfigurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize)) //
