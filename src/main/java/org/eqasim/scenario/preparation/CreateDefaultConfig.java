@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import org.eqasim.components.config.EqasimConfigGroup;
 import org.eqasim.simulation.ScenarioConfigurator;
 import org.eqasim.simulation.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
@@ -37,7 +38,7 @@ public class CreateDefaultConfig {
 
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("output-path", "prefix") //
+				.requireOptions("output-path", "prefix", "sample-size") //
 				.build();
 
 		Config config = ConfigUtils.createConfig(ScenarioConfigurator.getConfigGroups());
@@ -59,9 +60,17 @@ public class CreateDefaultConfig {
 		config.transit().setUseTransit(true);
 
 		// QSim settings
+		double sampleSize = Double.parseDouble(cmd.getOptionStrict("sample-size"));
 
 		config.qsim().setEndTime(30.0 * 3600.0);
 		config.qsim().setNumberOfThreads(12);
+		config.qsim().setFlowCapFactor(sampleSize);
+		config.qsim().setStorageCapFactor(sampleSize);
+
+		// Eqasim settings
+		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
+		eqasimConfig.setCrossingPenalty(3.0);
+		eqasimConfig.setSampleSize(sampleSize);
 
 		// Scoring config
 		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
