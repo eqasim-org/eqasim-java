@@ -24,7 +24,7 @@ public class FreightAssignment {
 		index = new QuadTree<>(bounds[0], bounds[1], bounds[2], bounds[3]);
 
 		for (ActivityFacility facility : facilities.getFacilities().values()) {
-			Link link = network.getLinks().get(facility.getId());
+			Link link = network.getLinks().get(facility.getLinkId());
 			index.put(link.getCoord().getX(), link.getCoord().getY(), facility);
 		}
 	}
