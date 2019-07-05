@@ -1,6 +1,7 @@
 package org.eqasim.scenario.cutter.population.trips.crossing;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -93,14 +94,14 @@ public class TestDefaultNetworkCrossingPointFinder {
 	@Test
 	public void testFindCrossingPoints() {
 		NetworkCrossingPointFinder finder = new DefaultNetworkCrossingPointFinder(extentMock, networkMock,
-				travelTimeMock);
+				Collections.singletonMap("car", travelTimeMock));
 
 		NetworkRoute route;
 		List<NetworkCrossingPoint> result;
 
 		// 1) Outside -> Inside
 		route = createRouteMock(1, 3);
-		result = finder.findCrossingPoints(route, 100.0);
+		result = finder.findCrossingPoints("car", route, 100.0);
 		Assert.assertEquals(1, result.size());
 		Assert.assertEquals(110.0, result.get(0).enterTime, 1e-3);
 		Assert.assertEquals(120.0, result.get(0).leaveTime, 1e-3);
@@ -108,14 +109,14 @@ public class TestDefaultNetworkCrossingPointFinder {
 		Assert.assertFalse(result.get(0).isOutgoing);
 
 		route = createRouteMock(1, 4);
-		result = finder.findCrossingPoints(route, 100.0);
+		result = finder.findCrossingPoints("car", route, 100.0);
 
 		route = createRouteMock(2, 4);
-		result = finder.findCrossingPoints(route, 100.0);
+		result = finder.findCrossingPoints("car", route, 100.0);
 
 		// 2) Inside -> Outside
 		route = createRouteMock(6, 9);
-		result = finder.findCrossingPoints(route, 100.0);
+		result = finder.findCrossingPoints("car", route, 100.0);
 		Assert.assertEquals(1, result.size());
 		Assert.assertEquals(110.0, result.get(0).enterTime, 1e-3);
 		Assert.assertEquals(120.0, result.get(0).leaveTime, 1e-3);
@@ -130,7 +131,7 @@ public class TestDefaultNetworkCrossingPointFinder {
 
 		// 3) Inside -> Outside -> Inside
 		route = createRouteMock(4, 7);
-		result = finder.findCrossingPoints(route, 100.0);
+		result = finder.findCrossingPoints("car", route, 100.0);
 		Assert.assertEquals(2, result.size());
 		Assert.assertEquals(100.0, result.get(0).enterTime, 1e-3);
 		Assert.assertEquals(110.0, result.get(0).leaveTime, 1e-3);
@@ -143,7 +144,7 @@ public class TestDefaultNetworkCrossingPointFinder {
 
 		// 4) Outside -> Inside -> Outside
 		route = createRouteMock(1, 5);
-		result = finder.findCrossingPoints(route, 100.0);
+		result = finder.findCrossingPoints("car", route, 100.0);
 		Assert.assertEquals(2, result.size());
 		Assert.assertEquals(110.0, result.get(0).enterTime, 1e-3);
 		Assert.assertEquals(120.0, result.get(0).leaveTime, 1e-3);
@@ -156,7 +157,7 @@ public class TestDefaultNetworkCrossingPointFinder {
 
 		// 4) Outside -> Inside -> Outside -> Inside -> Outside
 		route = createRouteMock(1, 9);
-		result = finder.findCrossingPoints(route, 100.0);
+		result = finder.findCrossingPoints("car", route, 100.0);
 		Assert.assertEquals(4, result.size());
 	}
 }

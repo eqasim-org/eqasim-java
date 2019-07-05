@@ -64,6 +64,10 @@ public class NetworkCutter {
 
 						if (!activity.getType().equals(PtConstants.TRANSIT_ACTIVITY_TYPE)) {
 							retainedLinkIds.add(activity.getLinkId());
+							
+							if (activity.getLinkId() == null) {
+								throw new IllegalStateException();
+							}
 						}
 					} else {
 						Leg leg = (Leg) element;
@@ -75,6 +79,20 @@ public class NetworkCutter {
 							retainedLinkIds.add(networkRoute.getStartLinkId());
 							retainedLinkIds.add(networkRoute.getEndLinkId());
 							retainedLinkIds.addAll(networkRoute.getLinkIds());
+							
+							if (networkRoute.getStartLinkId() == null) {
+								throw new IllegalStateException();
+							}
+							
+							if (networkRoute.getEndLinkId() == null) {
+								throw new IllegalStateException();
+							}
+							
+							for (Id<Link> linkId : networkRoute.getLinkIds()) {
+								if (linkId == null) {
+									throw new IllegalStateException();
+								}
+							}
 						}
 					}
 				}
@@ -89,16 +107,38 @@ public class NetworkCutter {
 				retainedLinkIds.add(networkRoute.getStartLinkId());
 				retainedLinkIds.add(networkRoute.getEndLinkId());
 				retainedLinkIds.addAll(networkRoute.getLinkIds());
+				
+				if (networkRoute.getStartLinkId() == null) {
+					throw new IllegalStateException();
+				}
+				
+				if (networkRoute.getEndLinkId() == null) {
+					throw new IllegalStateException();
+				}
+				
+				for (Id<Link> linkId : networkRoute.getLinkIds()) {
+					if (linkId == null) {
+						throw new IllegalStateException();
+					}
+				}
 			}
 		}
 
 		for (TransitStopFacility facility : scenario.getTransitSchedule().getFacilities().values()) {
 			retainedLinkIds.add(facility.getLinkId());
+			
+			if (facility.getLinkId() == null) {
+				throw new IllegalStateException();
+			}
 		}
 
 		// Collect all facilities
 		for (ActivityFacility facility : scenario.getActivityFacilities().getFacilities().values()) {
 			retainedLinkIds.add(facility.getLinkId());
+			
+			if (facility.getLinkId() == null) {
+				throw new IllegalStateException();
+			}
 		}
 
 		// Further processing is needed for the population links, because it may be the

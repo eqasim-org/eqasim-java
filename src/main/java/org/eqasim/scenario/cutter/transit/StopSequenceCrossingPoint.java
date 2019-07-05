@@ -1,4 +1,4 @@
-package org.eqasim.scenario.cutter.schedule;
+package org.eqasim.scenario.cutter.transit;
 
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 

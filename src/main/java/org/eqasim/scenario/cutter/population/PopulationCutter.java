@@ -37,6 +37,7 @@ public class PopulationCutter {
 		ThreadGroup threadGroup = new ThreadGroup("PopulationCutter");
 
 		ParallelProgress progress = new ParallelProgress("Cutting population ...", population.getPersons().size());
+		progress.start();
 
 		for (int i = 0; i < numberOfThreads; i++) {
 			Thread thread = new Thread(threadGroup, new Worker(personIterator, progress, planCutterProvider));

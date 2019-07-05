@@ -24,18 +24,24 @@ import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.core.router.StageActivityTypes;
+import org.matsim.core.router.TripRouter;
 import org.matsim.pt.config.TransitConfigGroup;
+import org.matsim.pt.config.TransitRouterConfigGroup;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 
 public class PopulationCutterModule extends AbstractModule {
 	private final int numberOfThreads;
 	private final int batchSize;
+	private final ScenarioExtent extent;
 
-	public PopulationCutterModule(int numberOfThreads, int batchSize) {
+	public PopulationCutterModule(ScenarioExtent extent, int numberOfThreads, int batchSize) {
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
+		this.extent = extent;
 	}
 
 	@Override
@@ -51,9 +57,10 @@ public class PopulationCutterModule extends AbstractModule {
 
 		bind(TeleportationTripProcessor.class);
 		bind(NetworkTripProcessor.class);
-		bind(TransitTripProcessor.class);
 
 		bind(PlanCutter.class);
+
+		bind(ScenarioExtent.class).toInstance(extent);
 	}
 
 	@Provides
@@ -124,5 +131,17 @@ public class PopulationCutterModule extends AbstractModule {
 		}
 
 		return tripProcessor;
+	}
+
+	@Provides
+	public TransitTripProcessor provideTransitTripProcessor(TransitTripCrossingPointFinder transitPointFinder,
+			ScenarioExtent extent, TransitRouterConfigGroup routerConfig) {
+		return new TransitTripProcessor(transitPointFinder, extent, routerConfig.getAdditionalTransferTime());
+	}
+
+	@Provides
+	@Singleton
+	public StageActivityTypes provideStageActivityTypes(TripRouter tripRouter) {
+		return tripRouter.getStageActivityTypes();
 	}
 }

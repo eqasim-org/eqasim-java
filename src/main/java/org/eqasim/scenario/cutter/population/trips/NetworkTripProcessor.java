@@ -35,7 +35,7 @@ public class NetworkTripProcessor implements TripProcessor {
 	}
 
 	public List<PlanElement> process(String mode, NetworkRoute route, double departureTime, boolean allOutside) {
-		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(route, departureTime);
+		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(mode, route, departureTime);
 
 		if (crossingPoints.size() == 0) {
 			return Arrays.asList(PopulationUtils.createLeg(allOutside ? "outside" : mode));

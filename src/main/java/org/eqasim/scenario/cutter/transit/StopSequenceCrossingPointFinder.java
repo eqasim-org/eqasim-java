@@ -1,4 +1,4 @@
-package org.eqasim.scenario.cutter.schedule;
+package org.eqasim.scenario.cutter.transit;
 
 import java.util.List;
 

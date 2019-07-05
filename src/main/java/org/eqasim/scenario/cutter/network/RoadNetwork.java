@@ -1,19 +1,24 @@
 package org.eqasim.scenario.cutter.network;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkFactory;
 import org.matsim.api.core.v01.network.Node;
+import org.matsim.core.network.LinkQuadTree;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.SearchableNetwork;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
+import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 
-public class RoadNetwork implements Network {
+public class RoadNetwork implements Network, SearchableNetwork {
 	private Network delegate;
 
 	public RoadNetwork(Network network) {
@@ -83,5 +88,30 @@ public class RoadNetwork implements Network {
 
 	public double getEffectiveCellSize() {
 		return delegate.getEffectiveCellSize();
+	}
+
+	@Override
+	public Link getNearestLinkExactly(Coord coord) {
+		return ((SearchableNetwork) delegate).getNearestLinkExactly(coord);
+	}
+
+	@Override
+	public Node getNearestNode(Coord coord) {
+		return ((SearchableNetwork) delegate).getNearestNode(coord);
+	}
+
+	@Override
+	public Collection<Node> getNearestNodes(Coord coord, double distance) {
+		return ((SearchableNetwork) delegate).getNearestNodes(coord, distance);
+	}
+
+	@Override
+	public QuadTree<Node> getNodeQuadTree() {
+		return ((SearchableNetwork) delegate).getNodeQuadTree();
+	}
+
+	@Override
+	public LinkQuadTree getLinkQuadTree() {
+		return ((SearchableNetwork) delegate).getLinkQuadTree();
 	}
 }

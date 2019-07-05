@@ -17,18 +17,11 @@ public class LinkAssignment {
 	}
 
 	public void run(Population population) throws InterruptedException {
-		ParallelProgress progress = new ParallelProgress("Assigning facility links to activities ...", population.getPersons().size());
+		ParallelProgress progress = new ParallelProgress("Assigning facility links to activities ...",
+				population.getPersons().size());
 		progress.start();
 
 		for (Person person : population.getPersons().values()) {
-			// TODO: Remove this once freight agents get proper facility IDs
-			Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
-
-			if (isFreight != null && isFreight) {
-				progress.update();
-				continue;
-			}
-
 			for (Plan plan : person.getPlans()) {
 				for (PlanElement element : plan.getPlanElements()) {
 					if (element instanceof Activity) {

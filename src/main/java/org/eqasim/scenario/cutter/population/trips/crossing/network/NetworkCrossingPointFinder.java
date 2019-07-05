@@ -5,5 +5,5 @@ import java.util.List;
 import org.matsim.core.population.routes.NetworkRoute;
 
 public interface NetworkCrossingPointFinder {
-	List<NetworkCrossingPoint> findCrossingPoints(NetworkRoute route, double departureTime);
+	List<NetworkCrossingPoint> findCrossingPoints(String mode, NetworkRoute route, double departureTime);
 }

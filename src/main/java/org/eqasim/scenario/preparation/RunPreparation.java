@@ -26,6 +26,11 @@ public class RunPreparation {
 		new MatsimNetworkReader(scenario.getNetwork()).readFile(cmd.getOptionStrict("input-network-path"));
 		new PopulationReader(scenario).readFile(cmd.getOptionStrict("input-population-path"));
 
+		// Fix freight activities (TODO: should go to the pipeline)
+		FreightAssignment freightAssignment = new FreightAssignment(scenario.getNetwork(),
+				scenario.getActivityFacilities());
+		freightAssignment.run(scenario.getPopulation());
+
 		// Assign links to facilities
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
@@ -37,7 +42,7 @@ public class RunPreparation {
 		// Assign links to activities which are consistent with facilities
 		LinkAssignment linkAssignment = new LinkAssignment(scenario.getActivityFacilities());
 		linkAssignment.run(scenario.getPopulation());
-		
+
 		// Adjust link lengths
 		AdjustLinkLength adjustLinkLength = new AdjustLinkLength();
 		adjustLinkLength.run(scenario.getNetwork());

@@ -41,7 +41,7 @@ public class RunPopulationRouting {
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(ScenarioConfigurator.getModules()) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize)) //
+				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true)) //
 				.build();
 
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);

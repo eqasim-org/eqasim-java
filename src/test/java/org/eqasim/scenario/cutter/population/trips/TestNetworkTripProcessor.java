@@ -24,7 +24,7 @@ public class TestNetworkTripProcessor {
 		final private List<NetworkCrossingPoint> points = new LinkedList<>();
 
 		@Override
-		public List<NetworkCrossingPoint> findCrossingPoints(NetworkRoute route, double departureTime) {
+		public List<NetworkCrossingPoint> findCrossingPoints(String mode, NetworkRoute route, double departureTime) {
 			return points;
 		}
 

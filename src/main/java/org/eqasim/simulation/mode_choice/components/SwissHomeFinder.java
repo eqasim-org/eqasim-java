@@ -9,7 +9,6 @@ import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFind
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class SwissHomeFinder implements HomeFinder {
-	@SuppressWarnings("rawtypes")
 	@Override
 	public Id<? extends BasicLocation> getHomeLocationId(List<DiscreteModeChoiceTrip> trips) {
 		return null;

@@ -1,4 +1,4 @@
-package org.eqasim.scenario.cutter.schedule;
+package org.eqasim.scenario.cutter.transit;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -192,7 +192,7 @@ public class TransitScheduleCutter {
 
 		log.info("Finished cutting transit schedule.");
 		log.info("  Before: " + originalInfo);
-		log.info("  After: " + finalInfo);
+		log.info("   After: " + finalInfo);
 	}
 
 	private class ScheduleInfo {

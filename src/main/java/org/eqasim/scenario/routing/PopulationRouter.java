@@ -6,20 +6,23 @@ import java.util.List;
 
 import org.eqasim.misc.ParallelProgress;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.core.router.PlanRouter;
 
 import com.google.inject.Provider;
 
 public class PopulationRouter {
 	private final int numberOfThreads;
 	private final int batchSize;
+	private final boolean replaceExistingRoutes;
 	private final Provider<PlanRouter> routerProvider;
 
-	public PopulationRouter(int numberOfThreads, int batchSize, Provider<PlanRouter> routerProvider) {
+	public PopulationRouter(int numberOfThreads, int batchSize, boolean replaceExistingRoutes,
+			Provider<PlanRouter> routerProvider) {
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
 		this.routerProvider = routerProvider;
+		this.replaceExistingRoutes = replaceExistingRoutes;
 	}
 
 	public void run(Population population) throws InterruptedException {
@@ -68,7 +71,9 @@ public class PopulationRouter {
 					}
 
 					for (Person person : localTasks) {
-						router.run(person);
+						for (Plan plan : person.getPlans()) {
+							router.run(plan, replaceExistingRoutes);
+						}
 					}
 				}
 

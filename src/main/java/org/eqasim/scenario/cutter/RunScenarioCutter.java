@@ -19,10 +19,10 @@ import org.eqasim.scenario.cutter.population.CleanHouseholds;
 import org.eqasim.scenario.cutter.population.PopulationCutter;
 import org.eqasim.scenario.cutter.population.PopulationCutterModule;
 import org.eqasim.scenario.cutter.population.RemoveEmptyPlans;
-import org.eqasim.scenario.cutter.schedule.DefaultStopSequenceCrossingPointFinder;
-import org.eqasim.scenario.cutter.schedule.StopSequenceCrossingPointFinder;
-import org.eqasim.scenario.cutter.schedule.TransitScheduleCutter;
-import org.eqasim.scenario.cutter.schedule.TransitVehiclesCutter;
+import org.eqasim.scenario.cutter.transit.DefaultStopSequenceCrossingPointFinder;
+import org.eqasim.scenario.cutter.transit.StopSequenceCrossingPointFinder;
+import org.eqasim.scenario.cutter.transit.TransitScheduleCutter;
+import org.eqasim.scenario.cutter.transit.TransitVehiclesCutter;
 import org.eqasim.scenario.routing.PopulationRouter;
 import org.eqasim.scenario.routing.PopulationRouterModule;
 import org.eqasim.scenario.validation.ScenarioValidator;
@@ -59,12 +59,15 @@ public class RunScenarioCutter {
 		ScenarioExtent extent = new ShapeScenarioExtent.Builder(extentPath, extentAttribute, extentValue).build();
 
 		// Load scenario
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
+				ScenarioConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
-		Scenario scenario = ScenarioUtils.loadScenario(config);
+		Scenario scenario = ScenarioUtils.createScenario(config);
+		ScenarioConfigurator.configureScenario(scenario);
+		ScenarioUtils.loadScenario(scenario);
 
-		// Check validity before cutting
+		// Check validity before cuttingrammstein
 		ScenarioValidator scenarioValidator = new ScenarioValidator(new InteractionStageActivityTypes());
 		scenarioValidator.checkScenario(scenario);
 
@@ -74,7 +77,7 @@ public class RunScenarioCutter {
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(ScenarioConfigurator.getModules()) //
-				.addOverridingModule(new PopulationCutterModule(numberOfThreads, 40)) //
+				.addOverridingModule(new PopulationCutterModule(extent, numberOfThreads, 40)) //
 				.build();
 
 		PopulationCutter populationCutter = populationCutterInjector.getInstance(PopulationCutter.class);
@@ -121,7 +124,7 @@ public class RunScenarioCutter {
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(ScenarioConfigurator.getModules()) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100)) //
+				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.build();
 
 		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);
