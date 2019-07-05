@@ -15,7 +15,8 @@ public class RunSwitzerlandSimulation {
 				.requireOptions("config-path") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
+				ScenarioConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);

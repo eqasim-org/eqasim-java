@@ -9,6 +9,7 @@ public class AdjustLinkLength {
 
 	public void run(Network network) {
 		int infiniteSpeedCount = 0;
+		int adjustedLengthCount = 0;
 
 		for (Link link : network.getLinks().values()) {
 			double originalLength = link.getLength();
@@ -26,13 +27,12 @@ public class AdjustLinkLength {
 			if (travelTime < 1.0) {
 				double updatedLength = updatedFreespeed;
 				link.setLength(updatedLength);
-
-				logger.info(String.format("Increasing length of link %s from %f to %f", link.getId().toString(),
-						originalLength, updatedLength));
+				adjustedLengthCount++;
 			}
 		}
 
 		logger.info(
 				String.format("Set freespeed of %d links to 85.0, which as originally infinite", infiniteSpeedCount));
+		logger.info(String.format("Adjusted length of %d links", adjustedLengthCount));
 	}
 }

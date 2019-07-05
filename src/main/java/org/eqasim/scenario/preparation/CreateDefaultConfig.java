@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import org.eqasim.components.config.EqasimConfigGroup;
+import org.eqasim.simulation.ScenarioConfigurator;
 import org.eqasim.simulation.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine;
@@ -27,7 +27,6 @@ import ch.ethz.matsim.discrete_mode_choice.modules.ModelModule.ModelType;
 import ch.ethz.matsim.discrete_mode_choice.modules.SelectorModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup.HomeType;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 
 public class CreateDefaultConfig {
 	private final static List<String> ACTIVITY_TYPES = Arrays.asList("home", "work", "education", "shop", "leisure",
@@ -41,8 +40,7 @@ public class CreateDefaultConfig {
 				.requireOptions("output-path", "prefix") //
 				.build();
 
-		Config config = ConfigUtils.createConfig(new SwissRailRaptorConfigGroup(), new EqasimConfigGroup(),
-				new DiscreteModeChoiceConfigGroup());
+		Config config = ConfigUtils.createConfig(ScenarioConfigurator.getConfigGroups());
 
 		// General settings
 
@@ -85,20 +83,23 @@ public class CreateDefaultConfig {
 		// These parameters are only used by SwissRailRaptor. We configure the
 		// parameters here in a way that SRR searches for the route with the shortest
 		// travel time.
-		ModeParams ptParams = scoringConfig.getModes().get(TransportMode.pt);
-		ptParams.setConstant(0.0);
-		ptParams.setMarginalUtilityOfDistance(0.0);
-		ptParams.setMarginalUtilityOfTraveling(-1.0);
-		ptParams.setMonetaryDistanceRate(0.0);
-
 		for (String mode : MODES) {
-			scoringConfig.getOrCreateModeParams(mode);
+			ModeParams modeParams = scoringConfig.getOrCreateModeParams(mode);
+
+			modeParams.setConstant(0.0);
+			modeParams.setMarginalUtilityOfDistance(0.0);
+			modeParams.setMarginalUtilityOfTraveling(-1.0);
+			modeParams.setMonetaryDistanceRate(0.0);
 		}
 
 		// Routing configuration
 		PlansCalcRouteConfigGroup routingConfig = config.plansCalcRoute();
 
 		config.plansCalcRoute().setNetworkModes(Arrays.asList("car", "car_passenger", "truck"));
+
+		ModeRoutingParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
+		outsideParams.setBeelineDistanceFactor(1.0);
+		outsideParams.setTeleportedModeSpeed(1000.0);
 
 		ModeRoutingParams bikeParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.bike);
 		bikeParams.setBeelineDistanceFactor(1.4);
@@ -107,10 +108,6 @@ public class CreateDefaultConfig {
 		ModeRoutingParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
 		walkParams.setBeelineDistanceFactor(1.3);
 		walkParams.setTeleportedModeSpeed(1.2); // 4.32 km/h
-
-		ModeRoutingParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
-		outsideParams.setBeelineDistanceFactor(1.0);
-		outsideParams.setTeleportedModeSpeed(1000.0); // 4.32 km/h
 
 		// Travel time calculator
 		config.travelTimeCalculator().setAnalyzedModes(new HashSet<>(Arrays.asList("car", "car_passenger", "truck")));

@@ -1,12 +1,8 @@
 package org.eqasim.scenario.routing;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.eqasim.misc.InjectorBuilder;
 import org.eqasim.simulation.ScenarioConfigurator;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -24,8 +20,10 @@ public class RunPopulationRouting {
 				.allowOptions("threads", "batch-size") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
+				ScenarioConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+		config.strategy().clearStrategySettings();
 
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(10);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
