@@ -35,8 +35,11 @@ public class FreightAssignment {
 				for (PlanElement element : plan.getPlanElements()) {
 					if (element instanceof Activity) {
 						Activity activity = (Activity) element;
-						activity.setFacilityId(
-								index.getClosest(activity.getCoord().getX(), activity.getCoord().getY()).getId());
+						ActivityFacility facility = index.getClosest(activity.getCoord().getX(),
+								activity.getCoord().getY());
+
+						activity.setFacilityId(facility.getId());
+						activity.setCoord(facility.getCoord());
 					}
 				}
 			}
