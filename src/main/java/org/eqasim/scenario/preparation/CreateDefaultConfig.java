@@ -33,7 +33,7 @@ public class CreateDefaultConfig {
 	private final static List<String> ACTIVITY_TYPES = Arrays.asList("home", "work", "education", "shop", "leisure",
 			"other", "freight_loading", "freight_unloading", "outside");
 
-	private final static List<String> MODES = Arrays.asList("work", "bike", "pt", "car", "car_passenger", "truck",
+	private final static List<String> MODES = Arrays.asList("walk", "bike", "pt", "car", "car_passenger", "truck",
 			"outside");
 
 	static public void main(String[] args) throws ConfigurationException {
