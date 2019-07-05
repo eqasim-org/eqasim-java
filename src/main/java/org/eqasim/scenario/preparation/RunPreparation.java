@@ -1,6 +1,5 @@
 package org.eqasim.scenario.preparation;
 
-import org.eqasim.scenario.cutter.network.AdjustLinkLength;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
