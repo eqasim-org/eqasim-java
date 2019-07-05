@@ -26,7 +26,7 @@ import org.eqasim.scenario.cutter.schedule.TransitVehiclesCutter;
 import org.eqasim.scenario.routing.PopulationRouter;
 import org.eqasim.scenario.routing.PopulationRouterModule;
 import org.eqasim.scenario.validation.ScenarioValidator;
-import org.eqasim.simulation.ControllerConfigurator;
+import org.eqasim.simulation.ScenarioConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -73,7 +73,7 @@ public class RunScenarioCutter {
 
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(ControllerConfigurator.getModules()) //
+				.addOverridingModules(ScenarioConfigurator.getModules()) //
 				.addOverridingModule(new PopulationCutterModule(numberOfThreads, 40)) //
 				.build();
 
@@ -120,7 +120,7 @@ public class RunScenarioCutter {
 
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(ControllerConfigurator.getModules()) //
+				.addOverridingModules(ScenarioConfigurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100)) //
 				.build();
 

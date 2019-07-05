@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eqasim.misc.InjectorBuilder;
-import org.eqasim.simulation.ControllerConfigurator;
+import org.eqasim.simulation.ScenarioConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.config.CommandLine;
@@ -51,7 +51,7 @@ public class RunPopulationRouting {
 		}
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(ControllerConfigurator.getModules()) //
+				.addOverridingModules(ScenarioConfigurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize)) //
 				.build();
 
