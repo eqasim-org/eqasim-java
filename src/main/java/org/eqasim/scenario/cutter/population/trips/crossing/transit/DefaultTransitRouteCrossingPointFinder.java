@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.eqasim.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.scenario.cutter.extent.ScenarioExtent;
+import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
@@ -52,6 +53,24 @@ public class DefaultTransitRouteCrossingPointFinder implements TransitRouteCross
 
 				double outsideDepartureTime = routeDepartureTime + outsideStop.getDepartureOffset();
 				double insideDepartureTime = routeDepartureTime + insideStop.getDepartureOffset();
+
+				// This happens if we cross the border only to reach the very last stop of the
+				// line.
+				if (Time.isUndefinedTime(insideDepartureTime)) {
+					insideDepartureTime = routeDepartureTime + insideStop.getArrivalOffset();
+				}
+
+				if (Time.isUndefinedTime(outsideDepartureTime)) {
+					outsideDepartureTime = routeDepartureTime + outsideStop.getArrivalOffset();
+				}
+
+				if (Time.isUndefinedTime(insideDepartureTime)) {
+					throw new IllegalStateException();
+				}
+
+				if (Time.isUndefinedTime(outsideDepartureTime)) {
+					throw new IllegalStateException();
+				}
 
 				crossingPoints.add(new TransitRouteCrossingPoint(transitLine, transitRoute, outsideStop, insideStop,
 						outsideDepartureTime, insideDepartureTime, firstIsInside));

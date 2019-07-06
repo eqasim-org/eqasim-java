@@ -142,7 +142,8 @@ public class ScenarioValidator {
 						Leg leg = (Leg) element;
 
 						if (leg.getRoute() == null) {
-							logger.error(String.format("Person %s has leg without a route", person.getId().toString()));
+							logger.error(String.format("Person %s has %s leg without a route",
+									person.getId().toString(), leg.getMode()));
 							errorsFound = true;
 						} else {
 							Route route = leg.getRoute();
