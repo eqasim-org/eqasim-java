@@ -72,11 +72,16 @@ public class ScenarioConfigurator {
 				Person person = scenario.getPopulation().getPersons().get(memberId);
 
 				if (person != null) {
-					person.getAttributes().putAttribute("bikeAvailability",
-							household.getAttributes().getAttribute("bikeAvailability"));
-					person.getAttributes().putAttribute("spRegion", household.getAttributes().getAttribute("spRegion"));
+					copyAttribute(household, person, "bikeAvailability");
+					copyAttribute(household, person, "spRegion");
 				}
 			}
+		}
+	}
+
+	static private void copyAttribute(Household household, Person person, String attribute) {
+		if (household.getAttributes().getAsMap().containsKey(attribute)) {
+			person.getAttributes().putAttribute(attribute, household.getAttributes().getAttribute(attribute));
 		}
 	}
 }
