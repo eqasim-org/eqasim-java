@@ -5,8 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eqasim.misc.ParallelProgress;
+import org.eqasim.scenario.cutter.network.RoadNetwork;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.ActivityFacility;
@@ -15,9 +15,9 @@ import org.matsim.facilities.ActivityFacilityImpl;
 public class FacilityPlacement {
 	private final int numberOfThreads;
 	private final int batchSize;
-	private final Network network;
+	private final RoadNetwork network;
 
-	public FacilityPlacement(int numberOfThreads, int batchSize, Network network) {
+	public FacilityPlacement(int numberOfThreads, int batchSize, RoadNetwork network) {
 		this.network = network;
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
