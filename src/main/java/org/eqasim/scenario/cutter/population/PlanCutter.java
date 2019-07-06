@@ -55,7 +55,7 @@ public class PlanCutter {
 			}
 		}
 
-		mergeOutsideActivities.run(elements);
+		mergeOutsideActivities.run(result);
 
 		return result;
 	}
