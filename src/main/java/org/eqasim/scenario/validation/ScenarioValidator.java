@@ -88,7 +88,7 @@ public class ScenarioValidator {
 
 							if (facility == null) {
 								logger.error(String.format("Facility %s in %s activity for person %s does not exist",
-										activity.getLinkId(), activity.getType(), person.getId().toString()));
+										activity.getFacilityId(), activity.getType(), person.getId().toString()));
 								errorsFound = true;
 							} else {
 								Coord facilityCoord = facility.getCoord();
@@ -96,7 +96,7 @@ public class ScenarioValidator {
 								if (!activityCoord.equals(facilityCoord)) {
 									logger.error(String.format(
 											"Facility %s and %s activity for person %s do not have same coordinates",
-											activity.getLinkId(), activity.getType(), person.getId().toString()));
+											activity.getFacilityId(), activity.getType(), person.getId().toString()));
 									errorsFound = true;
 								}
 							}

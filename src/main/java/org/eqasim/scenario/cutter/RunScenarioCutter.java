@@ -127,7 +127,7 @@ public class RunScenarioCutter {
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(ScenarioConfigurator.getModules()) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, true)) //
+				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.build();
 
 		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);

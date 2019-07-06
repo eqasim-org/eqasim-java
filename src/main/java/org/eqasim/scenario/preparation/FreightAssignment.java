@@ -31,15 +31,19 @@ public class FreightAssignment {
 
 	public void run(Population population) {
 		for (Person person : population.getPersons().values()) {
-			for (Plan plan : person.getPlans()) {
-				for (PlanElement element : plan.getPlanElements()) {
-					if (element instanceof Activity) {
-						Activity activity = (Activity) element;
-						ActivityFacility facility = index.getClosest(activity.getCoord().getX(),
-								activity.getCoord().getY());
+			Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
 
-						activity.setFacilityId(facility.getId());
-						activity.setCoord(facility.getCoord());
+			if (isFreight != null && isFreight) {
+				for (Plan plan : person.getPlans()) {
+					for (PlanElement element : plan.getPlanElements()) {
+						if (element instanceof Activity) {
+							Activity activity = (Activity) element;
+							ActivityFacility facility = index.getClosest(activity.getCoord().getX(),
+									activity.getCoord().getY());
+
+							activity.setFacilityId(facility.getId());
+							activity.setCoord(facility.getCoord());
+						}
 					}
 				}
 			}

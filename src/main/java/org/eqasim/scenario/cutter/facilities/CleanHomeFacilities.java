@@ -39,16 +39,20 @@ public class CleanHomeFacilities {
 		while (iterator.hasNext()) {
 			ActivityFacility facility = iterator.next();
 
-			boolean onlyHome = true;
-
+			boolean hasHome = false;
+			boolean hasOthers = false;
+			
 			for (ActivityOption option : facility.getActivityOptions().values()) {
 				if (!option.getType().equals("home")) {
-					onlyHome = false;
-					break;
+					hasOthers = true;
+				} else {
+					hasHome = true;
 				}
 			}
+			
+			boolean isCandidateForRemoval = hasHome && !hasOthers;
 
-			if (onlyHome && !retainedIds.contains(facility.getId())) {
+			if (isCandidateForRemoval && !retainedIds.contains(facility.getId())) {
 				iterator.remove();
 			}
 		}
