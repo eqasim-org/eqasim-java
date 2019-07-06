@@ -118,13 +118,16 @@ public class RunScenarioCutter {
 		networkCutter.run(scenario.getNetwork());
 
 		// "Cut" config
+		// (we need to reload it, because it has become locked at this point)
+		config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), ScenarioConfigurator.getConfigGroups());
+		cmd.applyConfiguration(config);
 		ConfigCutter configCutter = new ConfigCutter(prefix);
 		configCutter.run(config);
 
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(ScenarioConfigurator.getModules()) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
+				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, true)) //
 				.build();
 
 		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);
@@ -134,7 +137,7 @@ public class RunScenarioCutter {
 		scenarioValidator.checkScenario(scenario);
 
 		// Write scenario
-		ScenarioWriter scenarioWriter = new ScenarioWriter(scenario, prefix);
+		ScenarioWriter scenarioWriter = new ScenarioWriter(config, scenario, prefix);
 		scenarioWriter.run(outputDirectory);
 	}
 }

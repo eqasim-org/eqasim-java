@@ -12,10 +12,11 @@ import org.eqasim.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.router.DijkstraFactory;
+import org.matsim.core.router.AStarLandmarksFactory;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculator.Path;
+import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
@@ -40,10 +41,14 @@ public class MinimumNetworkFinder {
 		ThreadGroup threadGroup = new ThreadGroup("MinimumNetworkFinder");
 
 		ParallelProgress progress = new ParallelProgress("Finding minimum network ...", linkIds.size());
+		progress.start();
+
 		Set<Id<Link>> minimumSet = Collections.synchronizedSet(new HashSet<>());
+		
+		LeastCostPathCalculatorFactory factory = new AStarLandmarksFactory(numberOfThreads);
 
 		for (int i = 0; i < numberOfThreads; i++) {
-			Thread thread = new Thread(threadGroup, new Worker(linkIterator, progress, minimumSet));
+			Thread thread = new Thread(threadGroup, new Worker(linkIterator, progress, minimumSet, factory));
 			thread.setDaemon(true);
 			thread.start();
 			threads.add(thread);
@@ -61,12 +66,15 @@ public class MinimumNetworkFinder {
 	private class Worker implements Runnable {
 		private final Iterator<Id<Link>> linkIterator;
 		private final ParallelProgress progress;
+		private final LeastCostPathCalculatorFactory routerFactory;
 		private final Set<Id<Link>> minimumSet;
 
-		Worker(Iterator<Id<Link>> linkIterator, ParallelProgress progress, Set<Id<Link>> minimumSet) {
+		Worker(Iterator<Id<Link>> linkIterator, ParallelProgress progress, Set<Id<Link>> minimumSet,
+				LeastCostPathCalculatorFactory routerFactory) {
 			this.linkIterator = linkIterator;
 			this.progress = progress;
 			this.minimumSet = minimumSet;
+			this.routerFactory = routerFactory;
 		}
 
 		@Override
@@ -75,7 +83,7 @@ public class MinimumNetworkFinder {
 
 			TravelTime travelTime = new FreeSpeedTravelTime();
 			TravelDisutility travelDisutility = new OnlyTimeDependentTravelDisutility(travelTime);
-			LeastCostPathCalculator calculator = new DijkstraFactory().createPathCalculator(network, travelDisutility,
+			LeastCostPathCalculator calculator = routerFactory.createPathCalculator(network, travelDisutility,
 					travelTime);
 
 			Set<Id<Link>> forwardTabuSet = new HashSet<>();

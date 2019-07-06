@@ -110,6 +110,18 @@ public class ScenarioValidator {
 								}
 							}
 						}
+
+						if (!stageActivityTypes.isStageActivity(activity.getType())) {
+							Link link = scenario.getNetwork().getLinks().get(activity.getLinkId());
+
+							if (link != null) {
+								if (!link.getAllowedModes().contains("car")) {
+									logger.error(String.format("Person %s has %s activity attached to non-car link %s",
+											person.getId().toString(), activity.getType(), link.getId().toString()));
+									errorsFound = true;
+								}
+							}
+						}
 					}
 				}
 			}
@@ -123,7 +135,9 @@ public class ScenarioValidator {
 
 		for (Person person : population.getPersons().values()) {
 			for (Plan plan : person.getPlans()) {
-				for (PlanElement element : plan.getPlanElements()) {
+				for (int i = 0; i < plan.getPlanElements().size(); i++) {
+					PlanElement element = plan.getPlanElements().get(i);
+
 					if (element instanceof Leg) {
 						Leg leg = (Leg) element;
 
@@ -137,12 +151,34 @@ public class ScenarioValidator {
 								logger.error(String.format("Person %s has route without a start link",
 										person.getId().toString()));
 								errorsFound = true;
+							} else {
+								Activity preceedingActivity = (Activity) plan.getPlanElements().get(i - 1);
+
+								if (!stageActivityTypes.isStageActivity(preceedingActivity.getType())) {
+									if (!preceedingActivity.getLinkId().equals(route.getStartLinkId())) {
+										logger.error(String.format(
+												"Person %s has route with a different start link (%s) than previous activity (%s)",
+												person.getId().toString(), route.getStartLinkId().toString(),
+												preceedingActivity.getLinkId().toString()));
+									}
+								}
 							}
 
 							if (route.getEndLinkId() == null) {
 								logger.error(String.format("Person %s has route without an end link",
 										person.getId().toString()));
 								errorsFound = true;
+							} else {
+								Activity followingActivity = (Activity) plan.getPlanElements().get(i - 1);
+
+								if (!stageActivityTypes.isStageActivity(followingActivity.getType())) {
+									if (!followingActivity.getLinkId().equals(route.getStartLinkId())) {
+										logger.error(String.format(
+												"Person %s has route with a different end link (%s) than following activity (%s)",
+												person.getId().toString(), route.getStartLinkId().toString(),
+												followingActivity.getLinkId().toString()));
+									}
+								}
 							}
 						}
 					}

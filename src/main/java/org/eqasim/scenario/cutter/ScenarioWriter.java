@@ -5,6 +5,7 @@ import java.io.File;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.api.core.v01.population.PopulationWriter;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigWriter;
 import org.matsim.facilities.FacilitiesWriter;
 import org.matsim.households.HouseholdsWriterV10;
@@ -14,10 +15,12 @@ import org.matsim.vehicles.VehicleWriterV1;
 public class ScenarioWriter {
 	private final String prefix;
 	private final Scenario scenario;
+	private final Config config;
 
-	public ScenarioWriter(Scenario scenario, String prefix) {
+	public ScenarioWriter(Config config, Scenario scenario, String prefix) {
 		this.scenario = scenario;
 		this.prefix = prefix;
+		this.config = config;
 	}
 
 	public void run(File outputDirectory) {
@@ -27,7 +30,7 @@ public class ScenarioWriter {
 			outputDirectory.mkdir();
 		}
 
-		new ConfigWriter(scenario.getConfig()).write(new File(outputDirectory, prefix + "config.xml").toString());
+		new ConfigWriter(config).write(new File(outputDirectory, prefix + "config.xml").toString());
 		new PopulationWriter(scenario.getPopulation())
 				.write(new File(outputDirectory, prefix + "population.xml.gz").toString());
 		new FacilitiesWriter(scenario.getActivityFacilities())
