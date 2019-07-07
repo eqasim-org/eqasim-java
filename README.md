@@ -88,7 +88,6 @@ hdm_threads: 24
 
 stages:
     - matsim.final
-    - matsim.java.eqasim
 ```
 
 Again, `python3 run.py ile_de_france.yml` should generate the scenario.
@@ -179,3 +178,9 @@ shape files:
 - `zurich_20km.shp` Zurich city and surroundings, plus a 20km buffer
 - `paris_city.shp` City area of Paris (20 arrondissements)
 - `paris_20km.shp` City area of Paris, plus a 20km buffer
+
+Note that the shape files must be given in the correct projection. For Switzerland
+this is `EPSG:2056` and for France it is `EPSG:2154`.
+
+![Zurich](gis/zurich.png "Zurich")
+![Paris](gis/paris.png "Paris")
