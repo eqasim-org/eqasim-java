@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.eqasim.components.config.EqasimConfigGroup;
-import org.eqasim.simulation.ScenarioConfigurator;
 import org.eqasim.simulation.mode_choice.SwissModeChoiceModule;
+import org.eqasim.simulation.universal.UniversalConfigurator;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -41,7 +41,7 @@ public class CreateDefaultConfig {
 				.requireOptions("output-path", "prefix", "sample-size") //
 				.build();
 
-		Config config = ConfigUtils.createConfig(ScenarioConfigurator.getConfigGroups());
+		Config config = ConfigUtils.createConfig(UniversalConfigurator.getConfigGroups());
 
 		// General settings
 

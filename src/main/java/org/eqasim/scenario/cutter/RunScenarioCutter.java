@@ -26,7 +26,7 @@ import org.eqasim.scenario.cutter.transit.TransitVehiclesCutter;
 import org.eqasim.scenario.routing.PopulationRouter;
 import org.eqasim.scenario.routing.PopulationRouterModule;
 import org.eqasim.scenario.validation.ScenarioValidator;
-import org.eqasim.simulation.ScenarioConfigurator;
+import org.eqasim.simulation.universal.UniversalConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -60,11 +60,11 @@ public class RunScenarioCutter {
 
 		// Load scenario
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				ScenarioConfigurator.getConfigGroups());
+				UniversalConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		ScenarioConfigurator.configureScenario(scenario);
+		UniversalConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
 		// Check validity before cuttingrammstein
@@ -76,7 +76,7 @@ public class RunScenarioCutter {
 
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(ScenarioConfigurator.getModules()) //
+				.addOverridingModules(UniversalConfigurator.getModules()) //
 				.addOverridingModule(new PopulationCutterModule(extent, numberOfThreads, 40)) //
 				.build();
 
@@ -119,14 +119,14 @@ public class RunScenarioCutter {
 
 		// "Cut" config
 		// (we need to reload it, because it has become locked at this point)
-		config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), ScenarioConfigurator.getConfigGroups());
+		config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), UniversalConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 		ConfigCutter configCutter = new ConfigCutter(prefix);
 		configCutter.run(config);
 
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(ScenarioConfigurator.getModules()) //
+				.addOverridingModules(UniversalConfigurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.build();
 

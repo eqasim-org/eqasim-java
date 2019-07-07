@@ -1,4 +1,4 @@
-package org.eqasim.simulation.ile_de_france.preparation;
+package org.eqasim.simulation.ile_de_france;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;

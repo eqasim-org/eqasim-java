@@ -1,4 +1,4 @@
-package org.eqasim.simulation.ile_de_france.preparation;
+package org.eqasim.simulation.ile_de_france.mode_choice;
 
 import java.util.Collection;
 import java.util.HashSet;

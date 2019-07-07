@@ -1,4 +1,4 @@
-package org.eqasim.simulation.mode_choice.components.constraints;
+package org.eqasim.simulation.universal.mode_choice.components.constraints;
 
 import java.util.Collection;
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.eqasim.simulation.mode_choice.components;
+package org.eqasim.simulation.universal.mode_choice.components;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import ch.ethz.matsim.discrete_mode_choice.components.tour_finder.TourFinder;
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SwissTourFinder implements TourFinder {
+public class UniversalTourFinder implements TourFinder {
 	private final String HOME_ACTIVITY_TYPE = "home";
 	private final String OUTSIDE_ACTIVITY_TYPE = "outside";
 

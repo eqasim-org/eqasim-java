@@ -1,4 +1,4 @@
-package org.eqasim.simulation;
+package org.eqasim.simulation.universal;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +23,7 @@ import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConf
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
-public class ScenarioConfigurator {
+public class UniversalConfigurator {
 	static public ConfigGroup[] getConfigGroups() {
 		return new ConfigGroup[] { //
 				new SwissRailRaptorConfigGroup(), //

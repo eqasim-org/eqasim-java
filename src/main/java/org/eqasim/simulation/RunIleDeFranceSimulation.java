@@ -1,8 +1,9 @@
 package org.eqasim.simulation;
 
-import org.eqasim.simulation.ile_de_france.preparation.IleDeFranceConfigurator;
-import org.eqasim.simulation.ile_de_france.preparation.IleDeFranceModeAvailability;
+import org.eqasim.simulation.ile_de_france.IleDeFranceConfigurator;
+import org.eqasim.simulation.ile_de_france.mode_choice.IleDeFranceModeAvailability;
 import org.eqasim.simulation.mode_choice.SwissModeChoiceModule;
+import org.eqasim.simulation.universal.UniversalConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -21,7 +22,7 @@ public class RunIleDeFranceSimulation {
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				ScenarioConfigurator.getConfigGroups());
+				UniversalConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
@@ -29,13 +30,13 @@ public class RunIleDeFranceSimulation {
 		dmcConfig.setModeAvailability("IDF");
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		ScenarioConfigurator.configureScenario(scenario);
+		UniversalConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		ScenarioConfigurator.adjustScenario(scenario);
+		UniversalConfigurator.adjustScenario(scenario);
 		IleDeFranceConfigurator.adjustScenario(scenario);
 
 		Controler controller = new Controler(scenario);
-		ScenarioConfigurator.configureController(controller);
+		UniversalConfigurator.configureController(controller);
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 		controller.addOverridingModule(new AbstractDiscreteModeChoiceExtension() {
 			@Override

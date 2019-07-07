@@ -1,4 +1,4 @@
-package org.eqasim.simulation.mode_choice.components.filters;
+package org.eqasim.simulation.universal.mode_choice.components.filters;
 
 import java.util.List;
 

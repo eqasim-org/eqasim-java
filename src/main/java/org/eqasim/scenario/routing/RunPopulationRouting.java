@@ -1,7 +1,7 @@
 package org.eqasim.scenario.routing;
 
 import org.eqasim.misc.InjectorBuilder;
-import org.eqasim.simulation.ScenarioConfigurator;
+import org.eqasim.simulation.universal.UniversalConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -21,7 +21,7 @@ public class RunPopulationRouting {
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				ScenarioConfigurator.getConfigGroups());
+				UniversalConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 		config.strategy().clearStrategySettings();
 
@@ -40,7 +40,7 @@ public class RunPopulationRouting {
 		}
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(ScenarioConfigurator.getModules()) //
+				.addOverridingModules(UniversalConfigurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true)) //
 				.build();
 

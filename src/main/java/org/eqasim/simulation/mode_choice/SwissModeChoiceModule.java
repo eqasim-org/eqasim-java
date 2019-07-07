@@ -2,15 +2,15 @@ package org.eqasim.simulation.mode_choice;
 
 import java.io.IOException;
 
-import org.eqasim.simulation.mode_choice.components.SwissHomeFinder;
-import org.eqasim.simulation.mode_choice.components.SwissTourFinder;
-import org.eqasim.simulation.mode_choice.components.constraints.OutsideConstraint;
-import org.eqasim.simulation.mode_choice.components.constraints.PassengerConstraint;
-import org.eqasim.simulation.mode_choice.components.filters.OutsideFilter;
-import org.eqasim.simulation.mode_choice.components.filters.TourLengthFilter;
 import org.eqasim.simulation.mode_choice.parameters.CostParameters;
 import org.eqasim.simulation.mode_choice.parameters.ModeChoiceParameters;
 import org.eqasim.simulation.mode_choice.parameters.ParameterDefinition;
+import org.eqasim.simulation.universal.mode_choice.components.UniversalHomeFinder;
+import org.eqasim.simulation.universal.mode_choice.components.UniversalTourFinder;
+import org.eqasim.simulation.universal.mode_choice.components.constraints.OutsideConstraint;
+import org.eqasim.simulation.universal.mode_choice.components.constraints.PassengerConstraint;
+import org.eqasim.simulation.universal.mode_choice.components.filters.OutsideFilter;
+import org.eqasim.simulation.universal.mode_choice.components.filters.TourLengthFilter;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.router.TripRouter;
@@ -53,7 +53,7 @@ public class SwissModeChoiceModule extends AbstractDiscreteModeChoiceExtension {
 		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(SwissUtilityEstimator.class);
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissModeAvailability.class);
 
-		bindTourFinder(TOUR_FINDER_NAME).to(SwissTourFinder.class);
+		bindTourFinder(TOUR_FINDER_NAME).to(UniversalTourFinder.class);
 	}
 
 	@Provides
@@ -84,15 +84,15 @@ public class SwissModeChoiceModule extends AbstractDiscreteModeChoiceExtension {
 	}
 
 	@Provides
-	public SwissTourFinder provideSwissTourFinder() {
-		return new SwissTourFinder();
+	public UniversalTourFinder provideSwissTourFinder() {
+		return new UniversalTourFinder();
 	}
 
 	@Provides
 	@Singleton
 	@Named("tour")
 	public HomeFinder provideHomeFinder() {
-		return new SwissHomeFinder();
+		return new UniversalHomeFinder();
 	}
 
 	@Provides
