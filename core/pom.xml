@@ -2,16 +2,14 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.eqasim</groupId>
-	<artifactId>eqasim</artifactId>
-	<version>1.0.0</version>
-    <packaging>pom</packaging>
+	<artifactId>core</artifactId>
 
-    <modules>
-        <module>core</module>
-        <module>switzerland</module>
-        <module>ile_de_france</module>
-    </modules>
+	<parent>
+		<groupId>org.eqasim</groupId>
+		<artifactId>eqasim</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
