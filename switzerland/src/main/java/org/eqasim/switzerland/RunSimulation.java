@@ -1,5 +1,6 @@
 package org.eqasim.switzerland;
 
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -26,6 +27,7 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		Configurator.configureController(controller);
+		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 
 		controller.run();
