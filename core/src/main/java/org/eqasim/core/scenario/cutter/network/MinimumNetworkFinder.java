@@ -38,18 +38,16 @@ public class MinimumNetworkFinder {
 		Iterator<Id<Link>> linkIterator = linkIds.iterator();
 
 		List<Thread> threads = new LinkedList<>();
-		ThreadGroup threadGroup = new ThreadGroup("MinimumNetworkFinder");
 
 		ParallelProgress progress = new ParallelProgress("Finding minimum network ...", linkIds.size());
 		progress.start();
 
 		Set<Id<Link>> minimumSet = Collections.synchronizedSet(new HashSet<>());
-		
+
 		LeastCostPathCalculatorFactory factory = new AStarLandmarksFactory(numberOfThreads);
 
 		for (int i = 0; i < numberOfThreads; i++) {
-			Thread thread = new Thread(threadGroup, new Worker(linkIterator, progress, minimumSet, factory));
-			thread.setDaemon(true);
+			Thread thread = new Thread(new Worker(linkIterator, progress, minimumSet, factory));
 			thread.start();
 			threads.add(thread);
 		}

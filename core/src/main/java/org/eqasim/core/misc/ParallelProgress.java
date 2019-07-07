@@ -14,7 +14,6 @@ public class ParallelProgress {
 
 	public ParallelProgress(String description, long totalCount) {
 		thread = new Thread(this::run);
-		thread.setDaemon(true);
 
 		this.totalCount = totalCount;
 		this.description = description;
@@ -31,7 +30,8 @@ public class ParallelProgress {
 				lastCount = currentCount;
 				Thread.sleep(1000);
 			}
-		} catch (InterruptedException e) {}
+		} catch (InterruptedException e) {
+		}
 	}
 
 	public void start() {
@@ -42,7 +42,7 @@ public class ParallelProgress {
 		thread.interrupt();
 	}
 
-	public synchronized void update(int count) {
+	public void update(int count) {
 		currentCount += count;
 	}
 
@@ -50,14 +50,14 @@ public class ParallelProgress {
 		update(1);
 	}
 
-	public synchronized void set(int count) {
+	public void set(int count) {
 		currentCount = count;
 	}
 
 	public void close() throws InterruptedException {
 		thread.interrupt();
 		thread.join();
-		
+
 		if (currentCount == totalCount) {
 			logger.info(String.format("%s Done!", description));
 		}

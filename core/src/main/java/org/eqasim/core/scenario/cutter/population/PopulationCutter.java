@@ -34,14 +34,12 @@ public class PopulationCutter {
 		Iterator<? extends Person> personIterator = population.getPersons().values().iterator();
 
 		List<Thread> threads = new LinkedList<>();
-		ThreadGroup threadGroup = new ThreadGroup("PopulationCutter");
 
 		ParallelProgress progress = new ParallelProgress("Cutting population ...", population.getPersons().size());
 		progress.start();
 
 		for (int i = 0; i < numberOfThreads; i++) {
-			Thread thread = new Thread(threadGroup, new Worker(personIterator, progress, planCutterProvider));
-			thread.setDaemon(true);
+			Thread thread = new Thread(new Worker(personIterator, progress, planCutterProvider));
 			thread.start();
 			threads.add(thread);
 		}

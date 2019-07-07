@@ -28,17 +28,15 @@ public class LocationAssignment {
 		Iterator<? extends Person> personIterator = population.getPersons().values().iterator();
 
 		List<Thread> threads = new LinkedList<>();
-		ThreadGroup threadGroup = new ThreadGroup("LocationAssignment");
 
 		ParallelProgress progress = new ParallelProgress("Location assignment ...", population.getPersons().size());
 
 		for (int i = 0; i < numberOfThreads; i++) {
-			Thread thread = new Thread(threadGroup, new Worker(personIterator, progress));
-			thread.setDaemon(true);
+			Thread thread = new Thread(new Worker(personIterator, progress));
 			thread.start();
 			threads.add(thread);
 		}
-		
+
 		progress.start();
 
 		for (Thread thread : threads) {

@@ -26,15 +26,13 @@ public class PopulationRouter {
 	}
 
 	public void run(Population population) throws InterruptedException {
-		ThreadGroup threadGroup = new ThreadGroup("PopulationRouter");
 		List<Thread> threads = new LinkedList<>();
 
 		Iterator<? extends Person> personIterator = population.getPersons().values().iterator();
 		ParallelProgress progress = new ParallelProgress("Routing population ...", population.getPersons().size());
 
 		for (int i = 0; i < numberOfThreads; i++) {
-			Thread thread = new Thread(threadGroup, new Worker(personIterator, progress));
-			thread.setDaemon(true);
+			Thread thread = new Thread(new Worker(personIterator, progress));
 			threads.add(thread);
 		}
 
@@ -69,11 +67,11 @@ public class PopulationRouter {
 					while (personIterator.hasNext() && localTasks.size() < batchSize) {
 						localTasks.add(personIterator.next());
 					}
+				}
 
-					for (Person person : localTasks) {
-						for (Plan plan : person.getPlans()) {
-							router.run(plan, replaceExistingRoutes);
-						}
+				for (Person person : localTasks) {
+					for (Plan plan : person.getPlans()) {
+						router.run(plan, replaceExistingRoutes);
 					}
 				}
 

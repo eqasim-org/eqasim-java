@@ -27,14 +27,12 @@ public class FacilityPlacement {
 		Iterator<? extends ActivityFacility> facilityIterator = facilities.getFacilities().values().iterator();
 
 		List<Thread> threads = new LinkedList<>();
-		ThreadGroup threadGroup = new ThreadGroup("FacilityPlacement");
 
 		ParallelProgress progress = new ParallelProgress("Assigning links to facilities ...",
 				facilities.getFacilities().size());
 
 		for (int i = 0; i < numberOfThreads; i++) {
-			Thread thread = new Thread(threadGroup, new Worker(facilityIterator, progress));
-			thread.setDaemon(true);
+			Thread thread = new Thread(new Worker(facilityIterator, progress));
 			threads.add(thread);
 		}
 

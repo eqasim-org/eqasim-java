@@ -88,7 +88,7 @@ public class RunLocationAssignment {
 		MATSimAssignmentSolver solver = builder.build();
 
 		// Run assignment
-		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
+		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(1000);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
 
