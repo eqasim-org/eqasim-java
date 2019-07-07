@@ -1,5 +1,7 @@
 # eqasim-java
 
+![eqasim](gis/top.png "eqasim")
+
 This repository contains all the Java (and MATSim) related parts of eqasim.
 Especially, it contains the standardized code to run the simulation and to cut
 smaller regions from the reference scenarios.
