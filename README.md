@@ -130,7 +130,7 @@ java -Xmx100G -cp /path/to/switzerland-1.0.0.jar org.eqasim.switzerland.RunSimul
 or
 
 ```bash
-java -Xmx100G -cp /path/to/ile_de_france-1.0.0.jar org.eqasim.switzerland.RunSimulation --config-path /path/to/ile_de_france_config.xml
+java -Xmx100G -cp /path/to/ile_de_france-1.0.0.jar org.eqasim.ile_de_france.RunSimulation --config-path /path/to/ile_de_france_config.xml
 ```
 
 This should start the simulation according to what is given in the respective
