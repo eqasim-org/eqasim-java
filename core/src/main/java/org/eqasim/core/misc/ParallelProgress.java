@@ -42,7 +42,7 @@ public class ParallelProgress {
 		thread.interrupt();
 	}
 
-	public void update(int count) {
+	public synchronized void update(int count) {
 		currentCount += count;
 	}
 
@@ -50,7 +50,7 @@ public class ParallelProgress {
 		update(1);
 	}
 
-	public void set(int count) {
+	public synchronized void set(int count) {
 		currentCount = count;
 	}
 
