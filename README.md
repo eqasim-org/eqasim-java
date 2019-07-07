@@ -182,5 +182,4 @@ shape files:
 Note that the shape files must be given in the correct projection. For Switzerland
 this is `EPSG:2056` and for France it is `EPSG:2154`.
 
-![Zurich](gis/zurich.png "Zurich")
-![Paris](gis/paris.png "Paris")
+![Scenario Shapes](gis/shapes.png "Scenario Shapes")
