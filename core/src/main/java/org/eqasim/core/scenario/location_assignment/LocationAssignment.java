@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eqasim.core.location_assignment.matsim.solver.MATSimAssignmentSolver;
+import org.eqasim.core.location_assignment.matsim.solver.MATSimAssignmentSolverBuilder;
 import org.eqasim.core.location_assignment.matsim.solver.MATSimSolverResult;
 import org.eqasim.core.location_assignment.matsim.utils.LocationAssignmentPlanAdapter;
 import org.eqasim.core.misc.ParallelProgress;
@@ -14,12 +15,12 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
 
 public class LocationAssignment {
-	private final MATSimAssignmentSolver solver;
+	private final MATSimAssignmentSolverBuilder builder;
 	private final int numberOfThreads;
 	private final int batchSize;
 
-	public LocationAssignment(MATSimAssignmentSolver solver, int numberOfThreads, int batchSize) {
-		this.solver = solver;
+	public LocationAssignment(MATSimAssignmentSolverBuilder builder, int numberOfThreads, int batchSize) {
+		this.builder = builder;
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
 	}
@@ -58,6 +59,8 @@ public class LocationAssignment {
 		@Override
 		public void run() {
 			List<Person> localTasks = new LinkedList<>();
+
+			MATSimAssignmentSolver solver = builder.build();
 			LocationAssignmentPlanAdapter adapter = new LocationAssignmentPlanAdapter();
 
 			do {

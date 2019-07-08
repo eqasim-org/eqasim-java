@@ -44,12 +44,14 @@ public class MATSimAssignmentSolverBuilder {
 	private double gravityConvergenceThreshold = 10.0;
 	private double gravityGain = 0.1;
 
-	private Random random = new Random();
+	private int randomSeed = 0;
 
 	private Set<String> variableActivityTypes = new HashSet<>();
 	private StageActivityTypes stageActivityTypes = new StageActivityTypesImpl();
 
 	public MATSimAssignmentSolver build() {
+		Random random = new Random(randomSeed);
+		
 		if (relaxedLocationSolver == null) {
 			GravityInitialLocationGenerator initialLocationGenerator = new LateralDeviationGenerator(random,
 					lateralDeviationStd);
@@ -156,8 +158,8 @@ public class MATSimAssignmentSolverBuilder {
 		this.gravityGain = gravityGain;
 	}
 
-	public void setRandom(Random random) {
-		this.random = random;
+	public void setRandomSeed(int randomSeed) {
+		this.randomSeed = randomSeed;
 	}
 
 	public void setVariableActivityTypes(Set<String> variableActivityTypes) {

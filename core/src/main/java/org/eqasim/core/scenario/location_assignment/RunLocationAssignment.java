@@ -6,12 +6,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.eqasim.core.location_assignment.matsim.discretizer.FacilityTypeDiscretizerFactory;
-import org.eqasim.core.location_assignment.matsim.solver.MATSimAssignmentSolver;
 import org.eqasim.core.location_assignment.matsim.solver.MATSimAssignmentSolverBuilder;
 import org.eqasim.core.misc.InteractionStageActivityTypes;
 import org.matsim.api.core.v01.Scenario;
@@ -47,7 +45,6 @@ public class RunLocationAssignment {
 
 		// Set up random seed
 		int randomSeed = cmd.getOption("random-seed").map(Integer::parseInt).orElse(0);
-		Random random = new Random(randomSeed);
 
 		// Load population and facilities
 		Config config = ConfigUtils.createConfig();
@@ -63,7 +60,7 @@ public class RunLocationAssignment {
 		File quantilesPath = new File(cmd.getOptionStrict("quantiles-path"));
 		File distributionsPath = new File(cmd.getOptionStrict("distributions-path"));
 
-		DistanceSamplerFactory distanceSamplerFactory = new DistanceSamplerFactory(random);
+		DistanceSamplerFactory distanceSamplerFactory = new DistanceSamplerFactory(randomSeed);
 		distanceSamplerFactory.load(quantilesPath, distributionsPath);
 
 		StageActivityTypes stageActivityTypes = new InteractionStageActivityTypes();
@@ -75,7 +72,7 @@ public class RunLocationAssignment {
 		MATSimAssignmentSolverBuilder builder = new MATSimAssignmentSolverBuilder();
 
 		builder.setVariableActivityTypes(relevantActivityTypes);
-		builder.setRandom(random);
+		builder.setRandomSeed(randomSeed);
 		builder.setStageActivityTypes(stageActivityTypes);
 
 		builder.setDiscretizerProvider(problemProvider);
@@ -85,14 +82,12 @@ public class RunLocationAssignment {
 		int discretizationIterations = cmd.getOption("discretization-iterations").map(Integer::parseInt).orElse(1000);
 		builder.setMaximumDiscretizationIterations(discretizationIterations);
 
-		MATSimAssignmentSolver solver = builder.build();
-
 		// Run assignment
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
 
-		LocationAssignment locationAssignment = new LocationAssignment(solver, numberOfThreads, batchSize);
+		LocationAssignment locationAssignment = new LocationAssignment(builder, numberOfThreads, batchSize);
 		locationAssignment.run(scenario.getPopulation());
 
 		// Write population

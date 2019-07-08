@@ -16,16 +16,18 @@ import java.util.stream.Collectors;
 import org.eqasim.core.location_assignment.algorithms.DistanceSampler;
 
 class DistanceSamplerFactory {
-	final private Random random;
+	final private int randomSeed;
 
 	final private Map<String, List<Double>> quantiles = new HashMap<>();
 	final private Map<String, List<List<Double>>> distributions = new HashMap<>();
 
-	public DistanceSamplerFactory(Random random) {
-		this.random = random;
+	public DistanceSamplerFactory(int randomSeed) {
+		this.randomSeed = randomSeed;
 	}
 
 	public DistanceSampler createDistanceSampler(String mode, double travelTime) {
+		Random random = new Random(randomSeed);
+
 		return new DistanceSampler() {
 			@Override
 			public double sample() {
