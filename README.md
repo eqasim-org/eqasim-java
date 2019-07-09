@@ -152,7 +152,7 @@ the scenario-specific jars.
 The script expects a number of arguments:
 
 ```bash
-java -Xmx100G -cp /path/to/switzerland-1.0.0.jar org.eqasim.switzerland.RunScenarioCutter
+java -Xmx100G -cp /path/to/switzerland-1.0.0.jar org.eqasim.core.scenario.cutter.RunScenarioCutter
 --config-path /path/to/ile_de_france_config.xml
 --output-path /path/to/output/paris_10pct
 --extent-path /path/to/paris_shapefile.shp
