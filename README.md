@@ -152,7 +152,7 @@ the scenario-specific jars.
 The script expects a number of arguments:
 
 ```bash
-java -Xmx100G -cp /path/to/switzerland-1.0.0.jar org.eqasim.switzerland.RunScenarioCutter
+java -Xmx100G -cp /path/to/switzerland-1.0.0.jar org.eqasim.core.scenario.cutter.RunScenarioCutter
 --config-path /path/to/ile_de_france_config.xml
 --output-path /path/to/output/paris_10pct
 --extent-path /path/to/paris_shapefile.shp
@@ -178,7 +178,7 @@ shape files:
 - `zurich_city.shp` The 12 districts of Zurich city
 - `zurich.shp` Zurich city and several high density areas in the surroundings
 - `zurich_20km.shp` Zurich city and surroundings, plus a 20km buffer
-- `paris_city.shp` City area of Paris (20 arrondissements)
+- `paris.shp` City area of Paris (20 arrondissements)
 - `paris_20km.shp` City area of Paris, plus a 20km buffer
 
 Note that the shape files must be given in the correct projection. For Switzerland
