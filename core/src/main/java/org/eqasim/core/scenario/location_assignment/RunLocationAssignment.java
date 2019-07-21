@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import org.eqasim.core.location_assignment.matsim.discretizer.FacilityTypeDiscretizerFactory;
 import org.eqasim.core.location_assignment.matsim.solver.MATSimAssignmentSolverBuilder;
 import org.eqasim.core.misc.InteractionStageActivityTypes;
+import org.eqasim.core.scenario.location_assignment.listener.StatisticsListener;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -29,7 +30,7 @@ public class RunLocationAssignment {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("population-path", "facilities-path", "quantiles-path", "distributions-path",
 						"output-path") //
-				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size") //
+				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path") //
 				.build();
 
 		// Setting up activity types
@@ -88,7 +89,14 @@ public class RunLocationAssignment {
 				.orElse(Runtime.getRuntime().availableProcessors());
 
 		LocationAssignment locationAssignment = new LocationAssignment(builder, numberOfThreads, batchSize);
-		locationAssignment.run(scenario.getPopulation());
+
+		if (cmd.hasOption("statistics-path")) {
+			StatisticsListener listener = new StatisticsListener(new File(cmd.getOptionStrict("statistics-path")));
+			locationAssignment.run(scenario.getPopulation());
+			listener.close();
+		} else {
+			locationAssignment.run(scenario.getPopulation());
+		}
 
 		// Write population
 		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-path"));
