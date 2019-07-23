@@ -13,6 +13,7 @@ import org.eqasim.core.location_assignment.algorithms.gravity.GravityChainResult
 import org.eqasim.core.location_assignment.algorithms.gravity.GravityChainSolver;
 import org.eqasim.core.location_assignment.assignment.LocationAssignmentProblem;
 import org.eqasim.core.location_assignment.assignment.distance.FeasibleDistanceResult;
+import org.eqasim.core.location_assignment.assignment.relaxation.DefaultRelaxedLocationResult;
 import org.eqasim.core.location_assignment.assignment.relaxation.RelaxedLocationResult;
 import org.eqasim.core.location_assignment.assignment.relaxation.RelaxedLocationSolver;
 
@@ -37,17 +38,8 @@ public class GravityAngularLocationSolver implements RelaxedLocationSolver {
 					problem.getDestinationLocation().get(), feasibleDistanceResult.getTargetDistances());
 			GravityChainResult gravityResult = gravitySolver.solve(gravityProblem);
 
-			return new RelaxedLocationResult() {
-				@Override
-				public boolean isConverged() {
-					return gravityResult.isConverged();
-				}
-
-				@Override
-				public List<Vector2D> getRelaxedLocations() {
-					return gravityResult.getLocations();
-				}
-			};
+			return new DefaultRelaxedLocationResult(gravityResult.isConverged(), gravityResult.getIterations(),
+					gravityResult.getLocations());
 		} else {
 			List<Double> orderedTargetDistances = new LinkedList<>(feasibleDistanceResult.getTargetDistances());
 			Vector2D anchorLocation = problem.getOriginLocation().isPresent() ? problem.getOriginLocation().get()
@@ -66,17 +58,7 @@ public class GravityAngularLocationSolver implements RelaxedLocationSolver {
 				Collections.reverse(relaxedLocations);
 			}
 
-			return new RelaxedLocationResult() {
-				@Override
-				public boolean isConverged() {
-					return angularResult.isConverged();
-				}
-
-				@Override
-				public List<Vector2D> getRelaxedLocations() {
-					return relaxedLocations;
-				}
-			};
+			return new DefaultRelaxedLocationResult(angularResult.isConverged(), 0, relaxedLocations);
 		}
 	}
 }

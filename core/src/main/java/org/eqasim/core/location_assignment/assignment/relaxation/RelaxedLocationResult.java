@@ -8,4 +8,6 @@ public interface RelaxedLocationResult {
 	List<Vector2D> getRelaxedLocations();
 
 	boolean isConverged();
+	
+	int getIterations();
 }

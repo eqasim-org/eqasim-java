@@ -10,10 +10,6 @@ public class GravityChainProblem {
 	final private List<Double> targetDistances;
 
 	public GravityChainProblem(Vector2D originLocation, Vector2D destinationLocation, List<Double> targetDistances) {
-		if (targetDistances.size() < 2) {
-			throw new IllegalArgumentException("GravityChainProblem must have at least two trips");
-		}
-
 		this.originLocation = originLocation;
 		this.destinationLocation = destinationLocation;
 		this.targetDistances = targetDistances;

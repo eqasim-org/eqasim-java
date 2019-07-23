@@ -72,7 +72,7 @@ public class GravityChainSolver {
 				problem.getDestinationLocation()));
 		stateLocations.add(problem.getDestinationLocation());
 
-		long iteration = 0;
+		int iteration = 0;
 		boolean isConverged = false;
 
 		while (iteration < maximumIterations && !isConverged) {
@@ -123,7 +123,7 @@ public class GravityChainSolver {
 			isConverged = isConverged(problem, differences, numberOfTrips);
 			iteration++;
 		}
-
+		
 		return new GravityChainResult(true, isConverged, stateLocations.subList(1, numberOfTrips), iteration);
 	}
 
@@ -134,7 +134,7 @@ public class GravityChainSolver {
 
 		boolean isFeasible = true;
 		Vector2D location = null;
-
+		
 		if (directDistance == 0.0) {
 			double alpha = random.nextDouble();
 			double radius = 0.5 * originDistance + 0.5 * destinationDistance;
@@ -142,14 +142,24 @@ public class GravityChainSolver {
 			location = problem.getOriginLocation().add(offset);
 			isFeasible = originDistance == destinationDistance;
 		} else if (directDistance > originDistance + destinationDistance) {
-			double ratio = originDistance / (originDistance + destinationDistance);
+			double ratio = 1.0;
+			
+			if (originDistance > 0.0 || destinationDistance > 0.0) {
+				ratio = originDistance / (originDistance + destinationDistance);
+			}
+			
 			Vector2D direction = problem.getDestinationLocation().subtract(problem.getOriginLocation()).normalize();
 
 			location = problem.getOriginLocation().add(direction.scalarMultiply(ratio * directDistance));
 			isFeasible = false;
 		} else if (directDistance < Math.abs(originDistance - destinationDistance)) {
+			double ratio = 1.0;
+			
+			if (originDistance > 0.0 || destinationDistance > 0.0) {
+				ratio = originDistance / (originDistance + destinationDistance);
+			}
+			
 			double maximumDistance = Math.max(originDistance, destinationDistance);
-			double ratio = originDistance / (originDistance + destinationDistance);
 			Vector2D direction = problem.getDestinationLocation().subtract(problem.getOriginLocation()).normalize();
 
 			location = problem.getOriginLocation().add(direction.scalarMultiply(ratio * maximumDistance));
@@ -174,7 +184,7 @@ public class GravityChainSolver {
 		List<Double> distances = computeDistances(problem, Collections.singletonList(location), numberOfTrips);
 		List<Double> differences = computeDifferences(problem, distances, numberOfTrips);
 		boolean isConverged = isConverged(problem, differences, numberOfTrips);
-
+		
 		return new GravityChainResult(isFeasible, isConverged, Collections.singletonList(location), 0);
 	}
 

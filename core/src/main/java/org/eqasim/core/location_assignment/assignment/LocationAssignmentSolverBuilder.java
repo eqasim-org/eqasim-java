@@ -11,15 +11,10 @@ public class LocationAssignmentSolverBuilder {
 	private RelaxedLocationSolver relaxedLocationSolver = null;
 	private DiscreteLocationSolver discreteLocationSolver = null;
 
-	private boolean useIterativeFeasibleSolutions = true;
-	private int maximumDiscretizationIterations = 1000;
+	private int maximumAssignmentIterations = 1000;
 
-	public void setMaximumDiscretizationIterations(int maximumDiscretizationIterations) {
-		this.maximumDiscretizationIterations = maximumDiscretizationIterations;
-	}
-
-	public void setUseIterativeFeasibleSolutions(boolean useIterativeFeasibleSolutions) {
-		this.useIterativeFeasibleSolutions = useIterativeFeasibleSolutions;
+	public void setMaximumAssignmentIterations(int maximumAssignmentIterations) {
+		this.maximumAssignmentIterations = maximumAssignmentIterations;
 	}
 
 	public void setDiscreteLocationSolver(DiscreteLocationSolver discreteLocationSolver) {
@@ -56,6 +51,6 @@ public class LocationAssignmentSolverBuilder {
 		}
 
 		return new LocationAssignmentSolver(objectiveFunction, feasibleDistanceSolver, relaxedLocationSolver,
-				discreteLocationSolver, useIterativeFeasibleSolutions, maximumDiscretizationIterations);
+				discreteLocationSolver, maximumAssignmentIterations);
 	}
 }

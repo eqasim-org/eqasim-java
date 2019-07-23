@@ -6,4 +6,6 @@ public interface FeasibleDistanceResult {
 	List<Double> getTargetDistances();
 
 	boolean isConverged();
+	
+	int getIterations();
 }
