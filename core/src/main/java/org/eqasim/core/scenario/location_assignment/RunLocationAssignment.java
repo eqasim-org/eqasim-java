@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -14,18 +13,13 @@ import org.eqasim.core.location_assignment.matsim.discretizer.FacilityTypeDiscre
 import org.eqasim.core.location_assignment.matsim.solver.MATSimAssignmentSolverBuilder;
 import org.eqasim.core.misc.InteractionStageActivityTypes;
 import org.eqasim.core.scenario.location_assignment.listener.StatisticsListener;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.population.algorithms.TripsToLegsAlgorithm;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.io.PopulationWriter;
-import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.MainModeIdentifierImpl;
 import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.MatsimFacilitiesReader;
@@ -36,22 +30,19 @@ public class RunLocationAssignment {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("population-path", "facilities-path", "quantiles-path", "distributions-path",
 						"output-path") //
-				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path",
-						"threshold-factor", "sample-size") //
+				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path") //
 				.build();
 
 		// Setting up activity types
 		Set<String> relevantActivityTypes = new HashSet<>(Arrays.asList("leisure", "shop", "other"));
 
 		// Setting up modes
-		double thresholdFactor = cmd.getOption("threshold-factor").map(Double::parseDouble).orElse(1.0);
-
 		Map<String, Double> discretizationThresholds = new HashMap<>();
-		discretizationThresholds.put("car", 200.0 * thresholdFactor);
-		discretizationThresholds.put("car_passenger", 200.0 * thresholdFactor);
-		discretizationThresholds.put("pt", 200.0 * thresholdFactor);
-		discretizationThresholds.put("bike", 100.0 * thresholdFactor);
-		discretizationThresholds.put("walk", 100.0 * thresholdFactor);
+		discretizationThresholds.put("car", 200.0);
+		discretizationThresholds.put("car_passenger", 200.0);
+		discretizationThresholds.put("pt", 200.0);
+		discretizationThresholds.put("bike", 100.0);
+		discretizationThresholds.put("walk", 100.0);
 
 		// Set up random seed
 		int randomSeed = cmd.getOption("random-seed").map(Integer::parseInt).orElse(0);
@@ -74,28 +65,6 @@ public class RunLocationAssignment {
 		distanceSamplerFactory.load(quantilesPath, distributionsPath);
 
 		StageActivityTypes stageActivityTypes = new InteractionStageActivityTypes();
-
-		// Downsampling
-		Set<Id<Person>> removeIds = new HashSet<>();
-		Random random = new Random(0);
-		double sampleSize = cmd.getOption("sample-size").map(Double::parseDouble).orElse(1.0);
-
-		for (Person person : scenario.getPopulation().getPersons().values()) {
-			if (random.nextDouble() > sampleSize) {
-				removeIds.add(person.getId());
-			}
-		}
-
-		for (Id<Person> personId : removeIds) {
-			scenario.getPopulation().removePerson(personId);
-		}
-
-		// Some cleanup
-		MainModeIdentifier mainModeIdentifier = new MainModeIdentifierImpl();
-
-		for (Person person : scenario.getPopulation().getPersons().values()) {
-			new TripsToLegsAlgorithm(stageActivityTypes, mainModeIdentifier).run(person.getSelectedPlan());
-		}
 
 		// Set up solver
 		ProblemProvider problemProvider = new ProblemProvider(distanceSamplerFactory, discretizerFactory,
