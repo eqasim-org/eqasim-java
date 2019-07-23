@@ -32,7 +32,6 @@ public class StatisticsListener implements LocationAssignmentListener, Closeable
 
 			errorWriter.write(String.join(";", new String[] { //
 					"problem_index", //
-					"runtime", //
 					"mode", //
 					"target_distance", //
 					"absolute_error", //
@@ -41,13 +40,17 @@ public class StatisticsListener implements LocationAssignmentListener, Closeable
 
 			problemWriter.write(String.join(";", new String[] { //
 					"problem_index", //
+					"runtime", //
 					"is_tail_problem", //
 					"number_of_trips", //
 					"distance_converged", //
 					"relaxation_converged", //
 					"discretization_converged", //
 					"number_of_trip_discretizations_converged", //
-					"crowfly_distance", "origin_x", "origin_y", "destination_x", "destination_y" //
+					"crowfly_distance", "origin_x", "origin_y", "destination_x", "destination_y", //
+					"assignmentIterations", //
+					"relaxationIterations", //
+					"distanceIterations" //
 			}) + "\n");
 		} else {
 			throw new IllegalStateException("Expected existing directory: " + path);
@@ -61,7 +64,7 @@ public class StatisticsListener implements LocationAssignmentListener, Closeable
 
 		try {
 			for (MATSimSolverResult result : results) {
-				long numberOfTrips = result.getProblem().getChainLegs().size();
+				long numberOfTrips = result.getProblem().getChainActivities().size() + 1;
 
 				FeasibleDistanceResult feasibleDistanceResult = result.getResult().getFeasibleDistanceResult();
 				boolean distanceConverged = feasibleDistanceResult.isConverged();
@@ -133,7 +136,10 @@ public class StatisticsListener implements LocationAssignmentListener, Closeable
 						String.valueOf(numberOfConvergedTripDiscretizations), //
 						String.valueOf(crowflyDistance), //
 						String.valueOf(originX), String.valueOf(originY), //
-						String.valueOf(destinationX), String.valueOf(destinationY) //
+						String.valueOf(destinationX), String.valueOf(destinationY), //
+						String.valueOf(result.getResult().getAssignmentIterations()), //
+						String.valueOf(result.getResult().getRelaxationIterations()), //
+						String.valueOf(result.getResult().getDistanceIterations()) //
 				}) + "\n");
 
 				problemIndex++;

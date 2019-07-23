@@ -10,14 +10,22 @@ public class LocationAssignmentResult {
 	final private RelaxedLocationResult relaxedLocationResult;
 	final private DiscreteLocationResult discreteLocationResult;
 	final private LocationAssignmentObjective objective;
+	final private int distanceIterations;
+	final private int relaxationIterations;
+	private int assignmentIterations;
 
 	public LocationAssignmentResult(FeasibleDistanceResult feasibleDistanceResult,
 			RelaxedLocationResult relaxedLocationResult, DiscreteLocationResult discreteLocationResult,
-			LocationAssignmentObjective objective) {
+			LocationAssignmentObjective objective, int distanceIterations, int relaxationIterations,
+			int assignmentIterations) {
 		this.feasibleDistanceResult = feasibleDistanceResult;
 		this.relaxedLocationResult = relaxedLocationResult;
 		this.discreteLocationResult = discreteLocationResult;
 		this.objective = objective;
+
+		this.distanceIterations = distanceIterations;
+		this.relaxationIterations = relaxationIterations;
+		this.assignmentIterations = assignmentIterations;
 	}
 
 	public FeasibleDistanceResult getFeasibleDistanceResult() {
@@ -34,5 +42,21 @@ public class LocationAssignmentResult {
 
 	public LocationAssignmentObjective getObjective() {
 		return objective;
+	}
+
+	public int getDistanceIterations() {
+		return distanceIterations;
+	}
+
+	public int getRelaxationIterations() {
+		return relaxationIterations;
+	}
+
+	public int getAssignmentIterations() {
+		return assignmentIterations;
+	}
+
+	public void setAssignmentIterations(int assignmentIterations) {
+		this.assignmentIterations = assignmentIterations;
 	}
 }

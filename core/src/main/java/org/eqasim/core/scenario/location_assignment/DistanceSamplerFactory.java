@@ -26,7 +26,7 @@ class DistanceSamplerFactory {
 	}
 
 	public DistanceSampler createDistanceSampler(String mode, double travelTime) {
-		Random random = new Random(randomSeed);
+		Random random = new Random(); // randomSeed);
 
 		return new DistanceSampler() {
 			@Override

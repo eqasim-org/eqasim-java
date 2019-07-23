@@ -9,9 +9,9 @@ public class GravityChainResult {
 	final private boolean isFeasible;
 
 	final private List<Vector2D> locations;
-	final private long iterations;
+	final private int iterations;
 
-	public GravityChainResult(boolean isFeasible, boolean isConverged, List<Vector2D> locations, long iterations) {
+	public GravityChainResult(boolean isFeasible, boolean isConverged, List<Vector2D> locations, int iterations) {
 		this.isFeasible = isFeasible;
 		this.isConverged = isConverged;
 		this.locations = locations;
@@ -30,7 +30,7 @@ public class GravityChainResult {
 		return isFeasible;
 	}
 
-	public long getIterations() {
+	public int getIterations() {
 		return iterations;
 	}
 }

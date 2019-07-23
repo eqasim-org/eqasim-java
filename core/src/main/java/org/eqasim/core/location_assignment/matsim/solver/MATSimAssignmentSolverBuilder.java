@@ -34,11 +34,9 @@ public class MATSimAssignmentSolverBuilder {
 	private MATSimDistanceSamplerProvider distanceSamplerProvider;
 	private MATSimDiscretizerProvider discretizerProvider = null;
 
-	private int maximumDiscretizationIterations = 1000;
+	private int maximumAssignmentIterations = 1000;
 	private int maximumGravityIterations = 1000;
 	private int maximumFeasibleDistanceSamples = 1000;
-
-	private boolean useIterativeFeasibleSolutions = true;
 
 	private double lateralDeviationStd = 10.0;
 	private double gravityConvergenceThreshold = 10.0;
@@ -90,8 +88,7 @@ public class MATSimAssignmentSolverBuilder {
 		}
 
 		LocationAssignmentSolverBuilder locationAssignmentSolverBuilder = new LocationAssignmentSolverBuilder();
-		locationAssignmentSolverBuilder.setMaximumDiscretizationIterations(maximumDiscretizationIterations);
-		locationAssignmentSolverBuilder.setUseIterativeFeasibleSolutions(useIterativeFeasibleSolutions);
+		locationAssignmentSolverBuilder.setMaximumAssignmentIterations(maximumAssignmentIterations);
 		locationAssignmentSolverBuilder.setDiscreteLocationSolver(discreteLocationSolver);
 		locationAssignmentSolverBuilder.setLocationAssignmentObjectiveFunction(objectiveFunction);
 		locationAssignmentSolverBuilder.setFeasibleDistanceSolver(feasibleDistanceSolver);
@@ -131,7 +128,7 @@ public class MATSimAssignmentSolverBuilder {
 	}
 
 	public void setMaximumDiscretizationIterations(int maximumDiscretizationIterations) {
-		this.maximumDiscretizationIterations = maximumDiscretizationIterations;
+		this.maximumAssignmentIterations = maximumDiscretizationIterations;
 	}
 
 	public void setMaximumFeasibleDistanceSamples(int maximumFeasibleDistanceSamples) {
@@ -140,10 +137,6 @@ public class MATSimAssignmentSolverBuilder {
 
 	public void setMaximumGravityIterations(int maximumGravityIterations) {
 		this.maximumGravityIterations = maximumGravityIterations;
-	}
-
-	public void setUseIterativeFeasibleSolutions(boolean useIterativeFeasibleSolutions) {
-		this.useIterativeFeasibleSolutions = useIterativeFeasibleSolutions;
 	}
 
 	public void setLateralDeviationStd(double lateralDeviationStd) {

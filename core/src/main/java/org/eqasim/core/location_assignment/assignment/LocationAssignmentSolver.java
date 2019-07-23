@@ -16,35 +16,40 @@ public class LocationAssignmentSolver {
 	final private RelaxedLocationSolver relaxedLocationSolver;
 	final private DiscreteLocationSolver discreteLocationSolver;
 
-	final private boolean useIterativeFeasibleSolution;
 	final private int maximumIterations;
 
 	public LocationAssignmentSolver(LocationAssignmentObjectiveFunction objectiveFunction,
 			FeasibleDistanceSolver feasibleDistanceSolver, RelaxedLocationSolver relaxedLocationSolver,
-			DiscreteLocationSolver discreteLocationSolver, boolean useIterativeFeasibleSolution,
-			int maximumIterations) {
+			DiscreteLocationSolver discreteLocationSolver, int maximumIterations) {
 		this.objectiveFunction = objectiveFunction;
 		this.feasibleDistanceSolver = feasibleDistanceSolver;
 		this.relaxedLocationSolver = relaxedLocationSolver;
 		this.discreteLocationSolver = discreteLocationSolver;
-		this.useIterativeFeasibleSolution = useIterativeFeasibleSolution;
 		this.maximumIterations = maximumIterations;
 	}
 
 	public LocationAssignmentResult solve(LocationAssignmentProblem problem) {
-		FeasibleDistanceResult feasibleDistanceResult = null;
-		LocationAssignmentResult bestResult = null;
+		LocationAssignmentResult assignmentResult = null;
+		double bestObjective = Double.POSITIVE_INFINITY;
 
-		int discretizationIteration = 0;
+		int assignmentIterations = 0;
+		int distanceIterations = 0;
+		int relaxationIterations = 0;
+
+		boolean isConverged;
 
 		do {
-			if (discretizationIteration == 0 || useIterativeFeasibleSolution) {
-				// Sample a feasible chain of distances
-				feasibleDistanceResult = feasibleDistanceSolver.solve(problem);
-			}
+			isConverged = true;
+
+			// Sample a feasible chain of distances
+			FeasibleDistanceResult feasibleDistanceResult = feasibleDistanceSolver.solve(problem);
+			distanceIterations += feasibleDistanceResult.getIterations();
+			isConverged &= feasibleDistanceResult.isConverged();
 
 			// Sample new realization of locations based on feasible distances
 			RelaxedLocationResult relaxedLocationResult = relaxedLocationSolver.solve(problem, feasibleDistanceResult);
+			relaxationIterations += relaxedLocationResult.getIterations();
+			isConverged &= relaxedLocationResult.isConverged();
 
 			// Discretized relaxed locations
 			DiscreteLocationResult discreteLocationResult = discreteLocationSolver.solve(problem,
@@ -53,16 +58,19 @@ public class LocationAssignmentSolver {
 			// Compute objective
 			LocationAssignmentObjective objective = objectiveFunction.computeObjective(problem, feasibleDistanceResult,
 					relaxedLocationResult, discreteLocationResult);
-			LocationAssignmentResult result = new LocationAssignmentResult(feasibleDistanceResult,
-					relaxedLocationResult, discreteLocationResult, objective);
+			isConverged &= objective.isConverged();
 
-			if (bestResult == null || result.getObjective().getValue() < bestResult.getObjective().getValue()) {
-				bestResult = result;
+			if (assignmentResult == null || objective.getValue() < bestObjective) {
+				bestObjective = objective.getValue();
+				assignmentResult = new LocationAssignmentResult(feasibleDistanceResult, relaxedLocationResult,
+						discreteLocationResult, objective, distanceIterations, relaxationIterations,
+						assignmentIterations);
 			}
 
-			discretizationIteration++;
-		} while (discretizationIteration < maximumIterations && !bestResult.getObjective().isConverged());
+			assignmentIterations++;
+		} while (assignmentIterations < maximumIterations && !isConverged);
 
-		return bestResult;
+		assignmentResult.setAssignmentIterations(assignmentIterations);
+		return assignmentResult;
 	}
 }
