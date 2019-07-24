@@ -3,6 +3,7 @@ package org.eqasim.sao_paulo;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.Configurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
+import org.eqasim.sao_paulo.mode_choice.SaoPauloModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -29,6 +30,7 @@ public class RunSimulation {
 		Configurator.configureController(controller);
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
+		controller.addOverridingModule(new SaoPauloModeChoiceModule());
 		controller.run();
 	}
 }
