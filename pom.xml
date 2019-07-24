@@ -11,6 +11,7 @@
         <module>core</module>
         <module>switzerland</module>
         <module>ile_de_france</module>
+        <module>sao_paulo</module>
     </modules>
 
 	<properties>
