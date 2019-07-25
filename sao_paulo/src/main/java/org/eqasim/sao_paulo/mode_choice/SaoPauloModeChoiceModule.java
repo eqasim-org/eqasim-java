@@ -1,18 +1,46 @@
 package org.eqasim.sao_paulo.mode_choice;
 
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
-import org.eqasim.ile_de_france.mode_choice.utilities.IDFUtilityEstimator;
-import org.matsim.core.config.CommandLine;
+import java.io.IOException;
 
-public class SaoPauloModeChoiceModule extends IDFModeChoiceModule {
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.eqasim.sao_paulo.mode_choice.parameters.CostParameters;
+import org.eqasim.sao_paulo.mode_choice.parameters.ModeChoiceParameters;
+import org.eqasim.sao_paulo.mode_choice.utilities.SaoPauloUtilityEstimator;
+import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
+
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+
+import ch.ethz.matsim.discrete_mode_choice.modules.AbstractDiscreteModeChoiceExtension;
+
+public class SaoPauloModeChoiceModule extends AbstractDiscreteModeChoiceExtension {
+	private final CommandLine commandLine;
+
 	public SaoPauloModeChoiceModule(CommandLine commandLine) {
-		super(commandLine);
+		this.commandLine = commandLine;
 	}
 
 	@Override
 	protected void installExtension() {
-		bindTripEstimator(EqasimModeChoiceModule.UTILITY_ESTIMATOR_NAME).to(IDFUtilityEstimator.class);
+		bindTripEstimator(EqasimModeChoiceModule.UTILITY_ESTIMATOR_NAME).to(SaoPauloUtilityEstimator.class);
 		bindModeAvailability(EqasimModeChoiceModule.MODE_AVAILABILITY_NAME).to(SaoPauloModeAvailability.class);
+	}
+
+	@Provides
+	@Singleton
+	public ModeChoiceParameters provideModeChoiceParameters() throws IOException, ConfigurationException {
+		ModeChoiceParameters parameters = ModeChoiceParameters.buildDefault();
+		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
+		return parameters;
+	}
+
+	@Provides
+	@Singleton
+	public CostParameters provideCostParameters() {
+		CostParameters parameters = CostParameters.buildDefault();
+		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
+		return parameters;
 	}
 }
