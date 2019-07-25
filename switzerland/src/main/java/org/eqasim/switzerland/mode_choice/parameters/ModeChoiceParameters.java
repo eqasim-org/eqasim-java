@@ -56,30 +56,30 @@ public class ModeChoiceParameters implements ParameterDefinition {
 
 		// Car
 		parameters.car.alpha = 0.827;
-		parameters.car.betaTravelTime = -0.067;
+		parameters.car.betaTravelTime = -0.0667;
 
-		parameters.car.constantAccessEgressWalkTime_min = 4.0;
-		parameters.car.constantParkingSearchPenalty_min = 4.0;
+		parameters.car.constantAccessEgressWalkTime_min = 5.0;
+		parameters.car.constantParkingSearchPenalty_min = 6.0;
 
-		parameters.car.betaStatedPreferenceRegion1 = -0.4;
-		parameters.car.betaStatedPreferenceRegion3 = 0.4;
+		parameters.car.betaStatedPreferenceRegion1 = 0.0;
+		parameters.car.betaStatedPreferenceRegion3 = 0.0;
 
 		// PT
 		parameters.pt.alpha = 0.0;
 		parameters.pt.betaLineSwitch = -0.17;
-		parameters.pt.betaInVehicleTime = -0.019;
-		parameters.pt.betaWaitingTime = -0.038;
-		parameters.pt.betaAccessEgressTime = -0.08;
+		parameters.pt.betaInVehicleTime = -0.0192;
+		parameters.pt.betaWaitingTime = -0.0384;
+		parameters.pt.betaAccessEgressTime = -0.0804;
 
 		// Bike
-		parameters.bike.alpha = 0.344;
-		parameters.bike.betaTravelTime = -0.09;
-		parameters.bike.betaAgeOver18 = -0.049;
+		parameters.bike.alpha = -0.1;
+		parameters.bike.betaTravelTime = -0.0805;
+		parameters.bike.betaAgeOver18 = -0.0496;
 
-		parameters.bike.betaStatedPreferenceRegion3 = -0.366;
+		parameters.bike.betaStatedPreferenceRegion3 = 0.0;
 
 		// Walk
-		parameters.walk.alpha = 1.3;
+		parameters.walk.alpha = 0.63;
 		parameters.walk.betaTravelTime = -0.141;
 
 		return parameters;

@@ -9,6 +9,8 @@ public class CostParameters implements ParameterDefinition {
 	public double ptCostMinimum_CHF = 0.0;
 
 	public double ptRegionalRadius_km = 0.0;
+	
+	public double useASTRA2018 = 0.0;
 
 	public static CostParameters buildDefault() {
 		CostParameters parameters = new CostParameters();

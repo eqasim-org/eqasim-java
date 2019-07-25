@@ -49,27 +49,27 @@ public class ModeChoiceParameters implements ParameterDefinition {
 		parameters.referenceCrowflyDistance_km = 40.0;
 
 		// Car
-		parameters.car.alpha = 1.35;
-		parameters.car.betaTravelTime = -0.06;
+		parameters.car.alpha = 0.827;
+		parameters.car.betaTravelTime = -0.0667;
 
-		parameters.car.constantAccessEgressWalkTime_min = 4.0;
-		parameters.car.constantParkingSearchPenalty_min = 4.0;
+		parameters.car.constantAccessEgressWalkTime_min = 5.0;
+		parameters.car.constantParkingSearchPenalty_min = 6.0;
 
 		// PT
 		parameters.pt.alpha = 0.0;
 		parameters.pt.betaLineSwitch = -0.17;
-		parameters.pt.betaInVehicleTime = -0.017;
-		parameters.pt.betaWaitingTime = -0.0484;
+		parameters.pt.betaInVehicleTime = -0.0192;
+		parameters.pt.betaWaitingTime = -0.0384;
 		parameters.pt.betaAccessEgressTime = -0.0804;
 
 		// Bike
-		parameters.bike.alpha = 0.0;
-		parameters.bike.betaTravelTime = -0.15;
+		parameters.bike.alpha = -0.1;
+		parameters.bike.betaTravelTime = -0.0805;
 		parameters.bike.betaAgeOver18 = -0.0496;
 
 		// Walk
-		parameters.walk.alpha = 1.43;
-		parameters.walk.betaTravelTime = -0.09;
+		parameters.walk.alpha = 0.63;
+		parameters.walk.betaTravelTime = -0.141;
 
 		return parameters;
 	}

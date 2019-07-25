@@ -79,10 +79,11 @@ public class PtPredictor {
 				trip.getDestinationActivity().getCoord()) * 1e-3;
 		double homeDistance = Math.max(originHomeDistance_km, destinationHomeDistance_km);
 
-		double cost_CHF = costModel.calculate_CHF(personVariables, inVehicleDistance_km, homeDistance);
-
 		double crowflyDistance_km = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
 				trip.getDestinationActivity().getCoord()) * 1e-3;
+
+		double cost_CHF = costModel.calculate_CHF(personVariables, inVehicleDistance_km, homeDistance,
+				crowflyDistance_km);
 
 		return new PtVariables(inVehicleTime_min, waitingTime_min, accessEgressTime_min, numberOfLineSwitches, cost_CHF,
 				crowflyDistance_km);
