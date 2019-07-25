@@ -8,7 +8,7 @@ public class CostParameters implements ParameterDefinition {
 	public static CostParameters buildDefault() {
 		CostParameters parameters = new CostParameters();
 
-		parameters.carCostPerKm_BRL = 0.2;
+		parameters.carCostPerKm_BRL = 0.76;
 
 		return parameters;
 	}

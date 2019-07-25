@@ -44,7 +44,7 @@ public class ModeChoiceParameters implements ParameterDefinition {
 		ModeChoiceParameters parameters = new ModeChoiceParameters();
 
 		// Cost
-		parameters.betaCost = -0.206;
+		parameters.betaCost = -0.184;
 		parameters.lambdaCostCrowflyDistance = -0.4;
 		parameters.referenceCrowflyDistance_km = 40.0;
 
