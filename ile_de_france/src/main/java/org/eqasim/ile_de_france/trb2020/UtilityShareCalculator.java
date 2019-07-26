@@ -128,22 +128,22 @@ public class UtilityShareCalculator {
 								List<? extends PlanElement> routedElements = router.calcRoute(mode, originFacility, destinationFacility,
 										trip.getDepartureTime(), person);
 
-								switch (mode) {
-									case TransportMode.car:
-										CarVariables carVariables = carPredictor.predict(trip, routedElements);
-										item.estimateCarUtilities(carVariables);
+								if (mode.equals(TransportMode.car)) {
+									CarVariables carVariables = carPredictor.predict(trip, routedElements);
+									item.estimateCarUtilities(carVariables);
 
-									case TransportMode.pt:
-										PtVariables ptVariables = ptPredictor.predict(personVariables, trip, routedElements);
-										item.estimatePtUtilities(ptVariables);
+								} else if (mode.equals(TransportMode.pt)) {
+									PtVariables ptVariables = ptPredictor.predict(personVariables, trip, routedElements);
+									item.estimatePtUtilities(ptVariables);
 
-									case TransportMode.bike:
-										BikeVariables bikeVariables = bikePredictor.predict(routedElements);
-										item.estimateBikeUtilities(bikeVariables);
+								} else if (mode.equals(TransportMode.bike)) {
+									BikeVariables bikeVariables = bikePredictor.predict(routedElements);
+									item.estimateBikeUtilities(bikeVariables);
 
-									case TransportMode.walk:
-										WalkVariables walkVariables = walkPredictor.predict(routedElements);
-										item.estimateWalkUtilities(walkVariables);
+								} else if (mode.equals(TransportMode.walk)) {
+									WalkVariables walkVariables = walkPredictor.predict(routedElements);
+									item.estimateWalkUtilities(walkVariables);
+
 								}
 							}
 

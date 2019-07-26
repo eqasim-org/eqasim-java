@@ -11,7 +11,7 @@ public class CSVUtilityShareFormatter {
 		return String.join(delimiter,
 				new String[] { "person_id",
 						"car_alpha", "car_travelTime", "car_accessEgressTime", "car_cost",
-						"pt_alpha", "pt_accessEgressTime", "pt_inVehicleTime", "pt_numberOfLineSwitches", "pt_numberOfLineSwitches", "pt_waitingTime", "pt_cost",
+						"pt_alpha", "pt_accessEgressTime", "pt_inVehicleTime", "pt_numberOfLineSwitches", "pt_waitingTime", "pt_cost",
 						"bike_alpha", "bike_travelTime", "bike_ageOver18",
 						"walk_alpha", "walk_travelTime"
 		});
