@@ -10,26 +10,31 @@ public class CSVUtilityShareFormatter {
 	public String formatHeader() {
 		return String.join(delimiter,
 				new String[] { "person_id",
-						"accessEgressTime_min_car", "crowflyDistance_km_car", "cost_EUR_car", "travelTime_min_car",
-						"accessEgressTime_min_pt", "cost_EUR_pt", "crowflyDistance_km_pt", "inVehicleTime_min_pt", "numberOfLineSwitches_pt", "waitingTime_min_pt",
-						"travelTime_min_bike", "travelTime_min_walk" });
+						"car_alpha", "car_travelTime", "car_accessEgressTime", "car_cost",
+						"pt_alpha", "pt_accessEgressTime", "pt_inVehicleTime", "pt_numberOfLineSwitches", "pt_numberOfLineSwitches", "pt_waitingTime", "pt_cost",
+						"bike_alpha", "bike_travelTime", "bike_ageOver18",
+						"walk_alpha", "walk_travelTime"
+		});
 	}
 
 	public String formatItem(UtilityShareItem item) {
 		return String.join(delimiter, new String[] {
 				item.personId.toString(),
-				String.valueOf(item.carVariables.accessEgressTime_min),
-				String.valueOf(item.carVariables.crowflyDistance_km),
-				String.valueOf(item.carVariables.cost_EUR),
-				String.valueOf(item.carVariables.travelTime_min),
-				String.valueOf(item.ptVariables.accessEgressTime_min),
-				String.valueOf(item.ptVariables.cost_EUR),
-				String.valueOf(item.ptVariables.crowflyDistance_km),
-				String.valueOf(item.ptVariables.inVehicleTime_min),
-				String.valueOf(item.ptVariables.numberOfLineSwitches),
-				String.valueOf(item.ptVariables.waitingTime_min),
-				String.valueOf(item.bikeVariables.travelTime_min),
-				String.valueOf(item.walkVariables.travelTime_min),
+				String.valueOf(item.car.alpha),
+				String.valueOf(item.car.travelTime),
+				String.valueOf(item.car.accessEgressTime),
+				String.valueOf(item.car.cost),
+				String.valueOf(item.pt.alpha),
+				String.valueOf(item.pt.accessEgressTime),
+				String.valueOf(item.pt.inVehicleTime),
+				String.valueOf(item.pt.numberOfLineSwitches),
+				String.valueOf(item.pt.waitingTime),
+				String.valueOf(item.pt.cost),
+				String.valueOf(item.bike.alpha),
+				String.valueOf(item.bike.travelTime),
+				String.valueOf(item.bike.ageOver18),
+				String.valueOf(item.walk.alpha),
+				String.valueOf(item.walk.travelTime),
 		});
 	}
 }

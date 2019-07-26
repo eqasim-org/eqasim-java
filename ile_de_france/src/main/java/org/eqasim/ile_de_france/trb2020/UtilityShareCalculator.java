@@ -121,29 +121,29 @@ public class UtilityShareCalculator {
 							Facility originFacility = FacilitiesUtils.toFacility(trip.getOriginActivity(), facilities);
 							Facility destinationFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
 
-							UtilityShareItem item = new UtilityShareItem(person.getId());
+							UtilityShareItem item = new UtilityShareItem(person.getId(), modeChoiceParameters, personVariables);
 
 							for (String mode : mainModes) {
 
 								List<? extends PlanElement> routedElements = router.calcRoute(mode, originFacility, destinationFacility,
 										trip.getDepartureTime(), person);
 
+								switch (mode) {
+									case TransportMode.car:
+										CarVariables carVariables = carPredictor.predict(trip, routedElements);
+										item.estimateCarUtilities(carVariables);
 
-								if (mode.equals(TransportMode.car)) {
-									CarVariables carVariables = carPredictor.predict(trip, routedElements);
-									item.setCarVariables(carVariables);
+									case TransportMode.pt:
+										PtVariables ptVariables = ptPredictor.predict(personVariables, trip, routedElements);
+										item.estimatePtUtilities(ptVariables);
 
-								} else if (mode.equals(TransportMode.pt)) {
-									PtVariables ptVariables = ptPredictor.predict(personVariables, trip, routedElements);
-									item.setPtVariables(ptVariables);
+									case TransportMode.bike:
+										BikeVariables bikeVariables = bikePredictor.predict(routedElements);
+										item.estimateBikeUtilities(bikeVariables);
 
-								} else if (mode.equals(TransportMode.bike)) {
-									BikeVariables bikeVariables = bikePredictor.predict(routedElements);
-									item.setBikeVariables(bikeVariables);
-
-								} else if (mode.equals(TransportMode.walk)) {
-									WalkVariables walkVariables = walkPredictor.predict(routedElements);
-									item.setWalkVariables(walkVariables);
+									case TransportMode.walk:
+										WalkVariables walkVariables = walkPredictor.predict(routedElements);
+										item.estimateWalkUtilities(walkVariables);
 								}
 							}
 
@@ -156,10 +156,7 @@ public class UtilityShareCalculator {
 								exception.printStackTrace();
 							}
 
-
 						}
-
-
 
 					}
 				}

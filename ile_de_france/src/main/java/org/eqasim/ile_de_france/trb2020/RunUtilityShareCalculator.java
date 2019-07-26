@@ -1,5 +1,6 @@
 package org.eqasim.ile_de_france.trb2020;
 
+import com.google.inject.Injector;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
@@ -7,11 +8,8 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.ActivityFacility;
-
-import com.google.inject.Injector;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
