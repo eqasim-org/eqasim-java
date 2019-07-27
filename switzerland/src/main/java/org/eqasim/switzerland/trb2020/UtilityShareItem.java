@@ -7,6 +7,7 @@ import org.matsim.api.core.v01.population.Person;
 
 public class UtilityShareItem {
     final public Id<Person> personId;
+    public double crowflyDistance;
     final public ModeChoiceParameters parameters;
     final public PersonVariables personVariables;
 
@@ -52,6 +53,8 @@ public class UtilityShareItem {
     }
 
     public void estimateCarUtilities(CarVariables variables) {
+        crowflyDistance = variables.crowflyDistance_km;
+
         car.alpha = parameters.car.alpha;
         car.travelTime = parameters.car.betaTravelTime * variables.travelTime_min;
         car.accessEgressTime = parameters.walk.betaTravelTime * variables.accessEgressTime_min;

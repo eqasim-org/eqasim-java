@@ -9,7 +9,7 @@ public class CSVUtilityShareFormatter {
 
 	public String formatHeader() {
 		return String.join(delimiter,
-				new String[] { "person_id",
+				new String[] { "person_id", "crowflyDistance",
 						"car_alpha", "car_travelTime", "car_accessEgressTime", "car_cost",
 						"pt_alpha", "pt_accessEgressTime", "pt_inVehicleTime", "pt_numberOfLineSwitches", "pt_waitingTime", "pt_cost",
 						"bike_alpha", "bike_travelTime", "bike_ageOver18",
@@ -20,6 +20,7 @@ public class CSVUtilityShareFormatter {
 	public String formatItem(UtilityShareItem item) {
 		return String.join(delimiter, new String[] {
 				item.personId.toString(),
+				String.valueOf(item.crowflyDistance),
 				String.valueOf(item.car.alpha),
 				String.valueOf(item.car.travelTime),
 				String.valueOf(item.car.accessEgressTime),
