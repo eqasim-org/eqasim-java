@@ -37,7 +37,7 @@ public class RunLocationAssignment {
 				.requireOptions("population-path", "facilities-path", "quantiles-path", "distributions-path",
 						"output-path") //
 				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path",
-						"threshold-factor", "sample-size") //
+						"threshold-factor", "sample-size", "feasible-distance-iterations", "gravity-iterations") //
 				.build();
 
 		// Setting up activity types
@@ -113,6 +113,13 @@ public class RunLocationAssignment {
 
 		int discretizationIterations = cmd.getOption("discretization-iterations").map(Integer::parseInt).orElse(1000);
 		builder.setMaximumDiscretizationIterations(discretizationIterations);
+
+		int feasibleDistanceIterations = cmd.getOption("feasible-distance-iterations").map(Integer::parseInt)
+				.orElse(1000);
+		builder.setMaximumFeasibleDistanceSamples(feasibleDistanceIterations);
+
+		int gravityIterations = cmd.getOption("gravity-iterations").map(Integer::parseInt).orElse(1000);
+		builder.setMaximumGravityIterations(gravityIterations);
 
 		// Run assignment
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
