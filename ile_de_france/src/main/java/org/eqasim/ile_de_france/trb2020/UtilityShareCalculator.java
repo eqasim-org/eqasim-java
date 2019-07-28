@@ -13,6 +13,7 @@ import org.eqasim.ile_de_france.mode_choice.utilities.variables.*;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.population.algorithms.TripsToLegsAlgorithm;
+import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.FacilitiesUtils;
@@ -78,10 +79,10 @@ public class UtilityShareCalculator {
 		@Override
 		public void run() {
 			List<Person> localTasks = new LinkedList<>();
-			TripRouter router = routerProvider.get();
-			String[] mainModes = new String[]{"car", "pt", "bike", "walk"};
+			TripRouter tripRouter = routerProvider.get();
+			String[] modes = new String[]{"car", "pt", "bike", "walk"};
 
-			TripsToLegsAlgorithm tripsToLegsAlgorithm = new TripsToLegsAlgorithm(router.getStageActivityTypes(), router.getMainModeIdentifier());
+			TripsToLegsAlgorithm tripsToLegsAlgorithm = new TripsToLegsAlgorithm(tripRouter.getStageActivityTypes(), tripRouter.getMainModeIdentifier());
 
 			CostParameters costParameters = CostParameters.buildDefault();
 			ModeChoiceParameters modeChoiceParameters = ModeChoiceParameters.buildDefault();
@@ -121,11 +122,11 @@ public class UtilityShareCalculator {
 							Facility originFacility = FacilitiesUtils.toFacility(trip.getOriginActivity(), facilities);
 							Facility destinationFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
 
-							UtilityShareItem item = new UtilityShareItem(person.getId(), modeChoiceParameters, personVariables);
+							UtilityShareItem item = new UtilityShareItem(person.getId(), modeChoiceParameters, personVariables, trip.getInitialMode());
 
-							for (String mode : mainModes) {
+							for (String mode : modes) {
 
-								List<? extends PlanElement> routedElements = router.calcRoute(mode, originFacility, destinationFacility,
+								List<? extends PlanElement> routedElements = tripRouter.calcRoute(mode, originFacility, destinationFacility,
 										trip.getDepartureTime(), person);
 
 								if (mode.equals(TransportMode.car)) {

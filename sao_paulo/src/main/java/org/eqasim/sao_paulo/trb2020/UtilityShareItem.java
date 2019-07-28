@@ -7,6 +7,7 @@ import org.matsim.api.core.v01.population.Person;
 
 public class UtilityShareItem {
     final public Id<Person> personId;
+    final public String selectedMode;
     public double crowflyDistance;
     final public ModeChoiceParameters parameters;
     final public PersonVariables personVariables;
@@ -46,10 +47,11 @@ public class UtilityShareItem {
 
 
     // Constructor
-    public UtilityShareItem(Id<Person> personId, ModeChoiceParameters parameters, PersonVariables personVariables) {
+    public UtilityShareItem(Id<Person> personId, ModeChoiceParameters parameters, PersonVariables personVariables, String selectedMode) {
         this.personId = personId;
         this.parameters = parameters;
         this.personVariables = personVariables;
+        this.selectedMode = selectedMode;
     }
 
     public void estimateCarUtilities(CarVariables variables) {

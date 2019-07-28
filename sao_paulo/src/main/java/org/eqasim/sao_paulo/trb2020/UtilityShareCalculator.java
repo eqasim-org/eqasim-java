@@ -121,7 +121,7 @@ public class UtilityShareCalculator {
 							Facility originFacility = FacilitiesUtils.toFacility(trip.getOriginActivity(), facilities);
 							Facility destinationFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
 
-							UtilityShareItem item = new UtilityShareItem(person.getId(), modeChoiceParameters, personVariables);
+							UtilityShareItem item = new UtilityShareItem(person.getId(), modeChoiceParameters, personVariables, trip.getInitialMode());
 
 							for (String mode : mainModes) {
 
