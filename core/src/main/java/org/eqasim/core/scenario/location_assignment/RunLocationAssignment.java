@@ -75,21 +75,6 @@ public class RunLocationAssignment {
 
 		StageActivityTypes stageActivityTypes = new InteractionStageActivityTypes();
 
-		// Downsampling
-		Set<Id<Person>> removeIds = new HashSet<>();
-		Random random = new Random(0);
-		double sampleSize = cmd.getOption("sample-size").map(Double::parseDouble).orElse(1.0);
-
-		for (Person person : scenario.getPopulation().getPersons().values()) {
-			if (random.nextDouble() > sampleSize) {
-				removeIds.add(person.getId());
-			}
-		}
-
-		for (Id<Person> personId : removeIds) {
-			scenario.getPopulation().removePerson(personId);
-		}
-
 		// Some cleanup
 		MainModeIdentifier mainModeIdentifier = new MainModeIdentifierImpl();
 
