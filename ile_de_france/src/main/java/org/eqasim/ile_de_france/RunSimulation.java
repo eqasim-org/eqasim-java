@@ -1,6 +1,6 @@
 package org.eqasim.ile_de_france;
 
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.ModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -26,7 +26,7 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		Configurator.configureController(controller);
-		controller.addOverridingModule(new EqasimModeChoiceModule());
+		controller.addOverridingModule(new ModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.run();
 	}

@@ -2,7 +2,7 @@ package org.eqasim.ile_de_france.mode_choice;
 
 import java.io.IOException;
 
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.ModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.ile_de_france.mode_choice.parameters.CostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.ModeChoiceParameters;
@@ -24,8 +24,8 @@ public class IDFModeChoiceModule extends AbstractDiscreteModeChoiceExtension {
 
 	@Override
 	protected void installExtension() {
-		bindTripEstimator(EqasimModeChoiceModule.UTILITY_ESTIMATOR_NAME).to(IDFUtilityEstimator.class);
-		bindModeAvailability(EqasimModeChoiceModule.MODE_AVAILABILITY_NAME).to(IDFModeAvailability.class);
+		bindTripEstimator(ModeChoiceModule.UTILITY_ESTIMATOR_NAME).to(IDFUtilityEstimator.class);
+		bindModeAvailability(ModeChoiceModule.MODE_AVAILABILITY_NAME).to(IDFModeAvailability.class);
 	}
 
 	@Provides

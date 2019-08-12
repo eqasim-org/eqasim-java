@@ -2,7 +2,7 @@ package org.eqasim.sao_paulo.mode_choice;
 
 import java.io.IOException;
 
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.ModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.sao_paulo.mode_choice.parameters.CostParameters;
 import org.eqasim.sao_paulo.mode_choice.parameters.ModeChoiceParameters;
@@ -24,8 +24,8 @@ public class SaoPauloModeChoiceModule extends AbstractDiscreteModeChoiceExtensio
 
 	@Override
 	protected void installExtension() {
-		bindTripEstimator(EqasimModeChoiceModule.UTILITY_ESTIMATOR_NAME).to(SaoPauloUtilityEstimator.class);
-		bindModeAvailability(EqasimModeChoiceModule.MODE_AVAILABILITY_NAME).to(SaoPauloModeAvailability.class);
+		bindTripEstimator(ModeChoiceModule.UTILITY_ESTIMATOR_NAME).to(SaoPauloUtilityEstimator.class);
+		bindModeAvailability(ModeChoiceModule.MODE_AVAILABILITY_NAME).to(SaoPauloModeAvailability.class);
 	}
 
 	@Provides

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.ModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -50,6 +50,14 @@ public class GenerateConfig {
 	}
 
 	public void run(Config config) throws ConfigurationException {
+		// Apply modifications
+		applyModifications(config);
+
+		// Consider command line
+		cmd.applyConfiguration(config);
+	}
+
+	protected void applyModifications(Config config) {
 		// General settings
 
 		config.controler().setFirstIteration(0);
@@ -137,23 +145,32 @@ public class GenerateConfig {
 
 		dmcConfig.setSelector(SelectorModule.MULTINOMIAL_LOGIT);
 
-		dmcConfig.setTripEstimator(EqasimModeChoiceModule.UTILITY_ESTIMATOR_NAME);
+		dmcConfig.setTripEstimator(ModeChoiceModule.UTILITY_ESTIMATOR_NAME);
 		dmcConfig.setTourEstimator(EstimatorModule.CUMULATIVE);
 		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck"));
 
-		dmcConfig.setTourFinder(EqasimModeChoiceModule.TOUR_FINDER_NAME);
-		dmcConfig.setModeAvailability(EqasimModeChoiceModule.MODE_AVAILABILITY_NAME);
+		dmcConfig.setTourFinder(ModeChoiceModule.TOUR_FINDER_NAME);
+		dmcConfig.setModeAvailability("unknown");
 
 		dmcConfig.setTourConstraints(
 				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.FROM_TRIP_BASED));
 		dmcConfig.setTripConstraints(Arrays.asList(ConstraintModule.TRANSIT_WALK,
-				EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME, EqasimModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
+				ModeChoiceModule.PASSENGER_CONSTRAINT_NAME, ModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
 
 		dmcConfig.getVehicleTourConstraintConfig().setHomeType(HomeType.USE_ACTIVITY_TYPE);
 		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
 
-		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,
-				EqasimModeChoiceModule.TOUR_LENGTH_FILTER_NAME));
+		dmcConfig.setTourFilters(
+				Arrays.asList(ModeChoiceModule.OUTSIDE_FILTER_NAME, ModeChoiceModule.TOUR_LENGTH_FILTER_NAME));
+
+		// Update utility bindings
+		for (String mode : Arrays.asList("car", "pt", "bike", "walk")) {
+			eqasimConfig.addModeUtilityMapping(mode, mode);
+		}
+
+		for (String mode : Arrays.asList("car_passenger", "truck", "outside")) {
+			eqasimConfig.addModeUtilityMapping(mode, "zero");
+		}
 
 		// Update paths
 		config.network().setInputFile(prefix + "network.xml.gz");
@@ -162,8 +179,5 @@ public class GenerateConfig {
 		config.facilities().setInputFile(prefix + "facilities.xml.gz");
 		config.transit().setTransitScheduleFile(prefix + "transit_schedule.xml.gz");
 		config.transit().setVehiclesFile(prefix + "transit_vehicles.xml.gz");
-
-		// Write config
-		cmd.applyConfiguration(config);
 	}
 }
