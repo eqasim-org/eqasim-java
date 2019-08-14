@@ -49,7 +49,7 @@ public class GenerateConfig {
 		this.threads = threads;
 	}
 
-	public void run(Config config) throws ConfigurationException {
+	protected void adaptConfiguration(Config config) {
 		// General settings
 
 		config.controler().setFirstIteration(0);
@@ -73,7 +73,7 @@ public class GenerateConfig {
 		config.qsim().setStorageCapFactor(sampleSize);
 
 		// Eqasim settings
-		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
+		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setCrossingPenalty(3.0);
 		eqasimConfig.setSampleSize(sampleSize);
 
@@ -142,7 +142,7 @@ public class GenerateConfig {
 		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck"));
 
 		dmcConfig.setTourFinder(EqasimModeChoiceModule.TOUR_FINDER_NAME);
-		dmcConfig.setModeAvailability(EqasimModeChoiceModule.MODE_AVAILABILITY_NAME);
+		dmcConfig.setModeAvailability("unknown");
 
 		dmcConfig.setTourConstraints(
 				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.FROM_TRIP_BASED));
@@ -155,6 +155,20 @@ public class GenerateConfig {
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,
 				EqasimModeChoiceModule.TOUR_LENGTH_FILTER_NAME));
 
+		// Set up modes
+
+		eqasimConfig.setEstimator(TransportMode.car, EqasimModeChoiceModule.CAR_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.pt, EqasimModeChoiceModule.PT_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.bike, EqasimModeChoiceModule.BIKE_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.walk, EqasimModeChoiceModule.WALK_ESTIMATOR_NAME);
+
+		for (String mode : Arrays.asList("outside", "car_passenger", "truck")) {
+			eqasimConfig.setEstimator(mode, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+		}
+
+		eqasimConfig.setCostModel(TransportMode.car, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+		eqasimConfig.setCostModel(TransportMode.pt, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+
 		// Update paths
 		config.network().setInputFile(prefix + "network.xml.gz");
 		config.plans().setInputFile(prefix + "population.xml.gz");
@@ -162,8 +176,13 @@ public class GenerateConfig {
 		config.facilities().setInputFile(prefix + "facilities.xml.gz");
 		config.transit().setTransitScheduleFile(prefix + "transit_schedule.xml.gz");
 		config.transit().setVehiclesFile(prefix + "transit_vehicles.xml.gz");
+	}
 
-		// Write config
+	public void run(Config config) throws ConfigurationException {
+		// Adapt config
+		adaptConfiguration(config);
+
+		// Apply command line
 		cmd.applyConfiguration(config);
 	}
 }
