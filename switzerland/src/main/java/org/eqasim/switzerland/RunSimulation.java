@@ -16,17 +16,17 @@ public class RunSimulation {
 				.requireOptions("config-path") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), Configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), SwitzerlandConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
-		Configurator.configureScenario(scenario);
+		SwitzerlandConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		Configurator.adjustScenario(scenario);
+		SwitzerlandConfigurator.adjustScenario(scenario);
 
 		Controler controller = new Controler(scenario);
-		Configurator.configureController(controller);
+		SwitzerlandConfigurator.configureController(controller);
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 

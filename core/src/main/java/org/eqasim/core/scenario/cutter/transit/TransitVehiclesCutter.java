@@ -21,6 +21,11 @@ public class TransitVehiclesCutter {
 	}
 
 	public void run(Vehicles vehicles) {
+		if (vehicles.getVehicles().size() == 0) {
+			log.warn("Not cutting vehicles as they are not defined.");
+			return;
+		}
+
 		log.info("Cutting transit vehicles ...");
 
 		Set<Vehicle> unusedVehicles = new HashSet<>(vehicles.getVehicles().values());
