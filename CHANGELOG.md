@@ -1,5 +1,6 @@
-- Add tools for ÖV Güteklasse to Switzerland scenario
+**1.0.2**
 
+- Add tools for ÖV Güteklasse to Switzerland scenario
 - Add Sé shape file
 
 **1.0.1**
