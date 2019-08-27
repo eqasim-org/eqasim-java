@@ -1,5 +1,6 @@
-package org.eqasim.core.handlers;
+package org.eqasim.core.travel_times.handlers;
 
+import org.eqasim.core.items.LinkTraverseTimeItem;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
@@ -26,15 +27,15 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventHandler, PersonDepartureEventHandler, PersonArrivalEventHandler, IterationEndsListener {
+public class LinkTraverseTimeHandler implements LinkEnterEventHandler, LinkLeaveEventHandler, PersonDepartureEventHandler, PersonArrivalEventHandler, IterationEndsListener {
 
     private Scenario scenario;
-    private Collection<TravelTimeItem> travelTimeItems = new LinkedList<>();
+    private Collection<LinkTraverseTimeItem> linkTraverseTimeItems = new LinkedList<>();
     private Map<Id<Person>, Double> personEnterTimes = new HashMap<>();
     private Collection<Id<Link>> linkIds;
     private Vehicle2DriverEventHandler vehicle2DriverEventHandler;
 
-    public TravelTimeHandler(Collection<Id<Link>> linkIds, Scenario scenario, Vehicle2DriverEventHandler vehicle2DriverEventHandler) {
+    public LinkTraverseTimeHandler(Collection<Id<Link>> linkIds, Scenario scenario, Vehicle2DriverEventHandler vehicle2DriverEventHandler) {
         this.linkIds = linkIds;
         this.vehicle2DriverEventHandler = vehicle2DriverEventHandler;
 
@@ -66,8 +67,8 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
             double enterTime = this.personEnterTimes.get(personId);
 
             // add travel time item
-            TravelTimeItem travelTimeItem = new TravelTimeItem(personId, linkId, enterTime, event.getTime());
-            this.travelTimeItems.add(travelTimeItem);
+            LinkTraverseTimeItem linkTraverseTimeItem = new LinkTraverseTimeItem(personId, linkId, enterTime, event.getTime());
+            this.linkTraverseTimeItems.add(linkTraverseTimeItem);
 
             // set enter time to link exit time
             this.personEnterTimes.put(personId, event.getTime());
@@ -82,8 +83,8 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
             double enterTime = this.personEnterTimes.get(personId);
 
             // add travel time item
-            TravelTimeItem travelTimeItem = new TravelTimeItem(personId, linkId, enterTime, event.getTime());
-            this.travelTimeItems.add(travelTimeItem);
+            LinkTraverseTimeItem linkTraverseTimeItem = new LinkTraverseTimeItem(personId, linkId, enterTime, event.getTime());
+            this.linkTraverseTimeItems.add(linkTraverseTimeItem);
 
             // set enter time to link exit time
             this.personEnterTimes.put(personId, event.getTime());
@@ -92,12 +93,12 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        String outputPath = event.getServices().getControlerIO().getIterationFilename(event.getIteration(), "travel_times.csv");
+        String outputPath = event.getServices().getControlerIO().getIterationFilename(event.getIteration(), "link_traverse_times.csv");
         write(outputPath);
     }
 
-    public Collection<TravelTimeItem> getTravelTimeItems() {
-        return travelTimeItems;
+    public Collection<LinkTraverseTimeItem> getLinkTraverseTimeItems() {
+        return linkTraverseTimeItems;
     }
 
     public Collection<Id<Link>> getLinkIds() {
@@ -107,26 +108,26 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
     @Override
     public void reset(int iteration) {
         for (Id<Person> personId : scenario.getPopulation().getPersons().keySet()) {
-            this.personEnterTimes.putIfAbsent(personId, 0.0);
+            this.personEnterTimes.put(personId, 0.0);
         }
-        this.travelTimeItems.clear();
+        this.linkTraverseTimeItems.clear();
     }
 
     private void write(String outputPath) {
 
         try {
-            System.out.println("Writing travel times to " + outputPath);
+            System.out.println("Writing link traverse times to " + outputPath);
 
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
 
-            writer.write(TravelTimeItem.formatHeader() + "\n");
+            writer.write(LinkTraverseTimeItem.formatHeader() + "\n");
             writer.flush();
 
-            Counter counter = new Counter("Route #");
+            Counter counter = new Counter("Traverse #");
 
-            for (TravelTimeItem travelTimeItem : this.travelTimeItems) {
+            for (LinkTraverseTimeItem linkTraverseTimeItem : this.linkTraverseTimeItems) {
 
-                writer.write(travelTimeItem.formatItem() + "\n");
+                writer.write(linkTraverseTimeItem.formatItem() + "\n");
                 writer.flush();
 
                 counter.incCounter();

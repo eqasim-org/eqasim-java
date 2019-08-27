@@ -1,16 +1,16 @@
-package org.eqasim.core.handlers;
+package org.eqasim.core.items;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 
-public class TravelTimeItem {
+public class LinkTraverseTimeItem {
     public Id<Person> personId;
     public Id<Link> linkId;
     public double enterTime;
     public double exitTime;
 
-    public TravelTimeItem(Id<Person> personId, Id<Link> linkId, double enterTime, double exitTime) {
+    public LinkTraverseTimeItem(Id<Person> personId, Id<Link> linkId, double enterTime, double exitTime) {
         this.personId = personId;
         this.linkId = linkId;
         this.enterTime = enterTime;
