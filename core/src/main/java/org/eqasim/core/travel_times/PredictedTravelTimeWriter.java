@@ -17,7 +17,7 @@ public class PredictedTravelTimeWriter {
         try {
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
 
-            writer.write(org.eqasim.core.items.LinkTraverseTimeItem.formatHeader() + "\n");
+            writer.write(TripTravelTimeItem.formatHeader() + "\n");
             writer.flush();
 
             counter = new Counter("Traverse #");
