@@ -49,7 +49,7 @@ public class PtUtilityEstimator implements UtilityEstimator {
 	}
 
 	@Override
-	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements, int tripId) {
 		PtVariables variables = predictor.predict(person, trip, elements);
 
 		double utility = 0.0;

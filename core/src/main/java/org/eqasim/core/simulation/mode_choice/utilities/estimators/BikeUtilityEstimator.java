@@ -41,7 +41,7 @@ public class BikeUtilityEstimator implements UtilityEstimator {
 	}
 
 	@Override
-	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements, int tripId) {
 		PersonVariables personVariables = personPredictor.predict(person, trip, elements);
 		BikeVariables bikeVariables = bikePredictor.predict(person, trip, elements);
 

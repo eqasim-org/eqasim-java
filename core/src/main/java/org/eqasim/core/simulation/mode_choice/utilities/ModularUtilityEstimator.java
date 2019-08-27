@@ -29,7 +29,7 @@ public class ModularUtilityEstimator extends AbstractTripRouterEstimator {
 		if (estimator == null) {
 			throw new IllegalStateException(String.format("No estimator registered for mode '%s'", mode));
 		} else {
-			return estimator.estimateUtility(person, trip, elements);
+			return estimator.estimateUtility(person, trip, elements, previousTrips.size());
 		}
 	}
 }

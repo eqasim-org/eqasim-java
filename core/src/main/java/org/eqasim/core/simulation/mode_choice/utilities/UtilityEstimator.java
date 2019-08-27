@@ -8,5 +8,5 @@ import org.matsim.api.core.v01.population.PlanElement;
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public interface UtilityEstimator {
-	double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements);
+	double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements, int tripId);
 }
