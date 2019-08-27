@@ -15,7 +15,12 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.events.algorithms.Vehicle2DriverEventHandler;
+import org.matsim.core.utils.misc.Counter;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -87,7 +92,8 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        event.getServices().getControlerIO().getIterationFilename(event.getIteration(), "travel_times.csv");
+        String outputPath = event.getServices().getControlerIO().getIterationFilename(event.getIteration(), "travel_times.csv");
+        write(outputPath);
     }
 
     public Collection<TravelTimeItem> getTravelTimeItems() {
@@ -104,5 +110,37 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
             this.personEnterTimes.putIfAbsent(personId, 0.0);
         }
         this.travelTimeItems.clear();
+    }
+
+    private void write(String outputPath) {
+
+        try {
+            System.out.println("Writing travel times to " + outputPath);
+
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
+
+            writer.write(TravelTimeItem.formatHeader() + "\n");
+            writer.flush();
+
+            Counter counter = new Counter("Route #");
+
+            for (TravelTimeItem travelTimeItem : this.travelTimeItems) {
+
+                writer.write(travelTimeItem.formatItem() + "\n");
+                writer.flush();
+
+                counter.incCounter();
+            }
+
+            writer.flush();
+            writer.close();
+            counter.printCounter();
+
+            System.out.println("Done");
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

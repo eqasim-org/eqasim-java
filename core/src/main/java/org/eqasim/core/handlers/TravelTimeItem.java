@@ -16,4 +16,19 @@ public class TravelTimeItem {
         this.enterTime = enterTime;
         this.exitTime = exitTime;
     }
+
+    public static String formatHeader() {
+        return String.join(";", new String[] {
+                "person_id", "link_id", "enter_time", "exit_time"
+        });
+    }
+
+    public String formatItem() {
+        return String.join(";", new String[] {
+                this.personId.toString(),
+                this.linkId.toString(),
+                Double.toString(this.enterTime),
+                Double.toString(this.exitTime),
+        });
+    }
 }
