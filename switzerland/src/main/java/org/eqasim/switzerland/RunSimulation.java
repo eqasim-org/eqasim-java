@@ -14,8 +14,10 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.events.algorithms.Vehicle2DriverEventHandler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -41,8 +43,14 @@ public class RunSimulation {
 		Vehicle2DriverEventHandler vehicle2DriverEventHandler = new Vehicle2DriverEventHandler();
 		controller.getEvents().addHandler(vehicle2DriverEventHandler);
 
+		// links we want to track
+		List<String> linkIdStrings = Arrays.asList("602433", "353721", "781183", "437648", "644662",
+				"920875", "321711", "1936", "580900", "635236", "455636", "485300", "825376", "58190",
+				"806135", "665248", "288481", "302670", "208899", "485299");
 		Collection<Id<Link>> linkIds = new LinkedList<>();
-		linkIds.add(Id.createLinkId("602433"));
+		for (String linkIdString : linkIdStrings) {
+			linkIds.add(Id.createLinkId(linkIdString));
+		}
 
 		TravelTimeHandler travelTimeHandler = new TravelTimeHandler(scenario, linkIds, vehicle2DriverEventHandler);
 		controller.addControlerListener(travelTimeHandler);
