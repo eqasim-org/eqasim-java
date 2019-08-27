@@ -1,7 +1,7 @@
 package org.eqasim.switzerland;
 
-import org.eqasim.core.handlers.TravelTimeHandler;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.travel_times.handlers.TravelTimeHandler;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -36,7 +36,7 @@ public class RunSimulation {
 		Vehicle2DriverEventHandler vehicle2DriverEventHandler = new Vehicle2DriverEventHandler();
 		controller.getEvents().addHandler(vehicle2DriverEventHandler);
 
-		TravelTimeHandler travelTimeHandler = new TravelTimeHandler(null, scenario, vehicle2DriverEventHandler);
+		TravelTimeHandler travelTimeHandler = new TravelTimeHandler(scenario, null, vehicle2DriverEventHandler);
 		controller.addControlerListener(travelTimeHandler);
 		controller.getEvents().addHandler(travelTimeHandler);
 		//
