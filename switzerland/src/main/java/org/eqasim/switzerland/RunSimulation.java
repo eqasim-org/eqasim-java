@@ -1,5 +1,6 @@
 package org.eqasim.switzerland;
 
+import org.eqasim.core.handlers.TravelTimeHandler;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
@@ -8,6 +9,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.events.algorithms.Vehicle2DriverEventHandler;
 import org.matsim.core.scenario.ScenarioUtils;
 
 public class RunSimulation {
@@ -29,6 +31,15 @@ public class RunSimulation {
 		SwitzerlandConfigurator.configureController(controller);
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
+
+		// handlers for travel times on problematic links
+		Vehicle2DriverEventHandler vehicle2DriverEventHandler = new Vehicle2DriverEventHandler();
+		controller.getEvents().addHandler(vehicle2DriverEventHandler);
+
+		TravelTimeHandler travelTimeHandler = new TravelTimeHandler(null, scenario, vehicle2DriverEventHandler);
+		controller.addControlerListener(travelTimeHandler);
+		controller.getEvents().addHandler(travelTimeHandler);
+		//
 
 		controller.run();
 	}
