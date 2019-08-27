@@ -38,12 +38,12 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 	}
 
 	@Override
-	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements, int tripId) {
 		SwissPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 
-		utility += super.estimateUtility(person, trip, elements);
+		utility += super.estimateUtility(person, trip, elements, tripId);
 		utility += estimateRegionalUtility(variables);
 
 		return utility;
