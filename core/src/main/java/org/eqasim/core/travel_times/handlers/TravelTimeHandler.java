@@ -27,7 +27,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventHandler,
-        PersonDepartureEventHandler, PersonArrivalEventHandler,
+        VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler,
         ActivityEndEventHandler,
         IterationStartsListener, IterationEndsListener {
 
@@ -63,18 +63,18 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
     }
 
     @Override
-    public void handleEvent(LinkEnterEvent event) {
+    public void handleEvent(VehicleEntersTrafficEvent event) {
         if (linkIds.contains(event.getLinkId())) {
-            Id<Person> personId = vehicle2DriverEventHandler.getDriverOfVehicle(event.getVehicleId());
+            Id<Person> personId = event.getPersonId();
             this.personEnterTimes.put(personId, event.getTime());
         }
     }
 
     @Override
-    public void handleEvent(PersonDepartureEvent event) {
-        this.personTripStartTimes.put(event.getPersonId(), event.getTime());
+    public void handleEvent(LinkEnterEvent event) {
         if (linkIds.contains(event.getLinkId())) {
-            this.personEnterTimes.put(event.getPersonId(), event.getTime());
+            Id<Person> personId = vehicle2DriverEventHandler.getDriverOfVehicle(event.getVehicleId());
+            this.personEnterTimes.put(personId, event.getTime());
         }
     }
 
@@ -95,7 +95,7 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
     }
 
     @Override
-    public void handleEvent(PersonArrivalEvent event) {
+    public void handleEvent(VehicleLeavesTrafficEvent event) {
         if (linkIds.contains(event.getLinkId())) {
             Id<Person> personId = event.getPersonId();
             Id<Link> linkId = event.getLinkId();
@@ -109,7 +109,7 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
             this.personEnterTimes.put(personId, event.getTime());
         }
 
-        if (event.getLegMode().equals(TransportMode.car)) {
+        if (event.getNetworkMode().equals(TransportMode.car)) {
 
             Id<Person> personId = event.getPersonId();
             double startTime = this.personTripStartTimes.get(personId);
