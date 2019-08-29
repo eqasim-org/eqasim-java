@@ -28,6 +28,7 @@ import java.util.Map;
 
 public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventHandler,
         VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler,
+        PersonDepartureEventHandler, PersonArrivalEventHandler,
         ActivityEndEventHandler,
         IterationStartsListener, IterationEndsListener {
 
@@ -60,6 +61,11 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
     public void notifyIterationStarts(IterationStartsEvent event) {
         String outputPath = event.getServices().getControlerIO().getIterationFilename(event.getIteration(), "predicted_travel_times.csv");
         PredictedTravelTimeWriter.initialize(outputPath);
+    }
+
+    @Override
+    public void handleEvent(PersonDepartureEvent event) {
+        this.personTripStartTimes.put(event.getPersonId(), event.getTime());
     }
 
     @Override
@@ -108,9 +114,11 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
             // set enter time to link exit time
             this.personEnterTimes.put(personId, event.getTime());
         }
+    }
 
-        if (event.getNetworkMode().equals(TransportMode.car)) {
-
+    @Override
+    public void handleEvent(PersonArrivalEvent event) {
+        if (event.getLegMode().equals(TransportMode.car)) {
             Id<Person> personId = event.getPersonId();
             double startTime = this.personTripStartTimes.get(personId);
             double travelTime = event.getTime() - startTime;
