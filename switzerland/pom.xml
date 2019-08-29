@@ -17,6 +17,11 @@
 			<artifactId>core</artifactId>
 			<version>1.0.2</version>
 		</dependency>
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>dvrp</artifactId>
+			<version>${matsim.version}</version>
+		</dependency>
 	</dependencies>
 
 	<profiles>

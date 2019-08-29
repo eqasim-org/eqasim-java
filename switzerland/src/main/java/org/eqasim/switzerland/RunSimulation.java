@@ -1,17 +1,22 @@
 package org.eqasim.switzerland;
 
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.travel_times.handlers.TravelTimeHandler;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.contrib.dvrp.trafficmonitoring.QSimFreeSpeedTravelTime;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.events.algorithms.Vehicle2DriverEventHandler;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 
 import java.util.Arrays;
@@ -40,8 +45,12 @@ public class RunSimulation {
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 
 		// handlers for travel times on problematic links
-		Vehicle2DriverEventHandler vehicle2DriverEventHandler = new Vehicle2DriverEventHandler();
-		controller.getEvents().addHandler(vehicle2DriverEventHandler);
+		controller.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				bind(Key.get(TravelTime.class, Names.named("car"))).to(QSimFreeSpeedTravelTime.class);
+			}
+		});
 
 		// links we want to track
 		List<String> linkIdStrings = Arrays.asList("602433", "353721", "781183", "437648", "644662",
@@ -52,7 +61,7 @@ public class RunSimulation {
 			linkIds.add(Id.createLinkId(linkIdString));
 		}
 
-		TravelTimeHandler travelTimeHandler = new TravelTimeHandler(scenario, linkIds, vehicle2DriverEventHandler);
+		TravelTimeHandler travelTimeHandler = new TravelTimeHandler(scenario, linkIds);
 		controller.addControlerListener(travelTimeHandler);
 		controller.getEvents().addHandler(travelTimeHandler);
 		//
