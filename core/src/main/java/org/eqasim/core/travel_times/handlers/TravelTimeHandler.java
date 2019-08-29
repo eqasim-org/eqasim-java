@@ -38,17 +38,15 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
     private Collection<LinkTraverseTimeItem> linkTraverseTimeItems = new LinkedList<>();
     private Map<Id<Person>, Double> personEnterTimes = new HashMap<>();
     private Collection<Id<Link>> linkIds;
-    private Vehicle2DriverEventHandler vehicle2DriverEventHandler;
 
     // trip experienced travel time
     private Collection<TripTravelTimeItem> tripTravelTimeItems = new LinkedList<>();
     private Map<Id<Person>, Integer> personTripCount = new HashMap<>();
     private Map<Id<Person>, Double> personTripStartTimes = new HashMap<>();
 
-    public TravelTimeHandler(Scenario scenario, Collection<Id<Link>> linkIds, Vehicle2DriverEventHandler vehicle2DriverEventHandler) {
+    public TravelTimeHandler(Scenario scenario, Collection<Id<Link>> linkIds) {
         this.scenario = scenario;
         this.linkIds = linkIds;
-        this.vehicle2DriverEventHandler = vehicle2DriverEventHandler;
 
         for (Id<Person> personId : scenario.getPopulation().getPersons().keySet()) {
             this.personEnterTimes.putIfAbsent(personId, 0.0);
@@ -70,7 +68,7 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
 
     @Override
     public void handleEvent(VehicleEntersTrafficEvent event) {
-        if (linkIds.contains(event.getLinkId())) {
+        if (linkIds.contains(event.getLinkId()) && event.getNetworkMode().equals(TransportMode.car)) {
             Id<Person> personId = event.getPersonId();
             this.personEnterTimes.put(personId, event.getTime());
         }
@@ -79,7 +77,7 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
     @Override
     public void handleEvent(LinkEnterEvent event) {
         if (linkIds.contains(event.getLinkId())) {
-            Id<Person> personId = vehicle2DriverEventHandler.getDriverOfVehicle(event.getVehicleId());
+            Id<Person> personId = Id.createPersonId(event.getVehicleId().toString());
             this.personEnterTimes.put(personId, event.getTime());
         }
     }
@@ -87,7 +85,7 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
     @Override
     public void handleEvent(LinkLeaveEvent event) {
         if (linkIds.contains(event.getLinkId())) {
-            Id<Person> personId = vehicle2DriverEventHandler.getDriverOfVehicle(event.getVehicleId());
+            Id<Person> personId = Id.createPersonId(event.getVehicleId().toString());
             Id<Link> linkId = event.getLinkId();
             double enterTime = this.personEnterTimes.get(personId);
 
@@ -102,7 +100,7 @@ public class TravelTimeHandler implements LinkEnterEventHandler, LinkLeaveEventH
 
     @Override
     public void handleEvent(VehicleLeavesTrafficEvent event) {
-        if (linkIds.contains(event.getLinkId())) {
+        if (linkIds.contains(event.getLinkId()) && event.getNetworkMode().equals(TransportMode.car)) {
             Id<Person> personId = event.getPersonId();
             Id<Link> linkId = event.getLinkId();
             double enterTime = this.personEnterTimes.get(personId);
