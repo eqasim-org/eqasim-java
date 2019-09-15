@@ -185,3 +185,7 @@ Note that the shape files must be given in the correct projection. For Switzerla
 this is `EPSG:2056` and for France it is `EPSG:2154`.
 
 ![Scenario Shapes](gis/shapes.png "Scenario Shapes")
+
+## Contributing
+
+This repository makes use of the (GitFlow)[https://nvie.com/posts/a-successful-git-branching-model/] repository model. This means that development is taking place in the `develop` branch, while the current production version can be found in the `master` branch. To contribute, please send a pull request to `develop`.
