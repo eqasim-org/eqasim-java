@@ -1,0 +1,9 @@
+package org.eqasim.automated_vehicles.mode_choice.mode_parameters;
+
+import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+
+public class AvModeParameters implements ParameterDefinition {
+	public double alpha_u = 0.0;
+	public double betaTravelTime_u_min = 0.0;
+	public double betaWaitingTime_u_min = 0.0;
+}

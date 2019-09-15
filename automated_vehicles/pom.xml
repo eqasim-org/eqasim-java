@@ -17,5 +17,11 @@
 			<artifactId>core</artifactId>
 			<version>1.0.2</version>
 		</dependency>
+
+		<dependency>
+			<groupId>ch.ethz.matsim</groupId>
+			<artifactId>av</artifactId>
+			<version>1.0.0-matsim11</version>
+		</dependency>
 	</dependencies>
 </project>
