@@ -3,17 +3,17 @@ package org.eqasim.switzerland.mode_choice.parameters;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
 public class SwissModeParameters extends ModeParameters {
-	public class BikeParameters extends ModeParameters.BikeParameters {
+	public class SwissBikeParameters {
 		public double betaStatedPreferenceRegion3_u = 0.0;
 	}
 
-	public class CarParameters extends ModeParameters.CarParameters {
+	public class SwissCarParameters {
 		public double betaStatedPreferenceRegion1_u = 0.0;
 		public double betaStatedPreferenceRegion3_u = 0.0;
 	}
 
-	public final CarParameters car = new CarParameters();
-	public final BikeParameters bike = new BikeParameters();
+	public SwissCarParameters swissCar = new SwissCarParameters();
+	public SwissBikeParameters swissBike = new SwissBikeParameters();
 
 	public static SwissModeParameters buildDefault() {
 		SwissModeParameters parameters = new SwissModeParameters();
@@ -30,8 +30,8 @@ public class SwissModeParameters extends ModeParameters {
 		parameters.car.constantAccessEgressWalkTime_min = 4.0;
 		parameters.car.constantParkingSearchPenalty_min = 4.0;
 
-		parameters.car.betaStatedPreferenceRegion1_u = -0.4;
-		parameters.car.betaStatedPreferenceRegion3_u = 0.4;
+		parameters.swissCar.betaStatedPreferenceRegion1_u = -0.4;
+		parameters.swissCar.betaStatedPreferenceRegion3_u = 0.4;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
@@ -45,7 +45,7 @@ public class SwissModeParameters extends ModeParameters {
 		parameters.bike.betaTravelTime_u_min = -0.09;
 		parameters.bike.betaAgeOver18_u_a = -0.049;
 
-		parameters.bike.betaStatedPreferenceRegion3_u = -0.366;
+		parameters.swissBike.betaStatedPreferenceRegion3_u = -0.366;
 
 		// Walk
 		parameters.walk.alpha_u = 1.3;

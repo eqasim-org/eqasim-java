@@ -74,6 +74,10 @@ public class GenerateConfig {
 
 		config.transit().setUseTransit(true);
 
+		// Disable some standard output
+		config.linkStats().setWriteLinkStatsInterval(0);
+		config.counts().setWriteCountsInterval(0);
+
 		// QSim settings
 		config.qsim().setEndTime(30.0 * 3600.0);
 		config.qsim().setNumberOfThreads(Math.min(12, threads));

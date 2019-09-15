@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.mode_choice.utilities.variables.SwissPersonVariables;
@@ -22,14 +21,14 @@ public class SwissBikeEstimator implements UtilityEstimator {
 
 	@Inject
 	public SwissBikeEstimator(SwissModeParameters parameters, BikeEstimator delegate,
-			SwissPersonPredictor swissPersonPredictor, BikePredictor bikePredictor) {
+			SwissPersonPredictor swissPersonPredictor) {
 		this.delegate = delegate;
 		this.swissPersonPredictor = swissPersonPredictor;
 		this.parameters = parameters;
 	}
 
 	protected double predictRegionUtility(SwissPersonVariables variables) {
-		return variables.statedPreferenceRegion == 3 ? parameters.bike.betaStatedPreferenceRegion3_u : 0.0;
+		return variables.statedPreferenceRegion == 3 ? parameters.swissBike.betaStatedPreferenceRegion3_u : 0.0;
 	}
 
 	@Override

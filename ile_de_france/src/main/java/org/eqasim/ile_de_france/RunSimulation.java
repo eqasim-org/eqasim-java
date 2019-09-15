@@ -16,16 +16,16 @@ public class RunSimulation {
 				.requireOptions("config-path") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), Configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		Configurator.configureScenario(scenario);
+		IDFConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		Configurator.adjustScenario(scenario);
+		IDFConfigurator.adjustScenario(scenario);
 
 		Controler controller = new Controler(scenario);
-		Configurator.configureController(controller);
+		IDFConfigurator.configureController(controller);
 		controller.addOverridingModule(new ModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.run();

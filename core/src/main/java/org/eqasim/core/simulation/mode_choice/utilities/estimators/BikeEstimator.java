@@ -21,8 +21,7 @@ public class BikeEstimator implements UtilityEstimator {
 	protected final ModeParameters parameters;
 
 	@Inject
-	public BikeEstimator(PersonPredictor personPredictor, BikePredictor bikePredictor,
-			ModeParameters parameters) {
+	public BikeEstimator(PersonPredictor personPredictor, BikePredictor bikePredictor, ModeParameters parameters) {
 		this.parameters = parameters;
 		this.bikePredictor = bikePredictor;
 		this.personPredictor = personPredictor;

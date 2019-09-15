@@ -31,9 +31,9 @@ public class SwissCarEstimator implements UtilityEstimator {
 		double utility = 0.0;
 
 		if (variables.statedPreferenceRegion == 1) {
-			utility += parameters.car.betaStatedPreferenceRegion1_u;
+			utility += parameters.swissCar.betaStatedPreferenceRegion1_u;
 		} else if (variables.statedPreferenceRegion == 3) {
-			utility += parameters.car.betaStatedPreferenceRegion3_u;
+			utility += parameters.swissCar.betaStatedPreferenceRegion3_u;
 		}
 
 		return utility;
