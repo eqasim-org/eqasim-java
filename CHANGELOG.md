@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Add trip analysis
 - Switch DiscreteModeChoice to version 1.0.7
 
 **1.0.2**
