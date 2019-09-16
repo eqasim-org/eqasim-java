@@ -94,23 +94,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		return new ModularUtilityEstimator(tripRouter, facilities, estimators);
 	}
 
-	protected CostModel getCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config, String mode) {
-		String model = config.getCostModels().get(mode);
-
-		if (model == null) {
-			throw new IllegalStateException(String.format("No cost model defined for mode '%s'", mode));
-		} else {
-			Provider<CostModel> modelFactory = factory.get(model);
-
-			if (modelFactory == null) {
-				throw new IllegalStateException(
-						String.format("Cost model '%s' for mode '%s' is not known", model, mode));
-			} else {
-				return modelFactory.get();
-			}
-		}
-	}
-
 	@Provides
 	@Named("car")
 	public CostModel provideCarCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {

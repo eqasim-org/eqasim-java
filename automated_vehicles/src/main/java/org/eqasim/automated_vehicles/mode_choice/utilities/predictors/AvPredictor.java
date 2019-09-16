@@ -9,7 +9,9 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtil
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.api.core.v01.population.Route;
 
+import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import ch.ethz.matsim.av.routing.AVRoute;
@@ -18,6 +20,7 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 public class AvPredictor extends CachedVariablePredictor<AvVariables> {
 	private CostModel costModel;
 
+	@Inject
 	public AvPredictor(@Named("av") CostModel costModel) {
 		this.costModel = costModel;
 	}
@@ -29,11 +32,16 @@ public class AvPredictor extends CachedVariablePredictor<AvVariables> {
 		}
 
 		Leg leg = (Leg) elements.get(0);
-		AVRoute route = (AVRoute) leg.getRoute();
 
 		double travelTime_min = leg.getTravelTime() / 60.0;
-		double waitingTime_min = route.getWaitingTime();
 		double cost_MU = costModel.calculateCost_MU(person, trip, elements);
+
+		double waitingTime_min = 0.0;
+
+		Route route = leg.getRoute();
+		if (route instanceof AVRoute) {
+			waitingTime_min = ((AVRoute) route).getWaitingTime() / 60.0;
+		}
 
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
 
@@ -41,8 +49,7 @@ public class AvPredictor extends CachedVariablePredictor<AvVariables> {
 	}
 
 	public AvVariables checkNaN(AvVariables variables) {
-		if (Double.isNaN(variables.travelTime_min) || Double.isNaN(variables.cost_MU)
-				|| Double.isNaN(variables.waitingTime_min)) {
+		if (Double.isNaN(variables.travelTime_min) || Double.isNaN(variables.waitingTime_min)) {
 			throw new IllegalStateException(
 					"NaN values encountered in AVVariables. Is the AV extension set up properly?");
 		}

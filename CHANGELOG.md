@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- Add `examples` package to demonstrate integration of multiple eqasim modules
+- Add `automated_vehicles` package for integration with `av` package version `1.0.0`
 - Add trip analysis
 - Switch DiscreteModeChoice to version 1.0.7
 
