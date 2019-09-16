@@ -12,6 +12,8 @@
         <module>switzerland</module>
         <module>ile_de_france</module>
         <module>sao_paulo</module>
+        <module>automated_vehicles</module>
+        <module>examples</module>
     </modules>
 
 	<properties>
