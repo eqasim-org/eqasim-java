@@ -13,6 +13,8 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import ch.ethz.matsim.av.config.AVConfigGroup;
+import ch.ethz.matsim.av.config.operator.OperatorConfig;
 import ch.ethz.matsim.av.framework.AVQSimModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
@@ -25,13 +27,19 @@ import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConf
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path") //
+				.requireOptions("config-path", "fleet-size") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				SwitzerlandConfigurator.getConfigGroups());
 		AvConfigurator.configure(config); // Add some configuration for AV
 		cmd.applyConfiguration(config);
+
+		// Here we customize our configuration by setting the fleet size from the
+		// command line
+		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
+				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
+		operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.getOptionStrict("fleet-size")));
 
 		// While the tools from the AV module conveniently set everything up to use the
 		// mode, we still need to give the option to agents through the ModeAvailability
