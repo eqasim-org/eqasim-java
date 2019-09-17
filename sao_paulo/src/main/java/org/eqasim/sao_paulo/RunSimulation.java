@@ -1,6 +1,7 @@
 package org.eqasim.sao_paulo;
 
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.sao_paulo.mode_choice.SaoPauloModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
@@ -29,6 +30,7 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);
+		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SaoPauloModeChoiceModule(cmd));
 		controller.run();
