@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Bugfix: Utility calculation for car/pt did not consider cost
 - Add interpolation for AV cost calculation and output
 - Add `fleet-size` parameter to Zurich/AV example
 - Add `examples` package to demonstrate integration of multiple eqasim modules
