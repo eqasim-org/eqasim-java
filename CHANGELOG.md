@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Add analysis of trips via config file
 - Add better support for command line parameters
 - Bugfix: Utility calculation for car/pt did not consider cost
 - Add interpolation for AV cost calculation and output
