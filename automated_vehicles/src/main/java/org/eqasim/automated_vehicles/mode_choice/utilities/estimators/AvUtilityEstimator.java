@@ -40,8 +40,10 @@ public class AvUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateMonetaryCostUtility(AvVariables variables) {
-		return generalParameters.betaCost_u_MU * EstimatorUtils.interaction(variables.euclideanDistance_km,
-				generalParameters.referenceEuclideanDistance_km, generalParameters.lambdaCostEuclideanDistance);
+		return generalParameters.betaCost_u_MU
+				* EstimatorUtils.interaction(variables.euclideanDistance_km,
+						generalParameters.referenceEuclideanDistance_km, generalParameters.lambdaCostEuclideanDistance)
+				* variables.cost_MU;
 	}
 
 	@Override
