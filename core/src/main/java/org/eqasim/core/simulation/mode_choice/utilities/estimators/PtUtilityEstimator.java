@@ -45,7 +45,7 @@ public class PtUtilityEstimator implements UtilityEstimator {
 
 	protected double estimateMonetaryCostUtility(PtVariables variables) {
 		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables.euclideanDistance_km,
-				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance);
+				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
 	}
 
 	@Override
