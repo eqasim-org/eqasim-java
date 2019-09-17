@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
+import org.eqasim.automated_vehicles.components.EqasimAvConfigGroup;
 import org.eqasim.automated_vehicles.mode_choice.constraints.AvWalkConstraint;
 import org.eqasim.automated_vehicles.mode_choice.cost.AvCostListener;
 import org.eqasim.automated_vehicles.mode_choice.cost.AvCostModel;
@@ -79,16 +80,26 @@ public class AvModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public AvCostParameters provideAvCostParameters() {
+	public AvCostParameters provideAvCostParameters(EqasimAvConfigGroup config) {
 		AvCostParameters parameters = AvCostParameters.buildDefault();
+
+		if (config.getCostParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
+		}
+
 		ParameterDefinition.applyCommandLine("av-cost-parameter", commandLine, parameters);
 		return parameters;
 	}
 
 	@Provides
 	@Singleton
-	public AvModeParameters provideAvModeParameters() {
+	public AvModeParameters provideAvModeParameters(EqasimAvConfigGroup config) {
 		AvModeParameters parameters = AvModeParameters.buildDefault();
+
+		if (config.getModeParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+		}
+
 		ParameterDefinition.applyCommandLine("av-mode-parameter", commandLine, parameters);
 		return parameters;
 	}

@@ -1,7 +1,9 @@
 package org.eqasim.switzerland.mode_choice;
 
+import java.io.File;
 import java.io.IOException;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
@@ -40,24 +42,35 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SwissPtCostModel.class);
-		
+
 		bind(SwissPersonPredictor.class);
-		
-		bind(ModeParameters.class).to(SwissModeParameters.class);
+
+		bind(ModeParameters.class).to(SwissModeParameters.class).asEagerSingleton();
 	}
 
 	@Provides
 	@Singleton
-	public SwissModeParameters provideSwissModeParameters() throws IOException, ConfigurationException {
+	public SwissModeParameters provideSwissModeParameters(EqasimConfigGroup config)
+			throws IOException, ConfigurationException {
 		SwissModeParameters parameters = SwissModeParameters.buildDefault();
-		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
+
+		if (config.getModeParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+		}
+
+		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
 		return parameters;
 	}
 
 	@Provides
 	@Singleton
-	public SwissCostParameters provideCostParameters() {
+	public SwissCostParameters provideCostParameters(EqasimConfigGroup config) {
 		SwissCostParameters parameters = SwissCostParameters.buildDefault();
+
+		if (config.getCostParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
+		}
+
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
 	}
