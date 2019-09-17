@@ -5,16 +5,16 @@
 	<groupId>org.eqasim</groupId>
 	<artifactId>eqasim</artifactId>
 	<version>1.0.2</version>
-    <packaging>pom</packaging>
+	<packaging>pom</packaging>
 
-    <modules>
-        <module>core</module>
-        <module>switzerland</module>
-        <module>ile_de_france</module>
-        <module>sao_paulo</module>
-        <module>automated_vehicles</module>
-        <module>examples</module>
-    </modules>
+	<modules>
+		<module>core</module>
+		<module>switzerland</module>
+		<module>ile_de_france</module>
+		<module>sao_paulo</module>
+		<module>automated_vehicles</module>
+		<module>examples</module>
+	</modules>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -44,6 +44,12 @@
 	</repositories>
 
 	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.9.9</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

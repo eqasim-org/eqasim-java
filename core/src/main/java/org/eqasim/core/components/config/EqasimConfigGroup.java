@@ -14,8 +14,14 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private final static String CROSSING_PENALTY = "crossingPenalty";
 	private final static String SAMPLE_SIZE = "sampleSize";
 
+	private final static String MODE_PARAMETERS_PATH = "modeParametersPath";
+	private final static String COST_PARAMETERS_PATH = "costParametersPath";
+
 	private double crossingPenalty = 3.0;
 	private double sampleSize = 1.0;
+
+	private String modeParametersPath = null;
+	private String costParametersPath = null;
 
 	public EqasimConfigGroup() {
 		super(GROUP_NAME);
@@ -155,5 +161,25 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 		}
 
 		return (EqasimConfigGroup) config.getModules().get(GROUP_NAME);
+	}
+
+	@StringGetter(MODE_PARAMETERS_PATH)
+	public String getModeParametersPath() {
+		return modeParametersPath;
+	}
+
+	@StringSetter(MODE_PARAMETERS_PATH)
+	public void setModeParametersPath(String modeParametersPath) {
+		this.modeParametersPath = modeParametersPath;
+	}
+
+	@StringGetter(COST_PARAMETERS_PATH)
+	public String getCostParametersPath() {
+		return costParametersPath;
+	}
+
+	@StringSetter(COST_PARAMETERS_PATH)
+	public void setCostParametersPath(String costParametersPath) {
+		this.costParametersPath = costParametersPath;
 	}
 }
