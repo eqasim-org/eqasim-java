@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Add interpolation for AV cost calculation and output
 - Add `fleet-size` parameter to Zurich/AV example
 - Add `examples` package to demonstrate integration of multiple eqasim modules
 - Add `automated_vehicles` package for integration with `av` package version `1.0.0`

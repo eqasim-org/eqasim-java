@@ -1,11 +1,14 @@
 package org.eqasim.automated_vehicles.mode_choice;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
 import org.eqasim.automated_vehicles.mode_choice.constraints.AvWalkConstraint;
+import org.eqasim.automated_vehicles.mode_choice.cost.AvCostListener;
 import org.eqasim.automated_vehicles.mode_choice.cost.AvCostModel;
 import org.eqasim.automated_vehicles.mode_choice.cost.AvCostParameters;
+import org.eqasim.automated_vehicles.mode_choice.cost.AvCostWriter;
 import org.eqasim.automated_vehicles.mode_choice.mode_parameters.AvModeParameters;
 import org.eqasim.automated_vehicles.mode_choice.utilities.estimators.AvUtilityEstimator;
 import org.eqasim.automated_vehicles.mode_choice.utilities.predictors.AvPredictor;
@@ -15,6 +18,7 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
@@ -46,16 +50,31 @@ public class AvModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(AV_WALK_CONSTRAINT_NAME).to(AvWalkConstraint.Factory.class);
 
 		addEventHandlerBinding().to(FleetDistanceListener.class);
+		addControlerListenerBinding().to(AvCostListener.class);
+		addControlerListenerBinding().to(AvCostWriter.class);
 	}
 
 	@Provides
 	@Singleton
-	public AvCostModel provideAvCostModel(AvCostParameters parameters, FleetDistanceListener distanceListener,
-			AVConfigGroup config) {
+	public AvCostModel provideAvCostModel(AvCostListener listener) {
+		return new AvCostModel(listener);
+	}
+
+	@Provides
+	@Singleton
+	public AvCostWriter provideAvCostWriter(AvCostListener listener, OutputDirectoryHierarchy outputHierarchy) {
+		File outputPath = new File(outputHierarchy.getOutputFilename("av_price.csv"));
+		return new AvCostWriter(outputPath, listener);
+	}
+
+	@Provides
+	@Singleton
+	public AvCostListener provideAvCostListener(AvCostParameters parameters, FleetDistanceListener distanceListener,
+			AVConfigGroup config, EqasimConfigGroup eqasimConfig) {
 		int numberOfVehicles = config.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID).getGeneratorConfig()
 				.getNumberOfVehicles();
 
-		return new AvCostModel(parameters, distanceListener, numberOfVehicles);
+		return new AvCostListener(parameters, distanceListener, numberOfVehicles);
 	}
 
 	@Provides
