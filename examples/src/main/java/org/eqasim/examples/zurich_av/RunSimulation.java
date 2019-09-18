@@ -1,6 +1,6 @@
 package org.eqasim.examples.zurich_av;
 
-import org.eqasim.automated_vehicles.mode_choice.AvConfigurator;
+import org.eqasim.automated_vehicles.components.AvConfigurator;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.SwitzerlandConfigurator;
@@ -28,6 +28,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "fleet-size") //
+				.allowPrefixes("mode-parameter", "cost-parameter", "av-mode-parameter", "av-cost-parameter") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),

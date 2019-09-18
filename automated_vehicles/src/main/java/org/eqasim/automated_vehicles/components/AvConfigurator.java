@@ -1,8 +1,9 @@
-package org.eqasim.automated_vehicles.mode_choice;
+package org.eqasim.automated_vehicles.components;
 
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eqasim.automated_vehicles.mode_choice.AvModeChoiceModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -88,6 +89,9 @@ public final class AvConfigurator {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setCostModel("av", AvModeChoiceModule.AV_COST_MODEL_NAME);
 		eqasimConfig.setEstimator("av", AvModeChoiceModule.AV_ESTIMATOR_NAME);
+
+		// Set up config group
+		EqasimAvConfigGroup.getOrCreate(config);
 	}
 
 	// TODO: This will be included in the next version of DMC
