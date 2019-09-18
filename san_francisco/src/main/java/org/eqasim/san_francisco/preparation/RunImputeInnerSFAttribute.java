@@ -14,7 +14,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
 
-public class RunImputeInnerParisAttribute {
+public class RunImputeInnerSFAttribute {
 	public static void main(String[] args)
 			throws MalformedURLException, IOException, ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
