@@ -16,6 +16,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
+				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
@@ -28,7 +29,8 @@ public class RunSimulation {
 		EqasimConfigurator.adjustScenario(scenario);
 		
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-		eqasimConfig.setEstimator("car", "mycarestimator");
+		eqasimConfig.setEstimator("walk", "sfWalkEstimator");
+		eqasimConfig.setEstimator("pt", "sfPTEstimator");
 
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);

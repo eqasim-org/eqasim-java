@@ -9,6 +9,8 @@ import org.eqasim.san_francisco.mode_choice.costs.SanFranciscoCarCostModel;
 import org.eqasim.san_francisco.mode_choice.costs.SanFranciscoPtCostModel;
 import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoCostParameters;
 import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoModeParameters;
+import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoPTUtilityEstimator;
+import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoWalkUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -36,7 +38,8 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SanFranciscoCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SanFranciscoPtCostModel.class);
-        //bindUtilityEstimator("")
+        bindUtilityEstimator("sfPTEstimator").to(SanFranciscoPTUtilityEstimator.class);
+        bindUtilityEstimator("sfWalkEstimator").to(SanFranciscoWalkUtilityEstimator.class);
 		bind(ModeParameters.class).to(SanFranciscoModeParameters.class);
 	}
 
