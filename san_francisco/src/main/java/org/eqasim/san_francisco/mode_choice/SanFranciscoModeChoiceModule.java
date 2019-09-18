@@ -5,11 +5,11 @@ import java.io.IOException;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloCarCostModel;
-import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloPtCostModel;
-import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloCostParameters;
-import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
-import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
+import org.eqasim.san_francisco.mode_choice.costs.SanFranciscoCarCostModel;
+import org.eqasim.san_francisco.mode_choice.costs.SanFranciscoPtCostModel;
+import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoCostParameters;
+import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoModeParameters;
+import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
@@ -19,10 +19,10 @@ import com.google.inject.Singleton;
 public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
-	static public final String MODE_AVAILABILITY_NAME = "SaoPauloModeAvailability";
+	static public final String MODE_AVAILABILITY_NAME = "SanFranciscoModeAvailability";
 
-	static public final String CAR_COST_MODEL_NAME = "SaoPauloCarCostModel";
-	static public final String PT_COST_MODEL_NAME = "SaoPauloPtCostModel";
+	static public final String CAR_COST_MODEL_NAME = "SanFranciscoCarCostModel";
+	static public final String PT_COST_MODEL_NAME = "SanFranciscoPtCostModel";
 
 	public SanFranciscoModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -30,28 +30,28 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 
 	@Override
 	protected void installEqasimExtension() {
-		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SaoPauloModeAvailability.class);
+		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SanFranciscoModeAvailability.class);
 
-		bind(SaoPauloPersonPredictor.class);
+		bind(SanFranciscoPersonPredictor.class);
 
-		bindCostModel(CAR_COST_MODEL_NAME).to(SaoPauloCarCostModel.class);
-		bindCostModel(PT_COST_MODEL_NAME).to(SaoPauloPtCostModel.class);
-
-		bind(ModeParameters.class).to(SaoPauloModeParameters.class);
+		bindCostModel(CAR_COST_MODEL_NAME).to(SanFranciscoCarCostModel.class);
+		bindCostModel(PT_COST_MODEL_NAME).to(SanFranciscoPtCostModel.class);
+        //bindUtilityEstimator("")
+		bind(ModeParameters.class).to(SanFranciscoModeParameters.class);
 	}
 
 	@Provides
 	@Singleton
-	public SaoPauloModeParameters provideModeChoiceParameters() throws IOException, ConfigurationException {
-		SaoPauloModeParameters parameters = SaoPauloModeParameters.buildDefault();
+	public SanFranciscoModeParameters provideModeChoiceParameters() throws IOException, ConfigurationException {
+		SanFranciscoModeParameters parameters = SanFranciscoModeParameters.buildDefault();
 		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
 		return parameters;
 	}
 
 	@Provides
 	@Singleton
-	public SaoPauloCostParameters provideCostParameters() {
-		SaoPauloCostParameters parameters = SaoPauloCostParameters.buildDefault();
+	public SanFranciscoCostParameters provideCostParameters() {
+		SanFranciscoCostParameters parameters = SanFranciscoCostParameters.buildDefault();
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
 	}

@@ -1,5 +1,6 @@
 package org.eqasim.san_francisco;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.san_francisco.mode_choice.SanFranciscoModeChoiceModule;
@@ -25,6 +26,9 @@ public class RunSimulation {
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		EqasimConfigurator.adjustScenario(scenario);
+		
+		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
+		eqasimConfig.setEstimator("car", "mycarestimator");
 
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);
