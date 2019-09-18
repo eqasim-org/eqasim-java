@@ -2,9 +2,9 @@ package org.eqasim.san_francisco.mode_choice.utilities.estimators;
 
 import java.util.List;
 
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
 import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoModeParameters;
 import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPersonPredictor;
 import org.eqasim.san_francisco.mode_choice.utilities.variables.SanFranciscoPersonVariables;
@@ -15,14 +15,14 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SanFranciscoWalkUtilityEstimator extends BikeUtilityEstimator {
+public class SanFranciscoWalkUtilityEstimator extends WalkUtilityEstimator {
 	private final SanFranciscoModeParameters parameters;
 	private final SanFranciscoPersonPredictor predictor;
 
 	@Inject
 	public SanFranciscoWalkUtilityEstimator(SanFranciscoModeParameters parameters, PersonPredictor personPredictor,
-			BikePredictor bikePredictor, SanFranciscoPersonPredictor predictor) {
-		super(parameters, personPredictor, bikePredictor);
+			WalkPredictor walkPredictor, SanFranciscoPersonPredictor predictor) {
+		super(parameters, walkPredictor);
 
 		this.parameters = parameters;
 		this.predictor = predictor;

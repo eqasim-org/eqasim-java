@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.population.PersonUtils;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import ch.ethz.matsim.discrete_mode_choice.model.mode_availability.ModeAvailability;
@@ -21,15 +22,19 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 		modes.add(TransportMode.bike);
 
 		// Check car availability
-		boolean carAvailability = true;
+				boolean carAvailability = true;
 
-		if ("never".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
-			carAvailability = false;
-		}
+				if (PersonUtils.getLicense(person).equals("no")) {
+					carAvailability = false;
+				}
 
-		if (carAvailability) {
-			modes.add(TransportMode.car);
-		}
+				if (PersonUtils.getCarAvail(person).equals("never")) {
+					carAvailability = false;
+				}
+
+				if (carAvailability) {
+					modes.add(TransportMode.car);
+				}
 
 		// Add special mode "outside" if applicable
 		Boolean isOutside = (Boolean) person.getAttributes().getAttribute("outside");

@@ -2,9 +2,9 @@ package org.eqasim.san_francisco.mode_choice.utilities.estimators;
 
 import java.util.List;
 
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoModeParameters;
 import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPersonPredictor;
 import org.eqasim.san_francisco.mode_choice.utilities.variables.SanFranciscoPersonVariables;
@@ -15,14 +15,14 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SanFranciscoPTUtilityEstimator extends BikeUtilityEstimator {
+public class SanFranciscoPTUtilityEstimator extends PtUtilityEstimator {
 	private final SanFranciscoModeParameters parameters;
 	private final SanFranciscoPersonPredictor predictor;
 
 	@Inject
 	public SanFranciscoPTUtilityEstimator(SanFranciscoModeParameters parameters, PersonPredictor personPredictor,
-			BikePredictor bikePredictor, SanFranciscoPersonPredictor predictor) {
-		super(parameters, personPredictor, bikePredictor);
+			PtPredictor ptPredictor, SanFranciscoPersonPredictor predictor) {
+		super(parameters, ptPredictor);
 
 		this.parameters = parameters;
 		this.predictor = predictor;
@@ -37,7 +37,7 @@ public class SanFranciscoPTUtilityEstimator extends BikeUtilityEstimator {
 		SanFranciscoPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
-
+        
 		utility += super.estimateUtility(person, trip, elements);
 		utility += estimateRegionalUtility(variables);
 
