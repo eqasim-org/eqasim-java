@@ -15,6 +15,7 @@ public class SanFranciscoPersonPredictor extends CachedVariablePredictor<SanFran
 			List<? extends PlanElement> elements) {
 		boolean hasSubscription = SanFranciscoPredictorUtils.hasSubscription(person);
 		boolean cityTrip = SanFranciscoPredictorUtils.startsEndsinCity(trip);
-		return new SanFranciscoPersonVariables(hasSubscription, cityTrip);
+		double hhlIncome = SanFranciscoPredictorUtils.hhlIncome(person);
+		return new SanFranciscoPersonVariables(hasSubscription, cityTrip ,hhlIncome);
 	}
 }
