@@ -18,7 +18,7 @@ public class SaoPauloModeAvailability implements ModeAvailability {
 		// Modes that are always available
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
-		modes.add(TransportMode.bike);
+		//modes.add(TransportMode.bike);
 
 		// Check car availability
 		boolean carAvailability = true;
