@@ -28,7 +28,7 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 					carAvailability = false;
 				}
 
-				if (PersonUtils.getCarAvail(person).equals("never")) {
+				if ("never".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
 					carAvailability = false;
 				}
 
