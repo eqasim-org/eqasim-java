@@ -38,15 +38,15 @@ public class SanFranciscoModeParameters extends ModeParameters {
 		parameters.car.alpha_u = 0.0;
 		parameters.car.betaTravelTime_u_min = -0.0347;
         
-		parameters.car.constantAccessEgressWalkTime_min = 4.0;
-		parameters.car.constantParkingSearchPenalty_min = 4.0;
+		parameters.car.constantAccessEgressWalkTime_min = 0.0;
+		parameters.car.constantParkingSearchPenalty_min = 0.0;
 
 		// PT
 		parameters.pt.alpha_u = -2.9636;
 		parameters.pt.betaLineSwitch_u = -0.0;
 		parameters.pt.betaInVehicleTime_u_min = -0.008;
 		parameters.pt.betaWaitingTime_u_min = -0.008;
-		parameters.pt.betaAccessEgressTime_u_min = -0.0338;
+		parameters.pt.betaAccessEgressTime_u_min = -0.0;
 		parameters.sfPT.alpha_pt_city = 1.9553;
 		
 		// Bike
