@@ -15,4 +15,9 @@ public class SanFranciscoPredictorUtils {
 		boolean endInCity = (boolean) trip.getDestinationActivity().getAttributes().getAttribute("city");
 		return startInCity & endInCity;
 	}
+
+	static public double hhlIncome(Person person) {
+        double hhlIncome = (double) person.getAttributes().getAttribute("hhlIncome");
+		return hhlIncome;
+	}
 }

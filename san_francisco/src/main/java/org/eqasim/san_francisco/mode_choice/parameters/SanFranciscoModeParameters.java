@@ -12,13 +12,18 @@ public class SanFranciscoModeParameters extends ModeParameters {
 		public double alpha_pt_city = 0.0;
 	}
 	
-	public class SanFranciscoIncomeELasticity {
+	public class SanFranciscoIncomeElasticity {
 		public double lambda_income = 0.0;
+	}
+	
+	public class SanFranciscoAvgHHLIncome {
+		public double avg_hhl_income = 0.0;
 	}
 	
 	public final SanFranciscoWalkParameters sfWalk = new SanFranciscoWalkParameters();
 	public final SanFranciscoPTParameters sfPT = new SanFranciscoPTParameters();
-	public final SanFranciscoIncomeELasticity sfIncomeElasticity = new SanFranciscoIncomeELasticity();
+	public final SanFranciscoIncomeElasticity sfIncomeElasticity = new SanFranciscoIncomeElasticity();
+	public final SanFranciscoAvgHHLIncome sfAvgHHLIncome = new SanFranciscoAvgHHLIncome();
 
 	public static SanFranciscoModeParameters buildDefault() {
 		SanFranciscoModeParameters parameters = new SanFranciscoModeParameters();
@@ -28,7 +33,7 @@ public class SanFranciscoModeParameters extends ModeParameters {
 		parameters.lambdaCostEuclideanDistance = 0.0;
 		parameters.referenceEuclideanDistance_km = 40.0;
         parameters.sfIncomeElasticity.lambda_income = -1.0;
-        
+        parameters.sfAvgHHLIncome.avg_hhl_income = 124108;
 		// Car
 		parameters.car.alpha_u = 0.0;
 		parameters.car.betaTravelTime_u_min = -0.0347;
