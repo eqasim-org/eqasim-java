@@ -1,7 +1,9 @@
 package org.eqasim.san_francisco.mode_choice;
 
+import java.io.File;
 import java.io.IOException;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
@@ -45,17 +47,29 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public SanFranciscoModeParameters provideModeChoiceParameters() throws IOException, ConfigurationException {
+	public SanFranciscoModeParameters provideModeChoiceParameters(EqasimConfigGroup config) throws IOException, ConfigurationException {
 		SanFranciscoModeParameters parameters = SanFranciscoModeParameters.buildDefault();
+		
+		if (config.getModeParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+		}
+		
 		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
+		
 		return parameters;
 	}
 
 	@Provides
 	@Singleton
-	public SanFranciscoCostParameters provideCostParameters() {
+	public SanFranciscoCostParameters provideCostParameters(EqasimConfigGroup config) {
 		SanFranciscoCostParameters parameters = SanFranciscoCostParameters.buildDefault();
+		
+		if (config.getModeParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+		}
+		
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
+		
 		return parameters;
 	}
 }
