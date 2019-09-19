@@ -13,7 +13,7 @@ public class SanFranciscoPredictorUtils {
 	static public boolean startsEndsinCity(DiscreteModeChoiceTrip trip) {
 		boolean startInCity = (boolean) trip.getOriginActivity().getAttributes().getAttribute("city");
 		boolean endInCity = (boolean) trip.getDestinationActivity().getAttributes().getAttribute("city");
-		return startInCity & endInCity;
+		return startInCity | endInCity;
 	}
 
 	static public double hhlIncome(Person person) {
