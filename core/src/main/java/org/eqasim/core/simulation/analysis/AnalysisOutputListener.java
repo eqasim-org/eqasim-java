@@ -8,9 +8,7 @@ import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.TripListener;
 import org.eqasim.core.analysis.TripWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.groups.ControlerConfigGroup;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
@@ -18,7 +16,6 @@ import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
-import org.matsim.core.router.MainModeIdentifier;
 
 import com.google.inject.Inject;
 
@@ -37,8 +34,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	@Inject
 	public AnalysisOutputListener(EqasimConfigGroup config, ControlerConfigGroup controllerConfig,
-			PlansCalcRouteConfigGroup routeConfig, OutputDirectoryHierarchy outputDirectory, Network network,
-			MainModeIdentifier mainModeIdentifier) {
+			OutputDirectoryHierarchy outputDirectory, TripListener tripListener) {
 		this.outputDirectory = outputDirectory;
 		this.lastIteration = controllerConfig.getLastIteration();
 
@@ -46,8 +42,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		this.analysisDistanceUnit = config.getTripAnalysisDistanceUnit();
 
 		this.tripAnalysisInterval = config.getTripAnalysisInterval();
-		this.tripAnalysisListener = new TripListener(network, type -> type.endsWith("interaction"), mainModeIdentifier,
-				routeConfig.getNetworkModes());
+		this.tripAnalysisListener = tripListener;
 	}
 
 	@Override
