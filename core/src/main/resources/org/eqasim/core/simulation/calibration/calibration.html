@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Calibration</title>
+    <meta charset="utf-8" />
+    <style>
+    body {
+        font-family: sans-serif;
+    }
+
+    svg text {
+      font-size: 2em;
+    }
+
+    .bar.simulation {
+      opacity: 1.0;
+    }
+
+    .bar.reference {
+      opacity: 0.5;
+    }
+
+    svg text.bar {
+      font-size: 1em;
+    }
+    </style>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script src="https://d3js.org/d3-array.v2.min.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-format.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v3.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+  </head>
+  <body>
+    <h1>Calibration</h1>
+    Annotation: <i class="hint">No hint.</i><br />
+    <script>
+      var margin = {top: 40, right: 20, bottom: 30, left: 60},
+          width = 800 - margin.left - margin.right,
+          height = 400 - margin.top - margin.bottom;
+
+      var svgTotal = d3.select("body")
+        .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      d3.select("body").append("br");
+
+      var svgDistance = d3.select("body")
+        .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      //d3.json("data.json").then(function(data) {
+
+        var data = {"reference":{"totalModeShare":{"car":0.3814168577313178,"pt":0.17226907084288656,"bike":0.08572649904791513,"walk":0.251855593984378,"car_passenger":0.1087319783935025},"distanceBoundaries":[500.0,1000.0,1500.0,2500.0,5000.0,10000.0],"modeShareByDistance":[{"car":0.1083875909613175,"pt":0.006319417847567982,"bike":0.0783224818077365,"walk":0.7893527384144006,"car_passenger":0.017617770968977403},{"car":0.265564738292011,"pt":0.06143250688705234,"bike":0.17327823691460056,"walk":0.4297520661157025,"car_passenger":0.0699724517906336},{"car":0.371548900327562,"pt":0.12962096396817968,"bike":0.19747309312119793,"walk":0.200280767430978,"car_passenger":0.10107627515208235},{"car":0.4306656101426308,"pt":0.205229793977813,"bike":0.14698890649762283,"walk":0.09469096671949287,"car_passenger":0.12242472266244057},{"car":0.525213557453844,"pt":0.21851749793331496,"bike":0.07329842931937172,"walk":0.031138054560484983,"car_passenger":0.1518324607329843},{"car":0.5667468430547203,"pt":0.24203247143716175,"bike":0.024954900781719785,"walk":0.004810583283223091,"car_passenger":0.161455201443175},{"car":0.4962962962962963,"pt":0.3388414055080722,"bike":0.0049382716049382715,"walk":5.698005698005698E-4,"car_passenger":0.1593542260208927}]},"simulation":{"totalModeShare":{"pt":0.09257098405289771,"car":0.4455464799688837,"car_passenger":0.09237650719564372,"walk":0.19778296382730456,"bike":0.17172306495527032},"distanceBoundaries":[500.0,1000.0,1500.0,2500.0,5000.0,10000.0],"modeShareByDistance":[{"pt":0.0017006802721088435,"car":0.24489795918367346,"car_passenger":0.023809523809523808,"walk":0.4192176870748299,"bike":0.31037414965986393},{"pt":0.03064066852367688,"car":0.2479108635097493,"car_passenger":0.0766016713091922,"walk":0.4136490250696379,"bike":0.23119777158774374},{"pt":0.07582938388625593,"car":0.3175355450236967,"car_passenger":0.05924170616113744,"walk":0.3815165876777251,"bike":0.16587677725118483},{"pt":0.16243654822335024,"car":0.4230118443316413,"car_passenger":0.08967851099830795,"walk":0.07952622673434856,"bike":0.24534686971235195},{"pt":0.1288265306122449,"car":0.5969387755102041,"car_passenger":0.11989795918367346,"walk":0.008928571428571428,"bike":0.14540816326530612},{"pt":0.16044776119402984,"car":0.6368159203980099,"car_passenger":0.1654228855721393,"walk":0.008706467661691543,"bike":0.028606965174129355},{"pt":0.14528593508500773,"car":0.7125193199381762,"car_passenger":0.13446676970633695,"walk":0.0077279752704791345,"bike":0.0}]},"hint":"No hint given."};
+        <!-- INSERT DATA -->
+
+        d3.select("i.hint").text(data.hint);
+
+        // Total plot
+        var modes = d3.map(data.simulation.totalModeShare).keys().sort()
+
+        var scaleX = d3.scaleBand().range([0, width]).padding(0.05);
+        var scaleY = d3.scaleLinear().range([height, 0]);
+        var scaleColor = d3.scaleOrdinal().range(d3.schemeSet2);
+
+        var axisX = d3.axisBottom().scale(scaleX);
+        var axisY = d3.axisLeft().scale(scaleY);
+
+        scaleX.domain(modes);
+        scaleColor.domain(modes);
+        scaleY.domain([0.0, d3.max([
+          d3.max(d3.map(data.simulation.totalModeShare).values()),
+          d3.max(d3.map(data.reference.totalModeShare).values())
+        ])])
+
+        svgTotal.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .call(axisX);
+
+        svgTotal.append("g").call(axisY);
+
+        var totalModeShareSimualtionData = [];
+        var totalModeShareReferenceData = [];
+
+        for (var mode in modes) {
+          mode = modes[mode]
+          totalModeShareSimualtionData.push({ "mode": mode, "value": data.simulation.totalModeShare[mode] })
+          totalModeShareReferenceData.push({ "mode": mode, "value": data.reference.totalModeShare[mode] })
+        }
+
+        var rounded = d3.format(".2f")
+
+        svgTotal.append("g").selectAll(".bar.simulation")
+            .data(totalModeShareSimualtionData)
+          .enter().append("rect")
+            .attr("x", function(d) { return scaleX(d.mode); })
+            .attr("y", function(d) { return scaleY(d.value); })
+            .attr("width", function(d) { return scaleX.bandwidth() * 0.5; })
+            .attr("height", function(d) { return height - scaleY(d.value); })
+            .attr("fill", function(d) { return scaleColor(d.mode); })
+            .attr("class", "simulation")
+            .attr("class", "bar simulation")
+          ;
+
+        svgTotal.append("g").selectAll(".bar.simulation")
+            .data(totalModeShareSimualtionData).enter()
+            .append("text")
+            .attr("x", function(d) { return scaleX(d.mode) + scaleX.bandwidth() * 0.25; })
+            .attr("y", function(d) { return scaleY(d.value); })
+            .attr("width", function(d) { return scaleX.bandwidth() * 0.5; })
+            .attr("text-anchor", "middle")
+            .attr("dy", "-0.5em")
+            .attr("fill", function(d) { return d3.color(scaleColor(d.mode)).darker(2.0) })
+            .text(function(d) { return rounded(d.value); })
+            .attr("class", "bar")
+          ;
+
+        svgTotal.append("g").selectAll(".bar.reference")
+            .data(totalModeShareReferenceData)
+          .enter()
+            .append("rect")
+            .attr("x", function(d) { return scaleX(d.mode) + scaleX.bandwidth() * 0.5; })
+            .attr("y", function(d) { return scaleY(d.value); })
+            .attr("width", function(d) { return scaleX.bandwidth() * 0.5; })
+            .attr("height", function(d) { return height - scaleY(d.value); })
+            .attr("fill", function(d) { return scaleColor(d.mode) })
+            .attr("class", "bar reference")
+
+        svgTotal.append("g").selectAll(".bar.reference")
+            .data(totalModeShareReferenceData).enter()
+            .append("text")
+            .attr("x", function(d) { return scaleX(d.mode) + scaleX.bandwidth() * 0.75; })
+            .attr("y", function(d) { return scaleY(d.value); })
+            .attr("width", function(d) { return scaleX.bandwidth() * 0.5; })
+            .attr("text-anchor", "middle")
+            .attr("dy", "-0.5em")
+            .attr("fill", function(d) { return d3.color(scaleColor(d.mode)).darker(2.0) })
+            .text(function(d) { return rounded(d.value); })
+            .attr("class", "bar")
+          ;
+
+          // Distance plot
+
+          var boundaries = data.simulation.distanceBoundaries;
+          //boundaries.push(Infinity);
+
+          var modeShareByDistanceSimulationData = [];
+          var modeShareByDistanceReferenceData = [];
+
+          for (var boundary_index in boundaries) {
+            var boundary = boundaries[boundary_index];
+
+            for (var mode_index in modes) {
+              var mode = modes[mode_index];
+
+              modeShareByDistanceSimulationData.push(function(d) { d.boundary = boundary; return d; } (data.simulation.modeShareByDistance[boundary_index]));
+              modeShareByDistanceReferenceData.push(function(d) { d.boundary = boundary; return d; } (data.reference.modeShareByDistance[boundary_index]));
+            }
+          }
+
+          if (true) {
+            var scaleX = d3.scaleLinear().range([0, width]);
+            var scaleY = d3.scaleLinear().range([height, 0]);
+
+            var axisX = d3.axisBottom().scale(scaleX);
+            var axisY = d3.axisLeft().scale(scaleY);
+
+            scaleX.domain([0, d3.max(boundaries)]);
+            scaleY.domain([0.0, 0.8]);
+
+            svgDistance.append("g")
+              .attr("transform", "translate(0," + height + ")")
+              .call(axisX);
+
+            svgDistance.append("g").call(axisY);
+
+            var newSimulationData = {};
+            var newReferenceData = {};
+
+            for (var mode_index in modes) {
+              var modeValuesSimulation = [];
+              var modeValuesReference = [];
+
+              for (var boundary_index in boundaries) {
+                modeValuesSimulation.push({
+                  boundary: boundaries[boundary_index],
+                  value: data.simulation.modeShareByDistance[boundary_index][modes[mode_index]]
+                });
+
+                modeValuesReference.push({
+                  boundary: boundaries[boundary_index],
+                  value: data.reference.modeShareByDistance[boundary_index][modes[mode_index]]
+                });
+              }
+
+              newSimulationData[modes[mode_index]] = modeValuesSimulation;
+              newReferenceData[modes[mode_index]] = modeValuesReference;
+            }
+
+            svgDistance.append("g").selectAll(".line.reference")
+              .data(d3.map(newSimulationData).entries())
+              .enter().append("path")
+                .attr("fill", "none")
+                .attr("stroke", function(d) { return scaleColor(d.key); })
+                .attr("stroke-width", 3.0)
+                .attr("d", function(d) {
+                  console.log(d);
+                  return d3.line()
+                    .x(function(d) { return scaleX(d.boundary); })
+                    .y(function(d) { return scaleY(d.value); })
+                    (d.value);
+                });
+
+            svgDistance.append("g").selectAll(".line.reference")
+              .data(d3.map(newReferenceData).entries())
+              .enter().append("path")
+                .attr("fill", "none")
+                .attr("stroke", function(d) { return scaleColor(d.key); })
+                .attr("stroke-width", 1.0)
+                .attr("d", function(d) {
+                  console.log(d);
+                  return d3.line()
+                    .x(function(d) { return scaleX(d.boundary); })
+                    .y(function(d) { return scaleY(d.value); })
+                    (d.value);
+                });
+
+
+          }
+
+          if (false) {
+            var scaleX = d3.scaleBand().range([0, width]).padding(0.1);
+            var scaleY = d3.scaleLinear().range([height, 0]);
+
+            var axisX = d3.axisBottom().scale(scaleX);
+            var axisY = d3.axisLeft().scale(scaleY);
+
+            scaleX.domain(boundaries);
+            scaleY.domain([0.0, 1.0]);
+
+            svgDistance.append("g")
+              .attr("transform", "translate(0," + height + ")")
+              .call(axisX);
+
+            svgDistance.append("g").call(axisY);
+
+            var modeStack = d3.stack().keys(modes);
+            var modeShareByDistanceReferenceData = modeStack(modeShareByDistanceReferenceData);
+            var modeShareByDistanceSimulationData = modeStack(modeShareByDistanceSimulationData);
+
+            svgDistance.append("g").selectAll(".bar.reference")
+                .data(modeShareByDistanceSimulationData)
+                .enter().append("g")
+                  .attr("fill", function(d) { return scaleColor(d.key); })
+                .selectAll("rect")
+                  .data(function(d) { return d; })
+                  .enter().append("rect")
+                  .attr("x", function(d) { return scaleX(d.data.boundary); })
+                  .attr("y", function(d) { return scaleY(d[1]); })
+                  .attr("height", function(d) { return height - scaleY(d[1] - d[0]); })
+                  .attr("width", function(d) { return scaleX.bandwidth() * 0.48; })
+                  .attr("class", "bar simulation")
+              ;
+
+              svgDistance.append("g").selectAll(".bar.reference")
+                  .data(modeShareByDistanceSimulationData)
+                  .enter().append("g")
+                  .attr("fill", function(d) { return d3.color(scaleColor(d.key)).darker(2.0) })
+                  .selectAll("text")
+                    .data(function(d) { return d; })
+                    .enter().append("text")
+                    .attr("x", function(d) { return scaleX(d.data.boundary) + scaleX.bandwidth() * 0.25; })
+                    .attr("y", function(d) { return 0.5 * (scaleY(d[0]) + scaleY(d[1])); })
+                    .attr("text-anchor", "middle")
+                    .attr("dominant-baseline", "middle")
+                    .text(function(d) { return rounded(d[1] - d[0]); })
+                    .attr("class", "bar")
+                ;
+
+              svgDistance.append("g").selectAll(".bar.reference")
+                  .data(modeShareByDistanceReferenceData)
+                  .enter().append("g")
+                    .attr("fill", function(d) { return scaleColor(d.key); })
+                  .selectAll("rect")
+                    .data(function(d) { return d; })
+                    .enter().append("rect")
+                    .attr("x", function(d) { return scaleX(d.data.boundary) + scaleX.bandwidth() * 0.51; })
+                    .attr("y", function(d) { return scaleY(d[1]); })
+                    .attr("height", function(d) { return height - scaleY(d[1] - d[0]); })
+                    .attr("width", function(d) { return scaleX.bandwidth() * 0.48; })
+                    .attr("class", "bar reference")
+                ;
+
+                svgDistance.append("g").selectAll(".bar.reference")
+                    .data(modeShareByDistanceReferenceData)
+                    .enter().append("g")
+                      .attr("fill", function(d) { return d3.color(scaleColor(d.key)).darker(2.0) })
+                    .selectAll("text")
+                      .data(function(d) { return d; })
+                      .enter().append("text")
+                      .attr("x", function(d) { return scaleX(d.data.boundary) + scaleX.bandwidth() * 0.75; })
+                      .attr("y", function(d) { return 0.5 * (scaleY(d[0]) + scaleY(d[1])); })
+                      .attr("text-anchor", "middle")
+                      .attr("dominant-baseline", "middle")
+                      .text(function(d) { return rounded(d[1] - d[0]); })
+                      .attr("class", "bar")
+                  ;
+            }
+      //});
+      </script>
+  </body>
+</html>
