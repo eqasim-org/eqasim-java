@@ -25,12 +25,14 @@ public class TripReaderFromPopulation {
 	final private Network network;
 	final private StageActivityTypes stageActivityTypes;
 	final private MainModeIdentifier mainModeIdentifier;
+	final private PersonAnalysisFilter personFilter;
 
 	public TripReaderFromPopulation(Network network, StageActivityTypes stageActivityTypes,
-			MainModeIdentifier mainModeIdentifier) {
+			MainModeIdentifier mainModeIdentifier, PersonAnalysisFilter personFilter) {
 		this.network = network;
 		this.stageActivityTypes = stageActivityTypes;
 		this.mainModeIdentifier = mainModeIdentifier;
+		this.personFilter = personFilter;
 	}
 
 	public Collection<TripItem> readTrips(String populationPath) {
@@ -44,23 +46,25 @@ public class TripReaderFromPopulation {
 		List<TripItem> tripItems = new LinkedList<>();
 
 		for (Person person : population.getPersons().values()) {
-			List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(person.getSelectedPlan(),
-					stageActivityTypes);
+			if (personFilter.analyzePerson(person.getId())) {
+				List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(person.getSelectedPlan(),
+						stageActivityTypes);
 
-			int personTripIndex = 0;
+				int personTripIndex = 0;
 
-			for (TripStructureUtils.Trip trip : trips) {
-				boolean isHomeTrip = trip.getDestinationActivity().getType().equals("home");
+				for (TripStructureUtils.Trip trip : trips) {
+					boolean isHomeTrip = trip.getDestinationActivity().getType().equals("home");
 
-				tripItems.add(new TripItem(person.getId(), personTripIndex, trip.getOriginActivity().getCoord(),
-						trip.getDestinationActivity().getCoord(), trip.getOriginActivity().getEndTime(),
-						trip.getDestinationActivity().getStartTime() - trip.getOriginActivity().getEndTime(),
-						getNetworkDistance(trip), mainModeIdentifier.identifyMainMode(trip.getTripElements()),
-						trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
-						CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
-								trip.getDestinationActivity().getCoord())));
+					tripItems.add(new TripItem(person.getId(), personTripIndex, trip.getOriginActivity().getCoord(),
+							trip.getDestinationActivity().getCoord(), trip.getOriginActivity().getEndTime(),
+							trip.getDestinationActivity().getStartTime() - trip.getOriginActivity().getEndTime(),
+							getNetworkDistance(trip), mainModeIdentifier.identifyMainMode(trip.getTripElements()),
+							trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
+							CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
+									trip.getDestinationActivity().getCoord())));
 
-				personTripIndex++;
+					personTripIndex++;
+				}
 			}
 		}
 
