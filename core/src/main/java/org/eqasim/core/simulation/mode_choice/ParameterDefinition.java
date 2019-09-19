@@ -46,7 +46,7 @@ public interface ParameterDefinition {
 
 				Object activeObject = parameterDefinition;
 
-				for (int i = 0; i < parts.length - 1; i++) {
+				for (int i = 0; i < parts.length; i++) {
 					Field field = activeObject.getClass().getField(parts[i]);
 
 					if (i == numberOfParts - 1) {
