@@ -2,6 +2,7 @@ package org.eqasim.examples.zurich_av;
 
 import org.eqasim.automated_vehicles.components.AvConfigurator;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
+import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
@@ -67,6 +68,7 @@ public class RunSimulation {
 		Controler controller = new Controler(scenario);
 		SwitzerlandConfigurator.configureController(controller);
 		controller.addOverridingModule(new EqasimModeChoiceModule());
+		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 		AvConfigurator.configureController(controller, cmd); // Add some modules for AV
 
