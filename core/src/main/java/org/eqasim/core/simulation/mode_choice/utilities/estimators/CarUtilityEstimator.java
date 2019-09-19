@@ -42,7 +42,7 @@ public class CarUtilityEstimator implements UtilityEstimator {
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		CarVariables variables = predictor.predict(person, trip, elements);
+		CarVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 

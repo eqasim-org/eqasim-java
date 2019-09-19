@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.mode_choice.utilities.variables.SwissPersonVariables;
@@ -17,15 +16,15 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 	private final SwissModeParameters parameters;
-	private final SwissPersonPredictor predictor;
+	private final SwissPersonPredictor personPredictor;
 
 	@Inject
-	public SwissBikeUtilityEstimator(SwissModeParameters parameters, PersonPredictor personPredictor,
-			BikePredictor bikePredictor, SwissPersonPredictor predictor) {
-		super(parameters, personPredictor, bikePredictor);
+	public SwissBikeUtilityEstimator(SwissModeParameters parameters, SwissPersonPredictor personPredictor,
+			BikePredictor bikePredictor) {
+		super(parameters, personPredictor.delegate, bikePredictor);
 
 		this.parameters = parameters;
-		this.predictor = predictor;
+		this.personPredictor = personPredictor;
 	}
 
 	protected double estimateRegionalUtility(SwissPersonVariables variables) {
@@ -34,7 +33,7 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		SwissPersonVariables variables = predictor.predictVariables(person, trip, elements);
+		SwissPersonVariables variables = personPredictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 
