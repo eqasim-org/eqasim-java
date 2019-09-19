@@ -33,7 +33,7 @@ public class WalkUtilityEstimator implements UtilityEstimator {
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		WalkVariables variables = predictor.predict(person, trip, elements);
+		WalkVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 

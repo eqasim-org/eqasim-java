@@ -46,13 +46,16 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 	final private Map<Id<Vehicle>, Collection<Id<Person>>> passengers = new HashMap<>();
 	final private Map<Id<Person>, Integer> tripIndex = new HashMap<>();
 
+	final private PersonAnalysisFilter personFilter;
+
 	public TripListener(Network network, StageActivityTypes stageActivityTypes, MainModeIdentifier mainModeIdentifier,
-			Collection<String> networkRouteModes) {
+			Collection<String> networkRouteModes, PersonAnalysisFilter personFilter) {
 		this.network = network;
 		this.stageActivityTypes = stageActivityTypes;
 		this.mainModeIdentifier = mainModeIdentifier;
 		this.networkRouteModes = networkRouteModes;
 		this.factory = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation().getFactory();
+		this.personFilter = personFilter;
 	}
 
 	public Collection<TripItem> getTripItems() {
@@ -69,68 +72,78 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
-		if (!stageActivityTypes.isStageActivity(event.getActType())) {
-			Integer personTripIndex = tripIndex.get(event.getPersonId());
-			network.getLinks().get(event.getLinkId()).getCoord();
+		if (personFilter.analyzePerson(event.getPersonId())) {
+			if (!stageActivityTypes.isStageActivity(event.getActType())) {
+				Integer personTripIndex = tripIndex.get(event.getPersonId());
+				network.getLinks().get(event.getLinkId()).getCoord();
 
-			if (personTripIndex == null) {
-				personTripIndex = 0;
-			} else {
-				personTripIndex = personTripIndex + 1;
+				if (personTripIndex == null) {
+					personTripIndex = 0;
+				} else {
+					personTripIndex = personTripIndex + 1;
+				}
+
+				ongoing.put(event.getPersonId(), new TripListenerItem(event.getPersonId(), personTripIndex,
+						network.getLinks().get(event.getLinkId()).getCoord(), event.getTime(), event.getActType()));
+
+				tripIndex.put(event.getPersonId(), personTripIndex);
 			}
-
-			ongoing.put(event.getPersonId(), new TripListenerItem(event.getPersonId(), personTripIndex,
-					network.getLinks().get(event.getLinkId()).getCoord(), event.getTime(), event.getActType()));
-
-			tripIndex.put(event.getPersonId(), personTripIndex);
 		}
 	}
 
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
-		ongoing.get(event.getPersonId()).elements.add(factory.createLeg(event.getLegMode()));
+		if (personFilter.analyzePerson(event.getPersonId())) {
+			ongoing.get(event.getPersonId()).elements.add(factory.createLeg(event.getLegMode()));
+		}
 	}
 
 	@Override
 	public void handleEvent(ActivityStartEvent event) {
-		if (stageActivityTypes.isStageActivity(event.getActType())) {
-			ongoing.get(event.getPersonId()).elements
-					.add(factory.createActivityFromLinkId(event.getActType(), event.getLinkId()));
-		} else {
-			TripListenerItem trip = ongoing.remove(event.getPersonId());
+		if (personFilter.analyzePerson(event.getPersonId())) {
+			if (stageActivityTypes.isStageActivity(event.getActType())) {
+				ongoing.get(event.getPersonId()).elements
+						.add(factory.createActivityFromLinkId(event.getActType(), event.getLinkId()));
+			} else {
+				TripListenerItem trip = ongoing.remove(event.getPersonId());
 
-			if (trip != null) {
-				trip.returning = event.getActType().equals("home");
-				trip.followingPurpose = event.getActType();
-				trip.travelTime = event.getTime() - trip.startTime;
-				trip.mode = mainModeIdentifier.identifyMainMode(trip.elements);
-				trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
-				trip.networkDistance = getNetworkDistance(trip);
-				trip.crowflyDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
+				if (trip != null) {
+					trip.returning = event.getActType().equals("home");
+					trip.followingPurpose = event.getActType();
+					trip.travelTime = event.getTime() - trip.startTime;
+					trip.mode = mainModeIdentifier.identifyMainMode(trip.elements);
+					trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
+					trip.networkDistance = getNetworkDistance(trip);
+					trip.crowflyDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
-				trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination, trip.startTime,
-						trip.travelTime, trip.networkDistance, trip.mode, trip.preceedingPurpose, trip.followingPurpose,
-						trip.returning, trip.crowflyDistance));
+					trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination,
+							trip.startTime, trip.travelTime, trip.networkDistance, trip.mode, trip.preceedingPurpose,
+							trip.followingPurpose, trip.returning, trip.crowflyDistance));
+				}
 			}
 		}
 	}
 
 	@Override
 	public void handleEvent(PersonEntersVehicleEvent event) {
-		if (!passengers.containsKey(event.getVehicleId())) {
-			passengers.put(event.getVehicleId(), new HashSet<>());
-		}
+		if (personFilter.analyzePerson(event.getPersonId())) {
+			if (!passengers.containsKey(event.getVehicleId())) {
+				passengers.put(event.getVehicleId(), new HashSet<>());
+			}
 
-		passengers.get(event.getVehicleId()).add(event.getPersonId());
+			passengers.get(event.getVehicleId()).add(event.getPersonId());
+		}
 	}
 
 	@Override
 	public void handleEvent(PersonLeavesVehicleEvent event) {
-		if (passengers.containsKey(event.getVehicleId())) {
-			passengers.get(event.getVehicleId()).remove(event.getPersonId());
+		if (personFilter.analyzePerson(event.getPersonId())) {
+			if (passengers.containsKey(event.getVehicleId())) {
+				passengers.get(event.getVehicleId()).remove(event.getPersonId());
 
-			if (passengers.get(event.getVehicleId()).size() == 0) {
-				passengers.remove(event.getVehicleId());
+				if (passengers.get(event.getVehicleId()).size() == 0) {
+					passengers.remove(event.getVehicleId());
+				}
 			}
 		}
 	}
@@ -162,12 +175,14 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 	@Override
 	public void handleEvent(TeleportationArrivalEvent event) {
-		TripListenerItem item = ongoing.get(event.getPersonId());
+		if (personFilter.analyzePerson(event.getPersonId())) {
+			TripListenerItem item = ongoing.get(event.getPersonId());
 
-		if (Double.isNaN(item.networkDistance)) {
-			item.networkDistance = 0.0;
+			if (Double.isNaN(item.networkDistance)) {
+				item.networkDistance = 0.0;
+			}
+
+			item.networkDistance += event.getDistance();
 		}
-
-		item.networkDistance += event.getDistance();
 	}
 }

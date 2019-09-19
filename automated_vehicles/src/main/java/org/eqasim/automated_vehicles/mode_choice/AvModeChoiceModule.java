@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
+import org.eqasim.automated_vehicles.components.AvPersonAnalysisFilter;
 import org.eqasim.automated_vehicles.components.EqasimAvConfigGroup;
 import org.eqasim.automated_vehicles.mode_choice.constraints.AvWalkConstraint;
 import org.eqasim.automated_vehicles.mode_choice.cost.AvCostListener;
@@ -13,6 +14,7 @@ import org.eqasim.automated_vehicles.mode_choice.cost.AvCostWriter;
 import org.eqasim.automated_vehicles.mode_choice.mode_parameters.AvModeParameters;
 import org.eqasim.automated_vehicles.mode_choice.utilities.estimators.AvUtilityEstimator;
 import org.eqasim.automated_vehicles.mode_choice.utilities.predictors.AvPredictor;
+import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
@@ -53,6 +55,8 @@ public class AvModeChoiceModule extends AbstractEqasimExtension {
 		addEventHandlerBinding().to(FleetDistanceListener.class);
 		addControlerListenerBinding().to(AvCostListener.class);
 		addControlerListenerBinding().to(AvCostWriter.class);
+
+		bind(PersonAnalysisFilter.class).to(AvPersonAnalysisFilter.class);
 	}
 
 	@Provides
