@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Add iml and idea to gitignore
 - Add calibration utilities
 - Improve code structure of the choice models in `core` and `switzerland`
 - Improve trips analysis with PersonFilter and give access to other modules if present
