@@ -48,11 +48,12 @@ public class RunTripAnalysis {
 
 		if (cmd.hasOption("events-path")) {
 			String eventsPath = cmd.getOptionStrict("events-path");
-			TripListener tripListener = new TripListener(network, stageActivityTypes, mainModeIdentifier, networkModes);
+			TripListener tripListener = new TripListener(network, stageActivityTypes, mainModeIdentifier, networkModes,
+					new DefaultPersonAnalysisFilter());
 			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
 		} else {
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier)
+			trips = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier, new DefaultPersonAnalysisFilter())
 					.readTrips(populationPath);
 		}
 
