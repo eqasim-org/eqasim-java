@@ -34,7 +34,7 @@ public class CalibrationDataProvider {
 				continue;
 			}
 			
-			if (trip.crowflyDistance == 0.0) {
+			if (trip.crowflyDistance < 10.0) {
 				continue;
 			}
 
