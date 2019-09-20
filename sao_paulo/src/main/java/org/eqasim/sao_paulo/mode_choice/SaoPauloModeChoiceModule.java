@@ -1,7 +1,9 @@
 package org.eqasim.sao_paulo.mode_choice;
 
+import java.io.File;
 import java.io.IOException;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
@@ -42,16 +44,27 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public SaoPauloModeParameters provideModeChoiceParameters() throws IOException, ConfigurationException {
+	public SaoPauloModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
+			throws IOException, ConfigurationException {
 		SaoPauloModeParameters parameters = SaoPauloModeParameters.buildDefault();
+
+		if (config.getModeParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+		}
+
 		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
 		return parameters;
 	}
 
 	@Provides
 	@Singleton
-	public SaoPauloCostParameters provideCostParameters() {
+	public SaoPauloCostParameters provideCostParameters(EqasimConfigGroup config) {
 		SaoPauloCostParameters parameters = SaoPauloCostParameters.buildDefault();
+
+		if (config.getCostParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
+		}
+
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
 	}

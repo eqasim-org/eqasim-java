@@ -5,14 +5,16 @@
 	<groupId>org.eqasim</groupId>
 	<artifactId>eqasim</artifactId>
 	<version>1.0.2</version>
-    <packaging>pom</packaging>
+	<packaging>pom</packaging>
 
-    <modules>
-        <module>core</module>
-        <module>switzerland</module>
-        <module>ile_de_france</module>
-        <module>sao_paulo</module>
-    </modules>
+	<modules>
+		<module>core</module>
+		<module>switzerland</module>
+		<module>ile_de_france</module>
+		<module>sao_paulo</module>
+		<module>automated_vehicles</module>
+		<module>examples</module>
+	</modules>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -43,6 +45,12 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-yaml</artifactId>
+			<version>2.9.9</version>
+		</dependency>
+
+		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>2.9.9.3</version>
@@ -69,7 +77,7 @@
 		<dependency>
 			<groupId>ch.ethz.matsim</groupId>
 			<artifactId>discrete_mode_choice</artifactId>
-			<version>11.0.6</version>
+			<version>1.0.7-matsim11</version>
 		</dependency>
 
 		<dependency>
