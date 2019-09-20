@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Disable calibration output by default (since reference data is not always available)
 - Add iml and idea to gitignore
 - Add calibration utilities
 - Improve code structure of the choice models in `core` and `switzerland`
