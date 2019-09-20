@@ -54,7 +54,6 @@ public class RunSimulation {
 		
 		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.get(config);
 		calibrationConfig.setEnable(true);
-		calibrationConfig.setReferencePath("/home/shoerl/calibration/reference.json");
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
