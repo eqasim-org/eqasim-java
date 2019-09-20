@@ -11,7 +11,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 	static public final String HINT = "hint";
 
 	private String referencePath;
-	private boolean enable = true;
+	private boolean enable = false;
 	private String hint = "No hint given.";
 
 	public CalibrationConfigGroup() {
