@@ -1,5 +1,6 @@
 package org.eqasim.core.scenario.location_assignment;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import org.eqasim.core.location_assignment.matsim.discretizer.FacilityTypeDiscre
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDiscretizationThresholdProvider;
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDiscretizerProvider;
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDistanceSamplerProvider;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.core.population.PopulationUtils;
@@ -20,18 +22,32 @@ class ProblemProvider
 	final private DistanceSamplerFactory distanceSamplerFactory;
 	final private FacilityTypeDiscretizerFactory discretizerFactory;
 	final private Map<String, Double> discretizationThresholds;
+	final private boolean requirePtAccessibility;
 
 	public ProblemProvider(DistanceSamplerFactory distanceSamplerFactory,
-			FacilityTypeDiscretizerFactory discretizerFactory, Map<String, Double> discretizationThresholds) {
+			FacilityTypeDiscretizerFactory discretizerFactory, Map<String, Double> discretizationThresholds, boolean requirePtAccessibility) {
 		this.distanceSamplerFactory = distanceSamplerFactory;
 		this.discretizerFactory = discretizerFactory;
 		this.discretizationThresholds = discretizationThresholds;
+		this.requirePtAccessibility = requirePtAccessibility;
 	}
 
 	@Override
 	public List<Discretizer> getDiscretizers(MATSimAssignmentProblem problem) {
-		return problem.getChainActivities().stream().map(Activity::getType).map(discretizerFactory::createDiscretizer)
-				.collect(Collectors.toList());
+		List<Discretizer> discretizers = new LinkedList<>();
+		
+		for (int index = 0; index < problem.getChainActivities().size(); index++) {
+			String activityType = problem.getChainActivities().get(index).getType();
+			String mode = problem.getChainLegs().get(index).getMode();
+			
+			if (mode.equals(TransportMode.pt) && requirePtAccessibility) {
+				discretizers.add(discretizerFactory.createDiscretizer(activityType, true));
+			} else {
+				discretizers.add(discretizerFactory.createDiscretizer(activityType, false));
+			}
+		}
+		
+		return discretizers;
 	}
 
 	@Override
