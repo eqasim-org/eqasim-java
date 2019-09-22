@@ -43,7 +43,7 @@ class ProblemProvider
 						discretizerFactory.createDiscretizer(problem.getChainActivities().get(index).getType(), false));
 			else {
 				String activityType = problem.getChainActivities().get(index).getType();
-				String mode = problem.getChainLegs().get(index).getMode();
+				String mode = problem.getAllLegs().get(index).getMode();
 
 				if (mode.equals(TransportMode.pt)) {
 					discretizers.add(discretizerFactory.createDiscretizer(activityType, true));
