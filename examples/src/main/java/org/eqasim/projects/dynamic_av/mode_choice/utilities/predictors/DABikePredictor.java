@@ -25,7 +25,7 @@ public class DABikePredictor extends CachedVariablePredictor<DABikeVariables> {
 	@Override
 	protected DABikeVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
-		BikeVariables delegateVariables = delegate.predict(person, trip, elements);
+		BikeVariables delegateVariables = delegate.predictVariables(person, trip, elements);
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
 
 		return new DABikeVariables(delegateVariables, euclideanDistance_km);

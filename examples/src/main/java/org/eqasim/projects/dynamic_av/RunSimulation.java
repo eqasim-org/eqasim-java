@@ -1,5 +1,10 @@
 package org.eqasim.projects.dynamic_av;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+
 import org.eqasim.automated_vehicles.components.AvConfigurator;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
@@ -16,6 +21,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.households.Household;
 
 import ch.ethz.matsim.av.framework.AVQSimModule;
 
@@ -26,7 +32,7 @@ import ch.ethz.matsim.av.framework.AVQSimModule;
  * to use the AV module. They are marked further below.
  */
 public class RunSimulation {
-	static public void main(String[] args) throws ConfigurationException {
+	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter", "av-mode-parameter", "av-cost-parameter") //
@@ -48,10 +54,10 @@ public class RunSimulation {
 		 */
 
 		DAConfigurator.configure(config);
-		
+
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setTripAnalysisInterval(1);
-		
+
 		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.get(config);
 		calibrationConfig.setEnable(true);
 
@@ -61,6 +67,23 @@ public class RunSimulation {
 		ScenarioUtils.loadScenario(scenario);
 		SwitzerlandConfigurator.adjustScenario(scenario);
 		DAConfigurator.adjustScenario(scenario);
+		
+		double totalIncome = 0.0;
+		double numberOfHouseholds = 0.0;
+		
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("income.txt")));
+		writer.write("income\n");
+		
+		for (Household household : scenario.getHouseholds().getHouseholds().values()) {
+			totalIncome += household.getIncome().getIncome();
+			numberOfHouseholds++;
+			writer.write(String.valueOf(household.getIncome().getIncome()) + "\n");
+		}
+		
+		writer.close();
+		
+		System.out.println(totalIncome / numberOfHouseholds);
+
 
 		// The AvConfigurator provides some convenience functions to adjust the
 		// scenario. Here, we add the mode 'av' to all links that have the 'car' mode

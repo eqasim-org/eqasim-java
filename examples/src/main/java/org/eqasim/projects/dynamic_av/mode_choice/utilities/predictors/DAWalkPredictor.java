@@ -25,6 +25,6 @@ public class DAWalkPredictor extends CachedVariablePredictor<DAWalkVariables> {
 	protected DAWalkVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-		return new DAWalkVariables(delegate.predict(person, trip, elements), euclideanDistance_km);
+		return new DAWalkVariables(delegate.predictVariables(person, trip, elements), euclideanDistance_km);
 	}
 }

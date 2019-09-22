@@ -40,15 +40,15 @@ public class DAModeParameters extends SwissModeParameters {
 		parameters.referenceHouseholdIncome_MU = 12260.0;
 
 		// Walk
-		parameters.walk.alpha_u = -0.195;
-		parameters.walk.betaTravelTime_u_min = -0.036;
+		parameters.walk.alpha_u = -0.195 + 0.9;
+		parameters.walk.betaTravelTime_u_min = -0.036 - 0.02;
 
 		parameters.daWalk.betaAgeOver60 = 2.28;
 		parameters.daWalk.betaWork = 1.13;
 
 		// Bike
-		parameters.bike.alpha_u = 0.629;
-		parameters.bike.betaTravelTime_u_min = -0.0638;
+		parameters.bike.alpha_u = 0.629 - 0.4;
+		parameters.bike.betaTravelTime_u_min = -0.0638 + 0.02;
 
 		parameters.daBike.betaAgeOver60 = -2.39;
 		parameters.daBike.betaWork = -0.454;
@@ -60,8 +60,8 @@ public class DAModeParameters extends SwissModeParameters {
 		parameters.daCar.betaAgeOver60 = 0.258;
 		parameters.daCar.betaWork = -1.06;
 		
-		// parameters.car.constantParkingSearchPenalty_min = 4.0;
-		// parameters.car.constantAccessEgressWalkTime_min = 4.0;
+		parameters.car.constantParkingSearchPenalty_min = 4.0;
+		parameters.car.constantAccessEgressWalkTime_min = 4.0;
 
 		// PT
 		parameters.pt.betaAccessEgressTime_u_min = -0.0751;
