@@ -14,19 +14,20 @@ import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.ActivityOption;
 
 public class FacilityTypeDiscretizerFactory {
-	final private Map<String, QuadTree<FacilityLocation>> index = new HashMap<>();
+	final private Map<String, QuadTree<FacilityLocation>> indexAll = new HashMap<>();
+	final private Map<String, QuadTree<FacilityLocation>> indexPtAccessible = new HashMap<>();
 	final private Set<String> relevantActivityTypes = new HashSet<>();
 
 	public FacilityTypeDiscretizerFactory(Set<String> relevantActivityTypes) {
 		this.relevantActivityTypes.addAll(relevantActivityTypes);
 	}
 
-	public FacilityDiscretizer createDiscretizer(String activityType) {
-		if (!index.containsKey(activityType)) {
+	public FacilityDiscretizer createDiscretizer(String activityType, boolean requirePtAccessible) {
+		if (!indexAll.containsKey(activityType)) {
 			throw new IllegalArgumentException(String.format("Activity type '%s' is not registered", activityType));
 		}
 
-		return new FacilityDiscretizer(index.get(activityType));
+		return new FacilityDiscretizer(requirePtAccessible ? indexPtAccessible.get(activityType) : indexAll.get(activityType));
 	}
 
 	public void loadFacilities(ActivityFacilities facilities) {
@@ -44,8 +45,12 @@ public class FacilityTypeDiscretizerFactory {
 				.mapToDouble(Coord::getY).max().getAsDouble();
 
 		for (String type : types) {
-			if (!index.containsKey(type)) {
-				index.put(type, new QuadTree<FacilityLocation>(minX, minY, maxX, maxY));
+			if (!indexAll.containsKey(type)) {
+				indexAll.put(type, new QuadTree<FacilityLocation>(minX, minY, maxX, maxY));
+			}
+			
+			if (!indexPtAccessible.containsKey(type)) {
+				indexPtAccessible.put(type, new QuadTree<FacilityLocation>(minX, minY, maxX, maxY));
 			}
 		}
 
@@ -57,7 +62,13 @@ public class FacilityTypeDiscretizerFactory {
 				String activityType = option.getType();
 
 				if (relevantActivityTypes.contains(activityType)) {
-					index.get(activityType).put(coord.getX(), coord.getY(), facilityLocation);
+					indexAll.get(activityType).put(coord.getX(), coord.getY(), facilityLocation);
+					
+					Boolean ptAccessibleAttribute = (Boolean) facility.getAttributes().getAttribute("ptAccessible");
+					
+					if (ptAccessibleAttribute != null && ptAccessibleAttribute) {
+						indexPtAccessible.get(activityType).put(coord.getX(), coord.getY(), facilityLocation);
+					}
 				}
 			}
 		}
