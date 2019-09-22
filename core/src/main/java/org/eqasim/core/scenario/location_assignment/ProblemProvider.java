@@ -25,7 +25,8 @@ class ProblemProvider
 	final private boolean requirePtAccessibility;
 
 	public ProblemProvider(DistanceSamplerFactory distanceSamplerFactory,
-			FacilityTypeDiscretizerFactory discretizerFactory, Map<String, Double> discretizationThresholds, boolean requirePtAccessibility) {
+			FacilityTypeDiscretizerFactory discretizerFactory, Map<String, Double> discretizationThresholds,
+			boolean requirePtAccessibility) {
 		this.distanceSamplerFactory = distanceSamplerFactory;
 		this.discretizerFactory = discretizerFactory;
 		this.discretizationThresholds = discretizationThresholds;
@@ -35,18 +36,23 @@ class ProblemProvider
 	@Override
 	public List<Discretizer> getDiscretizers(MATSimAssignmentProblem problem) {
 		List<Discretizer> discretizers = new LinkedList<>();
-		
+
 		for (int index = 0; index < problem.getChainActivities().size(); index++) {
-			String activityType = problem.getChainActivities().get(index).getType();
-			String mode = problem.getChainLegs().get(index).getMode();
-			
-			if (mode.equals(TransportMode.pt) && requirePtAccessibility) {
-				discretizers.add(discretizerFactory.createDiscretizer(activityType, true));
-			} else {
-				discretizers.add(discretizerFactory.createDiscretizer(activityType, false));
+			if (!requirePtAccessibility)
+				discretizers.add(
+						discretizerFactory.createDiscretizer(problem.getChainActivities().get(index).getType(), false));
+			else {
+				String activityType = problem.getChainActivities().get(index).getType();
+				String mode = problem.getChainLegs().get(index).getMode();
+
+				if (mode.equals(TransportMode.pt)) {
+					discretizers.add(discretizerFactory.createDiscretizer(activityType, true));
+				} else {
+					discretizers.add(discretizerFactory.createDiscretizer(activityType, false));
+				}
 			}
 		}
-		
+
 		return discretizers;
 	}
 
