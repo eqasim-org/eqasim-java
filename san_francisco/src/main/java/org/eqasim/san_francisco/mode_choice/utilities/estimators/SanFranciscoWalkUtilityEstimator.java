@@ -10,6 +10,7 @@ import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPer
 import org.eqasim.san_francisco.mode_choice.utilities.variables.SanFranciscoPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.core.utils.geometry.CoordUtils;
 
 import com.google.inject.Inject;
 
@@ -37,7 +38,10 @@ public class SanFranciscoWalkUtilityEstimator extends WalkUtilityEstimator {
 		SanFranciscoPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
-
+		double distance = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
+				trip.getDestinationActivity().getCoord());
+		if (distance > 4 * 5280)
+			utility += -100;
 		utility += super.estimateUtility(person, trip, elements);
 		utility += estimateRegionalUtility(variables);
 
