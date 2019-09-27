@@ -24,7 +24,7 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 		// Check car availability
 				boolean carAvailability = true;
 
-				if (PersonUtils.getAge(person) < 16) {
+				if (PersonUtils.getLicense(person).equals("no")) {
 					carAvailability = false;
 				}
 
