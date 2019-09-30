@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Make AvCostWriter close file on shutdown
 - Disable calibration output by default (since reference data is not always available)
 - Add iml and idea to gitignore
 - Add calibration utilities
