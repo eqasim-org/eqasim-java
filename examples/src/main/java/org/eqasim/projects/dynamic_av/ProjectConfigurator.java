@@ -45,7 +45,7 @@ public class ProjectConfigurator extends EqasimConfigurator {
 		dmcConfig.setModeAvailability(ProjectModule.PROJECT_MODE_AVAILABILITY_NAME);
 
 		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.get(config);
-		calibrationConfig.setEnable(true);
+		// calibrationConfig.setEnable(true);
 	}
 
 	static public void adjustScenario(Scenario scenario) {
