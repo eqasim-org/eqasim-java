@@ -1,15 +1,10 @@
 package org.eqasim.projects.dynamic_av;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 
 import org.eqasim.automated_vehicles.components.AvConfigurator;
-import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.eqasim.core.simulation.calibration.CalibrationModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.SwitzerlandConfigurator;
@@ -21,8 +16,9 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.households.Household;
 
+import ch.ethz.matsim.av.config.AVConfigGroup;
+import ch.ethz.matsim.av.config.operator.OperatorConfig;
 import ch.ethz.matsim.av.framework.AVQSimModule;
 
 /**
@@ -36,61 +32,37 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter", "av-mode-parameter", "av-cost-parameter") //
+				.allowOptions("fleet-size") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				SwitzerlandConfigurator.getConfigGroups());
-		CalibrationConfigGroup.get(config);
+				ProjectConfigurator.getConfigGroups());
+
 		AvConfigurator.configure(config); // Add some configuration for AV
+		ProjectConfigurator.configure(config);
+
 		cmd.applyConfiguration(config);
 
 		// Here we customize our configuration by setting the fleet size from the
 		// command line
-		/*
-		 * OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
-		 * .getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
-		 * operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.
-		 * getOptionStrict("fleet-size")));
-		 */
 
-		DAConfigurator.configure(config);
-
-		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-		eqasimConfig.setTripAnalysisInterval(1);
-
-		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.get(config);
-		calibrationConfig.setEnable(true);
+		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
+				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
+		operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.getOptionStrict("fleet-size")));
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
 		SwitzerlandConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		SwitzerlandConfigurator.adjustScenario(scenario);
-		DAConfigurator.adjustScenario(scenario);
-		
-		double totalIncome = 0.0;
-		double numberOfHouseholds = 0.0;
-		
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("income.txt")));
-		writer.write("income\n");
-		
-		for (Household household : scenario.getHouseholds().getHouseholds().values()) {
-			totalIncome += household.getIncome().getIncome();
-			numberOfHouseholds++;
-			writer.write(String.valueOf(household.getIncome().getIncome()) + "\n");
-		}
-		
-		writer.close();
-		
-		System.out.println(totalIncome / numberOfHouseholds);
-
+		ProjectConfigurator.adjustScenario(scenario);
 
 		// The AvConfigurator provides some convenience functions to adjust the
 		// scenario. Here, we add the mode 'av' to all links that have the 'car' mode
 		// and define that all links belong to one waiting time estimation group (i.e.
 		// we estimate an overall waiting time average over all links).
 		AvConfigurator.configureCarLinks(scenario);
-		AvConfigurator.configureUniformWaitingTimeGroup(scenario);
+		// AvConfigurator.configureUniformWaitingTimeGroup(scenario);
 
 		Controler controller = new Controler(scenario);
 		SwitzerlandConfigurator.configureController(controller);
@@ -101,7 +73,7 @@ public class RunSimulation {
 		AvConfigurator.configureController(controller, cmd); // Add some modules for AV
 
 		// Here we add our custom Zurich/AV module to add our specific ModeAvailability
-		controller.addOverridingModule(new DAModule(cmd));
+		controller.addOverridingModule(new ProjectModule(cmd));
 
 		// This is not totally obvious, but we need to adjust the QSim components if we
 		// have AVs

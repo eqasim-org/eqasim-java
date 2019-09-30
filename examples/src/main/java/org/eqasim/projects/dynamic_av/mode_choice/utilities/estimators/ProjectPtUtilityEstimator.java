@@ -4,13 +4,13 @@ import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
-import org.eqasim.projects.dynamic_av.mode_choice.DAModeParameters;
-import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.DAPersonPredictor;
-import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.DAPtPredictor;
-import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.DATripPredictor;
-import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.DAPersonVariables;
-import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.DAPtVariables;
-import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.DATripVariables;
+import org.eqasim.projects.dynamic_av.mode_choice.ProjectModeParameters;
+import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectPersonPredictor;
+import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectPtPredictor;
+import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectTripPredictor;
+import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.ProjectPersonVariables;
+import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.ProjectPtVariables;
+import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.ProjectTripVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 
@@ -18,15 +18,15 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class DAPtUtilityEstimator extends PtUtilityEstimator {
-	private final DAModeParameters parameters;
-	private final DAPtPredictor predictor;
-	private final DAPersonPredictor personPredictor;
-	private final DATripPredictor tripPredictor;
+public class ProjectPtUtilityEstimator extends PtUtilityEstimator {
+	private final ProjectModeParameters parameters;
+	private final ProjectPtPredictor predictor;
+	private final ProjectPersonPredictor personPredictor;
+	private final ProjectTripPredictor tripPredictor;
 
 	@Inject
-	public DAPtUtilityEstimator(DAModeParameters parameters, DAPtPredictor predictor, DAPersonPredictor personPredictor,
-			DATripPredictor tripPredictor) {
+	public ProjectPtUtilityEstimator(ProjectModeParameters parameters, ProjectPtPredictor predictor, ProjectPersonPredictor personPredictor,
+			ProjectTripPredictor tripPredictor) {
 		super(parameters, predictor.delegate);
 
 		this.parameters = parameters;
@@ -35,21 +35,21 @@ public class DAPtUtilityEstimator extends PtUtilityEstimator {
 		this.tripPredictor = tripPredictor;
 	}
 
-	protected double estimateInVehicleTimeUtility(DAPtVariables variables) {
+	protected double estimateInVehicleTimeUtility(ProjectPtVariables variables) {
 		double utility = 0.0;
 
-		utility += parameters.daPt.betaRailTravelTime //
+		utility += parameters.projectPt.betaRailTravelTime //
 				* EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
 						parameters.lambdaTravelTimeEuclideanDistance) //
 				* variables.railTravelTime_min;
 
 		if (variables.railTravelTime_min > 0.0 && variables.busTravelTime_min > 0.0) {
 			// This is a feeder case
-			utility += parameters.daPt.betaFeederTravelTime //
+			utility += parameters.projectPt.betaFeederTravelTime //
 					* variables.busTravelTime_min;
 		} else {
 			// This is not a feeder case
-			utility += parameters.daPt.betaBusTravelTime //
+			utility += parameters.projectPt.betaBusTravelTime //
 					* EstimatorUtils.interaction(variables.euclideanDistance_km,
 							parameters.referenceEuclideanDistance_km, parameters.lambdaTravelTimeEuclideanDistance) //
 					* variables.busTravelTime_min;
@@ -58,25 +58,25 @@ public class DAPtUtilityEstimator extends PtUtilityEstimator {
 		return utility;
 	}
 
-	protected double estimateMonetaryCostUtility(DAPtVariables variables, DAPersonVariables personVariables) {
+	protected double estimateMonetaryCostUtility(ProjectPtVariables variables, ProjectPersonVariables personVariables) {
 		return super.estimateMonetaryCostUtility(variables) //
 				* EstimatorUtils.interaction(personVariables.householdIncome_MU, parameters.referenceHouseholdIncome_MU,
 						parameters.lambdaCostHouseholdIncome);
 	}
 
-	protected double estimateAgeUtility(DAPersonVariables variables) {
-		return variables.age_a >= 60 ? parameters.daWalk.betaAgeOver60 : 0.0;
+	protected double estimateAgeUtility(ProjectPersonVariables variables) {
+		return variables.age_a >= 60 ? parameters.projectWalk.betaAgeOver60 : 0.0;
 	}
 
-	protected double estimateWorkUtility(DATripVariables variables) {
-		return variables.purpose.equals("work") ? parameters.daWalk.betaWork : 0.0;
+	protected double estimateWorkUtility(ProjectTripVariables variables) {
+		return variables.purpose.equals("work") ? parameters.projectWalk.betaWork : 0.0;
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		DAPtVariables variables = predictor.predictVariables(person, trip, elements);
-		DAPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
-		DATripVariables tripVariables = tripPredictor.predictVariables(person, trip, elements);
+		ProjectPtVariables variables = predictor.predictVariables(person, trip, elements);
+		ProjectPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
+		ProjectTripVariables tripVariables = tripPredictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 

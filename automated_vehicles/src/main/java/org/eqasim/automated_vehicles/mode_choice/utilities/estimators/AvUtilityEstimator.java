@@ -46,6 +46,10 @@ public class AvUtilityEstimator implements UtilityEstimator {
 				* variables.cost_MU;
 	}
 
+	protected double estimateAccessEgressTimeUtility(AvVariables variables) {
+		return avParameters.betaAccessEgressTime_u_min * variables.accessEgressTime_min;
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		AvVariables variables = predictor.predict(person, trip, elements);

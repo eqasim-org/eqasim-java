@@ -4,7 +4,7 @@ import org.matsim.api.core.v01.population.Person;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class DAPredictorUtils {
+public class ProjectPredictorUtils {
 	static public double getHouseholdIncome(Person person) {
 		return (Double) person.getAttributes().getAttribute("householdIncome");
 	}

@@ -6,7 +6,7 @@ import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
-import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.DAPtVariables;
+import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.ProjectPtVariables;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -18,18 +18,18 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class DAPtPredictor extends CachedVariablePredictor<DAPtVariables> {
+public class ProjectPtPredictor extends CachedVariablePredictor<ProjectPtVariables> {
 	public final PtPredictor delegate;
 	private final TransitSchedule schedule;
 
 	@Inject
-	public DAPtPredictor(PtPredictor delegate, TransitSchedule schedule) {
+	public ProjectPtPredictor(PtPredictor delegate, TransitSchedule schedule) {
 		this.delegate = delegate;
 		this.schedule = schedule;
 	}
 
 	@Override
-	protected DAPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	protected ProjectPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		PtVariables delegateVariables = delegate.predictVariables(person, trip, elements);
 
 		double railTravelTime_min = 0.0;
@@ -56,6 +56,6 @@ public class DAPtPredictor extends CachedVariablePredictor<DAPtVariables> {
 		Double headwayRaw = (Double) trip.getOriginActivity().getAttributes().getAttribute("headway");
 		double headway_min = headwayRaw == null ? 0.0 : headwayRaw;
 
-		return new DAPtVariables(delegateVariables, railTravelTime_min, busTravelTime_min, headway_min);
+		return new ProjectPtVariables(delegateVariables, railTravelTime_min, busTravelTime_min, headway_min);
 	}
 }
