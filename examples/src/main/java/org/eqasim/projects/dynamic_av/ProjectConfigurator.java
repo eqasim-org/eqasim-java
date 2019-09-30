@@ -38,7 +38,7 @@ public class ProjectConfigurator extends EqasimConfigurator {
 		eqasimConfig.setEstimator(TransportMode.walk, ProjectModule.PROJECT_WALK_ESTIMATOR);
 		eqasimConfig.setEstimator(AVModule.AV_MODE, ProjectModule.PROJECT_AV_ESTIMATOR);
 
-		eqasimConfig.setTripAnalysisInterval(1);
+		// eqasimConfig.setTripAnalysisInterval(1);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
