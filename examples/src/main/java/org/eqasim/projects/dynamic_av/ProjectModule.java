@@ -31,6 +31,7 @@ import org.matsim.core.config.ConfigGroup;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
+import ch.ethz.matsim.av.network.AVNetworkFilter;
 import ch.ethz.matsim.av.waiting_time.WaitingTimeFactory;
 
 public class ProjectModule extends AbstractEqasimExtension {
@@ -65,6 +66,7 @@ public class ProjectModule extends AbstractEqasimExtension {
 		bind(ProjectTripPredictor.class);
 
 		bind(WaitingTimeFactory.class).to(ProjectWaitingTimeFactory.class);
+		bind(AVNetworkFilter.class).to(ProjectNetworkFilter.class);
 	}
 
 	@Provides
