@@ -50,6 +50,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		if (tripAnalysisInterval > 0 && event.getIteration() % tripAnalysisInterval == 0) {
 			isTripAnalysisActive = true;
 			event.getServices().getEvents().addHandler(tripAnalysisListener);
+		} else {
+			isTripAnalysisActive = false;
 		}
 	}
 
