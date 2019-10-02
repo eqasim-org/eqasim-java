@@ -45,11 +45,11 @@ public class ShapeScenarioExtent implements ScenarioExtent {
 			return Collections.emptyList();
 		}
 
-		Coordinate fromCoordinate = new Coordinate(from.getX(), to.getY());
-		Coordinate toCoordinate = new Coordinate(from.getX(), to.getY());
+		Coordinate fromCoordinate = new Coordinate(from.getX(), from.getY());
+		Coordinate toCoordinate = new Coordinate(to.getX(), to.getY());
 
 		LineString line = factory.createLineString(new Coordinate[] { fromCoordinate, toCoordinate });
-		Coordinate[] crossingCoordinates = ((LineString) polygon.intersection(line)).getCoordinates();
+		Coordinate[] crossingCoordinates = polygon.getExteriorRing().intersection(line).getCoordinates();
 
 		List<Coord> crossings = new ArrayList<>(crossingCoordinates.length);
 
