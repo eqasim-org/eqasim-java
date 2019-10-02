@@ -1,6 +1,7 @@
 # CHANGELOG
 
 - Bugfix: Shape extent did not cut teleportation trips properly
+- Fix analysis interval for trip analysis
 - Make AvCostWriter close file on shutdown
 - Disable calibration output by default (since reference data is not always available)
 - Add iml and idea to gitignore
