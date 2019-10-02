@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.geotools.data.DataStore;
@@ -28,29 +29,30 @@ import org.opengis.feature.simple.SimpleFeature;
 
 public class OperatingArea {
 	private final Collection<Zone> zones;
+	private final Geometry envelope;
 
 	public OperatingArea(Collection<Zone> zones) {
 		this.zones = zones;
+
+		Geometry[] zoneGeometries = zones.stream().map(Zone::getGeometry).collect(Collectors.toList())
+				.toArray(new Geometry[zones.size()]);
+		this.envelope = geometryFactory.createGeometryCollection(zoneGeometries).getEnvelope();
 	}
 
 	public Collection<Zone> getZones() {
 		return zones;
 	}
 
-	public boolean covers(Id<Link> linkId) {
-		for (Zone zone : zones) {
-			if (zone.covers(linkId)) {
-				return true;
-			}
-		}
-
-		return false;
+	public boolean covers(Link link) {
+		return covers(link.getCoord());
 	}
 
 	public boolean covers(Coord coord) {
-		for (Zone zone : zones) {
-			if (zone.covers(coord)) {
-				return true;
+		if (envelope.covers(geometryFactory.createPoint(new Coordinate(coord.getX(), coord.getY())))) {
+			for (Zone zone : zones) {
+				if (zone.covers(coord)) {
+					return true;
+				}
 			}
 		}
 

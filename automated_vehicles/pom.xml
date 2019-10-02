@@ -21,7 +21,7 @@
 		<dependency>
 			<groupId>ch.ethz.matsim</groupId>
 			<artifactId>av</artifactId>
-			<version>1.0.0-matsim11</version>
+			<version>1.0.1-matsim11</version>
 		</dependency>
 	</dependencies>
 </project>

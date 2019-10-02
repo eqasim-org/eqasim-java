@@ -49,6 +49,8 @@ public class RunSimulation {
 		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
 				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
 		operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.getOptionStrict("fleet-size")));
+		operatorConfig.setCleanNetwork(true);
+		AVConfigGroup.getOrCreate(config).setUseAccessAgress(true);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 

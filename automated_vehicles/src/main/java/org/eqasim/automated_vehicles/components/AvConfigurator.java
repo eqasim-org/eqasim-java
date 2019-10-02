@@ -11,6 +11,7 @@ import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 
@@ -63,6 +64,10 @@ public final class AvConfigurator {
 			// TODO: Could also be added by default in AV extension
 			AVScoringParameterSet scoringParameters = new AVScoringParameterSet();
 			avConfig.addScoringParameters(scoringParameters);
+			
+			ActivityParams activityParams = new ActivityParams("av interaction");
+			activityParams.setScoringThisActivityAtAll(false);
+			config.planCalcScore().addActivityParams(activityParams);
 		}
 
 		// Set up DiscreteModeChoice

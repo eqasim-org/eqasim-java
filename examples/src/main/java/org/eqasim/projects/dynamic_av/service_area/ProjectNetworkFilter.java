@@ -15,6 +15,6 @@ public class ProjectNetworkFilter implements AVNetworkFilter {
 
 	@Override
 	public boolean isAllowed(Id<AVOperator> operatorId, Link link) {
-		return operatingArea.covers(link.getId());
+		return operatingArea.covers(link);
 	}
 }

@@ -22,8 +22,8 @@ public class Zone {
 		this.geometry = geometry;
 	}
 
-	public boolean covers(Id<Link> linkId) {
-		return coveredLinkIds.contains(linkId);
+	public boolean covers(Link link) {
+		return covers(link.getCoord());
 	}
 
 	public boolean covers(Coord coord) {
@@ -36,5 +36,9 @@ public class Zone {
 
 	public int getIndex() {
 		return index;
+	}
+
+	public Geometry getGeometry() {
+		return geometry;
 	}
 }
