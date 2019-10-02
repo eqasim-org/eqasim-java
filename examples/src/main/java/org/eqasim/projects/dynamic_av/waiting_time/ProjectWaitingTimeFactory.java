@@ -34,7 +34,7 @@ public class ProjectWaitingTimeFactory implements WaitingTimeFactory {
 				Link link = network.getLinks().get(linkId);
 
 				if (link != null) {
-					link.getAttributes().putAttribute("waitingTimeGroupIndex", zone.getIndex());
+					link.getAttributes().putAttribute("avWaitingTimeGroup", zone.getIndex());
 				}
 			}
 		}

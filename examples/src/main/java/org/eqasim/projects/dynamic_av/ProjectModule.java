@@ -2,6 +2,7 @@ package org.eqasim.projects.dynamic_av;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import org.eqasim.automated_vehicles.components.EqasimAvConfigGroup;
 import org.eqasim.core.components.config.EqasimConfigGroup;
@@ -22,6 +23,9 @@ import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectWa
 import org.eqasim.projects.dynamic_av.service_area.OperatingArea;
 import org.eqasim.projects.dynamic_av.service_area.ProjectNetworkFilter;
 import org.eqasim.projects.dynamic_av.waiting_time.ProjectWaitingTimeFactory;
+import org.eqasim.projects.dynamic_av.waiting_time.WaitingTimeAnalysisListener;
+import org.eqasim.projects.dynamic_av.waiting_time.WaitingTimeWriter;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -31,7 +35,12 @@ import org.matsim.core.config.ConfigGroup;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
+import ch.ethz.matsim.av.config.AVConfigGroup;
+import ch.ethz.matsim.av.config.operator.OperatorConfig;
+import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
+import ch.ethz.matsim.av.data.AVOperator;
 import ch.ethz.matsim.av.network.AVNetworkFilter;
+import ch.ethz.matsim.av.waiting_time.WaitingTime;
 import ch.ethz.matsim.av.waiting_time.WaitingTimeFactory;
 
 public class ProjectModule extends AbstractEqasimExtension {
@@ -67,6 +76,8 @@ public class ProjectModule extends AbstractEqasimExtension {
 
 		bind(WaitingTimeFactory.class).to(ProjectWaitingTimeFactory.class);
 		bind(AVNetworkFilter.class).to(ProjectNetworkFilter.class);
+
+		addControlerListenerBinding().to(WaitingTimeAnalysisListener.class);
 	}
 
 	@Provides
@@ -110,4 +121,15 @@ public class ProjectModule extends AbstractEqasimExtension {
 		return new ProjectNetworkFilter(operatingArea);
 	}
 
+	@Provides
+	@Singleton
+	public WaitingTimeWriter provideWaitingTimeWriter(Map<Id<AVOperator>, WaitingTime> waitingTimes,
+			OperatingArea operatingArea, Map<Id<AVOperator>, Network> networks, AVConfigGroup config) {
+		WaitingTime waitingTime = waitingTimes.get(OperatorConfig.DEFAULT_OPERATOR_ID);
+		Network network = networks.get(OperatorConfig.DEFAULT_OPERATOR_ID);
+		WaitingTimeConfig waitingTimeConfig = config.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID)
+				.getWaitingTimeConfig();
+
+		return new WaitingTimeWriter(waitingTime, operatingArea, network, waitingTimeConfig);
+	}
 }
