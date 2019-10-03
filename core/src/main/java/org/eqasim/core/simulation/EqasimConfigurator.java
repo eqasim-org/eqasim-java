@@ -3,6 +3,7 @@ package org.eqasim.core.simulation;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
@@ -37,7 +38,8 @@ public class EqasimConfigurator {
 		return Arrays.asList( //
 				new SwissRailRaptorModule(), //
 				new EqasimTransitModule(), //
-				new DiscreteModeChoiceModule() //
+				new DiscreteModeChoiceModule(), //
+				new EqasimComponentsModule() //
 		);
 	}
 
