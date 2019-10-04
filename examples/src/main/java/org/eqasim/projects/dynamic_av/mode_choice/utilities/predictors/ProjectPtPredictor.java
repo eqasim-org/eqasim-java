@@ -7,6 +7,8 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariabl
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.variables.ProjectPtVariables;
+import org.eqasim.switzerland.ovgk.OVGK;
+import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -21,15 +23,18 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 public class ProjectPtPredictor extends CachedVariablePredictor<ProjectPtVariables> {
 	public final PtPredictor delegate;
 	private final TransitSchedule schedule;
+	private final OVGKCalculator ovgkCalculator;
 
 	@Inject
-	public ProjectPtPredictor(PtPredictor delegate, TransitSchedule schedule) {
+	public ProjectPtPredictor(PtPredictor delegate, TransitSchedule schedule, OVGKCalculator ovgkCalculator) {
 		this.delegate = delegate;
 		this.schedule = schedule;
+		this.ovgkCalculator = ovgkCalculator;
 	}
 
 	@Override
-	protected ProjectPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	protected ProjectPtVariables predict(Person person, DiscreteModeChoiceTrip trip,
+			List<? extends PlanElement> elements) {
 		PtVariables delegateVariables = delegate.predictVariables(person, trip, elements);
 
 		double railTravelTime_min = 0.0;
@@ -53,9 +58,13 @@ public class ProjectPtPredictor extends CachedVariablePredictor<ProjectPtVariabl
 			}
 		}
 
-		Double headwayRaw = (Double) trip.getOriginActivity().getAttributes().getAttribute("headway");
+		Double headwayRaw = (Double) trip.getOriginActivity().getAttributes().getAttribute("headway_min");
 		double headway_min = headwayRaw == null ? 0.0 : headwayRaw;
 
-		return new ProjectPtVariables(delegateVariables, railTravelTime_min, busTravelTime_min, headway_min);
+		OVGK originOvgk = ovgkCalculator.calculateOVGK(trip.getOriginActivity().getCoord());
+		OVGK destinatonOvgk = ovgkCalculator.calculateOVGK(trip.getDestinationActivity().getCoord());
+		OVGK worstOvgk = OVGK.worst(originOvgk, destinatonOvgk);
+
+		return new ProjectPtVariables(delegateVariables, railTravelTime_min, busTravelTime_min, headway_min, worstOvgk);
 	}
 }

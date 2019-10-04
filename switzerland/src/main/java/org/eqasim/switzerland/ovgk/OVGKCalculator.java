@@ -45,34 +45,6 @@ public class OVGKCalculator {
 		return attribute;
 	}
 
-	private int rank(OVGK ovgk) {
-		switch (ovgk) {
-		case A:
-			return 1;
-		case B:
-			return 2;
-		case C:
-			return 3;
-		case D:
-			return 4;
-		case None:
-			return 5;
-		}
-
-		throw new IllegalStateException();
-	}
-
-	private OVGK max(OVGK a, OVGK b) {
-		int rankA = rank(a);
-		int rankB = rank(b);
-
-		if (rankA < rankB) {
-			return a;
-		} else {
-			return b;
-		}
-	}
-
 	public OVGK calculateOVGK(Coord coord) {
 		List<TransitStopFacility> disk = new LinkedList<>(index.getDisk(coord.getX(), coord.getY(), 1000.0));
 
@@ -124,7 +96,7 @@ public class OVGKCalculator {
 				}
 			}
 
-			bestOVGK = max(bestOVGK, ovgk);
+			bestOVGK = OVGK.best(bestOVGK, ovgk);
 
 			if (bestOVGK == OVGKConstants.BEST_OVGK) {
 				return bestOVGK;

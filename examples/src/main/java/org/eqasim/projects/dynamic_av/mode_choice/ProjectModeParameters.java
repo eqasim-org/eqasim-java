@@ -14,11 +14,15 @@ public class ProjectModeParameters extends SwissModeParameters {
 	public ProjectBaseModeParameters projectAv = new ProjectBaseModeParameters();
 
 	public class ProjectPtParameters {
-		public double betaRailTravelTime = 0.0;
-		public double betaBusTravelTime = 0.0;
-		public double betaFeederTravelTime = 0.0;
+		public double betaRailTravelTime_u_min = 0.0;
+		public double betaBusTravelTime_u_min = 0.0;
+		public double betaFeederTravelTime_u_min = 0.0;
 
-		public double betaHeadway_min = 0.0;
+		public double betaHeadway_u_min = 0.0;
+		public double betaOvgkB_u = 0.0;
+		public double betaOvgkC_u = 0.0;
+		public double betaOvgkD_u = 0.0;
+		public double betaOvgkNone_u = 0.0;
 	}
 
 	public ProjectPtParameters projectPt = new ProjectPtParameters();
@@ -69,9 +73,9 @@ public class ProjectModeParameters extends SwissModeParameters {
 		parameters.pt.betaLineSwitch_u = -0.195;
 		parameters.pt.betaWaitingTime_u_min = -0.0126;
 
-		parameters.projectPt.betaRailTravelTime = -0.0154;
-		parameters.projectPt.betaBusTravelTime = -0.0299;
-		parameters.projectPt.betaFeederTravelTime = -0.0582;
+		parameters.projectPt.betaRailTravelTime_u_min = -0.0154;
+		parameters.projectPt.betaBusTravelTime_u_min = -0.0299;
+		parameters.projectPt.betaFeederTravelTime_u_min = -0.0582;
 
 		return parameters;
 	}

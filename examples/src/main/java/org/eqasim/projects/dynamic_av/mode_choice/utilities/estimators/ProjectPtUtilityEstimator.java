@@ -25,8 +25,8 @@ public class ProjectPtUtilityEstimator extends PtUtilityEstimator {
 	private final ProjectTripPredictor tripPredictor;
 
 	@Inject
-	public ProjectPtUtilityEstimator(ProjectModeParameters parameters, ProjectPtPredictor predictor, ProjectPersonPredictor personPredictor,
-			ProjectTripPredictor tripPredictor) {
+	public ProjectPtUtilityEstimator(ProjectModeParameters parameters, ProjectPtPredictor predictor,
+			ProjectPersonPredictor personPredictor, ProjectTripPredictor tripPredictor) {
 		super(parameters, predictor.delegate);
 
 		this.parameters = parameters;
@@ -38,18 +38,18 @@ public class ProjectPtUtilityEstimator extends PtUtilityEstimator {
 	protected double estimateInVehicleTimeUtility(ProjectPtVariables variables) {
 		double utility = 0.0;
 
-		utility += parameters.projectPt.betaRailTravelTime //
+		utility += parameters.projectPt.betaRailTravelTime_u_min //
 				* EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
 						parameters.lambdaTravelTimeEuclideanDistance) //
 				* variables.railTravelTime_min;
 
 		if (variables.railTravelTime_min > 0.0 && variables.busTravelTime_min > 0.0) {
 			// This is a feeder case
-			utility += parameters.projectPt.betaFeederTravelTime //
+			utility += parameters.projectPt.betaFeederTravelTime_u_min //
 					* variables.busTravelTime_min;
 		} else {
 			// This is not a feeder case
-			utility += parameters.projectPt.betaBusTravelTime //
+			utility += parameters.projectPt.betaBusTravelTime_u_min //
 					* EstimatorUtils.interaction(variables.euclideanDistance_km,
 							parameters.referenceEuclideanDistance_km, parameters.lambdaTravelTimeEuclideanDistance) //
 					* variables.busTravelTime_min;
@@ -72,6 +72,31 @@ public class ProjectPtUtilityEstimator extends PtUtilityEstimator {
 		return variables.purpose.equals("work") ? parameters.projectWalk.betaWork : 0.0;
 	}
 
+	protected double estimateHeadwayUtility(ProjectPtVariables variables) {
+		if (parameters.projectPt.betaHeadway_u_min > 0.0 && variables.headway_min == 0.0) {
+			throw new IllegalStateException("Non-zero beta for headway, but no headway is given.");
+		}
+
+		return parameters.projectPt.betaHeadway_u_min * variables.headway_min;
+	}
+
+	protected double estimateOvgkUtility(ProjectPtVariables variables) {
+		switch (variables.ovgk) {
+		case A:
+			return 0.0;
+		case B:
+			return parameters.projectPt.betaOvgkB_u;
+		case C:
+			return parameters.projectPt.betaOvgkC_u;
+		case D:
+			return parameters.projectPt.betaOvgkD_u;
+		case None:
+			return parameters.projectPt.betaOvgkNone_u;
+		default:
+			throw new RuntimeException();
+		}
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		ProjectPtVariables variables = predictor.predictVariables(person, trip, elements);
@@ -88,6 +113,8 @@ public class ProjectPtUtilityEstimator extends PtUtilityEstimator {
 		utility += estimateMonetaryCostUtility(variables);
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
+		utility += estimateHeadwayUtility(variables);
+		utility += estimateOvgkUtility(variables);
 
 		return utility;
 	}

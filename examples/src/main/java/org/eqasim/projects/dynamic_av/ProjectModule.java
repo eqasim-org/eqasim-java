@@ -26,10 +26,12 @@ import org.eqasim.projects.dynamic_av.service_area.ProjectNetworkFilter;
 import org.eqasim.projects.dynamic_av.waiting_time.ProjectWaitingTimeFactory;
 import org.eqasim.projects.dynamic_av.waiting_time.WaitingTimeAnalysisListener;
 import org.eqasim.projects.dynamic_av.waiting_time.WaitingTimeWriter;
+import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 
@@ -134,5 +136,11 @@ public class ProjectModule extends AbstractEqasimExtension {
 				.getWaitingTimeConfig();
 
 		return new WaitingTimeWriter(waitingTime, operatingArea, network, waitingTimeConfig);
+	}
+	
+	@Provides
+	@Singleton
+	public OVGKCalculator provideOVGKCalculator(TransitSchedule transitSchedule) {
+		return new OVGKCalculator(transitSchedule);
 	}
 }
