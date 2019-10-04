@@ -17,17 +17,20 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 	private final CostCalculator costCalculator;
 	private final FleetDistanceListener fleetListener;
 	private final int numberOfVehicles;
-	
+	private final double scalingFactor;
+
 	private int numberOfTrips;
 
 	private double observedPrice_MU_km;
 	private double activePrice_MU_km;
 
-	public PriceCalculator(ProjectCostParameters parameters, FleetDistanceListener fleetListener, int numberOfVehicles, CostCalculator costCalculator) {
+	public PriceCalculator(ProjectCostParameters parameters, FleetDistanceListener fleetListener, int numberOfVehicles,
+			CostCalculator costCalculator, double scalingFactor) {
 		this.costParameters = parameters;
 		this.fleetListener = fleetListener;
 		this.numberOfVehicles = numberOfVehicles;
 		this.costCalculator = costCalculator;
+		this.scalingFactor = scalingFactor;
 
 		this.observedPrice_MU_km = parameters.defaultPrice_MU_km;
 		this.activePrice_MU_km = parameters.defaultPrice_MU_km;
@@ -39,23 +42,25 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 		OperatorData data = fleetListener.getData(OperatorConfig.DEFAULT_OPERATOR_ID);
 
 		CostCalculatorParameters calculatorParameters = new CostCalculatorParameters( //
-				numberOfVehicles, //
-				1e-3 * (data.emptyDistance_m + data.occupiedDistance_m), //
-				numberOfTrips, //
-				1e-3 * data.passengerDistance_m //
+				(int) (numberOfVehicles / scalingFactor), //
+				1e-3 * (data.emptyDistance_m + data.occupiedDistance_m) / scalingFactor, //
+				(int) (numberOfTrips / scalingFactor), //
+				1e-3 * data.passengerDistance_m / scalingFactor //
 		);
-		
+
 		double fleetCost_MU = costCalculator.calculateFleetCost(calculatorParameters);
-		
+
 		// Second, obtain price per passenger kilometer
-		double pricePerPassengerKm_MU = costCalculator.calculatePricePerPassengerKm(fleetCost_MU, data.passengerDistance_m);
+		double pricePerPassengerKm_MU = costCalculator.calculatePricePerPassengerKm(fleetCost_MU,
+				calculatorParameters.passengerDistanceKm);
 		observedPrice_MU_km = pricePerPassengerKm_MU;
 
 		// Third, interpolate
 		if (Double.isFinite(observedPrice_MU_km)) {
-			activePrice_MU_km = activePrice_MU_km * (1.0 - costParameters.alpha) + costParameters.alpha * observedPrice_MU_km;
+			double alpha = event.getIteration() >= costParameters.transientIterations ? costParameters.alpha : 0.0;
+			activePrice_MU_km = activePrice_MU_km * (1.0 - alpha) + alpha * observedPrice_MU_km;
 		}
-		
+
 		numberOfTrips = 0;
 	}
 

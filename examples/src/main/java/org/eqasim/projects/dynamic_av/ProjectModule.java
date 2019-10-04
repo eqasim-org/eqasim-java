@@ -80,7 +80,7 @@ public class ProjectModule extends AbstractEqasimExtension {
 
 		addControlerListenerBinding().to(WaitingTimeAnalysisListener.class);
 
-		install(new PricingModule());
+		install(new PricingModule(commandLine));
 	}
 
 	@Provides

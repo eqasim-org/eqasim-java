@@ -52,8 +52,8 @@ public class CostCalculator {
 		vehicleType.otherCostPerKm /= 1.0 + (vat.otherCostPerKmIsDeductible ? vat.vat : 1.0);
 	}
 
-	private double calculateFixedCostPerVehiclePerDay(VehicleTypeDefinition vehicleType, int numberOfTrips) {
-		double cleaningCostPerYear = scenario.cleaningPrice * scenario.cleaningFrequencyPerTrip * numberOfTrips
+	private double calculateFixedCostPerVehiclePerDay(VehicleTypeDefinition vehicleType, int numberOfTrips, int numberOfVehicles) {
+		double cleaningCostPerYear = scenario.cleaningPrice * scenario.cleaningFrequencyPerTrip * (numberOfTrips / numberOfVehicles)
 				* 365.25;
 
 		return (0.0 //
@@ -89,7 +89,7 @@ public class CostCalculator {
 			double vehicleDistanceKm, int numberOfTrips) {
 		return calculateOverheadCostPerDay() //
 				+ calculateVariableCostPerVehiclePerDay(vehicleType, vehicleDistanceKm, numberOfVehicles) //
-				+ calculateFixedCostPerVehiclePerDay(vehicleType, numberOfTrips);
+				+ calculateFixedCostPerVehiclePerDay(vehicleType, numberOfTrips, numberOfVehicles);
 	}
 
 	public double calculateFleetCost(CostCalculatorParameters parameters) {
@@ -98,7 +98,7 @@ public class CostCalculator {
 		applyVATDeducation(vehicleTypeDefinition);
 
 		return calculateTotalCostPerVehiclePerDay(vehicleTypeDefinition, parameters.numberOfVehicles,
-				parameters.vehicleDistanceKm, parameters.numberOfTrips);
+				parameters.vehicleDistanceKm, parameters.numberOfTrips) * parameters.numberOfVehicles;
 	}
 
 	public double calculatePricePerPassengerKm(double fleetCost, double passengerDistanceKm) {

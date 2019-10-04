@@ -16,6 +16,12 @@ public class EqasimMainModeIdentifier implements MainModeIdentifier {
 			}
 		}
 
-		return TripStructureUtils.getLegs(tripElements).get(0).getMode();
+		String mode = TripStructureUtils.getLegs(tripElements).get(0).getMode();
+
+		if (mode.contains("walk")) {
+			return "walk";
+		}
+
+		return mode;
 	}
 }

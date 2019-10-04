@@ -2,13 +2,17 @@ package org.eqasim.projects.dynamic_av.pricing;
 
 import java.io.File;
 
+import org.eqasim.automated_vehicles.components.EqasimAvConfigGroup;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
+import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.projects.dynamic_av.pricing.cost_calculator.CostCalculator;
 import org.eqasim.projects.dynamic_av.pricing.cost_calculator.definitions.ScenarioDefinition;
 import org.eqasim.projects.dynamic_av.pricing.price.PriceCalculator;
 import org.eqasim.projects.dynamic_av.pricing.price.ProjectAvCostModel;
 import org.eqasim.projects.dynamic_av.pricing.price.ProjectAvCostWriter;
 import org.eqasim.projects.dynamic_av.pricing.price.ProjectCostParameters;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
@@ -21,6 +25,12 @@ import ch.ethz.matsim.av.config.operator.OperatorConfig;
 public class PricingModule extends AbstractEqasimExtension {
 	static public final String PROJECT_AV_COST_MODEL_NAME = "ProjectAvCostModel";
 
+	private final CommandLine commandLine;
+
+	public PricingModule(CommandLine commandLine) {
+		this.commandLine = commandLine;
+	}
+
 	@Override
 	public void installEqasimExtension() {
 		addEventHandlerBinding().to(PriceCalculator.class);
@@ -28,6 +38,8 @@ public class PricingModule extends AbstractEqasimExtension {
 
 		bind(ProjectAvCostModel.class);
 		bindCostModel(PROJECT_AV_COST_MODEL_NAME).to(ProjectAvCostModel.class);
+
+		addControlerListenerBinding().to(ProjectAvCostWriter.class);
 	}
 
 	@Provides
@@ -45,11 +57,12 @@ public class PricingModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public PriceCalculator providePriceCalculator(ProjectCostParameters costParameters, CostCalculator calculator,
-			FleetDistanceListener fleetDistanceListener, AVConfigGroup config) {
+			FleetDistanceListener fleetDistanceListener, AVConfigGroup config, EqasimConfigGroup eqasimConfig) {
 		int numberOfVehicles = config.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID).getGeneratorConfig()
 				.getNumberOfVehicles();
 
-		return new PriceCalculator(costParameters, fleetDistanceListener, numberOfVehicles, calculator);
+		return new PriceCalculator(costParameters, fleetDistanceListener, numberOfVehicles, calculator,
+				eqasimConfig.getSampleSize());
 	}
 
 	@Provides
@@ -58,5 +71,13 @@ public class PricingModule extends AbstractEqasimExtension {
 			PriceCalculator calculator) {
 		File outputPath = new File(outputDirectory.getOutputFilename("project_av_prices.csv"));
 		return new ProjectAvCostWriter(outputPath, calculator);
+	}
+
+	@Provides
+	@Singleton
+	public ProjectCostParameters provideProjectCostParameters(EqasimAvConfigGroup config) {
+		ProjectCostParameters parameters = ProjectCostParameters.buildDefault();
+		ParameterDefinition.applyCommandLine("project-cost-parameter", commandLine, parameters);
+		return parameters;
 	}
 }

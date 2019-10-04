@@ -18,8 +18,8 @@ public class TestCostCalculator {
 		CostCalculatorParameters parameters = new CostCalculatorParameters( //
 				fleetSize, //
 				vehicleDistanceKm * fleetSize, //
-				numberOfTrips, //
-				passengerDistanceKm //
+				numberOfTrips * fleetSize, //
+				passengerDistanceKm * fleetSize //
 		);
 
 		return costCalculator.calculatePricePerPassengerKm(costCalculator.calculateFleetCost(parameters),

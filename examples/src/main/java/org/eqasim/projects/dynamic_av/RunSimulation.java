@@ -31,7 +31,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter", "av-mode-parameter", "av-cost-parameter") //
+				.allowPrefixes("mode-parameter", "cost-parameter", "av-mode-parameter", "project-cost-parameter") //
 				.allowOptions("fleet-size") //
 				.build();
 
