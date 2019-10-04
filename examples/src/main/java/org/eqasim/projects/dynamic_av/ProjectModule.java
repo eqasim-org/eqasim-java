@@ -20,6 +20,7 @@ import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectPe
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectPtPredictor;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectTripPredictor;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.predictors.ProjectWalkPredictor;
+import org.eqasim.projects.dynamic_av.pricing.PricingModule;
 import org.eqasim.projects.dynamic_av.service_area.OperatingArea;
 import org.eqasim.projects.dynamic_av.service_area.ProjectNetworkFilter;
 import org.eqasim.projects.dynamic_av.waiting_time.ProjectWaitingTimeFactory;
@@ -78,6 +79,8 @@ public class ProjectModule extends AbstractEqasimExtension {
 		bind(AVNetworkFilter.class).to(ProjectNetworkFilter.class);
 
 		addControlerListenerBinding().to(WaitingTimeAnalysisListener.class);
+
+		install(new PricingModule());
 	}
 
 	@Provides

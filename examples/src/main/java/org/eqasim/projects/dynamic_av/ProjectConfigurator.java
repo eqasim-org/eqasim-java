@@ -6,6 +6,7 @@ import java.util.Set;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
+import org.eqasim.projects.dynamic_av.pricing.PricingModule;
 import org.eqasim.projects.dynamic_av.service_area.OperatingArea;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -45,6 +46,8 @@ public class ProjectConfigurator extends EqasimConfigurator {
 		eqasimConfig.setEstimator(TransportMode.bike, ProjectModule.PROJECT_BIKE_ESTIMATOR);
 		eqasimConfig.setEstimator(TransportMode.walk, ProjectModule.PROJECT_WALK_ESTIMATOR);
 		eqasimConfig.setEstimator(AVModule.AV_MODE, ProjectModule.PROJECT_AV_ESTIMATOR);
+		
+		eqasimConfig.setCostModel(AVModule.AV_MODE, PricingModule.PROJECT_AV_COST_MODEL_NAME);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
