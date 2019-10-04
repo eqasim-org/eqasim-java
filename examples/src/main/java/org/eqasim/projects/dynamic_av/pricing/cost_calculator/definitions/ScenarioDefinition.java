@@ -23,7 +23,7 @@ public class ScenarioDefinition {
 	public VehicleTypeDefinition vehicleType = new VehicleTypeDefinition();
 	public Collection<TechnologyDefinition> technologies = new HashSet<>();
 
-	public static ScenarioDefinition buildSwitzerlandSolo() {
+	public static ScenarioDefinition buildDefaultSwitzerlandSolo() {
 		ScenarioDefinition scenario = new ScenarioDefinition();
 
 		scenario.vehicleLifetimeKm = 300000.0;
@@ -89,6 +89,12 @@ public class ScenarioDefinition {
 		scenario.vehicleType.tireCostPerKm = 0.02;
 		scenario.vehicleType.fuelCostPerKm = 0.06;
 
+		return scenario;
+	}
+
+	public static ScenarioDefinition buildForProject() {
+		ScenarioDefinition scenario = buildDefaultSwitzerlandSolo();
+		scenario.profitMargin = 0.0;
 		return scenario;
 	}
 }

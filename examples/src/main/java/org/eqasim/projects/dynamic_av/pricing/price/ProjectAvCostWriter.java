@@ -11,13 +11,13 @@ import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 
-public class AvCostWriter implements IterationEndsListener, ShutdownListener {
+public class ProjectAvCostWriter implements IterationEndsListener, ShutdownListener {
 	private final File outputPath;
 	private final PriceCalculator listener;
 
 	private BufferedWriter writer = null;
 
-	public AvCostWriter(File outputPath, PriceCalculator listener) {
+	public ProjectAvCostWriter(File outputPath, PriceCalculator listener) {
 		this.outputPath = outputPath;
 		this.listener = listener;
 	}

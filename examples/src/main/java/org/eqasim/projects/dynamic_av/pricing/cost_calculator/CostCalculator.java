@@ -100,4 +100,16 @@ public class CostCalculator {
 		return calculateTotalCostPerVehiclePerDay(vehicleTypeDefinition, parameters.numberOfVehicles,
 				parameters.vehicleDistanceKm, parameters.numberOfTrips);
 	}
+
+	public double calculatePricePerPassengerKm(double fleetCost, double passengerDistanceKm) {
+		double costPerPassengerKm = fleetCost / passengerDistanceKm;
+		return calculatePrice(costPerPassengerKm);
+	}
+
+	public double calculatePrice(double cost) {
+		cost /= (1.0 - scenario.profitMargin);
+		cost /= (1.0 - scenario.paymentTransationFee);
+		cost *= (1.0 + scenario.vat.vat);
+		return cost;
+	}
 }
