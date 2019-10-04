@@ -116,12 +116,12 @@ public class GenerateConfig {
 		outsideParams.setTeleportedModeSpeed(1000.0);
 
 		ModeRoutingParams bikeParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.bike);
-		bikeParams.setBeelineDistanceFactor(1.4);
-		bikeParams.setTeleportedModeSpeed(3.1); // 11.6 km/h
+		bikeParams.setBeelineDistanceFactor(1.65);
+		bikeParams.setTeleportedModeSpeed(3.49); // 12.55 km/h
 
 		ModeRoutingParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
-		walkParams.setBeelineDistanceFactor(1.3);
-		walkParams.setTeleportedModeSpeed(1.2); // 4.32 km/h
+		walkParams.setBeelineDistanceFactor(1.62);
+		walkParams.setTeleportedModeSpeed(1.4); // 5 km/h
 
 		// Travel time calculator
 		config.travelTimeCalculator().setAnalyzedModes(new HashSet<>(NETWORK_MODES));

@@ -10,6 +10,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.projects.dynamic_av.mode_choice.ProjectAvModeParameters;
 import org.eqasim.projects.dynamic_av.mode_choice.ProjectModeParameters;
+import org.eqasim.projects.dynamic_av.mode_choice.constraints.InfiniteHeadwayConstraint;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.estimators.ProjectAvUtilityEstimator;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.estimators.ProjectBikeUtilityEstimator;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.estimators.ProjectCarUtilityEstimator;
@@ -31,9 +32,9 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -83,6 +84,8 @@ public class ProjectModule extends AbstractEqasimExtension {
 		addControlerListenerBinding().to(WaitingTimeAnalysisListener.class);
 
 		install(new PricingModule(commandLine));
+
+		bindTripConstraintFactory(InfiniteHeadwayConstraint.NAME).to(InfiniteHeadwayConstraint.Factory.class);
 	}
 
 	@Provides
@@ -137,7 +140,7 @@ public class ProjectModule extends AbstractEqasimExtension {
 
 		return new WaitingTimeWriter(waitingTime, operatingArea, network, waitingTimeConfig);
 	}
-	
+
 	@Provides
 	@Singleton
 	public OVGKCalculator provideOVGKCalculator(TransitSchedule transitSchedule) {

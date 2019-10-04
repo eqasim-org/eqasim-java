@@ -73,7 +73,7 @@ public class ProjectPtUtilityEstimator extends PtUtilityEstimator {
 	}
 
 	protected double estimateHeadwayUtility(ProjectPtVariables variables) {
-		if (parameters.projectPt.betaHeadway_u_min > 0.0 && variables.headway_min == 0.0) {
+		if (parameters.projectPt.betaHeadway_u_min != 0.0 && variables.headway_min == 0.0) {
 			throw new IllegalStateException("Non-zero beta for headway, but no headway is given.");
 		}
 

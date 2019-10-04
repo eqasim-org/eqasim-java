@@ -5,8 +5,8 @@ import org.eqasim.projects.dynamic_av.mode_choice.ProjectModeParameters.ProjectB
 
 public class ProjectAvModeParameters extends AvModeParameters {
 	public final ProjectBaseModeParameters project = new ProjectBaseModeParameters();
-	
-	static public ProjectAvModeParameters buildDefault() {
+
+	static public ProjectAvModeParameters buildPrevious() {
 		ProjectAvModeParameters parameters = new ProjectAvModeParameters();
 
 		// Av
@@ -14,10 +14,25 @@ public class ProjectAvModeParameters extends AvModeParameters {
 		parameters.betaTravelTime_u_min = -0.0277;
 		parameters.betaWaitingTime_u_min = -0.0769;
 		parameters.betaAccessEgressTime_u_min = -0.0751;
-		
+
 		// Av Project
 		parameters.project.betaAgeOver60 = 0.574;
 		parameters.project.betaWork = -0.785;
+
+		return parameters;
+	}
+
+	static public ProjectAvModeParameters buildDefault() { // 4 Oct
+		ProjectAvModeParameters parameters = new ProjectAvModeParameters();
+
+		// Av
+		parameters.alpha_u = -0.080;
+		parameters.betaTravelTime_u_min = -0.016;
+		parameters.betaWaitingTime_u_min = -0.097;
+		parameters.betaAccessEgressTime_u_min = -0.015;
+
+		// Av Project
+		parameters.project.betaWork = -1.919;
 
 		return parameters;
 	}

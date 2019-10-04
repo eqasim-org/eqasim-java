@@ -31,7 +31,7 @@ public class ProjectModeParameters extends SwissModeParameters {
 	public double lambdaCostHouseholdIncome = 0.0;
 	public double referenceHouseholdIncome_MU = 0.0;
 
-	static public ProjectModeParameters buildDefault() {
+	static public ProjectModeParameters buildPrevious() {
 		ProjectModeParameters parameters = new ProjectModeParameters();
 
 		// General
@@ -64,7 +64,7 @@ public class ProjectModeParameters extends SwissModeParameters {
 
 		parameters.projectCar.betaAgeOver60 = 0.258;
 		parameters.projectCar.betaWork = -1.06;
-		
+
 		parameters.car.constantParkingSearchPenalty_min = 4.0;
 		parameters.car.constantAccessEgressWalkTime_min = 4.0;
 
@@ -76,6 +76,104 @@ public class ProjectModeParameters extends SwissModeParameters {
 		parameters.projectPt.betaRailTravelTime_u_min = -0.0154;
 		parameters.projectPt.betaBusTravelTime_u_min = -0.0299;
 		parameters.projectPt.betaFeederTravelTime_u_min = -0.0582;
+
+		return parameters;
+	}
+
+	static public ProjectModeParameters buildDefault2() { // 4 Oct
+		ProjectModeParameters parameters = new ProjectModeParameters();
+
+		// General
+		parameters.betaCost_u_MU = -0.089;
+
+		parameters.lambdaTravelTimeEuclideanDistance = 0.0;
+		parameters.lambdaCostEuclideanDistance = -0.226;
+		parameters.referenceEuclideanDistance_km = 39.0;
+
+		parameters.lambdaCostHouseholdIncome = -0.825;
+		parameters.referenceHouseholdIncome_MU = 12260.0;
+
+		// Walk
+		parameters.walk.alpha_u = 0.564;
+		parameters.walk.betaTravelTime_u_min = -0.032;
+
+		// Bike
+		parameters.bike.alpha_u = 0.216;
+		parameters.bike.betaTravelTime_u_min = -0.106;
+
+		parameters.projectBike.betaAgeOver60 = -2.683;
+
+		// Car
+		parameters.car.alpha_u = 0.150;
+		parameters.car.betaTravelTime_u_min = -0.020;
+
+		parameters.projectCar.betaWork = -1.290;
+
+		parameters.car.constantParkingSearchPenalty_min = 4.0;
+		parameters.car.constantAccessEgressWalkTime_min = 4.0;
+
+		// PT
+		parameters.pt.betaAccessEgressTime_u_min = -0.016;
+		parameters.pt.betaWaitingTime_u_min = -0.011;
+
+		parameters.projectPt.betaRailTravelTime_u_min = -0.008;
+		parameters.projectPt.betaBusTravelTime_u_min = -0.014;
+		parameters.projectPt.betaFeederTravelTime_u_min = -0.043;
+
+		parameters.projectPt.betaHeadway_u_min = -0.030;
+		parameters.projectPt.betaOvgkB_u = -1.784;
+		parameters.projectPt.betaOvgkC_u = -1.765;
+		parameters.projectPt.betaOvgkD_u = -1.100;
+		parameters.projectPt.betaOvgkNone_u = -1.192;
+
+		return parameters;
+	}
+	
+	static public ProjectModeParameters buildDefault() { // 4 Oct
+		ProjectModeParameters parameters = new ProjectModeParameters();
+
+		// General
+		parameters.betaCost_u_MU = -0.089;
+
+		parameters.lambdaTravelTimeEuclideanDistance = 0.088;
+		parameters.lambdaCostEuclideanDistance = -0.225;
+		parameters.referenceEuclideanDistance_km = 39.0;
+
+		parameters.lambdaCostHouseholdIncome = -0.826;
+		parameters.referenceHouseholdIncome_MU = 12260.0;
+
+		// Walk
+		parameters.walk.alpha_u = 0.504;
+		parameters.walk.betaTravelTime_u_min = -0.040;
+
+		// Bike
+		parameters.bike.alpha_u = 0.104;
+		parameters.bike.betaTravelTime_u_min = -0.119;
+
+		parameters.projectBike.betaAgeOver60 = -2.645;
+
+		// Car
+		parameters.car.alpha_u = 0.122;
+		parameters.car.betaTravelTime_u_min = -0.019;
+
+		parameters.projectCar.betaWork = -1.296;
+
+		parameters.car.constantParkingSearchPenalty_min = 4.0;
+		parameters.car.constantAccessEgressWalkTime_min = 4.0;
+
+		// PT
+		parameters.pt.betaAccessEgressTime_u_min = -0.015;
+		parameters.pt.betaWaitingTime_u_min = -0.011;
+
+		parameters.projectPt.betaRailTravelTime_u_min = -0.008;
+		parameters.projectPt.betaBusTravelTime_u_min = -0.014;
+		parameters.projectPt.betaFeederTravelTime_u_min = -0.042;
+
+		parameters.projectPt.betaHeadway_u_min = -0.030;
+		parameters.projectPt.betaOvgkB_u = -1.771;
+		parameters.projectPt.betaOvgkC_u = -1.758;
+		parameters.projectPt.betaOvgkD_u = -1.093;
+		parameters.projectPt.betaOvgkNone_u = -1.194;
 
 		return parameters;
 	}

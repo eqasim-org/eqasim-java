@@ -6,6 +6,7 @@ import java.util.Set;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
+import org.eqasim.projects.dynamic_av.mode_choice.constraints.InfiniteHeadwayConstraint;
 import org.eqasim.projects.dynamic_av.pricing.PricingModule;
 import org.eqasim.projects.dynamic_av.service_area.OperatingArea;
 import org.matsim.api.core.v01.Id;
@@ -46,12 +47,16 @@ public class ProjectConfigurator extends EqasimConfigurator {
 		eqasimConfig.setEstimator(TransportMode.bike, ProjectModule.PROJECT_BIKE_ESTIMATOR);
 		eqasimConfig.setEstimator(TransportMode.walk, ProjectModule.PROJECT_WALK_ESTIMATOR);
 		eqasimConfig.setEstimator(AVModule.AV_MODE, ProjectModule.PROJECT_AV_ESTIMATOR);
-		
+
 		eqasimConfig.setCostModel(AVModule.AV_MODE, PricingModule.PROJECT_AV_COST_MODEL_NAME);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 		dmcConfig.setModeAvailability(ProjectModule.PROJECT_MODE_AVAILABILITY_NAME);
+
+		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
+		tripConstraints.add(InfiniteHeadwayConstraint.NAME);
+		dmcConfig.setTripConstraints(tripConstraints);
 	}
 
 	static public void adjustScenario(Scenario scenario) {
@@ -72,17 +77,17 @@ public class ProjectConfigurator extends EqasimConfigurator {
 
 		OperatingArea operatingArea = OperatingArea.load(projectConfig.getWaitingTimeGroupIndexAttribute(), network,
 				ConfigGroup.getInputFileURL(scenario.getConfig().getContext(), projectConfig.getOperatingAreaPath()));
-		
+
 		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(scenario.getConfig())
 				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
-		
+
 		for (Link link : network.getLinks().values()) {
 			if (link.getAllowedModes().contains(TransportMode.car)) {
 				Set<String> modes = new HashSet<>(link.getAllowedModes());
 				modes.add(AVModule.AV_MODE);
 				link.setAllowedModes(modes);
 			}
-			
+
 			if (operatingArea.covers(link)) {
 				link.getAttributes().putAttribute(operatorConfig.getAllowedLinkAttribute(), true);
 			}
