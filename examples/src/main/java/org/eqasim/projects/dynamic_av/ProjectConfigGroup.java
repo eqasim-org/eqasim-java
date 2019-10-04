@@ -8,9 +8,11 @@ public class ProjectConfigGroup extends ReflectiveConfigGroup {
 
 	public final static String OPERATING_AREA_PATH = "operatingAreaPath";
 	public final static String WAITING_TIME_GROUP_INDEX_ATTRIBUTE = "waitingTimeGroupIndexAttribute";
+	public final static String USE_AV = "useAv";
 
 	private String operatingAreaPath = null;
 	private String waitingTimeGroupIndexAttribute = "wgIndex";
+	private boolean useAv = true;
 
 	public ProjectConfigGroup() {
 		super(GROUP_NAME);
@@ -34,6 +36,16 @@ public class ProjectConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(WAITING_TIME_GROUP_INDEX_ATTRIBUTE)
 	public void setWaitingTimeGroupIndexAttribute(String waitingTimeGroupIndexAttribute) {
 		this.waitingTimeGroupIndexAttribute = waitingTimeGroupIndexAttribute;
+	}
+
+	@StringGetter(USE_AV)
+	public boolean getUseAv() {
+		return useAv;
+	}
+
+	@StringSetter(USE_AV)
+	public void setUseAv(boolean useAv) {
+		this.useAv = useAv;
 	}
 
 	static public ProjectConfigGroup get(Config config) {

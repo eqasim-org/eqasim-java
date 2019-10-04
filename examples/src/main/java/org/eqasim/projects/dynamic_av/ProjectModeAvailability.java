@@ -19,17 +19,19 @@ public class ProjectModeAvailability implements ModeAvailability {
 	private final ModeAvailability delegate = new SwissModeAvailability();
 
 	private final OperatingArea operatingArea;
+	private final boolean useAv;
 
 	@Inject
-	public ProjectModeAvailability(OperatingArea operatingArea) {
+	public ProjectModeAvailability(OperatingArea operatingArea, ProjectConfigGroup config) {
 		this.operatingArea = operatingArea;
+		this.useAv = config.getUseAv();
 	}
 
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = delegate.getAvailableModes(person, trips);
 
-		if (modes.contains(TransportMode.walk)) {
+		if (useAv && modes.contains(TransportMode.walk)) {
 			Coord homeLocation = SwissPredictorUtils.getHomeLocation(person);
 
 			if (homeLocation != null && operatingArea.covers(homeLocation)) {
