@@ -33,6 +33,14 @@ public class SanFranciscoPtCostModel implements CostModel {
 		}
 		double euclideanDistance_kfeet = PredictorUtils.calculateEuclideanDistance_km(trip);
 		double euclideanDistance_km = euclideanDistance_kfeet / 3.28084;
-		return Math.ceil(euclideanDistance_km / 10.0) * parameters.ptCostPerTrip_USD_10km;
+
+		if (euclideanDistance_km < 20)
+			return Math.ceil(euclideanDistance_km / 10.0) * parameters.ptCostPerTrip_USD_20km;
+		else if (euclideanDistance_km < 40)
+			return parameters.ptCostPerTrip_USD_20km * 2.0
+					+ Math.ceil((euclideanDistance_km - 20) / 10.0) * parameters.ptCostPerTrip_USD_40km;
+		else
+			return parameters.ptCostPerTrip_USD_20km * 2.0 + parameters.ptCostPerTrip_USD_40km * 2.0
+					+ Math.ceil((euclideanDistance_km - 40) / 10.0) * parameters.ptCostPerTrip_USD_40plus_km;
 	}
 }
