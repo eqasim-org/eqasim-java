@@ -1,21 +1,36 @@
 package org.eqasim.automated_vehicles.components;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.eqasim.automated_vehicles.mode_choice.AvModeChoiceModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.data.simple.SimpleFeatureSource;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
+import org.opengis.feature.simple.SimpleFeature;
 
 import ch.ethz.matsim.av.config.AVConfigGroup;
-import ch.ethz.matsim.av.config.AVScoringParameterSet;
 import ch.ethz.matsim.av.config.operator.DispatcherConfig;
 import ch.ethz.matsim.av.config.operator.GeneratorConfig;
 import ch.ethz.matsim.av.config.operator.OperatorConfig;
@@ -54,15 +69,6 @@ public final class AvConfigurator {
 
 			WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeConfig();
 			waitingTimeConfig.setEstimationAlpha(0.1);
-
-			// TODO: This should be fixed in AV extension (when it is null, we get an
-			// exception)
-			waitingTimeConfig.setConstantWaitingTimeLinkAttribute("constantWaitingTime");
-
-			// Set up scoring (although we don't really use it - MATSim wants it)
-			// TODO: Could also be added by default in AV extension
-			AVScoringParameterSet scoringParameters = new AVScoringParameterSet();
-			avConfig.addScoringParameters(scoringParameters);
 		}
 
 		// Set up DiscreteModeChoice
@@ -122,6 +128,41 @@ public final class AvConfigurator {
 	static public void configureUniformWaitingTimeGroup(Scenario scenario) {
 		for (Link link : scenario.getNetwork().getLinks().values()) {
 			link.getAttributes().putAttribute("avWaitingTimeGroup", 0);
+		}
+	}
+	
+	static public void configureWaitingTimeGroupFromShapefile(File path, String attributeName, Network network) {
+		GeometryFactory geometryFactory = new GeometryFactory();
+		Map<Integer, Geometry> shapes = new HashMap<>();
+
+		try {
+			DataStore dataStore = DataStoreFinder.getDataStore(Collections.singletonMap("url", path.toURI().toURL()));
+
+			SimpleFeatureSource featureSource = dataStore.getFeatureSource(dataStore.getTypeNames()[0]);
+			SimpleFeatureCollection featureCollection = featureSource.getFeatures();
+			SimpleFeatureIterator featureIterator = featureCollection.features();
+
+			while (featureIterator.hasNext()) {
+				SimpleFeature feature = featureIterator.next();
+				int index = (int) (long) (Long) feature.getAttribute(attributeName);
+				shapes.put(index, (Geometry) feature.getDefaultGeometry());
+			}
+
+			featureIterator.close();
+			dataStore.dispose();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		for (Link link : network.getLinks().values()) {
+			Coordinate coordinate = new Coordinate(link.getCoord().getX(), link.getCoord().getY());
+			Point point = geometryFactory.createPoint(coordinate);
+
+			for (Map.Entry<Integer, Geometry> entry : shapes.entrySet()) {
+				if (entry.getValue().contains(point)) {
+					link.getAttributes().putAttribute("avWaitingTimeGroup", entry.getKey());
+				}
+			}
 		}
 	}
 
