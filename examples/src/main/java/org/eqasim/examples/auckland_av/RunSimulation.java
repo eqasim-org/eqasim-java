@@ -52,6 +52,7 @@ public class RunSimulation {
 		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
 				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
 		operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.getOptionStrict("fleet-size")));
+		operatorConfig.getDispatcherConfig().setType("GlobalBipartiteMatchingDispatcher");
 
 		// This *can* be used for advanced dispatchers, but GLPK must be set up
 		// properly.

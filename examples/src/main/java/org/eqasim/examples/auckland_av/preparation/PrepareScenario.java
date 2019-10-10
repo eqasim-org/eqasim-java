@@ -43,9 +43,6 @@ public class PrepareScenario {
 
 		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
 				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
-		operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.getOptionStrict("fleet-size")));
-		operatorConfig.getDispatcherConfig().setType("GlobalBipartiteMatchingDispatcher");
-
 		operatorConfig.getWaitingTimeConfig().setEstimationAlpha(0.1);
 		operatorConfig.getWaitingTimeConfig().setEstimationLinkAttribute("avWaitingTimeGroup");
 
