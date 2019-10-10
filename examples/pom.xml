@@ -13,12 +13,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>ch.ethz.idsc</groupId>
-			<artifactId>amodeus</artifactId>
-			<version>1.8.3</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.eqasim</groupId>
 			<artifactId>automated_vehicles</artifactId>
 			<version>1.0.2</version>
