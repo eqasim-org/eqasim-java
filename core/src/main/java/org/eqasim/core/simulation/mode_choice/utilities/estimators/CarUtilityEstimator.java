@@ -37,12 +37,12 @@ public class CarUtilityEstimator implements UtilityEstimator {
 
 	protected double estimateMonetaryCostUtility(CarVariables variables) {
 		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables.euclideanDistance_km,
-				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance);
+				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		CarVariables variables = predictor.predict(person, trip, elements);
+		CarVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 

@@ -16,6 +16,7 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 
 				if (person != null) {
 					copyAttribute(household, person, "spRegion");
+					copyAttribute(household, person, "bikeAvailability");
 				}
 			}
 		}
