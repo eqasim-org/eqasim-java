@@ -1,5 +1,14 @@
 # CHANGELOG
 
+- No changes yet
+
+**1.0.4**
+
+- Update Auckland parameters
+- Add deployment target for Maven
+
+**1.0.3**
+
 - Add custom MainModeIdentifier
 - Bugfix: Shape extent did not cut teleportation trips properly
 - Fix analysis interval for trip analysis
