@@ -24,6 +24,13 @@
 		<swiss_rail.version>11.2</swiss_rail.version>
 	</properties>
 
+	<distributionManagement>
+		<repository>
+			<id>matsim-eth</id>
+			<url>https://api.bintray.com/maven/matsim-eth/eqasim/eqasim/;publish=1</url>
+		</repository>
+	</distributionManagement>
+
 	<repositories>
 		<repository>
 			<id>osgeo</id>
