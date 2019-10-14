@@ -12,7 +12,7 @@ public class AucklandModeParameters extends ModeParameters {
 		parameters.referenceEuclideanDistance_km = 40.0;
 
 		// Car
-		parameters.car.alpha_u = 0.827 - 0.8; // Adjusted to Auckland
+		parameters.car.alpha_u = 0.827 - 1.2; // Adjusted to Auckland
 		parameters.car.betaTravelTime_u_min = -0.067;
 
 		parameters.car.constantAccessEgressWalkTime_min = 4.0;
