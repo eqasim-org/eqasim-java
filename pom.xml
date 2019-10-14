@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.eqasim</groupId>
 	<artifactId>eqasim</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -23,6 +23,13 @@
 		<matsim.version>11.0</matsim.version>
 		<swiss_rail.version>11.2</swiss_rail.version>
 	</properties>
+
+	<distributionManagement>
+		<repository>
+			<id>matsim-eth</id>
+			<url>https://api.bintray.com/maven/matsim-eth/eqasim/eqasim/;publish=1</url>
+		</repository>
+	</distributionManagement>
 
 	<repositories>
 		<repository>

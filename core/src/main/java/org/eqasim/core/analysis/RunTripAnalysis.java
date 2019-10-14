@@ -5,13 +5,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import org.eqasim.core.components.EqasimMainModeIdentifier;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.MainModeIdentifierImpl;
 import org.matsim.core.router.StageActivityTypesImpl;
 import org.matsim.pt.PtConstants;
 
@@ -39,7 +39,7 @@ public class RunTripAnalysis {
 		StageActivityTypesImpl stageActivityTypes = new StageActivityTypesImpl(Arrays
 				.asList(plainStageActivityTypes.split(",")).stream().map(s -> s.trim()).collect(Collectors.toSet()));
 
-		MainModeIdentifier mainModeIdentifier = new MainModeIdentifierImpl();
+		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
 
 		Collection<String> networkModes = Arrays.asList(cmd.getOption("network-modes").orElse("car").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
@@ -53,8 +53,8 @@ public class RunTripAnalysis {
 			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
 		} else {
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier, new DefaultPersonAnalysisFilter())
-					.readTrips(populationPath);
+			trips = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier,
+					new DefaultPersonAnalysisFilter()).readTrips(populationPath);
 		}
 
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));
