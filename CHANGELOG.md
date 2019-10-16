@@ -1,6 +1,6 @@
 # CHANGELOG
 
-- No changes yet
+- Fix transit_walk detection in EqasimMainModeIdentifier
 
 **1.0.4**
 
