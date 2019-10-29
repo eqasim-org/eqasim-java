@@ -2,6 +2,7 @@ package org.eqasim.core.components;
 
 import java.util.List;
 
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.router.MainModeIdentifier;
@@ -16,12 +17,15 @@ public class EqasimMainModeIdentifier implements MainModeIdentifier {
 			}
 		}
 
-		String mode = TripStructureUtils.getLegs(tripElements).get(0).getMode();
+		String singleLegMode = TripStructureUtils.getLegs(tripElements).get(0).getMode();
 
-		if (mode.contains("walk")) {
-			return "walk";
+		switch (singleLegMode) {
+		case TransportMode.transit_walk:
+		case TransportMode.access_walk:
+		case TransportMode.egress_walk:
+			return TransportMode.pt;
+		default:
+			return TransportMode.walk;
 		}
-
-		return mode;
 	}
 }
