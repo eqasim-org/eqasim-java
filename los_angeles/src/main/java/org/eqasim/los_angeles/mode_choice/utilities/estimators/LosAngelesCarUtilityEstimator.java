@@ -29,6 +29,10 @@ public class LosAngelesCarUtilityEstimator extends CarUtilityEstimator {
 		this.parameters = parameters;
 		this.predictor = predictor;
 	}
+	
+	protected double estimateTravelTime(CarVariables variables_car) {
+		return parameters.laCar.vot_min * variables_car.travelTime_min;
+	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -38,10 +42,8 @@ public class LosAngelesCarUtilityEstimator extends CarUtilityEstimator {
 		double utility = 0.0;
 
 		utility += estimateConstantUtility();
-		utility += estimateTravelTimeUtility(variables_car);
-		utility += estimateAccessEgressTimeUtility(variables_car);
-		utility += estimateMonetaryCostUtility(variables_car)
-				* (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+		utility += (estimateTravelTime(variables_car) + estimateMonetaryCostUtility(variables_car))
+				* (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome) * parameters.betaCost_u_MU;
 
 		return utility;
 	}
