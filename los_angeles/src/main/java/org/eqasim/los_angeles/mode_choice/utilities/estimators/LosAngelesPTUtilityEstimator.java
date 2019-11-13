@@ -5,6 +5,7 @@ import java.util.List;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.los_angeles.mode_choice.parameters.LosAngelesModeParameters;
 import org.eqasim.los_angeles.mode_choice.utilities.predictors.LosAngelesPersonPredictor;
@@ -34,6 +35,11 @@ public class LosAngelesPTUtilityEstimator extends PtUtilityEstimator {
 		return (variables.cityTrip) ? parameters.laPT.alpha_pt_city : 0.0;
 	}
 
+	protected double estimateTravelTime(PtVariables variables_pt) {
+		return parameters.laPT.vot_min
+				* (variables_pt.inVehicleTime_min + variables_pt.accessEgressTime_min + variables_pt.waitingTime_min);
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		LosAngelesPersonVariables variables = predictor.predictVariables(person, trip, elements);
@@ -42,13 +48,11 @@ public class LosAngelesPTUtilityEstimator extends PtUtilityEstimator {
 		double utility = 0.0;
 
 		utility += estimateConstantUtility();
-		utility += estimateAccessEgressTimeUtility(variables_pt);
-		utility += estimateInVehicleTimeUtility(variables_pt);
-		utility += estimateWaitingTimeUtility(variables_pt);
-		utility += estimateLineSwitchUtility(variables_pt);
+		utility += (estimateTravelTime(variables_pt) + estimateLineSwitchUtility(variables_pt)
+				+ estimateMonetaryCostUtility(variables_pt))
+				* (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome)
+				* parameters.betaCost_u_MU;
 		utility += estimateRegionalUtility(variables);
-		utility += estimateMonetaryCostUtility(variables_pt)
-				* (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}
