@@ -18,7 +18,7 @@ public class RunImputeInnerLAAttribute {
 	public static void main(String[] args)
 			throws MalformedURLException, IOException, ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("sf-path", "input-path", "output-path") //
+				.requireOptions("la-path", "input-path", "output-path") //
 				.build();
 
 		// Load IRIS
