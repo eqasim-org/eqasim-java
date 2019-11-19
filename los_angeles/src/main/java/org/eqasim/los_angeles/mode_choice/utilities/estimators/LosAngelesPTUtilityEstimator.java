@@ -2,6 +2,7 @@ package org.eqasim.los_angeles.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
@@ -41,6 +42,12 @@ public class LosAngelesPTUtilityEstimator extends PtUtilityEstimator {
 	}
 
 	@Override
+	protected double estimateMonetaryCostUtility(PtVariables variables) {
+		return EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
+				parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
+	}
+
+	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		LosAngelesPersonVariables variables = predictor.predictVariables(person, trip, elements);
 		PtVariables variables_pt = ptPredictor.predict(person, trip, elements);
@@ -50,8 +57,7 @@ public class LosAngelesPTUtilityEstimator extends PtUtilityEstimator {
 		utility += estimateConstantUtility();
 		utility += (estimateTravelTime(variables_pt) + estimateLineSwitchUtility(variables_pt)
 				+ estimateMonetaryCostUtility(variables_pt))
-				* (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome)
-				* parameters.betaCost_u_MU;
+				* (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome) * parameters.betaCost_u_MU;
 		utility += estimateRegionalUtility(variables);
 
 		return utility;
