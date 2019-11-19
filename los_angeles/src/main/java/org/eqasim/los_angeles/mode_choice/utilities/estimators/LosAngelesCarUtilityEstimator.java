@@ -3,6 +3,7 @@ package org.eqasim.los_angeles.mode_choice.utilities.estimators;
 import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
@@ -29,9 +30,15 @@ public class LosAngelesCarUtilityEstimator extends CarUtilityEstimator {
 		this.parameters = parameters;
 		this.predictor = predictor;
 	}
-	
+
 	protected double estimateTravelTime(CarVariables variables_car) {
 		return parameters.laCar.vot_min * variables_car.travelTime_min;
+	}
+
+	@Override
+	protected double estimateMonetaryCostUtility(CarVariables variables) {
+		return EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
+				parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
 	}
 
 	@Override
