@@ -7,8 +7,6 @@ import org.matsim.api.core.v01.BasicLocation;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 
-import com.google.inject.Inject;
-
 import ch.ethz.matsim.discrete_mode_choice.components.utils.LocationUtils;
 import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -124,7 +122,6 @@ public class VehicleTourConstraintWithCarPassenger implements TourConstraint {
 		private final Collection<String> restrictedModes;
 		private final HomeFinder homeFinder;
 
-		@Inject
 		public Factory(Collection<String> restrictedModes, HomeFinder homeFinder) {
 			this.restrictedModes = restrictedModes;
 			this.homeFinder = homeFinder;
