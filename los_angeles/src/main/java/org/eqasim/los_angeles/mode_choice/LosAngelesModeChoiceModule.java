@@ -7,6 +7,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.los_angeles.mode_choice.constraints.VehicleTourConstraintWithCarPassenger;
 import org.eqasim.los_angeles.mode_choice.costs.LosAngelesCarCostModel;
 import org.eqasim.los_angeles.mode_choice.costs.LosAngelesPtCostModel;
 import org.eqasim.los_angeles.mode_choice.parameters.LosAngelesCostParameters;
@@ -35,27 +36,29 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(LosAngelesModeAvailability.class);
-
+		bindTourConstraintFactory("VehicleTourConstraintWithCarPassenger")
+				.to(VehicleTourConstraintWithCarPassenger.Factory.class);
 		bind(LosAngelesPersonPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(LosAngelesCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(LosAngelesPtCostModel.class);
-        bindUtilityEstimator("sfPTEstimator").to(LosAngelesPTUtilityEstimator.class);
-        bindUtilityEstimator("sfWalkEstimator").to(LosAngelesWalkUtilityEstimator.class);
+		bindUtilityEstimator("sfPTEstimator").to(LosAngelesPTUtilityEstimator.class);
+		bindUtilityEstimator("sfWalkEstimator").to(LosAngelesWalkUtilityEstimator.class);
 		bind(ModeParameters.class).to(LosAngelesModeParameters.class);
 	}
 
 	@Provides
 	@Singleton
-	public LosAngelesModeParameters provideModeChoiceParameters(EqasimConfigGroup config) throws IOException, ConfigurationException {
+	public LosAngelesModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
+			throws IOException, ConfigurationException {
 		LosAngelesModeParameters parameters = LosAngelesModeParameters.buildDefault();
-		
+
 		if (config.getModeParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
 		}
-		
+
 		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
-		
+
 		return parameters;
 	}
 
@@ -63,13 +66,13 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 	@Singleton
 	public LosAngelesCostParameters provideCostParameters(EqasimConfigGroup config) {
 		LosAngelesCostParameters parameters = LosAngelesCostParameters.buildDefault();
-		
+
 		if (config.getModeParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
 		}
-		
+
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
-		
+
 		return parameters;
 	}
 }
