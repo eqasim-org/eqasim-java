@@ -20,6 +20,11 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+
+import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 
 public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -74,5 +79,13 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 
 		return parameters;
+	}
+	
+	@Provides
+	@Singleton
+	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(DiscreteModeChoiceConfigGroup dmcConfig,
+			@Named("tour") HomeFinder homeFinder) {
+		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
+		return new VehicleTourConstraintWithCarPassenger.Factory(config.getRestrictedModes(), homeFinder);
 	}
 }
