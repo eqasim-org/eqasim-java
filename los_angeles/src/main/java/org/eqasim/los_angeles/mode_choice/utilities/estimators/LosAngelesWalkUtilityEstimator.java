@@ -5,14 +5,12 @@ import java.util.List;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.WalkVariables;
 import org.eqasim.los_angeles.mode_choice.parameters.LosAngelesModeParameters;
 import org.eqasim.los_angeles.mode_choice.utilities.predictors.LosAngelesPersonPredictor;
 import org.eqasim.los_angeles.mode_choice.utilities.variables.LosAngelesPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.core.utils.geometry.CoordUtils;
 
 import com.google.inject.Inject;
 
@@ -44,21 +42,16 @@ public class LosAngelesWalkUtilityEstimator extends WalkUtilityEstimator {
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		LosAngelesPersonVariables variables = predictor.predictVariables(person, trip, elements);
-		
-		double distance = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
-				trip.getDestinationActivity().getCoord());
-		
-		if (distance > 4 * 5280)
-			return -100;
-		
+
 		double utility = 0.0;
 
 		WalkVariables variables_walk = walkPredictor.predictVariables(person, trip, elements);
-        utility += estimateConstantUtility();
-		utility += estimateTravelTime(variables_walk) 
-				* (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome)
+		if (variables_walk.travelTime_min > 40)
+			return -100;
+		utility += estimateConstantUtility();
+		utility += estimateTravelTime(variables_walk) * (parameters.laAvgHHLIncome.avg_hhl_income / variables.hhlIncome)
 				* parameters.betaCost_u_MU;
-		utility += estimateRegionalUtility(variables);		
+		utility += estimateRegionalUtility(variables);
 
 		return utility;
 	}
