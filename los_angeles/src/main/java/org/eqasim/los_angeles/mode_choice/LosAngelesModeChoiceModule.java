@@ -8,6 +8,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.los_angeles.mode_choice.constraints.VehicleTourConstraintWithCarPassenger;
+import org.eqasim.los_angeles.mode_choice.constraints.WalkDurationConstraint;
 import org.eqasim.los_angeles.mode_choice.costs.LosAngelesCarCostModel;
 import org.eqasim.los_angeles.mode_choice.costs.LosAngelesPtCostModel;
 import org.eqasim.los_angeles.mode_choice.parameters.LosAngelesCostParameters;
@@ -43,6 +44,8 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(LosAngelesModeAvailability.class);
 		bindTourConstraintFactory("VehicleTourConstraintWithCarPassenger")
 				.to(VehicleTourConstraintWithCarPassenger.Factory.class);
+		bindTripConstraintFactory("WalkDurationConstraint")
+				.to(WalkDurationConstraint.Factory.class);
 		bind(LosAngelesPersonPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(LosAngelesCarCostModel.class);
@@ -80,12 +83,19 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 
 		return parameters;
 	}
-	
+
 	@Provides
 	@Singleton
-	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			@Named("tour") HomeFinder homeFinder) {
+	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(
+			DiscreteModeChoiceConfigGroup dmcConfig, @Named("tour") HomeFinder homeFinder) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
 		return new VehicleTourConstraintWithCarPassenger.Factory(config.getRestrictedModes(), homeFinder);
+	}
+
+	@Provides
+	@Singleton
+	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
+			@Named("tour") HomeFinder homeFinder) {
+		return new WalkDurationConstraint.Factory();
 	}
 }
