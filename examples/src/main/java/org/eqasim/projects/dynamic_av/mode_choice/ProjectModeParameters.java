@@ -144,22 +144,22 @@ public class ProjectModeParameters extends SwissModeParameters {
 
 		// Walk
 		parameters.walk.alpha_u = 0.504;
-		parameters.walk.betaTravelTime_u_min = -0.040;
+		parameters.walk.betaTravelTime_u_min = -0.040 - 0.1;
 
 		// Bike
-		parameters.bike.alpha_u = 0.104;
-		parameters.bike.betaTravelTime_u_min = -0.119;
+		parameters.bike.alpha_u = 0.104 - 0.2;
+		parameters.bike.betaTravelTime_u_min = -0.119 - 0.1 + 0.03;
 
 		parameters.projectBike.betaAgeOver60 = -2.645;
 
 		// Car
-		parameters.car.alpha_u = 0.122;
+		parameters.car.alpha_u = 0.122 - 0.019 * 4.0 - 0.040 * 4.0;
 		parameters.car.betaTravelTime_u_min = -0.019;
 
 		parameters.projectCar.betaWork = -1.296;
 
-		parameters.car.constantParkingSearchPenalty_min = 4.0;
-		parameters.car.constantAccessEgressWalkTime_min = 4.0;
+		parameters.car.constantParkingSearchPenalty_min = 0.0;
+		parameters.car.constantAccessEgressWalkTime_min = 0.0;
 
 		// PT
 		parameters.pt.betaAccessEgressTime_u_min = -0.015;
