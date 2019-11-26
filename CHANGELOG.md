@@ -2,6 +2,10 @@
 
 - No changes yet
 
+**1.0.5**
+
+- Fix transit_walk detection in EqasimMainModeIdentifier
+
 **1.0.4**
 
 - Update Auckland parameters
