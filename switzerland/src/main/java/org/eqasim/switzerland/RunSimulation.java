@@ -2,6 +2,7 @@ package org.eqasim.switzerland;
 
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.switzerland.congestion.CongestionUtilityModule;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -11,16 +12,23 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter") //
+				.allowOptions("use-congestion-fix") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				SwitzerlandConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+
+		if (cmd.hasOption("use-congestion-fix")) {
+			DiscreteModeChoiceConfigGroup.getOrCreate(config).setTripEstimator("congestion");
+		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
@@ -33,6 +41,8 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
+
+		controller.addOverridingModule(new CongestionUtilityModule());
 
 		controller.run();
 	}
