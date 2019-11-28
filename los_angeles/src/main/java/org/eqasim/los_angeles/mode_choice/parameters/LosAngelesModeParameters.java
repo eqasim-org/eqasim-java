@@ -12,6 +12,7 @@ public class LosAngelesModeParameters extends ModeParameters {
 	public class LosAngelesPTParameters {
 		public double alpha_pt_city = 0.0;
 		public double vot_min = 0.0;
+		public double alpha_orange_county = 0.0;
 	}
 	
 	public class LosAngelesCarParameters {
@@ -55,6 +56,7 @@ public class LosAngelesModeParameters extends ModeParameters {
 		parameters.pt.betaAccessEgressTime_u_min = -0.0;
 		parameters.laPT.alpha_pt_city = 1.3359;
 		parameters.laPT.vot_min = 0.0331;
+		parameters.laPT.alpha_orange_county  = 0.0;
 
 		// Bike
 		parameters.bike.alpha_u = 0.0;
