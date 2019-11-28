@@ -85,7 +85,7 @@
 		<dependency>
 			<groupId>ch.ethz.matsim</groupId>
 			<artifactId>discrete_mode_choice</artifactId>
-			<version>1.0.8-matsim11</version>
+			<version>1.0.8-matsim11-develop</version>
 		</dependency>
 
 		<dependency>
