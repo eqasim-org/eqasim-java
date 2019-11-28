@@ -15,6 +15,12 @@ public class LosAngelesPredictorUtils {
 		boolean endInCity = (boolean) trip.getDestinationActivity().getAttributes().getAttribute("city");
 		return startInCity | endInCity;
 	}
+	
+	static public boolean startsEndsinOrangeCounty(DiscreteModeChoiceTrip trip) {
+		boolean startInOrange = (boolean) trip.getOriginActivity().getAttributes().getAttribute("orangeCounty");
+		boolean endInOrange = (boolean) trip.getDestinationActivity().getAttributes().getAttribute("orangeCounty");
+		return startInOrange | endInOrange;
+	}
 
 	static public double hhlIncome(Person person) {
         double hhlIncome = (double) person.getAttributes().getAttribute("hhlIncome");

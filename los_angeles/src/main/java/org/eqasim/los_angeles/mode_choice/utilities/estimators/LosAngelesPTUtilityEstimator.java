@@ -6,7 +6,6 @@ import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtil
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.los_angeles.mode_choice.parameters.LosAngelesModeParameters;
 import org.eqasim.los_angeles.mode_choice.utilities.predictors.LosAngelesPersonPredictor;
@@ -33,7 +32,10 @@ public class LosAngelesPTUtilityEstimator extends PtUtilityEstimator {
 	}
 
 	protected double estimateRegionalUtility(LosAngelesPersonVariables variables) {
-		return (variables.cityTrip) ? parameters.laPT.alpha_pt_city : 0.0;
+		double utility_orange = variables.orangeTrip ? parameters.laPT.alpha_orange_county : 0.0;
+		double utility_city = (variables.cityTrip) ? parameters.laPT.alpha_pt_city : 0.0;
+
+		return utility_orange + utility_city;
 	}
 
 	protected double estimateTravelTime(PtVariables variables_pt) {
