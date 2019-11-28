@@ -16,7 +16,7 @@ public class ImputeInnerLAAttribute {
 		this.laTracts = laTracts;
 	}
 
-	public void run(Population population) throws InterruptedException {
+	public void run(Population population, String attributeName) throws InterruptedException {
 		ParallelProgress progress = new ParallelProgress("Imputing innerSF attribute ...",
 				population.getPersons().size());
 		progress.start();
@@ -26,7 +26,7 @@ public class ImputeInnerLAAttribute {
 				for (PlanElement planElement : plan.getPlanElements()) {
 					if (planElement instanceof Activity) {
 						Activity activity = (Activity) planElement;
-						activity.getAttributes().putAttribute("city", isCoveredByIRIS(activity));
+						activity.getAttributes().putAttribute(attributeName, isCoveredByIRIS(activity));
 					}
 				}
 			}

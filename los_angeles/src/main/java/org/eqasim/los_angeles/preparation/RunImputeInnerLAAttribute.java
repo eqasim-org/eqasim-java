@@ -18,7 +18,7 @@ public class RunImputeInnerLAAttribute {
 	public static void main(String[] args)
 			throws MalformedURLException, IOException, ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("la-path", "input-path", "output-path") //
+				.requireOptions("la-path", "input-path", "output-path", "attribute-name") //
 				.build();
 
 		// Load IRIS
@@ -33,7 +33,7 @@ public class RunImputeInnerLAAttribute {
 
 		// Impute attribute
 		ImputeInnerLAAttribute imputeInnerSFAttribute = new ImputeInnerLAAttribute(iris);
-		imputeInnerSFAttribute.run(scenario.getPopulation());
+		imputeInnerSFAttribute.run(scenario.getPopulation(), cmd.getOptionStrict("attribute-name"));
 
 		// Write population
 		PopulationWriter populationWriter = new PopulationWriter(scenario.getPopulation());
