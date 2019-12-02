@@ -158,6 +158,8 @@ public class ProjectModeParameters extends SwissModeParameters {
 
 		parameters.projectCar.betaWork = -1.296;
 
+		// parameters.car.constantParkingSearchPenalty_min = 4.0;
+		// parameters.car.constantAccessEgressWalkTime_min = 4.0;
 		parameters.car.constantParkingSearchPenalty_min = 0.0;
 		parameters.car.constantAccessEgressWalkTime_min = 0.0;
 
