@@ -1,6 +1,6 @@
 # CHANGELOG
 
-- No changes yet
+- Bugfix: EnrichedTransitRoutingModule wrote wrong link and facilities in "pt interaction" activities, which lead to problems when cutting the population
 
 **1.0.5**
 
