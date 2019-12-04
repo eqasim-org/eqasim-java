@@ -3,6 +3,7 @@ package org.eqasim.core.components.transit.routing;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -37,23 +38,27 @@ public class EnrichedTransitRoutingModule implements RoutingModule {
 		List<Leg> legs = transitRouter.calculateRoute(fromFacility, toFacility, departureTime, person);
 		List<PlanElement> trip = new LinkedList<>();
 
-		Facility currentFacility = fromFacility;
+		for (int i = 0; i < legs.size() - 1; i++) {
+			Facility currentFacility = null;
+			trip.add(legs.get(i));
+			
+			if (legs.get(i).getMode().equals(TransportMode.pt)) {
+				EnrichedTransitRoute route = (EnrichedTransitRoute) legs.get(i).getRoute();
 
-		for (Leg leg : legs.subList(0, legs.size() - 1)) {
-			trip.add(leg);
+				currentFacility = transitSchedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
+						.get(route.getTransitRouteId()).getStops().get(route.getEgressStopIndex()).getStopFacility();
+			} else {
+				EnrichedTransitRoute route = (EnrichedTransitRoute) legs.get(i + 1).getRoute();
 
+				currentFacility = transitSchedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
+						.get(route.getTransitRouteId()).getStops().get(route.getAccessStopIndex()).getStopFacility();
+			}
+			
 			Activity activity = PopulationUtils.createActivityFromCoordAndLinkId(PtConstants.TRANSIT_ACTIVITY_TYPE,
 					currentFacility.getCoord(), currentFacility.getLinkId());
 
 			activity.setMaximumDuration(0.0);
 			trip.add(activity);
-
-			if (leg.getMode().equals("pt")) {
-				EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
-
-				currentFacility = transitSchedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
-						.get(route.getTransitRouteId()).getStops().get(route.getEgressStopIndex()).getStopFacility();
-			}
 		}
 
 		trip.add(legs.get(legs.size() - 1));
