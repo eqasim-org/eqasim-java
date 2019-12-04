@@ -13,14 +13,17 @@ import ch.ethz.matsim.discrete_mode_choice.model.trip_based.TripEstimator;
 import ch.ethz.matsim.discrete_mode_choice.model.trip_based.candidates.DefaultRoutedTripCandidate;
 import ch.ethz.matsim.discrete_mode_choice.model.trip_based.candidates.RoutedTripCandidate;
 import ch.ethz.matsim.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
+import org.matsim.core.gbl.MatsimRandom;
 
 public class CongestionTripEstimator implements TripEstimator {
 	private final TripEstimator delegate;
 	private final UtilityEstimator carEstimator;
+	private final double inertia;
 
-	public CongestionTripEstimator(TripEstimator delegate, UtilityEstimator carEstimator) {
+	public CongestionTripEstimator(TripEstimator delegate, UtilityEstimator carEstimator, double inertia) {
 		this.delegate = delegate;
 		this.carEstimator = carEstimator;
+		this.inertia = inertia;
 	}
 
 	private double getTravelTime(List<? extends PlanElement> elements) {
@@ -47,9 +50,14 @@ public class CongestionTripEstimator implements TripEstimator {
 
 			double initialTravelTime = getTravelTime(trip.getInitialElements());
 			double updatedTravelTime = getTravelTime(updatedElements);
+			double difference = initialTravelTime - updatedTravelTime;
 
-			boolean useExistingRoute = false;
-			System.err.println("useExistingRoute: Tchervi, I'm set to false now. Change me in an intelligent way!");
+			double probabilityToChange = 1.0;
+			if (inertia > 0) {
+				probabilityToChange = 1.0 - Math.exp((-1 / inertia) * difference);
+			}
+
+			boolean useExistingRoute = MatsimRandom.getLocalInstance().nextDouble() > probabilityToChange;
 
 			if (useExistingRoute) {
 				double utility = carEstimator.estimateUtility(person, trip, trip.getInitialElements());
