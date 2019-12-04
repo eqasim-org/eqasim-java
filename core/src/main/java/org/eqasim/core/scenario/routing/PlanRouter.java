@@ -1,6 +1,7 @@
 package org.eqasim.core.scenario.routing;
 
 import java.util.List;
+import java.util.Set;
 
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Plan;
@@ -32,7 +33,7 @@ public class PlanRouter {
 		this.mainModeIdentifier = tripRouter.getMainModeIdentifier();
 	}
 
-	public void run(Plan plan, boolean replaceExistingRoutes) {
+	public void run(Plan plan, boolean replaceExistingRoutes, Set<String> modes) {
 		List<Trip> trips = TripStructureUtils.getTrips(plan, stageActivityTypes);
 
 		for (Trip trip : trips) {
@@ -46,20 +47,23 @@ public class PlanRouter {
 
 			if (!legsExist || replaceExistingRoutes) {
 				String mainMode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
-				double departureTime = trip.getOriginActivity().getEndTime();
 
-				if (Time.isUndefinedTime(departureTime)) {
-					throw new IllegalStateException(
-							"Found undefined activity end time for agent " + plan.getPerson().getId().toString());
+				if (modes.size() == 0 || modes.contains(mainMode)) {
+					double departureTime = trip.getOriginActivity().getEndTime();
+
+					if (Time.isUndefinedTime(departureTime)) {
+						throw new IllegalStateException(
+								"Found undefined activity end time for agent " + plan.getPerson().getId().toString());
+					}
+
+					Facility fromFacility = FacilitiesUtils.toFacility(trip.getOriginActivity(), facilities);
+					Facility toFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
+
+					List<? extends PlanElement> newElements = tripRouter.calcRoute(mainMode, fromFacility, toFacility,
+							departureTime, plan.getPerson());
+
+					TripRouter.insertTrip(plan, trip.getOriginActivity(), newElements, trip.getDestinationActivity());
 				}
-
-				Facility fromFacility = FacilitiesUtils.toFacility(trip.getOriginActivity(), facilities);
-				Facility toFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
-
-				List<? extends PlanElement> newElements = tripRouter.calcRoute(mainMode, fromFacility, toFacility,
-						departureTime, plan.getPerson());
-
-				TripRouter.insertTrip(plan, trip.getOriginActivity(), newElements, trip.getDestinationActivity());
 			}
 		}
 	}
