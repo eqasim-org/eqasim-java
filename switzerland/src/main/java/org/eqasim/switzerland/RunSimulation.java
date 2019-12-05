@@ -27,7 +27,7 @@ import java.util.List;
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "output") //
+				.requireOptions("config-path") //
 				.allowPrefixes("config", "mode-parameter", "cost-parameter") //
 				.allowOptions("use-congestion-fix", "inertia") //
 				.build();
@@ -36,7 +36,10 @@ public class RunSimulation {
 				SwitzerlandConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
+		Boolean useCongestionFix = false;
+
 		if (cmd.hasOption("use-congestion-fix")) {
+			useCongestionFix = true;
 			DiscreteModeChoiceConfigGroup.getOrCreate(config).setTripEstimator("congestion");
 		}
 
@@ -70,7 +73,14 @@ public class RunSimulation {
 		controller.addControlerListener(listener);
 		controller.run();
 
-		new ScenarioResultWriter(listener.getResults()).write(cmd.getOptionStrict("output"));
+		// write analysis output to file
+		String analysisFile = controller.getControlerIO().getOutputPath();
+		if (useCongestionFix) {
+			analysisFile += "/analysis-with-fix-inertia-" + inertia + ".csv";
+		} else {
+			analysisFile += "/analysis-no-fix.csv";
+		}
+		new ScenarioResultWriter(listener.getResults()).write(analysisFile);
 
 	}
 }
