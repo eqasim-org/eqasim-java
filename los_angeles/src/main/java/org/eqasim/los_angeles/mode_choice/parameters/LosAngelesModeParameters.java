@@ -50,7 +50,7 @@ public class LosAngelesModeParameters extends ModeParameters {
 		parameters.laCar.vot_min = 0.1618;
 		
 		// PT
-		parameters.pt.alpha_u = -1.7;//3.07;
+		parameters.pt.alpha_u = -1.7;//-3.07;
 		parameters.pt.betaLineSwitch_u = 1.33;
 		parameters.pt.betaWaitingTime_u_min = -0.0;
 		parameters.pt.betaAccessEgressTime_u_min = -0.0;
