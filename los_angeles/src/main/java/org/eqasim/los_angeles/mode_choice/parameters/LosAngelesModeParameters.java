@@ -50,13 +50,13 @@ public class LosAngelesModeParameters extends ModeParameters {
 		parameters.laCar.vot_min = 0.1618;
 		
 		// PT
-		parameters.pt.alpha_u = -3.07;
+		parameters.pt.alpha_u = -1.7;//3.07;
 		parameters.pt.betaLineSwitch_u = 1.33;
 		parameters.pt.betaWaitingTime_u_min = -0.0;
 		parameters.pt.betaAccessEgressTime_u_min = -0.0;
-		parameters.laPT.alpha_pt_city = 1.3359;
+		parameters.laPT.alpha_pt_city = 1.4;//1.3359;
 		parameters.laPT.vot_min = 0.0331;
-		parameters.laPT.alpha_orange_county  = 0.0;
+		parameters.laPT.alpha_orange_county  = -1.4;//0.0
 
 		// Bike
 		parameters.bike.alpha_u = 0.0;
@@ -64,9 +64,9 @@ public class LosAngelesModeParameters extends ModeParameters {
 		parameters.bike.betaAgeOver18_u_a = 0.0;
 
 		// Walk
-		parameters.walk.alpha_u = -0.9181;
+		parameters.walk.alpha_u = -0.3;//-0.9181;
 		parameters.laWalk.vot_min = 0.0685;
-		parameters.laWalk.alpha_walk_city = 0.4016;
+		parameters.laWalk.alpha_walk_city = 0.7;//0.4016;
         
 		
 		return parameters;
