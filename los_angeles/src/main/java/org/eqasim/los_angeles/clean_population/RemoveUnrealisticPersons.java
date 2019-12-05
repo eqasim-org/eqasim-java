@@ -28,6 +28,7 @@ public class RemoveUnrealisticPersons {
 		Scenario scenario2 = ScenarioUtils.createScenario(config);
 		
 		int counter = 0;
+		int countTr = 0;
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			
 			Plan plan = person.getSelectedPlan();
@@ -41,8 +42,10 @@ public class RemoveUnrealisticPersons {
 					}
 					
 					if (((Leg) pe).getMode().equals("transit_walk")) {
-						if (((Leg) pe).getTravelTime() > 5400.0)
+						if (((Leg) pe).getTravelTime() > 5400.0) {
 							remove = true;
+							countTr++;
+						}
 					}
 
 				}
@@ -58,6 +61,7 @@ public class RemoveUnrealisticPersons {
 		PopulationWriter popWriter = new PopulationWriter(scenario2.getPopulation());
 		popWriter.write(args[1]);
 		System.out.println("Removed " + counter + " persons.");
+		System.out.println("Removed " + countTr + " transit walk.");
 
 		System.out.println("Removed " + (double)counter/scenario.getPopulation().getPersons().values().size() + " % of the population");
 	}
