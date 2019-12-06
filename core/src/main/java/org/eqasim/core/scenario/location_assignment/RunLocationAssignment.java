@@ -30,7 +30,7 @@ public class RunLocationAssignment {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("population-path", "facilities-path", "quantiles-path", "distributions-path",
 						"output-path") //
-				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path") //
+				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path", "require-pt-accessibility") //
 				.build();
 
 		// Setting up activity types
@@ -67,8 +67,9 @@ public class RunLocationAssignment {
 		StageActivityTypes stageActivityTypes = new InteractionStageActivityTypes();
 
 		// Set up solver
+		boolean requirePtAccessibility = cmd.getOption("require-pt-accessibility").map(Boolean::parseBoolean).orElse(false);
 		ProblemProvider problemProvider = new ProblemProvider(distanceSamplerFactory, discretizerFactory,
-				discretizationThresholds);
+				discretizationThresholds, requirePtAccessibility);
 
 		MATSimAssignmentSolverBuilder builder = new MATSimAssignmentSolverBuilder();
 
