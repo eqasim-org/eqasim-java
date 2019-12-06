@@ -1,6 +1,26 @@
 # CHANGELOG
+- Remove bike from Sao Paulo
+- Add Los Angeles and San Francisco
+- Add possibility to choose modes to RunPopulationRouting
+- Bugfix: EnrichedTransitRoutingModule wrote wrong link and facilities in "pt interaction" activities, which lead to problems when cutting the population
 
-- Add option to location assignment to require public transport accessibility
+**1.0.5**
+
+- Fix transit_walk detection in EqasimMainModeIdentifier
+
+**1.0.4**
+
+- Update Auckland parameters
+- Add deployment target for Maven
+
+**1.0.3**
+
+- Add custom MainModeIdentifier
+- Bugfix: Shape extent did not cut teleportation trips properly
+- Fix analysis interval for trip analysis
+- Make AvCostWriter close file on shutdown
+- Disable calibration output by default (since reference data is not always available)
+- Add iml and idea to gitignore
 - Add calibration utilities
 - Improve code structure of the choice models in `core` and `switzerland`
 - Improve trips analysis with PersonFilter and give access to other modules if present

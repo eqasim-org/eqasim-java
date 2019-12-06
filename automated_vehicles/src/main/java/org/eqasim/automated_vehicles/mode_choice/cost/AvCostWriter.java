@@ -1,16 +1,17 @@
 package org.eqasim.automated_vehicles.mode_choice.cost;
 
 import java.io.BufferedWriter;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import org.matsim.core.controler.events.IterationEndsEvent;
+import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
+import org.matsim.core.controler.listener.ShutdownListener;
 
-public class AvCostWriter implements Closeable, IterationEndsListener {
+public class AvCostWriter implements IterationEndsListener, ShutdownListener {
 	private final File outputPath;
 	private final AvCostListener listener;
 
@@ -19,13 +20,6 @@ public class AvCostWriter implements Closeable, IterationEndsListener {
 	public AvCostWriter(File outputPath, AvCostListener listener) {
 		this.outputPath = outputPath;
 		this.listener = listener;
-	}
-
-	@Override
-	public void close() throws IOException {
-		if (writer != null) {
-			writer.close();
-		}
 	}
 
 	@Override
@@ -49,6 +43,17 @@ public class AvCostWriter implements Closeable, IterationEndsListener {
 			writer.flush();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public void notifyShutdown(ShutdownEvent event) {
+		if (writer != null) {
+			try {
+				writer.close();
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 }
