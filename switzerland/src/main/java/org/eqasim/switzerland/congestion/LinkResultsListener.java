@@ -22,14 +22,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class ScenarioResultListener
+public class LinkResultsListener
 		implements IterationStartsListener, VehicleEntersTrafficEventHandler, LinkEnterEventHandler,
 		LinkLeaveEventHandler, VehicleLeavesTrafficEventHandler, IterationEndsListener {
 	private final Network network;
 	private final List<Id<Link>> linkIds;
 	private final double binSize;
 
-	public ScenarioResultListener(Network network, List<Id<Link>> linkIds, double binSize) {
+	public LinkResultsListener(Network network, List<Id<Link>> linkIds, double binSize) {
 		this.network = network;
 		this.linkIds = linkIds;
 		this.binSize = binSize;

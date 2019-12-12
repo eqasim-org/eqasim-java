@@ -1,7 +1,7 @@
 package org.eqasim.switzerland;
 
-import org.eqasim.switzerland.congestion.ScenarioResultListener;
-import org.eqasim.switzerland.congestion.ScenarioResultWriter;
+import org.eqasim.switzerland.congestion.LinkResultsListener;
+import org.eqasim.switzerland.congestion.LinkResultsWriter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -39,7 +39,7 @@ public class RunEventAnalysis {
 		List<Id<Link>> linkIds = new LinkedList<>();
 		linkIds.add(Id.createLinkId("602433"));
 
-		ScenarioResultListener listener = new ScenarioResultListener(scenario.getNetwork(), linkIds, 900);
+		LinkResultsListener listener = new LinkResultsListener(scenario.getNetwork(), linkIds, 900);
 
 		eventsManager.addHandler(listener);
 
@@ -49,7 +49,7 @@ public class RunEventAnalysis {
 			listener.endIteration(i);
 		}
 
-		new ScenarioResultWriter(listener.getResults()).write(cmd.getOptionStrict("output"));
+		new LinkResultsWriter(listener.getResults()).write(cmd.getOptionStrict("output"));
 
 	}
 }

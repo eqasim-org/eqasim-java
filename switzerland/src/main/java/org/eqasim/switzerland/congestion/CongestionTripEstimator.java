@@ -52,9 +52,16 @@ public class CongestionTripEstimator implements TripEstimator {
 			double updatedTravelTime = getTravelTime(updatedElements);
 			double difference = initialTravelTime - updatedTravelTime;
 
+			if (difference < 0) {System.out.println("NEGATIVE DIFF!! : " + person.getId() + ", " + difference);}
+			if (difference > 10 * 60) {System.out.println("LARGE DIFF!! : " + person.getId() + ", " + difference);}
+
 			double probabilityToChange = 1.0;
+
 			if (inertia > 0) {
-				probabilityToChange = 1.0 - Math.exp((-1 / inertia) * difference);
+				probabilityToChange = 0.0;
+				if (difference > 0) {
+					probabilityToChange = 1.0 - Math.exp((-1 / inertia) * difference);
+				}
 			}
 
 			boolean useExistingRoute = MatsimRandom.getLocalInstance().nextDouble() > probabilityToChange;

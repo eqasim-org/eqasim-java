@@ -1,6 +1,6 @@
 package org.eqasim.switzerland.congestion;
 
-import org.eqasim.switzerland.congestion.ScenarioResultListener.IterationResult;
+import org.eqasim.switzerland.congestion.LinkResultsListener.IterationResult;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 
@@ -12,15 +12,15 @@ import java.util.List;
 import java.util.Map;
 
 
-public class ScenarioResultWriter {
+public class LinkResultsWriter {
 	private final List<Map<Id<Link>, IterationResult>> results;
 	private final String delimiter;
 
-	public ScenarioResultWriter(List<Map<Id<Link>, IterationResult>> results) {
+	public LinkResultsWriter(List<Map<Id<Link>, IterationResult>> results) {
 		this(results, ";");
 	}
 
-	public ScenarioResultWriter(List<Map<Id<Link>, IterationResult>> results, String delimiter) {
+	public LinkResultsWriter(List<Map<Id<Link>, IterationResult>> results, String delimiter) {
 		this.results = results;
 		this.delimiter = delimiter;
 	}
@@ -48,7 +48,7 @@ public class ScenarioResultWriter {
 				"linkId",
 				"binSize",
 				"bin",
-				"numberOfAgents",
+				"perLink",
 				"meanTravelTime",
 		});
 	}
