@@ -92,6 +92,9 @@ public final class AvConfigurator {
 		ModeParams modeParams = new ModeParams(AVModule.AV_MODE);
 		config.planCalcScore().addModeParams(modeParams);
 
+		ActivityParams interactionParams = new ActivityParams("av interaction");
+		config.planCalcScore().addActivityParams(interactionParams);
+
 		// Set up Eqasim (add AV cost model and estimator)
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setCostModel("av", AvModeChoiceModule.AV_COST_MODEL_NAME);
@@ -131,7 +134,7 @@ public final class AvConfigurator {
 			link.getAttributes().putAttribute("avWaitingTimeGroup", 0);
 		}
 	}
-	
+
 	static public void configureWaitingTimeGroupFromShapefile(File path, String attributeName, Network network) {
 		GeometryFactory geometryFactory = new GeometryFactory();
 		Map<Integer, Geometry> shapes = new HashMap<>();
