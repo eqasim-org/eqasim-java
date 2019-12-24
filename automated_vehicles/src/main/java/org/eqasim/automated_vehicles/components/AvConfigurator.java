@@ -93,6 +93,7 @@ public final class AvConfigurator {
 		config.planCalcScore().addModeParams(modeParams);
 
 		ActivityParams interactionParams = new ActivityParams("av interaction");
+		interactionParams.setTypicalDuration(3600.0);
 		config.planCalcScore().addActivityParams(interactionParams);
 
 		// Set up Eqasim (add AV cost model and estimator)
