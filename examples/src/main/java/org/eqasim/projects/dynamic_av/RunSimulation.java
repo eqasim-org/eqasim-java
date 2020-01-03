@@ -19,6 +19,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 
 import ch.ethz.matsim.av.config.AVConfigGroup;
 import ch.ethz.matsim.av.config.operator.OperatorConfig;
+import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
 import ch.ethz.matsim.av.framework.AVQSimModule;
 
 /**
@@ -51,6 +52,13 @@ public class RunSimulation {
 		operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.getOptionStrict("fleet-size")));
 		operatorConfig.setCleanNetwork(true);
 		AVConfigGroup.getOrCreate(config).setUseAccessAgress(true);
+		
+		WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeConfig();
+		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
+		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
+		waitingTimeConfig.setEstimationInterval(15 * 60.0);
+		waitingTimeConfig.setEstimationAlpha(0.1);
+		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 

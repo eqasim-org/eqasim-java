@@ -38,7 +38,7 @@ public class AvPredictor extends CachedVariablePredictor<AvVariables> {
 		for (Leg leg : TripStructureUtils.getLegs(elements)) {
 			switch (leg.getMode()) {
 			case TransportMode.walk:
-				accessEgressTime_min += leg.getTravelTime();
+				accessEgressTime_min += leg.getTravelTime() / 60.0;
 				break;
 			case AVModule.AV_MODE:
 				travelTime_min = leg.getTravelTime() / 60.0;
