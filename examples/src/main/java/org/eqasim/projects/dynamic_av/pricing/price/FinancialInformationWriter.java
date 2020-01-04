@@ -11,15 +11,15 @@ import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 
-public class ProjectAvCostWriter implements IterationEndsListener, ShutdownListener {
+public class FinancialInformationWriter implements IterationEndsListener, ShutdownListener {
 	private final File outputPath;
-	private final PriceCalculator listener;
+	private final PriceCalculator calculator;
 
 	private BufferedWriter writer = null;
 
-	public ProjectAvCostWriter(File outputPath, PriceCalculator listener) {
+	public FinancialInformationWriter(File outputPath, PriceCalculator listener) {
 		this.outputPath = outputPath;
-		this.listener = listener;
+		this.calculator = listener;
 	}
 
 	@Override
@@ -29,15 +29,26 @@ public class ProjectAvCostWriter implements IterationEndsListener, ShutdownListe
 				writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
 				writer.write(String.join(";", new String[] { //
 						"iteration", //
-						"observed_price_MU_km", //
-						"active_price_MU_km", //
+
+						"activeDistanceFare_MU_km", //
+
+						"distanceFare_MU_km", //
+						"baseFare_MU_km", //
+
+						"fleetCost_MU", //
+						"profit_MU" //
 				}) + "\n");
 			}
 
+			FinancialInformation information = calculator.getInformation();
+
 			writer.write(String.join(";", new String[] { //
 					String.valueOf(event.getIteration()), //
-					String.valueOf(listener.getObservedPrice_MU_km()), //
-					String.valueOf(listener.getActivePrice_MU_km()) //
+					String.valueOf(calculator.getInterpolatedPricePerKm_CHF()), //
+					String.valueOf(information.pricePerPassengerKm_CHF), //
+					String.valueOf(information.pricePerTrip_CHF), //
+					String.valueOf(information.fleetCost_CHF), //
+					String.valueOf(information.profit_CHF) //
 			}) + "\n");
 
 			writer.flush();

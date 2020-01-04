@@ -10,7 +10,7 @@ import org.eqasim.projects.dynamic_av.pricing.cost_calculator.CostCalculator;
 import org.eqasim.projects.dynamic_av.pricing.cost_calculator.definitions.ScenarioDefinition;
 import org.eqasim.projects.dynamic_av.pricing.price.PriceCalculator;
 import org.eqasim.projects.dynamic_av.pricing.price.ProjectAvCostModel;
-import org.eqasim.projects.dynamic_av.pricing.price.ProjectAvCostWriter;
+import org.eqasim.projects.dynamic_av.pricing.price.FinancialInformationWriter;
 import org.eqasim.projects.dynamic_av.pricing.price.ProjectCostParameters;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -39,7 +39,7 @@ public class PricingModule extends AbstractEqasimExtension {
 		bind(ProjectAvCostModel.class);
 		bindCostModel(PROJECT_AV_COST_MODEL_NAME).to(ProjectAvCostModel.class);
 
-		addControlerListenerBinding().to(ProjectAvCostWriter.class);
+		addControlerListenerBinding().to(FinancialInformationWriter.class);
 	}
 
 	@Provides
@@ -67,10 +67,10 @@ public class PricingModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public ProjectAvCostWriter provideProjectAvCostWriter(OutputDirectoryHierarchy outputDirectory,
+	public FinancialInformationWriter provideProjectAvCostWriter(OutputDirectoryHierarchy outputDirectory,
 			PriceCalculator calculator) {
 		File outputPath = new File(outputDirectory.getOutputFilename("project_av_prices.csv"));
-		return new ProjectAvCostWriter(outputPath, calculator);
+		return new FinancialInformationWriter(outputPath, calculator);
 	}
 
 	@Provides
