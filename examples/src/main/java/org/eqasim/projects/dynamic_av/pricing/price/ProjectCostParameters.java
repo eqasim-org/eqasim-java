@@ -9,6 +9,7 @@ public class ProjectCostParameters implements ParameterDefinition {
 	
 	public double baseFare_CHF = 0.0;
 	public double distanceFare_CHF_km = Double.NaN;
+	public double minimumDistanceFare_CHF_km = 0.0;
 
 	public static ProjectCostParameters buildDefault() {
 		ProjectCostParameters parameters = new ProjectCostParameters();

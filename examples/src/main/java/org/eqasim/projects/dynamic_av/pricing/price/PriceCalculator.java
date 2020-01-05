@@ -54,14 +54,17 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 
 		if (Double.isNaN(costParameters.distanceFare_CHF_km)) {
 			// Cost-covering case, we calculate a price that covers the costs
-			// Revenue can only come from base fares at a distance price of 0.0
 
 			double remainingFleetCost_MU = Math.max(0.0, information.fleetCost_CHF - baseFareRevenue_CHF);
-			double costPerPassengerKm_MU = remainingFleetCost_MU / calculatorParameters.passengerDistanceKm;
-
-			information.pricePerPassengerKm_CHF = costCalculator.calculatePrice(costPerPassengerKm_MU);
-			information.pricePerTrip_CHF = costCalculator.calculatePrice(costParameters.baseFare_CHF);
 			information.profit_CHF = Math.max(0.0, baseFareRevenue_CHF - information.fleetCost_CHF);
+			
+			double costPerPassengerKm_MU = remainingFleetCost_MU / calculatorParameters.passengerDistanceKm;
+			double minimumCostPerPassengerKm_MU = Math.max(costPerPassengerKm_MU, costParameters.minimumDistanceFare_CHF_km);
+			information.profit_CHF += (costPerPassengerKm_MU - minimumCostPerPassengerKm_MU) * calculatorParameters.passengerDistanceKm;
+
+			information.pricePerPassengerKm_CHF = costCalculator.calculatePrice(minimumCostPerPassengerKm_MU);
+			information.pricePerTrip_CHF = costCalculator.calculatePrice(costParameters.baseFare_CHF);
+			
 		} else {
 			// Fixed price, we calculate with revenue and profit
 
