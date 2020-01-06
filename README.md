@@ -156,6 +156,7 @@ java -Xmx100G -cp /path/to/switzerland-1.0.0.jar org.eqasim.core.scenario.cutter
 --config-path /path/to/ile_de_france_config.xml
 --output-path /path/to/output/paris_10pct
 --extent-path /path/to/paris_shapefile.shp
+--config:plans.inputPlansFile /path/to/output_plans.xml.gz
 --prefix paris_
 --threads 24
 ```
