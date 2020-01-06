@@ -5,6 +5,7 @@ public class FinancialInformation {
 	double pricePerTrip_CHF;
 	
 	double costPerPassengerKm_CHF;
+	double baseFareRevenue_CHF;
 	
 	double fleetCost_CHF;
 	double profit_CHF;

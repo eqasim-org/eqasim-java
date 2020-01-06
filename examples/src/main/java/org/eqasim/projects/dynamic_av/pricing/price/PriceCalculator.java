@@ -52,7 +52,8 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 
 		// Second obtain fare structure
 		double baseFareRevenue_CHF = costParameters.baseFare_CHF * calculatorParameters.numberOfTrips;
-
+		information.baseFareRevenue_CHF = baseFareRevenue_CHF;
+		
 		if (Double.isNaN(costParameters.distanceFare_CHF_km)) {
 			// Cost-covering case, we calculate a price that covers the costs
 

@@ -36,6 +36,7 @@ public class FinancialInformationWriter implements IterationEndsListener, Shutdo
 						"baseFare_MU_km", //
 
 						"costPerPassengerKm_CHF", //
+						"baseFareRevenue_CHF", //
 
 						"fleetCost_MU", //
 						"profit_MU" //
@@ -50,6 +51,7 @@ public class FinancialInformationWriter implements IterationEndsListener, Shutdo
 					String.valueOf(information.pricePerPassengerKm_CHF), //
 					String.valueOf(information.pricePerTrip_CHF), //
 					String.valueOf(information.costPerPassengerKm_CHF), //
+					String.valueOf(information.baseFareRevenue_CHF), //
 					String.valueOf(information.fleetCost_CHF), //
 					String.valueOf(information.profit_CHF) //
 			}) + "\n");
