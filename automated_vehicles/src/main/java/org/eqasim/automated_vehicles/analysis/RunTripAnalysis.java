@@ -48,7 +48,7 @@ public class RunTripAnalysis {
 
 		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
 
-		Collection<String> networkModes = Arrays.asList(cmd.getOption("network-modes").orElse("car").split(","))
+		Collection<String> networkModes = Arrays.asList(cmd.getOption("network-modes").orElse("car,av").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
 
 		Collection<TripItem> trips = null;
