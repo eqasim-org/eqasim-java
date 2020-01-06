@@ -60,9 +60,18 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 			information.profit_CHF = Math.max(0.0, baseFareRevenue_CHF - information.fleetCost_CHF);
 			
 			double costPerPassengerKm_MU = remainingFleetCost_MU / calculatorParameters.passengerDistanceKm;
-			double minimumCostPerPassengerKm_MU = Math.max(costPerPassengerKm_MU, costParameters.minimumDistanceFare_CHF_km);
-			information.profit_CHF += (costPerPassengerKm_MU - minimumCostPerPassengerKm_MU) * calculatorParameters.passengerDistanceKm;
-
+			
+			double minimumCostPerPassengerKm_MU = 0.0;
+			
+			if (costPerPassengerKm_MU < costParameters.minimumDistanceFare_CHF_km) {
+				// We make profit from distance
+				minimumCostPerPassengerKm_MU = costParameters.minimumDistanceFare_CHF_km;
+				information.profit_CHF += (costParameters.minimumDistanceFare_CHF_km - costPerPassengerKm_MU) * calculatorParameters.passengerDistanceKm;
+			} else {
+				// No profit from distance
+				minimumCostPerPassengerKm_MU = costPerPassengerKm_MU;
+			}
+			
 			information.pricePerPassengerKm_CHF = costCalculator.calculatePrice(minimumCostPerPassengerKm_MU);
 			information.pricePerTrip_CHF = costCalculator.calculatePrice(costParameters.baseFare_CHF);
 			
