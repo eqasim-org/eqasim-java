@@ -60,6 +60,7 @@ public class AvUtilityEstimator implements UtilityEstimator {
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateWaitingTimeUtility(variables);
 		utility += estimateMonetaryCostUtility(variables);
+		utility += estimateAccessEgressTimeUtility(variables);
 
 		return utility;
 	}
