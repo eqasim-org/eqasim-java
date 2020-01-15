@@ -56,7 +56,7 @@ public class RunSimulation {
 		WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeConfig();
 		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
 		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
-		waitingTimeConfig.setEstimationInterval(15 * 60.0);
+		waitingTimeConfig.setEstimationInterval(30.0 * 60.0);
 		waitingTimeConfig.setEstimationAlpha(0.1);
 		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
 
