@@ -121,6 +121,10 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 		}
 
 		horizonIndex++;
+		
+		if (horizonIndex == horizon) {
+			horizonIndex = 0;
+		}
 
 		for (int groupIndex = 0; groupIndex < linkGroupDefinition.getMaximumIndex() + 1; groupIndex++) {
 			for (int timeIndex = 0; timeIndex < numberOfTimeBins; timeIndex++) {
