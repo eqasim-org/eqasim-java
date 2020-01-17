@@ -1,5 +1,6 @@
 package org.eqasim.sao_paulo;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -21,6 +22,7 @@ public class RunSimulation {
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				EqasimConfigurator.getConfigGroups());
+		EqasimConfigGroup.get(config).setTripAnalysisInterval(1);
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
