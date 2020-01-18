@@ -10,7 +10,6 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.api.core.v01.population.Route;
 import org.matsim.core.router.TripStructureUtils;
 
 import com.google.inject.Inject;
@@ -41,13 +40,13 @@ public class AvPredictor extends CachedVariablePredictor<AvVariables> {
 				accessEgressTime_min += leg.getTravelTime() / 60.0;
 				break;
 			case AVModule.AV_MODE:
-				travelTime_min = leg.getTravelTime() / 60.0;
+				AVRoute route = (AVRoute) leg.getRoute();
+
+				travelTime_min = route.getInVehicleTime() / 60.0;
+				waitingTime_min = route.getWaitingTime() / 60.0;
+
 				cost_MU = costModel.calculateCost_MU(person, trip, elements);
 
-				Route route = leg.getRoute();
-				if (route instanceof AVRoute) {
-					waitingTime_min = ((AVRoute) route).getWaitingTime() / 60.0;
-				}
 				break;
 			default:
 				throw new IllegalStateException("Encountered unknown mode in AvPredictor: " + leg.getMode());

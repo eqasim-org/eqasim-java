@@ -108,18 +108,15 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 				double totalWaitingTime = 0.0;
 
 				for (int localHorizonIndex = 0; localHorizonIndex < horizon; localHorizonIndex++) {
-					int localCount = observationCounts[localHorizonIndex][groupIndex][timeIndex];
-
-					if (localCount == 0) {
-						totalObservations += 1;
-						totalWaitingTime += defaultValues[groupIndex][timeIndex];
-					} else {
-						totalObservations += localCount;
-						totalWaitingTime += cumulativeValues[localHorizonIndex][groupIndex][timeIndex];
-					}
+					totalObservations += observationCounts[localHorizonIndex][groupIndex][timeIndex];
+					totalWaitingTime += cumulativeValues[localHorizonIndex][groupIndex][timeIndex];
 				}
 
-				estimates[groupIndex][timeIndex] = totalWaitingTime / (double) totalObservations;
+				if (totalObservations == 0) {
+					estimates[groupIndex][timeIndex] = defaultValues[groupIndex][timeIndex];
+				} else {
+					estimates[groupIndex][timeIndex] = totalWaitingTime / (double) totalObservations;
+				}
 			}
 		}
 
