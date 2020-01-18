@@ -26,6 +26,7 @@ import org.eqasim.projects.dynamic_av.service_area.OperatingArea;
 import org.eqasim.projects.dynamic_av.service_area.ProjectNetworkFilter;
 import org.eqasim.projects.dynamic_av.waiting_time.ProjectWaitingTimeFactory;
 import org.eqasim.projects.dynamic_av.waiting_time.WaitingTimeAnalysisListener;
+import org.eqasim.projects.dynamic_av.waiting_time.WaitingTimeComparisonListener;
 import org.eqasim.projects.dynamic_av.waiting_time.WaitingTimeWriter;
 import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.api.core.v01.Id;
@@ -34,6 +35,7 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provides;
@@ -86,6 +88,9 @@ public class ProjectModule extends AbstractEqasimExtension {
 		install(new PricingModule(commandLine));
 
 		bindTripConstraintFactory(InfiniteHeadwayConstraint.NAME).to(InfiniteHeadwayConstraint.Factory.class);
+
+		addEventHandlerBinding().to(WaitingTimeComparisonListener.class);
+		addControlerListenerBinding().to(WaitingTimeComparisonListener.class);
 	}
 
 	@Provides
@@ -145,5 +150,13 @@ public class ProjectModule extends AbstractEqasimExtension {
 	@Singleton
 	public OVGKCalculator provideOVGKCalculator(TransitSchedule transitSchedule) {
 		return new OVGKCalculator(transitSchedule);
+	}
+
+	@Provides
+	@Singleton
+	public WaitingTimeComparisonListener provideWaitingTimeComparisonListener(
+			Map<Id<AVOperator>, WaitingTime> waitingTimes, OutputDirectoryHierarchy outputHierarchy) {
+		WaitingTime waitingTime = waitingTimes.get(OperatorConfig.DEFAULT_OPERATOR_ID);
+		return new WaitingTimeComparisonListener(outputHierarchy, waitingTime);
 	}
 }
