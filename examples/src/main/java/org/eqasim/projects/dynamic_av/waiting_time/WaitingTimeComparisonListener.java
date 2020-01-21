@@ -31,6 +31,7 @@ public class WaitingTimeComparisonListener
 	private final Map<Integer, Double> meanHistory = new HashMap<>();
 	private final Map<Integer, Double> medianHistory = new HashMap<>();
 	private final Map<Integer, Double> stdHistory = new HashMap<>();
+	private final Map<Integer, Double> q90History = new HashMap<>();
 
 	private final Map<Id<Person>, PersonDepartureEvent> departureEvents = new HashMap<>();
 
@@ -73,7 +74,7 @@ public class WaitingTimeComparisonListener
 				};
 
 				double estimatedWaitingTime = waitingTime.getWaitingTime(wrapper, departureTime);
-				statistics.addValue(estimatedWaitingTime - simulatedWaitingTime);
+				statistics.addValue(simulatedWaitingTime - estimatedWaitingTime);
 			}
 		}
 	}
@@ -83,22 +84,14 @@ public class WaitingTimeComparisonListener
 		meanHistory.put(event.getIteration(), statistics.getMean());
 		medianHistory.put(event.getIteration(), statistics.getPercentile(50));
 		stdHistory.put(event.getIteration(), statistics.getStandardDeviation());
+		q90History.put(event.getIteration(), statistics.getPercentile(90));
 
 		XYLineChart chart = new XYLineChart("Waiting time prediction", "Iteration", "Error");
 
 		chart.addSeries("Mean", meanHistory);
 		chart.addSeries("Median", medianHistory);
-
-		Map<Integer, Double> positive = new HashMap<>();
-		Map<Integer, Double> negative = new HashMap<>();
-
-		for (Integer index : meanHistory.keySet()) {
-			positive.put(index, meanHistory.get(index) + stdHistory.get(index));
-			negative.put(index, meanHistory.get(index) - stdHistory.get(index));
-		}
-
-		chart.addSeries("Mean + Std", positive);
-		chart.addSeries("Mean - Std", negative);
+		chart.addSeries("90% Quantile", q90History);
+		chart.addSeries("Stanard deviation", stdHistory);
 
 		chart.saveAsPng(outputHierarchy.getOutputFilename("waiting_time_error.png"), 800, 600);
 
