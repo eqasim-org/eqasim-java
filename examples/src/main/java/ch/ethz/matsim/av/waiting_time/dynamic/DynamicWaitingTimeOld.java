@@ -10,7 +10,7 @@ import ch.ethz.matsim.av.waiting_time.WaitingTime;
 import ch.ethz.matsim.av.waiting_time.WaitingTimeCollector;
 import ch.ethz.matsim.av.waiting_time.link_attribute.LinkWaitingTimeData;
 
-public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
+public class DynamicWaitingTimeOld implements WaitingTimeCollector, WaitingTime {
 	private final LinkGroupDefinition linkGroupDefinition;
 	private final LinkWaitingTimeData linkWaitingTimeData;
 	private final double defaultWaitingTime;
@@ -27,7 +27,7 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 	private final double interval;
 	private final int numberOfTimeBins;
 
-	public DynamicWaitingTime(LinkGroupDefinition linkGroupDefinition, LinkWaitingTimeData linkWaitingTimeData,
+	public DynamicWaitingTimeOld(LinkGroupDefinition linkGroupDefinition, LinkWaitingTimeData linkWaitingTimeData,
 			double defaultWaitingTime, double startTime, double endTime, double interval, double alpha) {
 		this.linkGroupDefinition = linkGroupDefinition;
 		this.linkWaitingTimeData = linkWaitingTimeData;

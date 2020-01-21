@@ -42,8 +42,6 @@ public class RunSimulation {
 		AvConfigurator.configure(config); // Add some configuration for AV
 		ProjectConfigurator.configure(config);
 
-		cmd.applyConfiguration(config);
-
 		// Here we customize our configuration by setting the fleet size from the
 		// command line
 
@@ -57,9 +55,11 @@ public class RunSimulation {
 		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
 		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
 		waitingTimeConfig.setEstimationInterval(30.0 * 60.0);
-		waitingTimeConfig.setEstimationAlpha(0.1);
+		waitingTimeConfig.setEstimationAlpha(0.9);
 		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
 
+		cmd.applyConfiguration(config);
+		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
 		SwitzerlandConfigurator.configureScenario(scenario);
