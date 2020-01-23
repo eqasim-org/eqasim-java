@@ -33,7 +33,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter", "av-mode-parameter", "project-cost-parameter") //
-				.allowOptions("fleet-size") //
+				.allowOptions("fleet-size", "time-interval") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
@@ -50,7 +50,7 @@ public class RunSimulation {
 		operatorConfig.getGeneratorConfig().setNumberOfVehicles(Integer.parseInt(cmd.getOptionStrict("fleet-size")));
 		operatorConfig.setCleanNetwork(true);
 		AVConfigGroup.getOrCreate(config).setUseAccessAgress(true);
-		
+
 		WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeConfig();
 		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
 		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
@@ -58,8 +58,12 @@ public class RunSimulation {
 		waitingTimeConfig.setEstimationAlpha(0.9);
 		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
 
+		if (cmd.hasOption("time-interval")) {
+			waitingTimeConfig.setEstimationInterval(Double.parseDouble(cmd.getOptionStrict("time-interval")));
+		}
+
 		cmd.applyConfiguration(config);
-		
+
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
 		SwitzerlandConfigurator.configureScenario(scenario);
