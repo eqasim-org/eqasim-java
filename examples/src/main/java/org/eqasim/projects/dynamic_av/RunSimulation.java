@@ -33,7 +33,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter", "av-mode-parameter", "project-cost-parameter") //
-				.allowOptions("fleet-size", "time-interval") //
+				.allowOptions("fleet-size", "time-interval", "alpha") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
@@ -60,6 +60,10 @@ public class RunSimulation {
 
 		if (cmd.hasOption("time-interval")) {
 			waitingTimeConfig.setEstimationInterval(Double.parseDouble(cmd.getOptionStrict("time-interval")));
+		}
+
+		if (cmd.hasOption("alpha")) {
+			waitingTimeConfig.setEstimationAlpha(Double.parseDouble(cmd.getOptionStrict("alpha")));
 		}
 
 		cmd.applyConfiguration(config);
