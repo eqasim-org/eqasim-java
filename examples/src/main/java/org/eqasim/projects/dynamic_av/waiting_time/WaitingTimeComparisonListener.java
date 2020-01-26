@@ -1,5 +1,9 @@
 package org.eqasim.projects.dynamic_av.waiting_time;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,6 +98,29 @@ public class WaitingTimeComparisonListener
 		chart.addSeries("Stanard deviation", stdHistory);
 
 		chart.saveAsPng(outputHierarchy.getOutputFilename("waiting_time_error.png"), 800, 600);
+
+		try {
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(outputHierarchy.getOutputFilename("waiting_time_error.csv"))));
+
+			writer.write(String.join(";", new String[] { "iteration", "mean", "median", "q90", "std" }) + "\n");
+
+			for (int iteration = 0; iteration < event.getIteration(); iteration++) {
+				if (meanHistory.containsKey(iteration)) {
+					writer.write(String.join(";", new String[] { //
+							String.valueOf(iteration), //
+							String.valueOf(meanHistory.get(iteration)), //
+							String.valueOf(medianHistory.get(iteration)), //
+							String.valueOf(q90History.get(iteration)), //
+							String.valueOf(stdHistory.get(iteration)) //
+					}) + "\n");
+				}
+			}
+
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		statistics.clear();
 		departureEvents.clear();
