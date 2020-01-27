@@ -22,6 +22,10 @@ public class SaoPauloModeParameters extends ModeParameters {
 	
 	public class SaoPauloTaxiParameters extends TaxiVariables {
 		public double alpha_taxi_city = 0.0;
+		public double beta_TravelTime_u_min = 0.0;
+		
+		public double constantAccessEgressWalkTime_min = 0.0;
+		public double betaWaitingTime_u_min = 0.0;
 		
 		public SaoPauloTaxiParameters() {
 			super(0.0,0.0,0.0,0.0);
@@ -46,25 +50,26 @@ public class SaoPauloModeParameters extends ModeParameters {
 		SaoPauloModeParameters parameters = new SaoPauloModeParameters();
 
 		// Cost
-		parameters.betaCost_u_MU = -0.12;
+		parameters.betaCost_u_MU = -0.0606;
 		parameters.lambdaCostEuclideanDistance = 0.0;
 		parameters.referenceEuclideanDistance_km = 40.0;
-        parameters.spIncomeElasticity.lambda_income = -1.0;
-        parameters.spAvgHHLIncome.avg_hhl_income = 124108;
+        parameters.spIncomeElasticity.lambda_income = -0.2019;
+        parameters.spAvgHHLIncome.avg_hhl_income = 4215;
+        
 		// Car
 		parameters.car.alpha_u = 0.0;
-		parameters.car.betaTravelTime_u_min = -0.0347;
+		parameters.car.betaTravelTime_u_min = -0.0246;
         
-		parameters.car.constantAccessEgressWalkTime_min = 0.0;
-		parameters.car.constantParkingSearchPenalty_min = 0.0;
+		parameters.car.constantAccessEgressWalkTime_min = -0.1597;
+		parameters.car.constantParkingSearchPenalty_min = -0.1597;
 
 		// PT
-		parameters.pt.alpha_u = -2.2;//-2.9636;
-		parameters.pt.betaLineSwitch_u = -0.0;
-		parameters.pt.betaInVehicleTime_u_min = -0.008;
-		parameters.pt.betaWaitingTime_u_min = -0.008;
-		parameters.pt.betaAccessEgressTime_u_min = -0.0338;
-		parameters.spPT.alpha_pt_city = 1.9553;
+		parameters.pt.alpha_u = -0.7938;
+		parameters.pt.betaLineSwitch_u = 0.0964;
+		parameters.pt.betaInVehicleTime_u_min = -0.0142;
+		parameters.pt.betaWaitingTime_u_min = -0.0142;
+		parameters.pt.betaAccessEgressTime_u_min = -0.0142;
+		parameters.spPT.alpha_pt_city = 0.0;
 		
 		// Bike
 		parameters.bike.alpha_u = 0.0;
@@ -72,12 +77,12 @@ public class SaoPauloModeParameters extends ModeParameters {
 		parameters.bike.betaAgeOver18_u_a = 0.0;
 
 		// Walk
-		parameters.walk.alpha_u = -0.2; //-0.66
-		parameters.walk.betaTravelTime_u_min = -0.0338;
-		parameters.spWalk.alpha_walk_city = 0.9005;
+		parameters.walk.alpha_u = 2.2218;
+		parameters.walk.betaTravelTime_u_min = -0.1657;
+		parameters.spWalk.alpha_walk_city = 0.0;
 		
 		//Taxi
-		parameters.spTaxi.alpha_taxi_city = 0.12;
+		parameters.spTaxi.alpha_taxi_city = -0.1597;
 		
 		return parameters;
 	}

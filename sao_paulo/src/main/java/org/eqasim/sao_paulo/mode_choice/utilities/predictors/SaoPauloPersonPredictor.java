@@ -14,6 +14,8 @@ public class SaoPauloPersonPredictor extends CachedVariablePredictor<SaoPauloPer
 	protected SaoPauloPersonVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
 		boolean hasSubscription = SaoPauloPredictorUtils.hasSubscription(person);
-		return new SaoPauloPersonVariables(hasSubscription);
+		boolean cityTrip = SaoPauloPredictorUtils.startsEndsinCity(trip);
+		double hhlIncome = SaoPauloPredictorUtils.hhlIncome(person);
+		return new SaoPauloPersonVariables(hasSubscription, cityTrip ,hhlIncome);
 	}
 }
