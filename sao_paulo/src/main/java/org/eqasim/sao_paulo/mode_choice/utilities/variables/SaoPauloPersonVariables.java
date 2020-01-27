@@ -4,6 +4,8 @@ import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
 
 public class SaoPauloPersonVariables implements BaseVariables {
 	public final boolean hasSubscription;
+	public double hhlIncome;
+	public boolean cityTrip;
 
 	public SaoPauloPersonVariables(boolean hasSubscription) {
 		this.hasSubscription = hasSubscription;

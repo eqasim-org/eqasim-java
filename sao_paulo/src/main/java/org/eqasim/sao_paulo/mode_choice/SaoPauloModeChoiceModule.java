@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloCarCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloPtCostModel;
+import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloTaxiCostModel;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloCostParameters;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
@@ -25,6 +26,7 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 	static public final String CAR_COST_MODEL_NAME = "SaoPauloCarCostModel";
 	static public final String PT_COST_MODEL_NAME = "SaoPauloPtCostModel";
+	static public final String TAXI_COST_MODEL_NAME = "SaoPauloTaxiCostModel";
 
 	public SaoPauloModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -38,6 +40,7 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SaoPauloCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SaoPauloPtCostModel.class);
+		bindCostModel(TAXI_COST_MODEL_NAME).to(SaoPauloTaxiCostModel.class);
 
 		bind(ModeParameters.class).to(SaoPauloModeParameters.class);
 	}

@@ -25,6 +25,7 @@ public class RunAdaptConfig {
 
 		eqasimConfig.setCostModel(TransportMode.car, SaoPauloModeChoiceModule.CAR_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, SaoPauloModeChoiceModule.PT_COST_MODEL_NAME);
+		eqasimConfig.setCostModel(TransportMode.taxi, SaoPauloModeChoiceModule.TAXI_COST_MODEL_NAME);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
