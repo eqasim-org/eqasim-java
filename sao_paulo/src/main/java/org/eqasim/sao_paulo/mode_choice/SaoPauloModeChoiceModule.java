@@ -2,10 +2,12 @@ package org.eqasim.sao_paulo.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloCarCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloPtCostModel;
@@ -16,8 +18,10 @@ import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredi
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -70,5 +74,11 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
+	}
+	
+	@Provides
+	@Named("taxi")
+	public CostModel provideTaxiCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "taxi");
 	}
 }

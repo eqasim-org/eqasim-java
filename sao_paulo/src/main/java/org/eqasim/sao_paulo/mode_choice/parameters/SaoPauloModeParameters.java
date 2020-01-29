@@ -20,7 +20,7 @@ public class SaoPauloModeParameters extends ModeParameters {
 		public double avg_hhl_income = 0.0;
 	}
 	
-	public class SaoPauloTaxiParameters extends TaxiVariables {
+	public class SaoPauloTaxiParameters {
 		public double alpha_taxi_city = 0.0;
 		public double beta_TravelTime_u_min = 0.0;
 		
@@ -28,13 +28,6 @@ public class SaoPauloModeParameters extends ModeParameters {
 		public double betaWaitingTime_u_min = 0.0;
 		
 		public SaoPauloTaxiParameters() {
-			super(0.0,0.0,0.0,0.0);
-			this.alpha_taxi_city = 0.0;
-		}
-		
-		public SaoPauloTaxiParameters(double travelTime_min, double cost_MU, double euclideanDistance_km,
-				double accessEgressTime_min) {
-			super(travelTime_min, cost_MU, euclideanDistance_km, accessEgressTime_min);
 			this.alpha_taxi_city = 0.0;
 		}
 		
@@ -65,7 +58,7 @@ public class SaoPauloModeParameters extends ModeParameters {
 
 		// PT
 		parameters.pt.alpha_u = -0.7938;
-		parameters.pt.betaLineSwitch_u = 0.0964;
+		parameters.pt.betaLineSwitch_u = 0.0;
 		parameters.pt.betaInVehicleTime_u_min = -0.0142;
 		parameters.pt.betaWaitingTime_u_min = -0.0142;
 		parameters.pt.betaAccessEgressTime_u_min = -0.0142;
@@ -82,7 +75,11 @@ public class SaoPauloModeParameters extends ModeParameters {
 		parameters.spWalk.alpha_walk_city = 0.0;
 		
 		//Taxi
-		parameters.spTaxi.alpha_taxi_city = -0.1597;
+		parameters.spTaxi.alpha_taxi_city = 0.0;
+		
+		parameters.spTaxi.beta_TravelTime_u_min = parameters.pt.betaInVehicleTime_u_min;
+		parameters.spTaxi.betaWaitingTime_u_min = parameters.pt.betaWaitingTime_u_min;
+		parameters.spTaxi.constantAccessEgressWalkTime_min = parameters.pt.betaAccessEgressTime_u_min;
 		
 		return parameters;
 	}
