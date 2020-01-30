@@ -1,10 +1,14 @@
 package org.eqasim.sao_paulo.scenario.routing.taxi;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
@@ -14,13 +18,11 @@ import org.matsim.core.router.util.TravelTime;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import com.google.inject.name.Named;
 
 public class TaxiRoutingModuleProvider implements Provider<RoutingModule> {
 
 	@Inject
-	@Named("car")
-	Network networkCar;	
+	Network network;
 	@Inject
 	private Scenario scenario;
 	@Inject
@@ -32,6 +34,11 @@ public class TaxiRoutingModuleProvider implements Provider<RoutingModule> {
 
 	@Override
 	public RoutingModule get() {
+		TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
+		Set<String> modesCar = new HashSet<>();
+		modesCar.add(TransportMode.car);
+		Network networkCar = NetworkUtils.createNetwork();
+		filter.filter(networkCar, modesCar);
 		TravelTime travelTime = travelTimes.get(TransportMode.car);
 
 		TravelDisutility travelDisutility = travelDisutilityFactories.get(TransportMode.car)
@@ -41,8 +48,5 @@ public class TaxiRoutingModuleProvider implements Provider<RoutingModule> {
 
 		return new TaxiRoutingModule(scenario, pathCalculator, networkCar);
 
-		//return new UAMIntermodalRoutingModule(this.scenario, this.uamManager.getStations(), modes, this.plcpc,
-		//		pathCalculator, networkCar, transitRouter, transitWalkRouter, uamConfig, transitConfig, transitRouting,
-		//		parameters, waitingData);
 	}
 }
