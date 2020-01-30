@@ -1,7 +1,6 @@
 package org.eqasim.sao_paulo.mode_choice.parameters;
 
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.sao_paulo.mode_choice.utilities.variables.TaxiVariables;
 
 public class SaoPauloModeParameters extends ModeParameters {
 	public class SaoPauloWalkParameters {
@@ -24,8 +23,9 @@ public class SaoPauloModeParameters extends ModeParameters {
 		public double alpha_taxi_city = 0.0;
 		public double beta_TravelTime_u_min = 0.0;
 		
-		public double constantAccessEgressWalkTime_min = 0.0;
+		public double betaAccessEgressWalkTime_min = 0.0;
 		public double betaWaitingTime_u_min = 0.0;
+		public double alpha_u = 0.0;
 		
 		public SaoPauloTaxiParameters() {
 			this.alpha_taxi_city = 0.0;
@@ -79,7 +79,8 @@ public class SaoPauloModeParameters extends ModeParameters {
 		
 		parameters.spTaxi.beta_TravelTime_u_min = parameters.pt.betaInVehicleTime_u_min;
 		parameters.spTaxi.betaWaitingTime_u_min = parameters.pt.betaWaitingTime_u_min;
-		parameters.spTaxi.constantAccessEgressWalkTime_min = parameters.pt.betaAccessEgressTime_u_min;
+		parameters.spTaxi.betaAccessEgressWalkTime_min = parameters.pt.betaAccessEgressTime_u_min;
+		parameters.spTaxi.alpha_u = parameters.pt.alpha_u;
 		
 		return parameters;
 	}

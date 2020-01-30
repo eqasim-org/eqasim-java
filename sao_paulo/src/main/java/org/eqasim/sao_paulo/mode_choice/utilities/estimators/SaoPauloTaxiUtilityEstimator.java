@@ -2,6 +2,7 @@ package org.eqasim.sao_paulo.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
@@ -45,27 +46,24 @@ public class SaoPauloTaxiUtilityEstimator {
 	}
 
 
+	private double estimateTravelTimeUtility(TaxiVariables variables_taxi) {
+		return parameters.spTaxi.beta_TravelTime_u_min * variables_taxi.travelTime_min;
+	}
+
+
 	private double estimateMonetaryCostUtility(TaxiVariables variables_taxi) {
-		// TODO Auto-generated method stub
-		return 0;
+		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables_taxi.euclideanDistance_km, 
+				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * variables_taxi.cost_MU;
 	}
 
 
 	private double estimateAccessEgressTimeUtility(TaxiVariables variables_taxi) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-
-	private double estimateTravelTimeUtility(TaxiVariables variables_taxi) {
-		// TODO Auto-generated method stub
-		return 0;
+		return parameters.spTaxi.betaAccessEgressWalkTime_min * variables_taxi.accessEgressTime_min;
 	}
 
 
 	private double estimateConstantUtility() {
-		// TODO Auto-generated method stub
-		return 0;
+		return parameters.spTaxi.alpha_u;
 	}
 
 }
