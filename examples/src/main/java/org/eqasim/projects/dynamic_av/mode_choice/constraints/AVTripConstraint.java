@@ -17,7 +17,7 @@ import ch.ethz.matsim.discrete_mode_choice.model.trip_based.candidates.TripCandi
 
 public class AVTripConstraint implements TripConstraint {
 	static public final String NAME = "AVTripConstraint";
-	
+
 	private final double minimumDistance_km;
 	private final double maximumWaitTime_min;
 
@@ -49,10 +49,13 @@ public class AVTripConstraint implements TripConstraint {
 			for (PlanElement element : elements) {
 				if (element instanceof Leg) {
 					Leg leg = (Leg) element;
-					AVRoute route = (AVRoute) leg.getRoute();
 
-					if (route.getWaitingTime() / 60.0 > maximumWaitTime_min) {
-						return false;
+					if (leg.getMode().equals("av")) {
+						AVRoute route = (AVRoute) leg.getRoute();
+
+						if (route.getWaitingTime() / 60.0 > maximumWaitTime_min) {
+							return false;
+						}
 					}
 				}
 			}
