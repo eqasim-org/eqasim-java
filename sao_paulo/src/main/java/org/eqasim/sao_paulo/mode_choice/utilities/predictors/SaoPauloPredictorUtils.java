@@ -11,9 +11,9 @@ public class SaoPauloPredictorUtils {
 	}
 	
 	static public boolean startsEndsinCity(DiscreteModeChoiceTrip trip) {
-		boolean startInCity = (boolean) trip.getOriginActivity().getAttributes().getAttribute("city");
-		boolean endInCity = (boolean) trip.getDestinationActivity().getAttributes().getAttribute("city");
-		return startInCity | endInCity;
+		Boolean startInCity = (Boolean) trip.getOriginActivity().getAttributes().getAttribute("city");
+		Boolean endInCity = (Boolean) trip.getDestinationActivity().getAttributes().getAttribute("city");
+		return startInCity != null && endInCity != null && startInCity | endInCity;
 	}
 
 	static public double hhlIncome(Person person) {
