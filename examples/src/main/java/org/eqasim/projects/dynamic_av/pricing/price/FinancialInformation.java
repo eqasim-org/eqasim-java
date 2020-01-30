@@ -9,4 +9,7 @@ public class FinancialInformation {
 	
 	double fleetCost_CHF;
 	double profit_CHF;
+	
+	double vehicleDistance_km;
+	double passengerDistance_km;
 }

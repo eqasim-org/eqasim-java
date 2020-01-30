@@ -49,6 +49,9 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 
 		information.fleetCost_CHF = costCalculator.calculateFleetCost(calculatorParameters);
 		information.costPerPassengerKm_CHF = information.fleetCost_CHF / calculatorParameters.passengerDistanceKm;
+		
+		information.vehicleDistance_km = calculatorParameters.vehicleDistanceKm;
+		information.passengerDistance_km = calculatorParameters.passengerDistanceKm;
 
 		// Second obtain fare structure
 		double baseFareRevenue_CHF = costParameters.baseFare_CHF * calculatorParameters.numberOfTrips;

@@ -39,7 +39,10 @@ public class FinancialInformationWriter implements IterationEndsListener, Shutdo
 						"baseFareRevenue_CHF", //
 
 						"fleetCost_MU", //
-						"profit_MU" //
+						"profit_MU", //
+
+						"vehicleDistance_km", //
+						"passengerDistance_km" //
 				}) + "\n");
 			}
 
@@ -53,7 +56,9 @@ public class FinancialInformationWriter implements IterationEndsListener, Shutdo
 					String.valueOf(information.costPerPassengerKm_CHF), //
 					String.valueOf(information.baseFareRevenue_CHF), //
 					String.valueOf(information.fleetCost_CHF), //
-					String.valueOf(information.profit_CHF) //
+					String.valueOf(information.profit_CHF), //
+					String.valueOf(information.vehicleDistance_km), //
+					String.valueOf(information.passengerDistance_km) //
 			}) + "\n");
 
 			writer.flush();
