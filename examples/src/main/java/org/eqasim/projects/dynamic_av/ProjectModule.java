@@ -10,6 +10,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.projects.dynamic_av.mode_choice.ProjectAvModeParameters;
 import org.eqasim.projects.dynamic_av.mode_choice.ProjectModeParameters;
+import org.eqasim.projects.dynamic_av.mode_choice.constraints.AVTripConstraint;
 import org.eqasim.projects.dynamic_av.mode_choice.constraints.InfiniteHeadwayConstraint;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.estimators.ProjectAvUtilityEstimator;
 import org.eqasim.projects.dynamic_av.mode_choice.utilities.estimators.ProjectBikeUtilityEstimator;
@@ -88,6 +89,7 @@ public class ProjectModule extends AbstractEqasimExtension {
 		install(new PricingModule(commandLine));
 
 		bindTripConstraintFactory(InfiniteHeadwayConstraint.NAME).to(InfiniteHeadwayConstraint.Factory.class);
+		bindTripConstraintFactory(AVTripConstraint.NAME).to(AVTripConstraint.Factory.class);
 
 		addEventHandlerBinding().to(WaitingTimeComparisonListener.class);
 		addControlerListenerBinding().to(WaitingTimeComparisonListener.class);
@@ -158,5 +160,11 @@ public class ProjectModule extends AbstractEqasimExtension {
 			Map<Id<AVOperator>, WaitingTime> waitingTimes, OutputDirectoryHierarchy outputHierarchy) {
 		WaitingTime waitingTime = waitingTimes.get(OperatorConfig.DEFAULT_OPERATOR_ID);
 		return new WaitingTimeComparisonListener(outputHierarchy, waitingTime);
+	}
+
+	@Provides
+	@Singleton
+	public AVTripConstraint.Factory provideAVTripConstraintFactory(ProjectConfigGroup config) {
+		return new AVTripConstraint.Factory(config.getMinimumDistance_km(), config.getMaximumWaitTime_min());
 	}
 }

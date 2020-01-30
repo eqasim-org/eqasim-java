@@ -6,6 +6,7 @@ import java.util.Set;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
+import org.eqasim.projects.dynamic_av.mode_choice.constraints.AVTripConstraint;
 import org.eqasim.projects.dynamic_av.mode_choice.constraints.InfiniteHeadwayConstraint;
 import org.eqasim.projects.dynamic_av.pricing.PricingModule;
 import org.eqasim.projects.dynamic_av.service_area.OperatingArea;
@@ -56,6 +57,7 @@ public class ProjectConfigurator extends EqasimConfigurator {
 
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 		tripConstraints.add(InfiniteHeadwayConstraint.NAME);
+		tripConstraints.add(AVTripConstraint.NAME);
 		dmcConfig.setTripConstraints(tripConstraints);
 	}
 

@@ -9,10 +9,16 @@ public class ProjectConfigGroup extends ReflectiveConfigGroup {
 	public final static String OPERATING_AREA_PATH = "operatingAreaPath";
 	public final static String WAITING_TIME_GROUP_INDEX_ATTRIBUTE = "waitingTimeGroupIndexAttribute";
 	public final static String USE_AV = "useAv";
+	
+	public final static String MINIMUM_DISTANCE_KM = "minimumDistance_km";
+	public final static String MAXIMUM_WAIT_TIME_MIN = "maximumWaitTime_min";
 
 	private String operatingAreaPath = null;
 	private String waitingTimeGroupIndexAttribute = "wgIndex";
 	private boolean useAv = true;
+	
+	private double minimumDistance_km = 0.5;
+	private double maximumWaitTime_min = 15.0;
 
 	public ProjectConfigGroup() {
 		super(GROUP_NAME);
@@ -47,6 +53,26 @@ public class ProjectConfigGroup extends ReflectiveConfigGroup {
 	public void setUseAv(boolean useAv) {
 		this.useAv = useAv;
 	}
+	
+	@StringGetter(MINIMUM_DISTANCE_KM)
+	public double getMinimumDistance_km() {
+		return minimumDistance_km;
+	}
+
+	@StringSetter(MINIMUM_DISTANCE_KM)
+	public void setMinimumDistance_km(double minimumDistance_km) {
+		this.minimumDistance_km = minimumDistance_km;
+	}
+	
+	@StringGetter(MAXIMUM_WAIT_TIME_MIN)
+	public double getMaximumWaitTime_min() {
+		return maximumWaitTime_min;
+	}
+
+	@StringSetter(MAXIMUM_WAIT_TIME_MIN)
+	public void setMaximumWaitTime_min(double maximumWaitTime_min) {
+		this.maximumWaitTime_min = maximumWaitTime_min;
+	}
 
 	static public ProjectConfigGroup get(Config config) {
 		if (!config.getModules().containsKey(GROUP_NAME)) {
@@ -55,5 +81,4 @@ public class ProjectConfigGroup extends ReflectiveConfigGroup {
 
 		return (ProjectConfigGroup) config.getModules().get(GROUP_NAME);
 	}
-
 }
