@@ -18,7 +18,7 @@ public class RunImputeInnerSPAttribute {
 	public static void main(String[] args)
 			throws MalformedURLException, IOException, ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("la-path", "input-path", "output-path", "attribute-name") //
+				.requireOptions("sp-path", "input-path", "output-path", "attribute-name") //
 				.build();
 
 		// Load IRIS
