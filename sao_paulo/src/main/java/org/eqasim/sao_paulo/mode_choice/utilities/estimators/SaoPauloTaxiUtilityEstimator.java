@@ -2,6 +2,7 @@ package org.eqasim.sao_paulo.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
@@ -16,7 +17,7 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SaoPauloTaxiUtilityEstimator {
+public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
 	private final SaoPauloModeParameters parameters;
 	private final SaoPauloPersonPredictor predictor;
 	private final SaoPauloTaxiPredictor taxiPredictor;

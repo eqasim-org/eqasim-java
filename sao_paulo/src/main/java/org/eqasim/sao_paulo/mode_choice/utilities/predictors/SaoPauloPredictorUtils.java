@@ -16,8 +16,11 @@ public class SaoPauloPredictorUtils {
 		return startInCity != null && endInCity != null && startInCity | endInCity;
 	}
 
-	static public double hhlIncome(Person person) {
-        double hhlIncome = (double) person.getAttributes().getAttribute("hhlIncome");
-		return hhlIncome;
+	static public Double hhlIncome(Person person) {
+        Double hhlIncome = (Double) person.getAttributes().getAttribute("hhlIncome");
+        if (hhlIncome != null) {
+        	return hhlIncome;
+        }
+		return 0.0;
 	}
 }
