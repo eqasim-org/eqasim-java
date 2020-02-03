@@ -2,9 +2,9 @@ package org.eqasim.sao_paulo.mode_choice.utilities.estimators;
 
 import java.util.List;
 
-import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloTaxiPredictor;
@@ -17,7 +17,7 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
+public class SaoPauloTaxiUtilityEstimator extends TaxiUtilityEstimator {
 	private final SaoPauloModeParameters parameters;
 	private final SaoPauloPersonPredictor predictor;
 	private final SaoPauloTaxiPredictor taxiPredictor;
@@ -25,6 +25,7 @@ public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
 	@Inject
 	public SaoPauloTaxiUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
 			SaoPauloTaxiPredictor taxiPredictor, SaoPauloPersonPredictor predictor) {
+		super(parameters, taxiPredictor);
 		this.taxiPredictor = taxiPredictor;
 		this.parameters = parameters;
 		this.predictor = predictor;
@@ -52,18 +53,18 @@ public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
 	}
 
 
-	private double estimateMonetaryCostUtility(TaxiVariables variables_taxi) {
+	protected double estimateMonetaryCostUtility(TaxiVariables variables_taxi) {
 		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables_taxi.euclideanDistance_km, 
 				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * variables_taxi.cost_MU;
 	}
 
 
-	private double estimateAccessEgressTimeUtility(TaxiVariables variables_taxi) {
+	protected double estimateAccessEgressTimeUtility(TaxiVariables variables_taxi) {
 		return parameters.spTaxi.betaAccessEgressWalkTime_min * variables_taxi.accessEgressTime_min;
 	}
 
 
-	private double estimateConstantUtility() {
+	protected double estimateConstantUtility() {
 		return parameters.spTaxi.alpha_u;
 	}
 
