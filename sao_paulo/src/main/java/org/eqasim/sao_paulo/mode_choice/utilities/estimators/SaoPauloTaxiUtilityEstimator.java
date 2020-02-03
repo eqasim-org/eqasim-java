@@ -2,9 +2,10 @@ package org.eqasim.sao_paulo.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
+import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloTaxiPredictor;
@@ -15,9 +16,8 @@ import org.matsim.api.core.v01.population.PlanElement;
 
 import com.google.inject.Inject;
 
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SaoPauloTaxiUtilityEstimator extends TaxiUtilityEstimator {
+public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
 	private final SaoPauloModeParameters parameters;
 	private final SaoPauloPersonPredictor predictor;
 	private final SaoPauloTaxiPredictor taxiPredictor;
@@ -25,7 +25,6 @@ public class SaoPauloTaxiUtilityEstimator extends TaxiUtilityEstimator {
 	@Inject
 	public SaoPauloTaxiUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
 			SaoPauloTaxiPredictor taxiPredictor, SaoPauloPersonPredictor predictor) {
-		super(parameters, taxiPredictor);
 		this.taxiPredictor = taxiPredictor;
 		this.parameters = parameters;
 		this.predictor = predictor;
