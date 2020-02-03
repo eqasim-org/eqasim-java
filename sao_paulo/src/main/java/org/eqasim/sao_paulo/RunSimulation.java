@@ -36,6 +36,9 @@ public class RunSimulation {
 		eqasimConfig.setEstimator("pt", "spPTEstimator");
 		eqasimConfig.setEstimator("car", "spCarEstimator");
 		eqasimConfig.setEstimator("taxi", "spTaxiEstimator");
+		
+		
+		
 
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);

@@ -1,5 +1,6 @@
 package org.eqasim.sao_paulo.mode_choice.utilities.predictors;
 
+import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
 import org.matsim.api.core.v01.population.Person;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -16,11 +17,11 @@ public class SaoPauloPredictorUtils {
 		return startInCity != null && endInCity != null && startInCity | endInCity;
 	}
 
-	static public Double hhlIncome(Person person) {
+	static public Double hhlIncome(Person person, SaoPauloModeParameters parameters) {
         Double hhlIncome = (Double) person.getAttributes().getAttribute("hhlIncome");
         if (hhlIncome != null) {
         	return hhlIncome;
         }
-		return 0.0;
+		return parameters.spAvgHHLIncome.avg_hhl_income;
 	}
 }
