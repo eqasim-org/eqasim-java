@@ -47,7 +47,11 @@ public class SaoPauloPTUtilityEstimator  extends PtUtilityEstimator{
 		utility += estimateWaitingTimeUtility(variables_pt);
 		utility += estimateLineSwitchUtility(variables_pt);
 		utility += estimateRegionalUtility(variables);
-		utility += estimateMonetaryCostUtility(variables_pt)
+		if (variables.hhlIncome == 0.0)
+			utility += estimateMonetaryCostUtility(variables_pt)
+			* (parameters.spAvgHHLIncome.avg_hhl_income / 1.0);
+		else
+			utility += estimateMonetaryCostUtility(variables_pt)
 				* (parameters.spAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;

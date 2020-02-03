@@ -40,7 +40,11 @@ public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables_taxi);
 		utility += estimateAccessEgressTimeUtility(variables_taxi);
-		utility += estimateMonetaryCostUtility(variables_taxi)
+		if (variables.hhlIncome == 0.0)
+			utility += estimateMonetaryCostUtility(variables_taxi)
+			* (parameters.spAvgHHLIncome.avg_hhl_income / 1.0);
+		else
+			utility += estimateMonetaryCostUtility(variables_taxi)
 				* (parameters.spAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
