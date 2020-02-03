@@ -14,6 +14,10 @@ import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloPtCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloTaxiCostModel;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloCostParameters;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
+import org.eqasim.sao_paulo.mode_choice.utilities.estimators.SaoPauloCarUtilityEstimator;
+import org.eqasim.sao_paulo.mode_choice.utilities.estimators.SaoPauloPTUtilityEstimator;
+import org.eqasim.sao_paulo.mode_choice.utilities.estimators.SaoPauloTaxiUtilityEstimator;
+import org.eqasim.sao_paulo.mode_choice.utilities.estimators.SaoPauloWalkUtilityEstimator;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -45,7 +49,10 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 		bindCostModel(CAR_COST_MODEL_NAME).to(SaoPauloCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SaoPauloPtCostModel.class);
 		bindCostModel(TAXI_COST_MODEL_NAME).to(SaoPauloTaxiCostModel.class);
-
+		bindUtilityEstimator("spPTEstimator").to(SaoPauloPTUtilityEstimator.class);
+		bindUtilityEstimator("spWalkEstimator").to(SaoPauloWalkUtilityEstimator.class);
+		bindUtilityEstimator("spCarEstimator").to(SaoPauloCarUtilityEstimator.class);
+		bindUtilityEstimator("spTaxiEstimator").to(SaoPauloTaxiUtilityEstimator.class);
 		bind(ModeParameters.class).to(SaoPauloModeParameters.class);
 	}
 
