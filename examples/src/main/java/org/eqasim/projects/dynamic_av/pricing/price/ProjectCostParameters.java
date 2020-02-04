@@ -4,7 +4,7 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 
 public class ProjectCostParameters implements ParameterDefinition {
 	public double defaultPrice_MU_km;
-	public double alpha = 0.0;
+	public int horizon;
 	public int transientIterations;
 	
 	public double baseFare_CHF = 0.0;
@@ -15,8 +15,8 @@ public class ProjectCostParameters implements ParameterDefinition {
 		ProjectCostParameters parameters = new ProjectCostParameters();
 
 		parameters.defaultPrice_MU_km = 0.4;
-		parameters.alpha = 0.1;
 		parameters.transientIterations = 10;
+		parameters.horizon = 10;
 
 		return parameters;
 	}

@@ -1,5 +1,8 @@
 package org.eqasim.projects.dynamic_av.pricing.price;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.eqasim.projects.dynamic_av.pricing.cost_calculator.CostCalculator;
 import org.eqasim.projects.dynamic_av.pricing.cost_calculator.CostCalculatorParameters;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
@@ -22,7 +25,9 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 	private int numberOfTrips;
 
 	private FinancialInformation information = new FinancialInformation();
-	private double interpolatedPricePerKm_CHF;
+
+	private List<Double> history = new LinkedList<>();
+	private double interpolatedPrice_MU_km;
 
 	public PriceCalculator(ProjectCostParameters parameters, FleetDistanceListener fleetListener, int numberOfVehicles,
 			CostCalculator costCalculator, double scalingFactor) {
@@ -32,7 +37,11 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 		this.costCalculator = costCalculator;
 		this.scalingFactor = scalingFactor;
 
-		this.interpolatedPricePerKm_CHF = parameters.defaultPrice_MU_km;
+		for (int i = 0; i < parameters.horizon; i++) {
+			history.add(parameters.defaultPrice_MU_km);
+		}
+
+		this.interpolatedPrice_MU_km = parameters.defaultPrice_MU_km;
 	}
 
 	@Override
@@ -49,36 +58,37 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 
 		information.fleetCost_CHF = costCalculator.calculateFleetCost(calculatorParameters);
 		information.costPerPassengerKm_CHF = information.fleetCost_CHF / calculatorParameters.passengerDistanceKm;
-		
+
 		information.vehicleDistance_km = calculatorParameters.vehicleDistanceKm;
 		information.passengerDistance_km = calculatorParameters.passengerDistanceKm;
 
 		// Second obtain fare structure
 		double baseFareRevenue_CHF = costParameters.baseFare_CHF * calculatorParameters.numberOfTrips;
 		information.baseFareRevenue_CHF = baseFareRevenue_CHF;
-		
+
 		if (Double.isNaN(costParameters.distanceFare_CHF_km)) {
 			// Cost-covering case, we calculate a price that covers the costs
 
 			double remainingFleetCost_MU = Math.max(0.0, information.fleetCost_CHF - baseFareRevenue_CHF);
 			information.profit_CHF = Math.max(0.0, baseFareRevenue_CHF - information.fleetCost_CHF);
-			
+
 			double costPerPassengerKm_MU = remainingFleetCost_MU / calculatorParameters.passengerDistanceKm;
-			
+
 			double minimumCostPerPassengerKm_MU = 0.0;
-			
+
 			if (costPerPassengerKm_MU < costParameters.minimumDistanceFare_CHF_km) {
 				// We make profit from distance
 				minimumCostPerPassengerKm_MU = costParameters.minimumDistanceFare_CHF_km;
-				information.profit_CHF += (costParameters.minimumDistanceFare_CHF_km - costPerPassengerKm_MU) * calculatorParameters.passengerDistanceKm;
+				information.profit_CHF += (costParameters.minimumDistanceFare_CHF_km - costPerPassengerKm_MU)
+						* calculatorParameters.passengerDistanceKm;
 			} else {
 				// No profit from distance
 				minimumCostPerPassengerKm_MU = costPerPassengerKm_MU;
 			}
-			
+
 			information.pricePerPassengerKm_CHF = costCalculator.calculatePrice(minimumCostPerPassengerKm_MU);
 			information.pricePerTrip_CHF = costCalculator.calculatePrice(costParameters.baseFare_CHF);
-			
+
 		} else {
 			// Fixed price, we calculate with revenue and profit
 
@@ -94,9 +104,16 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 
 		// Third, interpolate
 		if (Double.isFinite(information.pricePerPassengerKm_CHF)) {
-			double alpha = event.getIteration() >= costParameters.transientIterations ? costParameters.alpha : 0.0;
-			interpolatedPricePerKm_CHF = interpolatedPricePerKm_CHF * (1.0 - alpha)
-					+ alpha * information.pricePerPassengerKm_CHF;
+			history.remove(0);
+			history.add(information.pricePerPassengerKm_CHF);
+
+			interpolatedPrice_MU_km = 0.0;
+
+			for (int i = 0; i < costParameters.horizon; i++) {
+				interpolatedPrice_MU_km += history.get(i);
+			}
+
+			interpolatedPrice_MU_km /= costParameters.horizon;
 		}
 
 		numberOfTrips = 0;
@@ -110,7 +127,7 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 	}
 
 	public double calculateTripPrice_MU(double distance_km) {
-		return distance_km * interpolatedPricePerKm_CHF + information.pricePerTrip_CHF;
+		return distance_km * interpolatedPrice_MU_km + information.pricePerTrip_CHF;
 	}
 
 	public FinancialInformation getInformation() {
@@ -118,6 +135,6 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 	}
 
 	public double getInterpolatedPricePerKm_CHF() {
-		return interpolatedPricePerKm_CHF;
+		return interpolatedPrice_MU_km;
 	}
 }
