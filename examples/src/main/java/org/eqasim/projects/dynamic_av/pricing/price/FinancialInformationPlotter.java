@@ -32,7 +32,7 @@ public class FinancialInformationPlotter implements IterationEndsListener {
 		activeFareHistory.put(event.getIteration(), calculator.getInterpolatedPricePerKm_CHF());
 		computedFareHistory.put(event.getIteration(), information.pricePerPassengerKm_CHF);
 
-		XYLineChart chart = new XYLineChart("Waiting time prediction", "Iteration", "Error");
+		XYLineChart chart = new XYLineChart("Distance fare [CHF/km]", "Iteration", "Distance fare [CHF/km]");
 
 		chart.addSeries("Active", activeFareHistory);
 		chart.addSeries("Computed", computedFareHistory);

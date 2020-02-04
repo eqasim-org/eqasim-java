@@ -107,16 +107,18 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 
 		// Third, interpolate
 		if (Double.isFinite(information.pricePerPassengerKm_CHF)) {
-			history.remove(0);
-			history.add(information.pricePerPassengerKm_CHF);
+			if (event.getIteration() > costParameters.transientIterations) {
+				history.remove(0);
+				history.add(information.pricePerPassengerKm_CHF);
 
-			interpolatedPrice_MU_km = 0.0;
+				interpolatedPrice_MU_km = 0.0;
 
-			for (int i = 0; i < costParameters.horizon; i++) {
-				interpolatedPrice_MU_km += history.get(i);
+				for (int i = 0; i < costParameters.horizon; i++) {
+					interpolatedPrice_MU_km += history.get(i);
+				}
+
+				interpolatedPrice_MU_km /= costParameters.horizon;
 			}
-
-			interpolatedPrice_MU_km /= costParameters.horizon;
 		}
 
 		numberOfTrips = 0;
