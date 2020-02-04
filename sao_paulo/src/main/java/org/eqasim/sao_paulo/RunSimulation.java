@@ -41,6 +41,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SaoPauloModeChoiceModule(cmd));
+		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.run();
 	}
 }
