@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.eqasim.projects.dynamic_av.pricing.cost_calculator.CostCalculator;
 import org.eqasim.projects.dynamic_av.pricing.cost_calculator.CostCalculatorParameters;
+import org.eqasim.projects.dynamic_av.pricing.price.ProjectCostParameters.PriceStructure;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.core.controler.events.AfterMobsimEvent;
@@ -62,45 +63,47 @@ public class PriceCalculator implements AfterMobsimListener, PersonArrivalEventH
 		information.vehicleDistance_km = calculatorParameters.vehicleDistanceKm;
 		information.passengerDistance_km = calculatorParameters.passengerDistanceKm;
 
-		// Second obtain fare structure
-		double baseFareRevenue_CHF = costParameters.baseFare_CHF * calculatorParameters.numberOfTrips;
-		information.baseFareRevenue_CHF = baseFareRevenue_CHF;
+		// Second, set up cost structure
+		information.baseFareRevenue_CHF = costParameters.baseFare_CHF * calculatorParameters.numberOfTrips;
+		information.pricePerTrip_CHF = costParameters.baseFare_CHF;
 
-		if (Double.isNaN(costParameters.distanceFare_CHF_km)) {
-			// Cost-covering case, we calculate a price that covers the costs
+		if (costParameters.priceStructure.equals(PriceStructure.COST_COVERING)) {
+			double remainingFleetCost = information.fleetCost_CHF - information.baseFareRevenue_CHF;
 
-			double remainingFleetCost_MU = Math.max(0.0, information.fleetCost_CHF - baseFareRevenue_CHF);
-			information.profit_CHF = Math.max(0.0, baseFareRevenue_CHF - information.fleetCost_CHF);
+			if (remainingFleetCost > 0.0) {
+				double requiredPricePerPassengerKm_CHF = remainingFleetCost / information.passengerDistance_km;
+				double cappedPricePerPassengerKm_CHF = Math.min(
+						Math.max(requiredPricePerPassengerKm_CHF, costParameters.minimumDistanceFare_CHF_km),
+						costParameters.maximumDistanceFare_CHF_km);
 
-			double costPerPassengerKm_MU = remainingFleetCost_MU / calculatorParameters.passengerDistanceKm;
-
-			double minimumCostPerPassengerKm_MU = 0.0;
-
-			if (costPerPassengerKm_MU < costParameters.minimumDistanceFare_CHF_km) {
-				// We make profit from distance
-				minimumCostPerPassengerKm_MU = costParameters.minimumDistanceFare_CHF_km;
-				information.profit_CHF += (costParameters.minimumDistanceFare_CHF_km - costPerPassengerKm_MU)
-						* calculatorParameters.passengerDistanceKm;
+				information.pricePerPassengerKm_CHF = cappedPricePerPassengerKm_CHF;
+				information.profit_CHF = (cappedPricePerPassengerKm_CHF - requiredPricePerPassengerKm_CHF)
+						* information.passengerDistance_km;
 			} else {
-				// No profit from distance
-				minimumCostPerPassengerKm_MU = costPerPassengerKm_MU;
+				information.pricePerPassengerKm_CHF = 0.0;
+				information.profit_CHF = -remainingFleetCost;
 			}
+		} else if (costParameters.priceStructure.equals(PriceStructure.COST_COVERING_PLUS_BASE_FARE)) {
+			double requiredPricePerPassengerKm_CHF = information.fleetCost_CHF / information.passengerDistance_km;
 
-			information.pricePerPassengerKm_CHF = costCalculator.calculatePrice(minimumCostPerPassengerKm_MU);
-			information.pricePerTrip_CHF = costCalculator.calculatePrice(costParameters.baseFare_CHF);
+			double cappedPricePerPassengerKm_CHF = Math.min(
+					Math.max(requiredPricePerPassengerKm_CHF, costParameters.minimumDistanceFare_CHF_km),
+					costParameters.maximumDistanceFare_CHF_km);
 
+			information.pricePerPassengerKm_CHF = cappedPricePerPassengerKm_CHF;
+			information.profit_CHF = (cappedPricePerPassengerKm_CHF - requiredPricePerPassengerKm_CHF)
+					* information.passengerDistance_km + information.baseFareRevenue_CHF;
+		} else if (costParameters.priceStructure.equals(PriceStructure.FIXED_FARE)) {
+			double requiredPricePerPassengerKm_CHF = information.fleetCost_CHF / information.passengerDistance_km;
+			information.pricePerPassengerKm_CHF = costParameters.defaultPrice_MU_km;
+			information.profit_CHF = (costParameters.defaultPrice_MU_km - requiredPricePerPassengerKm_CHF)
+					* information.passengerDistance_km;
 		} else {
-			// Fixed price, we calculate with revenue and profit
-
-			information.pricePerPassengerKm_CHF = costCalculator.calculatePrice(costParameters.distanceFare_CHF_km);
-			information.pricePerTrip_CHF = costCalculator.calculatePrice(costParameters.baseFare_CHF);
-
-			double distanceFareRevenue_CHF = costParameters.distanceFare_CHF_km
-					* calculatorParameters.passengerDistanceKm;
-			double totalRevenue_CHF = distanceFareRevenue_CHF + baseFareRevenue_CHF;
-
-			information.profit_CHF = totalRevenue_CHF - information.fleetCost_CHF;
+			throw new IllegalStateException();
 		}
+
+		information.pricePerPassengerKm_CHF = costCalculator.calculatePrice(information.pricePerPassengerKm_CHF);
+		information.pricePerTrip_CHF = costCalculator.calculatePrice(information.pricePerTrip_CHF);
 
 		// Third, interpolate
 		if (Double.isFinite(information.pricePerPassengerKm_CHF)) {
