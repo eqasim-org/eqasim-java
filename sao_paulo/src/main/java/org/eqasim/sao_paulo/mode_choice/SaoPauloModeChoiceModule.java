@@ -9,7 +9,6 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloCarCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloPtCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloTaxiCostModel;
