@@ -26,6 +26,12 @@
 
 		<dependency>
 			<groupId>org.eqasim</groupId>
+			<artifactId>ile_de_france</artifactId>
+			<version>1.0.5-astra16</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eqasim</groupId>
 			<artifactId>switzerland</artifactId>
 			<version>1.0.5-astra16</version>
 		</dependency>
