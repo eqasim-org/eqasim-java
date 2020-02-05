@@ -55,7 +55,7 @@ public class ProjectAvUtilityEstimator extends AvUtilityEstimator {
 	}
 
 	protected double estimateWorkUtility(ProjectTripVariables variables) {
-		return variables.purpose.equals("work") ? avParameters.project.betaWork : 0.0;
+		return variables.isWork ? avParameters.project.betaWork : 0.0;
 	}
 
 	@Override

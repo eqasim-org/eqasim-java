@@ -13,6 +13,10 @@ public class ProjectTripPredictor extends CachedVariablePredictor<ProjectTripVar
 	@Override
 	protected ProjectTripVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
-		return new ProjectTripVariables(trip.getDestinationActivity().getType());
+		String originType = trip.getOriginActivity().getType();
+		String destinationType = trip.getDestinationActivity().getType();
+
+		boolean isWork = originType.equals("work") || destinationType.equals("work");
+		return new ProjectTripVariables(isWork);
 	}
 }

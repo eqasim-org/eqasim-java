@@ -69,7 +69,7 @@ public class ProjectPtUtilityEstimator extends PtUtilityEstimator {
 	}
 
 	protected double estimateWorkUtility(ProjectTripVariables variables) {
-		return variables.purpose.equals("work") ? parameters.projectWalk.betaWork : 0.0;
+		return variables.isWork ? parameters.projectWalk.betaWork : 0.0;
 	}
 
 	protected double estimateHeadwayUtility(ProjectPtVariables variables) {

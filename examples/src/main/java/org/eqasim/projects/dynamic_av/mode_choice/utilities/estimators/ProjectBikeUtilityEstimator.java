@@ -46,7 +46,7 @@ public class ProjectBikeUtilityEstimator extends SwissBikeUtilityEstimator {
 	}
 
 	protected double estimateWorkUtility(ProjectTripVariables variables) {
-		return variables.purpose.equals("work") ? parameters.projectBike.betaWork : 0.0;
+		return variables.isWork ? parameters.projectBike.betaWork : 0.0;
 	}
 
 	@Override

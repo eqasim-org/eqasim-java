@@ -52,7 +52,7 @@ public class ProjectCarUtilityEstimator extends CarUtilityEstimator {
 	}
 
 	protected double estimateWorkUtility(ProjectTripVariables variables) {
-		return variables.purpose.equals("work") ? parameters.projectCar.betaWork : 0.0;
+		return variables.isWork ? parameters.projectCar.betaWork : 0.0;
 	}
 
 	@Override

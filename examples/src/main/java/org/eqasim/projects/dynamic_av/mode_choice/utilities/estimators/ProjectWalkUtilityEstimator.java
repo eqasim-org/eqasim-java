@@ -46,7 +46,7 @@ public class ProjectWalkUtilityEstimator extends WalkUtilityEstimator {
 	}
 
 	protected double estimateWorkUtility(ProjectTripVariables variables) {
-		return variables.purpose.equals("work") ? parameters.projectWalk.betaWork : 0.0;
+		return variables.isWork ? parameters.projectWalk.betaWork : 0.0;
 	}
 
 	@Override
