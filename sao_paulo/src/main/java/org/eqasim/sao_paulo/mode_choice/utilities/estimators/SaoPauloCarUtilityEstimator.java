@@ -29,6 +29,10 @@ public class SaoPauloCarUtilityEstimator extends CarUtilityEstimator {
 		this.parameters = parameters;
 		this.predictor = predictor;
 	}
+	
+	protected double estimateRegionalUtility(SaoPauloPersonVariables variables) {
+		return (variables.cityTrip) ? parameters.spCar.alpha_car_city : 0.0;
+	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {

@@ -7,6 +7,10 @@ public class SaoPauloModeParameters extends ModeParameters {
 		public double alpha_walk_city = 0.0;
 	}
 	
+	public class SaoPauloCarParameters {
+		public double alpha_car_city = 0.0;
+	}
+	
 	public class SaoPauloPTParameters {
 		public double alpha_pt_city = 0.0;
 	}
@@ -35,6 +39,7 @@ public class SaoPauloModeParameters extends ModeParameters {
 	
 	public final SaoPauloWalkParameters spWalk = new SaoPauloWalkParameters();
 	public final SaoPauloPTParameters spPT = new SaoPauloPTParameters();
+	public final SaoPauloCarParameters spCar = new SaoPauloCarParameters();
 	public final SaoPauloIncomeElasticity spIncomeElasticity = new SaoPauloIncomeElasticity();
 	public final SaoPauloAvgHHLIncome spAvgHHLIncome = new SaoPauloAvgHHLIncome();
 	public final SaoPauloTaxiParameters spTaxi = new SaoPauloTaxiParameters();
@@ -55,6 +60,7 @@ public class SaoPauloModeParameters extends ModeParameters {
         
 		parameters.car.constantAccessEgressWalkTime_min = -0.1597;
 		parameters.car.constantParkingSearchPenalty_min = -0.1597;
+		parameters.spCar.alpha_car_city = -0.1597;
 
 		// PT
 		parameters.pt.alpha_u = -0.7938;
