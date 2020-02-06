@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.sao_paulo.mode_choice.constraints.WalkDurationConstraint;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloCarCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloPtCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloTaxiCostModel;
@@ -22,11 +23,15 @@ import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredi
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloTaxiPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.Config;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+
+import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
 public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -47,6 +52,9 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 		bind(SaoPauloPersonPredictor.class);
 		bind(SaoPauloTaxiPredictor.class);
+		bindTripConstraintFactory("WalkDurationConstraint")
+		.to(WalkDurationConstraint.Factory.class);
+
 		bindCostModel(CAR_COST_MODEL_NAME).to(SaoPauloCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SaoPauloPtCostModel.class);
 		bindCostModel(TAXI_COST_MODEL_NAME).to(SaoPauloTaxiCostModel.class);
@@ -88,5 +96,12 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	@Named("taxi")
 	public CostModel provideTaxiCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
 		return getCostModel(factory, config, "taxi");
+	}
+	
+	@Provides
+	@Singleton
+	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
+			@Named("tour") HomeFinder homeFinder, Config config) {
+		return new WalkDurationConstraint.Factory(config);
 	}
 }
