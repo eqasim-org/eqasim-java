@@ -43,6 +43,7 @@ public class SaoPauloCarUtilityEstimator extends CarUtilityEstimator {
 
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables_car);
+		utility += estimateRegionalUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables_car);
 		if (variables.hhlIncome == 0.0)
 			utility += estimateMonetaryCostUtility(variables_car)
