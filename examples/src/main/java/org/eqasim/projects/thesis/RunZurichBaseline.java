@@ -36,6 +36,7 @@ public class RunZurichBaseline {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 		controller.addOverridingModule(new CalibrationModule());
+		controller.addOverridingModule(new ThesisZurichModule(cmd));
 
 		controller.run();
 	}
