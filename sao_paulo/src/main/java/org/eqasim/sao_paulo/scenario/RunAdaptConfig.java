@@ -1,5 +1,6 @@
 package org.eqasim.sao_paulo.scenario;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,6 +36,9 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(SaoPauloModeChoiceModule.MODE_AVAILABILITY_NAME);
+		Collection<String> tripConstraints = dmcConfig.getTripConstraints();
+		tripConstraints.add("WalkDurationConstraint");
+		dmcConfig.setTripConstraints(tripConstraints);
 		
 		List<String> networkModes = new LinkedList<>(config.plansCalcRoute().getNetworkModes());
 		networkModes.add("taxi");
