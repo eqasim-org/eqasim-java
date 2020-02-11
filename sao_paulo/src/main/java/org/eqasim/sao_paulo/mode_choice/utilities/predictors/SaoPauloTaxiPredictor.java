@@ -34,11 +34,11 @@ public class SaoPauloTaxiPredictor extends CachedVariablePredictor<TaxiVariables
 
 		Leg leg = (Leg) elements.get(0);
 
-		double travelTime_min = leg.getTravelTime() / 60.0 + parameters.car.constantParkingSearchPenalty_min;
+		double travelTime_min = leg.getTravelTime() / 60.0;
 		double cost_MU = costModel.calculateCost_MU(person, trip, elements);
 
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-		double accessEgressTime_min = parameters.car.constantAccessEgressWalkTime_min;
+		double accessEgressTime_min = 0;//parameters.car.constantAccessEgressWalkTime_min;
 
 		return new TaxiVariables(travelTime_min, cost_MU, euclideanDistance_km, accessEgressTime_min);
 	}
