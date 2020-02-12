@@ -13,6 +13,8 @@ public class SaoPauloCostParameters implements ParameterDefinition {
 	public double taxiCostPerMin_BRL;
 	public double taxiCostPerkm_BRL;
 
+	public double taxMinCost_BRL;
+
 	public static SaoPauloCostParameters buildDefault() {
 		SaoPauloCostParameters parameters = new SaoPauloCostParameters();
 
@@ -24,6 +26,7 @@ public class SaoPauloCostParameters implements ParameterDefinition {
 		parameters.taxiPickUpFee_BRL = 3.25;//4.16;
 		parameters.taxiCostPerMin_BRL = 0.38;//0.48;
 		parameters.taxiCostPerkm_BRL = 2.0;//2.4;
+		parameters.taxMinCost_BRL = 7.0;//2.4;
 
 		return parameters;
 	}

@@ -45,7 +45,7 @@ public class SaoPauloTaxiCostModel extends AbstractCostModel {
 		double distance_cost = costParameters.taxiCostPerkm_BRL * getInVehicleDistance_km(elements);
 		double time_cost = costParameters.taxiCostPerMin_BRL * getTotalTravelTime(elements);
 		
-		return pick_up_fee + distance_cost + time_cost;
+		return Math.max(pick_up_fee + distance_cost + time_cost, costParameters.taxMinCost_BRL);
 	}
 
 }
