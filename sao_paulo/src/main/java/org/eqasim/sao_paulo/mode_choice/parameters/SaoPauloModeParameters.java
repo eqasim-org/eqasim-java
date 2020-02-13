@@ -13,6 +13,8 @@ public class SaoPauloModeParameters extends ModeParameters {
 	
 	public class SaoPauloPTParameters {
 		public double alpha_pt_city = 0.0;
+		public double alpha_age = 0.0;
+
 	}
 	
 	public class SaoPauloIncomeElasticity {
@@ -69,7 +71,7 @@ public class SaoPauloModeParameters extends ModeParameters {
 		parameters.pt.betaWaitingTime_u_min = -0.0142;
 		parameters.pt.betaAccessEgressTime_u_min = -0.0142;
 		parameters.spPT.alpha_pt_city = 0.0;
-		
+		parameters.spPT.alpha_age = 0.0;
 		// Bike
 		parameters.bike.alpha_u = 0.0;
 		parameters.bike.betaTravelTime_u_min = 0.0;

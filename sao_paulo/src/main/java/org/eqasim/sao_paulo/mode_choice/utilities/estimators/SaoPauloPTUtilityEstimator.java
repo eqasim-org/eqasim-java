@@ -33,6 +33,10 @@ public class SaoPauloPTUtilityEstimator  extends PtUtilityEstimator{
 	protected double estimateRegionalUtility(SaoPauloPersonVariables variables) {
 		return (variables.cityTrip) ? parameters.spPT.alpha_pt_city : 0.0;
 	}
+	
+	protected double estimateAgeUtility(Person person) {
+		return (double) person.getAttributes().getAttribute("age") <= 16 ? parameters.spPT.alpha_age : 0.0;
+	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
