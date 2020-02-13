@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.sao_paulo.mode_choice.constraints.VehicleTourConstraintWithCarPassenger;
 import org.eqasim.sao_paulo.mode_choice.constraints.WalkDurationConstraint;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloCarCostModel;
 import org.eqasim.sao_paulo.mode_choice.costs.SaoPauloPtCostModel;
@@ -32,6 +33,7 @@ import com.google.inject.name.Named;
 
 import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 
 public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -52,6 +54,8 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 		bind(SaoPauloPersonPredictor.class);
 		bind(SaoPauloTaxiPredictor.class);
+		bindTourConstraintFactory("VehicleTourConstraintWithCarPassenger")
+		.to(VehicleTourConstraintWithCarPassenger.Factory.class);
 		bindTripConstraintFactory("WalkDurationConstraint")
 		.to(WalkDurationConstraint.Factory.class);
 
@@ -103,5 +107,13 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
 			@Named("tour") HomeFinder homeFinder, Config config) {
 		return new WalkDurationConstraint.Factory(config);
+	}
+	
+	@Provides
+	@Singleton
+	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(
+			DiscreteModeChoiceConfigGroup dmcConfig, @Named("tour") HomeFinder homeFinder) {
+		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
+		return new VehicleTourConstraintWithCarPassenger.Factory(config.getRestrictedModes(), homeFinder);
 	}
 }
