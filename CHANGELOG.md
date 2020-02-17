@@ -1,6 +1,8 @@
 # CHANGELOG
-
-- No changes yet
+- Remove bike from Sao Paulo
+- Add Los Angeles and San Francisco
+- Add possibility to choose modes to RunPopulationRouting
+- Bugfix: EnrichedTransitRoutingModule wrote wrong link and facilities in "pt interaction" activities, which lead to problems when cutting the population
 
 **1.0.5**
 

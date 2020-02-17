@@ -1,5 +1,8 @@
 package org.eqasim.core.scenario.routing;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
@@ -17,7 +20,7 @@ public class RunPopulationRouting {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
-				.allowOptions("threads", "batch-size") //
+				.allowOptions("threads", "batch-size", "modes") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
@@ -39,9 +42,17 @@ public class RunPopulationRouting {
 			}
 		}
 
+		Set<String> modes = new HashSet<>();
+
+		if (cmd.hasOption("modes")) {
+			for (String mode : cmd.getOptionStrict("modes").split(",")) {
+				modes.add(mode.trim());
+			}
+		}
+
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(EqasimConfigurator.getModules()) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true)) //
+				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
 				.build();
 
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
