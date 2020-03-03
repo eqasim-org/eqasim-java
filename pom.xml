@@ -18,6 +18,7 @@
 		<module>san_francisco</module>
 		<module>los_angeles</module>
 		<module>auckland</module>
+		<module>jakarta</module>
 	</modules>
 
 	<properties>
