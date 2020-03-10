@@ -5,7 +5,7 @@ import org.matsim.api.core.v01.population.Person;
 public class WayneCountyPredictorUtils {
 
 	static public int hhlIncomeClass(Person person) {
-		int hhlIncomeClass = (int) person.getAttributes().getAttribute("hhlIncomeClass");
+		int hhlIncomeClass = (int) ((String)person.getAttributes().getAttribute("income")).charAt(3);
 		return hhlIncomeClass;
 	}
 }
