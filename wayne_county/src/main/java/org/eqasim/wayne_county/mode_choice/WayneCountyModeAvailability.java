@@ -18,19 +18,19 @@ public class WayneCountyModeAvailability implements ModeAvailability {
 
 		// Modes that are always available
 		modes.add(TransportMode.walk);
-		modes.add(TransportMode.pt);
+		//modes.add(TransportMode.pt);
 		// modes.add(TransportMode.bike);
 
 		// Check car availability
 		boolean carAvailability = true;
 
-		if (PersonUtils.getLicense(person).equals("no")) {
-			carAvailability = false;
-		}
+		//if (PersonUtils.getLicense(person).equals("no")) {
+		//	carAvailability = false;
+		//}
 
-		if ("none".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
-			carAvailability = false;
-		}
+		//if ("none".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
+		//	carAvailability = false;
+		//}
 
 		if (carAvailability) {
 			modes.add(TransportMode.car);
