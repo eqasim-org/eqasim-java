@@ -13,6 +13,7 @@ import org.eqasim.los_angeles.mode_choice.costs.LosAngelesCarCostModel;
 import org.eqasim.los_angeles.mode_choice.costs.LosAngelesPtCostModel;
 import org.eqasim.los_angeles.mode_choice.parameters.LosAngelesCostParameters;
 import org.eqasim.los_angeles.mode_choice.parameters.LosAngelesModeParameters;
+import org.eqasim.los_angeles.mode_choice.utilities.estimators.LosAngelesCarUtilityEstimator;
 import org.eqasim.los_angeles.mode_choice.utilities.estimators.LosAngelesPTUtilityEstimator;
 import org.eqasim.los_angeles.mode_choice.utilities.estimators.LosAngelesWalkUtilityEstimator;
 import org.eqasim.los_angeles.mode_choice.utilities.predictors.LosAngelesPersonPredictor;
@@ -50,8 +51,10 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(LosAngelesCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(LosAngelesPtCostModel.class);
-		bindUtilityEstimator("sfPTEstimator").to(LosAngelesPTUtilityEstimator.class);
-		bindUtilityEstimator("sfWalkEstimator").to(LosAngelesWalkUtilityEstimator.class);
+		bindUtilityEstimator("laPTEstimator").to(LosAngelesPTUtilityEstimator.class);
+		bindUtilityEstimator("laWalkEstimator").to(LosAngelesWalkUtilityEstimator.class);
+		bindUtilityEstimator("laCarEstimator").to(LosAngelesCarUtilityEstimator.class);
+
 		bind(ModeParameters.class).to(LosAngelesModeParameters.class);
 	}
 
