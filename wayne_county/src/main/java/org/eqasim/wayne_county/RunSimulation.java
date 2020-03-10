@@ -1,12 +1,16 @@
 package org.eqasim.wayne_county;
 
-import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.wayne_county.mode_choice.WayneCountyModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -28,12 +32,25 @@ public class RunSimulation {
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
+
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
+		for (Person person : scenario.getPopulation().getPersons().values()) {
+
+			Plan plan = person.getPlans().get(0);
+
+			for (PlanElement pe : plan.getPlanElements()) {
+
+				if (pe instanceof Activity) {
+					Link link = scenario.getNetwork().getLinks().get(((Activity) pe).getLinkId());
+					((Activity) pe).setCoord(link.getCoord());
+				}
+			}
+		}
 		EqasimConfigurator.adjustScenario(scenario);
 
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-		
+
 		eqasimConfig.setEstimator("walk", "wcWalkEstimator");
 		eqasimConfig.setEstimator("pt", "wcPTEstimator");
 		eqasimConfig.setEstimator("car", "wcCarEstimator");
@@ -44,7 +61,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new WayneCountyModeChoiceModule(cmd));
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		// controller.addOverridingModule(new CalibrationModule());
-		controller.run();	
+		controller.run();
 
 	}
 
