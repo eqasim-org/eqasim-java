@@ -28,7 +28,7 @@ public class SaoPauloModeAvailability implements ModeAvailability {
 			carAvailability = false;
 		}
 		
-		if ((int)person.getAttributes().getAttribute("age") <= 18)
+		if ((int)person.getAttributes().getAttribute("age") < 18)
 			carAvailability = false;
 
 		if (carAvailability) {
