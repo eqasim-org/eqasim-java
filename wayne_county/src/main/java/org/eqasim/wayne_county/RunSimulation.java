@@ -35,18 +35,7 @@ public class RunSimulation {
 
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		for (Person person : scenario.getPopulation().getPersons().values()) {
-
-			Plan plan = person.getPlans().get(0);
-
-			for (PlanElement pe : plan.getPlanElements()) {
-
-				if (pe instanceof Activity) {
-					Link link = scenario.getNetwork().getLinks().get(((Activity) pe).getLinkId());
-					((Activity) pe).setCoord(link.getCoord());
-				}
-			}
-		}
+		addCoordinatesToActivities(scenario);
 		EqasimConfigurator.adjustScenario(scenario);
 
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
@@ -63,6 +52,21 @@ public class RunSimulation {
 		// controller.addOverridingModule(new CalibrationModule());
 		controller.run();
 
+	}
+
+	private static void addCoordinatesToActivities(Scenario scenario) {
+		for (Person person : scenario.getPopulation().getPersons().values()) {
+
+			Plan plan = person.getPlans().get(0);
+
+			for (PlanElement pe : plan.getPlanElements()) {
+
+				if (pe instanceof Activity) {
+					Link link = scenario.getNetwork().getLinks().get(((Activity) pe).getLinkId());
+					((Activity) pe).setCoord(link.getCoord());
+				}
+			}
+		}
 	}
 
 }
