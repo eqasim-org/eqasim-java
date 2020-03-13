@@ -10,7 +10,7 @@ public class WayneCountyCostParameters implements ParameterDefinition {
 	public static WayneCountyCostParameters buildDefault() {
 		WayneCountyCostParameters parameters = new WayneCountyCostParameters();
 
-		parameters.carCost_USD_km = 0.2;
+		parameters.carCost_USD_km = 0.068; //11 cents per mile
 		return parameters;
 	}
 }

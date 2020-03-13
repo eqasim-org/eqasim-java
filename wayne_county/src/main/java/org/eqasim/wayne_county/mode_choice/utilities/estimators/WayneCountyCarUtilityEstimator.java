@@ -32,7 +32,7 @@ public class WayneCountyCarUtilityEstimator extends CarUtilityEstimator {
 
 	@Override
 	protected double estimateTravelTimeUtility(CarVariables variables_car) {
-		return parameters.wcCar.vot_min * variables_car.travelTime_min;
+		return parameters.wcCar.beta_time_min * variables_car.travelTime_min;
 	}
 
 	protected double estimateMonetaryCostUtility(CarVariables carVariables, WayneCountyPersonVariables variables) {

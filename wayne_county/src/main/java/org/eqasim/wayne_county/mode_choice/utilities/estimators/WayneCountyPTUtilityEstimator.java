@@ -44,7 +44,7 @@ public class WayneCountyPTUtilityEstimator extends PtUtilityEstimator {
 	}
 
 	protected double estimateTravelTimeUtility(PtVariables variables_pt) {
-		return parameters.wcPT.vot_min * variables_pt.inVehicleTime_min
+		return parameters.wcPT.beta_time_min * variables_pt.inVehicleTime_min
 				+ parameters.pt.betaAccessEgressTime_u_min * variables_pt.accessEgressTime_min
 				+ parameters.pt.betaWaitingTime_u_min * variables_pt.waitingTime_min;
 	}

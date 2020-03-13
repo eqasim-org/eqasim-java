@@ -27,7 +27,12 @@ public class WayneCountyPtCostModel implements CostModel {
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		WayneCountyPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
-		//TODO:
-		return 0;
+		/*if (variables.age >= 65) {
+			return 0.50;
+		}
+		TODO:
+		add age person variable in WayneCountyPersonVariables, WayneCountyPersonPredictor, WayneCountyPredictorUtils
+		*/
+		return 2;
 	}
 }

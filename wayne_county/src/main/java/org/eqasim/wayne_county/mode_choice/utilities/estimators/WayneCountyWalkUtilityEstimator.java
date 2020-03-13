@@ -45,7 +45,7 @@ public class WayneCountyWalkUtilityEstimator extends WalkUtilityEstimator {
 	}
 
 	protected double estimateTravelTime(WalkVariables variables) {
-		return parameters.wcWalk.vot_min * variables.travelTime_min;
+		return parameters.wcWalk.beta_time_min * variables.travelTime_min;
 	}
 
 	@Override
