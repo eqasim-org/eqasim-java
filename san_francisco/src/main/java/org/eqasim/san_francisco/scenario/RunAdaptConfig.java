@@ -1,5 +1,7 @@
 package org.eqasim.san_francisco.scenario;
 
+import java.util.Collection;
+
 import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -30,7 +32,10 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(SanFranciscoModeChoiceModule.MODE_AVAILABILITY_NAME);
-		dmcConfig.setTourConstraintsAsString("FromTripBased, VehicleTourConstraintWithCarPassenger, WalkDurationConstraint");
+		Collection<String> tripConstraints = dmcConfig.getTripConstraints();
+		tripConstraints.add("WalkDurationConstraint");
+		dmcConfig.setTripConstraints(tripConstraints);
+		dmcConfig.setTourConstraintsAsString("FromTripBased, VehicleTourConstraintWithCarPassenger");
 
 	}
 }
