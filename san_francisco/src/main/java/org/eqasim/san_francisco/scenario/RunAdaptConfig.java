@@ -30,5 +30,7 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(SanFranciscoModeChoiceModule.MODE_AVAILABILITY_NAME);
+		dmcConfig.setTourConstraintsAsString("FromTripBased, VehicleTourConstraintWithCarPassenger, WalkDurationConstraint");
+
 	}
 }
