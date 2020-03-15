@@ -46,8 +46,7 @@ public class SanFranciscoWalkUtilityEstimator extends WalkUtilityEstimator {
 		double utility = 0.0;
 
 		WalkVariables variables_walk = walkPredictor.predictVariables(person, trip, elements);
-		if (variables_walk.travelTime_min > 40)
-			return -100;
+		
 		utility += estimateConstantUtility();
 		utility += estimateTravelTime(variables_walk) * (parameters.sfAvgHHLIncome.avg_hhl_income / variables.hhlIncome)
 				* parameters.betaCost_u_MU;
