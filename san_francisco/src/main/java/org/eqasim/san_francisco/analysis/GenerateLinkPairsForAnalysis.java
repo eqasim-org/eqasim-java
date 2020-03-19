@@ -22,7 +22,7 @@ public class GenerateLinkPairsForAnalysis {
 	public static void main(String[] args) throws ConfigurationException, IOException {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("network-path","number-of-pairs","input-departure-times", "output-path") //
+				.requireOptions("network-path","number-of-pairs", "output-path") //
 				.build();
 
 		Network fullNetwork = NetworkUtils.createNetwork();
