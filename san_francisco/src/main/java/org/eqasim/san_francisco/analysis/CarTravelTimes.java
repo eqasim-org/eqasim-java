@@ -72,9 +72,7 @@ public class CarTravelTimes {
 		reader.readLine();
 		String s = reader.readLine();
 		
-		while (s != null ) {
-			
-			s = reader.readLine();
+		while (s != null ) {			
 			String[] variables = s.split(",");
 			Coord startCoord = CoordUtils.createCoord(Double.parseDouble(variables[1]), Double.parseDouble(variables[2]));
 			Coord endCoord = CoordUtils.createCoord(Double.parseDouble(variables[3]), Double.parseDouble(variables[4]));
