@@ -1,4 +1,4 @@
-package org.eqasim.projects.thesis;
+package org.eqasim.projects.astra16;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,10 +13,10 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
-public class ThesisZurichModule extends AbstractEqasimExtension {
+public class AstraZurichModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
-	public ThesisZurichModule(CommandLine commandLine) {
+	public AstraZurichModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
 	}
 
