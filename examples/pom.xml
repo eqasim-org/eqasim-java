@@ -35,6 +35,11 @@
 			<artifactId>core</artifactId>
 			<version>1.0.5</version>
 		</dependency>
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>carsharing</artifactId>
+			<version>11.0</version>
+		</dependency>
 	</dependencies>
 
 	<profiles>
