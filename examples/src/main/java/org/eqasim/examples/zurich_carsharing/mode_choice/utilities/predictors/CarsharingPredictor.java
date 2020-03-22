@@ -100,9 +100,9 @@ public class CarsharingPredictor extends CachedVariablePredictor<CarsharingVaria
 					locationVeh.getCoord()) * 1.3 / 1.1;
 			
 			double cost = this.costModel.calculateCost_MU(person, trip, elements);
-			return new CarsharingVariables(path.travelTime, cost, 1.0, accessTime);
+			return new CarsharingVariables(path.travelTime, cost, 1.0, accessTime, true);
 		}
-		return new CarsharingVariables(1.0, 1.0, 1.0, 1.0);
+		return new CarsharingVariables(1.0, 1.0, 1.0, 1.0, false);
 
 		
 	}

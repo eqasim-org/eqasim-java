@@ -39,6 +39,8 @@ public class CarsharingEstimator implements UtilityEstimator {
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		CarsharingVariables variables = this.predictor.predict(person, trip, elements);
+		if (!variables.foundVehicle)
+			return -100;
 		double utility = 0.0;
 		
 		utility += carsharingParameters.alpha_u;
