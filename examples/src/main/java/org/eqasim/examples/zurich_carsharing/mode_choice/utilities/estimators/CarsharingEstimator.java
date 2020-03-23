@@ -46,7 +46,7 @@ public class CarsharingEstimator implements UtilityEstimator {
 		utility += carsharingParameters.alpha_u;
 		utility += carsharingParameters.betaTravelTime_u_min * (variables.travelTime_min + 4.0);
 		utility += estimateMonetaryCostUtility(variables);
-		utility += carsharingParameters.betaAccessTime_u_min * (variables.accessEgressTime_min + 3.0);
+		utility += carsharingParameters.betaAccessTime_u_min * (variables.accessEgressTime_min);
 		
 		return utility;
 	}

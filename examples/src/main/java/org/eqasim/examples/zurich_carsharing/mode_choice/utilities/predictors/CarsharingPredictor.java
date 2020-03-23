@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.examples.zurich_carsharing.listeners.CarsharingAvailabilityListener;
 import org.eqasim.examples.zurich_carsharing.mode_choice.costs.CarsharingCostModel;
@@ -38,7 +37,7 @@ public class CarsharingPredictor extends CachedVariablePredictor<CarsharingVaria
 	private CarsharingSupplyInterface supply;	
 	private Network networkFF;
 	private LeastCostPathCalculator pathCalculator;
-	private CostModel costModel;
+	private CarsharingCostModel costModel;
 	
 	@Inject
 	public CarsharingPredictor(
@@ -99,8 +98,8 @@ public class CarsharingPredictor extends CachedVariablePredictor<CarsharingVaria
 			double accessTime = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
 					locationVeh.getCoord()) * 1.3 / 1.1;
 			
-			double cost = this.costModel.calculateCost_MU(person, trip, elements);
-			return new CarsharingVariables(path.travelTime, cost, 1.0, accessTime, true);
+			double cost = this.costModel.calculateCost(path.travelTime);
+			return new CarsharingVariables(path.travelTime / 60.0, cost, 1.0, accessTime/60.0, true);
 		}
 		return new CarsharingVariables(1.0, 1.0, 1.0, 1.0, false);
 

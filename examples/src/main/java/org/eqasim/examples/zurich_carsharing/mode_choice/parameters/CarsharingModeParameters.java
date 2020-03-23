@@ -10,9 +10,9 @@ public class CarsharingModeParameters implements ParameterDefinition {
 	static public CarsharingModeParameters buildDefault() {
 		CarsharingModeParameters parameters = new CarsharingModeParameters();
 
-		parameters.alpha_u = -0.533;
-		parameters.betaAccessTime_u_min = -0.0379;
-		parameters.betaTravelTime_u_min = -0.0605;
+		parameters.alpha_u = 0.0;
+		parameters.betaAccessTime_u_min = -0.08;
+		parameters.betaTravelTime_u_min = -0.067;
 
 		return parameters;
 	}
