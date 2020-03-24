@@ -52,7 +52,7 @@ public class CarTravelTimes {
 		eventsManager.addHandler(travelTimeListener);
 		new MatsimEventsReader(eventsManager).readFile(cmd.getOptionStrict("events-path"));
 
-		FreeSpeedTravelTime freeSpeedTravelTime = new FreeSpeedTravelTime();
+		EqasimFreeSpeedTravelTime freeSpeedTravelTime = new EqasimFreeSpeedTravelTime();
 		SerializableTravelTime congestedTravelTime = new SerializableTravelTime(0.0, 30.0 * 3600.0, 900, numberOfBins,
 				travelTimeListener.getData(), freeSpeedTravelTime);
 
@@ -60,7 +60,7 @@ public class CarTravelTimes {
 				new OutputStreamWriter(new FileOutputStream(cmd.getOptionStrict("traveltime-output-path"))));
 
 		writer.write(String.join(";", new String[] { //
-				"trip_id", "freespeed_travel_time", "congested_travel_time"}) + "\n");
+				"trip_id", "freespeed_travel_time", "congested_travel_time", "distance"}) + "\n");
 		writer.flush();
 
 		List<Thread> threads = new LinkedList<>();
@@ -116,17 +116,25 @@ public class CarTravelTimes {
 
 						double routeTime = task.departureTime;
 
-						Path freespeedPath = freeSpeedRouter.calcLeastCostPath(startLink.getToNode(),
-								endLink.getFromNode(), routeTime, null, null);
-						Path congestedPath = congestedRouter.calcLeastCostPath(startLink.getToNode(),
-								endLink.getFromNode(), routeTime, null, null);
+						Path freespeedPath = freeSpeedRouter.calcLeastCostPath(startLink.getFromNode(),
+								endLink.getToNode(), routeTime, null, null);
+						Path congestedPath = congestedRouter.calcLeastCostPath(startLink.getFromNode(),
+								endLink.getToNode(), routeTime, null, null);
 
 						try {
 							synchronized (writer) {
+								double distance = 0.0;
+								String links = "";
+								for (Link link : congestedPath.links) {
+									distance += link.getLength();
+									links = String.join(",", links,link.getId().toString());
+								}
 								writer.write(String.join(",", new String[] { //
 										String.valueOf(task.tripId),
 										String.valueOf(freespeedPath.travelTime), //
-										String.valueOf(congestedPath.travelTime) //
+										String.valueOf(congestedPath.travelTime),
+										String.valueOf(distance),
+										links//
 								}) + "\n");
 								writer.flush();
 							}
