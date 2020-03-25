@@ -52,7 +52,7 @@ public class CarTravelTimes {
 		eventsManager.addHandler(travelTimeListener);
 		new MatsimEventsReader(eventsManager).readFile(cmd.getOptionStrict("events-path"));
 
-		EqasimFreeSpeedTravelTime freeSpeedTravelTime = new EqasimFreeSpeedTravelTime();
+		EqasimFreeSpeedTravelTime freeSpeedTravelTime = new EqasimFreeSpeedTravelTime(Double.parseDouble(cmd.getOptionStrict("crossing-penalty")));
 		SerializableTravelTime congestedTravelTime = new SerializableTravelTime(0.0, 30.0 * 3600.0, 900, numberOfBins,
 				travelTimeListener.getData(Double.parseDouble(cmd.getOptionStrict("crossing-penalty"))),
 				freeSpeedTravelTime);

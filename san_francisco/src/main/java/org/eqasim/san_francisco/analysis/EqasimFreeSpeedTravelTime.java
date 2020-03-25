@@ -34,8 +34,9 @@ import org.matsim.vehicles.Vehicle;
  */
 public class EqasimFreeSpeedTravelTime implements TravelTime {
 
-	@Inject
-	public EqasimFreeSpeedTravelTime() {
+	private final double crossingPenalty;
+	public EqasimFreeSpeedTravelTime(double crossingPenalty) {
+		this.crossingPenalty = crossingPenalty;
 	}
 
 	@Override
@@ -53,7 +54,7 @@ public class EqasimFreeSpeedTravelTime implements TravelTime {
 			return link.getLength() / link.getFreespeed(time);
 		} else {
 			double travelTime = link.getLength() / link.getFreespeed(time);
-			travelTime += 8.0;
+			travelTime += crossingPenalty;
 			return travelTime;
 		}
 
