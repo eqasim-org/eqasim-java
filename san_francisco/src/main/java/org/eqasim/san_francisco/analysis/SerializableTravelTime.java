@@ -1,10 +1,9 @@
 package org.eqasim.san_francisco.analysis;
+
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,15 +54,15 @@ public class SerializableTravelTime implements TravelTime {
 		this.numberOfBins = numberOfBins;
 		this.fallback = fallback;
 	}
-	
+
 	public double getStartTime() {
 		return startTime;
 	}
-	
+
 	public double getEndTime() {
 		return endTime;
 	}
-	
+
 	public double getInterval() {
 		return interval;
 	}
@@ -89,9 +88,10 @@ public class SerializableTravelTime implements TravelTime {
 
 	static private void printProgress(String subject, int current, int total) {
 		System.out.println(String.format("%s %d/%d (%.2f%%)", subject, current, total, 100.0 * current / total));
-	}	
+	}
 
-	static public SerializableTravelTime readBinary(InputStream inputStream) throws IOException {
+	static public SerializableTravelTime readBinary(InputStream inputStream, double crossingPenalty)
+			throws IOException {
 		DataInputStream reader = new DataInputStream(inputStream);
 
 		double startTime = reader.readDouble();
@@ -121,7 +121,7 @@ public class SerializableTravelTime implements TravelTime {
 	}
 
 	static public SerializableTravelTime readFromEvents(double startTime, double endTime, double interval,
-			Network network, File eventsPath) {
+			Network network, File eventsPath, double crossingPenalty) {
 		int numberOfBins = (int) Math.floor((endTime - startTime) / interval);
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
@@ -129,7 +129,7 @@ public class SerializableTravelTime implements TravelTime {
 		eventsManager.addHandler(listener);
 
 		new MatsimEventsReader(eventsManager).readFile(eventsPath.toString());
-		return new SerializableTravelTime(startTime, endTime, interval, numberOfBins, listener.getData(),
+		return new SerializableTravelTime(startTime, endTime, interval, numberOfBins, listener.getData(crossingPenalty),
 				new FreeSpeedTravelTime());
 	}
 
@@ -205,7 +205,7 @@ public class SerializableTravelTime implements TravelTime {
 			traversalCounts.get(linkId).set(index, traversalCounts.get(linkId).get(index) + 1);
 		}
 
-		public Map<Id<Link>, List<Double>> getData() {
+		public Map<Id<Link>, List<Double>> getData(double crossingPenalty) {
 			Map<Id<Link>, List<Double>> data = new HashMap<>();
 
 			for (Link link : network.getLinks().values()) {
@@ -217,7 +217,7 @@ public class SerializableTravelTime implements TravelTime {
 
 				for (int i = 0; i < numberOfBins; i++) {
 					if (linkTraversalCounts.get(i) == 0) {
-						values.add(Math.max(1.0, link.getLength() / link.getFreespeed()));
+						values.add(Math.max(1.0, getFreespeedLinkTravelTime(link, this.interval * i, crossingPenalty)));
 					} else {
 						values.add(Math.max(1.0, linkCumulativeTraversalTimes.get(i) / linkTraversalCounts.get(i)));
 					}
@@ -227,5 +227,26 @@ public class SerializableTravelTime implements TravelTime {
 
 			return data;
 		}
+
+		public double getFreespeedLinkTravelTime(Link link, double time, double crossingPenalty) {
+
+			boolean isMajor = true;
+
+			for (Link other : link.getToNode().getInLinks().values()) {
+				if (other.getCapacity() >= link.getCapacity()) {
+					isMajor = false;
+				}
+			}
+
+			if (isMajor || link.getToNode().getInLinks().size() == 1) {
+				return link.getLength() / link.getFreespeed(time);
+			} else {
+				double travelTime = link.getLength() / link.getFreespeed(time);
+				travelTime += crossingPenalty;
+				return travelTime;
+			}
+
+		}
 	}
+
 }

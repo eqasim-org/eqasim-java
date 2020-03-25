@@ -20,15 +20,12 @@
 
 package org.eqasim.san_francisco.analysis;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.matsim.api.core.v01.Id;
+import javax.inject.Inject;
+
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.vehicles.Vehicle;
-
-import javax.inject.Inject;
 
 /**
  * Calculates and returns the FreeSpeedTravelTime on a link at the given time.
@@ -36,7 +33,6 @@ import javax.inject.Inject;
  * @author cdobler
  */
 public class EqasimFreeSpeedTravelTime implements TravelTime {
-	private static final Logger log = Logger.getLogger(EqasimFreeSpeedTravelTime.class);
 
 	@Inject
 	public EqasimFreeSpeedTravelTime() {

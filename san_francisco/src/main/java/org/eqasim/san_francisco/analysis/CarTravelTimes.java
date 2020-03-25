@@ -27,7 +27,6 @@ import org.matsim.core.router.AStarLandmarksFactory;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculator.Path;
-import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.geometry.CoordUtils;
 
 public class CarTravelTimes {
@@ -35,7 +34,8 @@ public class CarTravelTimes {
 	public static void main(String[] args) throws IOException, ConfigurationException, InterruptedException {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("network-path", "events-path", "input-path", "traveltime-output-path") //
+				.requireOptions("network-path", "events-path", "input-path", "traveltime-output-path",
+						"crossing-penalty") //
 				.build();
 
 		Network fullNetwork = NetworkUtils.createNetwork();
@@ -54,27 +54,28 @@ public class CarTravelTimes {
 
 		EqasimFreeSpeedTravelTime freeSpeedTravelTime = new EqasimFreeSpeedTravelTime();
 		SerializableTravelTime congestedTravelTime = new SerializableTravelTime(0.0, 30.0 * 3600.0, 900, numberOfBins,
-				travelTimeListener.getData(), freeSpeedTravelTime);
+				travelTimeListener.getData(Double.parseDouble(cmd.getOptionStrict("crossing-penalty"))),
+				freeSpeedTravelTime);
 
 		BufferedWriter writer = new BufferedWriter(
 				new OutputStreamWriter(new FileOutputStream(cmd.getOptionStrict("traveltime-output-path"))));
 
-		writer.write(String.join(";", new String[] { //
-				"trip_id", "freespeed_travel_time", "congested_travel_time", "distance"}) + "\n");
+		writer.write(String.join(",", new String[] { //
+				"trip_id", "freespeed_travel_time", "congested_travel_time", "distance" }) + "\n");
 		writer.flush();
 
 		List<Thread> threads = new LinkedList<>();
 		List<Task> tasks = new LinkedList<>();
 
-		
 		BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(cmd.getOptionStrict("input-path"))));
 		reader.readLine();
 		String s = reader.readLine();
-		
-		while (s != null ) {			
+
+		while (s != null) {
 			String[] variables = s.split(",");
-			Coord startCoord = CoordUtils.createCoord(Double.parseDouble(variables[1]), Double.parseDouble(variables[2]));
+			Coord startCoord = CoordUtils.createCoord(Double.parseDouble(variables[1]),
+					Double.parseDouble(variables[2]));
 			Coord endCoord = CoordUtils.createCoord(Double.parseDouble(variables[3]), Double.parseDouble(variables[4]));
 			double departureTime = Double.parseDouble(variables[5]);
 			int tripId = Integer.parseInt(variables[0]);
@@ -82,9 +83,9 @@ public class CarTravelTimes {
 			tasks.add(task);
 			s = reader.readLine();
 		}
-		
+
 		reader.close();
-		
+
 		long totalNumberOfTasks = tasks.size();
 		AtomicLong processedNumberOfTasks = new AtomicLong(0);
 
@@ -109,7 +110,7 @@ public class CarTravelTimes {
 
 					}
 
-					for (Task task : localTasks) {						
+					for (Task task : localTasks) {
 
 						Link startLink = NetworkUtils.getNearestLinkExactly(network, task.startCoord);
 						Link endLink = NetworkUtils.getNearestLinkExactly(network, task.endCoord);
@@ -124,17 +125,12 @@ public class CarTravelTimes {
 						try {
 							synchronized (writer) {
 								double distance = 0.0;
-								String links = "";
 								for (Link link : congestedPath.links) {
 									distance += link.getLength();
-									links = String.join(",", links,link.getId().toString());
 								}
 								writer.write(String.join(",", new String[] { //
-										String.valueOf(task.tripId),
-										String.valueOf(freespeedPath.travelTime), //
-										String.valueOf(congestedPath.travelTime),
-										String.valueOf(distance),
-										links//
+										String.valueOf(task.tripId), String.valueOf(freespeedPath.travelTime), //
+										String.valueOf(congestedPath.travelTime), String.valueOf(distance)//
 								}) + "\n");
 								writer.flush();
 							}
@@ -153,7 +149,6 @@ public class CarTravelTimes {
 					}
 				}
 			});
-			
 
 			thread.start();
 			threads.add(thread);
@@ -162,7 +157,7 @@ public class CarTravelTimes {
 		for (Thread thread : threads) {
 			thread.join();
 		}
-		writer.close();		
+		writer.close();
 
 	}
 
