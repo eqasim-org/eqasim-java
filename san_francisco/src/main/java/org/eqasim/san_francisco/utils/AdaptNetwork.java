@@ -19,9 +19,19 @@ public class AdaptNetwork {
 		
 		for (Link link : scenario.getNetwork().getLinks().values()) {
 			
-			if (link.getAttributes().getAttribute("osm:way:highway") !=null &&
+			if (link.getAttributes().getAttribute("osm:way:highway") != null &&
 					link.getAttributes().getAttribute("osm:way:highway").equals("unclassified")) {
 				link.setCapacity(link.getCapacity() * 2);					
+			}
+			
+			if (link.getAttributes().getAttribute("osm:way:highway") != null &&
+					link.getAttributes().getAttribute("osm:way:highway").equals("tertiary")) {
+				link.setCapacity(link.getCapacity() * 1.5);					
+			}
+			
+			if (link.getAttributes().getAttribute("osm:way:highway") != null &&
+					link.getAttributes().getAttribute("osm:way:highway").equals("secondary")) {
+				link.setCapacity(link.getCapacity() / 11 * 12);					
 			}
 		}
 		
