@@ -24,7 +24,7 @@ public class AstraZurichModule extends AbstractEqasimExtension {
 	@Singleton
 	public SwissModeParameters provideSwissModeParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
-		SwissModeParameters parameters = SwissModeParameters.buildASTRA2016();
+		SwissModeParameters parameters = SwissModeParameters.buildDefault();
 
 		if (config.getModeParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
