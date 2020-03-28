@@ -20,8 +20,8 @@ public class RunSimulation {
 				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				SwitzerlandConfigurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), AstraConfigurator.getConfigGroups());
+		AstraConfigurator.configure(config);
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -29,6 +29,7 @@ public class RunSimulation {
 		SwitzerlandConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		SwitzerlandConfigurator.adjustScenario(scenario);
+		AstraConfigurator.adjustScenario(scenario);
 
 		Controler controller = new Controler(scenario);
 		SwitzerlandConfigurator.configureController(controller);
@@ -36,7 +37,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 		controller.addOverridingModule(new CalibrationModule());
-		controller.addOverridingModule(new AstraZurichModule(cmd));
+		controller.addOverridingModule(new AstraModule(cmd));
 
 		controller.run();
 	}
