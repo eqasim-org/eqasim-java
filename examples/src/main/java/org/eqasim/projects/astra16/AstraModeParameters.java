@@ -6,6 +6,7 @@ public class AstraModeParameters extends SwissModeParameters {
 	static public class AstraBaseModeParameters {
 		public double betaAgeOver60 = 0.0;
 		public double betaWork = 0.0;
+		public double betaCity = 0.0;
 	}
 
 	public AstraBaseModeParameters astraWalk = new AstraBaseModeParameters();
@@ -176,6 +177,54 @@ public class AstraModeParameters extends SwissModeParameters {
 		parameters.astraPt.betaOvgkC_u = -1.758;
 		parameters.astraPt.betaOvgkD_u = -1.093;
 		parameters.astraPt.betaOvgkNone_u = -1.194;
+
+		return parameters;
+	}
+
+	static public AstraModeParameters buildFrom6Feb2020() {
+		AstraModeParameters parameters = new AstraModeParameters();
+
+		// General
+		parameters.betaCost_u_MU = -0.0888;
+
+		parameters.lambdaCostHouseholdIncome = -0.8169;
+		parameters.lambdaCostEuclideanDistance = -0.2209;
+		parameters.lambdaTravelTimeEuclideanDistance = 0.1147;
+
+		parameters.referenceEuclideanDistance_km = 39.0;
+		parameters.referenceHouseholdIncome_MU = 12260.0;
+
+		// Public transport
+		parameters.pt.alpha_u = 0.0;
+		parameters.pt.betaWaitingTime_u_min = -0.0124;
+		parameters.pt.betaAccessEgressTime_u_min = -0.0142;
+
+		parameters.astraPt.betaFeederTravelTime_u_min = -0.0452;
+		parameters.astraPt.betaBusTravelTime_u_min = -0.0124;
+		parameters.astraPt.betaRailTravelTime_u_min = -0.0072;
+		parameters.astraPt.betaHeadway_u_min = -0.0301;
+
+		parameters.astraPt.betaOvgkB_u = -1.7436;
+		parameters.astraPt.betaOvgkC_u = -1.6413;
+		parameters.astraPt.betaOvgkD_u = -0.9649;
+		parameters.astraPt.betaOvgkNone_u = -1.0889;
+
+		// Bicycle
+		parameters.bike.alpha_u = 0.1522;
+		parameters.bike.betaTravelTime_u_min = -0.1258;
+
+		parameters.astraBike.betaAgeOver60 = -2.6588;
+
+		// Car
+		parameters.car.alpha_u = 0.2235;
+		parameters.car.betaTravelTime_u_min = -0.0192;
+
+		parameters.astraCar.betaWork = -1.1606;
+		parameters.astraCar.betaCity = -0.4590;
+
+		// Walking
+		parameters.walk.alpha_u = 0.5903;
+		parameters.walk.betaTravelTime_u_min = -0.0457;
 
 		return parameters;
 	}

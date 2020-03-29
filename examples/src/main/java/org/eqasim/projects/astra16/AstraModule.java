@@ -51,7 +51,7 @@ public class AstraModule extends AbstractEqasimExtension {
 	@Singleton
 	public AstraModeParameters provideAstraModeParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
-		AstraModeParameters parameters = AstraModeParameters.buildDefault();
+		AstraModeParameters parameters = AstraModeParameters.buildFrom6Feb2020();
 
 		if (config.getModeParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);

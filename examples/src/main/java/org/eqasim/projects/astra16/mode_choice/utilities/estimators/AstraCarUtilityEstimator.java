@@ -20,7 +20,7 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class AstraCarUtilityEstimator extends CarUtilityEstimator {
 	static public final String NAME = "AstraCarEstimator";
-	
+
 	private final AstraModeParameters parameters;
 	private final AstraPersonPredictor personPredictor;
 	private final AstraTripPredictor tripPredictor;
@@ -57,6 +57,10 @@ public class AstraCarUtilityEstimator extends CarUtilityEstimator {
 		return variables.isWork ? parameters.astraCar.betaWork : 0.0;
 	}
 
+	protected double estimateCityUtility(AstraTripVariables variables) {
+		return variables.isCity ? parameters.astraCar.betaCity : 0.0;
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		CarVariables variables = predictor.predictVariables(person, trip, elements);
@@ -71,6 +75,7 @@ public class AstraCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateMonetaryCostUtility(variables, personVariables);
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
+		utility += estimateCityUtility(tripVariables);
 
 		return utility;
 	}

@@ -13,10 +13,12 @@ public class AstraTripPredictor extends CachedVariablePredictor<AstraTripVariabl
 	@Override
 	protected AstraTripVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
-		String originType = trip.getOriginActivity().getType();
-		String destinationType = trip.getDestinationActivity().getType();
+		boolean isWork = AstraPredictorUtils.hasPurposeWork(trip.getOriginActivity())
+				|| AstraPredictorUtils.hasPurposeWork(trip.getDestinationActivity());
 
-		boolean isWork = originType.equals("work") || destinationType.equals("work");
-		return new AstraTripVariables(isWork);
+		boolean isCity = AstraPredictorUtils.isInsideCity(trip.getOriginActivity())
+				|| AstraPredictorUtils.isInsideCity(trip.getDestinationActivity());
+
+		return new AstraTripVariables(isWork, isCity);
 	}
 }
