@@ -1,4 +1,4 @@
-package org.eqasim.projects.astra16.mode_choice.utilities.estimators;
+package org.eqasim.projects.astra16.mode_choice.estimators;
 
 import java.util.List;
 
@@ -7,10 +7,10 @@ import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtil
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.projects.astra16.AstraModeParameters;
-import org.eqasim.projects.astra16.mode_choice.utilities.predictors.AstraPersonPredictor;
-import org.eqasim.projects.astra16.mode_choice.utilities.predictors.AstraTripPredictor;
-import org.eqasim.projects.astra16.mode_choice.utilities.variables.AstraPersonVariables;
-import org.eqasim.projects.astra16.mode_choice.utilities.variables.AstraTripVariables;
+import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
+import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
+import org.eqasim.projects.astra16.mode_choice.variables.AstraPersonVariables;
+import org.eqasim.projects.astra16.mode_choice.variables.AstraTripVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 

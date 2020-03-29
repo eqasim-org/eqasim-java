@@ -1,4 +1,4 @@
-package org.eqasim.projects.astra16.mode_choice.utilities.predictors;
+package org.eqasim.projects.astra16.mode_choice.predictors;
 
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;

@@ -1,16 +1,16 @@
-package org.eqasim.projects.astra16.mode_choice.utilities.estimators;
+package org.eqasim.projects.astra16.mode_choice.estimators;
 
 import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.projects.astra16.AstraModeParameters;
-import org.eqasim.projects.astra16.mode_choice.utilities.predictors.AstraPersonPredictor;
-import org.eqasim.projects.astra16.mode_choice.utilities.predictors.AstraTripPredictor;
-import org.eqasim.projects.astra16.mode_choice.utilities.predictors.AstraWalkPredictor;
-import org.eqasim.projects.astra16.mode_choice.utilities.variables.AstraPersonVariables;
-import org.eqasim.projects.astra16.mode_choice.utilities.variables.AstraTripVariables;
-import org.eqasim.projects.astra16.mode_choice.utilities.variables.AstraWalkVariables;
+import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
+import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
+import org.eqasim.projects.astra16.mode_choice.predictors.AstraWalkPredictor;
+import org.eqasim.projects.astra16.mode_choice.variables.AstraPersonVariables;
+import org.eqasim.projects.astra16.mode_choice.variables.AstraTripVariables;
+import org.eqasim.projects.astra16.mode_choice.variables.AstraWalkVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 
@@ -64,9 +64,9 @@ public class AstraWalkUtilityEstimator extends WalkUtilityEstimator {
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
 
-		if (variables.travelTime_min > 30.0) {
-			utility -= 100.0;
-		}
+		/*
+		 * if (variables.travelTime_min > 30.0) { utility -= 100.0; }
+		 */
 
 		return utility;
 	}

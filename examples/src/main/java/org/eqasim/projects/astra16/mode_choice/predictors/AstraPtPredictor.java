@@ -1,4 +1,4 @@
-package org.eqasim.projects.astra16.mode_choice.utilities.predictors;
+package org.eqasim.projects.astra16.mode_choice.predictors;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
-import org.eqasim.projects.astra16.mode_choice.utilities.variables.AstraPtVariables;
+import org.eqasim.projects.astra16.mode_choice.variables.AstraPtVariables;
 import org.eqasim.switzerland.ovgk.OVGK;
 import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.api.core.v01.TransportMode;

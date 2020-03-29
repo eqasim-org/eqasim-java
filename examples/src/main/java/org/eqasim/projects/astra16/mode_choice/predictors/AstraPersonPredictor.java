@@ -1,9 +1,9 @@
-package org.eqasim.projects.astra16.mode_choice.utilities.predictors;
+package org.eqasim.projects.astra16.mode_choice.predictors;
 
 import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
-import org.eqasim.projects.astra16.mode_choice.utilities.variables.AstraPersonVariables;
+import org.eqasim.projects.astra16.mode_choice.variables.AstraPersonVariables;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;

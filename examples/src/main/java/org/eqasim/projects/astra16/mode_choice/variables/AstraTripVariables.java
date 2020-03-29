@@ -1,4 +1,4 @@
-package org.eqasim.projects.astra16.mode_choice.utilities.variables;
+package org.eqasim.projects.astra16.mode_choice.variables;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
 
