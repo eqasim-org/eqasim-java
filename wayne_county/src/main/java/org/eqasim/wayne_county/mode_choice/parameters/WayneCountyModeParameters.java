@@ -18,6 +18,15 @@ public class WayneCountyModeParameters extends ModeParameters {
 		public double beta_time_min = 0.0;
 	}
 
+	public class WayneCountyDRTParameters {
+		public double alpha_low_income = 0.0;
+		public double alpha_medium_income = 0.0;
+		public double alpha_high_income = 0.0;
+		public double beta_time_min = 0.0;
+		public double betaWaitingTime_u_min = 0.0;
+		public double betaAccessEgressTime_u_min = 0.0;
+	}
+
 	public class WayneCountyCarParameters {
 		public double beta_time_min = 0.0;
 		public double alpha_low_income = 0.0;
@@ -31,8 +40,10 @@ public class WayneCountyModeParameters extends ModeParameters {
 		public double beta_cost_high_income = 0.0;
 	}
 
+
 	public final WayneCountyWalkParameters wcWalk = new WayneCountyWalkParameters();
 	public final WayneCountyPTParameters wcPT = new WayneCountyPTParameters();
+	public final WayneCountyDRTParameters wcDRT = new WayneCountyDRTParameters();
 	public final WayneCountyCarParameters wcCar = new WayneCountyCarParameters();
 	public final WayneCountyCostParameters wcCost = new WayneCountyCostParameters();
 
@@ -57,6 +68,14 @@ public class WayneCountyModeParameters extends ModeParameters {
 		parameters.pt.betaWaitingTime_u_min = -0.0625;
 		parameters.pt.betaAccessEgressTime_u_min = -0.0;
 		parameters.wcPT.beta_time_min = -0.025;
+
+		// DRT
+		parameters.wcDRT.alpha_low_income = -2.7846;
+		parameters.wcDRT.alpha_medium_income = 0.6191;
+		parameters.wcDRT.alpha_high_income = 2.1311;
+		parameters.wcDRT.betaWaitingTime_u_min = -0.0625;
+		parameters.wcDRT.betaAccessEgressTime_u_min = -0.0;
+		parameters.wcDRT.beta_time_min = -0.025;
 
 		// Walk
 		parameters.wcWalk.alpha_low_income = 0.0;
