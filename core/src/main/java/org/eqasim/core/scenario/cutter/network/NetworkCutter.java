@@ -46,7 +46,7 @@ public class NetworkCutter {
 		Set<Id<Link>> retainedLinkIds = new HashSet<>();
 
 		for (Link link : network.getLinks().values()) {
-			if (extent.isInside(link.getToNode().getCoord()) || extent.isInside(link.getFromNode().getCoord())) {
+			if (extent.isInside(link.getToNode().getCoord()) && extent.isInside(link.getFromNode().getCoord())) {
 				retainedLinkIds.add(link.getId());
 			}
 
