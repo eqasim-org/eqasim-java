@@ -16,6 +16,7 @@ import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraPtPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraWalkPredictor;
+import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -45,6 +46,8 @@ public class AstraModule extends AbstractEqasimExtension {
 		bind(AstraTripPredictor.class);
 
 		bindTripConstraintFactory(InfiniteHeadwayConstraint.NAME).to(InfiniteHeadwayConstraint.Factory.class);
+
+		bind(SwissModeParameters.class).to(AstraModeParameters.class);
 	}
 
 	@Provides
