@@ -28,10 +28,55 @@ public class NetworkTripProcessor implements TripProcessor {
 	@Override
 	public List<PlanElement> process(Activity firstActivity, List<PlanElement> trip, Activity secondActivity) {
 		Leg leg = (Leg) trip.get(0);
-		NetworkRoute route = (NetworkRoute) leg.getRoute();
 
-		return process(leg.getMode(), route, leg.getDepartureTime(),
-				!extent.isInside(firstActivity.getCoord()) && !extent.isInside(secondActivity.getCoord()));
+		NetworkRoute route = (NetworkRoute) leg.getRoute();
+		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(leg.getMode(), route,
+				leg.getDepartureTime());
+
+		if (crossingPoints.size() > 0) {
+			List<PlanElement> result = new LinkedList<>();
+
+			result.add(PopulationUtils.createLeg(crossingPoints.get(0).isOutgoing ? leg.getMode() : "outside"));
+
+			for (NetworkCrossingPoint point : crossingPoints) {
+				Activity activity = PopulationUtils.createActivityFromLinkId("outside", point.link.getId());
+				activity.setEndTime(point.leaveTime);
+				result.add(activity);
+				result.add(PopulationUtils.createLeg(point.isOutgoing ? "outside" : leg.getMode()));
+			}
+
+			return result;
+		} else if (crossingPointFinder.isInside(route)) {
+			return Arrays.asList(PopulationUtils.createLeg(leg.getMode()));
+		} else {
+			// The route is outside. This does not means that both (or any) activity is
+			// actually outside. These are mainly special cases in which the route is
+			// outside, but some activity is inside, across the border, because the link is
+			// parallel to the border. We put an outside activity right next to the inside
+			// activity.
+
+			List<PlanElement> result = new LinkedList<>();
+
+			result.add(PopulationUtils.createLeg("outside"));
+
+			if (extent.isInside(firstActivity.getCoord())) {
+				Activity activity = PopulationUtils.createActivityFromLinkId("outside", firstActivity.getLinkId());
+				activity.setEndTime(firstActivity.getEndTime());
+				result.add(activity);
+
+				result.add(PopulationUtils.createLeg("outside"));
+			}
+
+			if (extent.isInside(secondActivity.getCoord())) {
+				Activity activity = PopulationUtils.createActivityFromLinkId("outside", secondActivity.getLinkId());
+				activity.setEndTime(secondActivity.getStartTime());
+				result.add(activity);
+
+				result.add(PopulationUtils.createLeg("outside"));
+			}
+
+			return result;
+		}
 	}
 
 	public List<PlanElement> process(String mode, NetworkRoute route, double departureTime, boolean allOutside) {
