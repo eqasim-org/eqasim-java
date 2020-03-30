@@ -6,7 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.PersonUtils;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -16,7 +18,20 @@ public class WayneCountyModeAvailability implements ModeAvailability {
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
+		
+		//remove makeshift below when integrated into the population file
+	
+		for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
+			if (element instanceof Leg) {
+				Leg leg = (Leg) element;
 
+				if (leg.getMode().equals("truck")) {
+					isFreight = true;
+					}
+				}
+			}
+		//makeshift end
+		
 		if (isFreight != null && isFreight) {
 			return Collections.singleton("truck");
 		}
