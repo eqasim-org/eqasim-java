@@ -1,6 +1,7 @@
 package org.eqasim.wayne_county.mode_choice;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -14,11 +15,17 @@ import ch.ethz.matsim.discrete_mode_choice.model.mode_availability.ModeAvailabil
 public class WayneCountyModeAvailability implements ModeAvailability {
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
+		Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
+
+		if (isFreight != null && isFreight) {
+			return Collections.singleton("truck");
+		}
+		
 		Collection<String> modes = new HashSet<>();
 
 		// Modes that are always available
 		modes.add(TransportMode.walk);
-		//modes.add(TransportMode.pt);
+		modes.add(TransportMode.pt);
 		// modes.add(TransportMode.bike);
 
 		// Check car availability
