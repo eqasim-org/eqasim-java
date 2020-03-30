@@ -7,6 +7,8 @@ public class AstraModeParameters extends SwissModeParameters {
 		public double betaAgeOver60 = 0.0;
 		public double betaWork = 0.0;
 		public double betaCity = 0.0;
+
+		public double travelTimeThreshold_min = 0.0;
 	}
 
 	public AstraBaseModeParameters astraWalk = new AstraBaseModeParameters();
@@ -66,6 +68,8 @@ public class AstraModeParameters extends SwissModeParameters {
 
 		parameters.astraBike.betaAgeOver60 = -2.6588;
 
+		parameters.astraBike.travelTimeThreshold_min = 60.0;
+
 		// Car
 		parameters.car.alpha_u = 0.2235;
 		parameters.car.betaTravelTime_u_min = -0.0192;
@@ -76,6 +80,8 @@ public class AstraModeParameters extends SwissModeParameters {
 		// Walking
 		parameters.walk.alpha_u = 0.5903;
 		parameters.walk.betaTravelTime_u_min = -0.0457;
+
+		parameters.astraWalk.travelTimeThreshold_min = 30.0;
 
 		return parameters;
 	}

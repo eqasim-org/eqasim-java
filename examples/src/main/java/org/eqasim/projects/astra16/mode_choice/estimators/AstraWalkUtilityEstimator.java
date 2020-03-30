@@ -51,6 +51,11 @@ public class AstraWalkUtilityEstimator extends WalkUtilityEstimator {
 		return variables.isWork ? parameters.astraWalk.betaWork : 0.0;
 	}
 
+	protected double estimatePenalty(AstraWalkVariables variables) {
+		double beta = Math.log(100) / parameters.astraBike.travelTimeThreshold_min;
+		return -Math.exp(beta * variables.travelTime_min);
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		AstraWalkVariables variables = predictor.predictVariables(person, trip, elements);
@@ -63,10 +68,7 @@ public class AstraWalkUtilityEstimator extends WalkUtilityEstimator {
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
-
-		/*
-		 * if (variables.travelTime_min > 30.0) { utility -= 100.0; }
-		 */
+		utility += estimatePenalty(variables);
 
 		return utility;
 	}
