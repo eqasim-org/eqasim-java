@@ -33,6 +33,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 
 import com.google.inject.Injector;
 
@@ -67,7 +68,22 @@ public class RunScenarioCutter {
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
-		// Check validity before cuttingrammstein
+		{
+		StopSequenceCrossingPointFinder stopSequenceCrossingPointFinder = new DefaultStopSequenceCrossingPointFinder(
+				extent);
+		TransitScheduleCutter transitScheduleCutter = new TransitScheduleCutter(extent,
+				stopSequenceCrossingPointFinder);
+		transitScheduleCutter.run(scenario.getTransitSchedule());
+		
+		ScenarioValidator scenarioValidator2 = new ScenarioValidator(new InteractionStageActivityTypes());
+		scenarioValidator2.checkScenario(scenario);
+		
+		new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile("/home/shoerl/cut/schedule.xml.gz");
+		}
+		
+		System.exit(1);
+		
+		// Check validity before cutting
 		ScenarioValidator scenarioValidator = new ScenarioValidator(new InteractionStageActivityTypes());
 		scenarioValidator.checkScenario(scenario);
 

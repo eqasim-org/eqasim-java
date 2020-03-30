@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Fix: Correct cutting of public transit lines
 - Fix: Consider special "parallel link" cases for network route cutting
 - Remove bike from Sao Paulo
 - Add Los Angeles and San Francisco
