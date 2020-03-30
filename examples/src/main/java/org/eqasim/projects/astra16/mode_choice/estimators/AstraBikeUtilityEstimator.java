@@ -68,7 +68,7 @@ public class AstraBikeUtilityEstimator extends SwissBikeUtilityEstimator {
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
-		utility += estimatePenalty(variables);
+		// utility += estimatePenalty(variables);
 		
 		return utility;
 	}
