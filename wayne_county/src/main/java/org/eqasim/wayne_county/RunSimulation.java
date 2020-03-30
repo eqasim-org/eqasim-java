@@ -1,5 +1,7 @@
 package org.eqasim.wayne_county;
 
+import java.util.Arrays;
+
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -30,6 +32,10 @@ public class RunSimulation {
 				EqasimConfigurator.getConfigGroups());
 		EqasimConfigGroup.get(config).setTripAnalysisInterval(5);
 		cmd.applyConfiguration(config);
+		// add truck estimator
+		for (String mode : Arrays.asList("truck")) {
+			EqasimConfigGroup.get(config).setEstimator(mode, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
