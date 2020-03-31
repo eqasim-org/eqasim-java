@@ -14,9 +14,9 @@ jobs:
       uses: actions/cache@v1
       env:
         cache-name: maven
-        key: maven
       with:
         path: ~/.m2
+        key: maven
 
     - name: Set up JDK
       uses: actions/setup-java@v1
