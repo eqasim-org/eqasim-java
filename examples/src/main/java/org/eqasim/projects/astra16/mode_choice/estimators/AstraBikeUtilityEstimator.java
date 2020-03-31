@@ -50,7 +50,7 @@ public class AstraBikeUtilityEstimator extends SwissBikeUtilityEstimator {
 	protected double estimateWorkUtility(AstraTripVariables variables) {
 		return variables.isWork ? parameters.astraBike.betaWork : 0.0;
 	}
-	
+
 	protected double estimatePenalty(AstraBikeVariables variables) {
 		double beta = Math.log(100) / parameters.astraBike.travelTimeThreshold_min;
 		return -Math.exp(beta * variables.travelTime_min);
@@ -68,8 +68,8 @@ public class AstraBikeUtilityEstimator extends SwissBikeUtilityEstimator {
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
-		// utility += estimatePenalty(variables);
-		
+		utility += estimatePenalty(variables);
+
 		return utility;
 	}
 }
