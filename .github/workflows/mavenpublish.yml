@@ -11,11 +11,11 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Cache Maven dependencies
-          uses: actions/cache@v1
-          env:
-            cache-name: maven
-          with:
-            path: ~/.m2
+      uses: actions/cache@v1
+      env:
+        cache-name: maven
+      with:
+        path: ~/.m2
 
     - name: Set up JDK
       uses: actions/setup-java@v1
