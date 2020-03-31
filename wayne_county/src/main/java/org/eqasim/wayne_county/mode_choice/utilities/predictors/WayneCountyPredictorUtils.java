@@ -1,8 +1,6 @@
 package org.eqasim.wayne_county.mode_choice.utilities.predictors;
 
-import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.PlanElement;
 
 public class WayneCountyPredictorUtils {
 
@@ -10,7 +8,8 @@ public class WayneCountyPredictorUtils {
 		String income = ((String)person.getAttributes().getAttribute("income"));
 		if (income.length()<4)
 			return -1;
-		int hhlIncomeClass = (int) ((String)person.getAttributes().getAttribute("income")).charAt(3);
+		char s = ((String)person.getAttributes().getAttribute("income")).charAt(3);
+		int hhlIncomeClass=Integer.parseInt(String.valueOf(s));
 		return hhlIncomeClass;
 	}
 	
