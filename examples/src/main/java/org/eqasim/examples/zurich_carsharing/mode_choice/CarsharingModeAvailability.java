@@ -17,13 +17,8 @@ public class CarsharingModeAvailability implements ModeAvailability {
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = delegate.getAvailableModes(person, trips);
-
-		boolean freefloatingAvailability = true;
-		if (PersonUtils.getLicense(person).equals("no")) {
-			freefloatingAvailability = false;
-		}
-		
-		if (freefloatingAvailability && modes.contains(TransportMode.walk)) {
+				
+		if (modes.contains(TransportMode.walk) && PersonUtils.getLicense(person).equals("yes")) {
 			modes.add("freefloating");
 		}
 
