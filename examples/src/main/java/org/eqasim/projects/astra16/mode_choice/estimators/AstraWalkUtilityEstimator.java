@@ -52,7 +52,7 @@ public class AstraWalkUtilityEstimator extends WalkUtilityEstimator {
 	}
 
 	protected double estimatePenalty(AstraWalkVariables variables) {
-		double beta = Math.log(100) / parameters.astraBike.travelTimeThreshold_min;
+		double beta = Math.log(100) / parameters.astraWalk.travelTimeThreshold_min;
 		return -Math.exp(beta * variables.travelTime_min);
 	}
 
