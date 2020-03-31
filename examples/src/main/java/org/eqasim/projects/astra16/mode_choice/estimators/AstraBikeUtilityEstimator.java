@@ -53,7 +53,7 @@ public class AstraBikeUtilityEstimator extends SwissBikeUtilityEstimator {
 
 	protected double estimatePenalty(AstraBikeVariables variables) {
 		double beta = Math.log(100) / parameters.astraBike.travelTimeThreshold_min;
-		return -Math.exp(beta * variables.travelTime_min);
+		return -Math.exp(beta * variables.travelTime_min) + 1.0;
 	}
 
 	@Override
