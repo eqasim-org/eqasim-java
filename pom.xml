@@ -28,8 +28,8 @@
 	</properties>
 	<distributionManagement>
 		<repository>
-			<id>matsim-eth</id>
-			<url>https://api.bintray.com/maven/matsim-eth/eqasim/eqasim/;publish=1</url>
+			<id>github</id>
+			<url>https://maven.pkg.github.com/eqasim-org</url>
 		</repository>
 	</distributionManagement>
 	<repositories>
