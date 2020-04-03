@@ -76,8 +76,8 @@ public class CarTravelTimes {
 			String[] variables = s.split(",");
 			Coord startCoord = CoordUtils.createCoord(Double.parseDouble(variables[1]),
 					Double.parseDouble(variables[2]));
-			Coord endCoord = CoordUtils.createCoord(Double.parseDouble(variables[3]), Double.parseDouble(variables[4]));
-			double departureTime = Double.parseDouble(variables[5]);
+			Coord endCoord = CoordUtils.createCoord(Double.parseDouble(variables[4]), Double.parseDouble(variables[5]));
+			double departureTime = Double.parseDouble(variables[7]);
 			int tripId = Integer.parseInt(variables[0]);
 			Task task = new Task(startCoord, endCoord, departureTime, tripId);
 			tasks.add(task);

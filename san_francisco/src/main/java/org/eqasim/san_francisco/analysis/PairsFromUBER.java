@@ -22,7 +22,7 @@ public class PairsFromUBER {
 		BufferedWriter writer = new BufferedWriter(
 				new OutputStreamWriter(new FileOutputStream(cmd.getOptionStrict("output-path"))));
 		writer.write(String.join(",", new String[] { //
-				"start_coord_x", "start_coord_y", "id_start", "end_coord_x", "end_coord_y", "id_end",
+				"id", "start_coord_x", "start_coord_y", "id_start", "end_coord_x", "end_coord_y", "id_end",
 				"departure_time" }) + "\n");
 		writer.flush();
 
