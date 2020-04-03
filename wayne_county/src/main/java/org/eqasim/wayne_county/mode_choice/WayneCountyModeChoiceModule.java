@@ -11,6 +11,7 @@ import org.eqasim.wayne_county.mode_choice.costs.WayneCountyCarCostModel;
 import org.eqasim.wayne_county.mode_choice.costs.WayneCountyPtCostModel;
 import org.eqasim.wayne_county.mode_choice.parameters.WayneCountyCostParameters;
 import org.eqasim.wayne_county.mode_choice.parameters.WayneCountyModeParameters;
+import org.eqasim.wayne_county.mode_choice.utilities.estimators.WayneCountyBikeUtilityEstimator;
 import org.eqasim.wayne_county.mode_choice.utilities.estimators.WayneCountyCarUtilityEstimator;
 import org.eqasim.wayne_county.mode_choice.utilities.estimators.WayneCountyPTUtilityEstimator;
 import org.eqasim.wayne_county.mode_choice.utilities.estimators.WayneCountyWalkUtilityEstimator;
@@ -45,6 +46,7 @@ public class WayneCountyModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator("wcPTEstimator").to(WayneCountyPTUtilityEstimator.class);
 		bindUtilityEstimator("wcWalkEstimator").to(WayneCountyWalkUtilityEstimator.class);
 		bindUtilityEstimator("wcCarEstimator").to(WayneCountyCarUtilityEstimator.class);
+		bindUtilityEstimator("wcBikeEstimator").to(WayneCountyBikeUtilityEstimator.class);
 
 	}
 

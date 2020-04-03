@@ -10,6 +10,13 @@ public class WayneCountyModeParameters extends ModeParameters {
 		public double alpha_high_income = 0.0;
 		public double beta_time_min = 0.0;
 	}
+	
+	public class WayneCountyBikeParameters {
+		public double alpha_low_income = 0.0;
+		public double alpha_medium_income = 0.0;
+		public double alpha_high_income = 0.0;
+		public double beta_time_min = 0.0;
+	}	
 
 	public class WayneCountyPTParameters {
 		public double alpha_low_income = 0.0;
@@ -42,6 +49,7 @@ public class WayneCountyModeParameters extends ModeParameters {
 
 
 	public final WayneCountyWalkParameters wcWalk = new WayneCountyWalkParameters();
+	public final WayneCountyBikeParameters wcBike = new WayneCountyBikeParameters();	
 	public final WayneCountyPTParameters wcPT = new WayneCountyPTParameters();
 	public final WayneCountyDRTParameters wcDRT = new WayneCountyDRTParameters();
 	public final WayneCountyCarParameters wcCar = new WayneCountyCarParameters();
@@ -62,9 +70,9 @@ public class WayneCountyModeParameters extends ModeParameters {
 		parameters.wcCar.beta_time_min = -0.025;
 
 		// PT
-		parameters.wcPT.alpha_low_income = -2.7846;
-		parameters.wcPT.alpha_medium_income = 0.6191;
-		parameters.wcPT.alpha_high_income = 2.1311;
+		parameters.wcPT.alpha_low_income = -2.996;
+		parameters.wcPT.alpha_medium_income = -4.918;
+		parameters.wcPT.alpha_high_income = -8.1217;
 		parameters.pt.betaWaitingTime_u_min = -0.0625;
 		parameters.pt.betaAccessEgressTime_u_min = -0.0;
 		parameters.wcPT.beta_time_min = -0.025;
@@ -78,11 +86,17 @@ public class WayneCountyModeParameters extends ModeParameters {
 		parameters.wcDRT.beta_time_min = -0.025;
 
 		// Walk
-		parameters.wcWalk.alpha_low_income = 0.0;
-		parameters.wcWalk.alpha_medium_income = 0.0;
-		parameters.wcWalk.alpha_high_income = 0.0;
+		parameters.wcWalk.alpha_low_income = 0.9;
+		parameters.wcWalk.alpha_medium_income = 0.5;
+		parameters.wcWalk.alpha_high_income = 0.5;
 		parameters.wcWalk.beta_time_min = -0.0625;
 
+		// Bike
+		parameters.wcBike.alpha_low_income = -2;
+		parameters.wcBike.alpha_medium_income = -3;
+		parameters.wcBike.alpha_high_income = -3;
+		parameters.wcBike.beta_time_min = -0.0625;
+		
 		return parameters;
 	}
 }

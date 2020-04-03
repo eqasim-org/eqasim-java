@@ -49,6 +49,7 @@ public class RunSimulation {
 		eqasimConfig.setEstimator("walk", "wcWalkEstimator");
 		eqasimConfig.setEstimator("pt", "wcPTEstimator");
 		eqasimConfig.setEstimator("car", "wcCarEstimator");
+		eqasimConfig.setEstimator("bike", "wcBikeEstimator");
 
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);
