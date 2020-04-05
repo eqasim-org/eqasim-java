@@ -63,15 +63,13 @@ public class AstraModeParameters extends SwissModeParameters {
 		parameters.astraPt.betaOvgkNone_u = -1.0889;
 
 		// Bicycle
-		parameters.bike.alpha_u = 0.1522;
+		parameters.bike.alpha_u = -0.5; // Original from fb model: 0.1522;
 		parameters.bike.betaTravelTime_u_min = -0.1258;
 
 		parameters.astraBike.betaAgeOver60 = -2.6588;
 
-		parameters.astraBike.travelTimeThreshold_min = 60.0;
-
 		// Car
-		parameters.car.alpha_u = 0.2235;
+		parameters.car.alpha_u = -0.8; // Original from fb model: 0.2235;
 		parameters.car.betaTravelTime_u_min = -0.0192;
 
 		parameters.astraCar.betaWork = -1.1606;
@@ -81,7 +79,7 @@ public class AstraModeParameters extends SwissModeParameters {
 		parameters.walk.alpha_u = 0.5903;
 		parameters.walk.betaTravelTime_u_min = -0.0457;
 
-		parameters.astraWalk.travelTimeThreshold_min = 30.0;
+		parameters.astraWalk.travelTimeThreshold_min = 120.0;
 
 		return parameters;
 	}

@@ -56,6 +56,13 @@ public class AstraConfigurator extends EqasimConfigurator {
 	static public void configure(Config config) {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
+		// Sets to 0.11 for 10% sample
+		config.qsim().setFlowCapFactor(1.1 * eqasimConfig.getSampleSize());
+
+		// General
+		eqasimConfig.setTripAnalysisInterval(config.controler().getWriteEventsInterval());
+
+		// Estimators
 		eqasimConfig.setEstimator(TransportMode.car, AstraCarUtilityEstimator.NAME);
 		eqasimConfig.setEstimator(TransportMode.pt, AstraPtUtilityEstimator.NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, AstraBikeUtilityEstimator.NAME);
@@ -79,6 +86,9 @@ public class AstraConfigurator extends EqasimConfigurator {
 		AVConfigGroup avConfig = AVConfigGroup.getOrCreate(config);
 		avConfig.setUseAccessAgress(true);
 		avConfig.setAllowedLinkMode("car"); // And later we also filter for operating area
+
+		avConfig.setVehicleAnalysisInterval(config.controler().getWriteEventsInterval());
+		avConfig.setPassengerAnalysisInterval(config.controler().getWriteEventsInterval());
 	}
 
 	static public void adjustOperator(Config config) {

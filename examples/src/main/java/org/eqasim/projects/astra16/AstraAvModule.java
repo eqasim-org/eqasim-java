@@ -2,15 +2,22 @@ package org.eqasim.projects.astra16;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.eqasim.automated_vehicles.components.EqasimAvConfigGroup;
 import org.eqasim.automated_vehicles.mode_choice.mode_parameters.AvModeParameters;
+import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.TripListener;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.projects.astra16.mode_choice.AstraAvModeParameters;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraAvUtilityEstimator;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.router.MainModeIdentifier;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -40,5 +47,14 @@ public class AstraAvModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("av-mode-parameter", commandLine, parameters);
 		return parameters;
+	}
+
+	@Provides
+	@Singleton
+	public TripListener provideTripListener(Network network, MainModeIdentifier mainModeIdentifier,
+			PlansCalcRouteConfigGroup routeConfig, PersonAnalysisFilter personFilter) {
+		// We override this one, because we want AV as a network mode in here.
+		List<String> modes = Arrays.asList("car", "av");
+		return new TripListener(network, type -> type.endsWith("interaction"), mainModeIdentifier, modes, personFilter);
 	}
 }
