@@ -1,4 +1,4 @@
-package org.eqasim.projects.astra16.av;
+package org.eqasim.projects.astra16.service_area;
 
 import java.util.Collection;
 
@@ -9,14 +9,14 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 
-public class Zone {
+public class ServiceAreaZone {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
 
 	private final int index;
 	private final Collection<Id<Link>> coveredLinkIds;
 	private final Geometry geometry;
 
-	public Zone(int index, Collection<Id<Link>> coveredLinkIds, Geometry geometry) {
+	public ServiceAreaZone(int index, Collection<Id<Link>> coveredLinkIds, Geometry geometry) {
 		this.index = index;
 		this.coveredLinkIds = coveredLinkIds;
 		this.geometry = geometry;

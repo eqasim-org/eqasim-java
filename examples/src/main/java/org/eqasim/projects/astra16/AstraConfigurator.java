@@ -16,6 +16,10 @@ import org.eqasim.projects.astra16.mode_choice.estimators.AstraBikeUtilityEstima
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraCarUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraPtUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraWalkUtilityEstimator;
+import org.eqasim.projects.astra16.pricing.AstraAvCostModel;
+import org.eqasim.projects.astra16.pricing.PricingModule;
+import org.eqasim.projects.astra16.service_area.ServiceAreaModule;
+import org.eqasim.projects.astra16.waiting_time.WaitingTimeModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -26,6 +30,9 @@ import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.households.Household;
 
+import ch.ethz.matsim.av.config.AVConfigGroup;
+import ch.ethz.matsim.av.config.operator.OperatorConfig;
+import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
 import ch.ethz.matsim.av.framework.AVModule;
 import ch.ethz.matsim.av.framework.AVQSimModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -43,8 +50,6 @@ public class AstraConfigurator extends EqasimConfigurator {
 				new CalibrationConfigGroup(), //
 				new AstraConfigGroup(), //
 				new EqasimAvConfigGroup(), //
-				// new AVConfigGroup(), //
-				// new DvrpConfigGroup() //
 		};
 	}
 
@@ -65,8 +70,33 @@ public class AstraConfigurator extends EqasimConfigurator {
 
 		dmcConfig.setModeAvailability(AstraModeAvailability.NAME);
 
+		// Add default AV configuration
 		AvConfigurator.configure(config);
 		eqasimConfig.setEstimator(AVModule.AV_MODE, AstraAvUtilityEstimator.NAME);
+		eqasimConfig.setCostModel(AVModule.AV_MODE, AstraAvCostModel.NAME);
+
+		// Set up AV
+		AVConfigGroup avConfig = AVConfigGroup.getOrCreate(config);
+		avConfig.setUseAccessAgress(true);
+		avConfig.setAllowedLinkMode("car"); // And later we also filter for operating area
+	}
+
+	static public void adjustOperator(Config config) {
+		// Here we assume that all other config stuff has been handled before
+		AstraConfigGroup astraConfig = AstraConfigGroup.get(config);
+
+		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
+				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
+		operatorConfig.getGeneratorConfig().setNumberOfVehicles(astraConfig.getFleetSize());
+
+		operatorConfig.setCleanNetwork(true);
+
+		WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeConfig();
+		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
+		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
+		waitingTimeConfig.setEstimationInterval(15.0 * 60.0);
+		waitingTimeConfig.setEstimationAlpha(0.1);
+		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
 	}
 
 	static public void adjustScenario(Scenario scenario) {
@@ -81,12 +111,14 @@ public class AstraConfigurator extends EqasimConfigurator {
 		}
 
 		AvConfigurator.configureUniformWaitingTimeGroup(scenario);
-		AvConfigurator.configureCarLinks(scenario);
 	}
 
 	static public void configureController(Controler controller, CommandLine commandLine) {
 		AvConfigurator.configureController(controller, commandLine);
 		controller.addOverridingModule(new AstraAvModule(commandLine));
+		controller.addOverridingModule(new ServiceAreaModule());
+		controller.addOverridingModule(new WaitingTimeModule());
+		controller.addOverridingModule(new PricingModule());
 
 		controller.configureQSimComponents(configurator -> {
 			EqasimTransitQSimModule.configure(configurator);

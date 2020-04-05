@@ -1,4 +1,4 @@
-package org.eqasim.projects.astra16.av;
+package org.eqasim.projects.astra16.service_area;
 
 import java.io.IOException;
 import java.net.URL;
@@ -28,28 +28,36 @@ import org.matsim.api.core.v01.network.Network;
 import org.opengis.feature.simple.SimpleFeature;
 
 public class ServiceArea {
-	private final Collection<Zone> zones;
+	private final Collection<ServiceAreaZone> zones;
 	private final Geometry envelope;
 
-	public ServiceArea(Collection<Zone> zones) {
+	public ServiceArea(Collection<ServiceAreaZone> zones) {
 		this.zones = zones;
 
-		Geometry[] zoneGeometries = zones.stream().map(Zone::getGeometry).collect(Collectors.toList())
+		Geometry[] zoneGeometries = zones.stream().map(ServiceAreaZone::getGeometry).collect(Collectors.toList())
 				.toArray(new Geometry[zones.size()]);
 		this.envelope = geometryFactory.createGeometryCollection(zoneGeometries).getEnvelope();
 	}
 
-	public Collection<Zone> getZones() {
+	public Collection<ServiceAreaZone> getZones() {
 		return zones;
 	}
 
 	public boolean covers(Link link) {
+		if (zones.size() == 0) {
+			return true;
+		}
+
 		return covers(link.getCoord());
 	}
 
 	public boolean covers(Coord coord) {
+		if (zones.size() == 0) {
+			return true;
+		}
+
 		if (envelope.covers(geometryFactory.createPoint(new Coordinate(coord.getX(), coord.getY())))) {
-			for (Zone zone : zones) {
+			for (ServiceAreaZone zone : zones) {
 				if (zone.covers(coord)) {
 					return true;
 				}
@@ -98,13 +106,13 @@ public class ServiceArea {
 			}
 		}
 
-		List<Zone> zones = new ArrayList<>(links.size());
+		List<ServiceAreaZone> zones = new ArrayList<>(links.size());
 
 		for (Map.Entry<Integer, Collection<Id<Link>>> entry : links.entrySet()) {
 			logger.info(
-					String.format("Found %d links for waiting time zone %d", entry.getValue().size(), entry.getKey()));
+					String.format("Found %d links for service area zone %d", entry.getValue().size(), entry.getKey()));
 
-			zones.add(new Zone(entry.getKey(), entry.getValue(), shapes.get(entry.getKey())));
+			zones.add(new ServiceAreaZone(entry.getKey(), entry.getValue(), shapes.get(entry.getKey())));
 		}
 
 		return new ServiceArea(zones);

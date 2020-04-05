@@ -1,10 +1,10 @@
 package org.eqasim.projects.astra16.mode_choice;
 
 import org.eqasim.automated_vehicles.mode_choice.mode_parameters.AvModeParameters;
-import org.eqasim.projects.dynamic_av.mode_choice.ProjectModeParameters.ProjectBaseModeParameters;
+import org.eqasim.projects.astra16.mode_choice.AstraModeParameters.AstraBaseModeParameters;
 
 public class AstraAvModeParameters extends AvModeParameters {
-	public final ProjectBaseModeParameters project = new ProjectBaseModeParameters();
+	public final AstraBaseModeParameters project = new AstraBaseModeParameters();
 
 	static public AstraAvModeParameters buildFrom6Feb2020() {
 		AstraAvModeParameters parameters = new AstraAvModeParameters();

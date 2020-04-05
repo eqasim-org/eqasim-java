@@ -23,6 +23,7 @@ public class RunSimulation {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), AstraConfigurator.getConfigGroups());
 		AstraConfigurator.configure(config);
 		cmd.applyConfiguration(config);
+		AstraConfigurator.adjustOperator(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 

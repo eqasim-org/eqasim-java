@@ -3,7 +3,10 @@ package org.eqasim.projects.astra16.mode_choice;
 import java.util.Collection;
 import java.util.List;
 
+import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.eqasim.switzerland.mode_choice.SwissModeAvailability;
+import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPredictorUtils;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 
@@ -16,26 +19,24 @@ public class AstraModeAvailability implements ModeAvailability {
 
 	private final SwissModeAvailability delegate;
 	private final boolean useAv;
+	private final ServiceArea serviceArea;
 
-	public AstraModeAvailability(boolean useAv, SwissModeAvailability delegate) {
+	public AstraModeAvailability(boolean useAv, SwissModeAvailability delegate, ServiceArea serviceArea) {
 		this.useAv = useAv;
 		this.delegate = delegate;
+		this.serviceArea = serviceArea;
 	}
 
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = delegate.getAvailableModes(person, trips);
 
-		/*
-		 * if (useAv && modes.contains(TransportMode.walk)) { Coord homeLocation =
-		 * SwissPredictorUtils.getHomeLocation(person);
-		 * 
-		 * if (homeLocation != null && operatingArea.covers(homeLocation)) {
-		 * modes.add(AVModule.AV_MODE); } }
-		 */
-
 		if (useAv && modes.contains(TransportMode.walk)) {
-			modes.add(AVModule.AV_MODE);
+			Coord homeLocation = SwissPredictorUtils.getHomeLocation(person);
+
+			if (homeLocation != null && serviceArea.covers(homeLocation)) {
+				modes.add(AVModule.AV_MODE);
+			}
 		}
 
 		return modes;

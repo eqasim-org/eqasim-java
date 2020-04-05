@@ -18,6 +18,7 @@ import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraPtPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraWalkPredictor;
+import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.eqasim.switzerland.mode_choice.SwissModeAvailability;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ovgk.OVGKCalculator;
@@ -78,8 +79,8 @@ public class AstraModule extends AbstractEqasimExtension {
 
 	@Provides
 	public AstraModeAvailability provideAstraModeAvailability(AstraConfigGroup astraConfig,
-			SwissModeAvailability delegate) {
+			SwissModeAvailability delegate, ServiceArea serviceArea) {
 		boolean useAv = astraConfig.getFleetSize() > 0;
-		return new AstraModeAvailability(useAv, delegate);
+		return new AstraModeAvailability(useAv, delegate, serviceArea);
 	}
 }

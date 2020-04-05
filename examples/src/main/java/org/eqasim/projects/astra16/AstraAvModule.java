@@ -25,7 +25,6 @@ public class AstraAvModule extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 		bindUtilityEstimator(AstraAvUtilityEstimator.NAME).to(AstraAvUtilityEstimator.class);
-
 		bind(AvModeParameters.class).to(AstraAvModeParameters.class);
 	}
 
