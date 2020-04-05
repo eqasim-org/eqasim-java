@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
-import org.eqasim.projects.astra16.AstraModeParameters;
+import org.eqasim.projects.astra16.mode_choice.AstraModeParameters;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraPtPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;

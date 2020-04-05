@@ -17,7 +17,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter") //
+				.allowPrefixes("av-mode-parameter", "mode-parameter", "cost-parameter") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), AstraConfigurator.getConfigGroups());
@@ -38,6 +38,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
 		controller.addOverridingModule(new CalibrationModule());
 		controller.addOverridingModule(new AstraModule(cmd));
+		AstraConfigurator.configureController(controller, cmd);
 
 		controller.run();
 	}

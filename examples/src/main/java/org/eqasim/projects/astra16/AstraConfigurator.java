@@ -3,10 +3,15 @@ package org.eqasim.projects.astra16;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eqasim.automated_vehicles.components.AvConfigurator;
+import org.eqasim.automated_vehicles.components.EqasimAvConfigGroup;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
+import org.eqasim.projects.astra16.mode_choice.AstraModeAvailability;
 import org.eqasim.projects.astra16.mode_choice.InfiniteHeadwayConstraint;
+import org.eqasim.projects.astra16.mode_choice.estimators.AstraAvUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraBikeUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraCarUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraPtUtilityEstimator;
@@ -15,10 +20,14 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.controler.Controler;
 import org.matsim.households.Household;
 
+import ch.ethz.matsim.av.framework.AVModule;
+import ch.ethz.matsim.av.framework.AVQSimModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 
@@ -32,6 +41,10 @@ public class AstraConfigurator extends EqasimConfigurator {
 				new EqasimConfigGroup(), //
 				new DiscreteModeChoiceConfigGroup(), //
 				new CalibrationConfigGroup(), //
+				new AstraConfigGroup(), //
+				new EqasimAvConfigGroup(), //
+				// new AVConfigGroup(), //
+				// new DvrpConfigGroup() //
 		};
 	}
 
@@ -49,6 +62,11 @@ public class AstraConfigurator extends EqasimConfigurator {
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 		tripConstraints.add(InfiniteHeadwayConstraint.NAME);
 		dmcConfig.setTripConstraints(tripConstraints);
+
+		dmcConfig.setModeAvailability(AstraModeAvailability.NAME);
+
+		AvConfigurator.configure(config);
+		eqasimConfig.setEstimator(AVModule.AV_MODE, AstraAvUtilityEstimator.NAME);
 	}
 
 	static public void adjustScenario(Scenario scenario) {
@@ -61,5 +79,18 @@ public class AstraConfigurator extends EqasimConfigurator {
 				}
 			}
 		}
+
+		AvConfigurator.configureUniformWaitingTimeGroup(scenario);
+		AvConfigurator.configureCarLinks(scenario);
+	}
+
+	static public void configureController(Controler controller, CommandLine commandLine) {
+		AvConfigurator.configureController(controller, commandLine);
+		controller.addOverridingModule(new AstraAvModule(commandLine));
+
+		controller.configureQSimComponents(configurator -> {
+			EqasimTransitQSimModule.configure(configurator);
+			AVQSimModule.configureComponents(configurator);
+		});
 	}
 }

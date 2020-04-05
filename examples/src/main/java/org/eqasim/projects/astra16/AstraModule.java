@@ -6,6 +6,8 @@ import java.io.IOException;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.eqasim.projects.astra16.mode_choice.AstraModeAvailability;
+import org.eqasim.projects.astra16.mode_choice.AstraModeParameters;
 import org.eqasim.projects.astra16.mode_choice.InfiniteHeadwayConstraint;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraBikeUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraCarUtilityEstimator;
@@ -16,6 +18,7 @@ import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraPtPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraWalkPredictor;
+import org.eqasim.switzerland.mode_choice.SwissModeAvailability;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.core.config.CommandLine;
@@ -48,6 +51,9 @@ public class AstraModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(InfiniteHeadwayConstraint.NAME).to(InfiniteHeadwayConstraint.Factory.class);
 
 		bind(SwissModeParameters.class).to(AstraModeParameters.class);
+
+		bind(SwissModeAvailability.class);
+		bindModeAvailability(AstraModeAvailability.NAME).to(AstraModeAvailability.class);
 	}
 
 	@Provides
@@ -68,5 +74,12 @@ public class AstraModule extends AbstractEqasimExtension {
 	@Singleton
 	public OVGKCalculator provideOVGKCalculator(TransitSchedule transitSchedule) {
 		return new OVGKCalculator(transitSchedule);
+	}
+
+	@Provides
+	public AstraModeAvailability provideAstraModeAvailability(AstraConfigGroup astraConfig,
+			SwissModeAvailability delegate) {
+		boolean useAv = astraConfig.getFleetSize() > 0;
+		return new AstraModeAvailability(useAv, delegate);
 	}
 }

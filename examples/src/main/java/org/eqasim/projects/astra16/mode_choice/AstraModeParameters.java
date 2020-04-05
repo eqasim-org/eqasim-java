@@ -1,4 +1,4 @@
-package org.eqasim.projects.astra16;
+package org.eqasim.projects.astra16.mode_choice;
 
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 

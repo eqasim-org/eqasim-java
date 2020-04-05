@@ -2,10 +2,11 @@ package org.eqasim.projects.astra16.mode_choice.estimators;
 
 import java.util.List;
 
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
+import org.eqasim.automated_vehicles.mode_choice.utilities.estimators.AvUtilityEstimator;
+import org.eqasim.automated_vehicles.mode_choice.utilities.predictors.AvPredictor;
+import org.eqasim.automated_vehicles.mode_choice.utilities.variables.AvVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
+import org.eqasim.projects.astra16.mode_choice.AstraAvModeParameters;
 import org.eqasim.projects.astra16.mode_choice.AstraModeParameters;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
@@ -18,52 +19,50 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class AstraCarUtilityEstimator extends CarUtilityEstimator {
-	static public final String NAME = "AstraCarEstimator";
-
-	private final AstraModeParameters parameters;
+public class AstraAvUtilityEstimator extends AvUtilityEstimator {
+	static public final String NAME = "AstraAvEstimator";
+	
+	private final AstraModeParameters generalParameters;
+	private final AstraAvModeParameters avParameters;
 	private final AstraPersonPredictor personPredictor;
 	private final AstraTripPredictor tripPredictor;
-	private final CarPredictor predictor;
+	private final AvPredictor predictor;
 
 	@Inject
-	public AstraCarUtilityEstimator(AstraModeParameters parameters, CarPredictor predictor,
-			AstraPersonPredictor personPredictor, AstraTripPredictor tripPredictor) {
-		super(parameters, predictor);
-
-		this.parameters = parameters;
+	public AstraAvUtilityEstimator(AstraModeParameters generalParameters, AstraAvModeParameters avParameters,
+			AvPredictor predictor, AstraPersonPredictor personPredictor, AstraTripPredictor tripPredictor) {
+		super(generalParameters, avParameters, predictor);
+		this.generalParameters = generalParameters;
+		this.avParameters = avParameters;
+		this.predictor = predictor;
 		this.personPredictor = personPredictor;
 		this.tripPredictor = tripPredictor;
-		this.predictor = predictor;
 	}
 
-	protected double estimateTravelTimeUtility(CarVariables variables) {
+	protected double estimateTravelTimeUtility(AvVariables variables) {
 		return super.estimateTravelTimeUtility(variables) //
-				* EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
-						parameters.lambdaTravelTimeEuclideanDistance);
+				* EstimatorUtils.interaction(variables.euclideanDistance_km,
+						generalParameters.referenceEuclideanDistance_km,
+						generalParameters.lambdaTravelTimeEuclideanDistance);
 	}
 
-	protected double estimateMonetaryCostUtility(CarVariables variables, AstraPersonVariables personVariables) {
+	protected double estimateMonetaryCostUtility(AvVariables variables, AstraPersonVariables personVariables) {
 		return super.estimateMonetaryCostUtility(variables) //
-				* EstimatorUtils.interaction(personVariables.householdIncome_MU, parameters.referenceHouseholdIncome_MU,
-						parameters.lambdaCostHouseholdIncome);
+				* EstimatorUtils.interaction(personVariables.householdIncome_MU,
+						generalParameters.referenceHouseholdIncome_MU, generalParameters.lambdaCostHouseholdIncome);
 	}
 
 	protected double estimateAgeUtility(AstraPersonVariables variables) {
-		return variables.age_a >= 60 ? parameters.astraCar.betaAgeOver60 : 0.0;
+		return variables.age_a >= 60 ? avParameters.project.betaAgeOver60 : 0.0;
 	}
 
 	protected double estimateWorkUtility(AstraTripVariables variables) {
-		return variables.isWork ? parameters.astraCar.betaWork : 0.0;
-	}
-
-	protected double estimateCityUtility(AstraTripVariables variables) {
-		return variables.isCity ? parameters.astraCar.betaCity : 0.0;
+		return variables.isWork ? avParameters.project.betaWork : 0.0;
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		CarVariables variables = predictor.predictVariables(person, trip, elements);
+		AvVariables variables = predictor.predict(person, trip, elements);
 		AstraPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 		AstraTripVariables tripVariables = tripPredictor.predictVariables(person, trip, elements);
 
@@ -71,11 +70,12 @@ public class AstraCarUtilityEstimator extends CarUtilityEstimator {
 
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables);
-		utility += estimateAccessEgressTimeUtility(variables);
+		utility += estimateWaitingTimeUtility(variables);
 		utility += estimateMonetaryCostUtility(variables, personVariables);
+		utility += estimateAccessEgressTimeUtility(variables);
+
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
-		utility += estimateCityUtility(tripVariables);
 
 		return utility;
 	}
