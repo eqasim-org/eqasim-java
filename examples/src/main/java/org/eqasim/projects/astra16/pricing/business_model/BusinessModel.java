@@ -26,6 +26,10 @@ public class BusinessModel {
 	}
 
 	public BusinessModelData update(double vehicleDistance_km, double passengerDistance_km, long passengerTrips) {
+		if (fleetSize == 0) {
+			return new BusinessModelData();
+		}
+		
 		vehicleDistance_km /= scalingFactor;
 		passengerDistance_km /= scalingFactor;
 		passengerTrips /= scalingFactor;
