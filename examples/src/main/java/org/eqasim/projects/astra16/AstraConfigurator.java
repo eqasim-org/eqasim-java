@@ -27,6 +27,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
 import org.matsim.core.controler.Controler;
 import org.matsim.households.Household;
 
@@ -35,6 +36,7 @@ import ch.ethz.matsim.av.config.operator.OperatorConfig;
 import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
 import ch.ethz.matsim.av.framework.AVModule;
 import ch.ethz.matsim.av.framework.AVQSimModule;
+import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 
@@ -56,8 +58,16 @@ public class AstraConfigurator extends EqasimConfigurator {
 	static public void configure(Config config) {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
-		// Sets to 0.11 for 10% sample
-		config.qsim().setFlowCapFactor(1.1 * eqasimConfig.getSampleSize());
+		// Sets to 0.1 for 10% sample
+		config.qsim().setFlowCapFactor(1.0 * eqasimConfig.getSampleSize());
+		
+		for (StrategySettings strategy : config.strategy().getStrategySettings()) {
+			if (strategy.getStrategyName().equals(DiscreteModeChoiceModule.STRATEGY_NAME)) {
+				strategy.setWeight(0.05);
+			} else {
+				strategy.setWeight(0.95);
+			}
+		}
 
 		// General
 		eqasimConfig.setTripAnalysisInterval(config.controler().getWriteEventsInterval());
