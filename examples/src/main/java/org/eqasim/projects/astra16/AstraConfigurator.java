@@ -58,9 +58,13 @@ public class AstraConfigurator extends EqasimConfigurator {
 	static public void configure(Config config) {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
-		// Sets to 0.1 for 10% sample
-		config.qsim().setFlowCapFactor(1.0 * eqasimConfig.getSampleSize());
-		
+		// General MATSim
+		config.controler().setLastIteration(100);
+		config.controler().setWriteEventsInterval(100);
+
+		config.qsim().setNumberOfThreads(Math.min(12, Runtime.getRuntime().availableProcessors()));
+		config.global().setNumberOfThreads(Runtime.getRuntime().availableProcessors());
+
 		for (StrategySettings strategy : config.strategy().getStrategySettings()) {
 			if (strategy.getStrategyName().equals(DiscreteModeChoiceModule.STRATEGY_NAME)) {
 				strategy.setWeight(0.05);
@@ -69,7 +73,7 @@ public class AstraConfigurator extends EqasimConfigurator {
 			}
 		}
 
-		// General
+		// General eqasim
 		eqasimConfig.setTripAnalysisInterval(config.controler().getWriteEventsInterval());
 
 		// Estimators
