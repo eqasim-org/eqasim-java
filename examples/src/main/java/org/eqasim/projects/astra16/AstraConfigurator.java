@@ -16,8 +16,8 @@ import org.eqasim.projects.astra16.mode_choice.estimators.AstraBikeUtilityEstima
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraCarUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraPtUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraWalkUtilityEstimator;
-import org.eqasim.projects.astra16.pricing.AstraAvCostModel;
 import org.eqasim.projects.astra16.pricing.PricingModule;
+import org.eqasim.projects.astra16.pricing.model.AstraAvCostModel;
 import org.eqasim.projects.astra16.service_area.ServiceAreaModule;
 import org.eqasim.projects.astra16.waiting_time.WaitingTimeModule;
 import org.matsim.api.core.v01.Id;
