@@ -20,6 +20,7 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
@@ -65,6 +66,8 @@ public class RunSimulation_drt_test {
 			config.addModule(dvrpConfig);
 			MultiModeDrtConfigGroup multiModeDrtConfig = new MultiModeDrtConfigGroup();
 			config.addModule(multiModeDrtConfig);
+			DrtConfigGroup drtConfig = new DrtConfigGroup();
+			config.addModule(drtConfig);
 			ModeParams modeParams = new ModeParams(drtMode);
 			config.planCalcScore().addModeParams(modeParams);
 
