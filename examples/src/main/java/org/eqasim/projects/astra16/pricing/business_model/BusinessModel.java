@@ -17,7 +17,7 @@ public class BusinessModel {
 			double maximumPricePerKm_CHF, double minimumPricePerKm_CHF) {
 		this.costCalculator = costCalculator;
 
-		this.fleetSize = fleetSize;
+		this.fleetSize = (int) (fleetSize / scalingFactor);
 		this.scalingFactor = scalingFactor;
 
 		this.pricePerTrip_CHF = pricePerTrip_CHF;
@@ -35,7 +35,7 @@ public class BusinessModel {
 		passengerTrips /= scalingFactor;
 
 		CostCalculatorParameters calculatorParameters = new CostCalculatorParameters( //
-				(int) (fleetSize / scalingFactor), //
+				fleetSize, //
 				vehicleDistance_km, //
 				(int) passengerTrips, //
 				passengerDistance_km //

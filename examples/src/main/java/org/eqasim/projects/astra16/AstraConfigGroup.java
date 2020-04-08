@@ -18,17 +18,21 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String INITIAL_PRICE_PER_KM_CHF = "initialPricePerKm_CHF";
 	static public final String PRICE_INTERPOLATION_START_ITERATION = "priceInterpolationStartIteration";
 
+	static public final String MINIMUM_AV_DISTANCE_KM = "minimumAvDistance_km";
+
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
 	private String operatingAreaIndexAttribute = "wgIndex";
 
 	private double maximumPricePerKm_CHF = Double.POSITIVE_INFINITY;
 	private double minimumPricePerKm_CHF = 0.0;
-	private double tripFare_CHF = 1.0;
+	private double tripFare_CHF = 0.0;
 
 	private double priceInterpolationFactor = 0.1;
 	private double initialPricePerKm_CHF = 0.4;
 	private int priceInterpolationStartIteration = 10;
+
+	private double minimumAvDistance_km = 0.25;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -122,6 +126,16 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(PRICE_INTERPOLATION_FACTOR)
 	public void setPriceInterpolationFactor(double priceInterpolationFactor) {
 		this.priceInterpolationFactor = priceInterpolationFactor;
+	}
+
+	@StringGetter(MINIMUM_AV_DISTANCE_KM)
+	public double getMinimumAvDistance_km() {
+		return minimumAvDistance_km;
+	}
+
+	@StringSetter(MINIMUM_AV_DISTANCE_KM)
+	public void setMinimumAvDistance_km(double minimumAvDistance_km) {
+		this.minimumAvDistance_km = minimumAvDistance_km;
 	}
 
 	static public AstraConfigGroup get(Config config) {

@@ -9,6 +9,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
+import org.eqasim.projects.astra16.mode_choice.AvServiceConstraint;
 import org.eqasim.projects.astra16.mode_choice.AstraModeAvailability;
 import org.eqasim.projects.astra16.mode_choice.InfiniteHeadwayConstraint;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraAvUtilityEstimator;
@@ -87,6 +88,7 @@ public class AstraConfigurator extends EqasimConfigurator {
 
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 		tripConstraints.add(InfiniteHeadwayConstraint.NAME);
+		tripConstraints.add(AvServiceConstraint.NAME);
 		dmcConfig.setTripConstraints(tripConstraints);
 
 		dmcConfig.setModeAvailability(AstraModeAvailability.NAME);
