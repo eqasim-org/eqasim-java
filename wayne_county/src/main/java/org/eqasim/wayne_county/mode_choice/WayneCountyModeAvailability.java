@@ -42,6 +42,7 @@ public class WayneCountyModeAvailability implements ModeAvailability {
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
 		modes.add(TransportMode.bike);
+		modes.add(TransportMode.drt);
 
 		// Check car availability
 		boolean carAvailability = true;

@@ -70,15 +70,15 @@ public class WayneCountyModeParameters extends ModeParameters {
 		parameters.wcCar.beta_time_min = -0.025;
 
 		// PT
-		parameters.wcPT.alpha_low_income = -2.996;
-		parameters.wcPT.alpha_medium_income = -4.918;
-		parameters.wcPT.alpha_high_income = -8.1217;
+		parameters.wcPT.alpha_low_income = -12.0034;
+		parameters.wcPT.alpha_medium_income = -8.5997 ;
+		parameters.wcPT.alpha_high_income = -7.0877;
 		parameters.pt.betaWaitingTime_u_min = -0.0625;
 		parameters.pt.betaAccessEgressTime_u_min = -0.0;
 		parameters.wcPT.beta_time_min = -0.025;
 
 		// DRT
-		parameters.wcDRT.alpha_low_income = -2.7846;
+		parameters.wcDRT.alpha_low_income = 2.7846;
 		parameters.wcDRT.alpha_medium_income = 0.6191;
 		parameters.wcDRT.alpha_high_income = 2.1311;
 		parameters.wcDRT.betaWaitingTime_u_min = -0.0625;
@@ -86,15 +86,15 @@ public class WayneCountyModeParameters extends ModeParameters {
 		parameters.wcDRT.beta_time_min = -0.025;
 
 		// Walk
-		parameters.wcWalk.alpha_low_income = 0.9;
-		parameters.wcWalk.alpha_medium_income = 0.5;
-		parameters.wcWalk.alpha_high_income = 0.5;
+		parameters.wcWalk.alpha_low_income = -0.7479;
+		parameters.wcWalk.alpha_medium_income = -0.7479;
+		parameters.wcWalk.alpha_high_income = -0.7479;
 		parameters.wcWalk.beta_time_min = -0.0625;
 
 		// Bike
-		parameters.wcBike.alpha_low_income = -2;
-		parameters.wcBike.alpha_medium_income = -3;
-		parameters.wcBike.alpha_high_income = -3;
+		parameters.wcBike.alpha_low_income = -2.4811;
+		parameters.wcBike.alpha_medium_income = -2.4811;
+		parameters.wcBike.alpha_high_income = -2.4811;
 		parameters.wcBike.beta_time_min = -0.0625;
 		
 		return parameters;
