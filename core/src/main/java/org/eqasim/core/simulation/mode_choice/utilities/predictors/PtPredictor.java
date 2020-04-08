@@ -9,6 +9,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.pt.routes.ExperimentalTransitRoute;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -52,15 +53,9 @@ public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 					waitingTime_min += leg.getTravelTime() / 60.0;
 					break;
 				case TransportMode.pt:
-					EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
+					ExperimentalTransitRoute route = (ExperimentalTransitRoute) leg.getRoute();
 
-					inVehicleTime_min += route.getInVehicleTime() / 60.0;
-
-					if (!isFirstWaitingTime) {
-						waitingTime_min += route.getWaitingTime() / 60.0;
-					} else {
-						isFirstWaitingTime = false;
-					}
+					inVehicleTime_min += route.getTravelTime() / 60.0;
 
 					numberOfVehicularTrips++;
 					break;

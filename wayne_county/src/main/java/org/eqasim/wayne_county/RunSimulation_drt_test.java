@@ -20,6 +20,9 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
+import org.matsim.contrib.drt.run.DrtConfigGroup.OperationalScheme;
+import org.matsim.contrib.drt.run.DrtConfigs;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
@@ -31,9 +34,13 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.run.NetworkCleaner;
 
+import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
 public class RunSimulation_drt_test {
 
@@ -59,20 +66,31 @@ public class RunSimulation_drt_test {
 		String drtMode = "drt";
 
 		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
-
 		if (true) {
 			DvrpConfigGroup dvrpConfig = new DvrpConfigGroup();
 			config.addModule(dvrpConfig);
 			MultiModeDrtConfigGroup multiModeDrtConfig = new MultiModeDrtConfigGroup();
 			config.addModule(multiModeDrtConfig);
+			DrtConfigGroup drtConfig = new DrtConfigGroup();
+			multiModeDrtConfig.addParameterSet(drtConfig);
+			drtConfig.setMaxTravelTimeBeta(900.0);
+			drtConfig.setMaxTravelTimeAlpha(1.4);
+			drtConfig.setMaxWaitTime(900.0);
+			drtConfig.setStopDuration(105);
+			drtConfig.setOperationalScheme("stopbased");
+
 			ModeParams modeParams = new ModeParams(drtMode);
 			config.planCalcScore().addModeParams(modeParams);
-
-			// Adjust DMC with DRT
-
+			drtConfig.setTransitStopFile("drt_stops.xml");
+			drtConfig.setMaxWalkDistance(800.0);
+			drtConfig.setVehiclesFile("drt_vehicle_20.xml");
+			DrtConfigs.adjustDrtConfig(drtConfig, config.planCalcScore());
 			List<String> cachedModes = new ArrayList<>(dmcConfig.getCachedModes());
 			cachedModes.add(drtMode);
 			dmcConfig.setCachedModes(cachedModes);
+			List<String> availableModes = new ArrayList<>(dmcConfig.getCarModeAvailabilityConfig().getAvailableModes());
+			availableModes.add(drtMode);
+			dmcConfig.getCarModeAvailabilityConfig().setAvailableModes(availableModes);
 		}
 
 //end of new input for drt
@@ -96,7 +114,7 @@ public class RunSimulation_drt_test {
 				link.setAllowedModes(allowedModes);
 			}
 		}		
-		
+
 		addCoordinatesToActivities(scenario);
 		EqasimConfigurator.adjustScenario(scenario);
 
@@ -108,18 +126,20 @@ public class RunSimulation_drt_test {
 		eqasimConfig.setEstimator("bike", "wcBikeEstimator");
 
 		Controler controller = new Controler(scenario);
-		EqasimConfigurator.configureController(controller);
+		//EqasimConfigurator.configureController(controller);
+		controller.addOverridingModule(new SwissRailRaptorModule());
+		controller.addOverridingModule(new DiscreteModeChoiceModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new WayneCountyModeChoiceModule(cmd));
-		controller.addOverridingModule(new EqasimAnalysisModule());
+		//controller.addOverridingModule(new EqasimAnalysisModule());
 		// controller.addOverridingModule(new CalibrationModule());
 
 		// second part of drt
 		if (useDrt) {
 			eqasimConfig.setEstimator("drt", "wcDRTEstimator");
-			controller.addOverridingModule(new DvrpModule());
 			controller.addOverridingModule(new MultiModeDrtModule());
-			controller.configureQSimComponents(DvrpQSimComponents.activateModes(drtMode));
+			controller.addOverridingModule(new DvrpModule());
+			controller.configureQSimComponents(DvrpQSimComponents.activateAllModes(MultiModeDrtConfigGroup.get(config)));
 		}
 		// end of second part of drt
 
@@ -136,6 +156,7 @@ public class RunSimulation_drt_test {
 
 				if (pe instanceof Activity) {
 					Link link = scenario.getNetwork().getLinks().get(((Activity) pe).getLinkId());
+					
 					((Activity) pe).setCoord(link.getCoord());
 				}
 			}
