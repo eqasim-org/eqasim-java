@@ -1,48 +1,39 @@
 package org.eqasim.wayne_county;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.wayne_county.mode_choice.WayneCountyModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contrib.drt.routing.DrtRoute;
+import org.matsim.contrib.drt.routing.DrtRouteFactory;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtModule;
+import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
+import org.matsim.contrib.dvrp.run.DvrpModule;
+import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.consistency.ConfigConsistencyCheckerImpl;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.eqasim.core.components.config.ConfigAdapter;
-import org.matsim.api.core.v01.TransportMode;
-
-import org.matsim.contrib.drt.routing.DrtRoute;
-import org.matsim.contrib.drt.routing.DrtRouteFactory;
-import org.matsim.contrib.drt.run.DrtConfigGroup;
-import org.matsim.contrib.drt.run.DrtConfigs;
-import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
-import org.matsim.contrib.drt.run.MultiModeDrtModule;
-import org.matsim.contrib.drt.run.DrtConfigGroup.OperationalScheme;
-import org.matsim.contrib.dvrp.fleet.DvrpVehicle;
-import org.matsim.contrib.dvrp.fleet.DvrpVehicleSpecification;
-import org.matsim.contrib.dvrp.fleet.FleetWriter;
-import org.matsim.contrib.dvrp.fleet.ImmutableDvrpVehicleSpecification;
-import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
-import org.matsim.contrib.dvrp.run.DvrpModule;
-import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 
 public class RunSimulation_drt_test {
 
@@ -55,6 +46,9 @@ public class RunSimulation_drt_test {
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				EqasimConfigurator.getConfigGroups());
+
+		
+
 		EqasimConfigGroup.get(config).setTripAnalysisInterval(5);
 		cmd.applyConfiguration(config);
 
@@ -66,8 +60,11 @@ public class RunSimulation_drt_test {
 
 		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 
-		if (useDrt) {
-
+		if (true) {
+			DvrpConfigGroup dvrpConfig = new DvrpConfigGroup();
+			config.addModule(dvrpConfig);
+			MultiModeDrtConfigGroup multiModeDrtConfig = new MultiModeDrtConfigGroup();
+			config.addModule(multiModeDrtConfig);
 			ModeParams modeParams = new ModeParams(drtMode);
 			config.planCalcScore().addModeParams(modeParams);
 
@@ -86,9 +83,20 @@ public class RunSimulation_drt_test {
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-
+		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class,
+				new DrtRouteFactory());
+		
+		
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			if (link.getAllowedModes().contains(TransportMode.car)) {
+				Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
+				allowedModes.add("drt");
+				link.setAllowedModes(allowedModes);
+			}
+		}		
+		
 		addCoordinatesToActivities(scenario);
 		EqasimConfigurator.adjustScenario(scenario);
 
