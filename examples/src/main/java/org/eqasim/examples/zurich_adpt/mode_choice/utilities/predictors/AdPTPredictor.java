@@ -27,12 +27,12 @@ import com.google.inject.name.Named;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SwissAdPTPredictor extends CachedVariablePredictor<AdPTVariables> {
+public class AdPTPredictor extends CachedVariablePredictor<AdPTVariables> {
 	private LeastCostPathCalculator pathCalculator;
 	private Zones zones;
 	private ZonalVariables zonalCosts;
 	@Inject
-	public SwissAdPTPredictor(@Named("car") TravelTime travelTimes,
+	public AdPTPredictor(@Named("car") TravelTime travelTimes,
 			Map<String, TravelDisutilityFactory> travelDisutilityFactories, @Named("carnetwork") Network networkFF,
 			LeastCostPathCalculatorFactory pathCalculatorFactory, Zones zones, ZonalVariables zonalCosts,
 			Scenario scenario) {

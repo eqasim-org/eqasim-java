@@ -12,10 +12,11 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class AdPTCostModel extends AbstractCostModel {
 
+	private ZonalVariables zonalVariables;
 	@Inject
-	public AdPTCostModel(String mode) {
-		super(mode);
-		// TODO Auto-generated constructor stub
+	public AdPTCostModel(ZonalVariables zoneVariables) {
+		super("adpt");
+		this.zonalVariables = zonalVariables;
 	}
 
 	@Override
