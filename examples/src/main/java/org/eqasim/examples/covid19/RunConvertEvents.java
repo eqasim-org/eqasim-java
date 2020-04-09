@@ -41,5 +41,6 @@ public class RunConvertEvents {
 		EventWriterXML writer = new EventWriterXML(cmd.getOptionStrict("output-events-path"));
 		outputManager.addHandler(writer);
 		handler.replay(outputManager);
+		writer.closeFile();
 	}
 }
