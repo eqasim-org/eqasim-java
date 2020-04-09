@@ -53,7 +53,7 @@ public class EventConverter implements ActivityStartEventHandler, ActivityEndEve
 			PublicTransitEvent transitEvent = (PublicTransitEvent) event;
 
 			Id<Person> personId = transitEvent.getPersonId();
-			Id<Vehicle> vehicleId = vehicleFinder.findVehicleId(transitEvent);
+			Id<Vehicle> vehicleId = Id.createVehicleId("pt::" + vehicleFinder.findVehicleId(transitEvent).toString());
 
 			// The event comes when the trip is finished, so the event time is the "leave
 			// time".
