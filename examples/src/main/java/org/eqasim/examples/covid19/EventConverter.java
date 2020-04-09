@@ -31,11 +31,19 @@ public class EventConverter implements ActivityStartEventHandler, ActivityEndEve
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
+		if (event.getPersonId().toString().startsWith("freight")) {
+			return;
+		}
+
 		events.add(event);
 	}
 
 	@Override
 	public void handleEvent(ActivityStartEvent event) {
+		if (event.getPersonId().toString().startsWith("freight")) {
+			return;
+		}
+
 		events.add(event);
 	}
 
