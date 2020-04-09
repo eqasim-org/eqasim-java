@@ -8,6 +8,7 @@ public class AdPTRoute extends AbstractRoute {
 	final static String AdPT_ROUTE = "adpt";
 
 	private double inVehicleTime;
+	private double inVehicleDistance;
 	public AdPTRoute(Id<Link> startLinkId, Id<Link> endLinkId) {
 		super(startLinkId, endLinkId);
 	}
@@ -30,6 +31,14 @@ public class AdPTRoute extends AbstractRoute {
 
 	public void setInVehicleTime(double inVehicleTime) {
 		this.inVehicleTime = inVehicleTime;
+	}
+
+	public double getInVehicleDistance() {
+		return inVehicleDistance;
+	}
+
+	public void setInVehicleDistance(double inVehicleDistance) {
+		this.inVehicleDistance = inVehicleDistance;
 	}
 
 	@Override

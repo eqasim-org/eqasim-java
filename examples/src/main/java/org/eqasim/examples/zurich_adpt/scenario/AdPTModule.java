@@ -6,11 +6,14 @@ import org.eqasim.examples.zurich_adpt.mode_choice.costs.ZonalVariables;
 import org.eqasim.examples.zurich_adpt.mode_choice.utilities.zones.Zones;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.PopulationFactory;
+import org.matsim.core.network.filter.NetworkFilterManager;
 import org.matsim.core.router.RoutingModule;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+
+import ch.ethz.matsim.av.routing.AVRouteFactory;
 
 public class AdPTModule extends AbstractEqasimExtension {
 	final static public String ADPT_MODE = "adpt";
@@ -29,15 +32,17 @@ public class AdPTModule extends AbstractEqasimExtension {
 		addRoutingModuleBinding(ADPT_MODE).to(AdPTRoutingModule.class);
 		bind(Zones.class).toInstance(zones);
 		bind(ZonalVariables.class).toInstance(zonalVariables);
+		bind(AdPTRouteFactory.class);
+
 	}
 
 	@Provides
 	public AdPTRoutingModule provideAdPTRoutingModule(@Named("walk") RoutingModule walkRoutingModule,
 			@Named("car") Provider<RoutingModule> roadRoutingModuleProvider, PopulationFactory populationFactory,
-			AdPTRouteFactory routeFactory, @Named("car") Network network) {
+			AdPTRouteFactory routeFactory, Network network, ZonalVariables zonalVariables) {
 
 		return new AdPTRoutingModule(walkRoutingModule, roadRoutingModuleProvider.get(), this.zones, network, routeFactory,
-				populationFactory);
+				populationFactory, zonalVariables);
 	}
 
 }

@@ -4,11 +4,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.examples.zurich_adpt.mode_choice.costs.ZonalVariables;
 import org.eqasim.examples.zurich_adpt.mode_choice.utilities.zones.Zone;
 import org.eqasim.examples.zurich_adpt.mode_choice.utilities.zones.Zones;
 import org.locationtech.jts.geom.Coordinate;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -30,21 +32,21 @@ public class AdPTRoutingModule implements RoutingModule {
 	private final Network network;
 	private final AdPTRouteFactory routeFactory;
 	private final PopulationFactory populationFactory;
-
+	private final ZonalVariables zonalVariables;
 	public AdPTRoutingModule(RoutingModule walkRoutingModule, RoutingModule roadRoutingModule, Zones zones,
-			Network network, AdPTRouteFactory routeFactory, PopulationFactory populationFactory) {
+			Network network, AdPTRouteFactory routeFactory, PopulationFactory populationFactory, ZonalVariables zonalVariables) {
 		this.walkRoutingModule = walkRoutingModule;
 		this.roadRoutingModule = roadRoutingModule;
 		this.zones = zones;
 		this.network = network;
 		this.routeFactory = routeFactory;
 		this.populationFactory = populationFactory;
+		this.zonalVariables = zonalVariables;
 	}
 
 	@Override
 	public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
 			Person person) {
-		// TODO Auto-generated method stub
 		List<PlanElement> routeElements = new LinkedList<>();
 
 		Coord startCoord = fromFacility.getCoord();
@@ -84,7 +86,15 @@ public class AdPTRoutingModule implements RoutingModule {
 				departureTime, null);
 
 		routeElements.addAll(accessElements);
+		double arrivalAtPickup = departureTime + ((Leg)accessElements.get(0)).getTravelTime();
+		double headway = this.zonalVariables.getZoneZoneFrequency().get(startZoneId).get(endZoneId);
+		double waitTime = (arrivalAtPickup % headway);
+		Activity pickupActivity = populationFactory.createActivityFromLinkId(INTERACTION_ACTIVITY_TYPE,
+				pickupFacility.getLinkId());
+		pickupActivity.setMaximumDuration(waitTime);
+		routeElements.add(pickupActivity);
 
+		
 		List<? extends PlanElement> transitElements = roadRoutingModule.calcRoute(pickupFacility, dropoffFacility,
 				departureTime, null);
 		Leg leg = (Leg) transitElements.get(0);
@@ -93,8 +103,8 @@ public class AdPTRoutingModule implements RoutingModule {
 		//create AdPT route
 		AdPTRoute route = routeFactory.createRoute(pickupFacility.getLinkId(), dropoffFacility.getLinkId());
 		route.setInVehicleTime(vehicleTravelTime);
-
-		leg = populationFactory.createLeg("AdPT");
+		route.setDistance(leg.getRoute().getDistance());
+		leg = populationFactory.createLeg("adpt");
 		leg.setTravelTime(vehicleTravelTime);
 		leg.setRoute(route);
 

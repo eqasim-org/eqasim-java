@@ -47,7 +47,7 @@ public class Zone {
 		while (featureIterator.hasNext()) {
 			SimpleFeature feature = featureIterator.next();
 			Geometry geometry = (Geometry) feature.getDefaultGeometry();
-			String code = (String) feature.getAttribute("ID_ZONE");
+			String code = (String) feature.getAttribute("ID");
 			zones.put(code, new Zone(geometry, code));
 		}
 

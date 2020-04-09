@@ -16,13 +16,19 @@ public class AdPTCostModel extends AbstractCostModel {
 	@Inject
 	public AdPTCostModel(ZonalVariables zoneVariables) {
 		super("adpt");
-		this.zonalVariables = zonalVariables;
+		this.zonalVariables = zoneVariables;
 	}
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		// TODO Auto-generated method stub
+
+		
 		return 0;
+	}
+
+	public double calculateCost_MU(String startZoneId, String endZoneId) {
+		return this.zonalVariables.getZoneZoneCosts().get(startZoneId).get(endZoneId);
+		
 	}
 
 }
