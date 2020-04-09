@@ -61,6 +61,7 @@ public class EventConverter implements ActivityStartEventHandler, ActivityEndEve
 	}
 
 	public void replay(EventsManager manager) {
+		System.out.println("Sorting ...");
 		Collections.sort(events, new Comparator<Event>() {
 			@Override
 			public int compare(Event a, Event b) {
