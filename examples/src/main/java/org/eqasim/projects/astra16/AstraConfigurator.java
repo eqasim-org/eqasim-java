@@ -9,8 +9,8 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
-import org.eqasim.projects.astra16.mode_choice.AvServiceConstraint;
 import org.eqasim.projects.astra16.mode_choice.AstraModeAvailability;
+import org.eqasim.projects.astra16.mode_choice.AvServiceConstraint;
 import org.eqasim.projects.astra16.mode_choice.InfiniteHeadwayConstraint;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraAvUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraBikeUtilityEstimator;
@@ -33,8 +33,11 @@ import org.matsim.core.controler.Controler;
 import org.matsim.households.Household;
 
 import ch.ethz.matsim.av.config.AVConfigGroup;
+import ch.ethz.matsim.av.config.operator.DispatcherConfig;
 import ch.ethz.matsim.av.config.operator.OperatorConfig;
+import ch.ethz.matsim.av.config.operator.TimingConfig;
 import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
+import ch.ethz.matsim.av.dispatcher.single_heuristic.SingleHeuristicDispatcher;
 import ch.ethz.matsim.av.framework.AVModule;
 import ch.ethz.matsim.av.framework.AVQSimModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
@@ -123,6 +126,14 @@ public class AstraConfigurator extends EqasimConfigurator {
 		waitingTimeConfig.setEstimationInterval(15.0 * 60.0);
 		waitingTimeConfig.setEstimationAlpha(0.1);
 		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
+
+		TimingConfig timingConfig = operatorConfig.getTimingConfig();
+		timingConfig.setPickupDurationPerStop(120.0);
+		timingConfig.setDropoffDurationPerStop(60.0);
+
+		DispatcherConfig dispatcherConfig = operatorConfig.getDispatcherConfig();
+		dispatcherConfig.setType(SingleHeuristicDispatcher.TYPE);
+		dispatcherConfig.addParam("replanningInterval", "1.0");
 	}
 
 	static public void adjustScenario(Scenario scenario) {

@@ -3,11 +3,11 @@ package org.eqasim.projects.astra16.mode_choice.estimators;
 import java.util.List;
 
 import org.eqasim.automated_vehicles.mode_choice.utilities.estimators.AvUtilityEstimator;
-import org.eqasim.automated_vehicles.mode_choice.utilities.predictors.AvPredictor;
 import org.eqasim.automated_vehicles.mode_choice.utilities.variables.AvVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.projects.astra16.mode_choice.AstraAvModeParameters;
 import org.eqasim.projects.astra16.mode_choice.AstraModeParameters;
+import org.eqasim.projects.astra16.mode_choice.predictors.AstraAvPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
 import org.eqasim.projects.astra16.mode_choice.variables.AstraPersonVariables;
@@ -21,16 +21,16 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class AstraAvUtilityEstimator extends AvUtilityEstimator {
 	static public final String NAME = "AstraAvEstimator";
-	
+
 	private final AstraModeParameters generalParameters;
 	private final AstraAvModeParameters avParameters;
 	private final AstraPersonPredictor personPredictor;
 	private final AstraTripPredictor tripPredictor;
-	private final AvPredictor predictor;
+	private final AstraAvPredictor predictor;
 
 	@Inject
 	public AstraAvUtilityEstimator(AstraModeParameters generalParameters, AstraAvModeParameters avParameters,
-			AvPredictor predictor, AstraPersonPredictor personPredictor, AstraTripPredictor tripPredictor) {
+			AstraAvPredictor predictor, AstraPersonPredictor personPredictor, AstraTripPredictor tripPredictor) {
 		super(generalParameters, avParameters, predictor);
 		this.generalParameters = generalParameters;
 		this.avParameters = avParameters;

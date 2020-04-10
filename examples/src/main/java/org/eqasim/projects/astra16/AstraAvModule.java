@@ -11,9 +11,10 @@ import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.TripListener;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
-import org.eqasim.projects.astra16.mode_choice.AvServiceConstraint;
 import org.eqasim.projects.astra16.mode_choice.AstraAvModeParameters;
+import org.eqasim.projects.astra16.mode_choice.AvServiceConstraint;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraAvUtilityEstimator;
+import org.eqasim.projects.astra16.mode_choice.predictors.AstraAvPredictor;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -33,8 +34,10 @@ public class AstraAvModule extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 		bindUtilityEstimator(AstraAvUtilityEstimator.NAME).to(AstraAvUtilityEstimator.class);
-		bind(AvModeParameters.class).to(AstraAvModeParameters.class);
 		bindTripConstraintFactory(AvServiceConstraint.NAME).to(AvServiceConstraint.Factory.class);
+
+		bind(AvModeParameters.class).to(AstraAvModeParameters.class);
+		bind(AstraAvPredictor.class);
 	}
 
 	@Provides
