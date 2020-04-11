@@ -30,6 +30,8 @@ public class AdPTConstraint extends AbstractTripConstraint {
 		if (mode.equals(ADPT_MODE)) {
 			boolean foundStart = false;
 			boolean foundEnd = false;
+			String startZone = null;
+			String endZone = null;
 			Coord startCoord = trip.getOriginActivity().getCoord();
 
 			Coord endCoord = trip.getDestinationActivity().getCoord();
@@ -40,14 +42,17 @@ public class AdPTConstraint extends AbstractTripConstraint {
 
 				if (zone.containsCoordinate(startCoord)) {
 					foundStart = true;
+					startZone = zone.code;
 				}
 				if (zone.containsCoordinate(endCoord)) {
 					foundEnd = true;
+					endZone = zone.code;
 				}
 				if (foundStart && foundEnd)
 					break;
 			}
-			return foundStart && foundEnd;
+			return ((foundStart && foundEnd) && (!startZone.equals(endZone)));
+
 		}
 
 		return true;
