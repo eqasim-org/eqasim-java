@@ -104,6 +104,8 @@ public class AdPTRoutingModule implements RoutingModule {
 		AdPTRoute route = routeFactory.createRoute(pickupFacility.getLinkId(), dropoffFacility.getLinkId());
 		route.setInVehicleTime(vehicleTravelTime);
 		route.setDistance(leg.getRoute().getDistance());
+		route.setOriginZone(startZoneId);
+		route.setDestinationZone(endZoneId);
 		leg = populationFactory.createLeg("adpt");
 		leg.setTravelTime(vehicleTravelTime);
 		leg.setRoute(route);
