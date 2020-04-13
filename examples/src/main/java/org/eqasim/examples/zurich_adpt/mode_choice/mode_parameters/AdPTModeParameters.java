@@ -10,10 +10,10 @@ public class AdPTModeParameters implements ParameterDefinition {
 	static public AdPTModeParameters buildDefault() {
 		AdPTModeParameters parameters = new AdPTModeParameters();
 
-		parameters.alpha_u = -0.533;
-		parameters.betaWaitingTime_u_min = -0.0379;
-		parameters.betaAccessEgressTime_min = 0.0;
-		parameters.betaTravelTime_u_min = -0.0605;
+		parameters.alpha_u = 0.0;
+		parameters.betaWaitingTime_u_min = -0.038;
+		parameters.betaAccessEgressTime_min = -0.08;
+		parameters.betaTravelTime_u_min = -0.019;
 
 		return parameters;
 	}
