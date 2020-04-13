@@ -12,6 +12,7 @@ import org.eqasim.wayne_county.mode_choice.costs.WayneCountyPtCostModel;
 import org.eqasim.wayne_county.mode_choice.parameters.WayneCountyCostParameters;
 import org.eqasim.wayne_county.mode_choice.parameters.WayneCountyModeParameters;
 import org.eqasim.wayne_county.mode_choice.utilities.estimators.*;
+import org.eqasim.wayne_county.mode_choice.utilities.predictors.CorktownPtPredictor;
 import org.eqasim.wayne_county.mode_choice.utilities.predictors.WayneCountyPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -45,7 +46,7 @@ public class WayneCountyModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator("wcCarEstimator").to(WayneCountyCarUtilityEstimator.class);
 		bindUtilityEstimator("wcBikeEstimator").to(WayneCountyBikeUtilityEstimator.class);
 		bindUtilityEstimator("wcDRTEstimator").to(WayneCountyDRTUtilityEstimator.class);
-
+		bind(CorktownPtPredictor.class);
 	}
 
 	@Provides

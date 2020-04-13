@@ -7,6 +7,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredict
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.wayne_county.mode_choice.parameters.WayneCountyModeParameters;
+import org.eqasim.wayne_county.mode_choice.utilities.predictors.CorktownPtPredictor;
 import org.eqasim.wayne_county.mode_choice.utilities.predictors.WayneCountyPersonPredictor;
 import org.eqasim.wayne_county.mode_choice.utilities.variables.WayneCountyPersonVariables;
 import org.matsim.api.core.v01.population.Person;
@@ -19,12 +20,12 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 public class WayneCountyPTUtilityEstimator extends PtUtilityEstimator {
 	private final WayneCountyModeParameters parameters;
 	private final WayneCountyPersonPredictor predictor;
-	private final PtPredictor ptPredictor;
+	private final CorktownPtPredictor ptPredictor;
 
 	@Inject
 	public WayneCountyPTUtilityEstimator(WayneCountyModeParameters parameters, PersonPredictor personPredictor,
-			PtPredictor ptPredictor, WayneCountyPersonPredictor predictor) {
-		super(parameters, ptPredictor);
+			CorktownPtPredictor ptPredictor, WayneCountyPersonPredictor predictor, PtPredictor dummyPtPredictor) {
+		super(parameters, dummyPtPredictor);
 		this.ptPredictor = ptPredictor;
 		this.parameters = parameters;
 		this.predictor = predictor;
