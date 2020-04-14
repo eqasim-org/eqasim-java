@@ -1,5 +1,6 @@
 package org.eqasim.core.scenario.routing;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +37,12 @@ public class PopulationRouter {
 
 		for (int i = 0; i < numberOfThreads; i++) {
 			Thread thread = new Thread(new Worker(personIterator, progress));
+			thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+				@Override
+				public void uncaughtException(Thread t, Throwable e) {
+					throw new RuntimeException(e);
+				}
+			});
 			threads.add(thread);
 		}
 
