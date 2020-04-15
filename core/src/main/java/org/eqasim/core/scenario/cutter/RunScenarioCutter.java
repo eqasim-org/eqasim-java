@@ -67,7 +67,7 @@ public class RunScenarioCutter {
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
-		// Check validity before cuttingrammstein
+		// Check validity before cutting
 		ScenarioValidator scenarioValidator = new ScenarioValidator(new InteractionStageActivityTypes());
 		scenarioValidator.checkScenario(scenario);
 

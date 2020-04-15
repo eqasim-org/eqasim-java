@@ -161,6 +161,7 @@ public class ScenarioValidator {
 												"Person %s has route with a different start link (%s) than previous activity (%s)",
 												person.getId().toString(), route.getStartLinkId().toString(),
 												preceedingActivity.getLinkId().toString()));
+										errorsFound = true;
 									}
 								}
 							}
@@ -178,6 +179,7 @@ public class ScenarioValidator {
 												"Person %s has route with a different end link (%s) than following activity (%s)",
 												person.getId().toString(), route.getStartLinkId().toString(),
 												followingActivity.getLinkId().toString()));
+										errorsFound = true;
 									}
 								}
 							}
