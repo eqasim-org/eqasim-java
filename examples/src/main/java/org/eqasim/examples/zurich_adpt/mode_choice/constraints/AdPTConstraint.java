@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.examples.zurich_adpt.mode_choice.costs.ZonalVariables;
 import org.eqasim.examples.zurich_adpt.mode_choice.utilities.zones.Zone;
 import org.eqasim.examples.zurich_adpt.mode_choice.utilities.zones.Zones;
 import org.matsim.api.core.v01.Coord;
@@ -19,9 +20,11 @@ import ch.ethz.matsim.discrete_mode_choice.model.trip_based.TripConstraintFactor
 public class AdPTConstraint extends AbstractTripConstraint {
 	public static final String ADPT_MODE = "adpt";
 	private Zones zones;
+	private ZonalVariables zonalVariables;
 
-	public AdPTConstraint(Zones zones) {
+	public AdPTConstraint(Zones zones, ZonalVariables zonalVariables) {
 		this.zones = zones;
+		this.zonalVariables = zonalVariables;
 	}
 
 	@Override
@@ -51,7 +54,13 @@ public class AdPTConstraint extends AbstractTripConstraint {
 				if (foundStart && foundEnd)
 					break;
 			}
-			return ((foundStart && foundEnd) && (!startZone.equals(endZone)));
+			if (!(foundStart && foundEnd))
+				return false;
+			if (startZone.equals(endZone))
+				return false;
+			if (!(zonalVariables.getZoneZoneCosts().containsKey(startZone) 
+					&& zonalVariables.getZoneZoneCosts().get(startZone).containsKey(endZone)))
+				return false;
 
 		}
 
@@ -60,16 +69,18 @@ public class AdPTConstraint extends AbstractTripConstraint {
 
 	static public class Factory implements TripConstraintFactory {
 		private Zones zones;
+		private ZonalVariables zonalVariables;
 
 		@Inject
-		public Factory(Zones zones) {
+		public Factory(Zones zones, ZonalVariables zonalVariables) {
 			this.zones = zones;
+			this.zonalVariables = zonalVariables;
 		}
 
 		@Override
 		public TripConstraint createConstraint(Person person, List<DiscreteModeChoiceTrip> planTrips,
 				Collection<String> availableModes) {
-			return new AdPTConstraint(zones);
+			return new AdPTConstraint(zones, zonalVariables);
 		}
 	}
 }
