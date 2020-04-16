@@ -7,6 +7,8 @@
 - Add possibility to choose modes to RunPopulationRouting
 - Bugfix: EnrichedTransitRoutingModule wrote wrong link and facilities in "pt interaction" activities, which lead to problems when cutting the population
 - Bugfix: Added non-default estimators for car to SF and LA
+- Bugfix: Chnaged utility functions in SF to WTP space
+- Added additional constraints in SF (walk and car_passenger)
 
 **1.0.5**
 
