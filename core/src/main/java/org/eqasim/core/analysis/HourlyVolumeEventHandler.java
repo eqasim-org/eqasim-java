@@ -14,7 +14,7 @@ import org.matsim.core.utils.charts.XYLineChart;
 
 public class HourlyVolumeEventHandler implements LinkLeaveEventHandler{
 	
-	private Map<Id<Link>, double[] > hourlyCounts = new HashMap<>(); 
+	public Map<Id<Link>, double[] > hourlyCounts = new HashMap<>(); 
 
 	@Override
 	public void handleEvent(LinkLeaveEvent event) {
