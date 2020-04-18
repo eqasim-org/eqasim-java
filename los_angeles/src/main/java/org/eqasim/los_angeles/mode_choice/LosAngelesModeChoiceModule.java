@@ -78,8 +78,8 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 	public LosAngelesCostParameters provideCostParameters(EqasimConfigGroup config) {
 		LosAngelesCostParameters parameters = LosAngelesCostParameters.buildDefault();
 
-		if (config.getModeParametersPath() != null) {
-			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+		if (config.getCostParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
 		}
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
