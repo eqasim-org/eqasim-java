@@ -1,8 +1,14 @@
 # CHANGELOG
+
+- Fix: Correct cutting of public transit lines
+- Fix: Consider special "parallel link" cases for network route cutting
 - Remove bike from Sao Paulo
 - Add Los Angeles and San Francisco
 - Add possibility to choose modes to RunPopulationRouting
 - Bugfix: EnrichedTransitRoutingModule wrote wrong link and facilities in "pt interaction" activities, which lead to problems when cutting the population
+- Bugfix: Added non-default estimators for car to SF and LA
+- Bugfix: Chnaged utility functions in SF to WTP space
+- Added additional constraints in SF (walk and car_passenger)
 
 **1.0.5**
 

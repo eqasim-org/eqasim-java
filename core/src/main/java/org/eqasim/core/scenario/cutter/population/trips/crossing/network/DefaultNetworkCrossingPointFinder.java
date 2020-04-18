@@ -60,4 +60,27 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 
 		return crossingPoints;
 	}
+
+	@Override
+	public boolean isInside(NetworkRoute route) {
+		List<Id<Link>> fullRoute = new LinkedList<>();
+
+		fullRoute.add(route.getStartLinkId());
+		fullRoute.addAll(route.getLinkIds());
+		fullRoute.add(route.getEndLinkId());
+
+		for (Id<Link> linkId : fullRoute) {
+			Link link = network.getLinks().get(linkId);
+
+			if (!extent.isInside(link.getFromNode().getCoord())) {
+				return false;
+			}
+
+			if (!extent.isInside(link.getToNode().getCoord())) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }

@@ -6,4 +6,6 @@ import org.matsim.core.population.routes.NetworkRoute;
 
 public interface NetworkCrossingPointFinder {
 	List<NetworkCrossingPoint> findCrossingPoints(String mode, NetworkRoute route, double departureTime);
+
+	boolean isInside(NetworkRoute route);
 }

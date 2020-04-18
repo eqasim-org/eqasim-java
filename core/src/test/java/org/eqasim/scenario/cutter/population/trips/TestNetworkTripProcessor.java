@@ -32,6 +32,11 @@ public class TestNetworkTripProcessor {
 		public void add(NetworkCrossingPoint point) {
 			points.add(point);
 		}
+
+		@Override
+		public boolean isInside(NetworkRoute route) {
+			return true;
+		}
 	}
 
 	static ScenarioExtent scenarioExtentMock = new ScenarioExtent() {
