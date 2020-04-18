@@ -9,6 +9,7 @@
 - Bugfix: Added non-default estimators for car to SF and LA
 - Bugfix: Chnaged utility functions in SF to WTP space
 - Added additional constraints in SF (walk and car_passenger)
+- Fixed files read for Cost Parameters in LA and SF
 
 **1.0.5**
 

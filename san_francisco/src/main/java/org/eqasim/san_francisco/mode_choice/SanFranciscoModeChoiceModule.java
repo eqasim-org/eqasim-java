@@ -77,8 +77,8 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	public SanFranciscoCostParameters provideCostParameters(EqasimConfigGroup config) {
 		SanFranciscoCostParameters parameters = SanFranciscoCostParameters.buildDefault();
 		
-		if (config.getModeParametersPath() != null) {
-			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+		if (config.getCostParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
 		}
 		
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
