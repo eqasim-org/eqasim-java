@@ -19,6 +19,7 @@ public class SaoPauloModeAvailability implements ModeAvailability {
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
 		//modes.add(TransportMode.bike);
+		modes.add(TransportMode.taxi);
 
 		// Check car availability
 		boolean carAvailability = true;
@@ -26,6 +27,9 @@ public class SaoPauloModeAvailability implements ModeAvailability {
 		if ("never".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
 			carAvailability = false;
 		}
+		
+		if ((int)person.getAttributes().getAttribute("age") < 18)
+			carAvailability = false;
 
 		if (carAvailability) {
 			modes.add(TransportMode.car);

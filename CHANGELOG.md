@@ -10,6 +10,7 @@
 - Bugfix: Chnaged utility functions in SF to WTP space
 - Added additional constraints in SF (walk and car_passenger)
 - Fixed files read for Cost Parameters in LA and SF
+- Added new version of sao paulo
 
 **1.0.5**
 

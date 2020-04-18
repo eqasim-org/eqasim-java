@@ -13,6 +13,7 @@ public class NetworkFixer {
 			if (link.getAllowedModes().contains(TransportMode.car)) {
 				Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
 				allowedModes.add("car_passenger");
+				allowedModes.add("taxi");
 				link.setAllowedModes(allowedModes);
 			}
 		}
