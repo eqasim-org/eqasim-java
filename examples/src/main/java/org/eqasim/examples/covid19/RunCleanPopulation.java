@@ -27,6 +27,9 @@ public class RunCleanPopulation {
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			new ArrayList<>(person.getPlans()).forEach(person::removePlan);
+
+			person.getAttributes().putAttribute("age",
+					Math.min(99, (Integer) person.getAttributes().getAttribute("age")));
 		}
 
 		new PopulationWriter(scenario.getPopulation()).write(outputPath);
