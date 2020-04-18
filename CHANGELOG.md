@@ -9,6 +9,7 @@
 - Bugfix: Added non-default estimators for car to SF and LA
 - Bugfix: Chnaged utility functions in SF to WTP space
 - Added additional constraints in SF (walk and car_passenger)
+- Added new version of sao paulo
 
 **1.0.5**
 
