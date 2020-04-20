@@ -31,8 +31,8 @@ public class CarsharingEstimator implements UtilityEstimator {
 	
 	protected double estimateMonetaryCostUtility(CarsharingVariables variables) {
 		return generalParameters.betaCost_u_MU
-				//* EstimatorUtils.interaction(variables.euclideanDistance_km,
-				//		generalParameters.referenceEuclideanDistance_km, generalParameters.lambdaCostEuclideanDistance)
+				* EstimatorUtils.interaction(variables.euclideanDistance_km,
+						generalParameters.referenceEuclideanDistance_km, generalParameters.lambdaCostEuclideanDistance)
 				* variables.cost_MU;
 	}
 	
