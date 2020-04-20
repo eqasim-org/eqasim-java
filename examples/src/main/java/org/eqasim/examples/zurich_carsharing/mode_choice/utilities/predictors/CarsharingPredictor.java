@@ -34,32 +34,31 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class CarsharingPredictor extends CachedVariablePredictor<CarsharingVariables> {
 	private CarsharingAvailabilityListener carsharingListener;
-	private CarsharingSupplyInterface supply;	
+	private CarsharingSupplyInterface supply;
 	private Network networkFF;
 	private LeastCostPathCalculator pathCalculator;
 	private CarsharingCostModel costModel;
-	
+
 	@Inject
-	public CarsharingPredictor(
-			CarsharingAvailabilityListener carsharingListener,
-			CarsharingSupplyInterface supply, @Named("ff") TravelTime travelTimes, 
-			Map<String, TravelDisutilityFactory> travelDisutilityFactories, 
-			@Named("carnetwork") Network networkFF,
-			LeastCostPathCalculatorFactory pathCalculatorFactory,
+	public CarsharingPredictor(CarsharingAvailabilityListener carsharingListener, CarsharingSupplyInterface supply,
+			@Named("ff") TravelTime travelTimes, Map<String, TravelDisutilityFactory> travelDisutilityFactories,
+			@Named("carnetwork") Network networkFF, LeastCostPathCalculatorFactory pathCalculatorFactory,
 			CarsharingCostModel costModel) {
 		this.networkFF = networkFF;
 		this.carsharingListener = carsharingListener;
 		this.supply = supply;
 		TravelDisutility travelDisutility = travelDisutilityFactories.get(TransportMode.car)
 				.createTravelDisutility(travelTimes);
-		this.pathCalculator = pathCalculatorFactory.createPathCalculator(networkFF, travelDisutility,
-				travelTimes);
+		this.pathCalculator = pathCalculatorFactory.createPathCalculator(networkFF, travelDisutility, travelTimes);
 		this.costModel = costModel;
 	}
 
 	@Override
-	public CarsharingVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-				
+	public CarsharingVariables predict(Person person, DiscreteModeChoiceTrip trip,
+			List<? extends PlanElement> elements) {
+
+		double euclideanDistance = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
+				trip.getDestinationActivity().getCoord());
 		Map<String, ArrayList<QuadTree<CSVehicle>>> avail = this.carsharingListener.getAvailability();
 
 		int departureTimeIndex = (int) (trip.getDepartureTime() / 900.0);
@@ -92,17 +91,16 @@ public class CarsharingPredictor extends CachedVariablePredictor<CarsharingVaria
 					continue;
 			}
 			Link destinationLink = this.networkFF.getLinks().get(trip.getDestinationActivity().getLinkId());
-			Path path = pathCalculator.calcLeastCostPath(locationVeh.getToNode(), destinationLink.getFromNode(), 
-					trip.getDepartureTime(), person, null ) ;
-			
+			Path path = pathCalculator.calcLeastCostPath(locationVeh.getToNode(), destinationLink.getFromNode(),
+					trip.getDepartureTime(), person, null);
+
 			double accessTime = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
 					locationVeh.getCoord()) * 1.3 / 1.1;
-			
+
 			double cost = this.costModel.calculateCost(path.travelTime);
-			return new CarsharingVariables(path.travelTime / 60.0, cost, 1.0, accessTime/60.0, true);
+			return new CarsharingVariables(path.travelTime / 60.0, cost, euclideanDistance, accessTime / 60.0, true);
 		}
 		return new CarsharingVariables(1.0, 1.0, 1.0, 1.0, false);
 
-		
 	}
 }
