@@ -19,6 +19,7 @@ import org.eqasim.examples.zurich_adpt.scenario.AdPTModule;
 import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -39,7 +40,8 @@ import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConf
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException, MalformedURLException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "zones-shapefile", "costs-zones") //
+				.requireOptions("config-path", "zones-shapefile", "costs-zones", "cordon-shapefile",
+						"cordon-charges") //
 				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
 
@@ -63,7 +65,8 @@ public class RunSimulation {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setCostModel("adpt", AdPTModeChoiceModule.ADPT_COST_MODEL_NAME);
 		eqasimConfig.setEstimator("adpt", AdPTModeChoiceModule.ADPT_ESTIMATOR_NAME);
-		
+		eqasimConfig.setCostModel(TransportMode.car, AdPTModeChoiceModule.CAR_COST_MODEL_NAME);
+
 		//read zones
 		Map<String, Zone> mapZones = Zone.read(new File(cmd.getOptionStrict("zones-shapefile")));
 		Zones zones = new Zones(mapZones);
@@ -81,7 +84,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
-		controller.addOverridingModule(new AdPTModeChoiceModule());
+		controller.addOverridingModule(new AdPTModeChoiceModule(cmd));
 		// Here we add our custom AdPT module to add our specific ModeAvailability
 		controller.addOverridingModule(new AdPTModule(zones, zonalVariables));
 
