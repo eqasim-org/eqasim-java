@@ -103,7 +103,7 @@ public class AdPTRoutingModule implements RoutingModule {
 		//create AdPT route
 		AdPTRoute route = routeFactory.createRoute(pickupFacility.getLinkId(), dropoffFacility.getLinkId());
 		route.setInVehicleTime(vehicleTravelTime);
-		route.setDistance(leg.getRoute().getDistance());
+		route.setInVehicleDistance(leg.getRoute().getDistance());
 		route.setOriginZone(startZoneId);
 		route.setDestinationZone(endZoneId);
 		leg = populationFactory.createLeg("adpt");
@@ -111,7 +111,7 @@ public class AdPTRoutingModule implements RoutingModule {
 		leg.setRoute(route);
 
 		routeElements.add(leg);
-		List<? extends PlanElement> egressElements = this.walkRoutingModule.calcRoute(pickupFacility, toFacility,
+		List<? extends PlanElement> egressElements = this.walkRoutingModule.calcRoute(dropoffFacility, toFacility,
 				departureTime, null);
 
 		routeElements.addAll(egressElements);

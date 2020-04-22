@@ -72,7 +72,7 @@ public class AdPTPredictor extends CachedVariablePredictor<AdPTVariables> {
 		double egressTime_min = leg.getTravelTime() / 60.0;
 
 
-		double euclideanDistance_km = route.getInVehicleDistance();
+		double euclideanDistance_km = route.getInVehicleDistance()/1000.0;
 		AdPTVariables adptVariables = new AdPTVariables(inVehicleTime, cost, euclideanDistance_km, waitingTime_min,
 				accessTime_min, egressTime_min);
 
