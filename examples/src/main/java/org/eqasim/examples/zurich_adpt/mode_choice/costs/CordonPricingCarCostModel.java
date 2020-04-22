@@ -48,6 +48,8 @@ public class CordonPricingCarCostModel extends AbstractCostModel {
 		}
 		double cordonCharge = 0.0;
 		if (!foundStart && foundEnd) {
+			if (departureHour > 30)
+				departureHour -=24;
 			cordonCharge = this.cordonCharingData.getMapCordCharges().get(departureHour);
 		}
 		return cordonCharge + parameters.carCost_CHF_km * getInVehicleDistance_km(elements);
