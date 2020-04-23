@@ -9,7 +9,7 @@ public class CarsharingCostParameters implements ParameterDefinition {
 	public static CarsharingCostParameters buildDefault() {
 		CarsharingCostParameters parameters = new CarsharingCostParameters();
 
-		parameters.traveltimeCost_MU = 0.4;
+		parameters.traveltimeCost_MU = 0.6;
 		
 		return parameters;
 	}
