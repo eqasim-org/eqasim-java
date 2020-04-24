@@ -24,7 +24,7 @@ public class ComputeDelayTrafficLights {
 		this.samplesize = p.samplesize;
 	}
 	
-	final static double LOST_TIME_PER_LINK = 4.0;
+	final static double LOST_TIME_PER_LINK = 2.0;
 	
 	public void resizeCounts() {
 		Map<Id<Link>, double[] > hourlyCounts = this.hourlyCounts;
@@ -60,11 +60,11 @@ public class ComputeDelayTrafficLights {
 			double[] count = this.hourlyCounts.get(idlink);
 			double flow = 0.0;
 			if (!( count == null)){
-			    flow = Math.max(15, count[hour]);
+			    flow = Math.max(5, count[hour]);
 			    
 			}
 			else {
-				flow = 15;
+				flow = 5;
 			}
 			double capacity = this.capacities.get(links.get(k));
 		    ratio.add(flow / capacity);
@@ -101,13 +101,13 @@ public class ComputeDelayTrafficLights {
 			    for (int l=0; l<links.size(); l++) {
 			    	double[] counts = this.hourlyCounts.get(links.get(l));
 			    	if (!(counts == null)) {
-				        double flow = Math.max(15, counts[hour]);
+				        double flow = Math.max(5, counts[hour]);
 				        flows[l] = flow;
 				        total_flow += flow;
 			    	}
 			    	else {
-			    		flows[l] = 15;
-				        total_flow += 15;
+			    		flows[l] = 5;
+				        total_flow += 5;
 			    	}
 			    }
 			    
@@ -125,7 +125,7 @@ public class ComputeDelayTrafficLights {
 			    	double delay3 = 0.65 * Math.pow(optimal_length / Math.pow(link_flow, 2), 1/3) * Math.pow(saturation,2 + 5 * green_ratio);
 
 			    	
-			    	double delay = delay1 + delay2 + delay3;
+			    	double delay = Math.min(20, delay1 + delay2 + delay3);
 			    	System.out.println(delay);
 			    	
 			    	if (!delays.containsKey(idlink)) {

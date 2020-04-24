@@ -6,6 +6,7 @@ import java.util.List;
 import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
+import org.eqasim.core.components.traffic.EqasimTrafficQSimTrafficLightsModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRoute;
@@ -46,7 +47,8 @@ public class EqasimConfigurator {
 	static public List<AbstractQSimModule> getQSimModules() {
 		return Arrays.asList( //
 				new EqasimTransitQSimModule(), //
-				new EqasimTrafficQSimModule() //
+				//new EqasimTrafficQSimTrafficLightsModule() //
+				new EqasimTrafficQSimModule()
 		);
 	}
 

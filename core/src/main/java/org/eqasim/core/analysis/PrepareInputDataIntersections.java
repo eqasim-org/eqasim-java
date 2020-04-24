@@ -34,7 +34,7 @@ public class PrepareInputDataIntersections {
 
 		/** 1. Events **/ 
 		// Path to the events file
-		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Zurich_10pct_Aurore/0.events.xml.gz";
+		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Zurich_10pct_Aurore/40.events.xml.gz";
 				
 		// Create an event object
 		EventsManager events = EventsUtils.createEventsManager();

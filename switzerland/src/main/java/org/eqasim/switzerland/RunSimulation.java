@@ -1,5 +1,6 @@
 package org.eqasim.switzerland;
 
+import org.eqasim.core.analysis.HourlyVolumeEventHandler;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
@@ -33,6 +34,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
+		//controller.getEvents().addHandler(new HourlyVolumeEventHandler());
 
 		controller.run();
 	}
