@@ -13,8 +13,10 @@ public class BusinessModel {
 	private double maximumPricePerKm_CHF;
 	private double minimumPricePerKm_CHF;
 
+	private final double infrastructureCostPerKm_CHF;
+
 	public BusinessModel(CostCalculator costCalculator, int fleetSize, double scalingFactor, double pricePerTrip_CHF,
-			double maximumPricePerKm_CHF, double minimumPricePerKm_CHF) {
+			double maximumPricePerKm_CHF, double minimumPricePerKm_CHF, double infrastructureCostPerKm_CHF) {
 		this.costCalculator = costCalculator;
 
 		this.fleetSize = (int) (fleetSize / scalingFactor);
@@ -23,13 +25,15 @@ public class BusinessModel {
 		this.pricePerTrip_CHF = pricePerTrip_CHF;
 		this.maximumPricePerKm_CHF = maximumPricePerKm_CHF;
 		this.minimumPricePerKm_CHF = minimumPricePerKm_CHF;
+
+		this.infrastructureCostPerKm_CHF = infrastructureCostPerKm_CHF;
 	}
 
 	public BusinessModelData update(double vehicleDistance_km, double passengerDistance_km, long passengerTrips) {
 		if (fleetSize == 0) {
 			return new BusinessModelData();
 		}
-		
+
 		vehicleDistance_km /= scalingFactor;
 		passengerDistance_km /= scalingFactor;
 		passengerTrips /= scalingFactor;
@@ -42,10 +46,13 @@ public class BusinessModel {
 		);
 
 		double fleetCost_CHF = costCalculator.calculateFleetCost(calculatorParameters);
-		double costPerPassengerKm_CHF = fleetCost_CHF / passengerDistance_km;
+		double infrastructureCost_CHF = vehicleDistance_km * infrastructureCostPerKm_CHF;
+		double totalCost_CHF = fleetCost_CHF + infrastructureCost_CHF;
+
+		double costPerPassengerKm_CHF = totalCost_CHF / passengerDistance_km;
 
 		double tripFareRevenue_CHF = passengerTrips * pricePerTrip_CHF;
-		double remainingFleetCost_CHF = fleetCost_CHF - tripFareRevenue_CHF;
+		double remainingFleetCost_CHF = totalCost_CHF - tripFareRevenue_CHF;
 
 		// If base fare covers costs, we do not need additional distance fare, instead
 		// we make profit
@@ -72,6 +79,8 @@ public class BusinessModel {
 
 		model.tripFareRevenue_CHF = tripFareRevenue_CHF;
 		model.fleetCost_CHF = fleetCost_CHF;
+		model.totalCost_CHF = totalCost_CHF;
+		model.infrastructureCost_CHF = infrastructureCost_CHF;
 
 		// No we can start calculating prices. First, we calculate the nominal price
 		// (without taxes) that we need to ask to cover the remaining costs.

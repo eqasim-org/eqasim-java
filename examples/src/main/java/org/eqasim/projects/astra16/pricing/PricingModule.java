@@ -49,7 +49,7 @@ public class PricingModule extends AbstractEqasimExtension {
 			EqasimConfigGroup eqasimConfig) {
 		return new BusinessModel(costCalculator, astraConfig.getFleetSize(), eqasimConfig.getSampleSize(),
 				astraConfig.getTripFare_CHF(), astraConfig.getMaximumPricePerKm_CHF(),
-				astraConfig.getMinimumPricePerKm_CHF());
+				astraConfig.getMinimumPricePerKm_CHF(), astraConfig.getInfrastructureCostPerKm_CHF());
 	}
 
 	@Singleton

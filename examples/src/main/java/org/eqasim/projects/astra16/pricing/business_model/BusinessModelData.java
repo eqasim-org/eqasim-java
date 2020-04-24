@@ -15,4 +15,7 @@ public class BusinessModelData {
 
 	public double vehicleDistance_km;
 	public double passengerDistance_km;
+
+	public double infrastructureCost_CHF;
+	public double totalCost_CHF;
 }
