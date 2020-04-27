@@ -27,12 +27,12 @@ public class HourlyVolumeEventHandler implements LinkLeaveEventHandler{
 		
 		// First check if the link is already in the dictionary, if not initialize the entry.
 		if (!hourlyCounts.containsKey(id)) {
-			hourlyCounts.put(id, new double[30]);			
+			hourlyCounts.put(id, new double[31]);			
 		}
 		
 		// Then add one to the corresponding count
 		double[] count = hourlyCounts.get(id);		
-		if (hour < 30) {
+		if (hour < 31) {
 			count[hour]++;
 		}	
 		
@@ -46,8 +46,8 @@ public class HourlyVolumeEventHandler implements LinkLeaveEventHandler{
 			Id<Link> id = keysAsArray.get(r.nextInt(keysAsArray.size()));
 			double[] counts_to_plot = hourlyCounts.get(id);
 			
-			double[] hours = new double[30];
-			for (double j = 0.0; j < 30.0; j++){
+			double[] hours = new double[31];
+			for (double j = 0.0; j < 31.0; j++){
 				hours[(int)j] = j;
 			}
 			XYLineChart chart = new XYLineChart("Traffic link " + id.toString(), "hour", "LinkLeaveEvents");
@@ -59,18 +59,18 @@ public class HourlyVolumeEventHandler implements LinkLeaveEventHandler{
 	// Sum the hourly counts on all links.
 	public void writeChart_AllLinks(String filename) {
 		List<Id<Link>> keysAsArray = new ArrayList<Id<Link>>(this.hourlyCounts.keySet());
-		double[] counts_to_plot = new double[30];
+		double[] counts_to_plot = new double[31];
 		
 		for(int i=0; i<keysAsArray.size(); i++) {
 			double[] counts = this.hourlyCounts.get(keysAsArray.get(i));
 			
-			for(int j=0; j<30; j++) {
+			for(int j=0; j<31; j++) {
 				counts_to_plot[j] += counts[j];
 			}
 		}
 		
-		double[] hours = new double[30];
-		for (double j = 0.0; j < 30.0; j++){
+		double[] hours = new double[31];
+		for (double j = 0.0; j < 31.0; j++){
 			hours[(int)j] = j;
 		}
 		XYLineChart chart = new XYLineChart("Traffic on all links", "hour", "LinkLeaveEvents");

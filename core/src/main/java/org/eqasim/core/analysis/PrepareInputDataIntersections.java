@@ -21,6 +21,7 @@ public class PrepareInputDataIntersections {
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
 	Map<Id<Link>, Double> capacities = new HashMap<>();	
 	double samplesize;
+	double crossingPenalty;
 	
 
 	public PrepareInputDataIntersections () {
@@ -31,6 +32,7 @@ public class PrepareInputDataIntersections {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		String sample = scenario.getConfig().findParam("eqasim", "sampleSize");
 		this.samplesize = Double.parseDouble(sample); 
+		this.crossingPenalty = Double.parseDouble(scenario.getConfig().findParam("eqasim", "crossingPenalty"));
 
 		/** 1. Events **/ 
 		// Path to the events file
@@ -46,7 +48,7 @@ public class PrepareInputDataIntersections {
         // Create the reader and read the file
 		MatsimEventsReader reader = new MatsimEventsReader(events);
 		reader.readFile(eventFile);
-		hv.writeChart_AllLinks("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/output_link_");
+		//hv.writeChart_AllLinks("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/output_link_");
 		this.hourlyCounts = hv.hourlyCounts;
 		
 		/** 2. Intersections **/

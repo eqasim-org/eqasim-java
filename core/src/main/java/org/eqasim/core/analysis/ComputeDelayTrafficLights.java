@@ -1,5 +1,7 @@
 package org.eqasim.core.analysis;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,12 +18,14 @@ public class ComputeDelayTrafficLights {
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
 	Map<Id<Link>, Double> capacities = new HashMap<>();	
 	double samplesize;
+	double crossingPenalty;
 	
 	public ComputeDelayTrafficLights(PrepareInputDataIntersections p) {
 		this.hourlyCounts = p.hourlyCounts;
 		this.ir = p.ir;
 		this.capacities = p.capacities;
 		this.samplesize = p.samplesize;
+		this.crossingPenalty = p.crossingPenalty;
 	}
 	
 	final static double LOST_TIME_PER_LINK = 2.0;
@@ -91,7 +95,7 @@ public class ComputeDelayTrafficLights {
 		for (int k=0; k<this.ir.intersections.size(); k++) {
 			Intersection intersection = this.ir.intersections.get(k);
 			
-			for (int hour=0; hour<30; hour++) {
+			for (int hour=0; hour<31; hour++) {
 				double optimal_length = optimal_effective_green_time(intersection,hour);
 			
 			    ArrayList<Id<Link>> links = intersection.incoming_links;
@@ -114,22 +118,25 @@ public class ComputeDelayTrafficLights {
 			    for (int l=0; l<links.size(); l++) {
 			    	Id<Link> idlink = links.get(l);
 			    	double link_flow = flows[l];
-			    	double green_time = Math.max(4, optimal_length * link_flow / total_flow);
+			    	double green_time = Math.min(optimal_length, Math.max(4, optimal_length * link_flow / total_flow));
 			    	double capacity = this.capacities.get(idlink);
-			    	double saturation = link_flow / capacity;
-			    	double green_ratio = green_time / optimal_length;
+			    	double saturation = Math.min(0.995 ,link_flow / capacity);
+			    	double green_ratio = Math.min(0.995 ,green_time / optimal_length);
 			    	
 			    	double delay1 = (optimal_length * Math.pow(1 - green_ratio, 2))/(2 * (1 - green_ratio * saturation));
-
 			    	double delay2 = Math.pow(saturation, 2) / (2 * link_flow * (1 - saturation));
 			    	double delay3 = 0.65 * Math.pow(optimal_length / Math.pow(link_flow, 2), 1/3) * Math.pow(saturation,2 + 5 * green_ratio);
 
 			    	
-			    	double delay = Math.min(20, delay1 + delay2 + delay3);
-			    	System.out.println(delay);
+			    	double delay = Math.max(delay1 + delay2 + delay3, this.crossingPenalty / 4);
+			    	if (delay>100) {
+			    		System.out.println("Alert " + delay1 + " " + delay2 + " " + delay3);
+			    	}
+			    		
 			    	
 			    	if (!delays.containsKey(idlink)) {
-			    		delays.put(idlink, new double[30]);
+			    		delays.put(idlink, new double[31]);
+			    		delays.get(idlink)[hour] = delay;
 			    	}
 			    	else {
 			    		delays.get(idlink)[hour] = delay;
@@ -141,10 +148,49 @@ public class ComputeDelayTrafficLights {
 		return delays;
 	}
 	
+	public void writeCSV(String pathToCSV) {
+		try {
+			FileWriter csvWriter = new FileWriter(pathToCSV);
+			Map<Id<Link>, double[]> delays = this.compute_all_delays();
+			
+			csvWriter.append("Link_ID");
+			csvWriter.append(",");
+			csvWriter.append("Hour");
+			csvWriter.append(",");
+			csvWriter.append("Delay");
+			csvWriter.append("\n");
+			
+			for (Entry<Id<Link>, double[]> entry : delays.entrySet()) {
+				String idLink = entry.getKey().toString();
+				double[] delays_link = entry.getValue();
+				
+				for (int l = 0; l<delays_link.length; l++) {
+					csvWriter.append(idLink);
+					csvWriter.append(",");
+					csvWriter.append(Integer.toString(l));
+					csvWriter.append(",");
+					double d = delays_link[l];
+					if (d==0) {
+						System.out.println("Alert 0 " + l);
+					}
+					csvWriter.append(Double.toString(d));
+					csvWriter.append("\n");
+				}
+			}
+			
+			csvWriter.flush();
+			csvWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	public static void main(String[] args) {
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
 		delay.compute_all_delays();
+		delay.writeCSV("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/intersections.csv");
 	}
 
 }
