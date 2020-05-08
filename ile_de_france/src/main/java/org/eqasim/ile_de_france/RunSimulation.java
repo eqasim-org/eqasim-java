@@ -18,10 +18,15 @@ public class RunSimulation {
 				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
 
-//emission
+		//emission
 		
+				
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+		
+//		config.network().setInputFile("ile_de_france_network_reduced.xml.gz");
+		//counts
+		config.counts().setInputFile("counts_saint_denis.xml");
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
