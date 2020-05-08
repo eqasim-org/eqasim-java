@@ -1,5 +1,7 @@
 package org.eqasim.san_francisco.scenario;
 
+import java.util.Collection;
+
 import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -8,6 +10,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 
+import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceModel.FallbackBehaviour;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
 public class RunAdaptConfig {
@@ -30,5 +33,11 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(SanFranciscoModeChoiceModule.MODE_AVAILABILITY_NAME);
+		Collection<String> tripConstraints = dmcConfig.getTripConstraints();
+		tripConstraints.add("WalkDurationConstraint");
+		dmcConfig.setTripConstraints(tripConstraints);
+		dmcConfig.setTourConstraintsAsString("FromTripBased, VehicleTourConstraintWithCarPassenger");
+		dmcConfig.setFallbackBehaviour(FallbackBehaviour.INITIAL_CHOICE);
+
 	}
 }
