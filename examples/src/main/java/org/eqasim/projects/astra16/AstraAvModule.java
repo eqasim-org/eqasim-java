@@ -15,6 +15,7 @@ import org.eqasim.projects.astra16.mode_choice.AstraAvModeParameters;
 import org.eqasim.projects.astra16.mode_choice.AvServiceConstraint;
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraAvUtilityEstimator;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraAvPredictor;
+import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -65,7 +66,8 @@ public class AstraAvModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public AvServiceConstraint.Factory provideAVServiceConstraintFactory(AstraConfigGroup config) {
-		return new AvServiceConstraint.Factory(config.getMinimumAvDistance_km());
+	public AvServiceConstraint.Factory provideAVServiceConstraintFactory(AstraConfigGroup config,
+			ServiceArea serviceArea) {
+		return new AvServiceConstraint.Factory(serviceArea, config.getMinimumAvDistance_km());
 	}
 }
