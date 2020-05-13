@@ -1,6 +1,7 @@
 package org.eqasim.projects.astra16;
 
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import org.eqasim.automated_vehicles.components.AvConfigurator;
@@ -148,6 +149,22 @@ public class AstraConfigurator extends EqasimConfigurator {
 		}
 
 		AvConfigurator.configureUniformWaitingTimeGroup(scenario);
+		adjustBikeAvailability(scenario);
+	}
+
+	static private void adjustBikeAvailability(Scenario scenario) {
+		Random random = new Random(scenario.getConfig().global().getRandomSeed());
+		AstraConfigGroup astraConfig = AstraConfigGroup.get(scenario.getConfig());
+
+		for (Person person : scenario.getPopulation().getPersons().values()) {
+			if (!person.getId().toString().contains("freight")) {
+				if (!person.getAttributes().getAttribute("bikeAvailability").equals("FOR_NONE")) {
+					if (random.nextDouble() > astraConfig.getBikeAvailability()) {
+						person.getAttributes().putAttribute("bikeAvailability", "FOR_NONE");
+					}
+				}
+			}
+		}
 	}
 
 	static public void configureController(Controler controller, CommandLine commandLine) {

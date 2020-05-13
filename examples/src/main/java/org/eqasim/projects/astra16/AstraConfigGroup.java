@@ -22,6 +22,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 
 	static public final String INFRASTRCTURE_COST_PER_KM_CHF = "infrastructureCostPerKm_CHF";
 
+	static public final String BIKE_AVAILABILITY = "bikeAvailability";
+
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
 	private String operatingAreaIndexAttribute = "wgIndex";
@@ -37,6 +39,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double minimumAvDistance_km = 0.25;
 
 	private double infrastructureCostPerKm_CHF = 0.0;
+
+	private double bikeAvailability = 1.0;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -150,6 +154,16 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(INFRASTRCTURE_COST_PER_KM_CHF)
 	public void setInfrastructureCostPerKm_CHF(double infrastructureCostPerKm_CHF) {
 		this.infrastructureCostPerKm_CHF = infrastructureCostPerKm_CHF;
+	}
+
+	@StringGetter(BIKE_AVAILABILITY)
+	public double getBikeAvailability() {
+		return bikeAvailability;
+	}
+
+	@StringSetter(BIKE_AVAILABILITY)
+	public void setBikeAvailability(double bikeAvailability) {
+		this.bikeAvailability = bikeAvailability;
 	}
 
 	static public AstraConfigGroup get(Config config) {
