@@ -22,22 +22,11 @@ public class ExtractResidentialRoadsCoordinates {
 		networReader.readFile(args[0]);
 		BufferedWriter writer = IOUtils.getBufferedWriter(args[1]);
 		writer.write("coordX,coordY,purpose\n");
-		int countS = 0;
-		int countE = 0;
 		for (Link link : scenario.getNetwork().getLinks().values()) {
 
 			if (link.getAttributes().getAsMap().containsKey("osm:way:highway")
 					&& ((String) link.getAttributes().getAsMap().get("osm:way:highway")).equals("residential")) {
-				if (countS % 25 == 0) {
-					writer.write(link.getCoord().getX() + "," + link.getCoord().getY() + ",shop\n");
-					writer.write(link.getCoord().getX() + "," + link.getCoord().getY() + ",leisure\n");
-
-				}
-				if (countE % 100 == 0) {
-					writer.write(link.getCoord().getX() + "," + link.getCoord().getY() + ",education\n");
-				}
-				countS++;
-				countE++;
+					writer.write(link.getCoord().getX() + "," + link.getCoord().getY() + ",home\n");				
 			}
 
 		}
