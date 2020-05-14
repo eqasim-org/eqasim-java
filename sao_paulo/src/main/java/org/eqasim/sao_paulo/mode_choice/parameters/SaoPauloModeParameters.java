@@ -60,8 +60,8 @@ public class SaoPauloModeParameters extends ModeParameters {
 		parameters.car.alpha_u = 0.0;
 		parameters.car.betaTravelTime_u_min = -0.0246;
         
-		parameters.car.constantAccessEgressWalkTime_min = -0.1597;
-		parameters.car.constantParkingSearchPenalty_min = -0.1597;
+		parameters.car.constantAccessEgressWalkTime_min = 0.0;
+		parameters.car.constantParkingSearchPenalty_min = 0.0;
 		parameters.spCar.alpha_car_city = -0.1597;
 
 		// PT
