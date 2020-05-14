@@ -63,7 +63,7 @@ public class AstraModeParameters extends SwissModeParameters {
 		parameters.astraPt.betaOvgkNone_u = -1.0889;
 
 		// Bicycle
-		parameters.bike.alpha_u = -0.5; // Original from fb model: 0.1522;
+		parameters.bike.alpha_u = 0.1522;
 		parameters.bike.betaTravelTime_u_min = -0.1258;
 
 		parameters.astraBike.betaAgeOver60 = -2.6588;
