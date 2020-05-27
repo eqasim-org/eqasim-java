@@ -18,21 +18,26 @@ import org.matsim.pt.PtConstants;
 public class RunTripAnalysis {
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("network-path", "output-path") //
-				.allowOptions("population-path", "events-path") //
+				.requireOptions("output-path") //
+				.allowOptions("population-path", "events-path", "network-path") //
 				.allowOptions("stage-activity-types", "network-modes") //
 				.allowOptions("input-distance-units", "output-distance-units") //
 				.build();
 
+		run(cmd, new DefaultPersonAnalysisFilter());
+	}
+
+	public static void run(CommandLine cmd, PersonAnalysisFilter personAnalysisFilter)
+			throws ConfigurationException, IOException {
 		if (!(cmd.hasOption("population-path") ^ cmd.hasOption("events-path"))) {
 			throw new IllegalStateException("Either population-path or events-path must be provided.");
 		}
 
-		String networkPath = cmd.getOptionStrict("network-path");
-		String outputPath = cmd.getOptionStrict("output-path");
+		if (cmd.hasOption("events-path") && !cmd.hasOption("network-path")) {
+			throw new IllegalStateException("Netowrk must be given for events analysis.");
+		}
 
-		Network network = NetworkUtils.createNetwork();
-		new MatsimNetworkReader(network).readFile(networkPath);
+		String outputPath = cmd.getOptionStrict("output-path");
 
 		String plainStageActivityTypes = cmd.getOption("stage-activity-types")
 				.orElse(PtConstants.TRANSIT_ACTIVITY_TYPE);
@@ -47,14 +52,18 @@ public class RunTripAnalysis {
 		Collection<TripItem> trips = null;
 
 		if (cmd.hasOption("events-path")) {
+			String networkPath = cmd.getOptionStrict("network-path");
+			Network network = NetworkUtils.createNetwork();
+			new MatsimNetworkReader(network).readFile(networkPath);
+
 			String eventsPath = cmd.getOptionStrict("events-path");
-			TripListener tripListener = new TripListener(network, stageActivityTypes, mainModeIdentifier, networkModes,
-					new DefaultPersonAnalysisFilter());
+			TripListener tripListener = new TripListener(network, stageActivityTypes, mainModeIdentifier,
+					personAnalysisFilter);
 			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
 		} else {
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier,
-					new DefaultPersonAnalysisFilter()).readTrips(populationPath);
+			trips = new TripReaderFromPopulation(networkModes, stageActivityTypes, mainModeIdentifier,
+					personAnalysisFilter).readTrips(populationPath);
 		}
 
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));

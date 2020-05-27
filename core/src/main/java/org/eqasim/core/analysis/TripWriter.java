@@ -53,6 +53,7 @@ public class TripWriter {
 				"destination_y", "start_time", //
 				"travel_time", //
 				"network_distance", //
+				"routed_distance", //
 				"mode", //
 				"preceedingPurpose", //
 				"followingPurpose", //
@@ -101,6 +102,7 @@ public class TripWriter {
 				String.valueOf(trip.startTime), //
 				String.valueOf(trip.travelTime), //
 				String.valueOf(trip.networkDistance * inputFactor * outputFactor), //
+				String.valueOf(trip.routedDistance * inputFactor * outputFactor), //
 				String.valueOf(trip.mode), //
 				normalizeActivityType(String.valueOf(trip.preceedingPurpose)), //
 				normalizeActivityType(String.valueOf(trip.followingPurpose)), //
