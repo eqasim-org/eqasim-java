@@ -11,7 +11,7 @@ public class TripItem {
 	public Coord destination;
 	public double startTime;
 	public double travelTime;
-	public double networkDistance;
+	public double vehicleDistance;
 	public double routedDistance;
 	public String mode;
 	public String followingPurpose;
@@ -28,7 +28,7 @@ public class TripItem {
 		this.destination = destination;
 		this.startTime = startTime;
 		this.travelTime = travelTime;
-		this.networkDistance = networkDistance;
+		this.vehicleDistance = networkDistance;
 		this.routedDistance = routedDistance;
 		this.mode = mode;
 		this.followingPurpose = followingPurpose;

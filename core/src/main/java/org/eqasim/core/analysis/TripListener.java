@@ -6,15 +6,18 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.eqasim.core.components.transit.events.PublicTransitEvent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
+import org.matsim.api.core.v01.events.GenericEvent;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
+import org.matsim.api.core.v01.events.handler.GenericEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
@@ -33,7 +36,7 @@ import org.matsim.vehicles.Vehicle;
 
 public class TripListener implements ActivityStartEventHandler, ActivityEndEventHandler, PersonDepartureEventHandler,
 		PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, LinkEnterEventHandler,
-		TeleportationArrivalEventHandler {
+		TeleportationArrivalEventHandler, GenericEventHandler {
 	final private StageActivityTypes stageActivityTypes;
 	final private MainModeIdentifier mainModeIdentifier;
 	final private Network network;
@@ -113,7 +116,7 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 					trip.crowflyDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
 					trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination,
-							trip.startTime, trip.travelTime, trip.networkDistance, trip.routedDistance, trip.mode,
+							trip.startTime, trip.travelTime, trip.vehicleDistance, trip.routedDistance, trip.mode,
 							trip.preceedingPurpose, trip.followingPurpose, trip.returning, trip.crowflyDistance));
 				}
 			}
@@ -151,7 +154,7 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 		if (personIds != null) {
 			personIds.forEach(id -> {
 				ongoing.get(id).routedDistance += network.getLinks().get(event.getLinkId()).getLength();
-				ongoing.get(id).networkDistance += network.getLinks().get(event.getLinkId()).getLength();
+				ongoing.get(id).vehicleDistance += network.getLinks().get(event.getLinkId()).getLength();
 			});
 		}
 	}
@@ -161,6 +164,18 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 		if (personFilter.analyzePerson(event.getPersonId())) {
 			TripListenerItem item = ongoing.get(event.getPersonId());
 			item.routedDistance += event.getDistance();
+		}
+	}
+
+	@Override
+	public void handleEvent(GenericEvent event) {
+		if (event instanceof PublicTransitEvent) {
+			PublicTransitEvent transitEvent = (PublicTransitEvent) event;
+
+			if (personFilter.analyzePerson(transitEvent.getPersonId())) {
+				TripListenerItem item = ongoing.get(transitEvent.getPersonId());
+				item.vehicleDistance += transitEvent.getTravelDistance();
+			}
 		}
 	}
 }

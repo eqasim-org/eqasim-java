@@ -20,7 +20,7 @@ public class RunTripAnalysis {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("output-path") //
 				.allowOptions("population-path", "events-path", "network-path") //
-				.allowOptions("stage-activity-types", "network-modes") //
+				.allowOptions("stage-activity-types", "vehicle-modes") //
 				.allowOptions("input-distance-units", "output-distance-units") //
 				.build();
 
@@ -46,7 +46,7 @@ public class RunTripAnalysis {
 
 		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
 
-		Collection<String> networkModes = Arrays.asList(cmd.getOption("network-modes").orElse("car").split(","))
+		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
 
 		Collection<TripItem> trips = null;
@@ -62,7 +62,7 @@ public class RunTripAnalysis {
 			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
 		} else {
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(networkModes, stageActivityTypes, mainModeIdentifier,
+			trips = new TripReaderFromPopulation(vehicleModes, stageActivityTypes, mainModeIdentifier,
 					personAnalysisFilter).readTrips(populationPath);
 		}
 
