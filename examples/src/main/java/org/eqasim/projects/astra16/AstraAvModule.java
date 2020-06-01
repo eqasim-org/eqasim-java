@@ -52,6 +52,7 @@ public class AstraAvModule extends AbstractEqasimExtension {
 	@Singleton
 	public AvServiceConstraint.Factory provideAVServiceConstraintFactory(AstraConfigGroup config,
 			ServiceArea serviceArea) {
-		return new AvServiceConstraint.Factory(serviceArea, config.getMinimumAvDistance_km());
+		return new AvServiceConstraint.Factory(serviceArea, config.getMinimumAvDistance_km(),
+				config.getMaximumWaitTime());
 	}
 }

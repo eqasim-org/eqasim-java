@@ -23,6 +23,7 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String INFRASTRCTURE_COST_PER_KM_CHF = "infrastructureCostPerKm_CHF";
 
 	static public final String BIKE_AVAILABILITY = "bikeAvailability";
+	static public final String MAXIMUM_WAIT_TIME_MIN = "maximumWaitTime_min";
 
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
@@ -41,6 +42,7 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double infrastructureCostPerKm_CHF = 0.0;
 
 	private double bikeAvailability = 0.5;
+	private double maximumWaitTime_min = Double.POSITIVE_INFINITY;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -164,6 +166,16 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(BIKE_AVAILABILITY)
 	public void setBikeAvailability(double bikeAvailability) {
 		this.bikeAvailability = bikeAvailability;
+	}
+
+	@StringGetter(MAXIMUM_WAIT_TIME_MIN)
+	public double getMaximumWaitTime() {
+		return maximumWaitTime_min;
+	}
+
+	@StringSetter(MAXIMUM_WAIT_TIME_MIN)
+	public void setMaximumWaitTime(double maximumWaitTime_min) {
+		this.maximumWaitTime_min = maximumWaitTime_min;
 	}
 
 	static public AstraConfigGroup get(Config config) {
