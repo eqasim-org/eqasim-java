@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- Fix: Updating geotools repository
 - Fix: Correct cutting of public transit lines
 - Fix: Consider special "parallel link" cases for network route cutting
 - Remove bike from Sao Paulo
