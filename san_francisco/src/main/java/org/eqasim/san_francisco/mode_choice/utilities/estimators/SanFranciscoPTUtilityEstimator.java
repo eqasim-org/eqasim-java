@@ -2,6 +2,7 @@ package org.eqasim.san_francisco.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
@@ -31,7 +32,20 @@ public class SanFranciscoPTUtilityEstimator extends PtUtilityEstimator {
 	}
 
 	protected double estimateRegionalUtility(SanFranciscoPersonVariables variables) {
-		return (variables.cityTrip) ? parameters.sfPT.alpha_pt_city : 0.0;
+		double utility_city = (variables.cityTrip) ? parameters.sfPT.alpha_pt_city : 0.0;
+
+		return utility_city;
+	}
+
+	protected double estimateTravelTime(PtVariables variables_pt) {
+		return parameters.sfPT.vot_min
+				* (variables_pt.inVehicleTime_min + variables_pt.accessEgressTime_min + variables_pt.waitingTime_min);
+	}
+
+	@Override
+	protected double estimateMonetaryCostUtility(PtVariables variables) {
+		return EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
+				parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
 	}
 
 	@Override
@@ -42,13 +56,10 @@ public class SanFranciscoPTUtilityEstimator extends PtUtilityEstimator {
 		double utility = 0.0;
 
 		utility += estimateConstantUtility();
-		utility += estimateAccessEgressTimeUtility(variables_pt);
-		utility += estimateInVehicleTimeUtility(variables_pt);
-		utility += estimateWaitingTimeUtility(variables_pt);
-		utility += estimateLineSwitchUtility(variables_pt);
+		utility += (estimateTravelTime(variables_pt) + estimateLineSwitchUtility(variables_pt)
+				+ estimateMonetaryCostUtility(variables_pt))
+				* (parameters.sfAvgHHLIncome.avg_hhl_income / variables.hhlIncome) * parameters.betaCost_u_MU;
 		utility += estimateRegionalUtility(variables);
-		utility += estimateMonetaryCostUtility(variables_pt)
-				* (parameters.sfAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}
