@@ -158,14 +158,14 @@ public class AstraConfigurator extends EqasimConfigurator {
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			if (!person.getId().toString().contains("freight")) {
-				if (!person.getAttributes().getAttribute("bikeAvailability").equals("FOR_SOME")) {
-					if (random.nextDouble() > astraConfig.getSomeBikeAvailability()) {
+				if (!person.getAttributes().getAttribute("bikeAvailability").equals("FOR_NONE")) {
+					if (random.nextDouble() > astraConfig.getBikeAvailability()) {
 						person.getAttributes().putAttribute("bikeAvailability", "FOR_NONE");
 					}
 				}
 
-				if (!person.getAttributes().getAttribute("carAvail").equals("sometimes")) {
-					if (random.nextDouble() > astraConfig.getSomeCarAvailability()) {
+				if (person.getAttributes().getAttribute("carAvail").equals("sometimes")) {
+					if (random.nextDouble() > astraConfig.getSometimesCarAvailability()) {
 						person.getAttributes().putAttribute("carAvail", "never");
 					}
 				}

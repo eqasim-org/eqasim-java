@@ -22,8 +22,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 
 	static public final String INFRASTRCTURE_COST_PER_KM_CHF = "infrastructureCostPerKm_CHF";
 
-	static public final String SOME_BIKE_AVAILABILITY = "someBikeAvailability";
-	static public final String SOME_CAR_AVAILABILITY = "someCarAvailability";
+	static public final String BIKE_AVAILABILITY = "bikeAvailability";
+	static public final String SOMETIMES_CAR_AVAILABILITY = "sometimesCarAvailability";
 	static public final String MAXIMUM_WAIT_TIME_MIN = "maximumWaitTime_min";
 
 	private int fleetSize = 0;
@@ -42,8 +42,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 
 	private double infrastructureCostPerKm_CHF = 0.0;
 
-	private double someBikeAvailability = 0.5;
-	private double someCarAvailability = 0.5;
+	private double bikeAvailability = 0.5;
+	private double sometimesCarAvailability = 0.5;
 	private double maximumWaitTime_min = 15;
 
 	public AstraConfigGroup() {
@@ -160,24 +160,24 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 		this.infrastructureCostPerKm_CHF = infrastructureCostPerKm_CHF;
 	}
 
-	@StringGetter(SOME_BIKE_AVAILABILITY)
-	public double getSomeBikeAvailability() {
-		return someBikeAvailability;
+	@StringGetter(BIKE_AVAILABILITY)
+	public double getBikeAvailability() {
+		return bikeAvailability;
 	}
 
-	@StringSetter(SOME_BIKE_AVAILABILITY)
-	public void setSomeBikeAvailability(double bikeAvailability) {
-		this.someBikeAvailability = bikeAvailability;
+	@StringSetter(BIKE_AVAILABILITY)
+	public void setBikeAvailability(double bikeAvailability) {
+		this.bikeAvailability = bikeAvailability;
 	}
 
-	@StringGetter(SOME_CAR_AVAILABILITY)
-	public double getSomeCarAvailability() {
-		return someCarAvailability;
+	@StringGetter(SOMETIMES_CAR_AVAILABILITY)
+	public double getSometimesCarAvailability() {
+		return sometimesCarAvailability;
 	}
 
-	@StringSetter(SOME_CAR_AVAILABILITY)
-	public void setSomeCarAvailability(double carAvailability) {
-		this.someCarAvailability = carAvailability;
+	@StringSetter(SOMETIMES_CAR_AVAILABILITY)
+	public void setSometimesCarAvailability(double carAvailability) {
+		this.sometimesCarAvailability = carAvailability;
 	}
 
 	@StringGetter(MAXIMUM_WAIT_TIME_MIN)
