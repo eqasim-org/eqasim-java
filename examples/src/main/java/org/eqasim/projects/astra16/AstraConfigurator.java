@@ -149,18 +149,24 @@ public class AstraConfigurator extends EqasimConfigurator {
 		}
 
 		AvConfigurator.configureUniformWaitingTimeGroup(scenario);
-		adjustBikeAvailability(scenario);
+		adjustModeAvailability(scenario);
 	}
 
-	static private void adjustBikeAvailability(Scenario scenario) {
+	static private void adjustModeAvailability(Scenario scenario) {
 		Random random = new Random(scenario.getConfig().global().getRandomSeed());
 		AstraConfigGroup astraConfig = AstraConfigGroup.get(scenario.getConfig());
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			if (!person.getId().toString().contains("freight")) {
-				if (!person.getAttributes().getAttribute("bikeAvailability").equals("FOR_NONE")) {
-					if (random.nextDouble() > astraConfig.getBikeAvailability()) {
+				if (!person.getAttributes().getAttribute("bikeAvailability").equals("FOR_SOME")) {
+					if (random.nextDouble() > astraConfig.getSomeBikeAvailability()) {
 						person.getAttributes().putAttribute("bikeAvailability", "FOR_NONE");
+					}
+				}
+
+				if (!person.getAttributes().getAttribute("carAvail").equals("sometimes")) {
+					if (random.nextDouble() > astraConfig.getSomeCarAvailability()) {
+						person.getAttributes().putAttribute("carAvail", "never");
 					}
 				}
 			}
