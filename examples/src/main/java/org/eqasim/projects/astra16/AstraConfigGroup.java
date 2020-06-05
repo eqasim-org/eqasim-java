@@ -43,7 +43,7 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double infrastructureCostPerKm_CHF = 0.0;
 
 	private double bikeAvailability = 0.5;
-	private double sometimesCarAvailability = 0.5;
+	private double sometimesCarAvailability = 1.0;
 	private double maximumWaitTime_min = 15;
 
 	public AstraConfigGroup() {
