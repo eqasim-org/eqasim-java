@@ -51,7 +51,8 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 			if (currentLeg.getMode().equals(TransportMode.pt)) {
 				try {
 					double departureAfterAdditionalTransfer = currentTime + additionalTransferTime;
-					double totalTravelTimeAfterAdditionalTransfer = currentLeg.getTravelTime() - additionalTransferTime;
+					double totalTravelTimeAfterAdditionalTransfer = currentLeg.getTravelTime().seconds()
+							- additionalTransferTime;
 
 					ExperimentalTransitRoute originalRoute = (ExperimentalTransitRoute) currentLeg.getRoute();
 					TransitRoute transitRoute = transitSchedule.getTransitLines().get(originalRoute.getLineId())
@@ -64,7 +65,7 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 					double totalTime = additionalTransferTime + connection.getWaitingTime()
 							+ connection.getInVehicleTime();
 
-					if (Math.abs(totalTime - currentLeg.getTravelTime()) > 1e-3) {
+					if (Math.abs(totalTime - currentLeg.getTravelTime().seconds()) > 1e-3) {
 						throw new IllegalStateException(String.format(
 								"Calculation of travel time is not consistent! Leg travel time: %s, Additional transfer time: %s, Waiting time: %s, In-vehicle time: %s",
 								currentLeg.getTravelTime(), additionalTransferTime, connection.getWaitingTime(),
@@ -95,7 +96,7 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 				throw new IllegalStateException("Can only enrich pt and *_walk legs");
 			}
 
-			currentTime += currentLeg.getTravelTime();
+			currentTime += currentLeg.getTravelTime().seconds();
 		}
 
 		for (int i = 0; i < legs.size(); i++) {

@@ -11,17 +11,11 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.api.core.v01.population.Route;
-import org.matsim.core.router.StageActivityTypes;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.facilities.ActivityFacility;
 
 public class ScenarioValidator {
 	private final static Logger logger = Logger.getLogger(ScenarioValidator.class);
-
-	private final StageActivityTypes stageActivityTypes;
-
-	public ScenarioValidator(StageActivityTypes stageActivityTypes) {
-		this.stageActivityTypes = stageActivityTypes;
-	}
 
 	public boolean checkSpatialConsistency(Scenario scenario) {
 		boolean errorsFound = false;
@@ -68,7 +62,7 @@ public class ScenarioValidator {
 							errorsFound = true;
 						}
 
-						if (!hasFacility && !stageActivityTypes.isStageActivity(activity.getType())) {
+						if (!hasFacility && !TripStructureUtils.isStageActivityType(activity.getType())) {
 							logger.error(String.format("Person %s has %s activity without facility",
 									person.getId().toString(), activity.getType()));
 							errorsFound = true;
@@ -111,7 +105,7 @@ public class ScenarioValidator {
 							}
 						}
 
-						if (!stageActivityTypes.isStageActivity(activity.getType())) {
+						if (!TripStructureUtils.isStageActivityType(activity.getType())) {
 							Link link = scenario.getNetwork().getLinks().get(activity.getLinkId());
 
 							if (link != null) {
@@ -155,7 +149,7 @@ public class ScenarioValidator {
 							} else {
 								Activity preceedingActivity = (Activity) plan.getPlanElements().get(i - 1);
 
-								if (!stageActivityTypes.isStageActivity(preceedingActivity.getType())) {
+								if (!TripStructureUtils.isStageActivityType(preceedingActivity.getType())) {
 									if (!preceedingActivity.getLinkId().equals(route.getStartLinkId())) {
 										logger.error(String.format(
 												"Person %s has route with a different start link (%s) than previous activity (%s)",
@@ -173,7 +167,7 @@ public class ScenarioValidator {
 							} else {
 								Activity followingActivity = (Activity) plan.getPlanElements().get(i - 1);
 
-								if (!stageActivityTypes.isStageActivity(followingActivity.getType())) {
+								if (!TripStructureUtils.isStageActivityType(followingActivity.getType())) {
 									if (!followingActivity.getLinkId().equals(route.getStartLinkId())) {
 										logger.error(String.format(
 												"Person %s has route with a different end link (%s) than following activity (%s)",

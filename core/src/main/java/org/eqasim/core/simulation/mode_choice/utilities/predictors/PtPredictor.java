@@ -9,11 +9,10 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 	private CostModel costModel;
@@ -44,12 +43,11 @@ public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 				Leg leg = (Leg) element;
 
 				switch (leg.getMode()) {
-				case TransportMode.access_walk:
-				case TransportMode.egress_walk:
-					accessEgressTime_min += leg.getTravelTime() / 60.0;
+				case TransportMode.non_network_walk:
+					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
 					break;
 				case TransportMode.transit_walk:
-					waitingTime_min += leg.getTravelTime() / 60.0;
+					waitingTime_min += leg.getTravelTime().seconds() / 60.0;
 					break;
 				case TransportMode.pt:
 					EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();

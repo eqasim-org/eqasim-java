@@ -23,8 +23,7 @@ public class EqasimAnalysisModule extends AbstractModule {
 	@Singleton
 	public TripListener provideTripListener(Network network, MainModeIdentifier mainModeIdentifier,
 			PlansCalcRouteConfigGroup routeConfig, PersonAnalysisFilter personFilter) {
-		return new TripListener(network, type -> type.endsWith("interaction"), mainModeIdentifier,
-				routeConfig.getNetworkModes(), personFilter);
+		return new TripListener(network, mainModeIdentifier, routeConfig.getNetworkModes(), personFilter);
 	}
 
 }

@@ -8,10 +8,9 @@ import org.eqasim.switzerland.mode_choice.utilities.variables.SwissPersonVariabl
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class SwissPersonPredictor extends CachedVariablePredictor<SwissPersonVariables> {
 	public final PersonPredictor delegate;

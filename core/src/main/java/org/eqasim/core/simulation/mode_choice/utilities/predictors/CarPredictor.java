@@ -8,11 +8,10 @@ import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class CarPredictor extends CachedVariablePredictor<CarVariables> {
 	private final CostModel costModel;
@@ -32,7 +31,7 @@ public class CarPredictor extends CachedVariablePredictor<CarVariables> {
 
 		Leg leg = (Leg) elements.get(0);
 
-		double travelTime_min = leg.getTravelTime() / 60.0 + parameters.car.constantParkingSearchPenalty_min;
+		double travelTime_min = leg.getTravelTime().seconds() / 60.0 + parameters.car.constantParkingSearchPenalty_min;
 		double cost_MU = costModel.calculateCost_MU(person, trip, elements);
 
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);

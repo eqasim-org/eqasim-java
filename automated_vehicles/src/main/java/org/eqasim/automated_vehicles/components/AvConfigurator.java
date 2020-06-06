@@ -24,6 +24,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
@@ -38,7 +39,6 @@ import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
 import ch.ethz.matsim.av.dispatcher.single_heuristic.SingleHeuristicDispatcher;
 import ch.ethz.matsim.av.framework.AVModule;
 import ch.ethz.matsim.av.generator.PopulationDensityGenerator;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
 public final class AvConfigurator {
 	private AvConfigurator() {

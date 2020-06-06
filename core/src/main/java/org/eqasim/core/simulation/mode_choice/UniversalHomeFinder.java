@@ -4,9 +4,8 @@ import java.util.List;
 
 import org.matsim.api.core.v01.BasicLocation;
 import org.matsim.api.core.v01.Id;
-
-import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 /**
  * Using this home finder, vehicle constraints will always assume that the

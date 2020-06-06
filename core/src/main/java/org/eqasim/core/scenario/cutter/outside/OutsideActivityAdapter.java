@@ -8,7 +8,6 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.utils.misc.Time;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.ActivityFacility;
 
@@ -49,7 +48,7 @@ public class OutsideActivityAdapter {
 				Activity lastActivity = (Activity) plan.getPlanElements().get(plan.getPlanElements().size() - 1);
 
 				if (lastActivity.getType().equals("outside")) {
-					lastActivity.setEndTime(Time.getUndefinedTime());
+					lastActivity.setEndTimeUndefined();
 				}
 			}
 		}
