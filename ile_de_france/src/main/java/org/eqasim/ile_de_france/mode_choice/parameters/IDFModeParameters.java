@@ -13,7 +13,7 @@ public class IDFModeParameters extends ModeParameters {
 
 		// Car
 		parameters.car.alpha_u = 1.35;
-		parameters.car.betaTravelTime_u_min = -0.06;
+		parameters.car.betaTravelTime_u_min = -0.0667;
 
 		parameters.car.constantAccessEgressWalkTime_min = 4.0;
 		parameters.car.constantParkingSearchPenalty_min = 4.0;
@@ -26,7 +26,7 @@ public class IDFModeParameters extends ModeParameters {
 		parameters.pt.betaAccessEgressTime_u_min = -0.0804;
 
 		// Bike
-		parameters.bike.alpha_u = 0.0;
+		parameters.bike.alpha_u = 0.1;
 		parameters.bike.betaTravelTime_u_min = -0.15;
 		parameters.bike.betaAgeOver18_u_a = -0.0496;
 
