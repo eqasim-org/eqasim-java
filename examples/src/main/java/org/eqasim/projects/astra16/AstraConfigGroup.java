@@ -46,7 +46,7 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double bikeAvailability = 0.5;
 	private double maximumWaitTime_min = 15;
 
-	private double dispatchInterval = 1.0;
+	private double dispatchInterval = 10.0;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
