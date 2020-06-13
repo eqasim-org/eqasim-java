@@ -64,8 +64,9 @@ public class AstraConfigurator extends EqasimConfigurator {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
 		// General MATSim
-		config.controler().setLastIteration(100);
-		config.controler().setWriteEventsInterval(100);
+		config.controler().setLastIteration(200);
+		config.controler().setWriteEventsInterval(200);
+		config.controler().setWritePlansInterval(200);
 
 		config.qsim().setNumberOfThreads(Math.min(12, Runtime.getRuntime().availableProcessors()));
 		config.global().setNumberOfThreads(Runtime.getRuntime().availableProcessors());
