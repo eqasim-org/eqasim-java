@@ -110,7 +110,11 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 					currentValue = cumulativeValues[groupIndex][timeIndex] / observationCounts[groupIndex][timeIndex];
 				}
 
-				estimates[groupIndex][timeIndex] = (1.0 - alpha) * previousValue + alpha * currentValue;
+				if (currentValue > previousValue) {
+					estimates[groupIndex][timeIndex] = alpha * previousValue + (1.0 - alpha) * currentValue;
+				} else {
+					estimates[groupIndex][timeIndex] = (1.0 - alpha) * previousValue + alpha * currentValue;
+				}
 
 				cumulativeValues[groupIndex][timeIndex] = 0.0;
 				observationCounts[groupIndex][timeIndex] = 0;
