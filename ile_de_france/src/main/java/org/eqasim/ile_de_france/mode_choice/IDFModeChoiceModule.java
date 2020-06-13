@@ -52,7 +52,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
 		}
 
-		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
+		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
 		return parameters;
 	}
 
