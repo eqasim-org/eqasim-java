@@ -134,7 +134,7 @@ public class AstraConfigurator extends EqasimConfigurator {
 
 		DispatcherConfig dispatcherConfig = operatorConfig.getDispatcherConfig();
 		dispatcherConfig.setType(SingleHeuristicDispatcher.TYPE);
-		dispatcherConfig.addParam("replanningInterval", "1.0");
+		dispatcherConfig.addParam("replanningInterval", String.valueOf(astraConfig.getDispatchInterval()));
 	}
 
 	static public void adjustScenario(Scenario scenario) {

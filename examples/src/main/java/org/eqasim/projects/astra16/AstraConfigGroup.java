@@ -25,6 +25,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String BIKE_AVAILABILITY = "bikeAvailability";
 	static public final String MAXIMUM_WAIT_TIME_MIN = "maximumWaitTime_min";
 
+	static public final String DISPATCH_INTERVAL = "dispatchInterval";
+
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
 	private String operatingAreaIndexAttribute = "wgIndex";
@@ -43,6 +45,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 
 	private double bikeAvailability = 0.5;
 	private double maximumWaitTime_min = 15;
+
+	private double dispatchInterval = 1.0;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -176,6 +180,16 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(MAXIMUM_WAIT_TIME_MIN)
 	public void setMaximumWaitTime(double maximumWaitTime_min) {
 		this.maximumWaitTime_min = maximumWaitTime_min;
+	}
+
+	@StringGetter(DISPATCH_INTERVAL)
+	public double getDispatchInterval() {
+		return dispatchInterval;
+	}
+
+	@StringSetter(DISPATCH_INTERVAL)
+	public void setDispatchInterval(double dispatchInterval) {
+		this.dispatchInterval = dispatchInterval;
 	}
 
 	static public AstraConfigGroup get(Config config) {
