@@ -47,7 +47,7 @@ public class RunFlowAnalysis {
 		PolylineFeatureFactory.Builder featureFactoryBuilder = new PolylineFeatureFactory.Builder() //
 				.setCrs(crs) //
 				.setName("link") //
-				.addAttribute("link_id", String.class);
+				.addAttribute("link_id", String.class).addAttribute("road_type", String.class);
 
 		for (int i = 0; i < 30; i++) {
 			featureFactoryBuilder.addAttribute("flow_" + i, Integer.class);
@@ -70,10 +70,11 @@ public class RunFlowAnalysis {
 				if (link.getAllowedModes().contains("car")) {
 					Object[] attributes = new Object[61];
 					attributes[0] = link.getId().toString();
+					attributes[1] = (String) link.getAttributes().getAttribute("osm:way:highway");
 
 					for (int i = 0; i < 30; i++) {
-						attributes[i * 2 + 1] = allLinkFlow.get(i);
-						attributes[i * 2 + 2] = avLinkFlow.get(i);
+						attributes[i * 2 + 2] = allLinkFlow.get(i);
+						attributes[i * 2 + 3] = avLinkFlow.get(i);
 					}
 
 					features.add(featureFactory.createPolyline(new Coordinate[] { fromCoordinate, toCoordinate },
