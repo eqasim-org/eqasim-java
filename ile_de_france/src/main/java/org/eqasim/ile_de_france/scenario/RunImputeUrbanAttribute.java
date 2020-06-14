@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -34,6 +35,7 @@ public class RunImputeUrbanAttribute {
 
 		Config config = ConfigUtils.createConfig();
 		Scenario scenario = ScenarioUtils.createScenario(config);
+		EqasimConfigurator.configureScenario(scenario);
 
 		new PopulationReader(scenario).readFile(inputPath.toString());
 
