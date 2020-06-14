@@ -11,6 +11,7 @@ import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -26,6 +27,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	public static final String CAR_COST_MODEL_NAME = "IDFCarCostModel";
 	public static final String PT_COST_MODEL_NAME = "IDFPtCostModel";
 
+	public static final String CAR_ESTIMATOR_NAME = "IDFCarUtilityEstimator";
+
 	public IDFModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
 	}
@@ -38,6 +41,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(IDFCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(IDFPtCostModel.class);
+
+		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(IDFCarUtilityEstimator.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 	}
@@ -52,7 +57,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
 		}
 
-		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
+		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
 		return parameters;
 	}
 
