@@ -41,7 +41,7 @@ public class RunLocationAssignment {
 		discretizationThresholds.put("car", 200.0);
 		discretizationThresholds.put("car_passenger", 200.0);
 		discretizationThresholds.put("pt", 200.0);
-		discretizationThresholds.put("taxi", 200.0);
+		discretizationThresholds.put("mc", 200.0);
 
 		discretizationThresholds.put("bike", 100.0);
 		discretizationThresholds.put("walk", 100.0);
