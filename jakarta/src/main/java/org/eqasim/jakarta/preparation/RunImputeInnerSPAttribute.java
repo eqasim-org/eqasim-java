@@ -14,15 +14,15 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
 
-public class RunImputeInnerSFAttribute {
+public class RunImputeInnerSPAttribute {
 	public static void main(String[] args)
 			throws MalformedURLException, IOException, ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("sf-path", "input-path", "output-path") //
+				.requireOptions("sp-path", "input-path", "output-path", "attribute-name") //
 				.build();
 
 		// Load IRIS
-		Set<SFTract> iris = SFTract.read(new File(cmd.getOptionStrict("sf-path")));
+		Set<SPTract> iris = SPTract.read(new File(cmd.getOptionStrict("sp-path")));
 
 		// Load population
 		Config config = ConfigUtils.createConfig();
@@ -32,8 +32,8 @@ public class RunImputeInnerSFAttribute {
 		populationReader.readFile(cmd.getOptionStrict("input-path"));
 
 		// Impute attribute
-		ImputeInnerSFAttribute imputeInnerSFAttribute = new ImputeInnerSFAttribute(iris);
-		imputeInnerSFAttribute.run(scenario.getPopulation());
+		ImputeInnerSPAttribute imputeInnerSPAttribute = new ImputeInnerSPAttribute(iris);
+		imputeInnerSPAttribute.run(scenario.getPopulation(), cmd.getOptionStrict("attribute-name"));
 
 		// Write population
 		PopulationWriter populationWriter = new PopulationWriter(scenario.getPopulation());

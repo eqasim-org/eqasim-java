@@ -9,15 +9,15 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 
-public class ImputeInnerSFAttribute {
-	private final Set<SFTract> sfTracts;
+public class ImputeInnerSPAttribute {
+	private final Set<SPTract> spTracts;
 
-	public ImputeInnerSFAttribute(Set<SFTract> sfTracts) {
-		this.sfTracts = sfTracts;
+	public ImputeInnerSPAttribute(Set<SPTract> spTracts) {
+		this.spTracts = spTracts;
 	}
 
-	public void run(Population population) throws InterruptedException {
-		ParallelProgress progress = new ParallelProgress("Imputing innerSF attribute ...",
+	public void run(Population population, String attributeName) throws InterruptedException {
+		ParallelProgress progress = new ParallelProgress("Imputing innerSP attribute ...",
 				population.getPersons().size());
 		progress.start();
 
@@ -26,7 +26,7 @@ public class ImputeInnerSFAttribute {
 				for (PlanElement planElement : plan.getPlanElements()) {
 					if (planElement instanceof Activity) {
 						Activity activity = (Activity) planElement;
-						activity.getAttributes().putAttribute("city", isCoveredByIRIS(activity));
+						activity.getAttributes().putAttribute(attributeName, isCoveredByIRIS(activity));
 					}
 				}
 			}
@@ -38,7 +38,7 @@ public class ImputeInnerSFAttribute {
 	}
 
 	private boolean isCoveredByIRIS(Activity activity) {
-		for (SFTract candidate : this.sfTracts) {
+		for (SPTract candidate : this.spTracts) {
 			if (candidate.containsCoordinate(activity.getCoord())) {
 				return true;
 			}

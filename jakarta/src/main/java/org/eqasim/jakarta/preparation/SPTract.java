@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.geotools.data.DataStore;
@@ -20,12 +19,12 @@ import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
 import org.opengis.feature.simple.SimpleFeature;
 
-public class SFTract {
+public class SPTract {
 	private final static GeometryFactory factory = new GeometryFactory();
 
 	public final Geometry geometry;
 
-	public SFTract(Geometry geometry) {
+	public SPTract(Geometry geometry) {
 		this.geometry = geometry;
 	}
 
@@ -35,18 +34,18 @@ public class SFTract {
 		return geometry.contains(point);
 	}
 
-	public static Set<SFTract> read(File path) throws MalformedURLException, IOException {
+	public static Set<SPTract> read(File path) throws MalformedURLException, IOException {
 		DataStore dataStore = DataStoreFinder.getDataStore(Collections.singletonMap("url", path.toURI().toURL()));
 		SimpleFeatureSource featureSource = dataStore.getFeatureSource(dataStore.getTypeNames()[0]);
 		SimpleFeatureCollection featureCollection = featureSource.getFeatures();
 		SimpleFeatureIterator featureIterator = featureCollection.features();
 
-		Set<SFTract> iris = new HashSet<>();
+		Set<SPTract> iris = new HashSet<>();
 
 		while (featureIterator.hasNext()) {
 			SimpleFeature feature = featureIterator.next();
 			Geometry geometry = (Geometry) feature.getDefaultGeometry();
-			iris.add(new SFTract(geometry));
+			iris.add(new SPTract(geometry));
 		}
 
 		featureIterator.close();

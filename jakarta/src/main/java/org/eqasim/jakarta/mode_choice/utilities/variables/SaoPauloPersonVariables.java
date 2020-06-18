@@ -2,11 +2,12 @@ package org.eqasim.jakarta.mode_choice.utilities.variables;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
 
-public class SanFranciscoPersonVariables implements BaseVariables {
+public class SaoPauloPersonVariables implements BaseVariables {
 	public final boolean hasSubscription;
-    public final boolean cityTrip;
-    public final double hhlIncome;
-	public SanFranciscoPersonVariables(boolean hasSubscription, boolean cityTrip, double hhlIncome) {
+	public double hhlIncome;
+	public boolean cityTrip;
+
+	public SaoPauloPersonVariables(boolean hasSubscription, boolean cityTrip, double hhlIncome) {
 		this.hasSubscription = hasSubscription;
 		this.cityTrip = cityTrip;
 		this.hhlIncome = hhlIncome;
