@@ -8,17 +8,16 @@ import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.jakarta.mode_choice.JakartaModeChoiceModule;
-import org.eqasim.sao_paulo.mode_choice.SaoPauloModeChoiceModule;
-import org.eqasim.sao_paulo.scenario.RunAdaptConfig;
+import org.eqasim.jakarta.mode_choice.JakartaModeChoiceModule;
+import org.eqasim.jakarta.scenario.RunAdaptConfig;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceModel.FallbackBehaviour;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
-publiimport ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+
+import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
