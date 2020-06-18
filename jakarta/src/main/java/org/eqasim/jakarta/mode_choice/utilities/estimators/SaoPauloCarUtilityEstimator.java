@@ -8,7 +8,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredict
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.jakarta.mode_choice.parameters.SaoPauloModeParameters;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
-import org.eqasim.jakarta.mode_choice.utilities.variables.SaoPauloPersonVariables;
+import org.eqasim.jakarta.mode_choice.utilities.variables.JakartaPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 
@@ -30,13 +30,13 @@ public class SaoPauloCarUtilityEstimator extends CarUtilityEstimator {
 		this.predictor = predictor;
 	}
 	
-	protected double estimateRegionalUtility(SaoPauloPersonVariables variables) {
+	protected double estimateRegionalUtility(JakartaPersonVariables variables) {
 		return (variables.cityTrip) ? parameters.spCar.alpha_car_city : 0.0;
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		SaoPauloPersonVariables variables = predictor.predictVariables(person, trip, elements);
+		JakartaPersonVariables variables = predictor.predictVariables(person, trip, elements);
 		CarVariables variables_car = carPredictor.predict(person, trip, elements);
 
 		double utility = 0.0;

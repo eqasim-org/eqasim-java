@@ -8,7 +8,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredict
 import org.eqasim.jakarta.mode_choice.parameters.SaoPauloModeParameters;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaTaxiPredictor;
-import org.eqasim.jakarta.mode_choice.utilities.variables.SaoPauloPersonVariables;
+import org.eqasim.jakarta.mode_choice.utilities.variables.JakartaPersonVariables;
 import org.eqasim.jakarta.mode_choice.utilities.variables.TaxiVariables;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -34,7 +34,7 @@ public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		SaoPauloPersonVariables variables = predictor.predictVariables(person, trip, elements);
+		JakartaPersonVariables variables = predictor.predictVariables(person, trip, elements);
 		TaxiVariables variables_taxi = taxiPredictor.predict(person, trip, elements);
 
 		double utility = 0.0;

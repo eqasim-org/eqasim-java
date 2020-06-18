@@ -6,7 +6,7 @@ import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.jakarta.mode_choice.parameters.SaoPauloCostParameters;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
-import org.eqasim.jakarta.mode_choice.utilities.variables.SaoPauloPersonVariables;
+import org.eqasim.jakarta.mode_choice.utilities.variables.JakartaPersonVariables;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -75,7 +75,7 @@ public class SaoPauloPtCostModel implements CostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		SaoPauloPersonVariables variables = predictor.predictVariables(person, trip, elements);
+		JakartaPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
 		if (variables.hasSubscription) {
 			return 0.0;
