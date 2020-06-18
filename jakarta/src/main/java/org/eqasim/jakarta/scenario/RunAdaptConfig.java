@@ -8,7 +8,6 @@ import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.jakarta.mode_choice.JakartaModeChoiceModule;
-import org.eqasim.jakarta.mode_choice.JakartaModeChoiceModule;
 import org.eqasim.jakarta.scenario.RunAdaptConfig;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine.ConfigurationException;
