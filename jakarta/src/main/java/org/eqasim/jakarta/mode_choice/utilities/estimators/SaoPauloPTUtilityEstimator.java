@@ -7,7 +7,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredict
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.jakarta.mode_choice.parameters.SaoPauloModeParameters;
-import org.eqasim.jakarta.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
 import org.eqasim.jakarta.mode_choice.utilities.variables.SaoPauloPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -18,12 +18,12 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class SaoPauloPTUtilityEstimator  extends PtUtilityEstimator{
 	private final SaoPauloModeParameters parameters;
-	private final SaoPauloPersonPredictor predictor;
+	private final JakartaPersonPredictor predictor;
 	private final PtPredictor ptPredictor;
 
 	@Inject
 	public SaoPauloPTUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
-			PtPredictor ptPredictor, SaoPauloPersonPredictor predictor) {
+			PtPredictor ptPredictor, JakartaPersonPredictor predictor) {
 		super(parameters, ptPredictor);
 		this.ptPredictor = ptPredictor;
 		this.parameters = parameters;

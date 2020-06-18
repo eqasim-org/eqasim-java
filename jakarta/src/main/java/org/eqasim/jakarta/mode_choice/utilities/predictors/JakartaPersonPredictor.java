@@ -11,14 +11,14 @@ import org.matsim.api.core.v01.population.PlanElement;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SaoPauloPersonPredictor extends CachedVariablePredictor<SaoPauloPersonVariables> {
+public class JakartaPersonPredictor extends CachedVariablePredictor<SaoPauloPersonVariables> {
 	@Override
 	protected SaoPauloPersonVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
 		SaoPauloModeParameters parameters = SaoPauloModeParameters.buildDefault();
-		boolean hasSubscription = SaoPauloPredictorUtils.hasSubscription(person);
-		boolean cityTrip = SaoPauloPredictorUtils.startsEndsinCity(trip);
-		double hhlIncome = SaoPauloPredictorUtils.hhlIncome(person, parameters);
+		boolean hasSubscription = JakartaPredictorUtils.hasSubscription(person);
+		boolean cityTrip = JakartaPredictorUtils.startsEndsinCity(trip);
+		double hhlIncome = JakartaPredictorUtils.hhlIncome(person, parameters);
 		return new SaoPauloPersonVariables(hasSubscription, cityTrip ,hhlIncome);
 	}
 	

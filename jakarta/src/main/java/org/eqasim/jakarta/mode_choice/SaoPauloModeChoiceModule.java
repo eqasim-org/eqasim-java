@@ -20,8 +20,8 @@ import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloCarUtilityEst
 import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloPTUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloTaxiUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloWalkUtilityEstimator;
-import org.eqasim.jakarta.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
-import org.eqasim.jakarta.mode_choice.utilities.predictors.SaoPauloTaxiPredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaTaxiPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -52,8 +52,8 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	protected void installEqasimExtension() {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SaoPauloModeAvailability.class);
 
-		bind(SaoPauloPersonPredictor.class);
-		bind(SaoPauloTaxiPredictor.class);
+		bind(JakartaPersonPredictor.class);
+		bind(JakartaTaxiPredictor.class);
 		bindTourConstraintFactory("VehicleTourConstraintWithCarPassenger")
 		.to(VehicleTourConstraintWithCarPassenger.Factory.class);
 		bindTripConstraintFactory("WalkDurationConstraint")

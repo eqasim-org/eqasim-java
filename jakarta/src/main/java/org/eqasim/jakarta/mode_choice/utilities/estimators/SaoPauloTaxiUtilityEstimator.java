@@ -6,8 +6,8 @@ import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.jakarta.mode_choice.parameters.SaoPauloModeParameters;
-import org.eqasim.jakarta.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
-import org.eqasim.jakarta.mode_choice.utilities.predictors.SaoPauloTaxiPredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaTaxiPredictor;
 import org.eqasim.jakarta.mode_choice.utilities.variables.SaoPauloPersonVariables;
 import org.eqasim.jakarta.mode_choice.utilities.variables.TaxiVariables;
 
@@ -21,12 +21,12 @@ import com.google.inject.Inject;
 
 public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
 	private final SaoPauloModeParameters parameters;
-	private final SaoPauloPersonPredictor predictor;
-	private final SaoPauloTaxiPredictor taxiPredictor;
+	private final JakartaPersonPredictor predictor;
+	private final JakartaTaxiPredictor taxiPredictor;
 
 	@Inject
 	public SaoPauloTaxiUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
-			SaoPauloTaxiPredictor taxiPredictor, SaoPauloPersonPredictor predictor) {
+			JakartaTaxiPredictor taxiPredictor, JakartaPersonPredictor predictor) {
 		this.taxiPredictor = taxiPredictor;
 		this.parameters = parameters;
 		this.predictor = predictor;

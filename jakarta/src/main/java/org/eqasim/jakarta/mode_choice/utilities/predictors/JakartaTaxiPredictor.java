@@ -16,12 +16,12 @@ import com.google.inject.name.Named;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SaoPauloTaxiPredictor extends CachedVariablePredictor<TaxiVariables> {
+public class JakartaTaxiPredictor extends CachedVariablePredictor<TaxiVariables> {
 	private final CostModel costModel;
 	private final ModeParameters parameters;
 
 	@Inject
-	public SaoPauloTaxiPredictor(ModeParameters parameters, @Named("taxi") CostModel costModel) {
+	public JakartaTaxiPredictor(ModeParameters parameters, @Named("taxi") CostModel costModel) {
 		this.costModel = costModel;
 		this.parameters = parameters;
 	}
