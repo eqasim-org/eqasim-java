@@ -2,7 +2,7 @@ package org.eqasim.jakarta.mode_choice.parameters;
 
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 
-public class SaoPauloCostParameters implements ParameterDefinition {
+public class JakartaCostParameters implements ParameterDefinition {
 	
 	public double carCost_BRL_km;	
 	
@@ -15,8 +15,8 @@ public class SaoPauloCostParameters implements ParameterDefinition {
 
 	public double taxMinCost_BRL;
 
-	public static SaoPauloCostParameters buildDefault() {
-		SaoPauloCostParameters parameters = new SaoPauloCostParameters();
+	public static JakartaCostParameters buildDefault() {
+		JakartaCostParameters parameters = new JakartaCostParameters();
 
 		parameters.carCost_BRL_km = 0.51;
 		

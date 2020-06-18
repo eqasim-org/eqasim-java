@@ -1,6 +1,6 @@
 package org.eqasim.jakarta.mode_choice.utilities.predictors;
 
-import org.eqasim.jakarta.mode_choice.parameters.SaoPauloModeParameters;
+import org.eqasim.jakarta.mode_choice.parameters.JakartaModeParameters;
 import org.matsim.api.core.v01.population.Person;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -17,7 +17,7 @@ public class JakartaPredictorUtils {
 		return startInCity != null && endInCity != null && startInCity | endInCity;
 	}
 
-	static public Double hhlIncome(Person person, SaoPauloModeParameters parameters) {
+	static public Double hhlIncome(Person person, JakartaModeParameters parameters) {
         Double hhlIncome = (Double) person.getAttributes().getAttribute("hhlIncome");
         if (hhlIncome != null) {
         	return hhlIncome;

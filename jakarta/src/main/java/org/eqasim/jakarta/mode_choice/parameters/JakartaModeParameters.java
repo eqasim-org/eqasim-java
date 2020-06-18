@@ -2,7 +2,7 @@ package org.eqasim.jakarta.mode_choice.parameters;
 
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
-public class SaoPauloModeParameters extends ModeParameters {
+public class JakartaModeParameters extends ModeParameters {
 	public class SaoPauloWalkParameters {
 		public double alpha_walk_city = 0.0;
 	}
@@ -46,8 +46,8 @@ public class SaoPauloModeParameters extends ModeParameters {
 	public final SaoPauloAvgHHLIncome spAvgHHLIncome = new SaoPauloAvgHHLIncome();
 	public final SaoPauloTaxiParameters spTaxi = new SaoPauloTaxiParameters();
 
-	public static SaoPauloModeParameters buildDefault() {
-		SaoPauloModeParameters parameters = new SaoPauloModeParameters();
+	public static JakartaModeParameters buildDefault() {
+		JakartaModeParameters parameters = new JakartaModeParameters();
 
 		// Cost
 		parameters.betaCost_u_MU = -0.0606;

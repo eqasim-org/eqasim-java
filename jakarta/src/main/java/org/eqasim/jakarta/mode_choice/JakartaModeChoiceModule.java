@@ -11,11 +11,11 @@ import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.jakarta.mode_choice.constraints.VehicleTourConstraintWithCarPassenger;
 import org.eqasim.jakarta.mode_choice.constraints.WalkDurationConstraint;
-import org.eqasim.jakarta.mode_choice.costs.SaoPauloCarCostModel;
-import org.eqasim.jakarta.mode_choice.costs.SaoPauloPtCostModel;
-import org.eqasim.jakarta.mode_choice.costs.SaoPauloTaxiCostModel;
-import org.eqasim.jakarta.mode_choice.parameters.SaoPauloCostParameters;
-import org.eqasim.jakarta.mode_choice.parameters.SaoPauloModeParameters;
+import org.eqasim.jakarta.mode_choice.costs.JakartaCarCostModel;
+import org.eqasim.jakarta.mode_choice.costs.JakartaPtCostModel;
+import org.eqasim.jakarta.mode_choice.costs.JakartaTaxiCostModel;
+import org.eqasim.jakarta.mode_choice.parameters.JakartaCostParameters;
+import org.eqasim.jakarta.mode_choice.parameters.JakartaModeParameters;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaCarUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaPTUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaTaxiUtilityEstimator;
@@ -35,7 +35,7 @@ import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFind
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 
-public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
+public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
 	static public final String MODE_AVAILABILITY_NAME = "SaoPauloModeAvailability";
@@ -44,13 +44,13 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	static public final String PT_COST_MODEL_NAME = "SaoPauloPtCostModel";
 	static public final String TAXI_COST_MODEL_NAME = "SaoPauloTaxiCostModel";
 
-	public SaoPauloModeChoiceModule(CommandLine commandLine) {
+	public JakartaModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
 	}
 
 	@Override
 	protected void installEqasimExtension() {
-		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SaoPauloModeAvailability.class);
+		bindModeAvailability(MODE_AVAILABILITY_NAME).to(JakartaModeAvailability.class);
 
 		bind(JakartaPersonPredictor.class);
 		bind(JakartaTaxiPredictor.class);
@@ -59,21 +59,21 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory("WalkDurationConstraint")
 		.to(WalkDurationConstraint.Factory.class);
 
-		bindCostModel(CAR_COST_MODEL_NAME).to(SaoPauloCarCostModel.class);
-		bindCostModel(PT_COST_MODEL_NAME).to(SaoPauloPtCostModel.class);
-		bindCostModel(TAXI_COST_MODEL_NAME).to(SaoPauloTaxiCostModel.class);
+		bindCostModel(CAR_COST_MODEL_NAME).to(JakartaCarCostModel.class);
+		bindCostModel(PT_COST_MODEL_NAME).to(JakartaPtCostModel.class);
+		bindCostModel(TAXI_COST_MODEL_NAME).to(JakartaTaxiCostModel.class);
 		bindUtilityEstimator("spPTEstimator").to(JakartaPTUtilityEstimator.class);
 		bindUtilityEstimator("spWalkEstimator").to(JakartaWalkUtilityEstimator.class);
 		bindUtilityEstimator("spCarEstimator").to(JakartaCarUtilityEstimator.class);
 		bindUtilityEstimator("spTaxiEstimator").to(JakartaTaxiUtilityEstimator.class);
-		bind(ModeParameters.class).to(SaoPauloModeParameters.class);
+		bind(ModeParameters.class).to(JakartaModeParameters.class);
 	}
 
 	@Provides
 	@Singleton
-	public SaoPauloModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
+	public JakartaModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
-		SaoPauloModeParameters parameters = SaoPauloModeParameters.buildDefault();
+		JakartaModeParameters parameters = JakartaModeParameters.buildDefault();
 
 		if (config.getModeParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
@@ -85,8 +85,8 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public SaoPauloCostParameters provideCostParameters(EqasimConfigGroup config) {
-		SaoPauloCostParameters parameters = SaoPauloCostParameters.buildDefault();
+	public JakartaCostParameters provideCostParameters(EqasimConfigGroup config) {
+		JakartaCostParameters parameters = JakartaCostParameters.buildDefault();
 
 		if (config.getCostParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);

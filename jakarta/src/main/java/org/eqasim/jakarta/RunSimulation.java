@@ -4,7 +4,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.jakarta.mode_choice.SaoPauloModeChoiceModule;
+import org.eqasim.jakarta.mode_choice.JakartaModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -40,7 +40,7 @@ public class RunSimulation {
 		EqasimConfigurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new SaoPauloModeChoiceModule(cmd));
+		controller.addOverridingModule(new JakartaModeChoiceModule(cmd));
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.run();
 	}
