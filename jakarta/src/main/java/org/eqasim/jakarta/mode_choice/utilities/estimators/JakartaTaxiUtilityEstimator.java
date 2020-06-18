@@ -19,13 +19,13 @@ import org.matsim.api.core.v01.population.PlanElement;
 import com.google.inject.Inject;
 
 
-public class SaoPauloTaxiUtilityEstimator implements UtilityEstimator {
+public class JakartaTaxiUtilityEstimator implements UtilityEstimator {
 	private final SaoPauloModeParameters parameters;
 	private final JakartaPersonPredictor predictor;
 	private final JakartaTaxiPredictor taxiPredictor;
 
 	@Inject
-	public SaoPauloTaxiUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
+	public JakartaTaxiUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
 			JakartaTaxiPredictor taxiPredictor, JakartaPersonPredictor predictor) {
 		this.taxiPredictor = taxiPredictor;
 		this.parameters = parameters;

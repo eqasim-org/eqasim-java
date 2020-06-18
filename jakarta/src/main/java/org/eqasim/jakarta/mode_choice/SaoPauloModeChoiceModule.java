@@ -16,10 +16,10 @@ import org.eqasim.jakarta.mode_choice.costs.SaoPauloPtCostModel;
 import org.eqasim.jakarta.mode_choice.costs.SaoPauloTaxiCostModel;
 import org.eqasim.jakarta.mode_choice.parameters.SaoPauloCostParameters;
 import org.eqasim.jakarta.mode_choice.parameters.SaoPauloModeParameters;
-import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloCarUtilityEstimator;
-import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloPTUtilityEstimator;
-import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloTaxiUtilityEstimator;
-import org.eqasim.jakarta.mode_choice.utilities.estimators.SaoPauloWalkUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaCarUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaPTUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaTaxiUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaWalkUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaTaxiPredictor;
 import org.matsim.core.config.CommandLine;
@@ -62,10 +62,10 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 		bindCostModel(CAR_COST_MODEL_NAME).to(SaoPauloCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SaoPauloPtCostModel.class);
 		bindCostModel(TAXI_COST_MODEL_NAME).to(SaoPauloTaxiCostModel.class);
-		bindUtilityEstimator("spPTEstimator").to(SaoPauloPTUtilityEstimator.class);
-		bindUtilityEstimator("spWalkEstimator").to(SaoPauloWalkUtilityEstimator.class);
-		bindUtilityEstimator("spCarEstimator").to(SaoPauloCarUtilityEstimator.class);
-		bindUtilityEstimator("spTaxiEstimator").to(SaoPauloTaxiUtilityEstimator.class);
+		bindUtilityEstimator("spPTEstimator").to(JakartaPTUtilityEstimator.class);
+		bindUtilityEstimator("spWalkEstimator").to(JakartaWalkUtilityEstimator.class);
+		bindUtilityEstimator("spCarEstimator").to(JakartaCarUtilityEstimator.class);
+		bindUtilityEstimator("spTaxiEstimator").to(JakartaTaxiUtilityEstimator.class);
 		bind(ModeParameters.class).to(SaoPauloModeParameters.class);
 	}
 

@@ -16,13 +16,13 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class SaoPauloPTUtilityEstimator  extends PtUtilityEstimator{
+public class JakartaPTUtilityEstimator  extends PtUtilityEstimator{
 	private final SaoPauloModeParameters parameters;
 	private final JakartaPersonPredictor predictor;
 	private final PtPredictor ptPredictor;
 
 	@Inject
-	public SaoPauloPTUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
+	public JakartaPTUtilityEstimator(SaoPauloModeParameters parameters, PersonPredictor personPredictor,
 			PtPredictor ptPredictor, JakartaPersonPredictor predictor) {
 		super(parameters, ptPredictor);
 		this.ptPredictor = ptPredictor;
