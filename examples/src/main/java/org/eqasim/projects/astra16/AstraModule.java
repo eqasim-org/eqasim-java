@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.eqasim.projects.astra16.analysis.ConvergenceListener;
 import org.eqasim.projects.astra16.mode_choice.AstraModeAvailability;
 import org.eqasim.projects.astra16.mode_choice.AstraModeParameters;
 import org.eqasim.projects.astra16.mode_choice.InfiniteHeadwayConstraint;
@@ -24,6 +25,7 @@ import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provides;
@@ -55,6 +57,15 @@ public class AstraModule extends AbstractEqasimExtension {
 
 		bind(SwissModeAvailability.class);
 		bindModeAvailability(AstraModeAvailability.NAME).to(AstraModeAvailability.class);
+
+		addEventHandlerBinding().to(ConvergenceListener.class);
+		addControlerListenerBinding().to(ConvergenceListener.class);
+	}
+
+	@Provides
+	@Singleton
+	public ConvergenceListener provideConvergenceListener(OutputDirectoryHierarchy outputHierarchy) {
+		return new ConvergenceListener(outputHierarchy);
 	}
 
 	@Provides

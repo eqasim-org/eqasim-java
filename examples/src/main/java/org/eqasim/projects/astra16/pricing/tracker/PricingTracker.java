@@ -59,10 +59,10 @@ public class PricingTracker implements IterationEndsListener, BusinessModelListe
 		try {
 			BufferedWriter writer = IOUtils.getBufferedWriter(outputHierarchy.getOutputFilename("distance_fare.csv"));
 
-			writer.write("active;computed\n");
+			writer.write("iteration,active;computed\n");
 
 			for (int i = 0; i < event.getIteration(); i++) {
-				writer.write(String.format("%f;%f\n", activeData.get(i), nominalData.get(i)));
+				writer.write(String.format("%d;%f;%f\n", i, activeData.get(i), nominalData.get(i)));
 			}
 
 			writer.close();
