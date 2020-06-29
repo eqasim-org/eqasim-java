@@ -1,5 +1,7 @@
 package org.eqasim.projects.astra16.pricing.tracker;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +14,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.charts.XYLineChart;
+import org.matsim.core.utils.io.IOUtils;
 
 public class PricingTracker implements IterationEndsListener, BusinessModelListener {
 	private final PriceInterpolator interpolator;
@@ -52,6 +55,20 @@ public class PricingTracker implements IterationEndsListener, BusinessModelListe
 		chart.addSeries("Computed", nominalData);
 
 		chart.saveAsPng(outputHierarchy.getOutputFilename("distance_fare.png"), 800, 600);
+
+		try {
+			BufferedWriter writer = IOUtils.getBufferedWriter(outputHierarchy.getOutputFilename("distance_fare.csv"));
+
+			writer.write("active;computed\n");
+
+			for (int i = 0; i < event.getIteration(); i++) {
+				writer.write(String.format("%f;%f\n", activeData.get(i), nominalData.get(i)));
+			}
+
+			writer.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
