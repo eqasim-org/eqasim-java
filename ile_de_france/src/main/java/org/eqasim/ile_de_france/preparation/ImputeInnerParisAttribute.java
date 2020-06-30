@@ -26,7 +26,10 @@ public class ImputeInnerParisAttribute {
 				for (PlanElement planElement : plan.getPlanElements()) {
 					if (planElement instanceof Activity) {
 						Activity activity = (Activity) planElement;
-						activity.getAttributes().putAttribute("innerParis", isCoveredByIRIS(activity));
+
+						if (!activity.getType().contains("interaction")) {
+							activity.getAttributes().putAttribute("city", isCoveredByIRIS(activity));
+						}
 					}
 				}
 			}
