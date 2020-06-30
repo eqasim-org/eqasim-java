@@ -144,7 +144,8 @@ public class AstraConfigurator extends EqasimConfigurator {
 				Person person = scenario.getPopulation().getPersons().get(memberId);
 
 				if (person != null) {
-					person.getAttributes().putAttribute("householdIncome", household.getIncome().getIncome());
+					// person.getAttributes().putAttribute("householdIncome",
+					// household.getIncome().getIncome());
 				}
 			}
 		}
@@ -159,9 +160,9 @@ public class AstraConfigurator extends EqasimConfigurator {
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			if (!person.getId().toString().contains("freight")) {
-				if (!person.getAttributes().getAttribute("bikeAvailability").equals("FOR_NONE")) {
+				if (!person.getAttributes().getAttribute("bikeAvailability").equals("none")) {
 					if (random.nextDouble() > astraConfig.getBikeAvailability()) {
-						person.getAttributes().putAttribute("bikeAvailability", "FOR_NONE");
+						person.getAttributes().putAttribute("bikeAvailability", "none");
 					}
 				}
 			}

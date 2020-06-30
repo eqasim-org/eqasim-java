@@ -34,7 +34,7 @@ public class SwissModeAvailability implements ModeAvailability {
 			carAvailability = false;
 		}
 
-		if (PersonUtils.getCarAvail(person).equals("never")) {
+		if (person.getAttributes().getAttribute("carAvailability").equals("none")) {
 			carAvailability = false;
 		}
 
@@ -45,7 +45,7 @@ public class SwissModeAvailability implements ModeAvailability {
 		// Check bike availability
 		boolean bikeAvailability = true;
 
-		if (person.getAttributes().getAttribute("bikeAvailability").equals("FOR_NONE")) {
+		if (person.getAttributes().getAttribute("bikeAvailability").equals("none")) {
 			bikeAvailability = false;
 		}
 
@@ -61,7 +61,7 @@ public class SwissModeAvailability implements ModeAvailability {
 		}
 
 		// Add special mode "car_passenger" if applicable
-		Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isCarPassenger");
+		Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
 
 		if (isCarPassenger != null && isCarPassenger) {
 			modes.add("car_passenger");
