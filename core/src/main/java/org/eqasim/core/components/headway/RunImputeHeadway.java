@@ -18,7 +18,7 @@ public class RunImputeHeadway {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
-				.allowOptions("threads", "batch-size") //
+				.allowOptions("threads", "batch-size", "interval") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
@@ -35,9 +35,11 @@ public class RunImputeHeadway {
 				new DefaultEnrichedTransitRouteFactory());
 		ScenarioUtils.loadScenario(scenario);
 
+		double interval = cmd.getOption("interval").map(Double::parseDouble).orElse(2.0 * 3600.0);
+
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(EqasimConfigurator.getModules()) //
-				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, 2.0 * 3600.0)) //
+				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, interval)) //
 				.build();
 
 		HeadwayImputer headwayImputer = injector.getInstance(HeadwayImputer.class);
