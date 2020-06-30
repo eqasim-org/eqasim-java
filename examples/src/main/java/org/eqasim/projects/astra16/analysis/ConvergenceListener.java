@@ -24,7 +24,9 @@ public class ConvergenceListener implements IterationEndsListener, PersonDepartu
 
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
-		iterationTrips++;
+		if (event.getLegMode().equals("av")) {
+			iterationTrips++;
+		}
 	}
 
 	@Override
@@ -35,7 +37,7 @@ public class ConvergenceListener implements IterationEndsListener, PersonDepartu
 		try {
 			BufferedWriter writer = IOUtils.getBufferedWriter(outputHierarchy.getOutputFilename("amod_trips.csv"));
 
-			writer.write("iteration;computed\n");
+			writer.write("iteration;trips\n");
 
 			for (int i = 0; i < trips.size(); i++) {
 				writer.write(String.format("%d;%d\n", i, trips.get(i)));
