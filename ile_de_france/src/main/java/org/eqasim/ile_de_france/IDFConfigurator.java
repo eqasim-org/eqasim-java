@@ -15,7 +15,7 @@ public class IDFConfigurator extends EqasimConfigurator {
 				Person person = scenario.getPopulation().getPersons().get(memberId);
 
 				if (person != null) {
-					copyAttribute(household, person, "carAvailability");
+					// copyAttribute(household, person, "carAvailability");
 				}
 			}
 		}
