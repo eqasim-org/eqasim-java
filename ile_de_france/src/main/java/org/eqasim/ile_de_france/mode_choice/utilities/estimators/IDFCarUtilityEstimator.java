@@ -32,7 +32,9 @@ public class IDFCarUtilityEstimator extends CarUtilityEstimator {
 
 		if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
 			utility += parameters.idfCar.betaInsideUrbanArea;
-		} else if (variables.hasUrbanOrigin || variables.hasUrbanDestination) {
+		}
+		
+		if (variables.hasUrbanOrigin || variables.hasUrbanDestination) {
 			utility += parameters.idfCar.betaCrossingUrbanArea;
 		}
 
