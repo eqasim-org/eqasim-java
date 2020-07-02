@@ -60,9 +60,9 @@ public class SanFranciscoModeParameters extends ModeParameters {
 		parameters.sfPT.alpha_pt_city = 1.9553;
 		
 		// Bike
-		parameters.bike.alpha_u = -0.66;
-		parameters.bike.betaTravelTime_u_min = 0.2641;
-		parameters.bike.betaAgeOver18_u_a = 0.9005;
+		parameters.bike.alpha_u = -1.0;
+		parameters.sfBike.vot_min = 0.2641;
+		parameters.bike.betaAgeOver18_u_a = 0.0;
 
 		// Walk
 		parameters.walk.alpha_u = -0.66;
