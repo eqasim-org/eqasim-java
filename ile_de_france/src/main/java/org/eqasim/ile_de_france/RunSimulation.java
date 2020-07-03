@@ -17,7 +17,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "urban-capacity-factor") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
@@ -30,7 +30,9 @@ public class RunSimulation {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		IDFConfigurator.adjustScenario(scenario);
+
+		double urbanCapacityFactor = cmd.getOption("urban-capacity-factor").map(Double::parseDouble).orElse(1.0);
+		IDFConfigurator.adjustScenario(scenario, urbanCapacityFactor);
 
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);

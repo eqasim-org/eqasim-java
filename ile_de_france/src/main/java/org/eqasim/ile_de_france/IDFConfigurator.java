@@ -1,22 +1,19 @@
 package org.eqasim.ile_de_france;
 
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.households.Household;
+import org.matsim.api.core.v01.network.Link;
 
 public class IDFConfigurator extends EqasimConfigurator {
-	static public void adjustScenario(Scenario scenario) {
+	static public void adjustScenario(Scenario scenario, double urbanCapacityFactor) { // TODO: Put this in a config
+																						// file!
 		EqasimConfigurator.adjustScenario(scenario);
 
-		for (Household household : scenario.getHouseholds().getHouseholds().values()) {
-			for (Id<Person> memberId : household.getMemberIds()) {
-				Person person = scenario.getPopulation().getPersons().get(memberId);
+		for (Link link : scenario.getNetwork().getLinks().values()) {
+			boolean isUrban = (Boolean) link.getAttributes().getAsMap().getOrDefault("isUrban", false);
 
-				if (person != null) {
-					// copyAttribute(household, person, "carAvailability");
-				}
+			if (isUrban) {
+				link.setCapacity(link.getCapacity() * urbanCapacityFactor);
 			}
 		}
 	}

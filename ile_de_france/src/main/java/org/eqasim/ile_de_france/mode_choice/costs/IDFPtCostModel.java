@@ -24,7 +24,7 @@ public class IDFPtCostModel implements CostModel {
 	private final IDFPersonPredictor personPredictor;
 	private final IDFSpatialPredictor spatialPredictor;
 
-	// This should be hidden by some custom predictor
+	// TODO: This should be hidden by some custom predictor
 	private final TransitSchedule transitSchedule;
 
 	@Inject
@@ -96,7 +96,7 @@ public class IDFPtCostModel implements CostModel {
 		 * This assumes that trips in Île-de-France usually must cross through Paris (and otherwise
 		 * they would usually be a bus). And some brief experimentation with the route planner of 
 		 * RATP showed that the prices are roghly constructed by the total ride distance with
-		 * a price per distance. A more detailed analysis would be good to have!
+		 * a price per distance. TODO: A more detailed analysis would be good to have!
 		 */
 
 		return 0.25 * calculateBasisDistance_km(trip);
