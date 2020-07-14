@@ -9,18 +9,18 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
 import org.matsim.core.mobsim.qsim.qnetsimengine.linkspeedcalculator.LinkSpeedCalculator;
 
-public class EqasimLinkSpeedCalculatorTrafficLights implements LinkSpeedCalculator {
+public class EqasimLinkSpeedCalculatorTrafficLightsWebster implements LinkSpeedCalculator {
 	final private LinkSpeedCalculator delegate;
 	final private double crossingPenalty;
 	final private Map<Id<Link>, double[]> trafficLightsDelays;
 
-	public EqasimLinkSpeedCalculatorTrafficLights(LinkSpeedCalculator delegate, double crossingPenalty) {
+	public EqasimLinkSpeedCalculatorTrafficLightsWebster(LinkSpeedCalculator delegate, double crossingPenalty) {
 		this.delegate = delegate;
 		this.crossingPenalty = crossingPenalty;
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
-		delay.writeCSV_heuristic("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/60it_heuristic/intersections_heuristic.csv");
-		this.trafficLightsDelays = delay.compute_all_delays_heuristic().get(0);
+		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/60it_webster/intersections_webster.csv");
+		this.trafficLightsDelays = delay.compute_all_delays_webster().get(0);
 	}
 
 	@Override
@@ -49,4 +49,3 @@ public class EqasimLinkSpeedCalculatorTrafficLights implements LinkSpeedCalculat
 		}
 	}
 }
-

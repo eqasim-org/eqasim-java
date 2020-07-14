@@ -5,6 +5,8 @@ import java.io.File;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
@@ -26,31 +28,37 @@ public class IntersectionsReader {
 	         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 	         Document doc = dBuilder.parse(inputFile);
 	         doc.getDocumentElement().normalize();
-	         //System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
 	         NodeList nList = doc.getElementsByTagName("intersection");
-	         //System.out.println("----------------------------");
 	         
 	         for (int temp = 0; temp < nList.getLength(); temp++) {
 	             Node nNode = nList.item(temp);
-	             //System.out.println("\nCurrent Element :" + nNode.getNodeName());
 	             
 	             if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 	                 Element eElement = (Element) nNode;
 	                 String idnode = eElement.getAttribute("node_id");
+	                 ArrayList<String> alreadyseen = new ArrayList<String>();
 	                 NodeList nnList = eElement.getElementsByTagName("incoming_link");
-	                 ArrayList<String> links = new ArrayList<String>();
-	                 //System.out.println(idnode);
+	                 ArrayList<ArrayList<Id<Link>>> groups = new ArrayList<ArrayList<Id<Link>>>();
 	                 
 	                 for(int j=0; j<nnList.getLength(); j++) {
 	                	 Node nnNode = nnList.item(j);
 	                	 Element e = (Element) nnNode;
-	                	 links.add(e.getAttribute("link_id"));
+	                	 String s = e.getAttribute("link_id");
+	                	 if (! alreadyseen.contains(s)) {
+	                		 alreadyseen.add(s);
+	                		 ArrayList<Id<Link>> group = new ArrayList<Id<Link>>();
+	                		 group.add(Id.createLinkId(s));
+	                		 String same = e.getAttribute("same_road_as");
+	                		 if (! same.isEmpty()) {
+	                			 group.add(Id.createLinkId(same));
+	                			 alreadyseen.add(same);
+	                		 }
+		                	 groups.add(group);
+	                	 }
 	                 }
 	                 
-	                 //System.out.println(links.toString());
-	    	         //System.out.println("----------------------------");
 	                 
-	                 Intersection current_inter = new Intersection(idnode, links);
+	                 Intersection current_inter = new Intersection(idnode, groups);
 	                 this.intersections.add(current_inter);
 	                 
 	             }    

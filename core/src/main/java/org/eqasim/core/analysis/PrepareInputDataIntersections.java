@@ -20,15 +20,17 @@ public class PrepareInputDataIntersections {
 	IntersectionsReader ir = new IntersectionsReader();
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
 	Map<Id<Link>, Double> capacities = new HashMap<>();	
+	Map<Id<Link>, Double> velocities = new HashMap<>();	
 	double samplesize;
 	double crossingPenalty;
 	
 
+	@SuppressWarnings("deprecation")
 	public PrepareInputDataIntersections () {
 
 		// Path to configuration file.
 		Config config = ConfigUtils.loadConfig("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Zurich_10pct_Aurore/zurich_config.xml");
-		config.controler().setLastIteration(5);
+		//config.controler().setLastIteration(5);
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		String sample = scenario.getConfig().findParam("eqasim", "sampleSize");
 		this.samplesize = Double.parseDouble(sample); 
@@ -36,7 +38,7 @@ public class PrepareInputDataIntersections {
 
 		/** 1. Events **/ 
 		// Path to the events file
-		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Zurich_10pct_Aurore/40.events.xml.gz";
+		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/60it_noTL/ITERS/it.60/60.events.xml.gz";
 				
 		// Create an event object
 		EventsManager events = EventsUtils.createEventsManager();
@@ -48,7 +50,6 @@ public class PrepareInputDataIntersections {
         // Create the reader and read the file
 		MatsimEventsReader reader = new MatsimEventsReader(events);
 		reader.readFile(eventFile);
-		//hv.writeChart_AllLinks("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/output_link_");
 		this.hourlyCounts = hv.hourlyCounts;
 		
 		/** 2. Intersections **/
@@ -56,20 +57,26 @@ public class PrepareInputDataIntersections {
 		String intersectionFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Traffic_Light_output.xml";
 		this.ir.read_xml(intersectionFile);
 		
-		/** 3. Capacities **/
+		/** 3. Capacities and velocities **/
 		// Access the link capacities
 		Network net = scenario.getNetwork();
 		Map<Id<Link>, ? extends Link> links = net.getLinks();
 		
+		System.out.println("Imputing velocities and capacities...");
 		for (int k=0; k< ir.intersections.size(); k++ ) {
 			Intersection current_intersection = ir.intersections.get(k);
-			ArrayList<Id<Link>> incoming_links = current_intersection.incoming_links;
+			ArrayList<ArrayList<Id<Link>>> groups = current_intersection.groups;
 			
-			for (int j=0; j<incoming_links.size(); j++) {
-				Id<Link> current_link_id = incoming_links.get(j);
-				if (! this.capacities.containsKey(current_link_id) ) {
-					Link current_link = links.get(current_link_id);
-					this.capacities.put(current_link_id, current_link.getCapacity());
+			for (int j=0; j<groups.size(); j++) {
+				ArrayList<Id<Link>> group = groups.get(j);
+				for (int j2 = 0; j2 < group.size(); j2++) {
+					Id<Link> cl = group.get(j2);
+					if (! this.capacities.containsKey(cl) ) {
+						Link current_link = links.get(cl);
+						this.capacities.put(cl, current_link.getCapacity());
+						this.velocities.put(cl, current_link.getFreespeed());
+					}
+				
 				}
 			}
 		}
@@ -79,6 +86,7 @@ public class PrepareInputDataIntersections {
 	} 
 	
 	public static void main(String[] args) {
+		@SuppressWarnings("unused")
 		PrepareInputDataIntersections prep = new PrepareInputDataIntersections();
 		
 	}
