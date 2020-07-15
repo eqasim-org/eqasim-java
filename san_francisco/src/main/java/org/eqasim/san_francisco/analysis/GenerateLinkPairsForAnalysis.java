@@ -51,38 +51,20 @@ public class GenerateLinkPairsForAnalysis {
 		Collections.shuffle(linksO);
 		Collections.shuffle(linksD);
 		int tripId = 0;
+		
+		int[] hours = {6,8,12,18,20};
+		
 		for (int i = 0; i < numberOfPairs; i++) {
 			Link originLink = linksO.get(i);
 			Link destinationLink = linksD.get(i);
-			writer.write(String.join(",", new String[] { //
-					String.valueOf(tripId++), String.valueOf(originLink.getCoord().getX()),
-					String.valueOf(originLink.getCoord().getY()), //
-					String.valueOf(destinationLink.getCoord().getX()),
-					String.valueOf(destinationLink.getCoord().getY()), String.valueOf(2.0 * 3600.0) }) + "\n");
-
-			writer.write(String.join(",", new String[] { //
-					String.valueOf(tripId++), String.valueOf(originLink.getCoord().getX()),
-					String.valueOf(originLink.getCoord().getY()), //
-					String.valueOf(destinationLink.getCoord().getX()),
-					String.valueOf(destinationLink.getCoord().getY()), String.valueOf(5.0 * 3600.0) }) + "\n");
-
-			writer.write(String.join(",", new String[] { //
-					String.valueOf(tripId++), String.valueOf(originLink.getCoord().getX()),
-					String.valueOf(originLink.getCoord().getY()), //
-					String.valueOf(destinationLink.getCoord().getX()),
-					String.valueOf(destinationLink.getCoord().getY()), String.valueOf(7.0 * 3600.0) }) + "\n");
-
-			writer.write(String.join(",", new String[] { //
-					String.valueOf(tripId++), String.valueOf(originLink.getCoord().getX()),
-					String.valueOf(originLink.getCoord().getY()), //
-					String.valueOf(destinationLink.getCoord().getX()),
-					String.valueOf(destinationLink.getCoord().getY()), String.valueOf(11.0 * 3600.0) }) + "\n");
-
-			writer.write(String.join(",", new String[] { //
-					String.valueOf(tripId++), String.valueOf(originLink.getCoord().getX()),
-					String.valueOf(originLink.getCoord().getY()), //
-					String.valueOf(destinationLink.getCoord().getX()),
-					String.valueOf(destinationLink.getCoord().getY()), String.valueOf(18.0 * 3600.0) }) + "\n");
+			for (int h = 0; h < hours.length; h ++) {
+				int hour = hours[h];
+				writer.write(String.join(",", new String[] { //
+						String.valueOf(tripId++), String.valueOf(originLink.getCoord().getX()),
+						String.valueOf(originLink.getCoord().getY()), //
+						String.valueOf(destinationLink.getCoord().getX()),
+						String.valueOf(destinationLink.getCoord().getY()), String.valueOf(hour * 3600.0) }) + "\n");
+			}
 			writer.flush();
 		}
 

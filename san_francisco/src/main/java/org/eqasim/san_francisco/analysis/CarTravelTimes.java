@@ -35,7 +35,7 @@ public class CarTravelTimes {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("network-path", "events-path", "input-path", "traveltime-output-path",
-						"crossing-penalty") //
+						"crossing-penalty", "delays-tl-path") //
 				.build();
 
 		Network fullNetwork = NetworkUtils.createNetwork();
@@ -51,8 +51,17 @@ public class CarTravelTimes {
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		eventsManager.addHandler(travelTimeListener);
 		new MatsimEventsReader(eventsManager).readFile(cmd.getOptionStrict("events-path"));
-
+		
 		EqasimFreeSpeedTravelTime freeSpeedTravelTime = new EqasimFreeSpeedTravelTime(Double.parseDouble(cmd.getOptionStrict("crossing-penalty")));
+		
+		String trafficlights = cmd.getOptionStrict("delays-tl-path");
+		if (trafficlights != "") {
+			System.err.println("Traffic Lights mode detected");
+			freeSpeedTravelTime = new EqasimFreeSpeedTravelTime(Double.parseDouble(cmd.getOptionStrict("crossing-penalty")), trafficlights);
+		}
+		
+		final EqasimFreeSpeedTravelTime freeSpeedTravelTime_copy = EqasimFreeSpeedTravelTime.copy(freeSpeedTravelTime);
+				
 		SerializableTravelTime congestedTravelTime = new SerializableTravelTime(0.0, 30.0 * 3600.0, 900, numberOfBins,
 				travelTimeListener.getData(Double.parseDouble(cmd.getOptionStrict("crossing-penalty"))),
 				freeSpeedTravelTime);
@@ -76,8 +85,8 @@ public class CarTravelTimes {
 			String[] variables = s.split(",");
 			Coord startCoord = CoordUtils.createCoord(Double.parseDouble(variables[1]),
 					Double.parseDouble(variables[2]));
-			Coord endCoord = CoordUtils.createCoord(Double.parseDouble(variables[4]), Double.parseDouble(variables[5]));
-			double departureTime = Double.parseDouble(variables[7]);
+			Coord endCoord = CoordUtils.createCoord(Double.parseDouble(variables[3]), Double.parseDouble(variables[4]));
+			double departureTime = Double.parseDouble(variables[5]);
 			int tripId = Integer.parseInt(variables[0]);
 			Task task = new Task(startCoord, endCoord, departureTime, tripId);
 			tasks.add(task);
@@ -94,7 +103,7 @@ public class CarTravelTimes {
 				List<Task> localTasks = new LinkedList<>();
 				LeastCostPathCalculator freeSpeedRouter = new AStarLandmarksFactory(
 						Runtime.getRuntime().availableProcessors()).createPathCalculator(network,
-								new OnlyTimeDependentTravelDisutility(freeSpeedTravelTime), freeSpeedTravelTime);
+								new OnlyTimeDependentTravelDisutility(freeSpeedTravelTime_copy), freeSpeedTravelTime_copy);
 
 				LeastCostPathCalculator congestedRouter = new AStarLandmarksFactory(
 						Runtime.getRuntime().availableProcessors()).createPathCalculator(network,

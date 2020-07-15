@@ -20,11 +20,23 @@
 
 package org.eqasim.san_francisco.analysis;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.inject.Inject;
 
+import org.eqasim.san_francisco.analysis.CarTravelTimes.Task;
+import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.router.util.TravelTime;
+import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
 
 /**
@@ -35,8 +47,45 @@ import org.matsim.vehicles.Vehicle;
 public class EqasimFreeSpeedTravelTime implements TravelTime {
 
 	private final double crossingPenalty;
+	private  Map<Id<Link>, double[]> delays = new HashMap<Id<Link>, double[]>();
+	
 	public EqasimFreeSpeedTravelTime(double crossingPenalty) {
 		this.crossingPenalty = crossingPenalty;
+	}
+	
+	public static EqasimFreeSpeedTravelTime copy(EqasimFreeSpeedTravelTime free) {
+		EqasimFreeSpeedTravelTime mycopy = new EqasimFreeSpeedTravelTime(free.crossingPenalty);
+		mycopy.delays = free.delays;
+		return mycopy;
+	}
+	
+	public EqasimFreeSpeedTravelTime(double crossingPenalty, String filepath) {
+		this.crossingPenalty = crossingPenalty;
+		BufferedReader reader;
+		try {
+			reader = new BufferedReader(
+					new InputStreamReader(new FileInputStream(filepath)));
+			reader.readLine();
+			String s = reader.readLine();
+			while (s != null) {
+				String[] variables = s.split(",");
+				Id<Link> idlink = Id.createLinkId(variables[0]);
+				double hour = Double.parseDouble(variables[1]);
+				double delay = Double.parseDouble(variables[2]);
+				
+				if (!delays.containsKey(idlink)) {
+					delays.put(idlink, new double[31]);
+				}
+				delays.get(idlink)[(int)hour] = delay;
+				
+				s = reader.readLine();
+			}
+
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 	@Override
@@ -49,8 +98,14 @@ public class EqasimFreeSpeedTravelTime implements TravelTime {
 				isMajor = false;
 			}
 		}
-
-		if (isMajor || link.getToNode().getInLinks().size() == 1) {
+		if (this.delays.containsKey(link.getId()) & time > 0) {
+			double travelTime =  link.getLength() / link.getFreespeed(time);
+			int hour = ((int) time / 3600) % 30;
+			travelTime += delays.get(link.getId())[hour];
+			return link.getLength() / travelTime;
+		}
+		
+		else if (isMajor || link.getToNode().getInLinks().size() == 1) {
 			return link.getLength() / link.getFreespeed(time);
 		} else {
 			double travelTime = link.getLength() / link.getFreespeed(time);
