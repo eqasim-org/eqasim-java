@@ -19,7 +19,7 @@ public class EqasimLinkSpeedCalculatorTrafficLightsWebster implements LinkSpeedC
 		this.crossingPenalty = crossingPenalty;
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
-		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/60it_webster/intersections_webster.csv");
+		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/60it_webster/intersections_webster.csv");
 		this.trafficLightsDelays = delay.compute_all_delays_webster().get(0);
 	}
 

@@ -49,8 +49,8 @@ public class EqasimConfigurator {
 		return Arrays.asList( //
 				new EqasimTransitQSimModule(), //
 				//new EqasimTrafficQSimTrafficLightsModule() //
-				//new EqasimTrafficQSimTrafficLightsWebsterModule()//
-				new EqasimTrafficQSimModule()
+				new EqasimTrafficQSimTrafficLightsWebsterModule()//
+				//new EqasimTrafficQSimModule()
 		);
 	}
 
