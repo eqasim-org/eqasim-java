@@ -35,6 +35,7 @@ public class RunWriteShapefileNetwork {
 				.setCrs(crs) //
 				.setName("links") //
 				.addAttribute("link_id", String.class) //
+				.addAttribute("osm_type", String.class) //
 				//
 				.create();
 
@@ -57,6 +58,7 @@ public class RunWriteShapefileNetwork {
 					SimpleFeature feature = featureFactory.createPolyline(new Coordinate[] { fromCoord, toCoord },
 							new Object[] { //
 									link.getId().toString(), //
+									type, //
 							//
 							}, null);
 					features.add(feature);
