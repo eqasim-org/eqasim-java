@@ -16,7 +16,7 @@ public class ComputeDelayTrafficLights {
 	
 	IntersectionsReader ir = new IntersectionsReader();
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
-	Map<Id<Link>, Double> capacities = new HashMap<>();	
+	Map<Id<Link>, double[]> capacities = new HashMap<>();	
 	Map<Id<Link>, Double> velocities = new HashMap<>();	
 	double samplesize;
 	double crossingPenalty;
@@ -65,7 +65,7 @@ public class ComputeDelayTrafficLights {
 				else {
 					flow = 5.0 / this.samplesize;
 				}
-				capacities += this.capacities.get(idlink);
+				capacities += this.capacities.get(idlink)[hour];
 			}
 		    ratio.add(flow / capacities);
 		}
@@ -95,7 +95,7 @@ public class ComputeDelayTrafficLights {
 		return cycle_and_lost;
 	}
 	
-	public List<Map<Id<Link>, double[]>> compute_all_delays_webster(){
+	public List<Map<Id<Link>, double[]>> compute_all_delays_webster(boolean change ){
 		Map<Id<Link>, double[]> delays = new HashMap<Id<Link>, double[]>();
 		Map<Id<Link>, double[]> opts = new HashMap<Id<Link>, double[]>();
 		Map<Id<Link>, double[]> greens = new HashMap<Id<Link>, double[]>();
@@ -149,7 +149,13 @@ public class ComputeDelayTrafficLights {
 			    		Id<Link> idlink = group.get(g);
 			    		System.out.println(idlink + " " + l +", "+ green_ratio);
 			    		double link_flow = flowonlinks.get(idlink);
-			    		double link_capacity = this.capacities.get(idlink);
+			    		double link_capacity = this.capacities.get(idlink)[hour];
+			    		if ( change) {
+			    			link_capacity = INTERSECTION_CAPACITY * green_ratio / group.size();
+			    			double[] tab = this.capacities.get(idlink);
+			    			tab[hour] = link_capacity;
+			    			this.capacities.put(idlink, tab);
+			    		}
 			    		double saturation = link_flow / link_capacity;
 			    		double delay1 = (opt_cycle_length * Math.pow(1 - green_ratio, 2))/(2 * (1 - green_ratio * saturation));
 				    	double delay2 = Math.pow(saturation, 2) / (2 * link_flow * (1 - saturation));
@@ -187,6 +193,13 @@ public class ComputeDelayTrafficLights {
 				    	}
 				    	else {
 				    		greens.get(idlink)[hour] = green_time;
+				    	}
+				    	if (!caps.containsKey(idlink)) {
+				    		caps.put(idlink, new double[31]);
+				    		caps.get(idlink)[hour] = link_capacity;
+				    	}
+				    	else {
+				    		caps.get(idlink)[hour] = link_capacity;
 				    	}
 				    	
 				    	
@@ -277,6 +290,9 @@ public class ComputeDelayTrafficLights {
 			    		System.out.println(idlink + " " + l +", "+ green_ratio);
 			    		double link_flow = flowonlinks.get(idlink);
 			    		double link_capacity = INTERSECTION_CAPACITY * green_ratio / group.size();
+			    		double[] tab = this.capacities.get(idlink);
+			    		tab[hour] = link_capacity;
+			    		this.capacities.put(idlink, tab);
 			    		double saturation = Math.min(link_flow / link_capacity, 0.99);
 			    		
 			    		double delay1 = (cycle_length * Math.pow(1 - green_ratio, 2))/(2 * (1 - green_ratio * saturation));
@@ -353,10 +369,12 @@ public class ComputeDelayTrafficLights {
 	public void writeCSV_webster(String pathToCSV) {
 		try {
 			FileWriter csvWriter = new FileWriter(pathToCSV);
-			Map<Id<Link>, double[]> delays = this.compute_all_delays_webster().get(0);
-			Map<Id<Link>, double[]> greens = this.compute_all_delays_webster().get(1);
-			Map<Id<Link>, double[]> opts = this.compute_all_delays_webster().get(2);
-			Map<Id<Link>, double[]> flows = this.compute_all_delays_webster().get(4);
+			List<Map<Id<Link>, double[]>> results = this.compute_all_delays_webster(false);
+			Map<Id<Link>, double[]> delays = results.get(0);
+			Map<Id<Link>, double[]> greens = results.get(1);
+			Map<Id<Link>, double[]> opts = results.get(2);
+			Map<Id<Link>, double[]> caps = results.get(3);
+			Map<Id<Link>, double[]> flows = results.get(4);
 			
 			csvWriter.append("Link_ID");
 			csvWriter.append(",");
@@ -369,6 +387,8 @@ public class ComputeDelayTrafficLights {
 			csvWriter.append("Green time");
 			csvWriter.append(",");
 			csvWriter.append("Flow");
+			csvWriter.append(",");
+			csvWriter.append("Capacity");
 			csvWriter.append("\n");
 			
 			for (Entry<Id<Link>, double[]> entry : delays.entrySet()) {
@@ -377,6 +397,7 @@ public class ComputeDelayTrafficLights {
 				double[] opt_link = opts.get(idLink);
 				double[] green_link = greens.get(idLink);
 				double[] flow_link = flows.get(idLink);
+				double[] cap_link = caps.get(idLink);
 				
 				for (int l = 0; l<delays_link.length; l++) {
 					csvWriter.append(idLink.toString());
@@ -387,6 +408,7 @@ public class ComputeDelayTrafficLights {
 					double o = opt_link[l];
 					double g = green_link[l];
 					double f = flow_link[l];
+					double c = cap_link[l];
 					if (d==0) {
 						System.out.println("Alert 0 " + l);
 					}
@@ -397,6 +419,8 @@ public class ComputeDelayTrafficLights {
 					csvWriter.append(Double.toString(g));
 					csvWriter.append(",");
 					csvWriter.append(Double.toString(f));
+					csvWriter.append(",");
+					csvWriter.append(Double.toString(c));
 					csvWriter.append("\n");
 				}
 			}
@@ -412,11 +436,12 @@ public class ComputeDelayTrafficLights {
 	public void writeCSV_heuristic(String pathToCSV) {
 		try {
 			FileWriter csvWriter = new FileWriter(pathToCSV);
-			Map<Id<Link>, double[]> delays = this.compute_all_delays_heuristic().get(0);
-			Map<Id<Link>, double[]> greens = this.compute_all_delays_heuristic().get(1);
-			Map<Id<Link>, double[]> opts = this.compute_all_delays_heuristic().get(2);
-			Map<Id<Link>, double[]> caps = this.compute_all_delays_heuristic().get(3);
-			Map<Id<Link>, double[]> flows = this.compute_all_delays_heuristic().get(4);
+			List<Map<Id<Link>, double[]>> results = this.compute_all_delays_heuristic();
+			Map<Id<Link>, double[]> delays = results.get(0);
+			Map<Id<Link>, double[]> greens = results.get(1);
+			Map<Id<Link>, double[]> opts = results.get(2);
+			Map<Id<Link>, double[]> caps = results.get(3);
+			Map<Id<Link>, double[]> flows = results.get(4);
 			
 			csvWriter.append("Link_ID");
 			csvWriter.append(",");
@@ -478,8 +503,9 @@ public class ComputeDelayTrafficLights {
 	public static void main(String[] args) {
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
-		delay.compute_all_delays_webster();
-		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/60it_webster/intersections_webster.csv");
+		delay.writeCSV_heuristic("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais/heuristic.csv");
+		delay.compute_all_delays_webster(true);
+		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais/websterwebster.csv");
 		//delay.compute_all_delays_webster();
 		//delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/intersections_webster.csv");
 	}
