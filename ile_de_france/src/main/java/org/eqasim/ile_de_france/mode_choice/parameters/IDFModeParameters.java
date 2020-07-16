@@ -8,7 +8,12 @@ public class IDFModeParameters extends ModeParameters {
 		public double betaCrossingUrbanArea;
 	}
 
+	public class IDFBikeParameters {
+		public double betaInsideUrbanArea;
+	}
+
 	public final IDFCarParameters idfCar = new IDFCarParameters();
+	public final IDFBikeParameters idfBike = new IDFBikeParameters();
 
 	public static IDFModeParameters buildDefault() {
 		IDFModeParameters parameters = new IDFModeParameters();
@@ -39,6 +44,8 @@ public class IDFModeParameters extends ModeParameters {
 		parameters.bike.alpha_u = 0.0;
 		parameters.bike.betaTravelTime_u_min = -0.15;
 		parameters.bike.betaAgeOver18_u_a = -0.0496;
+
+		parameters.idfBike.betaInsideUrbanArea = 0.0;
 
 		// Walk
 		parameters.walk.alpha_u = 1.43;
