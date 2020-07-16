@@ -8,8 +8,8 @@ import org.matsim.vehicles.Vehicle;
 
 public class SanFranciscoBikeLinkSpeedCalculator implements LinkSpeedCalculator {
 
-    private double maxSpeed = 4.16666666;
-
+    private double maxSpeed = 13.67; // in ft/s
+    
     public double getMaximumVelocityForLink(Link link, Vehicle vehicle) {
 
         double maxBicycleSpeed = vehicle == null ? maxSpeed : vehicle.getType().getMaximumVelocity();
