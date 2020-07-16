@@ -14,7 +14,9 @@ import org.eqasim.core.analysis.od_routing.data.ModalOriginDestinationPair;
 import org.eqasim.core.analysis.od_routing.data.ModalTravelTimeMatrix;
 import org.eqasim.core.analysis.od_routing.data.OriginDestinationIterator;
 import org.eqasim.core.analysis.od_routing.data.OriginDestinationPair;
+import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.misc.ParallelProgress;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.router.TripRouter;
@@ -107,9 +109,20 @@ public class OriginDestinationRouter {
 								departureTime, null);
 
 						double travelTime = 0.0;
+						boolean isFirst = true;
 
 						for (Leg leg : TripStructureUtils.getLegs(elements)) {
 							travelTime += leg.getTravelTime();
+
+							if (leg.getMode().equals(TransportMode.pt)) {
+								EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
+
+								if (isFirst) {
+									travelTime -= route.getWaitingTime();
+								}
+
+								isFirst = false;
+							}
 						}
 
 						localResults.put(new ModalOriginDestinationPair(mode, pair), travelTime);
