@@ -1,11 +1,15 @@
 package org.eqasim.san_francisco.bike.network;
 
 import org.eqasim.san_francisco.bike.reader.BikeInfo;
+import org.locationtech.jts.geom.Geometry;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.utils.geometry.geotools.MGC;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -83,5 +87,55 @@ public class BikeNetworkFixer {
 			Id<Link> linkId = Id.createLinkId(i);
 			network.getLinks().get(linkId).getAttributes().putAttribute("bikeIsPermitted", true);
 		}
+	}
+
+	// this assumes that you already ran the above method on the network first
+	public void addNewBikeLanes(Network network, Collection<Geometry> geometries) {
+
+		int numberTotalLinks = 0;
+		int numberModifiedLinks = 0;
+		for (Link link : network.getLinks().values()) {
+
+			numberTotalLinks++;
+
+			//check if link is within geometries
+			Coord coord = link.getCoord();
+			if (geometries.stream().anyMatch(geometry -> geometry.contains(MGC.coord2Point(coord)))) {
+
+				// check if the highway tag is present
+				if (link.getAttributes().getAsMap().containsKey("osm:way:highway")) {
+
+					// check if the link is neither a motorway or trunk
+					if (!link.getAttributes().getAttribute("osm:way:highway").toString().contains("motorway") &&
+							!link.getAttributes().getAttribute("osm:way:highway").toString().contains("trunk")) {
+
+						// check if bike is permitted
+						boolean bikeIsPermitted = (boolean) link.getAttributes().getAttribute("bikeIsPermitted");
+
+						// only do something if bike is already permitted
+						if (bikeIsPermitted) {
+
+							// check the current bike facility class
+							String bikeFacilityClass = link.getAttributes().getAttribute("bikeFacilityClass").toString();
+
+							// add a bike lane if there is no facility or only a shared lane (if more than 1 lane)
+							if (bikeFacilityClass.equals("none") || bikeFacilityClass.equals("class_3")) {
+								double numberOfLanes = link.getNumberOfLanes();
+								if (numberOfLanes >= 2.0) {
+									link.setNumberOfLanes(numberOfLanes - 1.0);
+									link.getAttributes().putAttribute("bikeFacilityClass", "class_2");
+									numberModifiedLinks++;
+								}
+							}
+
+						}
+
+					}
+				}
+			}
+		}
+
+		System.out.println("Number of total links: " + numberTotalLinks);
+		System.out.println("Number of modified links: " + numberModifiedLinks);
 	}
 }
