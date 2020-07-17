@@ -24,7 +24,8 @@ public class RunImproveBikeNetworkFixer {
         Collection<Geometry> geometries = ShapeFileReader.getAllFeatures(cmd.getOptionStrict("input-shp")).stream()
                 .map(feature -> (Geometry) feature.getDefaultGeometry())
                 .collect(Collectors.toList());
-        new BikeNetworkFixer().addNewBikeLanes(network, geometries);
+        new BikeNetworkFixer().addNewBikeLanesWithinShape(network, geometries);
+//        new BikeNetworkFixer().addNewBikeLanes(network);
 
         new NetworkWriter(network).write(cmd.getOptionStrict("output-path"));
 

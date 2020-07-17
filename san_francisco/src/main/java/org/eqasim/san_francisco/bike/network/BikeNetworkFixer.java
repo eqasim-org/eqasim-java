@@ -90,10 +90,13 @@ public class BikeNetworkFixer {
 	}
 
 	// this assumes that you already ran the above method on the network first
-	public void addNewBikeLanes(Network network, Collection<Geometry> geometries) {
+	public void addNewBikeLanesWithinShape(Network network, Collection<Geometry> geometries) {
 
 		int numberTotalLinks = 0;
 		int numberModifiedLinks = 0;
+		double roadLengthRemoved = 0.0;
+		double roadLengthInShape = 0.0;
+
 		for (Link link : network.getLinks().values()) {
 
 			numberTotalLinks++;
@@ -104,6 +107,8 @@ public class BikeNetworkFixer {
 
 				// check if the highway tag is present
 				if (link.getAttributes().getAsMap().containsKey("osm:way:highway")) {
+
+					roadLengthInShape += link.getLength() * link.getNumberOfLanes();
 
 					// check if the link is neither a motorway or trunk
 					if (!link.getAttributes().getAttribute("osm:way:highway").toString().contains("motorway") &&
@@ -122,7 +127,24 @@ public class BikeNetworkFixer {
 							if (bikeFacilityClass.equals("none") || bikeFacilityClass.equals("class_3")) {
 								double numberOfLanes = link.getNumberOfLanes();
 								if (numberOfLanes >= 2.0) {
-									link.setNumberOfLanes(numberOfLanes - 1.0);
+
+									double flowCapacity = link.getCapacity();
+									double flowCapacityPerLane = flowCapacity / numberOfLanes;
+
+									double newNumberOfLanes = numberOfLanes - 1.0;
+									double newFlowCapacity = Math.round(flowCapacityPerLane * newNumberOfLanes);
+
+									link.setNumberOfLanes(newNumberOfLanes);
+									link.setCapacity(newFlowCapacity);
+
+									roadLengthRemoved += link.getLength();
+
+//									System.out.println(link.getId() + ", "
+//											+ numberOfLanes + ", "
+//											+ link.getNumberOfLanes() + ", "
+//											+ flowCapacity + ", "
+//											+ link.getCapacity());
+
 									link.getAttributes().putAttribute("bikeFacilityClass", "class_2");
 									numberModifiedLinks++;
 								}
@@ -131,6 +153,75 @@ public class BikeNetworkFixer {
 						}
 
 					}
+				}
+			}
+		}
+
+		System.out.println("Number of total links: " + numberTotalLinks);
+		System.out.println("Number of modified links: " + numberModifiedLinks);
+		System.out.println("Road length in shapefile : " + roadLengthInShape);
+		System.out.println("Road removed (bike lanes added) : " + roadLengthRemoved);
+	}
+
+	// this assumes that you already ran the above method on the network first
+	public void addNewBikeLanes(Network network) {
+
+		int numberTotalLinks = 0;
+		int numberModifiedLinks = 0;
+		double roadLengthRemoved = 0.0;
+		double roadLengthInShape = 0.0;
+
+		for (Link link : network.getLinks().values()) {
+
+			numberTotalLinks++;
+
+			// check if the highway tag is present
+			if (link.getAttributes().getAsMap().containsKey("osm:way:highway")) {
+
+				roadLengthInShape += link.getLength() * link.getNumberOfLanes();
+
+				// check if the link is neither a motorway or trunk
+				if (!link.getAttributes().getAttribute("osm:way:highway").toString().contains("motorway") &&
+						!link.getAttributes().getAttribute("osm:way:highway").toString().contains("trunk")) {
+
+					// check if bike is permitted
+					boolean bikeIsPermitted = (boolean) link.getAttributes().getAttribute("bikeIsPermitted");
+
+					// only do something if bike is already permitted
+					if (bikeIsPermitted) {
+
+						// check the current bike facility class
+						String bikeFacilityClass = link.getAttributes().getAttribute("bikeFacilityClass").toString();
+
+						// add a bike lane if there is no facility or only a shared lane (if more than 1 lane)
+						if (bikeFacilityClass.equals("none") || bikeFacilityClass.equals("class_3")) {
+							double numberOfLanes = link.getNumberOfLanes();
+							if (numberOfLanes >= 2.0) {
+
+								double flowCapacity = link.getCapacity();
+								double flowCapacityPerLane = flowCapacity / numberOfLanes;
+
+								double newNumberOfLanes = numberOfLanes - 1.0;
+								double newFlowCapacity = Math.round(flowCapacityPerLane * newNumberOfLanes);
+
+								link.setNumberOfLanes(newNumberOfLanes);
+								link.setCapacity(newFlowCapacity);
+
+								roadLengthRemoved += link.getLength();
+
+//								System.out.println(link.getId() + ", "
+//										+ numberOfLanes + ", "
+//										+ link.getNumberOfLanes() + ", "
+//										+ flowCapacity + ", "
+//										+ link.getCapacity());
+
+								link.getAttributes().putAttribute("bikeFacilityClass", "class_2");
+								numberModifiedLinks++;
+							}
+						}
+
+					}
+
 				}
 			}
 		}
