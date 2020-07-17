@@ -10,6 +10,7 @@ import org.eqasim.san_francisco.mode_choice.SanFranciscoModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -26,6 +27,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
+				.allowOptions("bike-available-to-all", "e-bike")
 				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
 
@@ -46,9 +48,22 @@ public class RunSimulation {
 		eqasimConfig.setEstimator("pt", "sfPTEstimator");
 		eqasimConfig.setEstimator("car", "sfCarEstimator");
 
-		// add bike
+		// add bike availability
+		if (cmd.hasOption("bike-available-to-all")) {
+			for (Person person : scenario.getPopulation().getPersons().values()) {
+				person.getAttributes().putAttribute("bikeAvailability", "all");
+			}
+		}
+
+		// set effective cell size to feet
+		scenario.getNetwork().setEffectiveCellSize(24.6063);
+
+		// add bike as vehicle type
 		VehicleType bike = VehicleUtils.getFactory().createVehicleType(Id.create(TransportMode.bike, VehicleType.class));
-		bike.setMaximumVelocity(4.16666666); // 15km/h
+		bike.setMaximumVelocity(13.6702); // 15km/h in ft/sec
+		if (cmd.hasOption("e-bike")) {
+			bike.setMaximumVelocity(27.3403); // 30km/h in ft/sec
+		}
 		bike.setPcuEquivalents(0.25);
 		scenario.getVehicles().addVehicleType(bike);
 
