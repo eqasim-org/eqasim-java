@@ -186,7 +186,8 @@ public class AdjustSchedule {
 
 		// DONE LOADING THE DATA
 
-		final double SPEED_KM_H = 40.0;
+		final double SPEED_KM_H = 45.0;
+		final double SPEED_L14_KM_H = 50.0;
 
 		for (String line : Arrays.asList("L14O", "L14L", "L15", "L16", "L17", "L18")) {
 			TransitLine transitLine = schedule.getFactory()
@@ -210,7 +211,9 @@ public class AdjustSchedule {
 					time = Math.ceil(time / 60) * 60.0;
 				}
 
-				forwardStops.add(schedule.getFactory().createTransitRouteStop(stop, time, time));
+				TransitRouteStop routeStop = schedule.getFactory().createTransitRouteStop(stop, time, time);
+				routeStop.setAwaitDepartureTime(true);
+				forwardStops.add(routeStop);
 			}
 
 			List<TransitRouteStop> backwardStops = new LinkedList<>();
@@ -230,7 +233,9 @@ public class AdjustSchedule {
 					time = Math.ceil(time / 60) * 60.0;
 				}
 
-				backwardStops.add(schedule.getFactory().createTransitRouteStop(stop, time, time));
+				TransitRouteStop routeStop = schedule.getFactory().createTransitRouteStop(stop, time, time);
+				routeStop.setAwaitDepartureTime(true);
+				backwardStops.add(routeStop);
 			}
 
 			List<Id<Link>> forwardLinkIds = new LinkedList<>();
@@ -378,11 +383,14 @@ public class AdjustSchedule {
 					Coord currentCoord = stop.getStopFacility().getCoord();
 
 					double euclideanDistance_km = CoordUtils.calcEuclideanDistance(previousCoord, currentCoord) * 1e-3;
-					time += 3600 * euclideanDistance_km / SPEED_KM_H;
+					time += 3600 * euclideanDistance_km / SPEED_L14_KM_H;
 					time = Math.ceil(time / 60) * 60.0;
 				}
 
-				forwardStops.add(schedule.getFactory().createTransitRouteStop(stop.getStopFacility(), time, time));
+				TransitRouteStop routeStop = schedule.getFactory().createTransitRouteStop(stop.getStopFacility(), time,
+						time);
+				routeStop.setAwaitDepartureTime(true);
+				forwardStops.add(routeStop);
 				previousStop = stop;
 			}
 		}
@@ -423,11 +431,14 @@ public class AdjustSchedule {
 					Coord currentCoord = stop.getStopFacility().getCoord();
 
 					double euclideanDistance_km = CoordUtils.calcEuclideanDistance(previousCoord, currentCoord) * 1e-3;
-					time += 3600 * euclideanDistance_km / SPEED_KM_H;
+					time += 3600 * euclideanDistance_km / SPEED_L14_KM_H;
 					time = Math.ceil(time / 60) * 60.0;
 				}
 
-				backwardStops.add(schedule.getFactory().createTransitRouteStop(stop.getStopFacility(), time, time));
+				TransitRouteStop routeStop = schedule.getFactory().createTransitRouteStop(stop.getStopFacility(), time,
+						time);
+				routeStop.setAwaitDepartureTime(true);
+				backwardStops.add(routeStop);
 				previousStop = stop;
 			}
 		}

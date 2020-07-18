@@ -20,6 +20,7 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
@@ -45,6 +46,18 @@ public class RunOriginDestinationRouting {
 				EqasimConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 		config.strategy().clearStrategySettings();
+		
+		for (String mode : Arrays.asList("transit_walk", "access_walk", "egress_walk")) {
+			ModeParams modeParams = config.planCalcScore().getOrCreateModeParams(mode);
+
+			modeParams.setConstant(0.0);
+			modeParams.setMarginalUtilityOfDistance(0.0);
+			modeParams.setMarginalUtilityOfTraveling(-1.0);
+			modeParams.setMonetaryDistanceRate(0.0);
+		}
+		
+		config.planCalcScore().setPerforming_utils_hr(0.0);
+		config.planCalcScore().setUtilityOfLineSwitch(0.0);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		new MatsimNetworkReader(scenario.getNetwork()).readURL(config.network().getInputFileURL(config.getContext()));
