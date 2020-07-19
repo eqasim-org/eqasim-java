@@ -21,6 +21,7 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.utils.misc.Time;
 import org.matsim.facilities.Facility;
 
 import com.google.inject.Provider;
@@ -111,8 +112,7 @@ public class OriginDestinationRouter {
 						double travelTime = 0.0;
 						boolean isFirst = true;
 
-						// System.out.println(pair.getOrigin().getId() + " ---> " +
-						// pair.getDestination().getId());
+						//System.out.println(pair.getOrigin().getId() + " ---> " + pair.getDestination().getId());
 
 						for (Leg leg : TripStructureUtils.getLegs(elements)) {
 							travelTime += leg.getTravelTime();
@@ -121,7 +121,7 @@ public class OriginDestinationRouter {
 								EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
 
 								if (isFirst) {
-									travelTime -= route.getWaitingTime();
+									//travelTime -= route.getWaitingTime();
 								}
 
 								isFirst = false;
@@ -129,13 +129,12 @@ public class OriginDestinationRouter {
 
 							if (leg.getMode().contains("walk")) {
 								if (leg.getTravelTime() > 30.0 * 60.0) {
-									travelTime = Double.POSITIVE_INFINITY;
+									//travelTime = Double.POSITIVE_INFINITY;
 								}
 							}
 
-							// System.out.println(" " + leg.getMode() + " " + Time.writeTime(travelTime) + "
-							// " + leg.getRoute().toString());
-							// System.out.println(" " + leg.getRoute().getRouteDescription());
+							//System.out.println(" " + leg.getMode() + " " + Time.writeTime(travelTime) + " " + leg.getRoute().toString());
+							//System.out.println(" " + leg.getRoute().getRouteDescription());
 						}
 
 						localResults.put(new ModalOriginDestinationPair(mode, pair), travelTime);
