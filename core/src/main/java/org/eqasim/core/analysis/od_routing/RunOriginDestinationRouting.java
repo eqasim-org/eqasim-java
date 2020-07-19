@@ -53,7 +53,7 @@ public class RunOriginDestinationRouting {
 
 		SwissRailRaptorConfigGroup raptorConfig = (SwissRailRaptorConfigGroup) config.getModules()
 				.get(SwissRailRaptorConfigGroup.GROUP);
-		raptorConfig.setUseRangeQuery(true);
+		raptorConfig.setUseRangeQuery(false);
 
 		RangeQuerySettingsParameterSet rangeConfig = new RangeQuerySettingsParameterSet();
 		rangeConfig.setMaxEarlierDeparture(30 * 60);
