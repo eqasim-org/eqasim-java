@@ -16,9 +16,13 @@ import org.eqasim.core.analysis.od_routing.data.OriginDestinationIterator;
 import org.eqasim.core.analysis.od_routing.data.OriginDestinationPair;
 import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.misc.ParallelProgress;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.misc.Time;
@@ -106,8 +110,11 @@ public class OriginDestinationRouter {
 						Facility fromFacility = new LocationFacility(pair.getOrigin());
 						Facility toFacility = new LocationFacility(pair.getDestination());
 
+						Person person = PopulationUtils.createPopulation(ConfigUtils.createConfig()).getFactory()
+								.createPerson(Id.createPersonId("person"));
+
 						List<? extends PlanElement> elements = router.calcRoute(mode, fromFacility, toFacility,
-								departureTime, null);
+								departureTime, person);
 
 						double travelTime = 0.0;
 						boolean isFirst = true;
@@ -121,7 +128,7 @@ public class OriginDestinationRouter {
 								EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
 
 								if (isFirst) {
-									//travelTime -= route.getWaitingTime();
+									// travelTime -= route.getWaitingTime();
 								}
 
 								isFirst = false;
@@ -129,11 +136,12 @@ public class OriginDestinationRouter {
 
 							if (leg.getMode().contains("walk")) {
 								if (leg.getTravelTime() > 30.0 * 60.0) {
-									//travelTime = Double.POSITIVE_INFINITY;
+									// travelTime = Double.POSITIVE_INFINITY;
 								}
 							}
 
-							//System.out.println(" " + leg.getMode() + " " + Time.writeTime(travelTime) + " " + leg.getRoute().toString());
+							//System.out.println(" " + leg.getMode() + " " + Time.writeTime(travelTime) + " "
+							//		+ leg.getRoute().toString());
 							//System.out.println(" " + leg.getRoute().getRouteDescription());
 						}
 
