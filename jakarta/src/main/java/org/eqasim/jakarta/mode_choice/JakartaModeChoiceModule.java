@@ -26,6 +26,7 @@ import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaPTUtilityEstim
 import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaWalkUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaCarodtPredictor;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaMcodtPredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaMotorcyclePredictor;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -62,6 +63,7 @@ public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 		bind(JakartaPersonPredictor.class);
 		bind(JakartaCarodtPredictor.class);
 		bind(JakartaMcodtPredictor.class);
+		bind(JakartaMotorcyclePredictor.class);
 		bindTourConstraintFactory("VehicleTourConstraintWithCarPassenger")
 		.to(VehicleTourConstraintWithCarPassenger.Factory.class);
 		bindTripConstraintFactory("WalkDurationConstraint")
@@ -107,6 +109,22 @@ public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
 	}	
+	@Provides
+	@Named("mcodt")
+	public CostModel provideMcodtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "mcodt");
+	}
+	@Provides
+	@Named("carodt")
+	public CostModel provideCarodtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "carodt");
+	}
+	@Provides
+	@Named("motorcycle")
+	public CostModel provideMotorcycleCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "motorcycle");
+	}
+	
 	
 	
 	@Provides
