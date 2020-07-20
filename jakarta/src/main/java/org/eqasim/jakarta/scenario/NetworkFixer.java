@@ -14,6 +14,11 @@ public class NetworkFixer {
 				Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
 				allowedModes.add("car_passenger");
 				allowedModes.add("taxi");
+				allowedModes.add("carodt");
+				allowedModes.add("motorcycle");
+				allowedModes.add("mcodt");
+				
+				
 				link.setAllowedModes(allowedModes);
 			}
 		}
