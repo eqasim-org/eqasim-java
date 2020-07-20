@@ -44,7 +44,7 @@ public class JakartaPtCostModel implements CostModel {
 					TransitLine tl = scenario.getTransitSchedule().getTransitLines()
 							.get(((EnrichedTransitRoute) leg.getRoute()).getTransitLineId());
 					TransitRoute tr = tl.getRoutes().get(((EnrichedTransitRoute) leg.getRoute()).getTransitRouteId());
-					if (tr.getTransportMode().equals("subway") || tr.getTransportMode().equals("rail"))
+					if (tr.getTransportMode().equals("train") || tr.getTransportMode().equals("rail"))
 						n_Vehicles += 1;
 				}
 			}
@@ -65,7 +65,7 @@ public class JakartaPtCostModel implements CostModel {
 					TransitLine tl = scenario.getTransitSchedule().getTransitLines()
 							.get(((EnrichedTransitRoute) leg.getRoute()).getTransitLineId());
 					TransitRoute tr = tl.getRoutes().get(((EnrichedTransitRoute) leg.getRoute()).getTransitRouteId());
-					if (tr.getTransportMode().equals("bus"))
+					if (tr.getTransportMode().equals("bus")|| tr.getTransportMode().equals("angkot"))
 						n_Vehicles += 1;
 				}
 			}

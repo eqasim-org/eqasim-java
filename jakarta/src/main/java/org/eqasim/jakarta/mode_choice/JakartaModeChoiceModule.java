@@ -106,20 +106,8 @@ public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
-	}
+	}	
 	
-	@Provides
-	@Named("carodt")
-	public CostModel provideCarodtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
-		return getCostModel(factory, config, "carodt");
-	}
-	
-	
-	@Provides
-	@Named("mcodt")
-	public CostModel provideMcodtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
-		return getCostModel(factory, config, "mcodt");
-	}
 	
 	@Provides
 	@Singleton

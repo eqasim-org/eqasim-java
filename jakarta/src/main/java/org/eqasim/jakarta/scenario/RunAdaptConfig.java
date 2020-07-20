@@ -35,7 +35,8 @@ public class RunAdaptConfig {
 		eqasimConfig.setCostModel(TransportMode.car, JakartaModeChoiceModule.CAR_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, JakartaModeChoiceModule.PT_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.motorcycle, JakartaModeChoiceModule.MOTORCYCLE_COST_MODEL_NAME);
-		
+		eqasimConfig.setCostModel("mcodt", JakartaModeChoiceModule.MCODT_COST_MODEL_NAME);
+		eqasimConfig.setCostModel("carodt", JakartaModeChoiceModule.CARODT_COST_MODEL_NAME);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);

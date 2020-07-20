@@ -33,7 +33,7 @@ public class JakartaMotorcyclePredictor extends CachedVariablePredictor<Motorcyc
 
 		Leg leg = (Leg) elements.get(0);
 
-		double travelTime_min = leg.getTravelTime() / 60.0 + parameters.car.constantParkingSearchPenalty_min;
+		double travelTime_min = leg.getTravelTime() / 60.0; // + parameters.car.constantParkingSearchPenalty_min;
 		double cost_MU = costModel.calculateCost_MU(person, trip, elements);
 
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
@@ -42,3 +42,4 @@ public class JakartaMotorcyclePredictor extends CachedVariablePredictor<Motorcyc
 		return new MotorcycleVariables(travelTime_min, cost_MU, euclideanDistance_km, accessEgressTime_min);
 	}
 }
+
