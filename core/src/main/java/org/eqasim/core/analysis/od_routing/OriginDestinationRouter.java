@@ -110,8 +110,8 @@ public class OriginDestinationRouter {
 						Facility fromFacility = new LocationFacility(pair.getOrigin());
 						Facility toFacility = new LocationFacility(pair.getDestination());
 
-						Person person = PopulationUtils.createPopulation(ConfigUtils.createConfig()).getFactory()
-								.createPerson(Id.createPersonId("person"));
+						Person person = null; //PopulationUtils.createPopulation(ConfigUtils.createConfig()).getFactory()
+								//.createPerson(Id.createPersonId("person"));
 
 						List<? extends PlanElement> elements = router.calcRoute(mode, fromFacility, toFacility,
 								departureTime, person);

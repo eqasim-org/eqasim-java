@@ -51,7 +51,7 @@ public class RunOriginDestinationRouting {
 		cmd.applyConfiguration(config);
 		config.strategy().clearStrategySettings();
 
-		SwissRailRaptorConfigGroup raptorConfig = (SwissRailRaptorConfigGroup) config.getModules()
+		/*SwissRailRaptorConfigGroup raptorConfig = (SwissRailRaptorConfigGroup) config.getModules()
 				.get(SwissRailRaptorConfigGroup.GROUP);
 		raptorConfig.setUseRangeQuery(false);
 
@@ -66,7 +66,7 @@ public class RunOriginDestinationRouting {
 		selectorConfig.setBetaTravelTime(1.0);
 		selectorConfig.setBetaTransfers(0.0);
 		selectorConfig.getSubpopulations().add(null);
-		raptorConfig.addRouteSelector(selectorConfig);
+		raptorConfig.addRouteSelector(selectorConfig);*/
 
 		for (String mode : Arrays.asList("transit_walk", "access_walk", "egress_walk")) {
 			ModeParams modeParams = config.planCalcScore().getOrCreateModeParams(mode);
