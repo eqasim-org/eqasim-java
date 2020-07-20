@@ -16,10 +16,10 @@ public class JakartaPersonPredictor extends CachedVariablePredictor<JakartaPerso
 	protected JakartaPersonVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
 		JakartaModeParameters parameters = JakartaModeParameters.buildDefault();
-		boolean hasSubscription = JakartaPredictorUtils.hasSubscription(person);
-		boolean cityTrip = JakartaPredictorUtils.startsEndsinCity(trip);
+//		boolean hasSubscription = JakartaPredictorUtils.hasSubscription(person);
+//		boolean cityTrip = JakartaPredictorUtils.startsEndsinCity(trip);
 		double hhlIncome = JakartaPredictorUtils.hhlIncome(person, parameters);
-		return new JakartaPersonVariables(hasSubscription, cityTrip ,hhlIncome);
+		return new JakartaPersonVariables(hhlIncome);
 	}
 	
 }

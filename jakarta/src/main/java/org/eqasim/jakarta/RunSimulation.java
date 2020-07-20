@@ -1,5 +1,7 @@
 package org.eqasim.jakarta;
 
+
+
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -13,12 +15,16 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+
+
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
+		
+		
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				EqasimConfigurator.getConfigGroups());
@@ -31,10 +37,19 @@ public class RunSimulation {
 		EqasimConfigurator.adjustScenario(scenario);
 		
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-		eqasimConfig.setEstimator("walk", "spWalkEstimator");
-		eqasimConfig.setEstimator("pt", "spPTEstimator");
-		eqasimConfig.setEstimator("car", "spCarEstimator");
-		eqasimConfig.setEstimator("taxi", "spTaxiEstimator");		
+		eqasimConfig.setEstimator("walk", "jWalkEstimator");
+		eqasimConfig.setEstimator("pt", "jPTEstimator");
+		eqasimConfig.setEstimator("motorcycle", "jMotorcycleEstimator");
+		eqasimConfig.setEstimator("car", "jCarEstimator");
+		eqasimConfig.setEstimator("carodt", "jCarodtEstimator");
+		eqasimConfig.setEstimator("mcodt", "jMcodtEstimator");
+		
+		//DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
+		
+		//List<String> availableModes = new ArrayList<>(dmcConfig.getCarModeAvailabilityConfig().getAvailableModes());
+		//availableModes.add("car_odt");
+		//dmcConfig.getCarModeAvailabilityConfig().setAvailableModes(availableModes);
+		
 
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);

@@ -10,6 +10,8 @@ public class ModeParameters implements ParameterDefinition {
 		public double constantAccessEgressWalkTime_min = 0.0;
 		public double constantParkingSearchPenalty_min = 0.0;
 	}
+	
+
 
 	public class PtParameters {
 		public double alpha_u = 0.0;
@@ -35,8 +37,10 @@ public class ModeParameters implements ParameterDefinition {
 
 	public double betaCost_u_MU = 0.0;
 
+	
 	public final CarParameters car = new CarParameters();
 	public final PtParameters pt = new PtParameters();
 	public final BikeParameters bike = new BikeParameters();
 	public final WalkParameters walk = new WalkParameters();
+	
 }

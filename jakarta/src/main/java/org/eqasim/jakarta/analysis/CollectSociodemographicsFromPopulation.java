@@ -19,14 +19,13 @@ public class CollectSociodemographicsFromPopulation {
 		PopulationReader popReader = new PopulationReader(scenario);
 		popReader.readFile(args[0]);
 		BufferedWriter writer = IOUtils.getBufferedWriter(args[1]);
-		writer.write("id,gender,age,pt,car,license\n");
+		writer.write("id,gender,age,car\n");
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 
 			writer.write(person.getId().toString() + "," + person.getAttributes().getAttribute("sex") + ","
 					+ person.getAttributes().getAttribute("age") + ","
-					+ person.getAttributes().getAttribute("ptSubscription") + ","
-					+ person.getAttributes().getAttribute("carAvailability") + ","
-					+ person.getAttributes().getAttribute("hasLicense") + "\n");
+					//+ person.getAttributes().getAttribute("ptSubscription") + ","
+					+ person.getAttributes().getAttribute("carAvailability") + "\n");
 		}
 
 		writer.flush();

@@ -30,10 +30,12 @@ public class RunAdaptConfig {
 
 		// Set up mode choice
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+		
 
 		eqasimConfig.setCostModel(TransportMode.car, JakartaModeChoiceModule.CAR_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, JakartaModeChoiceModule.PT_COST_MODEL_NAME);
-		eqasimConfig.setCostModel(TransportMode.taxi, JakartaModeChoiceModule.TAXI_COST_MODEL_NAME);
+		eqasimConfig.setCostModel(TransportMode.motorcycle, JakartaModeChoiceModule.MOTORCYCLE_COST_MODEL_NAME);
+		
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
@@ -43,12 +45,25 @@ public class RunAdaptConfig {
 		tripConstraints.add("WalkDurationConstraint");
 		dmcConfig.setTripConstraints(tripConstraints);
 		
+
+			
+		
 		List<String> networkModes = new LinkedList<>(config.plansCalcRoute().getNetworkModes());
 		networkModes.add("taxi");
+		networkModes.add("carodt");
+		networkModes.add("mcodt");
 		config.plansCalcRoute().setNetworkModes(networkModes);
 		
 		ModeParams taxiParams = new ModeParams("taxi");
 		config.planCalcScore().addModeParams(taxiParams);
+		
+		ModeParams carodtParams = new ModeParams("carodt");
+		config.planCalcScore().addModeParams(carodtParams);
+		
+		ModeParams mcodtParams = new ModeParams("mcodt");
+		config.planCalcScore().addModeParams(mcodtParams);
+		
+		
 		
 	}
 }

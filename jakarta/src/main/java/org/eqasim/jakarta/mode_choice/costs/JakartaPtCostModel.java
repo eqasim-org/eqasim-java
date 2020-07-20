@@ -77,19 +77,19 @@ public class JakartaPtCostModel implements CostModel {
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		JakartaPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
-		if (variables.hasSubscription) {
-			return 0.0;
-		}
+//		if (variables.hasSubscription) {
+//			return 0.0;
+//		}
 
 		int n_VehiclesMR = getNumberOfMetroRailVehicles(elements);
 		int n_VehiclesBus = getNumberOfBusVehicles(elements);
 
 		if (n_VehiclesBus == 0 || n_VehiclesMR == 0)
-			return parameters.ptCostPerTrip_0Transfers_BRL;
+			return parameters.ptCostPerTrip_0Transfers_KIDR;
 		else if (n_VehiclesBus > 0 && n_VehiclesMR > 0)
-			return parameters.ptCostPerTrip_3Transfers_BRL;
+			return parameters.ptCostPerTrip_3Transfers_KIDR;
 		else
-			return parameters.ptCostPerTrip_0Transfers_BRL;
+			return parameters.ptCostPerTrip_0Transfers_KIDR;
 
 	}
 }

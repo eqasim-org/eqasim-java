@@ -30,12 +30,12 @@ public class JakartaPTUtilityEstimator  extends PtUtilityEstimator{
 		this.predictor = predictor;
 	}
 
-	protected double estimateRegionalUtility(JakartaPersonVariables variables) {
-		return (variables.cityTrip) ? parameters.spPT.alpha_pt_city : 0.0;
-	}
+//	protected double estimateRegionalUtility(JakartaPersonVariables variables) {
+//		return (variables.cityTrip) ? parameters.jPT.alpha_pt_city : 0.0;
+//	}
 	
 	protected double estimateAgeUtility(Person person) {
-		return (int) person.getAttributes().getAttribute("age") <= 16 ? parameters.spPT.alpha_age : 0.0;
+		return (int) person.getAttributes().getAttribute("age") <= 16 ? parameters.jPT.alpha_age : 0.0;
 	}
 
 	@Override
@@ -50,14 +50,14 @@ public class JakartaPTUtilityEstimator  extends PtUtilityEstimator{
 		utility += estimateInVehicleTimeUtility(variables_pt);
 		utility += estimateWaitingTimeUtility(variables_pt);
 		utility += estimateLineSwitchUtility(variables_pt);
-		utility += estimateRegionalUtility(variables);
+//		utility += estimateRegionalUtility(variables);
 		utility += estimateAgeUtility(person);
 		if (variables.hhlIncome == 0.0)
 			utility += estimateMonetaryCostUtility(variables_pt)
-			* (parameters.spAvgHHLIncome.avg_hhl_income / 1.0);
+			* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
 		else
 			utility += estimateMonetaryCostUtility(variables_pt)
-				* (parameters.spAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+				* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}

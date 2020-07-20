@@ -18,9 +18,13 @@ public class JakartaModeAvailability implements ModeAvailability {
 		// Modes that are always available
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
+		modes.add(TransportMode.motorcycle);
 		//modes.add(TransportMode.bike);
-		modes.add(TransportMode.taxi);
-
+		//modes.add(TransportMode.taxi);
+		modes.add("carodt");
+		modes.add("mcodt");
+		
+		
 		// Check car availability
 		boolean carAvailability = true;
 
@@ -34,7 +38,23 @@ public class JakartaModeAvailability implements ModeAvailability {
 		if (carAvailability) {
 			modes.add(TransportMode.car);
 		}
+		
+		
+		
+		
+		// Check motorcycle availability
+		boolean motorcycleAvailability = true;
 
+		
+	    if ((int)person.getAttributes().getAttribute("age") < 18)
+	    	motorcycleAvailability = false;
+
+		if (motorcycleAvailability) {
+			modes.add(TransportMode.motorcycle);
+		}
+		
+		
+		
 		// Add special mode "outside" if applicable
 		Boolean isOutside = (Boolean) person.getAttributes().getAttribute("outside");
 

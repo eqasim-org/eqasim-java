@@ -12,19 +12,19 @@ import com.google.inject.Inject;
 
 import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-public class JakartaTaxiCostModel extends AbstractCostModel {
+public class JakartaMcodtCostModel extends AbstractCostModel {
 	private final JakartaCostParameters costParameters;
 
 	@Inject
-	public JakartaTaxiCostModel(JakartaCostParameters costParameters) {
-		super("taxi");
+	public JakartaMcodtCostModel(JakartaCostParameters costParameters) {
+		super("mcodt");
 
 		this.costParameters = costParameters;
 	}
 	
 	public double getTotalTravelTime(List<? extends PlanElement> elements) {
 		double total_time = 0.0;
-		String mode = "taxi";
+		String mode = "mcodt";
 		
 		for (PlanElement element : elements) {
 			if (element instanceof Leg) {
@@ -41,11 +41,11 @@ public class JakartaTaxiCostModel extends AbstractCostModel {
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		
-		double pick_up_fee = costParameters.taxiPickUpFee_BRL;
-		double distance_cost = costParameters.taxiCostPerkm_BRL * getInVehicleDistance_km(elements);
-		double time_cost = costParameters.taxiCostPerMin_BRL * getTotalTravelTime(elements);
+		double pick_up_fee = costParameters.mcodtPickUpFee_KIDR;
+		double distance_cost = costParameters.mcodtCostPerkm_KIDR * getInVehicleDistance_km(elements);
+		//double time_cost = costParameters.taxiCostPerMin_BRL * getTotalTravelTime(elements);
 		
-		return Math.max(pick_up_fee + distance_cost + time_cost, costParameters.taxMinCost_BRL);
+		return Math.max(pick_up_fee + distance_cost, costParameters.mcodtMinCost_KIDR);
 	}
 
 }

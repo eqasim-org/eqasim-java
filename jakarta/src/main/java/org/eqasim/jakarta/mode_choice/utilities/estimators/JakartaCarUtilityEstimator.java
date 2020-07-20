@@ -30,9 +30,9 @@ public class JakartaCarUtilityEstimator extends CarUtilityEstimator {
 		this.predictor = predictor;
 	}
 	
-	protected double estimateRegionalUtility(JakartaPersonVariables variables) {
-		return (variables.cityTrip) ? parameters.spCar.alpha_car_city : 0.0;
-	}
+	//protected double estimateRegionalUtility(JakartaPersonVariables variables) {
+	//	return (variables.cityTrip) ? parameters.jCar.alpha_car_city : 0.0;
+	//}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -43,14 +43,14 @@ public class JakartaCarUtilityEstimator extends CarUtilityEstimator {
 
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables_car);
-		utility += estimateRegionalUtility(variables);
+		//utility += estimateRegionalUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables_car);
 		if (variables.hhlIncome == 0.0)
 			utility += estimateMonetaryCostUtility(variables_car)
-			* (parameters.spAvgHHLIncome.avg_hhl_income / 1.0);
+			* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
 		else
 			utility += estimateMonetaryCostUtility(variables_car)
-				* (parameters.spAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+				* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}

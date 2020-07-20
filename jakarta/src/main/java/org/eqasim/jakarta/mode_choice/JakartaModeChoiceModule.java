@@ -12,16 +12,21 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.jakarta.mode_choice.constraints.VehicleTourConstraintWithCarPassenger;
 import org.eqasim.jakarta.mode_choice.constraints.WalkDurationConstraint;
 import org.eqasim.jakarta.mode_choice.costs.JakartaCarCostModel;
+import org.eqasim.jakarta.mode_choice.costs.JakartaCarodtCostModel;
+import org.eqasim.jakarta.mode_choice.costs.JakartaMcodtCostModel;
+import org.eqasim.jakarta.mode_choice.costs.JakartaMotorcycleCostModel;
 import org.eqasim.jakarta.mode_choice.costs.JakartaPtCostModel;
-import org.eqasim.jakarta.mode_choice.costs.JakartaTaxiCostModel;
 import org.eqasim.jakarta.mode_choice.parameters.JakartaCostParameters;
 import org.eqasim.jakarta.mode_choice.parameters.JakartaModeParameters;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaCarUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaCarodtUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaMcodtUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaMotorcycleUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaPTUtilityEstimator;
-import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaTaxiUtilityEstimator;
 import org.eqasim.jakarta.mode_choice.utilities.estimators.JakartaWalkUtilityEstimator;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaCarodtPredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaMcodtPredictor;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
-import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaTaxiPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -38,11 +43,13 @@ import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintC
 public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
-	static public final String MODE_AVAILABILITY_NAME = "SaoPauloModeAvailability";
+	static public final String MODE_AVAILABILITY_NAME = "JakartaModeAvailability";
 
-	static public final String CAR_COST_MODEL_NAME = "SaoPauloCarCostModel";
-	static public final String PT_COST_MODEL_NAME = "SaoPauloPtCostModel";
-	static public final String TAXI_COST_MODEL_NAME = "SaoPauloTaxiCostModel";
+	static public final String CAR_COST_MODEL_NAME = "JakartaCarCostModel";
+	static public final String PT_COST_MODEL_NAME = "JakartaPtCostModel";
+	static public final String CARODT_COST_MODEL_NAME = "JakartaCarodtCostModel";
+	static public final String MCODT_COST_MODEL_NAME = "JakartaMcodtCostModel";
+	static public final String MOTORCYCLE_COST_MODEL_NAME = "JakartaMotorcycleCostModel";
 
 	public JakartaModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -53,7 +60,8 @@ public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(JakartaModeAvailability.class);
 
 		bind(JakartaPersonPredictor.class);
-		bind(JakartaTaxiPredictor.class);
+		bind(JakartaCarodtPredictor.class);
+		bind(JakartaMcodtPredictor.class);
 		bindTourConstraintFactory("VehicleTourConstraintWithCarPassenger")
 		.to(VehicleTourConstraintWithCarPassenger.Factory.class);
 		bindTripConstraintFactory("WalkDurationConstraint")
@@ -61,11 +69,15 @@ public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(JakartaCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(JakartaPtCostModel.class);
-		bindCostModel(TAXI_COST_MODEL_NAME).to(JakartaTaxiCostModel.class);
-		bindUtilityEstimator("spPTEstimator").to(JakartaPTUtilityEstimator.class);
-		bindUtilityEstimator("spWalkEstimator").to(JakartaWalkUtilityEstimator.class);
-		bindUtilityEstimator("spCarEstimator").to(JakartaCarUtilityEstimator.class);
-		bindUtilityEstimator("spTaxiEstimator").to(JakartaTaxiUtilityEstimator.class);
+		bindCostModel(MCODT_COST_MODEL_NAME).to(JakartaMcodtCostModel.class);
+		bindCostModel(CARODT_COST_MODEL_NAME).to(JakartaCarodtCostModel.class);
+		bindCostModel(MOTORCYCLE_COST_MODEL_NAME).to(JakartaMotorcycleCostModel.class);
+		bindUtilityEstimator("jPTEstimator").to(JakartaPTUtilityEstimator.class);
+		bindUtilityEstimator("jWalkEstimator").to(JakartaWalkUtilityEstimator.class);
+		bindUtilityEstimator("jCarEstimator").to(JakartaCarUtilityEstimator.class);
+		bindUtilityEstimator("jCarodtEstimator").to(JakartaCarodtUtilityEstimator.class);
+		bindUtilityEstimator("jMcodtEstimator").to(JakartaMcodtUtilityEstimator.class);
+		bindUtilityEstimator("jMotorcycleEstimator").to(JakartaMotorcycleUtilityEstimator.class);
 		bind(ModeParameters.class).to(JakartaModeParameters.class);
 	}
 
@@ -97,9 +109,16 @@ public class JakartaModeChoiceModule extends AbstractEqasimExtension {
 	}
 	
 	@Provides
-	@Named("taxi")
-	public CostModel provideTaxiCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
-		return getCostModel(factory, config, "taxi");
+	@Named("carodt")
+	public CostModel provideCarodtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "carodt");
+	}
+	
+	
+	@Provides
+	@Named("mcodt")
+	public CostModel provideMcodtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "mcodt");
 	}
 	
 	@Provides

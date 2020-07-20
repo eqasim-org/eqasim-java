@@ -30,9 +30,9 @@ public class JakartaWalkUtilityEstimator extends WalkUtilityEstimator {
 		this.predictor = predictor;
 	}
 
-	protected double estimateRegionalUtility(JakartaPersonVariables variables) {
-		return (variables.cityTrip) ? parameters.spWalk.alpha_walk_city : 0.0;
-	}
+//	protected double estimateRegionalUtility(JakartaPersonVariables variables) {
+//		return (variables.cityTrip) ? parameters.spWalk.alpha_walk_city : 0.0;
+//	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -44,7 +44,7 @@ public class JakartaWalkUtilityEstimator extends WalkUtilityEstimator {
 		if (distance > 4 * 5280)
 			utility += -100;
 		utility += super.estimateUtility(person, trip, elements);
-		utility += estimateRegionalUtility(variables);
+//		utility += estimateRegionalUtility(variables);
 
 		return utility;
 	}
