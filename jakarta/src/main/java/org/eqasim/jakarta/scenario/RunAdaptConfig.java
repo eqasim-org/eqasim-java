@@ -25,8 +25,8 @@ public class RunAdaptConfig {
 
 	static public void adaptConfiguration(Config config) {
 		// Ignore some input files
-		config.transit().setVehiclesFile(null);
-		config.households().setInputFile(null);
+		//config.transit().setVehiclesFile(null);
+		//config.households().setInputFile(null);
 
 		// Set up mode choice
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
