@@ -53,7 +53,7 @@ public class RunAdaptConfig {
 		networkModes.add("taxi");
 		networkModes.add("carodt");
 		networkModes.add("mcodt");
-		networkModes.add("motorcycle");
+		networkModes.add(TransportMode.motorcycle);
 		config.plansCalcRoute().setNetworkModes(networkModes);
 		
 		ModeParams taxiParams = new ModeParams("taxi");
