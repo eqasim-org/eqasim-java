@@ -59,7 +59,7 @@ public class RunAdaptConfig {
 		ModeParams taxiParams = new ModeParams("taxi");
 		config.planCalcScore().addModeParams(taxiParams);
 		
-		ModeParams motorcycleParams = new ModeParams("motorcycle");
+		ModeParams motorcycleParams = new ModeParams(TransportMode.motorcycle);
 		config.planCalcScore().addModeParams(motorcycleParams);
 		
 		ModeParams carodtParams = new ModeParams("carodt");
