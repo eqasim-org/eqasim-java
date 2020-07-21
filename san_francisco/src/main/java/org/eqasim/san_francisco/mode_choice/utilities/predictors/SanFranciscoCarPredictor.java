@@ -28,8 +28,10 @@ public class SanFranciscoCarPredictor extends CachedVariablePredictor<CarVariabl
 
 	@Override
 	public CarVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		if (elements.size() > 1) {
-			throw new IllegalStateException("We do not support multi-stage car trips yet.");
+
+		if (elements.size() != 5) {
+			System.out.println("Number of elements: " + elements.size());
+			System.out.println(elements.toString());
 		}
 
 		Leg legAccess = (Leg) elements.get(0);
