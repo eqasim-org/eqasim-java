@@ -17,6 +17,7 @@ import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoBik
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoCarUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoPTUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoWalkUtilityEstimator;
+import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoCarPredictor;
 import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -43,6 +44,8 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 
 	@Override
 	protected void installEqasimExtension() {
+		
+		bind(SanFranciscoCarPredictor.class);
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SanFranciscoModeAvailability.class);
 
 		bind(SanFranciscoPersonPredictor.class);

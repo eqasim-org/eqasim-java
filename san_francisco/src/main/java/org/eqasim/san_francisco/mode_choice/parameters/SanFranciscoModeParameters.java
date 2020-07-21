@@ -16,6 +16,7 @@ public class SanFranciscoModeParameters extends ModeParameters {
 	
 	public class SanFranciscoCarParameters {
 		public double vot_min = 0.0;
+		public double vot_accessegress_min;
 	}
 	
 	public class SanFranciscoPTParameters {
@@ -50,7 +51,7 @@ public class SanFranciscoModeParameters extends ModeParameters {
 		// Car
 		parameters.car.alpha_u = 0.0;
 		parameters.sfCar.vot_min = 0.2714;
-        
+		parameters.sfCar.vot_accessegress_min = 0.2641;
 		parameters.car.constantAccessEgressWalkTime_min = 0.0;
 		parameters.car.constantParkingSearchPenalty_min = 0.0;
 
