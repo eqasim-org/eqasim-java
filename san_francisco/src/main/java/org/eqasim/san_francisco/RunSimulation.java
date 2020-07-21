@@ -37,6 +37,9 @@ public class RunSimulation {
 		EqasimConfigGroup.get(config).setDistanceUnit(DistanceUnit.foot);
 		cmd.applyConfiguration(config);
 
+		// access egress walk routing
+		config.plansCalcRoute().setInsertingAccessEgressWalk(true);
+
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
@@ -67,9 +70,10 @@ public class RunSimulation {
 		bike.setPcuEquivalents(0.25);
 		scenario.getVehicles().addVehicleType(bike);
 
-		// add bike as network mode
+		// add bike as network mode, remove truck
 		List<String> networkModes = new LinkedList<>(config.plansCalcRoute().getNetworkModes());
 		networkModes.add(TransportMode.bike);
+		networkModes.remove(TransportMode.truck);
 		config.plansCalcRoute().setNetworkModes(networkModes);
 
 		Controler controller = new Controler(scenario);
