@@ -28,8 +28,8 @@ public class IDFConfigurator extends EqasimConfigurator {
 		// file!
 
 		// Adjust flow and storage capacity
-		config.qsim().setFlowCapFactor(0.035);
-		config.qsim().setStorageCapFactor(0.035);
+		config.qsim().setFlowCapFactor(0.045);
+		config.qsim().setStorageCapFactor(0.045);
 
 		// Adjust replanning
 		for (StrategySettings strategy : config.strategy().getStrategySettings()) {
