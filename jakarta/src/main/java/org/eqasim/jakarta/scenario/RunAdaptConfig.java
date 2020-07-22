@@ -24,8 +24,12 @@ public class RunAdaptConfig {
 
 	static public void adaptConfiguration(Config config) {
 		// Ignore some input files
-		//config.transit().setVehiclesFile(null);
-		//config.households().setInputFile(null);
+		config.transit().setVehiclesFile(null);
+		config.households().setInputFile(null);
+		
+		
+		
+		//config.qsim().setLinkDynamics(linkDynamics.SeepageQ, config.qsim());
 		
 		
 		List<String> seepMode = new LinkedList<>(config.qsim().getSeepModes());
