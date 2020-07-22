@@ -30,16 +30,22 @@ public class RunAdaptConfig {
 		
 		//LinkDynamics.SeepageQ
 		
-		//config.qsim().setLinkDynamics()
+		//config.qsim().setLinkDynamics();
 		
-		//QSimConfigGroup.TrafficDynamics.valueOf("SeepageQ")
+		//QSimConfigGroup.TrafficDynamics.valueOf("SeepageQ");
+		
+		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
+		
+		//config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
 		
 		//QSimConfigGroup.LinkDynamics.SeepageQ
 		
 		
-		config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
+		//config.qsim().getLinkDynamics().SeepageQ;
 		
-		
+		//string linkDynamics = new <>config.qsim().getLinkDynamics();
+		//linkDynamics.valueOf("SeepageQ");
+		//config.qsim().setLinkDynamics(linkDynamics);
 		
 		
 		List<String> seepMode = new LinkedList<>(config.qsim().getSeepModes());
@@ -75,12 +81,12 @@ public class RunAdaptConfig {
 
 		//QsimConfigGroup eqasimConfig = QsimConfigGroup.get(config);	
 		
-		//List<String> networkModes = new LinkedList<>(config.plansCalcRoute().getNetworkModes());
-		//networkModes.add("taxi");
-		//networkModes.add("carodt");
-		//networkModes.add("mcodt");
-		//networkModes.add("motorcycle");
-		//config.plansCalcRoute().setNetworkModes(networkModes);
+		List<String> networkModes = new LinkedList<>(config.plansCalcRoute().getNetworkModes());
+		networkModes.add("taxi");
+		networkModes.add("carodt");
+		networkModes.add("mcodt");
+		networkModes.add("motorcycle");
+		config.plansCalcRoute().setNetworkModes(networkModes);
 		
 		
 		//RunAdaptConfig.QsimConfigGroup().getConfig().setSeepMode
