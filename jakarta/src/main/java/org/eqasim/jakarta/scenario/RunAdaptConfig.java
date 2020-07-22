@@ -25,27 +25,13 @@ public class RunAdaptConfig {
 
 	static public void adaptConfiguration(Config config) {
 		// Ignore some input files
-		config.transit().setVehiclesFile(null);
-		config.households().setInputFile(null);
+		//config.transit().setVehiclesFile(null);
+		//config.households().setInputFile(null);
 		
-		//LinkDynamics.SeepageQ
-		
-		//config.qsim().setLinkDynamics();
-		
-		//QSimConfigGroup.TrafficDynamics.valueOf("SeepageQ");
+	
+		//set link dynamics and seep mode
 		
 		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
-		
-		//config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
-		
-		//QSimConfigGroup.LinkDynamics.SeepageQ
-		
-		
-		//config.qsim().getLinkDynamics().SeepageQ;
-		
-		//string linkDynamics = new <>config.qsim().getLinkDynamics();
-		//linkDynamics.valueOf("SeepageQ");
-		//config.qsim().setLinkDynamics(linkDynamics);
 		
 		
 		List<String> seepMode = new LinkedList<>(config.qsim().getSeepModes());
@@ -53,11 +39,6 @@ public class RunAdaptConfig {
 		seepMode.add("mcodt");
 		config.qsim().setSeepModes(seepMode);
 		
-		//setSeepModes("bike, motorcycle, mcodt");
-		
-		
-		
-		//()(Arrays.asList("bike","motorcycle", "mcodt");
 		
 
 		// Set up mode choice
