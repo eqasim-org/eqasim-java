@@ -30,7 +30,16 @@ public class RunAdaptConfig {
 		
 		//LinkDynamics.SeepageQ
 		
-		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
+		//config.qsim().setLinkDynamics()
+		
+		//QSimConfigGroup.TrafficDynamics.valueOf("SeepageQ")
+		
+		//QSimConfigGroup.LinkDynamics.SeepageQ
+		
+		
+		config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
+		
+		
 		
 		
 		List<String> seepMode = new LinkedList<>(config.qsim().getSeepModes());
