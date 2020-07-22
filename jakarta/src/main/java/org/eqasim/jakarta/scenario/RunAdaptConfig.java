@@ -14,6 +14,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup.LinkDynamics;
 
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
@@ -27,9 +28,9 @@ public class RunAdaptConfig {
 		config.transit().setVehiclesFile(null);
 		config.households().setInputFile(null);
 		
+		//LinkDynamics.SeepageQ
 		
-		
-		//config.qsim().setLinkDynamics(linkDynamics.SeepageQ, config.qsim());
+		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
 		
 		
 		List<String> seepMode = new LinkedList<>(config.qsim().getSeepModes());
