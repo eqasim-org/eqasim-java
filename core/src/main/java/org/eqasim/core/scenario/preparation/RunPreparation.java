@@ -26,6 +26,8 @@ public class RunPreparation {
 		new MatsimFacilitiesReader(scenario).readFile(cmd.getOptionStrict("input-facilities-path"));
 		new MatsimNetworkReader(scenario.getNetwork()).readFile(cmd.getOptionStrict("input-network-path"));
 		new PopulationReader(scenario).readFile(cmd.getOptionStrict("input-population-path"));
+		
+		
 
 		// Assign links to facilities
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
@@ -53,5 +55,6 @@ public class RunPreparation {
 		new FacilitiesWriter(scenario.getActivityFacilities()).write(cmd.getOptionStrict("output-facilities-path"));
 		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-population-path"));
 		new NetworkWriter(scenario.getNetwork()).write(cmd.getOptionStrict("output-network-path"));
+		
 	}
 }
