@@ -13,8 +13,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
-
-
+import org.matsim.core.config.groups.QSimConfigGroup;
 
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
@@ -27,6 +26,19 @@ public class RunAdaptConfig {
 		// Ignore some input files
 		//config.transit().setVehiclesFile(null);
 		//config.households().setInputFile(null);
+		
+		
+		List<String> seepModes = new LinkedList<>(config.qsim().getSeepModes());
+		seepModes.add("motorcycle");
+		seepModes.add("mcodt");
+		config.qsim().setSeepModes(seepModes);
+		
+		//setSeepModes("bike, motorcycle, mcodt");
+		
+		
+		
+		//()(Arrays.asList("bike","motorcycle", "mcodt");
+		
 
 		// Set up mode choice
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
@@ -47,14 +59,19 @@ public class RunAdaptConfig {
 		dmcConfig.setTripConstraints(tripConstraints);
 		
 
-			
+		//QsimConfigGroup eqasimConfig = QsimConfigGroup.get(config);	
 		
-		List<String> networkModes = new LinkedList<>(config.plansCalcRoute().getNetworkModes());
-		networkModes.add("taxi");
-		networkModes.add("carodt");
-		networkModes.add("mcodt");
-		networkModes.add("motorcycle");
-		config.plansCalcRoute().setNetworkModes(networkModes);
+		//List<String> networkModes = new LinkedList<>(config.plansCalcRoute().getNetworkModes());
+		//networkModes.add("taxi");
+		//networkModes.add("carodt");
+		//networkModes.add("mcodt");
+		//networkModes.add("motorcycle");
+		//config.plansCalcRoute().setNetworkModes(networkModes);
+		
+		
+		//RunAdaptConfig.QsimConfigGroup().getConfig().setSeepMode
+		//Run.getConfig.
+		
 		
 		ModeParams taxiParams = new ModeParams("taxi");
 		config.planCalcScore().addModeParams(taxiParams);
@@ -70,5 +87,10 @@ public class RunAdaptConfig {
 		
 		
 		
+	}
+
+	private static Object QsimConfigGroup() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
