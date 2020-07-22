@@ -28,10 +28,10 @@ public class RunAdaptConfig {
 		//config.households().setInputFile(null);
 		
 		
-		List<String> seepModes = new LinkedList<>(config.qsim().getSeepModes());
-		seepModes.add("motorcycle");
-		seepModes.add("mcodt");
-		config.qsim().setSeepModes(seepModes);
+		List<String> seepMode = new LinkedList<>(config.qsim().getSeepModes());
+		seepMode.add("motorcycle");
+		seepMode.add("mcodt");
+		config.qsim().setSeepModes(seepMode);
 		
 		//setSeepModes("bike, motorcycle, mcodt");
 		
