@@ -29,7 +29,8 @@ public class SpatialUtils {
 			SimpleFeature feature = featureIterator.next();
 			Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
-			if (value.equals(feature.getAttribute(attribute))) {
+			if (feature.getAttribute(attribute) != null
+					&& value.equals(String.valueOf(feature.getAttribute(attribute)))) {
 				if (geometry instanceof MultiPolygon) {
 					MultiPolygon multiPolygon = (MultiPolygon) geometry;
 

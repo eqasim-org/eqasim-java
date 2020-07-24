@@ -24,7 +24,6 @@ public class RunSimulation {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		IDFConfigurator.checkUrbanAttributes(scenario);
 
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);
