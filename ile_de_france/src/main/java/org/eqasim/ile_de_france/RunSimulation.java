@@ -39,9 +39,9 @@ public class RunSimulation {
 		ScenarioUtils.loadScenario(scenario);
 		IDFConfigurator.checkUrbanAttributes(scenario);
 
-		if (cmd.getOption("use-calibrated-settings").map(Boolean::parseBoolean).orElse(false)) {
-			IDFConfigurator.adjustCalibratedScenario(cmd, scenario);
-		}
+		//if (cmd.getOption("use-calibrated-settings").map(Boolean::parseBoolean).orElse(false)) {
+		IDFConfigurator.adjustCalibratedScenario(cmd, scenario);
+		//}
 
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);
