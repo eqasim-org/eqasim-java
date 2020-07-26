@@ -1,7 +1,6 @@
 # eqasim-java
 
 ![eqasim](docs/top.png "eqasim")
-[![Build Status](https://travis-ci.com/eqasim-org/eqasim-java.svg?branch=develop)](https://travis-ci.com/eqasim-org/eqasim-java)
 
 The `eqasim` package is a collection of ready-to-run high-quality scenarios
 for the agent- and activity-based transport simulation framework [MATSim](https://matsim.org/).
@@ -22,6 +21,8 @@ respective repositories. To cut out smaller parts of existing simulations
 check out how to use this repository to [create simulation cut-outs](docs/cutting.md).
 
 ## Versioning and Packging
+
+[![Build Status](https://travis-ci.com/eqasim-org/eqasim-java.svg?branch=develop)](https://travis-ci.com/eqasim-org/eqasim-java)
 
 The current version of `eqasim` is `1.0.6`. You can access it through the `v1.0.6` tag. The
 `develop` branch is kept at version `1.0.6` until the next release is prepared,
