@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- Set default mode choice rate to 5%
+- Set default iterations to 60
+- Consolidate validated Île-de-France simulation
 - Fix: Updating geotools repository
 - Fix: Correct cutting of public transit lines
 - Fix: Consider special "parallel link" cases for network route cutting
