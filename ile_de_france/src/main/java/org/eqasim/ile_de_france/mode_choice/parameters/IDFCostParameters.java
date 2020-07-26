@@ -8,7 +8,7 @@ public class IDFCostParameters implements ParameterDefinition {
 	public static IDFCostParameters buildDefault() {
 		IDFCostParameters parameters = new IDFCostParameters();
 
-		parameters.carCost_EUR_km = 0.2;
+		parameters.carCost_EUR_km = 0.15;
 
 		return parameters;
 	}

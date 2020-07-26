@@ -38,7 +38,7 @@ public class IDFModeAvailability implements ModeAvailability {
 		// Check bike availability
 		boolean bikeAvailability = true;
 
-		if ("FOR_NONE".equals((String) person.getAttributes().getAttribute("bikeAvailability"))) {
+		if ("none".equals((String) person.getAttributes().getAttribute("bikeAvailability"))) {
 			bikeAvailability = false;
 		}
 
