@@ -28,7 +28,7 @@
 	</properties>
 	<distributionManagement>
 		<repository>
-			<id>eqasim</id>
+			<id>eqasim-bintray</id>
 			<url>https://api.bintray.com/maven/eqasim/eqasim/eqasim/;publish=1</url>
 		</repository>
 	</distributionManagement>
