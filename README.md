@@ -1,6 +1,7 @@
 # eqasim-java
 
 ![eqasim](docs/top.png "eqasim")
+[![Build Status](https://travis-ci.com/eqasim-org/eqasim-java.svg?branch=develop)](https://travis-ci.com/eqasim-org/eqasim-java)
 
 The `eqasim` package is a collection of ready-to-run high-quality scenarios
 for the agent- and activity-based transport simulation framework [MATSim](https://matsim.org/).
