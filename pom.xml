@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.eqasim</groupId>
 	<artifactId>eqasim</artifactId>
-	<version>1.0.5</version>
+	<version>1.0.6</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -28,8 +28,8 @@
 	</properties>
 	<distributionManagement>
 		<repository>
-			<id>matsim-eth</id>
-			<url>https://api.bintray.com/maven/matsim-eth/eqasim/eqasim/;publish=1</url>
+			<id>eqasim</id>
+			<url>https://api.bintray.com/maven/eqasim/eqasim/eqasim/;publish=1</url>
 		</repository>
 	</distributionManagement>
 	<repositories>
@@ -56,13 +56,13 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>2.9.9</version>
+			<version>2.10.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.10.0.pr1</version>
+			<version>2.10.0</version>
 		</dependency>
 
 		<dependency>

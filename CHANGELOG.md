@@ -1,5 +1,9 @@
 # CHANGELOG
 
+- No changes yet
+
+**1.0.6**
+
 - Set default mode choice rate to 5%
 - Set default iterations to 60
 - Consolidate validated Île-de-France simulation
