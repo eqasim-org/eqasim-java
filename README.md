@@ -32,7 +32,7 @@ to your `pom.xml`:
 ```xml
 <repository>
     <id>matsim-eth</id>
-    <url>https://dl.bintray.com/matsim-eth/matsim</url>
+    <url>https://dl.bintray.com/eqasim/eqasim</url>
 </repository>
 ```
 
