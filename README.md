@@ -18,7 +18,7 @@ such as for:
 
 To understand how to set up a simulation and run it, please refer to the
 respective repositories. To cut out smaller parts of existing simulations
-check out how to use this repository to [create simulation cut-outs](docs/cutting-md).
+check out how to use this repository to [create simulation cut-outs](docs/cutting.md).
 
 ## Versioning and Packging
 
@@ -37,8 +37,6 @@ to your `pom.xml`:
 ```
 
 Afterwards, you can add various sub-packages to your project:
-
-Add the following to your `pom.xml` dependencies to use the extension with version `1.0.3` and MATSim 11, for instance:
 
 ```xml
 <dependency>
