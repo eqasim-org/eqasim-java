@@ -34,22 +34,14 @@ public class SanFranciscoWalkUtilityEstimator extends WalkUtilityEstimator {
 	protected double estimateRegionalUtility(SanFranciscoPersonVariables variables) {
 		return (variables.cityTrip) ? parameters.sfWalk.alpha_walk_city : 0.0;
 	}
-
-	protected double estimateTravelTime(WalkVariables variables) {
-		return parameters.sfWalk.vot_min * variables.travelTime_min;
-	}
-
+	
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SanFranciscoPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
-
-		WalkVariables variables_walk = walkPredictor.predictVariables(person, trip, elements);
 		
-		utility += estimateConstantUtility();
-		utility += estimateTravelTime(variables_walk) * (parameters.sfAvgHHLIncome.avg_hhl_income / variables.hhlIncome)
-				* parameters.betaCost_u_MU;
+		utility +=super.estimateUtility(person, trip, elements);
 		utility += estimateRegionalUtility(variables);
 
 		return utility;

@@ -37,15 +37,16 @@ public class SanFranciscoPTUtilityEstimator extends PtUtilityEstimator {
 		return utility_city;
 	}
 
-	protected double estimateTravelTime(PtVariables variables_pt) {
-		return parameters.sfPT.vot_min
-				* (variables_pt.inVehicleTime_min + variables_pt.accessEgressTime_min + variables_pt.waitingTime_min);
-	}
-
+	
 	@Override
 	protected double estimateMonetaryCostUtility(PtVariables variables) {
 		return EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
 				parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
+	}
+	
+	protected double estimateTravelTimeUtility(PtVariables variables_pt) {
+		return parameters.sfPT.travelTime_min
+				* (variables_pt.inVehicleTime_min + variables_pt.accessEgressTime_min + variables_pt.waitingTime_min);
 	}
 
 	@Override
@@ -54,11 +55,16 @@ public class SanFranciscoPTUtilityEstimator extends PtUtilityEstimator {
 		PtVariables variables_pt = ptPredictor.predict(person, trip, elements);
 
 		double utility = 0.0;
-
 		utility += estimateConstantUtility();
-		utility += (estimateTravelTime(variables_pt) + estimateLineSwitchUtility(variables_pt)
-				+ estimateMonetaryCostUtility(variables_pt))
-				* (parameters.sfAvgHHLIncome.avg_hhl_income / variables.hhlIncome) * parameters.betaCost_u_MU;
+		utility += estimateTravelTimeUtility(variables_pt);
+		if (variables.hhlIncome == 0.0)
+			utility += parameters.betaCost_u_MU * estimateMonetaryCostUtility(variables_pt) * Math.pow(
+					(10.000 / parameters.sfAvgHHLIncome.avg_hhl_income), parameters.sfIncomeElasticity.lambda_income);
+		else
+			utility += parameters.betaCost_u_MU * estimateMonetaryCostUtility(variables_pt)
+					* Math.pow((variables.hhlIncome / parameters.sfAvgHHLIncome.avg_hhl_income),
+							parameters.sfIncomeElasticity.lambda_income);
+
 		utility += estimateRegionalUtility(variables);
 
 		return utility;
