@@ -13,6 +13,7 @@ import org.eqasim.san_francisco.mode_choice.costs.SanFranciscoCarCostModel;
 import org.eqasim.san_francisco.mode_choice.costs.SanFranciscoPtCostModel;
 import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoCostParameters;
 import org.eqasim.san_francisco.mode_choice.parameters.SanFranciscoModeParameters;
+import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoBikeUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoCarUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoPTUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoWalkUtilityEstimator;
@@ -55,6 +56,8 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator("sfCarEstimator").to(SanFranciscoCarUtilityEstimator.class);
         bindUtilityEstimator("sfPTEstimator").to(SanFranciscoPTUtilityEstimator.class);
         bindUtilityEstimator("sfWalkEstimator").to(SanFranciscoWalkUtilityEstimator.class);
+        bindUtilityEstimator("sfBikeEstimator").to(SanFranciscoBikeUtilityEstimator.class);
+
 		bind(ModeParameters.class).to(SanFranciscoModeParameters.class);
 	}
 

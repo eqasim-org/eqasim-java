@@ -49,13 +49,15 @@ public class GenerateConfig {
 		this.threads = threads;
 	}
 
+	private final static int DEFAULT_ITERATIONS = 60;
+
 	protected void adaptConfiguration(Config config) {
 		// General settings
 
 		config.controler().setFirstIteration(0);
-		config.controler().setLastIteration(40);
-		config.controler().setWriteEventsInterval(40);
-		config.controler().setWritePlansInterval(40);
+		config.controler().setLastIteration(DEFAULT_ITERATIONS);
+		config.controler().setWriteEventsInterval(DEFAULT_ITERATIONS);
+		config.controler().setWritePlansInterval(DEFAULT_ITERATIONS);
 		config.controler().setOutputDirectory("simulation_output");
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 
@@ -76,6 +78,7 @@ public class GenerateConfig {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setCrossingPenalty(3.0);
 		eqasimConfig.setSampleSize(sampleSize);
+		eqasimConfig.setTripAnalysisInterval(DEFAULT_ITERATIONS);
 
 		// Scoring config
 		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
@@ -127,7 +130,7 @@ public class GenerateConfig {
 		config.travelTimeCalculator().setAnalyzedModes(new HashSet<>(NETWORK_MODES));
 
 		// Discrete mode choice
-		DiscreteModeChoiceConfigurator.configureAsModeChoiceInTheLoop(config);
+		DiscreteModeChoiceConfigurator.configureAsModeChoiceInTheLoop(config, 0.05);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);

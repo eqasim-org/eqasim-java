@@ -19,22 +19,31 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 		// Modes that are always available
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
-		//modes.add(TransportMode.bike);
+		// modes.add(TransportMode.bike);
 
 		// Check car availability
-				boolean carAvailability = true;
+		boolean carAvailability = true;
+        boolean bikeAvailability = true;
+        
+		if (PersonUtils.getLicense(person).equals("no")) {
+			carAvailability = false;
+		}
 
-				if (PersonUtils.getLicense(person).equals("no")) {
-					carAvailability = false;
-				}
+		if ("none".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
+			carAvailability = false;
+		}
 
-				if ("none".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
-					carAvailability = false;
-				}
+		if (carAvailability) {
+			modes.add(TransportMode.car);
+		}
+		
+		if ("none".equals((String) person.getAttributes().getAttribute("bikeAvailability"))) {
+			bikeAvailability = false;
+		}
 
-				if (carAvailability) {
-					modes.add(TransportMode.car);
-				}
+		if (bikeAvailability) {
+			modes.add(TransportMode.bike);
+		}
 
 		// Add special mode "outside" if applicable
 		Boolean isOutside = (Boolean) person.getAttributes().getAttribute("outside");
