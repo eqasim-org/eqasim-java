@@ -227,7 +227,7 @@ public class BikeNetworkFixer {
 		System.out.println("Number of modified links: " + numberModifiedLinks);
 	}
 
-	public void createCarFreeZone(Network network, Collection<Geometry> geometries) {
+	public void createCarFreeZoneFromShapefile(Network network, Collection<Geometry> carFreeZone) {
 
 		int numberModifiedLinks = 0;
 		double roadLengthRemoved = 0.0;
@@ -238,7 +238,47 @@ public class BikeNetworkFixer {
 
 			//check if link is within geometries
 			Coord coord = link.getCoord();
-			if (geometries.stream().anyMatch(geometry -> geometry.contains(MGC.coord2Point(coord)))) {
+			if (carFreeZone.stream().anyMatch(geometry -> geometry.contains(MGC.coord2Point(coord)))) {
+
+				// check if the highway tag is present
+				if (link.getAttributes().getAsMap().containsKey("osm:way:highway")) {
+
+					numberModifiedLinks++;
+					roadLengthRemoved += link.getLength() * link.getNumberOfLanes();
+					capacityRemoved += link.getCapacity();
+
+					// remove car as a mode
+					Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
+					allowedModes.remove(TransportMode.car);
+					allowedModes.remove("car_passenger");
+					allowedModes.remove("taxi");
+					System.out.println(link.getId() + ", " + allowedModes.toString());
+					link.setAllowedModes(allowedModes);
+
+					link.getAttributes().putAttribute("bikeFacilityClass", "class_2");
+					bikeLengthAdded += link.getLength();
+
+				}
+			}
+		}
+
+		System.out.println("Number of modified road links in geometry: " + numberModifiedLinks);
+		System.out.println("Original road length in geometry : " + roadLengthRemoved);
+		System.out.println("Bike length added: " + bikeLengthAdded);
+		System.out.println("Capacity removed from geometry: " + capacityRemoved);
+	}
+
+	public void createCarFreeZoneFromLinkIds(Network network, Set<Id<Link>> linkIds) {
+
+		int numberModifiedLinks = 0;
+		double roadLengthRemoved = 0.0;
+		double capacityRemoved = 0.0;
+		double bikeLengthAdded = 0.0;
+
+		for (Link link : network.getLinks().values()) {
+
+			//check if link is not within link ids
+			if (!linkIds.contains(link.getId())) {
 
 				// check if the highway tag is present
 				if (link.getAttributes().getAsMap().containsKey("osm:way:highway")) {
@@ -268,3 +308,4 @@ public class BikeNetworkFixer {
 		System.out.println("Capacity removed from geometry: " + capacityRemoved);
 	}
 }
+
