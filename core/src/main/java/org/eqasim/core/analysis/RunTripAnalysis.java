@@ -55,12 +55,15 @@ public class RunTripAnalysis {
 					new DefaultPersonAnalysisFilter());
 			TripReaderFromEvents reader = new TripReaderFromEvents(tripListener);
 			reader.read(eventsPath);
-			trips = reader.tripItems;
-			legs = reader.legItems;
+			trips = reader.getTripItems();
+			legs = reader.getLegItems();
 		} else {
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier,
-					new DefaultPersonAnalysisFilter()).readTrips(populationPath);
+			TripReaderFromPopulation reader = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier,
+					new DefaultPersonAnalysisFilter());
+			reader.read(populationPath);
+			trips = reader.getTripItems();
+			legs = reader.getLegItems();
 		}
 
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));

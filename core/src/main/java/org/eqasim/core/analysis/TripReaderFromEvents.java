@@ -8,11 +8,19 @@ import org.matsim.core.events.MatsimEventsReader;
 
 public class TripReaderFromEvents {
 	final private TripListener tripListener;
-	public Collection<TripItem> tripItems;
-	public Collection<LegItem> legItems;
+	private Collection<TripItem> tripItems;
+	private Collection<LegItem> legItems;
 
 	public TripReaderFromEvents(TripListener tripListener) {
 		this.tripListener = tripListener;
+	}
+
+	public Collection<TripItem> getTripItems() {
+		return tripItems;
+	}
+
+	public Collection<LegItem> getLegItems() {
+		return legItems;
 	}
 
 	public void read(String eventsPath) {
