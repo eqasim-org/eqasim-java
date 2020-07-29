@@ -48,7 +48,7 @@ public class ComputeDelayTrafficLights {
 		
 	public double[] optimal_cycle_length(Intersection intersection, int hour ) {
 		ArrayList<ArrayList<Id<Link>>> groups = intersection.groups;
-		ArrayList<Double>  ratio = new ArrayList<Double>();
+		double  ratio = 0.0;
 		
 		int numberoflinks = this.get_numberoflinks(groups);
 		
@@ -62,21 +62,22 @@ public class ComputeDelayTrafficLights {
 				Id<Link> idlink = group.get(k2);
 				double[] count = this.hourlyCounts.get(idlink);
 				if (!( count == null)){
-				    flow = (Math.max(5, count[hour]) / this.samplesize ) / this.lanes.get(idlink);
+				    flow += (Math.max(5, count[hour]) / 0.1 ) / this.lanes.get(idlink);
 				}
 				else {
-					flow = (5.0 / this.samplesize) / this.lanes.get(idlink);
+					flow += (5.0 / this.samplesize) / this.lanes.get(idlink);
 				}
-				capacities += this.capacities.get(idlink)[hour];
+				capacities += 1800;
 			}
-		    ratio.add(flow / 1800);
+		    ratio += flow  / capacities;
 		}
 		
-		double maxratio = Collections.max(ratio);
+		System.out.println(ratio );
+		//double maxratio = Collections.max(ratio);
 		
 		double optimal_cycle_length = 0;
-		if (maxratio < 1) {
-			optimal_cycle_length =  (1.5 * total_lost_time + 5) / (1 - maxratio); 
+		if (ratio < 1) {
+			optimal_cycle_length =  (1.5 * total_lost_time + 5) / (1 - ratio); 
 		}
 		else {
 			int groupssize = this.get_numberoflinks(groups);
@@ -95,6 +96,57 @@ public class ComputeDelayTrafficLights {
 	    
 		
 		return cycle_and_lost;
+	}
+	
+	public void flows(String pathToCSV) {
+		try {
+			FileWriter csvWriter = new FileWriter(pathToCSV);
+			
+			csvWriter.append("intersection");
+			for (int k= 0; k<31; k++) {
+				csvWriter.append(",");
+				csvWriter.append(String.valueOf(k));
+			}	
+			csvWriter.append("\n");
+			
+			for (int k= 0; k < this.ir.intersections.size(); k++) {
+				Intersection ir = this.ir.intersections.get(k);
+				csvWriter.append(String.valueOf(k));
+				csvWriter.append(",");
+				ArrayList<ArrayList<Id<Link>>> groups = ir.groups;
+				
+				for (int h = 0; h< 31; h++) {
+					double flow = 0;
+					
+					for (int l = 0; l< groups.size(); l++) {
+						ArrayList<Id<Link>> group = groups.get(l);
+						
+						for (int g = 0; g < group.size(); g++) {
+							Id<Link> idl = group.get(g);
+							double[] counts = this.hourlyCounts.get(idl);
+							if (!(counts == null)) {
+				    			flow += Math.max(5, counts[h]) / this.samplesize ;
+						        
+				    		}
+							else{
+								flow += 5 / this.samplesize;
+							}
+						}
+					}
+					csvWriter.append(String.valueOf(flow));
+					csvWriter.append(",");
+					
+				}
+				csvWriter.append("\n");
+			}
+			
+			csvWriter.flush();
+			csvWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	
 	}
 	
 	public List<Map<Id<Link>, double[]>> compute_all_delays_webster(boolean change ){
@@ -141,6 +193,7 @@ public class ComputeDelayTrafficLights {
 			    }
 			    
 			    for (int l=0; l<groups.size(); l++) {
+			    	System.out.println("--------------");
 			    	ArrayList<Id<Link>> group = groups.get(l);
 			    	
 			    	double group_flow = flowsongroups[l];
@@ -158,14 +211,22 @@ public class ComputeDelayTrafficLights {
 			    			this.capacities.put(idlink, tab);
 			    		}
 			    		double saturation = (link_flow / this.lanes.get(idlink)) / INTERSECTION_CAPACITY;
+			    		//double saturation = link_flow / 1800;
 			    		double delay1 = (opt_cycle_length * Math.pow(1 - green_ratio, 2))/(2 * (1 - green_ratio * saturation));
-				    	double delay2 = Math.pow(saturation, 2) / (2 * link_flow * (1 - saturation));
-				    	double delay3 = 0.65 * Math.pow(opt_cycle_length / Math.pow(link_flow, 2), 1/3) * Math.pow(saturation, 2 + 5 * green_ratio);
+				    	double delay2 = Math.pow(saturation, 2) / (2 * (link_flow/3600) * (1 - saturation));
+				    	double delay3 = 0.65 * Math.pow(opt_cycle_length / Math.pow((link_flow/3600), 2), 1/3) * Math.pow(saturation, 2 + 5 * green_ratio);
 			    		
-				    	double delay = Math.max(delay1 + delay2 + delay3, this.crossingPenalty );
+				    	double delay = Math.max(delay1 + delay2 - delay3, this.crossingPenalty );
 				    	if (delay>100) {
 				    		System.out.println("Alert " + delay1 + " " + delay2 + " " + delay3);
 				    	}
+				    	/*System.out.println("--------------");
+				    	System.out.println("Green ratio " + green_ratio);
+				    	System.out.println("Opt. length " + opt_cycle_length);
+				    	System.out.println("capacity" + this.capacities.get(idlink)[hour]);
+				    	System.out.println("flow" + link_flow);
+				    	System.out.println( delay1 + " " + delay2 + " " + delay3);*/
+				    	
 				    	
 				    	if (hour % 24 <= 4 || hour % 24 >= 23) {
 				    		delay = this.crossingPenalty;
@@ -505,11 +566,8 @@ public class ComputeDelayTrafficLights {
 	public static void main(String[] args) {
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
-		//delay.writeCSV_heuristic("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais2/heuristic_flows1.csv");
-		//delay.compute_all_delays_webster(true);
-		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais2/webster2.csv");
-		//delay.compute_all_delays_webster();
-		//delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/intersections_webster.csv");
+		//delay.flows("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/flowsintersection");
+		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais2/delays_opt_length.csv");
 	}
 
 }
