@@ -233,13 +233,24 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 	@Override
 	public void handleEvent(TeleportationArrivalEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
-			TripListenerItem item = ongoingTrip.get(event.getPersonId());
 
-			if (Double.isNaN(item.networkDistance)) {
-				item.networkDistance = 0.0;
+			// update trip distance
+			TripListenerItem trip = ongoingTrip.get(event.getPersonId());
+
+			if (Double.isNaN(trip.networkDistance)) {
+				trip.networkDistance = 0.0;
 			}
 
-			item.networkDistance += event.getDistance();
+			trip.networkDistance += event.getDistance();
+
+			// update leg distance
+			LegListenerItem leg = ongoingLeg.get(event.getPersonId());
+
+			if (Double.isNaN(leg.networkDistance)) {
+				leg.networkDistance = 0.0;
+			}
+
+			leg.networkDistance += event.getDistance();
 		}
 	}
 }
