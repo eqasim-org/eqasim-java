@@ -24,6 +24,7 @@ public class PrepareInputDataIntersections {
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
 	Map<Id<Link>, double[]> capacities = new HashMap<>();	
 	Map<Id<Link>, Double> velocities = new HashMap<>();	
+	Map<Id<Link>, Double> lanes = new HashMap<>();	
 	double samplesize;
 	double crossingPenalty;
 	
@@ -91,7 +92,7 @@ public class PrepareInputDataIntersections {
 
 		/** 1. Events **/ 
 		// Path to the events file
-		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/60it_default_CP0/ITERS/it.60/60.events.xml.gz";
+		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/60it_webster_flows/ITERS/it.60/60.events.xml.gz";
 				
 		// Create an event object
 		EventsManager events = EventsUtils.createEventsManager();
@@ -132,6 +133,7 @@ public class PrepareInputDataIntersections {
 						}
 						this.capacities.put(cl, tab);
 						this.velocities.put(cl, current_link.getFreespeed());
+						this.lanes.put(cl, current_link.getNumberOfLanes());
 					}
 				
 				}

@@ -1,9 +1,11 @@
 package org.eqasim.core.components.traffic;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.eqasim.core.analysis.ComputeDelayTrafficLights;
-import org.eqasim.core.analysis.PrepareInputDataIntersections;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
@@ -13,14 +15,45 @@ public class EqasimLinkSpeedCalculatorTrafficLightsWebster implements LinkSpeedC
 	final private LinkSpeedCalculator delegate;
 	final private double crossingPenalty;
 	final private Map<Id<Link>, double[]> trafficLightsDelays;
+	
+	public static Map<Id<Link>, double[]> parseCSV(String filepath) {
+    	Map<Id<Link>, double[]> delays = new HashMap<Id<Link>, double[]>();
+        String line = "";
+        String cvsSplitBy = ",";
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
+        	int cpt = 0;
+
+            while ((line = br.readLine()) != null) {
+                String[] currentLine = line.split(cvsSplitBy);
+
+                if (cpt > 0) {
+					Id<Link> lid = Id.createLinkId(currentLine[0]);
+					int hour = Integer.parseInt(currentLine[1]);
+					double delay = Double.parseDouble(currentLine[2]);
+					if (!delays.containsKey(lid)) {
+						delays.put(lid, new double[31]);
+					} 
+					double[] tab = delays.get(lid);
+					tab[hour] = delay;
+					delays.put(lid, tab);
+				}
+				cpt += 1;
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        
+        return delays;
+    }
 
 	public EqasimLinkSpeedCalculatorTrafficLightsWebster(LinkSpeedCalculator delegate, double crossingPenalty) {
 		this.delegate = delegate;
 		this.crossingPenalty = crossingPenalty;
-		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
-		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
-		//delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/60it_webster/intersections_webster.csv");
-		this.trafficLightsDelays = delay.compute_all_delays_webster(false).get(0);
+		this.trafficLightsDelays = parseCSV("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais2/webster2.csv");
 	}
 
 	@Override

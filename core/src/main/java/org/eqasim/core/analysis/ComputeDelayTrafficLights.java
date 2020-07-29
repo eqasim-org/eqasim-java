@@ -18,6 +18,7 @@ public class ComputeDelayTrafficLights {
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
 	Map<Id<Link>, double[]> capacities = new HashMap<>();	
 	Map<Id<Link>, Double> velocities = new HashMap<>();	
+	Map<Id<Link>, Double> lanes = new HashMap<>();	
 	double samplesize;
 	double crossingPenalty;
 	final static double INTERSECTION_CAPACITY = 2000;
@@ -30,6 +31,7 @@ public class ComputeDelayTrafficLights {
 		this.velocities = p.velocities;
 		this.samplesize = p.samplesize;
 		this.crossingPenalty = p.crossingPenalty;
+		this.lanes = p.lanes;
 	}
 	
 	public int get_numberoflinks(ArrayList<ArrayList<Id<Link>>> groups) {
@@ -60,14 +62,14 @@ public class ComputeDelayTrafficLights {
 				Id<Link> idlink = group.get(k2);
 				double[] count = this.hourlyCounts.get(idlink);
 				if (!( count == null)){
-				    flow = Math.max(5, count[hour]) / this.samplesize;
+				    flow = (Math.max(5, count[hour]) / this.samplesize ) / this.lanes.get(idlink);
 				}
 				else {
-					flow = 5.0 / this.samplesize;
+					flow = (5.0 / this.samplesize) / this.lanes.get(idlink);
 				}
 				capacities += this.capacities.get(idlink)[hour];
 			}
-		    ratio.add(flow / capacities);
+		    ratio.add(flow / 1800);
 		}
 		
 		double maxratio = Collections.max(ratio);
@@ -147,16 +149,15 @@ public class ComputeDelayTrafficLights {
 			    	
 			    	for (int g=0; g<group.size(); g++) {			    		
 			    		Id<Link> idlink = group.get(g);
-			    		System.out.println(idlink + " " + l +", "+ green_ratio);
 			    		double link_flow = flowonlinks.get(idlink);
-			    		double link_capacity = this.capacities.get(idlink)[hour];
+			    		double link_capacity = Math.max(200, INTERSECTION_CAPACITY * green_ratio) * this.lanes.get(idlink);
 			    		if ( change) {
-			    			link_capacity = INTERSECTION_CAPACITY * green_ratio / group.size();
+			    			link_capacity = Math.max(200, INTERSECTION_CAPACITY * green_ratio) * this.lanes.get(idlink);
 			    			double[] tab = this.capacities.get(idlink);
 			    			tab[hour] = link_capacity;
 			    			this.capacities.put(idlink, tab);
 			    		}
-			    		double saturation = link_flow / link_capacity;
+			    		double saturation = (link_flow / this.lanes.get(idlink)) / INTERSECTION_CAPACITY;
 			    		double delay1 = (opt_cycle_length * Math.pow(1 - green_ratio, 2))/(2 * (1 - green_ratio * saturation));
 				    	double delay2 = Math.pow(saturation, 2) / (2 * link_flow * (1 - saturation));
 				    	double delay3 = 0.65 * Math.pow(opt_cycle_length / Math.pow(link_flow, 2), 1/3) * Math.pow(saturation, 2 + 5 * green_ratio);
@@ -252,7 +253,7 @@ public class ComputeDelayTrafficLights {
 			    double total_speed = 0;
 			    double[] speedsongroups = new double[groups.size()];			    
 			    Map<Id<Link>, Double> speedonlinks = new HashMap<Id<Link>, Double>();
-			
+			    double total_flow = 0;
 			    for (int l=0; l<groups.size(); l++) {
 			    	
 			    	ArrayList<Id<Link>> group = groups.get(l);
@@ -269,6 +270,7 @@ public class ComputeDelayTrafficLights {
 					        
 			    		}
 				        groupflow += flow;
+				        total_flow += flow;
 				    	flowonlinks.put(idl, flow);
 				    	total_speed += speed;
 				        groupspeed += speed;
@@ -281,15 +283,15 @@ public class ComputeDelayTrafficLights {
 			    for (int l=0; l<groups.size(); l++) {
 			    	ArrayList<Id<Link>> group = groups.get(l);
 			    	
-			    	double group_speed = speedsongroups[l];
-			    	double green_time = cycle_length * 0.9 * group_speed / total_speed;
+			    	//double group_speed = speedsongroups[l];
+			    	double green_time = cycle_length * 0.9 * flowsongroups[l] / total_flow;
 			    	double green_ratio = green_time / cycle_length;
 			    	
 			    	for (int g=0; g<group.size(); g++) {			    		
 			    		Id<Link> idlink = group.get(g);
 			    		System.out.println(idlink + " " + l +", "+ green_ratio);
 			    		double link_flow = flowonlinks.get(idlink);
-			    		double link_capacity = INTERSECTION_CAPACITY * green_ratio / group.size();
+			    		double link_capacity = INTERSECTION_CAPACITY * green_ratio / group.size() * this.lanes.get(idlink);
 			    		double[] tab = this.capacities.get(idlink);
 			    		tab[hour] = link_capacity;
 			    		this.capacities.put(idlink, tab);
@@ -386,9 +388,9 @@ public class ComputeDelayTrafficLights {
 			csvWriter.append(",");
 			csvWriter.append("Green time");
 			csvWriter.append(",");
-			csvWriter.append("Flow");
-			csvWriter.append(",");
 			csvWriter.append("Capacity");
+			csvWriter.append(",");
+			csvWriter.append("Flow");
 			csvWriter.append("\n");
 			
 			for (Entry<Id<Link>, double[]> entry : delays.entrySet()) {
@@ -418,9 +420,9 @@ public class ComputeDelayTrafficLights {
 					csvWriter.append(",");
 					csvWriter.append(Double.toString(g));
 					csvWriter.append(",");
-					csvWriter.append(Double.toString(f));
-					csvWriter.append(",");
 					csvWriter.append(Double.toString(c));
+					csvWriter.append(",");
+					csvWriter.append(Double.toString(f));
 					csvWriter.append("\n");
 				}
 			}
@@ -503,9 +505,9 @@ public class ComputeDelayTrafficLights {
 	public static void main(String[] args) {
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
-		delay.writeCSV_heuristic("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais/heuristic.csv");
-		delay.compute_all_delays_webster(true);
-		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais/websterwebster.csv");
+		//delay.writeCSV_heuristic("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais2/heuristic_flows1.csv");
+		//delay.compute_all_delays_webster(true);
+		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais2/webster2.csv");
 		//delay.compute_all_delays_webster();
 		//delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/intersections_webster.csv");
 	}
