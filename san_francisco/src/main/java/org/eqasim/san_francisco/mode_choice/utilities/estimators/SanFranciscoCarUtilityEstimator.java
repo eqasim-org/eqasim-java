@@ -30,11 +30,15 @@ public class SanFranciscoCarUtilityEstimator extends CarUtilityEstimator {
 		this.parameters = parameters;
 		this.predictor = predictor;
 	}
-	
+
 	@Override
 	protected double estimateMonetaryCostUtility(CarVariables variables) {
 		return EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
 				parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
+	}
+
+	protected double estimateRegionalUtility(SanFranciscoPersonVariables variables) {
+		return (variables.cityTrip) ? parameters.sfCar.alpha_car_city : 0.0;
 	}
 
 	@Override
@@ -46,6 +50,7 @@ public class SanFranciscoCarUtilityEstimator extends CarUtilityEstimator {
 
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables_car);
+		utility += estimateRegionalUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables_car);
 		if (variables.hhlIncome == 0.0)
 			utility += parameters.betaCost_u_MU * estimateMonetaryCostUtility(variables_car) * Math.pow(
