@@ -6,19 +6,19 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
 
-public class TripWriter {
-	final private Collection<TripItem> trips;
+public class LegWriter {
+	final private Collection<LegItem> legs;
 	final private String delimiter;
 
 	final private DistanceUnit inputUnit;
 	final private DistanceUnit outputUnit;
 
-	public TripWriter(Collection<TripItem> trips, DistanceUnit inputUnit, DistanceUnit outputUnit) {
-		this(trips, inputUnit, outputUnit, ";");
+	public LegWriter(Collection<LegItem> legs, DistanceUnit inputUnit, DistanceUnit outputUnit) {
+		this(legs, inputUnit, outputUnit, ";");
 	}
 
-	public TripWriter(Collection<TripItem> trips, DistanceUnit inputUnit, DistanceUnit outputUnit, String delimiter) {
-		this.trips = trips;
+	public LegWriter(Collection<LegItem> legs, DistanceUnit inputUnit, DistanceUnit outputUnit, String delimiter) {
+		this.legs = legs;
 		this.delimiter = delimiter;
 		this.inputUnit = inputUnit;
 		this.outputUnit = outputUnit;
@@ -30,8 +30,8 @@ public class TripWriter {
 		writer.write(formatHeader() + "\n");
 		writer.flush();
 
-		for (TripItem trip : trips) {
-			writer.write(formatTrip(trip) + "\n");
+		for (LegItem leg : legs) {
+			writer.write(formatLeg(leg) + "\n");
 			writer.flush();
 		}
 
@@ -47,6 +47,7 @@ public class TripWriter {
 		return String.join(delimiter, new String[] { //
 				"person_id", //
 				"person_trip_id", //
+				"leg_id", //
 				"origin_x", //
 				"origin_y", //
 				"destination_x", //
@@ -87,25 +88,26 @@ public class TripWriter {
 		return factor;
 	}
 
-	private String formatTrip(TripItem trip) {
+	private String formatLeg(LegItem leg) {
 		double inputFactor = getUnitFactor(inputUnit);
 		double outputFactor = 1.0 / getUnitFactor(outputUnit);
 
 		return String.join(delimiter, new String[] { //
-				trip.personId.toString(), //
-				String.valueOf(trip.tripId), //
-				String.valueOf(trip.origin.getX()), //
-				String.valueOf(trip.origin.getY()), //
-				String.valueOf(trip.destination.getX()), //
-				String.valueOf(trip.destination.getY()), //
-				String.valueOf(trip.startTime), //
-				String.valueOf(trip.travelTime), //
-				String.valueOf(trip.networkDistance * inputFactor * outputFactor), //
-				String.valueOf(trip.mode), //
-				normalizeActivityType(String.valueOf(trip.preceedingPurpose)), //
-				normalizeActivityType(String.valueOf(trip.followingPurpose)), //
-				String.valueOf(trip.returning), //
-				String.valueOf(trip.crowflyDistance * inputFactor * outputFactor) //
+				leg.personId.toString(), //
+				String.valueOf(leg.tripId), //
+				String.valueOf(leg.legId), //
+				String.valueOf(leg.origin.getX()), //
+				String.valueOf(leg.origin.getY()), //
+				String.valueOf(leg.destination.getX()), //
+				String.valueOf(leg.destination.getY()), //
+				String.valueOf(leg.startTime), //
+				String.valueOf(leg.travelTime), //
+				String.valueOf(leg.networkDistance * inputFactor * outputFactor), //
+				String.valueOf(leg.mode), //
+				normalizeActivityType(String.valueOf(leg.preceedingPurpose)), //
+				normalizeActivityType(String.valueOf(leg.followingPurpose)), //
+				String.valueOf(leg.returning), //
+				String.valueOf(leg.crowflyDistance * inputFactor * outputFactor) //
 		});
 	}
 }

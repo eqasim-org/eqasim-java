@@ -6,7 +6,7 @@ import org.matsim.api.core.v01.population.Person;
 
 public class TripItem {
 	public Id<Person> personId;
-	public int personTripId;
+	public int tripId;
 	public Coord origin;
 	public Coord destination;
 	public double startTime;
@@ -18,11 +18,11 @@ public class TripItem {
 	public boolean returning;
 	public double crowflyDistance;
 
-	public TripItem(Id<Person> personId, int personTripId, Coord origin, Coord destination, double startTime,
-			double travelTime, double networkDistance, String mode, String preceedingPurpose, String followingPurpose,
-			boolean returning, double crowflyDistance) {
+	public TripItem(Id<Person> personId, int tripId, Coord origin, Coord destination, double startTime,
+					double travelTime, double networkDistance, String mode, String preceedingPurpose, String followingPurpose,
+					boolean returning, double crowflyDistance) {
 		this.personId = personId;
-		this.personTripId = personTripId;
+		this.tripId = tripId;
 		this.origin = origin;
 		this.destination = destination;
 		this.startTime = startTime;

@@ -18,7 +18,7 @@ import org.matsim.pt.PtConstants;
 public class RunTripAnalysis {
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("network-path", "output-path") //
+				.requireOptions("network-path", "trips-output-path", "legs-output-path") //
 				.allowOptions("population-path", "events-path") //
 				.allowOptions("stage-activity-types", "network-modes") //
 				.allowOptions("input-distance-units", "output-distance-units") //
@@ -29,7 +29,9 @@ public class RunTripAnalysis {
 		}
 
 		String networkPath = cmd.getOptionStrict("network-path");
-		String outputPath = cmd.getOptionStrict("output-path");
+		String tripsOutputPath = cmd.getOptionStrict("trips-output-path");
+		String legsOutputPath = cmd.getOptionStrict("legs-output-path");
+
 
 		Network network = NetworkUtils.createNetwork();
 		new MatsimNetworkReader(network).readFile(networkPath);
@@ -45,12 +47,16 @@ public class RunTripAnalysis {
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
 
 		Collection<TripItem> trips = null;
+		Collection<LegItem> legs = null;
 
 		if (cmd.hasOption("events-path")) {
 			String eventsPath = cmd.getOptionStrict("events-path");
 			TripListener tripListener = new TripListener(network, stageActivityTypes, mainModeIdentifier, networkModes,
 					new DefaultPersonAnalysisFilter());
-			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
+			TripReaderFromEvents reader = new TripReaderFromEvents(tripListener);
+			reader.read(eventsPath);
+			trips = reader.tripItems;
+			legs = reader.legItems;
 		} else {
 			String populationPath = cmd.getOptionStrict("population-path");
 			trips = new TripReaderFromPopulation(network, stageActivityTypes, mainModeIdentifier,
@@ -60,6 +66,7 @@ public class RunTripAnalysis {
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));
 		DistanceUnit outputUnit = DistanceUnit.valueOf(cmd.getOption("output-distance-unit").orElse("meter"));
 
-		new TripWriter(trips, inputUnit, outputUnit).write(outputPath);
+		new TripWriter(trips, inputUnit, outputUnit).write(tripsOutputPath);
+		new LegWriter(legs, inputUnit, outputUnit).write(legsOutputPath);
 	}
 }

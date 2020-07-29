@@ -8,15 +8,18 @@ import org.matsim.core.events.MatsimEventsReader;
 
 public class TripReaderFromEvents {
 	final private TripListener tripListener;
+	public Collection<TripItem> tripItems;
+	public Collection<LegItem> legItems;
 
 	public TripReaderFromEvents(TripListener tripListener) {
 		this.tripListener = tripListener;
 	}
 
-	public Collection<TripItem> readTrips(String eventsPath) {
+	public void read(String eventsPath) {
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		eventsManager.addHandler(tripListener);
 		new MatsimEventsReader(eventsManager).readFile(eventsPath);
-		return tripListener.getTripItems();
+		tripItems = tripListener.getTripItems();
+		legItems = tripListener.getLegItems();
 	}
 }
