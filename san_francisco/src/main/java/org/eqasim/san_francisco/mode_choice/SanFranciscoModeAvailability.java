@@ -23,8 +23,8 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 
 		// Check car availability
 		boolean carAvailability = true;
-        boolean bikeAvailability = true;
-        
+		boolean bikeAvailability = true;
+
 		if (PersonUtils.getLicense(person).equals("no")) {
 			carAvailability = false;
 		}
@@ -36,7 +36,7 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 		if (carAvailability) {
 			modes.add(TransportMode.car);
 		}
-		
+
 		if ("none".equals((String) person.getAttributes().getAttribute("bikeAvailability"))) {
 			bikeAvailability = false;
 		}

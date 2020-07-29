@@ -17,8 +17,6 @@ import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoBik
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoCarUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoPTUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoWalkUtilityEstimator;
-import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoBikePredictor;
-import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoCarPredictor;
 import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -45,23 +43,20 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 
 	@Override
 	protected void installEqasimExtension() {
-		
-		bind(SanFranciscoCarPredictor.class);
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SanFranciscoModeAvailability.class);
-		bind(SanFranciscoBikePredictor.class);
 
 		bind(SanFranciscoPersonPredictor.class);
 		bindTourConstraintFactory("VehicleTourConstraintWithCarPassenger")
-		.to(VehicleTourConstraintWithCarPassenger.Factory.class);
+				.to(VehicleTourConstraintWithCarPassenger.Factory.class);
 		bindTripConstraintFactory("WalkDurationConstraint")
-		.to(WalkDurationConstraint.Factory.class);
-		
+				.to(WalkDurationConstraint.Factory.class);
+
 		bindCostModel(CAR_COST_MODEL_NAME).to(SanFranciscoCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SanFranciscoPtCostModel.class);
 		bindUtilityEstimator("sfCarEstimator").to(SanFranciscoCarUtilityEstimator.class);
-        bindUtilityEstimator("sfPTEstimator").to(SanFranciscoPTUtilityEstimator.class);
-        bindUtilityEstimator("sfWalkEstimator").to(SanFranciscoWalkUtilityEstimator.class);
-        bindUtilityEstimator("sfBikeEstimator").to(SanFranciscoBikeUtilityEstimator.class);
+		bindUtilityEstimator("sfPTEstimator").to(SanFranciscoPTUtilityEstimator.class);
+		bindUtilityEstimator("sfWalkEstimator").to(SanFranciscoWalkUtilityEstimator.class);
+		bindUtilityEstimator("sfBikeEstimator").to(SanFranciscoBikeUtilityEstimator.class);
 
 		bind(ModeParameters.class).to(SanFranciscoModeParameters.class);
 	}
@@ -70,13 +65,13 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	@Singleton
 	public SanFranciscoModeParameters provideModeChoiceParameters(EqasimConfigGroup config) throws IOException, ConfigurationException {
 		SanFranciscoModeParameters parameters = SanFranciscoModeParameters.buildDefault();
-		
+
 		if (config.getModeParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
 		}
-		
+
 		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
-		
+
 		return parameters;
 	}
 
@@ -84,16 +79,16 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	@Singleton
 	public SanFranciscoCostParameters provideCostParameters(EqasimConfigGroup config) {
 		SanFranciscoCostParameters parameters = SanFranciscoCostParameters.buildDefault();
-		
+
 		if (config.getCostParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
 		}
-		
+
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
-		
+
 		return parameters;
 	}
-	
+
 	@Provides
 	@Singleton
 	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(
@@ -105,7 +100,7 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			@Named("tour") HomeFinder homeFinder) {
+																			   @Named("tour") HomeFinder homeFinder) {
 		return new WalkDurationConstraint.Factory();
 	}
 }
