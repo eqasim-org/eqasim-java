@@ -19,7 +19,7 @@ public class EqasimLinkSpeedCalculatorTrafficLights implements LinkSpeedCalculat
 		this.crossingPenalty = crossingPenalty;
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
-		delay.writeCSV_heuristic("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/60it_heuristic/intersections_heuristic.csv");
+		delay.writeCSV_heuristic("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/60it_heuristic/delays_opt_length.csv");
 		this.trafficLightsDelays = delay.compute_all_delays_heuristic().get(0);
 	}
 

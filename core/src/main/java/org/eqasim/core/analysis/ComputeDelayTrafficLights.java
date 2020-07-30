@@ -567,7 +567,7 @@ public class ComputeDelayTrafficLights {
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
 		//delay.flows("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/flowsintersection");
-		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/TT/essais2/delays_opt_length.csv");
+		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/Last try/delays_webster_CP0.csv");
 	}
 
 }

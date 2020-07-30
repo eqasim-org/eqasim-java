@@ -77,9 +77,10 @@ public class AdaptNetwork {
 		
 		for (Id<Link> key : links.keySet()) {
 			    Link l = links.get(key);
-			    if (capacities.containsKey(key)) {
+			    //if (capacities.containsKey(key)) {
+			    if (true) {
 			    	System.out.println("Before" + l.getCapacity());
-					l.setCapacity(capacities.get(key));
+					l.setCapacity(1800.0 * l.getNumberOfLanes());
 					System.out.println("After" + l.getCapacity());
 				}
 			}
