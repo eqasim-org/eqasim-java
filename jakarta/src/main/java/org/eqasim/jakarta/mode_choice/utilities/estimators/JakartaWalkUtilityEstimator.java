@@ -44,6 +44,7 @@ public class JakartaWalkUtilityEstimator extends WalkUtilityEstimator {
 		if (distance > 4 * 5280)
 			utility += -100;
 		utility += super.estimateUtility(person, trip, elements);
+		utility += parameters.jWalk.alpha_age * variables.age;
 //		utility += estimateRegionalUtility(variables);
 
 		return utility;

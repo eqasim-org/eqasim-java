@@ -19,7 +19,9 @@ public class JakartaPersonPredictor extends CachedVariablePredictor<JakartaPerso
 //		boolean hasSubscription = JakartaPredictorUtils.hasSubscription(person);
 //		boolean cityTrip = JakartaPredictorUtils.startsEndsinCity(trip);
 		double hhlIncome = JakartaPredictorUtils.hhlIncome(person, parameters);
-		return new JakartaPersonVariables(hhlIncome);
+		int age = JakartaPredictorUtils.age(person, parameters);
+		String sex = JakartaPredictorUtils.sex(person, parameters);
+		return new JakartaPersonVariables(hhlIncome, age, sex);
 	}
 	
 }

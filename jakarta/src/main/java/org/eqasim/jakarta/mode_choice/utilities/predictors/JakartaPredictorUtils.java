@@ -24,5 +24,17 @@ public class JakartaPredictorUtils {
         }
 		return parameters.jAvgHHLIncome.avg_hhl_income;
 	}
+	
+	
+	static public int age(Person person, JakartaModeParameters parameters) {
+        int age = (int) person.getAttributes().getAttribute("age");
+		return age;
+	}
+	
+	static public String sex(Person person, JakartaModeParameters parameters) {
+        String sex = (String) person.getAttributes().getAttribute("sex");
+		return sex;
+	}
+	
 }
 
