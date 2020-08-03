@@ -41,11 +41,11 @@ public class RunAdaptConfig {
 		config.qsim().setSeepModes(seepMode);
 		
 		
-		List<String> mainMode = new LinkedList<>(config.qsim().getMainModes());
-		mainMode.add("motorcycle");
-		mainMode.add("mcodt");
-		mainMode.add("carodt");
-		config.qsim().setMainModes(mainMode);
+		//List<String> mainMode = new LinkedList<>(config.qsim().getMainModes());
+		//mainMode.add("motorcycle");
+		//mainMode.add("mcodt");
+		//mainMode.add("carodt");
+		//config.qsim().setMainModes(mainMode);
 		
 
 		// Set up mode choice
