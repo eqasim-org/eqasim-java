@@ -45,7 +45,7 @@ public class RunAdaptConfig {
 		mainMode.add("motorcycle");
 		mainMode.add("mcodt");
 		mainMode.add("carodt");
-		config.qsim().setSeepModes(mainMode);
+		config.qsim().setMainModes(mainMode);
 		
 
 		// Set up mode choice
