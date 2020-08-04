@@ -145,7 +145,7 @@ public class JakartaModeParameters extends ModeParameters {
 		//parameters.jCarodt.betaAccessEgressWalkTime_min = 0.0;
 		parameters.jCarodt.alpha_u = -1.23;
 		parameters.jCarodt.alpha_sex = -0.42;
-		parameters.jCarodt.alpha_age = -1.32;
+		parameters.jCarodt.alpha_age = 0.0;
 
 		//Taxi
 		//parameters.jTaxi.alpha_taxi_city = 0.0;		
@@ -161,7 +161,7 @@ public class JakartaModeParameters extends ModeParameters {
 		//parameters.jMcodt.betaAccessEgressWalkTime_min = 0.0;
 		parameters.jMcodt.alpha_u = -1.23;
 		parameters.jMcodt.alpha_sex = -0.42;
-		parameters.jMcodt.alpha_age = -1.32;
+		parameters.jMcodt.alpha_age = 0.0;
 		
 		
 		//Motorcycle
@@ -170,7 +170,7 @@ public class JakartaModeParameters extends ModeParameters {
 		//parameters.jMotorcycle.betaWaitingTime_u_min = 0.0 ;
 		//parameters.jMotorcycle.betaAccessEgressWalkTime_min = 0.0;
 		parameters.jMotorcycle.alpha_u = 0.0;
-		parameters.jMotorcycle.alpha_age = -0.83;
+		parameters.jMotorcycle.alpha_age = 0.0;
 		
 		
 		
