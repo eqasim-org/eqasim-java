@@ -6,6 +6,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.jakarta.mode_choice.parameters.JakartaModeParameters;
 import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaMotorcyclePredictor;
+import org.eqasim.jakarta.mode_choice.utilities.predictors.JakartaPersonPredictor;
 import org.eqasim.jakarta.mode_choice.utilities.variables.MotorcycleVariables;
 import org.eqasim.jakarta.mode_choice.utilities.variables.JakartaPersonVariables;
 import org.matsim.api.core.v01.population.Person;
@@ -17,11 +18,13 @@ import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class JakartaMotorcycleUtilityEstimator implements UtilityEstimator {
 	private final JakartaModeParameters parameters;
-	private final JakartaMotorcyclePredictor predictor;
+	private final JakartaPersonPredictor predictor;
+	private final JakartaMotorcyclePredictor MotorcyclePredictor;
 
 	@Inject
-	public JakartaMotorcycleUtilityEstimator(JakartaModeParameters parameters, JakartaMotorcyclePredictor predictor) {
+	public JakartaMotorcycleUtilityEstimator(JakartaModeParameters parameters, JakartaMotorcyclePredictor MotorcyclePredictor, JakartaPersonPredictor predictor) {
 		this.parameters = parameters;
+		this.MotorcyclePredictor = MotorcyclePredictor;
 		this.predictor = predictor;
 	}
 
@@ -44,15 +47,18 @@ public class JakartaMotorcycleUtilityEstimator implements UtilityEstimator {
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		MotorcycleVariables variables = predictor.predictVariables(person, trip, elements);
+		JakartaPersonVariables variables = predictor.predictVariables(person, trip, elements);
+		MotorcycleVariables variables_mc = MotorcyclePredictor.predictVariables(person, trip, elements);
+		
 
 		
 		double utility = 0.0;
 
 		utility += estimateConstantUtility();
-		utility += estimateTravelTimeUtility(variables);
-		utility += estimateAccessEgressTimeUtility(variables);
-		utility += estimateMonetaryCostUtility(variables) * EstimatorUtils.interaction(variables.hhlIncome, 
+		utility += estimateTravelTimeUtility(variables_mc);
+		utility += estimateAccessEgressTimeUtility(variables_mc);
+		utility += parameters.jMotorcycle.alpha_age * variables.age / 100;
+		utility += estimateMonetaryCostUtility(variables_mc) * EstimatorUtils.interaction(variables.hhlIncome, 
 				parameters.jAvgHHLIncome.avg_hhl_income, parameters.jIncomeElasticity.lambda_income);
 		//if (variables.hhlIncome == 0.0)
 		//	utility += estimateMonetaryCostUtility(variables)

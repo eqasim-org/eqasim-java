@@ -41,10 +41,10 @@ public class JakartaWalkUtilityEstimator extends WalkUtilityEstimator {
 		double utility = 0.0;
 		double distance = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
 				trip.getDestinationActivity().getCoord());
-		if (distance > 2 * 1000)
+		if (distance > 2 * 750)
 			utility += -100;
 		utility += super.estimateUtility(person, trip, elements);
-		utility += parameters.jWalk.alpha_age * variables.age;
+		utility += parameters.jWalk.alpha_age * variables.age /100;
 //		utility += estimateRegionalUtility(variables);
 
 		return utility;

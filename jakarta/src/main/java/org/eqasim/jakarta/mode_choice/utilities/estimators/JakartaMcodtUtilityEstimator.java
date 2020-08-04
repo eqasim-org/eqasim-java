@@ -41,7 +41,7 @@ public class JakartaMcodtUtilityEstimator implements UtilityEstimator {
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables_mcodt);
 		utility += estimateAccessEgressTimeUtility(variables_mcodt);
-		utility += parameters.jMcodt.alpha_age * variables.age;
+		utility += parameters.jMcodt.alpha_age * variables.age /100;
 		if (variables.sex == "f")
 			utility += 0.0;
 		else
