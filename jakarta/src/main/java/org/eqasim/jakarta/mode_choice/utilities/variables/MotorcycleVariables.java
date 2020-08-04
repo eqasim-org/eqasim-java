@@ -7,7 +7,7 @@ public class MotorcycleVariables implements BaseVariables {
 	final public double cost_MU;
 	final public double euclideanDistance_km;
 	final public double accessEgressTime_min;
-	public double hhlIncome;
+	
 
 	public MotorcycleVariables(double travelTime_min, double cost_MU, double euclideanDistance_km,
 			double accessEgressTime_min) {
@@ -15,6 +15,6 @@ public class MotorcycleVariables implements BaseVariables {
 		this.cost_MU = cost_MU;
 		this.euclideanDistance_km = euclideanDistance_km;
 		this.accessEgressTime_min = accessEgressTime_min;
-		this.hhlIncome = hhlIncome;
+		
 	}
 }
