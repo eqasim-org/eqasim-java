@@ -3,6 +3,7 @@ package org.eqasim.jakarta.mode_choice.utilities.estimators;
 import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
@@ -45,6 +46,8 @@ public class JakartaCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateTravelTimeUtility(variables_car);
 		//utility += estimateRegionalUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables_car);
+		utility += estimateMonetaryCostUtility(variables_car) * EstimatorUtils.interaction(variables.hhlIncome, 
+				parameters.jAvgHHLIncome.avg_hhl_income, parameters.jIncomeElasticity.lambda_income);
 		//if (variables.hhlIncome == 0.0)
 		//	utility += estimateMonetaryCostUtility(variables_car)
 		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);

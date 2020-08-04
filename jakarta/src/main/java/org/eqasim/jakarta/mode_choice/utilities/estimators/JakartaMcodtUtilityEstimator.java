@@ -48,6 +48,8 @@ public class JakartaMcodtUtilityEstimator implements UtilityEstimator {
 			utility += parameters.jMcodt.alpha_sex	;
 		//if (variables.hhlIncome == 0.0)
 		//	utility += estimateMonetaryCostUtility(variables_mcodt)
+		utility += estimateMonetaryCostUtility(variables_mcodt) * EstimatorUtils.interaction(variables.hhlIncome, 
+				parameters.jAvgHHLIncome.avg_hhl_income, parameters.jIncomeElasticity.lambda_income);
 		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
 		//else
 		//	utility += estimateMonetaryCostUtility(variables_mcodt)

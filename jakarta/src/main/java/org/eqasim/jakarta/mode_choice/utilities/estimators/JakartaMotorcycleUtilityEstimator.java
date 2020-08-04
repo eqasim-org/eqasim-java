@@ -46,12 +46,14 @@ public class JakartaMotorcycleUtilityEstimator implements UtilityEstimator {
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		MotorcycleVariables variables = predictor.predictVariables(person, trip, elements);
 
+		
 		double utility = 0.0;
 
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables);
-		utility += estimateMonetaryCostUtility(variables);
+		utility += estimateMonetaryCostUtility(variables) * EstimatorUtils.interaction(variables.hhlIncome, 
+				parameters.jAvgHHLIncome.avg_hhl_income, parameters.jIncomeElasticity.lambda_income);
 		//if (variables.hhlIncome == 0.0)
 		//	utility += estimateMonetaryCostUtility(variables)
 		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);

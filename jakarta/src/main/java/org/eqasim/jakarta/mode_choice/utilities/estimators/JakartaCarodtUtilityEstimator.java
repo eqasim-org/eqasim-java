@@ -49,7 +49,8 @@ public class JakartaCarodtUtilityEstimator implements UtilityEstimator {
 		else
 			utility += parameters.jCarodt.alpha_sex	;
 		//if (variables.hhlIncome == 0.0)
-		//	utility += estimateMonetaryCostUtility(variables_Carodt)
+		utility += estimateMonetaryCostUtility(variables_Carodt) * EstimatorUtils.interaction(variables.hhlIncome, 
+				parameters.jAvgHHLIncome.avg_hhl_income, parameters.jIncomeElasticity.lambda_income);
 		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
 		//else
 		//	utility += estimateMonetaryCostUtility(variables_Carodt)
@@ -66,10 +67,10 @@ public class JakartaCarodtUtilityEstimator implements UtilityEstimator {
 
 	protected double estimateMonetaryCostUtility(CarodtVariables variables_Carodt) {
 		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables_Carodt.euclideanDistance_km, 
-				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * variables_Carodt.cost_MU;
+				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance)  * variables_Carodt.cost_MU;
 	}
 
-
+	
 	protected double estimateAccessEgressTimeUtility(CarodtVariables variables_Carodt) {
 		return parameters.jCarodt.betaAccessEgressWalkTime_min * variables_Carodt.accessEgressTime_min;
 	}
