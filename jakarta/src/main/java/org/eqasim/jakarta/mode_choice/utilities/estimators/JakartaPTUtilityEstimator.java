@@ -52,12 +52,12 @@ public class JakartaPTUtilityEstimator  extends PtUtilityEstimator{
 		utility += estimateLineSwitchUtility(variables_pt);
 //		utility += estimateRegionalUtility(variables);
 		utility += estimateAgeUtility(person);
-		if (variables.hhlIncome == 0.0)
-			utility += estimateMonetaryCostUtility(variables_pt)
-			* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
-		else
-			utility += estimateMonetaryCostUtility(variables_pt)
-				* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+		//if (variables.hhlIncome == 0.0)
+		//	utility += estimateMonetaryCostUtility(variables_pt)
+		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
+		//else
+		//	utility += estimateMonetaryCostUtility(variables_pt)
+		//		* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}

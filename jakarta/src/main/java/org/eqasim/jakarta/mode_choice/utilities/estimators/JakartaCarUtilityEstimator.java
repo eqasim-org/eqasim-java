@@ -45,12 +45,12 @@ public class JakartaCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateTravelTimeUtility(variables_car);
 		//utility += estimateRegionalUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables_car);
-		if (variables.hhlIncome == 0.0)
-			utility += estimateMonetaryCostUtility(variables_car)
-			* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
-		else
-			utility += estimateMonetaryCostUtility(variables_car)
-				* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+		//if (variables.hhlIncome == 0.0)
+		//	utility += estimateMonetaryCostUtility(variables_car)
+		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
+		//else
+		//	utility += estimateMonetaryCostUtility(variables_car)
+		//		* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}

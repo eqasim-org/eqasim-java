@@ -46,12 +46,12 @@ public class JakartaMcodtUtilityEstimator implements UtilityEstimator {
 			utility += 0.0;
 		else
 			utility += parameters.jMcodt.alpha_sex	;
-		if (variables.hhlIncome == 0.0)
-			utility += estimateMonetaryCostUtility(variables_mcodt)
-			* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
-		else
-			utility += estimateMonetaryCostUtility(variables_mcodt)
-				* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+		//if (variables.hhlIncome == 0.0)
+		//	utility += estimateMonetaryCostUtility(variables_mcodt)
+		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
+		//else
+		//	utility += estimateMonetaryCostUtility(variables_mcodt)
+		//		* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}

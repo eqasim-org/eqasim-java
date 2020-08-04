@@ -52,12 +52,12 @@ public class JakartaMotorcycleUtilityEstimator implements UtilityEstimator {
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables);
 		utility += estimateMonetaryCostUtility(variables);
-		if (variables.hhlIncome == 0.0)
-			utility += estimateMonetaryCostUtility(variables)
-			* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
-		else
-			utility += estimateMonetaryCostUtility(variables)
-				* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+		//if (variables.hhlIncome == 0.0)
+		//	utility += estimateMonetaryCostUtility(variables)
+		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
+		//else
+		//	utility += estimateMonetaryCostUtility(variables)
+		//		* (parameters.jAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
 
 		return utility;
 	}
