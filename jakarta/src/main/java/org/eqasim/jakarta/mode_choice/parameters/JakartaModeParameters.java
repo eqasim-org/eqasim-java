@@ -104,7 +104,7 @@ public class JakartaModeParameters extends ModeParameters {
 		JakartaModeParameters parameters = new JakartaModeParameters();
 
 		// Cost
-		parameters.betaCost_u_MU = -2.08;
+		parameters.betaCost_u_MU = -2.08/100;
 		parameters.lambdaCostEuclideanDistance = -0.75;
 		parameters.referenceEuclideanDistance_km = 9.19;
         parameters.jIncomeElasticity.lambda_income = -0.06;
@@ -112,7 +112,7 @@ public class JakartaModeParameters extends ModeParameters {
         
 		// Car
 		parameters.car.alpha_u = -1.09;
-		parameters.car.betaTravelTime_u_min = -1.24;
+		parameters.car.betaTravelTime_u_min = -1.24/100;
         
 		parameters.car.constantAccessEgressWalkTime_min = 0.0;
 		parameters.car.constantParkingSearchPenalty_min = 0.0;
@@ -121,7 +121,7 @@ public class JakartaModeParameters extends ModeParameters {
 		// PT
 		parameters.pt.alpha_u = -3.75;
 		parameters.pt.betaLineSwitch_u = 0.0;
-		parameters.pt.betaInVehicleTime_u_min = -1.49;
+		parameters.pt.betaInVehicleTime_u_min = -1.49/100;
 		parameters.pt.betaWaitingTime_u_min = -1.49;
 		parameters.pt.betaAccessEgressTime_u_min = -1.49;
 		//parameters.jPT.alpha_pt_city = 0.0;
@@ -129,18 +129,18 @@ public class JakartaModeParameters extends ModeParameters {
 		
 		// Bike
 		parameters.bike.alpha_u = -4.24;
-		parameters.bike.betaTravelTime_u_min = -9.05;
+		parameters.bike.betaTravelTime_u_min = -9.05/100;
 		//parameters.bike.betaAgeOver18_u_a = 0.0;
 
 		// Walk
 		parameters.walk.alpha_u = -2.57;
-		parameters.walk.betaTravelTime_u_min = -0.52;
+		parameters.walk.betaTravelTime_u_min = -0.52/100;
 		parameters.jWalk.alpha_age = 1.03;		//parameters.jWalk.alpha_walk_city = 0.0;
 		
 		//Carodt
 		//parameters.jCarodt.alpha_carodt_city = 0.0;
 		
-		parameters.jCarodt.beta_TravelTime_u_min = -6.26 ;
+		parameters.jCarodt.beta_TravelTime_u_min = -6.26/100 ;
 		//parameters.jCarodt.betaWaitingTime_u_min = 0.0 ;
 		//parameters.jCarodt.betaAccessEgressWalkTime_min = 0.0;
 		parameters.jCarodt.alpha_u = -1.23;
@@ -156,7 +156,7 @@ public class JakartaModeParameters extends ModeParameters {
 		
 		//Mcodt
 		//parameters.jMcodt.alpha_mcodt_city = 0.0;				
-		parameters.jMcodt.beta_TravelTime_u_min = -6.260 ;
+		parameters.jMcodt.beta_TravelTime_u_min = -6.26/100;
 		//parameters.jMcodt.betaWaitingTime_u_min = 0.0 ;
 		//parameters.jMcodt.betaAccessEgressWalkTime_min = 0.0;
 		parameters.jMcodt.alpha_u = -1.23;
@@ -166,7 +166,7 @@ public class JakartaModeParameters extends ModeParameters {
 		
 		//Motorcycle
 		//parameters.jMcodt.alpha_mcodt_city = 0.0;				
-		parameters.jMotorcycle.beta_TravelTime_u_min = -3.32 ;
+		parameters.jMotorcycle.beta_TravelTime_u_min = -3.32/100 ;
 		//parameters.jMotorcycle.betaWaitingTime_u_min = 0.0 ;
 		//parameters.jMotorcycle.betaAccessEgressWalkTime_min = 0.0;
 		parameters.jMotorcycle.alpha_u = 0.0;
