@@ -111,7 +111,7 @@ public class JakartaModeParameters extends ModeParameters {
         parameters.jAvgHHLIncome.avg_hhl_income = 5327;
         
 		// Car
-		parameters.car.alpha_u = -1.09;
+		parameters.car.alpha_u = -0.44;
 		parameters.car.betaTravelTime_u_min = -1.24/100;
         
 		parameters.car.constantAccessEgressWalkTime_min = 0.0;
@@ -119,7 +119,7 @@ public class JakartaModeParameters extends ModeParameters {
 		//parameters.jCar.alpha_car_city = -0.1597;
 
 		// PT
-		parameters.pt.alpha_u = -3.75;
+		parameters.pt.alpha_u = -4.12;
 		parameters.pt.betaLineSwitch_u = 0.0;
 		parameters.pt.betaInVehicleTime_u_min = -1.49/100;
 		parameters.pt.betaWaitingTime_u_min = -1.49/100;
@@ -128,12 +128,12 @@ public class JakartaModeParameters extends ModeParameters {
 		//parameters.jPT.alpha_age = 0.0;
 		
 		// Bike
-		parameters.bike.alpha_u = -4.24;
+		parameters.bike.alpha_u = -4.44;
 		parameters.bike.betaTravelTime_u_min = -9.05/100;
 		//parameters.bike.betaAgeOver18_u_a = 0.0;
 
 		// Walk
-		parameters.walk.alpha_u = -2.57;
+		parameters.walk.alpha_u = -4.79;
 		parameters.walk.betaTravelTime_u_min = -0.52/100;
 		parameters.jWalk.alpha_age = 1.03/100;		//parameters.jWalk.alpha_walk_city = 0.0;
 		
@@ -143,7 +143,7 @@ public class JakartaModeParameters extends ModeParameters {
 		parameters.jCarodt.beta_TravelTime_u_min = -6.26/100 ;
 		//parameters.jCarodt.betaWaitingTime_u_min = 0.0 ;
 		//parameters.jCarodt.betaAccessEgressWalkTime_min = 0.0;
-		parameters.jCarodt.alpha_u = -1.23;
+		parameters.jCarodt.alpha_u = -0.29;
 		parameters.jCarodt.alpha_sex = -0.42;
 		parameters.jCarodt.alpha_age = -1.32/100;
 
@@ -159,7 +159,7 @@ public class JakartaModeParameters extends ModeParameters {
 		parameters.jMcodt.beta_TravelTime_u_min = -6.26/100;
 		//parameters.jMcodt.betaWaitingTime_u_min = 0.0 ;
 		//parameters.jMcodt.betaAccessEgressWalkTime_min = 0.0;
-		parameters.jMcodt.alpha_u = -1.23;
+		parameters.jMcodt.alpha_u = -0.29;
 		parameters.jMcodt.alpha_sex = -0.42;
 		parameters.jMcodt.alpha_age = -1.32/100;
 		
