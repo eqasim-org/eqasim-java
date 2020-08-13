@@ -22,7 +22,6 @@ public class RunBikeNetworkESRI {
         NetworkFilterManager networkFilterManager = new NetworkFilterManager(network);
 
         NetworkLinkFilter networkLinkFilter = new NetworkLinkFilter() {
-
             @Override
             public boolean judgeLink(Link l) {
                 return l.getAllowedModes().contains(TransportMode.bike);

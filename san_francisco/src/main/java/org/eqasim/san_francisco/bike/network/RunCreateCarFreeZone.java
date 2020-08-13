@@ -27,7 +27,7 @@ public class RunCreateCarFreeZone {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException, IOException {
         CommandLine cmd = new CommandLine.Builder(args) //
-                .requireOptions("input-path", "input-shp", "output-path") //
+                .requireOptions("input-path", "input-csv", "output-path") //
                 .build();
 
         log.info("Loading the network ...");
@@ -39,7 +39,7 @@ public class RunCreateCarFreeZone {
 //                .map(feature -> (Geometry) feature.getDefaultGeometry())
 //                .collect(Collectors.toList());
 
-        Set<Id<Link>> linkIds = new LinkIdsCSVReader().read(cmd.getOptionStrict("input-shp"));
+        Set<Id<Link>> linkIds = new LinkIdsCSVReader().read(cmd.getOptionStrict("input-csv"));
 
         log.info("Creating the carfree zone in the network...");
 //        new BikeNetworkFixer().createCarFreeZoneFromShapefile(network, carFreeZone);
