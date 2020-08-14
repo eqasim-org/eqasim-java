@@ -18,7 +18,7 @@ public class JakartaModeAvailability implements ModeAvailability {
 		// Modes that are always available
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
-		modes.add(TransportMode.motorcycle);
+		//modes.add(TransportMode.motorcycle);
 		//modes.add(TransportMode.bike);
 		//modes.add(TransportMode.taxi);
 		modes.add("carodt");
