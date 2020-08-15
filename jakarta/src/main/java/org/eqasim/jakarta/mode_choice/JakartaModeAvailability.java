@@ -45,9 +45,9 @@ public class JakartaModeAvailability implements ModeAvailability {
 		// Check motorcycle availability
 		boolean motorcycleAvailability = true;
 		
-		if ("never".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
-			motorcycleAvailability = false;
-		}
+		//if ("never".equals((String) person.getAttributes().getAttribute("carAvailability"))) {
+		//	motorcycleAvailability = false;
+		//}
 
 		
 	    if ((int)person.getAttributes().getAttribute("age") < 18)
