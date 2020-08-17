@@ -244,59 +244,63 @@ public class DemandEstimator {
 									trip.getDestinationActivity().getCoord().getX(),
 									trip.getDestinationActivity().getCoord().getY());
 
-							Link fromLink = busNetwork.getLinks().get(fromFacility.getLinkId());
-							Link toLink = busNetwork.getLinks().get(toFacility.getLinkId());
+							if (closestStartFacility != closestEndFacility) {
+								Link fromLink = busNetwork.getLinks().get(fromFacility.getLinkId());
+								Link toLink = busNetwork.getLinks().get(toFacility.getLinkId());
 
-							Link accessLink = busNetwork.getLinks().get(closestStartFacility.getLinkId());
-							Link egressLink = busNetwork.getLinks().get(closestEndFacility.getLinkId());
+								Link accessLink = busNetwork.getLinks().get(closestStartFacility.getLinkId());
+								Link egressLink = busNetwork.getLinks().get(closestEndFacility.getLinkId());
 
-							Path accessPath = busRouter.calcLeastCostPath(fromLink.getToNode(),
-									accessLink.getFromNode(), departureTime, person, null);
-							Path egressPath = busRouter.calcLeastCostPath(egressLink.getToNode(), toLink.getFromNode(),
-									departureTime, person, null);
+								Path accessPath = busRouter.calcLeastCostPath(fromLink.getToNode(),
+										accessLink.getFromNode(), departureTime, person, null);
+								Path egressPath = busRouter.calcLeastCostPath(egressLink.getToNode(),
+										toLink.getFromNode(), departureTime, person, null);
 
-							double accessTime = accessPath.travelTime + walkOffset;
-							double egressTime = egressPath.travelTime + walkOffset;
+								double accessTime = accessPath.travelTime + walkOffset;
+								double egressTime = egressPath.travelTime + walkOffset;
 
-							if (accessTime + egressTime < minimumTravelTime) {
-								List<? extends PlanElement> accessStopRoute = tripRouter.calcRoute("pt",
-										closestStartFacility, toFacility, departureTime, person);
-								List<? extends PlanElement> egressStopRoute = tripRouter.calcRoute("pt", fromFacility,
-										closestEndFacility, departureTime, person);
-								List<? extends PlanElement> accessEgressStopRoute = tripRouter.calcRoute("pt",
-										closestStartFacility, closestEndFacility, departureTime, person);
+								if (accessTime + egressTime < minimumTravelTime) {
+									List<? extends PlanElement> accessStopRoute = tripRouter.calcRoute("pt",
+											closestStartFacility, toFacility, departureTime, person);
+									List<? extends PlanElement> egressStopRoute = tripRouter.calcRoute("pt",
+											fromFacility, closestEndFacility, departureTime, person);
+									List<? extends PlanElement> accessEgressStopRoute = tripRouter.calcRoute("pt",
+											closestStartFacility, closestEndFacility, departureTime, person);
 
-								if (containsGPE(accessStopRoute)) {
-									double accessStopTravelTime = getTravelTime(accessStopRoute) + accessTime;
+									if (containsGPE(accessStopRoute)) {
+										double accessStopTravelTime = getTravelTime(accessStopRoute) + accessTime;
 
-									if (accessStopTravelTime < minimumTravelTime) {
-										writeLine(person, tripIndex, trip, true, false, minimumTravelTime,
-												accessStopTravelTime, accessTime - walkOffset, egressTime - walkOffset);
+										if (accessStopTravelTime < minimumTravelTime) {
+											writeLine(person, tripIndex, trip, true, false, minimumTravelTime,
+													accessStopTravelTime, accessTime - walkOffset,
+													egressTime - walkOffset);
+										}
+									}
+
+									if (containsGPE(egressStopRoute)) {
+										double egressStopTravelTime = getTravelTime(egressStopRoute) + egressTime;
+
+										if (egressStopTravelTime < minimumTravelTime) {
+											writeLine(person, tripIndex, trip, false, true, minimumTravelTime,
+													egressStopTravelTime, accessTime - walkOffset,
+													egressTime - walkOffset);
+										}
+									}
+
+									if (containsGPE(accessEgressStopRoute)) {
+										double accessEgressStopTravelTime = getTravelTime(accessEgressStopRoute)
+												+ accessTime + egressTime;
+
+										if (accessEgressStopTravelTime < minimumTravelTime) {
+											writeLine(person, tripIndex, trip, true, true, minimumTravelTime,
+													accessEgressStopTravelTime, accessTime - walkOffset,
+													egressTime - walkOffset);
+										}
 									}
 								}
 
-								if (containsGPE(egressStopRoute)) {
-									double egressStopTravelTime = getTravelTime(egressStopRoute) + egressTime;
-
-									if (egressStopTravelTime < minimumTravelTime) {
-										writeLine(person, tripIndex, trip, false, true, minimumTravelTime,
-												egressStopTravelTime, accessTime - walkOffset, egressTime - walkOffset);
-									}
-								}
-
-								if (containsGPE(accessEgressStopRoute)) {
-									double accessEgressStopTravelTime = getTravelTime(accessEgressStopRoute)
-											+ accessTime + egressTime;
-
-									if (accessEgressStopTravelTime < minimumTravelTime) {
-										writeLine(person, tripIndex, trip, true, true, minimumTravelTime,
-												accessEgressStopTravelTime, accessTime - walkOffset,
-												egressTime - walkOffset);
-									}
-								}
+								tripIndex++;
 							}
-
-							tripIndex++;
 						}
 					}
 
