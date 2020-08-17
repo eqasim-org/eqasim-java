@@ -41,7 +41,7 @@ import com.google.inject.Provider;
 
 public class DemandEstimator {
 	private final double walkOffset = 5.0 * 60.0;
-	private final double busSpeed = 20.0; // km / h
+	private final double busSpeed = 30.0; // km / h
 
 	private final Provider<TripRouter> tripRouterProvider;
 	private final LeastCostPathCalculatorFactory routerFactory;
@@ -224,11 +224,17 @@ public class DemandEstimator {
 							Facility toFacility = new LinkWrapperFacility(
 									network.getLinks().get(trip.getDestinationActivity().getLinkId()));
 
-							double carTravelTime = getTravelTime(
-									tripRouter.calcRoute("car", fromFacility, toFacility, departureTime, person));
-							double ptTravelTime = getTravelTime(
+							double minimumTravelTime = getTravelTime(
 									tripRouter.calcRoute("pt", fromFacility, toFacility, departureTime, person));
-							double minimumTravelTime = Math.min(carTravelTime, ptTravelTime);
+
+							if (((String) person.getAttributes().getAttribute("hasLicense")).equals("yes")) {
+								if (!((String) person.getAttributes().getAttribute("carAvailability")).equals("none")) {
+									double carTravelTime = getTravelTime(tripRouter.calcRoute("car", fromFacility,
+											toFacility, departureTime, person));
+
+									minimumTravelTime = Math.min(minimumTravelTime, carTravelTime);
+								}
+							}
 
 							Facility closestStartFacility = stopIndex.getClosest(
 									trip.getOriginActivity().getCoord().getX(),
