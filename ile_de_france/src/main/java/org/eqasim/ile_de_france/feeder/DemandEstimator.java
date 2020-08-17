@@ -3,7 +3,9 @@ package org.eqasim.ile_de_france.feeder;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,18 +25,27 @@ import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.TripStructureUtils.Trip;
+import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
+import org.matsim.core.router.util.LeastCostPathCalculator;
+import org.matsim.core.router.util.LeastCostPathCalculator.Path;
+import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.vehicles.Vehicle;
 
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 
 public class DemandEstimator {
 	private final double walkOffset = 5.0 * 60.0;
+	private final double busSpeed = 20.0; // km / h
 
 	private final Provider<TripRouter> tripRouterProvider;
+	private final LeastCostPathCalculatorFactory routerFactory;
+
 	private final Iterator<? extends Person> personIterator;
 	private final ParallelProgress progress;
 	private final Network network;
@@ -43,6 +54,7 @@ public class DemandEstimator {
 
 	public DemandEstimator(Injector injector, BufferedWriter writer) throws IOException {
 		this.tripRouterProvider = injector.getProvider(TripRouter.class);
+		this.routerFactory = injector.getInstance(LeastCostPathCalculatorFactory.class);
 
 		Population population = injector.getInstance(Population.class);
 		this.personIterator = population.getPersons().values().iterator();
@@ -163,6 +175,21 @@ public class DemandEstimator {
 		public void run() {
 			TripRouter tripRouter = tripRouterProvider.get();
 
+			TravelTime constantTravelTime = new TravelTime() {
+				@Override
+				public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
+					double speed = Math.min(busSpeed / 3.6, link.getFreespeed());
+					return link.getLength() / speed;
+				}
+			};
+
+			Network busNetwork = NetworkUtils.createNetwork();
+			new TransportModeNetworkFilter(network).filter(busNetwork, new HashSet<>(Arrays.asList("car", "bus")));
+			new NetworkCleaner().run(busNetwork);
+
+			LeastCostPathCalculator busRouter = routerFactory.createPathCalculator(busNetwork,
+					new OnlyTimeDependentTravelDisutility(constantTravelTime), constantTravelTime);
+
 			while (true) {
 				List<Person> tasks = new ArrayList<>(numberOfTasks);
 
@@ -206,15 +233,24 @@ public class DemandEstimator {
 							Facility closestStartFacility = stopIndex.getClosest(
 									trip.getOriginActivity().getCoord().getX(),
 									trip.getOriginActivity().getCoord().getY());
-							double accessTime = getTravelTime(tripRouter.calcRoute("car", fromFacility,
-									closestStartFacility, departureTime, person)) + walkOffset;
 
 							Facility closestEndFacility = stopIndex.getClosest(
 									trip.getDestinationActivity().getCoord().getX(),
 									trip.getDestinationActivity().getCoord().getY());
-							double egressTime = getTravelTime(
-									tripRouter.calcRoute("car", closestEndFacility, toFacility, departureTime, person))
-									+ walkOffset;
+
+							Link fromLink = busNetwork.getLinks().get(fromFacility.getLinkId());
+							Link toLink = busNetwork.getLinks().get(toFacility.getLinkId());
+
+							Link accessLink = busNetwork.getLinks().get(closestStartFacility.getLinkId());
+							Link egressLink = busNetwork.getLinks().get(closestEndFacility.getLinkId());
+
+							Path accessPath = busRouter.calcLeastCostPath(fromLink.getToNode(),
+									accessLink.getFromNode(), departureTime, person, null);
+							Path egressPath = busRouter.calcLeastCostPath(egressLink.getToNode(), toLink.getFromNode(),
+									departureTime, person, null);
+
+							double accessTime = accessPath.travelTime + walkOffset;
+							double egressTime = egressPath.travelTime + walkOffset;
 
 							if (accessTime + egressTime < minimumTravelTime) {
 								List<? extends PlanElement> accessStopRoute = tripRouter.calcRoute("pt",
@@ -227,9 +263,7 @@ public class DemandEstimator {
 								if (containsGPE(accessStopRoute)) {
 									double accessStopTravelTime = getTravelTime(accessStopRoute) + accessTime;
 
-									System.err.println(accessStopTravelTime + " " + minimumTravelTime);
 									if (accessStopTravelTime < minimumTravelTime) {
-										System.err.println("  HIT!");
 										writeLine(person, tripIndex, trip, true, false, minimumTravelTime,
 												accessStopTravelTime, accessTime - walkOffset, egressTime - walkOffset);
 									}
