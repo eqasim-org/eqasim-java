@@ -121,9 +121,9 @@ public class JakartaModeParameters extends ModeParameters {
 		// PT
 		parameters.pt.alpha_u = -3.50;
 		parameters.pt.betaLineSwitch_u = 0.0;
-		parameters.pt.betaInVehicleTime_u_min = -1.49/100;
-		parameters.pt.betaWaitingTime_u_min = -1.49/100;
-		parameters.pt.betaAccessEgressTime_u_min = -1.49/100;
+		parameters.pt.betaInVehicleTime_u_min = -1.70/100;
+		parameters.pt.betaWaitingTime_u_min = -1.70/100;
+		parameters.pt.betaAccessEgressTime_u_min = -1.70/100;
 		//parameters.jPT.alpha_pt_city = 0.0;
 		//parameters.jPT.alpha_age = 0.0;
 		
