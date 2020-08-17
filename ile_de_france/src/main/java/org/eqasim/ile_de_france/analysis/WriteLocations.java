@@ -48,7 +48,7 @@ public class WriteLocations {
 				}
 			}
 		}
-		
+
 		writer.close();
 	}
 }
