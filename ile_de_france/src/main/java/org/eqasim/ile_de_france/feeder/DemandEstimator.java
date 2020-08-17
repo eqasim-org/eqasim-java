@@ -41,7 +41,7 @@ import com.google.inject.Provider;
 
 public class DemandEstimator {
 	private final double walkOffset = 5.0 * 60.0;
-	private final double busSpeed = 30.0; // km / h
+	private final double busSpeed = 17.5; // km / h
 
 	private final Provider<TripRouter> tripRouterProvider;
 	private final LeastCostPathCalculatorFactory routerFactory;
@@ -255,9 +255,12 @@ public class DemandEstimator {
 										accessLink.getFromNode(), departureTime, person, null);
 								Path egressPath = busRouter.calcLeastCostPath(egressLink.getToNode(),
 										toLink.getFromNode(), departureTime, person, null);
+								Path directPath = busRouter.calcLeastCostPath(fromLink.getToNode(),
+										toLink.getFromNode(), departureTime, person, null);
 
-								double accessTime = accessPath.travelTime + walkOffset;
-								double egressTime = egressPath.travelTime + walkOffset;
+								double accessTime = accessPath.travelTime;
+								double egressTime = egressPath.travelTime;
+								double directTime = directPath.travelTime;
 
 								if (accessTime + egressTime < minimumTravelTime) {
 									List<? extends PlanElement> accessStopRoute = tripRouter.calcRoute("pt",
@@ -270,20 +273,20 @@ public class DemandEstimator {
 									if (containsGPE(accessStopRoute)) {
 										double accessStopTravelTime = getTravelTime(accessStopRoute) + accessTime;
 
-										if (accessStopTravelTime < minimumTravelTime) {
+										if (accessStopTravelTime + walkOffset < minimumTravelTime
+												&& accessStopTravelTime < directTime) {
 											writeLine(person, tripIndex, trip, true, false, minimumTravelTime,
-													accessStopTravelTime, accessTime - walkOffset,
-													egressTime - walkOffset);
+													accessStopTravelTime + walkOffset, accessTime, egressTime);
 										}
 									}
 
 									if (containsGPE(egressStopRoute)) {
 										double egressStopTravelTime = getTravelTime(egressStopRoute) + egressTime;
 
-										if (egressStopTravelTime < minimumTravelTime) {
+										if (egressStopTravelTime + walkOffset < minimumTravelTime
+												&& egressStopTravelTime < directTime) {
 											writeLine(person, tripIndex, trip, false, true, minimumTravelTime,
-													egressStopTravelTime, accessTime - walkOffset,
-													egressTime - walkOffset);
+													egressStopTravelTime + walkOffset, accessTime, egressTime);
 										}
 									}
 
@@ -291,7 +294,8 @@ public class DemandEstimator {
 										double accessEgressStopTravelTime = getTravelTime(accessEgressStopRoute)
 												+ accessTime + egressTime;
 
-										if (accessEgressStopTravelTime < minimumTravelTime) {
+										if (accessEgressStopTravelTime < minimumTravelTime
+												&& accessEgressStopTravelTime < directTime) {
 											writeLine(person, tripIndex, trip, true, true, minimumTravelTime,
 													accessEgressStopTravelTime, accessTime - walkOffset,
 													egressTime - walkOffset);
