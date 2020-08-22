@@ -136,7 +136,7 @@ public class BatchRouter {
 									.get(route.getTransitRouteId()).getTransportMode();
 
 							switch (mode) {
-							case "train":
+							case "rail":
 								result.inVehicleTimeTrain_min += route.getInVehicleTime() / 60.0;
 								break;
 							case "subway":
