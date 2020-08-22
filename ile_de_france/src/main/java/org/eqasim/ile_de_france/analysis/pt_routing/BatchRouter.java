@@ -137,7 +137,7 @@ public class BatchRouter {
 
 							switch (mode) {
 							case "rail":
-								result.inVehicleTimeTrain_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleTimeRail_min += route.getInVehicleTime() / 60.0;
 								break;
 							case "subway":
 								result.inVehicleTimeSubway_min += route.getInVehicleTime() / 60.0;
@@ -185,7 +185,7 @@ public class BatchRouter {
 		public double egressTravelTime_min;
 		public double egressDistance_km;
 
-		public double inVehicleTimeTrain_min;
+		public double inVehicleTimeRail_min;
 		public double inVehicleTimeSubway_min;
 		public double inVehicleTimeBus_min;
 		public double inVehicleTimeOther_min;
