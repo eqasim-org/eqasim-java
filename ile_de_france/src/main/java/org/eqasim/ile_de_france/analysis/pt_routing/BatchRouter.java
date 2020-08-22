@@ -129,8 +129,9 @@ public class BatchRouter {
 								result.transferWaitingTime_min += route.getWaitingTime() / 60.0;
 							}
 
-							result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
-									task.departureTime);
+							// result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility,
+							// toFacility,
+							// task.departureTime);
 
 							String mode = schedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
 									.get(route.getTransitRouteId()).getTransportMode();
@@ -198,7 +199,8 @@ public class BatchRouter {
 		public double initialWaitingTime_min;
 		public double transferWaitingTime_min;
 
-		public double headway_min;
+		// public double headway_min;
+		public double nextDepartureDelay_min;
 
 		boolean isOnlyWalk;
 	}
