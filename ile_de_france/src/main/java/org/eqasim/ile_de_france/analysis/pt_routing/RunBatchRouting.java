@@ -49,7 +49,7 @@ public class RunBatchRouting {
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
-		double interval = (double) cmd.getOption("interval").map(Integer::parseInt).orElse(1200);
+		double interval = (double) cmd.getOption("interval").map(Integer::parseInt).orElse(3600);
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(EqasimConfigurator.getModules()) //
