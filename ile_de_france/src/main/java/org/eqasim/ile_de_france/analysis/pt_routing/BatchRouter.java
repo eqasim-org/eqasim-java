@@ -28,16 +28,18 @@ public class BatchRouter {
 
 	private final int batchSize;
 	private final int numberOfThreads;
+	private final double interval;
 
 	public BatchRouter(Provider<EnrichedTransitRouter> routerProvider,
 			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
-			int batchSize, int numberOfThreads) {
+			int batchSize, int numberOfThreads, double interval) {
 		this.routerProvider = routerProvider;
 		this.headwayCalculatorProvider = headwayCalculatorProvider;
 		this.batchSize = batchSize;
 		this.numberOfThreads = numberOfThreads;
 		this.schedule = schedule;
 		this.network = network;
+		this.interval = interval;
 	}
 
 	public Collection<Result> run(Collection<Task> tasks) throws InterruptedException {
@@ -95,7 +97,7 @@ public class BatchRouter {
 				List<Result> localResults = new ArrayList<>(localTasks.size());
 
 				for (Task task : localTasks) {
-					Result result = new Result();
+					Result result = new Result(task);
 
 					Coord fromCoord = new Coord(task.originX, task.originY);
 					Coord toCoord = new Coord(task.destinationX, task.destinationY);
@@ -129,9 +131,12 @@ public class BatchRouter {
 								result.transferWaitingTime_min += route.getWaitingTime() / 60.0;
 							}
 
-							// result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility,
-							// toFacility,
-							// task.departureTime);
+							if (interval > 0.0) {
+								result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
+										task.departureTime);
+							} else {
+								result.headway_min = Double.NaN;
+							}
 
 							String mode = schedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
 									.get(route.getTransitRouteId()).getTransportMode();
@@ -180,6 +185,8 @@ public class BatchRouter {
 	}
 
 	static public class Result {
+		public String identifier;
+
 		public double accessTravelTime_min;
 		public double accessDistance_km;
 
@@ -199,9 +206,12 @@ public class BatchRouter {
 		public double initialWaitingTime_min;
 		public double transferWaitingTime_min;
 
-		// public double headway_min;
-		public double nextDepartureDelay_min;
+		public double headway_min;
 
 		boolean isOnlyWalk;
+
+		Result(Task task) {
+			this.identifier = task.identifier;
+		}
 	}
 }

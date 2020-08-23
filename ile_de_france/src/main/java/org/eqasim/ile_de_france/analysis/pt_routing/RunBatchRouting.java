@@ -61,7 +61,7 @@ public class RunBatchRouting {
 		Network network = injector.getInstance(Network.class);
 
 		BatchRouter batchRouter = new BatchRouter(routerProvider, headwayCalculatorProvider, schedule, network,
-				batchSize, numberOfThreads);
+				batchSize, numberOfThreads, interval);
 
 		CsvMapper mapper = new CsvMapper();
 
