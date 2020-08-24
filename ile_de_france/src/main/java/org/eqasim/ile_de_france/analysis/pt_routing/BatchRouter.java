@@ -108,7 +108,7 @@ public class BatchRouter {
 					List<Leg> legs = router.calculateRoute(fromFacility, toFacility, task.departureTime, null);
 
 					boolean isFirstVehicularLeg = true;
-					result.isOnlyWalk = true;
+					result.isOnlyWalk = 0;
 
 					for (Leg leg : legs) {
 						if (leg.getMode().equals(TransportMode.access_walk)) {
@@ -127,7 +127,7 @@ public class BatchRouter {
 								result.initialWaitingTime_min += route.getWaitingTime() / 60.0;
 								isFirstVehicularLeg = false;
 							} else {
-								result.numberOfTranfers += 1;
+								result.numberOfTransfers += 1;
 								result.transferWaitingTime_min += route.getWaitingTime() / 60.0;
 							}
 
@@ -155,7 +155,7 @@ public class BatchRouter {
 								result.inVehicleTimeOther_min += route.getInVehicleTime() / 60.0;
 							}
 
-							result.isOnlyWalk = false;
+							result.isOnlyWalk = 1;
 						} else {
 							throw new IllegalStateException();
 						}
@@ -198,7 +198,7 @@ public class BatchRouter {
 		public double inVehicleTimeBus_min;
 		public double inVehicleTimeOther_min;
 
-		public int numberOfTranfers;
+		public int numberOfTransfers;
 
 		public double transferTravelTime_min;
 		public double transferDistance_km;
@@ -208,7 +208,7 @@ public class BatchRouter {
 
 		public double headway_min;
 
-		boolean isOnlyWalk;
+		int isOnlyWalk;
 
 		Result(Task task) {
 			this.identifier = task.identifier;

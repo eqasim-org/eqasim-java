@@ -35,12 +35,16 @@ public class RunBatchRouting {
 			IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size", "interval") //
+				.allowOptions("threads", "batch-size", "interval", "transfer-utility") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				EqasimConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+
+		if (cmd.hasOption("transfer-utility")) {
+			config.planCalcScore().setUtilityOfLineSwitch(Double.parseDouble(cmd.getOptionStrict("transfer-utility")));
+		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		EqasimConfigurator.configureScenario(scenario);
