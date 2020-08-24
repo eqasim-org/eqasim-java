@@ -57,7 +57,7 @@ public class JakartaMotorcycleUtilityEstimator implements UtilityEstimator {
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables_mc);
 		utility += estimateAccessEgressTimeUtility(variables_mc);
-		utility += parameters.jMotorcycle.alpha_age * variables.age / 100;
+		utility += parameters.jMotorcycle.alpha_age * variables.age;
 		utility += estimateMonetaryCostUtility(variables_mc) * EstimatorUtils.interaction(variables.hhlIncome, 
 				parameters.jAvgHHLIncome.avg_hhl_income, parameters.jIncomeElasticity.lambda_income);
 		//if (variables.hhlIncome == 0.0)

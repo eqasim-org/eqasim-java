@@ -43,7 +43,7 @@ public class JakartaCarodtUtilityEstimator implements UtilityEstimator {
 		utility += estimateConstantUtility();
 		utility += estimateTravelTimeUtility(variables_Carodt);
 		utility += estimateAccessEgressTimeUtility(variables_Carodt);
-		utility += parameters.jCarodt.alpha_age * variables.age / 100;
+		utility += parameters.jCarodt.alpha_age * variables.age;
 		if (variables.sex == "f")
 			utility += 0.0;
 		else
