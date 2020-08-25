@@ -18,9 +18,12 @@ import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredic
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.router.util.TravelTime;
 
+import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 
 public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -53,6 +56,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bind(IDFSpatialPredictor.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
+
+		bind(Key.get(TravelTime.class, Names.named("car_passenger"))).to(Key.get(TravelTime.class, Names.named("car")));
 	}
 
 	@Provides
