@@ -53,12 +53,8 @@ public class IDFModeAvailability implements ModeAvailability {
 			modes.add("outside");
 		}
 
-		// Add special mode "car_passenger" if applicable
-		Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-
-		if (isCarPassenger != null && isCarPassenger) {
-			modes.add("car_passenger");
-		}
+		// Add mode "car_passenger"
+		modes.add("car_passenger");
 
 		return modes;
 	}

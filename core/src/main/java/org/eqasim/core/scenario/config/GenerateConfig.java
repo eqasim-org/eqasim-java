@@ -84,7 +84,9 @@ public class GenerateConfig {
 		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
 
 		scoringConfig.setMarginalUtilityOfMoney(0.0);
-		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(0.0);
+		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(-1.0);
+		scoringConfig.setUtilityOfLineSwitch(0.0);
+		scoringConfig.setPerforming_utils_hr(0.0);
 
 		for (String activityType : ACTIVITY_TYPES) {
 			ActivityParams activityParams = scoringConfig.getActivityParams(activityType);

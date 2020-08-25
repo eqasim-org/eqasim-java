@@ -32,7 +32,7 @@ public class IDFBikeUtilityEstimator extends BikeUtilityEstimator {
 		double utility = 0.0;
 
 		if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
-			utility += parameters.idfBike.betaInsideUrbanArea;
+			utility += parameters.idfBike.betaInsideUrbanArea_u;
 		}
 
 		return utility;
