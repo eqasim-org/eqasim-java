@@ -144,15 +144,19 @@ public class BatchRouter {
 							switch (mode) {
 							case "rail":
 								result.inVehicleTimeRail_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
 								break;
 							case "subway":
 								result.inVehicleTimeSubway_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
 								break;
 							case "bus":
 								result.inVehicleTimeBus_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
 								break;
 							default:
 								result.inVehicleTimeOther_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
 							}
 
 							result.isOnlyWalk = 1;
@@ -197,6 +201,11 @@ public class BatchRouter {
 		public double inVehicleTimeSubway_min;
 		public double inVehicleTimeBus_min;
 		public double inVehicleTimeOther_min;
+
+		public double inVehicleDistanceRail_km;
+		public double inVehicleDistanceSubway_km;
+		public double inVehicleDistanceBus_km;
+		public double inVehicleDistanceOther_km;
 
 		public int numberOfTransfers;
 
