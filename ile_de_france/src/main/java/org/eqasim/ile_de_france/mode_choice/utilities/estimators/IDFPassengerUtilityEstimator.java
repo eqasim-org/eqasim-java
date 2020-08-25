@@ -1,6 +1,9 @@
 package org.eqasim.ile_de_france.mode_choice.utilities.estimators;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
@@ -72,13 +75,47 @@ public class IDFPassengerUtilityEstimator implements UtilityEstimator {
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 		CarVariables carVariables = carPredictor.predictVariables(person, trip, elements);
 
-		double utility = 0.0;
+		UtilityCollector collector = new UtilityCollector(false);
 
-		utility += estimateConstantUtility();
-		utility += estimateTravelTimeUtility(carVariables);
-		utility += estimateLicenseUtility(personVariables);
-		utility += estimateHouseholdCarAvailabilityUtility(personVariables);
+		collector.add("asc", estimateConstantUtility());
+		collector.add("travelTime", estimateTravelTimeUtility(carVariables));
+		collector.add("license", estimateLicenseUtility(personVariables));
+		collector.add("carAvailability", estimateHouseholdCarAvailabilityUtility(personVariables));
 
-		return utility;
+		return collector.getTotalUtility();
+	}
+
+	static private class UtilityCollector {
+		private Map<String, Double> components = null;
+		private double totalUtility = 0.0;
+
+		public UtilityCollector(boolean collectComponents) {
+			if (collectComponents) {
+				components = new LinkedHashMap<>();
+			}
+		}
+
+		public void add(String component, double utility) {
+			if (components != null) {
+				components.put(component, utility);
+			}
+
+			totalUtility += utility;
+		}
+
+		public double getTotalUtility() {
+			return totalUtility;
+		}
+
+		@Override
+		public String toString() {
+			List<String> stringComponents = new ArrayList<>(components.size());
+
+			for (Map.Entry<String, Double> item : components.entrySet()) {
+				stringComponents.add(String.format("%s=%.4f", item.getKey(), item.getValue()));
+			}
+
+			return "U[" + String.format("%.4f", getTotalUtility()) + "][" + String.join(", ", stringComponents) + "]";
+		}
 	}
 }
