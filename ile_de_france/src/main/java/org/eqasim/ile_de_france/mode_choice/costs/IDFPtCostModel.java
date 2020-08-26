@@ -99,6 +99,6 @@ public class IDFPtCostModel implements CostModel {
 		 * a price per distance. TODO: A more detailed analysis would be good to have!
 		 */
 
-		return 0.25 * calculateBasisDistance_km(trip);
+		return Math.max(0.25 * calculateBasisDistance_km(trip), 1.8);
 	}
 }

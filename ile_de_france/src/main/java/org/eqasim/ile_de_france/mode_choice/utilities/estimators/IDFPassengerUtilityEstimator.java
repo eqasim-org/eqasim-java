@@ -10,6 +10,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
 import org.matsim.api.core.v01.population.Person;
@@ -23,27 +24,15 @@ public class IDFPassengerUtilityEstimator implements UtilityEstimator {
 	private final IDFModeParameters parameters;
 	private final IDFPersonPredictor personPredictor;
 	private final CarPredictor carPredictor;
+	private final IDFSpatialPredictor spatialPredictor;
 
 	@Inject
 	public IDFPassengerUtilityEstimator(IDFModeParameters parameters, IDFPersonPredictor personPredictor,
-			CarPredictor carPredictor) {
+			IDFSpatialPredictor spatialPredictor, CarPredictor carPredictor) {
 		this.parameters = parameters;
 		this.personPredictor = personPredictor;
 		this.carPredictor = carPredictor;
-	}
-
-	protected double estimateUrbanUtility(IDFSpatialVariables variables) {
-		double utility = 0.0;
-
-		if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
-			utility += parameters.idfCar.betaInsideUrbanArea_u;
-		}
-
-		if (variables.hasUrbanOrigin || variables.hasUrbanDestination) {
-			utility += parameters.idfCar.betaCrossingUrbanArea_u;
-		}
-
-		return utility;
+		this.spatialPredictor = spatialPredictor;
 	}
 
 	protected double estimateConstantUtility() {
@@ -70,10 +59,25 @@ public class IDFPassengerUtilityEstimator implements UtilityEstimator {
 		}
 	}
 
+	protected double estimateUrbanUtility(IDFSpatialVariables variables) {
+		double utility = 0.0;
+
+		if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
+			utility += parameters.idfPassenger.betaInsideUrbanArea_u;
+		}
+
+		if (variables.hasUrbanOrigin || variables.hasUrbanDestination) {
+			utility += parameters.idfPassenger.betaCrossingUrbanArea_u;
+		}
+
+		return utility;
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 		CarVariables carVariables = carPredictor.predictVariables(person, trip, elements);
+		IDFSpatialVariables spatialVariables = spatialPredictor.predictVariables(person, trip, elements);
 
 		UtilityCollector collector = new UtilityCollector(false);
 
@@ -81,6 +85,7 @@ public class IDFPassengerUtilityEstimator implements UtilityEstimator {
 		collector.add("travelTime", estimateTravelTimeUtility(carVariables));
 		collector.add("license", estimateLicenseUtility(personVariables));
 		collector.add("carAvailability", estimateHouseholdCarAvailabilityUtility(personVariables));
+		collector.add("urban", estimateUrbanUtility(spatialVariables));
 
 		return collector.getTotalUtility();
 	}
