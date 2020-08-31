@@ -64,7 +64,17 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	@Singleton
 	public IDFModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
-		IDFModeParameters parameters = IDFModeParameters.buildBing();
+		IDFModeParameters parameters;
+
+		switch (commandLine.getOption("model").orElse("here")) {
+		default:
+		case "here":
+			parameters = IDFModeParameters.buildHERE();
+			break;
+		case "bing":
+			parameters = IDFModeParameters.buildBing();
+			break;
+		}
 
 		if (config.getModeParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);

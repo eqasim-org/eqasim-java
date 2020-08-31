@@ -16,6 +16,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
+				.allowOptions("model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
 				.build();
 
