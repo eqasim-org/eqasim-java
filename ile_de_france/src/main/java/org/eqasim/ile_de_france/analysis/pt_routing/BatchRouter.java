@@ -108,7 +108,14 @@ public class BatchRouter {
 					List<Leg> legs = router.calculateRoute(fromFacility, toFacility, task.departureTime, null);
 
 					boolean isFirstVehicularLeg = true;
-					result.isOnlyWalk = 0;
+					result.isOnlyWalk = 1;
+					
+					if (interval > 0.0) {
+						result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
+								task.departureTime);
+					} else {
+						result.headway_min = Double.NaN;
+					}
 
 					for (Leg leg : legs) {
 						if (leg.getMode().equals(TransportMode.access_walk)) {
@@ -131,13 +138,6 @@ public class BatchRouter {
 								result.transferWaitingTime_min += route.getWaitingTime() / 60.0;
 							}
 
-							if (interval > 0.0) {
-								result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
-										task.departureTime);
-							} else {
-								result.headway_min = Double.NaN;
-							}
-
 							String mode = schedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
 									.get(route.getTransitRouteId()).getTransportMode();
 
@@ -154,12 +154,16 @@ public class BatchRouter {
 								result.inVehicleTimeBus_min += route.getInVehicleTime() / 60.0;
 								result.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
 								break;
+							case "tram":
+								result.inVehicleTimeTram_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
+								break;
 							default:
 								result.inVehicleTimeOther_min += route.getInVehicleTime() / 60.0;
 								result.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
 							}
 
-							result.isOnlyWalk = 1;
+							result.isOnlyWalk = 0;
 						} else {
 							throw new IllegalStateException();
 						}
@@ -200,11 +204,13 @@ public class BatchRouter {
 		public double inVehicleTimeRail_min;
 		public double inVehicleTimeSubway_min;
 		public double inVehicleTimeBus_min;
+		public double inVehicleTimeTram_min;
 		public double inVehicleTimeOther_min;
 
 		public double inVehicleDistanceRail_km;
 		public double inVehicleDistanceSubway_km;
 		public double inVehicleDistanceBus_km;
+		public double inVehicleDistanceTram_km;
 		public double inVehicleDistanceOther_km;
 
 		public int numberOfTransfers;
