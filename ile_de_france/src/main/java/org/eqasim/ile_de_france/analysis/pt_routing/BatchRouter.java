@@ -223,7 +223,7 @@ public class BatchRouter {
 
 		public double headway_min;
 
-		int isOnlyWalk;
+		public int isOnlyWalk;
 
 		Result(Task task) {
 			this.identifier = task.identifier;
