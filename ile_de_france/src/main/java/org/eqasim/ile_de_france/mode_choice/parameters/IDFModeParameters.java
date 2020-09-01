@@ -75,44 +75,44 @@ public class IDFModeParameters extends ModeParameters {
 		IDFModeParameters parameters = new IDFModeParameters();
 
 		// Cost
-		parameters.betaCost_u_MU = -0.489;
-		parameters.lambdaCostEuclideanDistance = -0.322;
+		parameters.betaCost_u_MU = -0.526;
+		parameters.lambdaCostEuclideanDistance = -0.331;
 		parameters.referenceEuclideanDistance_km = 5.0;
 
 		// Car
-		parameters.car.alpha_u = 1.66;
-		parameters.car.betaTravelTime_u_min = -0.0411;
+		parameters.car.alpha_u = 1.36;
+		parameters.car.betaTravelTime_u_min = -0.042;
 
 		parameters.car.constantAccessEgressWalkTime_min = 0.0;
 		parameters.car.constantParkingSearchPenalty_min = 0.0;
 
-		parameters.idfCar.betaInsideUrbanArea_u = -2.26;
-		parameters.idfCar.betaCrossingUrbanArea_u = -1.17;
+		parameters.idfCar.betaInsideUrbanArea_u = -2.04;
+		parameters.idfCar.betaCrossingUrbanArea_u = -1.16;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
-		parameters.pt.betaLineSwitch_u = -0.998;
-		parameters.pt.betaInVehicleTime_u_min = -0.0261;
-		parameters.pt.betaWaitingTime_u_min = -0.0;
-		parameters.pt.betaAccessEgressTime_u_min = -0.0221;
+		parameters.pt.betaLineSwitch_u = -0.133;
+		parameters.pt.betaInVehicleTime_u_min = -0.0304;
+		parameters.pt.betaWaitingTime_u_min = -0.00263;
+		parameters.pt.betaAccessEgressTime_u_min = -0.0286;
 
 		// Bike
-		parameters.bike.alpha_u = -1.66;
+		parameters.bike.alpha_u = -1.89;
 		parameters.bike.betaTravelTime_u_min = -0.0656;
 
-		parameters.idfBike.betaInsideUrbanArea_u = 0.386;
+		parameters.idfBike.betaInsideUrbanArea_u = 0.446;
 
 		// Walk
-		parameters.walk.alpha_u = 2.94;
-		parameters.walk.betaTravelTime_u_min = -0.156;
+		parameters.walk.alpha_u = 2.81;
+		parameters.walk.betaTravelTime_u_min =	-0.157;
 
 		// Passenger
-		parameters.idfPassenger.alpha_u = -1.51;
-		parameters.idfPassenger.betaTravelTime_u_min = -0.0877;
-		parameters.idfPassenger.betaHouseholdCarAvailability_u = 1.85;
-		parameters.idfPassenger.betaLicense_u = -0.901;
-		parameters.idfPassenger.betaInsideUrbanArea_u = -1.73;
-		parameters.idfPassenger.betaCrossingUrbanArea_u = -0.362;
+		parameters.idfPassenger.alpha_u = -1.84;
+		parameters.idfPassenger.betaTravelTime_u_min = -0.086;
+		parameters.idfPassenger.betaHouseholdCarAvailability_u = 1.91;
+		parameters.idfPassenger.betaLicense_u = -0.933;
+		parameters.idfPassenger.betaInsideUrbanArea_u = -1.55;
+		parameters.idfPassenger.betaCrossingUrbanArea_u = -0.404;
 
 		return parameters;
 	}
