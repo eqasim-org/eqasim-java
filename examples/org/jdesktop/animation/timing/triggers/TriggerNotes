@@ -1,0 +1,135 @@
+Trigger Notes
+
+
+Want the ability to start/stop animations based on events, something like:
+
+"When X happens, start Anim1"
+
+"When Y happens, stop Anim2"
+
+Also want to start/stop animations based on other animations:
+
+"When Anim3 stops, start Anim4"
+
+Also want ability to auto-stop animations based on opposite events,
+and auto-start opposite animations likewise:
+
+"When X happens, start Anim1, stop Anim.
+When inverse(X) happens, stop Anim1
+
+Auto-reverse might be handleable through the new setDirection() API
+in Animator
+
+One of the problems with the current API is all these subclasses with
+essentially similar constructors.  It seems like I should be able to
+have the main functionality of creating a Trigger in just the Trigger
+class itself, and then have the functionality of the event-specific
+actions and listeners embedded in some other structure.
+
+something like:
+
+Trigger myTrigger = new Trigger(myAnimator, ButtonAction.MOUSEOVER,
+    TriggerAction.START);
+
+----------------
+
+12/22/06
+
+Triggers revisit: wouldn't it be nice if I could make these things actually
+work (and have a simple API) for 1.0 (and the book)?
+
+It seems like I should be able to have a *really* simple generic interface, with
+most of the current details hidden.  let's try it:
+
+
+abstract class Trigger {
+
+    protected Animator animator;
+
+    protected Trigger(Animator animator, TriggerAction action) {
+        this.animator = animator;
+        this.action = action;
+    }
+
+    protected void fire() {
+        if (action == TriggerAction.START) {
+            animator.start();
+        } else {
+            animator.stop();
+        }
+    }
+
+    public void disarm() {
+        // cancel Animator
+        // override to cancel any listeners
+    }
+}
+
+public class TimingTarget {
+
+    public TimingTarget(Animator source, TriggerAction action, TriggerEvent event, 
+            Animator animator) {
+        super(animator, action);
+        // Setup private TimingListener
+
+        }
+
+    private class TimingTriggerListener extends TimingTargetAdapter {
+        TimingTriggerEvent event;
+        protected TimingTriggerListener(TriggerAction action, TimingTriggerEvent event) {
+            super(timer, action);
+            this.event = event;
+        }
+        public void timingEvent(float fraction) {}
+        
+        public void begin() {
+            if (event == TimingTriggerEvent.START) {
+                pullTrigger();
+            }
+        }
+        public void end() {
+            if (event == TimingTriggerEvent.STOP) {
+                pullTrigger();
+            }
+        }
+        public void repeat() {
+            if (event == TimingTriggerEvent.REPEAT) {
+                pullTrigger();
+            }
+        }
+    }    
+}
+
+........
+This is working so far, but I've hit a snag with the auto-reverse functionality.
+
+Previously, it was up to the developer to set up two separate animations that
+Trigger would then add with opposite events.  In particular, it would do this:
+
+    - setup listener with animator, START, event
+    - setup listener with animator, STOP, event-opposite
+    - setup listener with reverseAnimator, START, event-opposite
+    - setup listener with reverseAnimator, STOP, event
+
+This was useful, but not particularly a great API.
+
+It seems like, with setDirection(), getFraction(), and setInitialFraction(),
+we should be able to create all of this stuff automatically.
+
+For any Trigger that wants to START on some EVENT, we should be able to do this:
+    - create an Animator (opp) that is a copy of the one supplied (anim), but with the
+    opposite direction
+    - when EVENT occurs:
+        - if (opp.isRunning()) {
+            - f = opp.getFraction()
+            - anim.setInitialFraction(f)
+            - opp.stop();
+          }
+        - anim.start()
+    - when !EVENT occurs: 
+        - if (anim.isRunning()) {
+            - f = anim.getFraction()
+            - opp.setInitialFraction(f)
+            - anim.stop();
+          }
+        - opp.start()

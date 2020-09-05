@@ -1,0 +1,16 @@
+JarIndex-Version: 1.0
+
+netty-common-4.1.0.CR3.jar
+META-INF
+META-INF/maven
+META-INF/maven/io.netty
+META-INF/maven/io.netty/netty-common
+io
+io/netty
+io/netty/util
+io/netty/util/collection
+io/netty/util/concurrent
+io/netty/util/internal
+io/netty/util/internal/chmv8
+io/netty/util/internal/logging
+

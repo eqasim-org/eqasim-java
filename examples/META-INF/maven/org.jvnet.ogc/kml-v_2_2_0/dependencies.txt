@@ -1,0 +1,14 @@
+
+The following files have been resolved:
+   org.hisrc.w3c:atom-v_1_0:jar:1.1.0:compile
+   org.hamcrest:hamcrest-core:jar:1.3:test
+   junit:junit:jar:4.11:test
+   com.sun.istack:istack-commons-runtime:jar:2.21:provided
+   com.sun.xml.fastinfoset:FastInfoset:jar:1.2.13:provided
+   org.glassfish.jaxb:jaxb-core:jar:2.2.11:provided
+   org.glassfish.jaxb:jaxb-runtime:jar:2.2.11:provided
+   org.jvnet.staxex:stax-ex:jar:1.7.7:provided
+   org.glassfish.jaxb:txw2:jar:2.2.11:provided
+   javax.xml.bind:jaxb-api:jar:2.2.11:provided
+   org.jvnet.jaxb2_commons:jaxb2-basics-runtime:jar:0.9.4:compile
+

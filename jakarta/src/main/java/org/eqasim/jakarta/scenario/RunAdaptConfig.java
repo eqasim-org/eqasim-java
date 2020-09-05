@@ -12,6 +12,7 @@ import org.eqasim.jakarta.scenario.RunAdaptConfig;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.LinkDynamics;
@@ -22,6 +23,8 @@ public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
 		ConfigAdapter.run(args, EqasimConfigurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
+	
+
 
 	static public void adaptConfiguration(Config config) {
 		// Ignore some input files
@@ -30,7 +33,7 @@ public class RunAdaptConfig {
 		
 	
 		//set link dynamics and seep mode
-		
+		config.qsim().setPcuThresholdForFlowCapacityEasing( 0.001 );
 		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
 		
 		
@@ -93,6 +96,8 @@ public class RunAdaptConfig {
 		ModeParams mcodtParams = new ModeParams("mcodt");
 		config.planCalcScore().addModeParams(mcodtParams);
 		
+		
+	
 		
 		
 	}
