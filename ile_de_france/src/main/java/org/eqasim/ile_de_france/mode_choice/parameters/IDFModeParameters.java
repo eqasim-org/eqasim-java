@@ -104,7 +104,7 @@ public class IDFModeParameters extends ModeParameters {
 
 		// Walk
 		parameters.walk.alpha_u = 2.8;
-		parameters.walk.betaTravelTime_u_min =-0.156;
+		parameters.walk.betaTravelTime_u_min = -0.156;
 
 		// Passenger
 		parameters.idfPassenger.alpha_u = -1.94;

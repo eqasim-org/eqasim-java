@@ -35,7 +35,7 @@ public class IDFPtCostModel implements CostModel {
 		this.transitSchedule = transitSchedule;
 	}
 
-	private boolean isOnlyMetroOrBus(List<? extends PlanElement> elements) {
+	private boolean usesRail(List<? extends PlanElement> elements) {
 		for (PlanElement element : elements) {
 			if (element instanceof Leg) {
 				Leg leg = (Leg) element;
@@ -46,14 +46,14 @@ public class IDFPtCostModel implements CostModel {
 					String transportMode = transitSchedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
 							.get(route.getTransitRouteId()).getTransportMode();
 
-					if (!transportMode.equals("bus") && !transportMode.equals("subway")) {
-						return false;
+					if (transportMode.equals("rail")) {
+						return true;
 					}
 				}
 			}
 		}
 
-		return true;
+		return false;
 	}
 
 	private final static Coord CENTER = new Coord(651726, 6862287);
@@ -79,9 +79,9 @@ public class IDFPtCostModel implements CostModel {
 		IDFSpatialVariables spatialVariables = spatialPredictor.predictVariables(person, trip, elements);
 		boolean isWithinParis = spatialVariables.hasUrbanOrigin && spatialVariables.hasUrbanDestination;
 
-		boolean isOnlyMetroOrBus = isOnlyMetroOrBus(elements);
+		boolean usesRail = usesRail(elements);
 
-		if (isOnlyMetroOrBus || isWithinParis) {
+		if (!usesRail || isWithinParis) {
 			return 1.8;
 		}
 
