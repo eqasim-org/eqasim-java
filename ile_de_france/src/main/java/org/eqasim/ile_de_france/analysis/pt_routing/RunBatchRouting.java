@@ -10,6 +10,7 @@ import org.eqasim.core.components.headway.HeadwayImputerModule;
 import org.eqasim.core.components.transit.routing.EnrichedTransitRouter;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.analysis.pt_routing.BatchRouter.Result;
 import org.eqasim.ile_de_france.analysis.pt_routing.BatchRouter.Task;
 import org.matsim.api.core.v01.Scenario;
@@ -40,6 +41,7 @@ public class RunBatchRouting {
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				EqasimConfigurator.getConfigGroups());
+		IDFConfigurator.configure(config);
 		cmd.applyConfiguration(config);
 
 		if (cmd.hasOption("transfer-utility")) {
