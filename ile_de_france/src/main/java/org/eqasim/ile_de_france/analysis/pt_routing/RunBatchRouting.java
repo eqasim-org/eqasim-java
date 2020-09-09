@@ -31,6 +31,8 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
 
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
+
 public class RunBatchRouting {
 	static public void main(String[] args) throws ConfigurationException, JsonGenerationException, JsonMappingException,
 			IOException, InterruptedException {
@@ -47,6 +49,8 @@ public class RunBatchRouting {
 		if (cmd.hasOption("transfer-utility")) {
 			config.planCalcScore().setUtilityOfLineSwitch(Double.parseDouble(cmd.getOptionStrict("transfer-utility")));
 		}
+		
+		SwissRailRaptor.DIRECT_WALK_FACTOR = config.transitRouter().getDirectWalkFactor();
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		EqasimConfigurator.configureScenario(scenario);

@@ -13,6 +13,8 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
+
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
@@ -24,6 +26,8 @@ public class RunSimulation {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
 		IDFConfigurator.configure(config);
 		cmd.applyConfiguration(config);
+		
+		SwissRailRaptor.DIRECT_WALK_FACTOR = config.transitRouter().getDirectWalkFactor();
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
