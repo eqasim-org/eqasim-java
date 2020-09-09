@@ -29,6 +29,11 @@ public class ModeParameters implements ParameterDefinition {
 		public double alpha_u = 0.0;
 		public double betaTravelTime_u_min = 0.0;
 	}
+	
+	public class CarPtParameters {
+		public double alpha_u = 0.0;
+		public double betaTravelTime_u_min = 0.0;
+	}
 
 	public double lambdaCostEuclideanDistance = 0.0;
 	public double referenceEuclideanDistance_km = 0.0;
@@ -39,4 +44,5 @@ public class ModeParameters implements ParameterDefinition {
 	public final PtParameters pt = new PtParameters();
 	public final BikeParameters bike = new BikeParameters();
 	public final WalkParameters walk = new WalkParameters();
+	public final CarPtParameters car_pt = new CarPtParameters();
 }
