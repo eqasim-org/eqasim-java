@@ -29,6 +29,8 @@ public class IDFConfigurator extends EqasimConfigurator {
 		config.planCalcScore().setMarginalUtlOfWaitingPt_utils_hr(-1.0);
 		config.planCalcScore().setUtilityOfLineSwitch(-0.1);
 
+		config.transitRouter().setDirectWalkFactor(1e6);
+
 		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
