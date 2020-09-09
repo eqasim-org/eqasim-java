@@ -6,10 +6,13 @@ public class IDFPersonVariables implements BaseVariables {
 	public final boolean hasSubscription;
 	public final boolean hasLicense;
 	public final boolean householdCarAvailability;
+	public final boolean householdBikeAvailability;
 
-	public IDFPersonVariables(boolean hasSubscription, boolean hasLicense, boolean householdCarAvailability) {
+	public IDFPersonVariables(boolean hasSubscription, boolean hasLicense, boolean householdCarAvailability,
+			boolean householdBikeAvailability) {
 		this.hasSubscription = hasSubscription;
 		this.hasLicense = hasLicense;
 		this.householdCarAvailability = householdCarAvailability;
+		this.householdBikeAvailability = householdBikeAvailability;
 	}
 }

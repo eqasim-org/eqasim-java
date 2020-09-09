@@ -26,4 +26,12 @@ public class IDFPredictorUtils {
 
 		return true;
 	}
+	
+	public static boolean getHouseholdBikeAvailability(Person person) {
+		if ("none".equals((String) person.getAttributes().getAttribute("bikeAvailability"))) {
+			return false;
+		}
+
+		return true;
+	}
 }

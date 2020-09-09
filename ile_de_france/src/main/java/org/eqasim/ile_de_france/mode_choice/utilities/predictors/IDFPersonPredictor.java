@@ -16,7 +16,8 @@ public class IDFPersonPredictor extends CachedVariablePredictor<IDFPersonVariabl
 		boolean hasSubscription = IDFPredictorUtils.hasSubscription(person);
 		boolean hasLicense = IDFPredictorUtils.hasLicense(person);
 		boolean householdCarAvailability = IDFPredictorUtils.getHouseholdCarAvailability(person);
+		boolean householdBikeAvailability = IDFPredictorUtils.getHouseholdBikeAvailability(person);
 
-		return new IDFPersonVariables(hasSubscription, hasLicense, householdCarAvailability);
+		return new IDFPersonVariables(hasSubscription, hasLicense, householdCarAvailability, householdBikeAvailability);
 	}
 }
