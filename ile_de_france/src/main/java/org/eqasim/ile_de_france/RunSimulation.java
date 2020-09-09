@@ -1,5 +1,6 @@
 package org.eqasim.ile_de_france;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
@@ -8,6 +9,8 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
@@ -20,6 +23,13 @@ public class RunSimulation {
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+		
+		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+	    eqasimConfig.setEstimator("car_pt", "CarPtUtilityEstimator");
+	    
+	    PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
+	    ModeParams carPtParams = new ModeParams("car_pt");
+	    scoringConfig.addModeParams(carPtParams);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
