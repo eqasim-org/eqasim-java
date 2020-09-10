@@ -13,12 +13,14 @@ import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
 import org.eqasim.core.simulation.mode_choice.utilities.ModularUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarPtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.ZeroUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
@@ -43,6 +45,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String CAR_ESTIMATOR_NAME = "CarUtilityEstimator";
 	public static final String PT_ESTIMATOR_NAME = "PtUtilityEstimator";
 	public static final String BIKE_ESTIMATOR_NAME = "BikeUtilityEstimator";
+	public static final String CAR_PT_ESTIMATOR_NAME = "CarPtUtilityEstimator";
 	public static final String WALK_ESTIMATOR_NAME = "WalkUtilityEstimator";
 	public static final String ZERO_ESTIMATOR_NAME = "ZeroUtilityEstimator";
 
@@ -63,6 +66,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bind(CarPredictor.class);
 		bind(PtPredictor.class);
 		bind(BikePredictor.class);
+		bind(CarPtPredictor.class);
 		bind(WalkPredictor.class);
 		bind(PersonPredictor.class);
 
@@ -70,6 +74,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(CarUtilityEstimator.class);
 		bindUtilityEstimator(PT_ESTIMATOR_NAME).to(PtUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(BikeUtilityEstimator.class);
+		bindUtilityEstimator(CAR_PT_ESTIMATOR_NAME).to(CarPtUtilityEstimator.class);
 		bindUtilityEstimator(WALK_ESTIMATOR_NAME).to(WalkUtilityEstimator.class);
 
 		bindCostModel(ZERO_COST_MODEL_NAME).to(ZeroCostModel.class);
