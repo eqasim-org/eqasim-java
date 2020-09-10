@@ -66,7 +66,7 @@ public class IDFPassengerUtilityEstimator implements UtilityEstimator {
 			utility += parameters.idfPassenger.betaInsideUrbanArea_u;
 		}
 
-		if (variables.hasUrbanOrigin || variables.hasUrbanDestination) {
+		if (variables.hasUrbanOrigin ^ variables.hasUrbanDestination) {
 			utility += parameters.idfPassenger.betaCrossingUrbanArea_u;
 		}
 
