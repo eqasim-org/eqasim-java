@@ -28,37 +28,66 @@ public class IntersectionsReader {
 	         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 	         Document doc = dBuilder.parse(inputFile);
 	         doc.getDocumentElement().normalize();
-	         NodeList nList = doc.getElementsByTagName("intersection");
+	         NodeList nList = doc.getElementsByTagName("Traffic-signaled_intersection");
+	         NodeList nList2 = doc.getElementsByTagName("Non_traffic-signaled_intersection");
 	         
-	         for (int temp = 0; temp < nList.getLength(); temp++) {
-	             Node nNode = nList.item(temp);
+	         for (int temp = 0; temp < nList.getLength() + nList2.getLength(); temp++) {
+	        	 System.out.println(temp);
+	        	 Node nNode = null;
+	        	 String label = null;
+	        	 if (temp < nList.getLength()) {
+	        		 nNode = nList.item(temp);
+	        		 label = "TS";
+	        	 }
+	        	 else {
+	        		 nNode = nList2.item(temp - nList.getLength());
+	        		 label = "NTS";
+	        	 }
 	             
 	             if (nNode.getNodeType() == Node.ELEMENT_NODE) {
 	                 Element eElement = (Element) nNode;
 	                 String idnode = eElement.getAttribute("node_id");
-	                 ArrayList<String> alreadyseen = new ArrayList<String>();
-	                 NodeList nnList = eElement.getElementsByTagName("incoming_link");
-	                 ArrayList<ArrayList<Id<Link>>> groups = new ArrayList<ArrayList<Id<Link>>>();
 	                 
-	                 for(int j=0; j<nnList.getLength(); j++) {
-	                	 Node nnNode = nnList.item(j);
+	                 NodeList linksList = eElement.getElementsByTagName("incoming_link");
+	                 ArrayList<Id<Link>> links = new ArrayList<Id<Link>>();
+	                 
+	                 for(int j=0; j<linksList.getLength(); j++) {
+	                	 Node nnNode = linksList.item(j);
 	                	 Element e = (Element) nnNode;
 	                	 String s = e.getAttribute("link_id");
-	                	 if (! alreadyseen.contains(s)) {
-	                		 alreadyseen.add(s);
+	                	 links.add(Id.createLinkId(s));
+	                 }
+	                 
+	                 NodeList groupsList = eElement.getElementsByTagName("group");
+	                 ArrayList<ArrayList<Id<Link>>> groups = new ArrayList<ArrayList<Id<Link>>>();
+	                 ArrayList<Id<Link>> links_in_groups = new ArrayList<Id<Link>>();
+	                 
+	                 for (int j=0; j<groupsList.getLength(); j++) {
+	                	 Node nnNode = groupsList.item(j);
+	                	 Element e = (Element) nnNode;
+	                	 String link1 = e.getAttribute("link_1");
+	                	 String link2 = e.getAttribute("link_2");
+	                	 
+	                	 ArrayList<Id<Link>> group = new ArrayList<Id<Link>>();
+	                	 group.add(Id.createLinkId(link1));
+	                	 group.add(Id.createLinkId(link2));
+	                	 links_in_groups.add(Id.createLinkId(link1));
+	                	 links_in_groups.add(Id.createLinkId(link2));
+	                	 
+	                	 groups.add(group);
+	                 }
+	                 
+	                 for (int k = 0; k < links.size(); k++) {
+	                	 Id<Link> lid = links.get(k);
+	                	 if (! links_in_groups.contains(lid)) {
 	                		 ArrayList<Id<Link>> group = new ArrayList<Id<Link>>();
-	                		 group.add(Id.createLinkId(s));
-	                		 String same = e.getAttribute("same_road_as");
-	                		 if (! same.isEmpty()) {
-	                			 group.add(Id.createLinkId(same));
-	                			 alreadyseen.add(same);
-	                		 }
-		                	 groups.add(group);
+	                		 group.add(lid);
+	                		 groups.add(group);
 	                	 }
 	                 }
 	                 
 	                 
-	                 Intersection current_inter = new Intersection(idnode, groups);
+	                 Intersection current_inter = new Intersection(idnode, links, groups, label);
 	                 this.intersections.add(current_inter);
 	                 
 	             }    
@@ -69,6 +98,13 @@ public class IntersectionsReader {
 		catch(Exception e) {
 	         e.printStackTrace();
 	      }
+	}
+	
+	
+	public static void main(String[] args) {
+		
+		IntersectionsReader ir = new IntersectionsReader();
+		ir.read_xml("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/NEWOUTPUT.xml");
 	}
 
 }

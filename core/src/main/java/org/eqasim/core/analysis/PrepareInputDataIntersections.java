@@ -108,7 +108,7 @@ public class PrepareInputDataIntersections {
 		
 		/** 2. Intersections **/
 		// Read the intersection file
-		String intersectionFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Traffic_Light_output.xml";
+		String intersectionFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/NEWOUTPUT.xml";
 		this.ir.read_xml(intersectionFile);
 		
 		/** 3. Capacities and velocities **/
