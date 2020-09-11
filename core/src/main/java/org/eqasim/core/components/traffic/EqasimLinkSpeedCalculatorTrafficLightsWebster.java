@@ -53,7 +53,7 @@ public class EqasimLinkSpeedCalculatorTrafficLightsWebster implements LinkSpeedC
 	public EqasimLinkSpeedCalculatorTrafficLightsWebster(LinkSpeedCalculator delegate, double crossingPenalty) {
 		this.delegate = delegate;
 		this.crossingPenalty = crossingPenalty;
-		this.trafficLightsDelays = parseCSV("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/Last try/delays_webster_CP0.csv");
+		this.trafficLightsDelays = parseCSV("/nas/asallard/IDF/Paris_java/InputTL/delays_CP0.csv");
 	}
 
 	@Override

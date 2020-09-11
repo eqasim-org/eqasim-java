@@ -83,7 +83,7 @@ public class PrepareInputDataIntersections {
 	public PrepareInputDataIntersections () {
 
 		// Path to configuration file.
-		Config config = ConfigUtils.loadConfig("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Zurich_10pct_Aurore/zurich_config_CP0.xml");
+		Config config = ConfigUtils.loadConfig("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Paris/Log_events_configs/paris_config_CP0.xml");
 		//config.controler().setLastIteration(5);
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		String sample = scenario.getConfig().findParam("eqasim", "sampleSize");
@@ -92,7 +92,7 @@ public class PrepareInputDataIntersections {
 
 		/** 1. Events **/ 
 		// Path to the events file
-		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/Last try/CP0/ITERS/it.60/60.events.xml.gz";
+		String eventFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Paris/Log_events_configs/eventsCP0.xml.gz";
 				
 		// Create an event object
 		EventsManager events = EventsUtils.createEventsManager();
@@ -108,7 +108,7 @@ public class PrepareInputDataIntersections {
 		
 		/** 2. Intersections **/
 		// Read the intersection file
-		String intersectionFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/NEWOUTPUT.xml";
+		String intersectionFile = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Paris/Paris_intersections.xml";
 		this.ir.read_xml(intersectionFile);
 		
 		/** 3. Capacities and velocities **/

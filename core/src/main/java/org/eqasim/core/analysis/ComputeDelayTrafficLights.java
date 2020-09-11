@@ -21,7 +21,7 @@ public class ComputeDelayTrafficLights {
 	Map<Id<Link>, Double> lanes = new HashMap<>();	
 	double samplesize;
 	double crossingPenalty;
-	final static double INTERSECTION_CAPACITY = 2000;
+	final static double INTERSECTION_CAPACITY = 1800;
 	final static double LOST_TIME_PER_LINK = 2.0;
 	
 	public ComputeDelayTrafficLights(PrepareInputDataIntersections p) {
@@ -567,7 +567,7 @@ public class ComputeDelayTrafficLights {
 		PrepareInputDataIntersections p = new PrepareInputDataIntersections();
 		ComputeDelayTrafficLights delay = new ComputeDelayTrafficLights(p);
 		//delay.flows("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/flowsintersection");
-		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/Last try/delays_webster_CP0.csv");
+		delay.writeCSV_webster("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Paris/InputTL/delays_CP0.csv");
 	}
 
 }
