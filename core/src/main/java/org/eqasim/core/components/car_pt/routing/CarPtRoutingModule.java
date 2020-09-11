@@ -27,6 +27,8 @@ public class CarPtRoutingModule implements RoutingModule{
 		route.setTravelTime(600.0);
 		route.setDistance(100.0);
 		
+		leg.setRoute(route);
+		
 		return Collections.singletonList(leg);
 	}
 
