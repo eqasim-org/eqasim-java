@@ -9,6 +9,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.jakarta.mode_choice.JakartaModeChoiceModule;
 import org.eqasim.jakarta.scenario.RunAdaptConfig;
+//import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -16,6 +17,10 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.LinkDynamics;
+//import org.matsim.core.controler.Controler;
+//import org.matsim.core.scenario.ScenarioUtils;
+//import org.matsim.
+
 
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
@@ -31,10 +36,19 @@ public class RunAdaptConfig {
 		//config.transit().setVehiclesFile(null);
 		//config.households().setInputFile(null);
 		
-	
+	    //road pricing scheme
+		//config.controler().
+		//Scenario scenario = ScenarioUtils.loadScenario(config) ;
+		//Controler controler = new Controler( scenario ) ;
+		//controler.addOverridingModule(new RoadP)
+		
+		
+		
 		//set link dynamics and seep mode
 		config.qsim().setPcuThresholdForFlowCapacityEasing( 0.001 );
 		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
+		
+		
 		
 		
 		List<String> seepMode = new LinkedList<>(config.qsim().getSeepModes());
@@ -68,6 +82,8 @@ public class RunAdaptConfig {
 		Collection<String> tripConstraints = dmcConfig.getTripConstraints();
 		tripConstraints.add("WalkDurationConstraint");
 		dmcConfig.setTripConstraints(tripConstraints);
+		
+		
 		
 
 		//QsimConfigGroup eqasimConfig = QsimConfigGroup.get(config);	

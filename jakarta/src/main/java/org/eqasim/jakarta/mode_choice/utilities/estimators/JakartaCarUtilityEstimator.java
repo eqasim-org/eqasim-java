@@ -48,6 +48,7 @@ public class JakartaCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateAccessEgressTimeUtility(variables_car);
 		utility += estimateMonetaryCostUtility(variables_car) * EstimatorUtils.interaction(variables.hhlIncome, 
 				parameters.jAvgHHLIncome.avg_hhl_income, parameters.jIncomeElasticity.lambda_income);
+		
 		//if (variables.hhlIncome == 0.0)
 		//	utility += estimateMonetaryCostUtility(variables_car)
 		//	* (parameters.jAvgHHLIncome.avg_hhl_income / 1.0);
