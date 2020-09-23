@@ -112,6 +112,10 @@ public class GenerateConfig {
 		PlansCalcRouteConfigGroup routingConfig = config.plansCalcRoute();
 
 		config.plansCalcRoute().setNetworkModes(NETWORK_MODES);
+		
+		// TODO: Potentially defaults we should change after MATSim 12
+		config.plansCalcRoute().setInsertingAccessEgressWalk(false);
+		config.plansCalcRoute().setRoutingRandomness(0.0);
 
 		ModeRoutingParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
 		outsideParams.setBeelineDistanceFactor(1.0);

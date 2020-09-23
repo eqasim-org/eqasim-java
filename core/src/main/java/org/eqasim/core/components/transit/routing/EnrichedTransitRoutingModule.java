@@ -15,6 +15,7 @@ import org.matsim.pt.PtConstants;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * TODO: Same as for DefaultEnrichedTransitRouter: This is very focused on "pt"
@@ -23,17 +24,25 @@ import com.google.inject.Inject;
 public class EnrichedTransitRoutingModule implements RoutingModule {
 	final private EnrichedTransitRouter transitRouter;
 	final private TransitSchedule transitSchedule;
+	final private RoutingModule walkRouter;
 
 	@Inject
-	public EnrichedTransitRoutingModule(EnrichedTransitRouter transitRouter, TransitSchedule transitSchedule) {
+	public EnrichedTransitRoutingModule(EnrichedTransitRouter transitRouter, TransitSchedule transitSchedule,
+			@Named("walk") RoutingModule walkRouter) {
 		this.transitRouter = transitRouter;
 		this.transitSchedule = transitSchedule;
+		this.walkRouter = walkRouter;
 	}
 
 	@Override
 	public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
 			Person person) {
 		List<Leg> legs = transitRouter.calculateRoute(fromFacility, toFacility, departureTime, person);
+
+		if (legs == null) {
+			return walkRouter.calcRoute(fromFacility, toFacility, departureTime, person);
+		}
+
 		List<PlanElement> trip = new LinkedList<>();
 
 		for (int i = 0; i < legs.size() - 1; i++) {
