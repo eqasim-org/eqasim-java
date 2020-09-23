@@ -15,7 +15,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
@@ -24,7 +24,6 @@ public class RunSimulation {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		IDFConfigurator.adjustScenario(scenario);
 
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);
