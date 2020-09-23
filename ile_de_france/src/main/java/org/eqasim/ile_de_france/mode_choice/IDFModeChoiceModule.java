@@ -61,7 +61,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 		
-		addRoutingModuleBinding("car_pt").to(CarPtRoutingModule.class);
+		//addRoutingModuleBinding("car_pt").to(CarPtRoutingModule.class);
 	}
 
 	@Provides

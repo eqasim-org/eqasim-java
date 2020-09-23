@@ -34,26 +34,23 @@ public class CarPtRoutingModule implements RoutingModule{
 	
 	//private final AVOperatorChoiceStrategy choiceStrategy;
 	//private final AVRouteFactory routeFactory;
-	private final RoutingModule walkRoutingModule;
-	private final PopulationFactory populationFactory;
 	private final RoutingModule carRoutingModule;
+	private final Network network;
 	//private final PriceCalculator priceCalculator;
 
 	//Create an object of a ptRoutingModule
-	private final EnrichedTransitRoutingModule ptRoutingModule;
-	private final boolean useAccessEgress;
+	private final RoutingModule ptRoutingModule;
 
 	//@Inject
-	public CarPtRoutingModule(PopulationFactory populationFactory, RoutingModule walkRoutingModule, 
-			boolean useAccessEgress, RoutingModule roadRoutingModule, EnrichedTransitRoutingModule ptRoutingModule) {
-		this.walkRoutingModule = walkRoutingModule;
-		this.populationFactory = populationFactory;
-		this.useAccessEgress = useAccessEgress;
+	public CarPtRoutingModule(RoutingModule roadRoutingModule, RoutingModule ptRoutingModule, Network network) {
 		this.carRoutingModule = roadRoutingModule;
 		this.ptRoutingModule = ptRoutingModule;
+		this.network = network;
+				
 	}
 
 	@Override
+	/*
 	public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
 			Person person) {
 		//Id<AVOperator> operatorId = choiceStrategy.chooseRandomOperator();
@@ -70,9 +67,9 @@ public class CarPtRoutingModule implements RoutingModule{
 		
 		return Collections.singletonList(leg);
 	}
-
+*/
 	public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
-			Person person, Network network) {
+			Person person) {
 		
 		double X = 50.62964, Y = 2.93251586;
 		/*
@@ -112,23 +109,29 @@ public class CarPtRoutingModule implements RoutingModule{
 		// Given the request time, we can calculate the waiting time
 		double timeToAccessPt = 600; //We take 10 min to park the car and access to PT
 		
-		double ptDepartureTime = vehicleTravelTime + timeToAccessPt;
+		double ptDepartureTime = departureTime + vehicleTravelTime + timeToAccessPt;
 
 		 // Here you create a PT trip from the PR facility to the destination
 		 List<? extends PlanElement> ptElements = ptRoutingModule.calcRoute(prFacility, toFacility, ptDepartureTime , person);
 
+		 //Creation interaction between car and pt
+		 Activity interactionActivtyCarPt = PopulationUtils.createActivityFromCoordAndLinkId("carPt interaction", prCoord, prLink.getId());
+		 
 		 // Create full trip
 		 List<PlanElement> allElements = new LinkedList<>();
 		 allElements.addAll(carElements);
+		 allElements.add(interactionActivtyCarPt);
 		 allElements.addAll(ptElements);
-
+		 
+		 
 		 return allElements;
 	
 	}
 
 	@Override
 	public StageActivityTypes getStageActivityTypes() {
-		return new StageActivityTypesImpl();
+		
+		return new StageActivityTypesImpl("pt interaction","carPt interaction");
 	}
 
 }
