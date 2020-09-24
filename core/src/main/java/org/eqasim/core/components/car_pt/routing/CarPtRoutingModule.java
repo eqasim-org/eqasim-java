@@ -1,42 +1,29 @@
 package org.eqasim.core.components.car_pt.routing;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
-import org.eqasim.core.car_pt.data.CarPtOperator;
-import org.eqasim.core.components.transit.routing.EnrichedTransitRoutingModule;
 import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.api.core.v01.population.PopulationFactory;
-import org.matsim.api.core.v01.population.Route;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.population.routes.GenericRouteImpl;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.facilities.Facility;
 
-import com.google.inject.Inject;
 
 import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.StageActivityTypesImpl;
-import org.matsim.core.utils.geometry.CoordUtils;
 
 public class CarPtRoutingModule implements RoutingModule{
 	
-	//private final AVOperatorChoiceStrategy choiceStrategy;
-	//private final AVRouteFactory routeFactory;
 	private final RoutingModule carRoutingModule;
 	private final Network network;
-	//private final PriceCalculator priceCalculator;
 
 	//Create an object of a ptRoutingModule
 	private final RoutingModule ptRoutingModule;
@@ -98,12 +85,12 @@ public class CarPtRoutingModule implements RoutingModule{
 		 // Here you create a car trip to the PR facility
 		 List<? extends PlanElement> carElements = carRoutingModule.calcRoute(fromFacility, prFacility, departureTime, null);
 		 
-		 double vehicleDistance = Double.NaN;
+		 //double vehicleDistance = Double.NaN;
 		 double vehicleTravelTime = Double.NaN;
-		 double price = Double.NaN;
+		 //double price = Double.NaN;
 		 
 		 Leg leg = (Leg) carElements.get(0);
-		 vehicleDistance = leg.getRoute().getDistance();
+		 //vehicleDistance = leg.getRoute().getDistance();
 		 vehicleTravelTime = leg.getRoute().getTravelTime(); // can not invoke seconds() in this context
 		 
 		// Given the request time, we can calculate the waiting time

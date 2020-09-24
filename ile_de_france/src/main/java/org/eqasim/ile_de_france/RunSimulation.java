@@ -11,6 +11,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -24,6 +25,7 @@ public class RunSimulation {
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+	
 		
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 	    eqasimConfig.setEstimator("car_pt", "CarPtUtilityEstimator");
@@ -31,6 +33,12 @@ public class RunSimulation {
 	    PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
 	    ModeParams carPtParams = new ModeParams("car_pt");
 	    scoringConfig.addModeParams(carPtParams);
+	    
+	    ActivityParams params = new ActivityParams( "carPt interaction");
+		params.setTypicalDuration(100.0);
+		params.setScoringThisActivityAtAll(false);
+
+		scoringConfig.addActivityParams(params);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
