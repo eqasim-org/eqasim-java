@@ -13,6 +13,7 @@ import org.matsim.contribs.discrete_mode_choice.modules.EstimatorModule;
 import org.matsim.contribs.discrete_mode_choice.modules.HomeFinderModule;
 import org.matsim.contribs.discrete_mode_choice.modules.ModelModule.ModelType;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
+import org.matsim.contribs.discrete_mode_choice.modules.TourFinderModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -149,7 +150,7 @@ public class GenerateConfig {
 		dmcConfig.setTourEstimator(EstimatorModule.CUMULATIVE);
 		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck"));
 
-		dmcConfig.setTourFinder(EqasimModeChoiceModule.TOUR_FINDER_NAME);
+		dmcConfig.setTourFinder(TourFinderModule.HOME_BASED);
 		dmcConfig.setModeAvailability("unknown");
 
 		dmcConfig.setTourConstraints(
@@ -158,6 +159,7 @@ public class GenerateConfig {
 				EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME, EqasimModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
 
 		dmcConfig.setHomeFinder(HomeFinderModule.ACTIVITY_BASED);
+		dmcConfig.getActivityTourFinderConfigGroup().setActivityTypes(Arrays.asList("home", "outside"));
 		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,

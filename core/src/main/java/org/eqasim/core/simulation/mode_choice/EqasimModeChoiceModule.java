@@ -59,8 +59,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
 
-		bindTourFinder(TOUR_FINDER_NAME).to(UniversalTourFinder.class);
-
 		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModularUtilityEstimator.class);
 
 		bind(CarPredictor.class);
