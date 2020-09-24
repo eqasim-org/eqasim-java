@@ -131,6 +131,8 @@ public class GenerateConfig {
 
 		// Travel time calculator
 		config.travelTimeCalculator().setAnalyzedModes(new HashSet<>(NETWORK_MODES));
+		config.travelTimeCalculator().setFilterModes(true);
+		config.travelTimeCalculator().setSeparateModes(false);
 
 		// Discrete mode choice
 		DiscreteModeChoiceConfigurator.configureAsModeChoiceInTheLoop(config, 0.05);
