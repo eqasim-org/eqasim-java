@@ -4,6 +4,9 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contrib.freight.carrier.CarrierPlanReader;
+import org.matsim.contrib.freight.carrier.Carriers;
+import org.matsim.contrib.freight.controler.CarrierModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -30,6 +33,12 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
+		
+		Carriers carriers = new Carriers();
+		new CarrierPlanReader(carriers).readFile("/home/shoerl/lyon/data/carriers.xml");
+		
+		CarrierModule carrierModule = new CarrierModule(carriers);
+		
 		controller.run();
 	}
 }
