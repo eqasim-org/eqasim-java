@@ -1,6 +1,6 @@
 package org.eqasim.core.components.transit.departure;
 
-import org.matsim.core.utils.misc.Time;
+import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
@@ -16,11 +16,11 @@ public class DefaultDepartureFinder implements DepartureFinder {
 	/**
 	 * TODO: Fix this mess.
 	 */
-	static private double fixTime(double time) {
-		if (Time.isUndefinedTime(time)) {
+	static private double fixTime(OptionalTime time) {
+		if (time.isUndefined()) {
 			return 24.0 * 3600.0 * 7.0;
 		} else {
-			return time;
+			return time.seconds();
 		}
 	}
 

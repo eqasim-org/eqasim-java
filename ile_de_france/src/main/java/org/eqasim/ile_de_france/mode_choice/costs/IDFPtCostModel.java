@@ -13,12 +13,11 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Inject;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class IDFPtCostModel implements CostModel {
 	private final IDFPersonPredictor personPredictor;

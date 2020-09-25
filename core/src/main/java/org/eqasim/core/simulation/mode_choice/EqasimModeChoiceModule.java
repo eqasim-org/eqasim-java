@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.mode_choice;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +23,8 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.replanning.time_interpreter.TimeInterpreter;
 import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.ActivityFacilities;
 
@@ -77,7 +80,8 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	public ModularUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
-			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config) {
+			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config,
+			TimeInterpreter.Factory timeInterpreterFactory, DiscreteModeChoiceConfigGroup dmcConfig) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
 
 		for (Map.Entry<String, String> entry : config.getEstimators().entrySet()) {
@@ -91,7 +95,8 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			}
 		}
 
-		return new ModularUtilityEstimator(tripRouter, facilities, estimators);
+		return new ModularUtilityEstimator(tripRouter, facilities, estimators, timeInterpreterFactory,
+				Collections.emptySet()); // Here we may add "pt" etc. as pre-routed modes.
 	}
 
 	@Provides

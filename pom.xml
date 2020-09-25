@@ -21,10 +21,9 @@
 	</modules>
 
 	<properties>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<matsim.version>11.0</matsim.version>
-		<swiss_rail.version>11.2</swiss_rail.version>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<matsim.version>12.0</matsim.version>
 	</properties>
 	<distributionManagement>
 		<repository>
@@ -45,10 +44,6 @@
 		<repository>
 			<id>matsim-eth</id>
 			<url>http://dl.bintray.com/matsim-eth/matsim</url>
-		</repository>
-		<repository>
-			<id>swiss-rail</id>
-			<url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
 		</repository>
 	</repositories>
 
@@ -84,15 +79,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>ch.sbb</groupId>
-			<artifactId>matsim-sbb-extensions</artifactId>
-			<version>${swiss_rail.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>ch.ethz.matsim</groupId>
+			<groupId>org.matsim.contrib</groupId>
 			<artifactId>discrete_mode_choice</artifactId>
-			<version>1.0.8-matsim11</version>
+			<version>${matsim.version}</version>
 		</dependency>
 
 		<dependency>

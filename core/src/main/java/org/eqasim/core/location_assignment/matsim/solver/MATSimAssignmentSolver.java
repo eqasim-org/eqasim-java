@@ -9,16 +9,14 @@ import org.eqasim.core.location_assignment.assignment.LocationAssignmentSolver;
 import org.eqasim.core.location_assignment.matsim.MATSimAssignmentProblem;
 import org.eqasim.core.location_assignment.matsim.utils.ActivityIndicesFinder;
 import org.matsim.api.core.v01.population.Plan;
-import org.matsim.core.router.StageActivityTypes;
 
 public class MATSimAssignmentSolver {
 	final private ActivityIndicesFinder indicesFinder;
 	final private LocationAssignmentSolver solver;
 
-	public MATSimAssignmentSolver(LocationAssignmentSolver solver, Set<String> variableActivityTypes,
-			StageActivityTypes stageActivityTypes) {
+	public MATSimAssignmentSolver(LocationAssignmentSolver solver, Set<String> variableActivityTypes) {
 		this.solver = solver;
-		this.indicesFinder = new ActivityIndicesFinder(variableActivityTypes, stageActivityTypes);
+		this.indicesFinder = new ActivityIndicesFinder(variableActivityTypes);
 	}
 
 	public Collection<MATSimAssignmentProblem> createProblems(Plan plan) {

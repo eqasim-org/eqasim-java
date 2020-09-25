@@ -10,13 +10,12 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.RoutingModule;
-import org.matsim.core.router.StageActivityTypes;
-import org.matsim.core.router.StageActivityTypesImpl;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.PtConstants;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 /**
  * TODO: Same as for DefaultEnrichedTransitRouter: This is very focused on "pt"
@@ -25,23 +24,31 @@ import com.google.inject.Inject;
 public class EnrichedTransitRoutingModule implements RoutingModule {
 	final private EnrichedTransitRouter transitRouter;
 	final private TransitSchedule transitSchedule;
+	final private RoutingModule walkRouter;
 
 	@Inject
-	public EnrichedTransitRoutingModule(EnrichedTransitRouter transitRouter, TransitSchedule transitSchedule) {
+	public EnrichedTransitRoutingModule(EnrichedTransitRouter transitRouter, TransitSchedule transitSchedule,
+			@Named("walk") RoutingModule walkRouter) {
 		this.transitRouter = transitRouter;
 		this.transitSchedule = transitSchedule;
+		this.walkRouter = walkRouter;
 	}
 
 	@Override
 	public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
 			Person person) {
 		List<Leg> legs = transitRouter.calculateRoute(fromFacility, toFacility, departureTime, person);
+
+		if (legs == null) {
+			return walkRouter.calcRoute(fromFacility, toFacility, departureTime, person);
+		}
+
 		List<PlanElement> trip = new LinkedList<>();
 
 		for (int i = 0; i < legs.size() - 1; i++) {
 			Facility currentFacility = null;
 			trip.add(legs.get(i));
-			
+
 			if (legs.get(i).getMode().equals(TransportMode.pt)) {
 				EnrichedTransitRoute route = (EnrichedTransitRoute) legs.get(i).getRoute();
 
@@ -53,7 +60,7 @@ public class EnrichedTransitRoutingModule implements RoutingModule {
 				currentFacility = transitSchedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
 						.get(route.getTransitRouteId()).getStops().get(route.getAccessStopIndex()).getStopFacility();
 			}
-			
+
 			Activity activity = PopulationUtils.createActivityFromCoordAndLinkId(PtConstants.TRANSIT_ACTIVITY_TYPE,
 					currentFacility.getCoord(), currentFacility.getLinkId());
 
@@ -64,10 +71,5 @@ public class EnrichedTransitRoutingModule implements RoutingModule {
 		trip.add(legs.get(legs.size() - 1));
 
 		return trip;
-	}
-
-	@Override
-	public StageActivityTypes getStageActivityTypes() {
-		return new StageActivityTypesImpl(PtConstants.TRANSIT_ACTIVITY_TYPE);
 	}
 }

@@ -52,7 +52,7 @@ public class DefaultMergeOutsideActivities implements MergeOutsideActivities {
 				// Check the current one again.
 				i -= 2;
 
-				firstActivity.setEndTime(secondActivity.getEndTime());
+				firstActivity.setEndTime(secondActivity.getEndTime().seconds());
 			}
 		}
 

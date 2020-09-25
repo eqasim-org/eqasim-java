@@ -12,10 +12,9 @@ import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPer
 import org.eqasim.san_francisco.mode_choice.utilities.variables.SanFranciscoPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class SanFranciscoCarUtilityEstimator extends CarUtilityEstimator {
 	private final SanFranciscoModeParameters parameters;

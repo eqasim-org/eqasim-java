@@ -16,21 +16,18 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 
 public class TripReaderFromPopulation {
 	final private Network network;
-	final private StageActivityTypes stageActivityTypes;
 	final private MainModeIdentifier mainModeIdentifier;
 	final private PersonAnalysisFilter personFilter;
 
-	public TripReaderFromPopulation(Network network, StageActivityTypes stageActivityTypes,
-			MainModeIdentifier mainModeIdentifier, PersonAnalysisFilter personFilter) {
+	public TripReaderFromPopulation(Network network, MainModeIdentifier mainModeIdentifier,
+			PersonAnalysisFilter personFilter) {
 		this.network = network;
-		this.stageActivityTypes = stageActivityTypes;
 		this.mainModeIdentifier = mainModeIdentifier;
 		this.personFilter = personFilter;
 	}
@@ -47,8 +44,7 @@ public class TripReaderFromPopulation {
 
 		for (Person person : population.getPersons().values()) {
 			if (personFilter.analyzePerson(person.getId())) {
-				List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(person.getSelectedPlan(),
-						stageActivityTypes);
+				List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(person.getSelectedPlan());
 
 				int personTripIndex = 0;
 
@@ -56,8 +52,9 @@ public class TripReaderFromPopulation {
 					boolean isHomeTrip = trip.getDestinationActivity().getType().equals("home");
 
 					tripItems.add(new TripItem(person.getId(), personTripIndex, trip.getOriginActivity().getCoord(),
-							trip.getDestinationActivity().getCoord(), trip.getOriginActivity().getEndTime(),
-							trip.getDestinationActivity().getStartTime() - trip.getOriginActivity().getEndTime(),
+							trip.getDestinationActivity().getCoord(), trip.getOriginActivity().getEndTime().seconds(),
+							trip.getDestinationActivity().getStartTime().seconds()
+									- trip.getOriginActivity().getEndTime().seconds(),
 							getNetworkDistance(trip), mainModeIdentifier.identifyMainMode(trip.getTripElements()),
 							trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
 							CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),

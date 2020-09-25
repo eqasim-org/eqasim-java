@@ -45,13 +45,14 @@ public class DefaultTransitTripCrossingPointFinder implements TransitTripCrossin
 					Coord legEndCoord = (i == trip.size() - 1) ? endCoord : ((Activity) trip.get(i + 1)).getCoord();
 
 					result.addAll(walkFinder
-							.findCrossingPoints(legStartCoord, legEndCoord, leg.getTravelTime(), leg.getDepartureTime())
+							.findCrossingPoints(legStartCoord, legEndCoord, leg.getTravelTime().seconds(),
+									leg.getDepartureTime().seconds())
 							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
 					break;
 				case "pt":
 					result.addAll(transitFinder
-							.findCrossingPoints((EnrichedTransitRoute) leg.getRoute(), leg.getDepartureTime()).stream()
-							.map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
+							.findCrossingPoints((EnrichedTransitRoute) leg.getRoute(), leg.getDepartureTime().seconds())
+							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
 					break;
 				default:
 					throw new IllegalStateException();

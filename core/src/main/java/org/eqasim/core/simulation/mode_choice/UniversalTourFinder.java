@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import ch.ethz.matsim.discrete_mode_choice.components.tour_finder.TourFinder;
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.components.tour_finder.TourFinder;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class UniversalTourFinder implements TourFinder {
 	private final String HOME_ACTIVITY_TYPE = "home";

@@ -18,31 +18,31 @@ public class RemoveUnrealisticPersons {
 	public static void main(String[] args) {
 
 		Config config = ConfigUtils.createConfig();
-		
+
 		Scenario scenario = ScenarioUtils.createMutableScenario(config);
 		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DefaultEnrichedTransitRoute.class,
 				new DefaultEnrichedTransitRouteFactory());
 		PopulationReader popReader = new PopulationReader(scenario);
 		popReader.readFile(args[0]);
-		
+
 		Scenario scenario2 = ScenarioUtils.createScenario(config);
-		
+
 		int counter = 0;
 		int countTr = 0;
 		for (Person person : scenario.getPopulation().getPersons().values()) {
-			
+
 			Plan plan = person.getSelectedPlan();
 			boolean remove = false;
 			for (PlanElement pe : plan.getPlanElements()) {
 				if (pe instanceof Leg) {
-					
+
 					if (((Leg) pe).getMode().equals("walk")) {
-						if (((Leg) pe).getTravelTime() > 5400.0)
+						if (((Leg) pe).getTravelTime().seconds() > 5400.0)
 							remove = true;
 					}
-					
+
 					if (((Leg) pe).getMode().equals("transit_walk")) {
-						if (((Leg) pe).getTravelTime() > 5400.0) {
+						if (((Leg) pe).getTravelTime().seconds() > 5400.0) {
 							remove = true;
 							countTr++;
 						}
@@ -50,20 +50,20 @@ public class RemoveUnrealisticPersons {
 
 				}
 			}
-			
+
 			if (!remove) {
 				scenario2.getPopulation().addPerson(person);
-			}
-			else
+			} else
 				counter++;
 		}
-		
+
 		PopulationWriter popWriter = new PopulationWriter(scenario2.getPopulation());
 		popWriter.write(args[1]);
 		System.out.println("Removed " + counter + " persons.");
 		System.out.println("Removed " + countTr + " transit walk.");
 
-		System.out.println("Removed " + (double)counter/scenario.getPopulation().getPersons().values().size() + " % of the population");
+		System.out.println("Removed " + (double) counter / scenario.getPopulation().getPersons().values().size()
+				+ " % of the population");
 	}
 
 }

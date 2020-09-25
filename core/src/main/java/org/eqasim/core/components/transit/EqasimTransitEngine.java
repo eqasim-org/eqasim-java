@@ -98,8 +98,9 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 			try {
 				Departure departure = departureFinder.findDeparture(transitRoute, accessStop, now);
 
-				double inVehicleTime = egressStop.getArrivalOffset() - accessStop.getDepartureOffset();
-				double vehicleDepartureTime = departure.getDepartureTime() + accessStop.getDepartureOffset();
+				double inVehicleTime = egressStop.getArrivalOffset().seconds()
+						- accessStop.getDepartureOffset().seconds();
+				double vehicleDepartureTime = departure.getDepartureTime() + accessStop.getDepartureOffset().seconds();
 				double arrivalTime = vehicleDepartureTime + inVehicleTime;
 
 				if (arrivalTime < vehicleDepartureTime || arrivalTime < now) {
@@ -146,7 +147,7 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 			arrival.agent.notifyArrivalOnLinkByNonNetworkMode(arrival.arrivalLinkId);
 			eventsManager.processEvent(arrival.event);
 			eventsManager.processEvent(new TeleportationArrivalEvent(arrival.arrivalTime, arrival.agent.getId(),
-					arrival.event.getTravelDistance()));
+					arrival.event.getTravelDistance(), "pt"));
 			arrival.agent.endLegAndComputeNextState(time);
 			internalInterface.arrangeNextAgentState(arrival.agent);
 		}
