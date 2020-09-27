@@ -41,8 +41,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 	public static final String UTILITY_ESTIMATOR_NAME = "EqasimUtilityEstimator";
 
-	public static final String TOUR_FINDER_NAME = "EqasimTourFinder";
-
 	public static final String CAR_ESTIMATOR_NAME = "CarUtilityEstimator";
 	public static final String PT_ESTIMATOR_NAME = "PtUtilityEstimator";
 	public static final String BIKE_ESTIMATOR_NAME = "BikeUtilityEstimator";

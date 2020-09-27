@@ -150,7 +150,8 @@ public class GenerateConfig {
 		dmcConfig.setTourEstimator(EstimatorModule.CUMULATIVE);
 		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck"));
 
-		dmcConfig.setTourFinder(TourFinderModule.HOME_BASED);
+		dmcConfig.setTourFinder(TourFinderModule.ACTIVITY_BASED);
+		dmcConfig.getActivityTourFinderConfigGroup().setActivityTypes(Arrays.asList("home", "outside"));
 		dmcConfig.setModeAvailability("unknown");
 
 		dmcConfig.setTourConstraints(
@@ -159,7 +160,6 @@ public class GenerateConfig {
 				EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME, EqasimModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
 
 		dmcConfig.setHomeFinder(HomeFinderModule.ACTIVITY_BASED);
-		dmcConfig.getActivityTourFinderConfigGroup().setActivityTypes(Arrays.asList("home", "outside"));
 		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,
