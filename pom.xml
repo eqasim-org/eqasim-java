@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.eqasim</groupId>
 	<artifactId>eqasim</artifactId>
-	<version>1.0.6</version>
+	<version>1.1.0</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -40,10 +40,6 @@
 		<repository>
 			<id>matsim</id>
 			<url>http://dl.bintray.com/matsim/matsim</url>
-		</repository>
-		<repository>
-			<id>matsim-eth</id>
-			<url>http://dl.bintray.com/matsim-eth/matsim</url>
 		</repository>
 	</repositories>
 
