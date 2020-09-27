@@ -11,7 +11,7 @@ import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
-import org.eqasim.core.simulation.mode_choice.utilities.ModularUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.ModalUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
@@ -57,7 +57,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
 
-		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModularUtilityEstimator.class);
+		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModalUtilityEstimator.class);
 
 		bind(CarPredictor.class);
 		bind(PtPredictor.class);
@@ -75,7 +75,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	public ModularUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
+	public ModalUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config,
 			TimeInterpreter.Factory timeInterpreterFactory, DiscreteModeChoiceConfigGroup dmcConfig) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
@@ -91,7 +91,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			}
 		}
 
-		return new ModularUtilityEstimator(tripRouter, facilities, estimators, timeInterpreterFactory,
+		return new ModalUtilityEstimator(tripRouter, facilities, estimators, timeInterpreterFactory,
 				Collections.emptySet()); // Here we may add "pt" etc. as pre-routed modes.
 	}
 

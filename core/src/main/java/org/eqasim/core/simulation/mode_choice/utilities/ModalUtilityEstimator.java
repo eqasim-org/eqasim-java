@@ -13,10 +13,10 @@ import org.matsim.contribs.discrete_mode_choice.replanning.time_interpreter.Time
 import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.ActivityFacilities;
 
-public class ModularUtilityEstimator extends AbstractTripRouterEstimator {
+public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
 	private final Map<String, UtilityEstimator> estimators;
 
-	public ModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
+	public ModalUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, UtilityEstimator> estimators, TimeInterpreter.Factory timeInterpreterFactory,
 			Collection<String> preroutedModes) {
 		super(tripRouter, facilities, timeInterpreterFactory, preroutedModes);
