@@ -1,14 +1,23 @@
 # CHANGELOG
 
+This change log is written in descending order. Changes that happen after version
+`X` was released, are written *above* that version number, because they will be
+included in the (note yet determined) next version number.
+
+**Development version**
+
 - No changes yet
 
-**1.0.6**
+**1.1.0**
 
 - Cutter: Cut transit routes with only *one* stop are not included anymore
 - `ModularUtilityEstimator` -> `ModalUtilityEstimator`
 - Removed `UniversalTourFinder` in favor of well-configured `ActivityTourFinder`
 - Introduction of routed_distance (in contrary to Euclidean distance) and vehicle_distance (all distance covered link by link) into the trip analysis. Changed header, e.g. `preceding_purpose` and `following_purpose`, `euclidean_distance`
 - Update to *MATSim 12.0*
+
+**1.0.6**
+
 - Set default mode choice rate to 5%
 - Set default iterations to 60
 - Consolidate validated Île-de-France simulation

@@ -24,8 +24,8 @@ check out how to use this repository to [create simulation cut-outs](docs/cuttin
 
 [![Build Status](https://travis-ci.com/eqasim-org/eqasim-java.svg?branch=develop)](https://travis-ci.com/eqasim-org/eqasim-java)
 
-The current version of `eqasim` is `1.0.6`. You can access it through the `v1.0.6` tag. The
-`develop` branch is kept at version `1.0.6` until the next release is prepared,
+The current version of `eqasim` is `1.1.0`. You can access it through the `v1.1.0` tag. The
+`develop` branch is kept at version `1.1.0` until the next release is prepared,
 but may include additional developments since the last release.
 
 The code is available as a Maven package. To use it, add the following repository
@@ -44,6 +44,6 @@ Afterwards, you can add various sub-packages to your project:
 <dependency>
     <groupId>org.eqasim</groupId>
     <artifactId>core</artifactId>
-    <version>1.0.6</version>
+    <version>1.1.0</version>
 </dependency>
 ```
