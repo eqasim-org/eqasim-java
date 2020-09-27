@@ -1,5 +1,6 @@
 package org.eqasim.core.scenario.cutter.population;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,6 +42,7 @@ public class PopulationCutter {
 		for (int i = 0; i < numberOfThreads; i++) {
 			Thread thread = new Thread(new Worker(personIterator, progress, planCutterProvider));
 			thread.start();
+			thread.setUncaughtExceptionHandler(new ExceptionHandler());
 			threads.add(thread);
 		}
 
@@ -49,6 +51,13 @@ public class PopulationCutter {
 		}
 
 		progress.close();
+	}
+	
+	private class ExceptionHandler implements UncaughtExceptionHandler {
+		@Override
+		public void uncaughtException(Thread t, Throwable e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private class Worker implements Runnable {

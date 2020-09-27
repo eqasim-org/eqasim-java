@@ -38,9 +38,7 @@ public class DefaultTransitTripCrossingPointFinder implements TransitTripCrossin
 				Leg leg = (Leg) element;
 
 				switch (leg.getMode()) {
-				case "transit_walk":
-				case "access_walk":
-				case "egress_walk":
+				case "walk":
 					Coord legStartCoord = (i == 0) ? startCoord : ((Activity) trip.get(i - 1)).getCoord();
 					Coord legEndCoord = (i == trip.size() - 1) ? endCoord : ((Activity) trip.get(i + 1)).getCoord();
 
@@ -55,7 +53,7 @@ public class DefaultTransitTripCrossingPointFinder implements TransitTripCrossin
 							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
 					break;
 				default:
-					throw new IllegalStateException();
+					throw new IllegalStateException(String.format("Unknown mode: %s", leg.getMode()));
 				}
 			}
 		}
