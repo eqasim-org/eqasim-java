@@ -14,7 +14,6 @@ public class PredictorUtils {
 	}
 
 	static public int getAge(Person person) {
-		Integer age = (Integer) person.getAttributes().getAttribute("age");
-		return age == null ? -1 : age;
+		return (int) (Integer) person.getAttributes().getAttribute("age");
 	}
 }

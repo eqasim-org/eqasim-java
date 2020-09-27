@@ -44,6 +44,10 @@ public class AvUtilityEstimator implements UtilityEstimator {
 						generalParameters.referenceEuclideanDistance_km, generalParameters.lambdaCostEuclideanDistance)
 				* variables.cost_MU;
 	}
+	
+	protected double estimateAccessEgressTimeUtility(AvVariables variables) {
+		return avParameters.betaAccessEgressTime_u_min * variables.accessEgressTime_min;
+	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -55,6 +59,7 @@ public class AvUtilityEstimator implements UtilityEstimator {
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateWaitingTimeUtility(variables);
 		utility += estimateMonetaryCostUtility(variables);
+		utility += estimateAccessEgressTimeUtility(variables);
 
 		return utility;
 	}

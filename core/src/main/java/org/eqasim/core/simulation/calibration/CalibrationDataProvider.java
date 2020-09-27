@@ -22,7 +22,7 @@ public class CalibrationDataProvider {
 				reference.distanceBoundaries);
 
 		for (TripItem trip : tripListener.getTripItems()) {
-			if (trip.preceedingPurpose.equals("outside")) {
+			if (trip.precedingPurpose.equals("outside")) {
 				continue;
 			}
 

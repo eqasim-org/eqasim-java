@@ -29,8 +29,8 @@ public class AvCostListener implements AfterMobsimListener {
 		// First, obtain fleet cost
 		OperatorData data = fleetListener.getData(OperatorConfig.DEFAULT_OPERATOR_ID);
 
-		double vehicleDistance_km = data.emptyDistance_m + data.occupiedDistance_m;
-		double passengerDistance_km = data.passengerDistance_m;
+		double vehicleDistance_km = (data.emptyDistance_m + data.occupiedDistance_m) * 1e-3;
+		double passengerDistance_km = data.passengerDistance_m * 1e-3;
 
 		double fleetCost_MU = 0.0;
 		fleetCost_MU += vehicleDistance_km * parameters.distanceCost_MU_km;

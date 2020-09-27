@@ -27,6 +27,7 @@ import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 import org.opengis.feature.simple.SimpleFeature;
@@ -90,6 +91,10 @@ public final class AvConfigurator {
 		// Set up MATSim scoring (although we don't really use it - MATSim wants it)
 		ModeParams modeParams = new ModeParams(AVModule.AV_MODE);
 		config.planCalcScore().addModeParams(modeParams);
+		
+		ActivityParams interactionParams = new ActivityParams("av interaction");
+		interactionParams.setTypicalDuration(3600.0);
+		config.planCalcScore().addActivityParams(interactionParams);
 
 		// Set up Eqasim (add AV cost model and estimator)
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
