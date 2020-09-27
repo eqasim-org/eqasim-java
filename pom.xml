@@ -23,7 +23,7 @@
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<matsim.version>12.0</matsim.version>
+		<matsim.version>13.0-SNAPSHOT</matsim.version>
 	</properties>
 	<distributionManagement>
 		<repository>
@@ -44,6 +44,10 @@
 		<repository>
 			<id>matsim-eth</id>
 			<url>http://dl.bintray.com/matsim-eth/matsim</url>
+		</repository>
+		<repository>
+			<id>matsim-snapshot</id>
+			<url>http://oss.jfrog.org/libs-snapshot</url>
 		</repository>
 	</repositories>
 
