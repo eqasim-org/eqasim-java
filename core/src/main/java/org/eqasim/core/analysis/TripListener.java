@@ -113,8 +113,8 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 					trip.crowflyDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
 					trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination,
-							trip.departureTime, trip.travelTime, trip.vehicleDistance, trip.routedDistance, trip.mode, trip.precedingPurpose,
-							trip.followingPurpose, trip.returning, trip.crowflyDistance));
+							trip.departureTime, trip.travelTime, trip.vehicleDistance, trip.routedDistance, trip.mode,
+							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.crowflyDistance));
 				}
 			}
 		}
@@ -140,6 +140,11 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 				if (passengers.get(event.getVehicleId()).size() == 0) {
 					passengers.remove(event.getVehicleId());
 				}
+
+				// Last link is not traversed, so we should not count it!
+				TripListenerItem item = ongoing.get(event.getPersonId());
+				item.routedDistance -= item.lastAddedLinkDistance;
+				item.vehicleDistance -= item.lastAddedLinkDistance;
 			}
 		}
 	}
@@ -150,8 +155,12 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 		if (personIds != null) {
 			personIds.forEach(id -> {
-				ongoing.get(id).routedDistance += network.getLinks().get(event.getLinkId()).getLength();
-				ongoing.get(id).vehicleDistance += network.getLinks().get(event.getLinkId()).getLength();
+				double linkDistance = network.getLinks().get(event.getLinkId()).getLength();
+				TripListenerItem item = ongoing.get(id);
+
+				item.routedDistance += linkDistance;
+				item.vehicleDistance += linkDistance;
+				item.lastAddedLinkDistance = linkDistance;
 			});
 		}
 	}
@@ -163,12 +172,12 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 			item.routedDistance += event.getDistance();
 		}
 	}
-	
+
 	@Override
 	public void handleEvent(GenericEvent event) {
 		if (event instanceof PublicTransitEvent) {
 			PublicTransitEvent transitEvent = (PublicTransitEvent) event;
-			
+
 			if (personFilter.analyzePerson(transitEvent.getPersonId())) {
 				TripListenerItem item = ongoing.get(transitEvent.getPersonId());
 				item.vehicleDistance += transitEvent.getTravelDistance();
