@@ -88,7 +88,7 @@ public class TestNetworkTripProcessor {
 		Assert.assertEquals("car", ((Leg) result.get(0)).getMode());
 		Assert.assertEquals("outside", ((Activity) result.get(1)).getType());
 		Assert.assertEquals("outside", ((Leg) result.get(2)).getMode());
-		Assert.assertEquals(20.0, ((Activity) result.get(1)).getEndTime(), 1e-3);
+		Assert.assertEquals(20.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
 		Assert.assertEquals(Id.createLinkId("A"), ((Activity) result.get(1)).getLinkId());
 
 		// One crossing point, incoming
@@ -105,7 +105,7 @@ public class TestNetworkTripProcessor {
 		Assert.assertEquals("outside", ((Leg) result.get(0)).getMode());
 		Assert.assertEquals("outside", ((Activity) result.get(1)).getType());
 		Assert.assertEquals("car", ((Leg) result.get(2)).getMode());
-		Assert.assertEquals(20.0, ((Activity) result.get(1)).getEndTime(), 1e-3);
+		Assert.assertEquals(20.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
 		Assert.assertEquals(Id.createLinkId("A"), ((Activity) result.get(1)).getLinkId());
 
 		// Two crossing points, inside -> outside -> inside
@@ -127,8 +127,8 @@ public class TestNetworkTripProcessor {
 		Assert.assertEquals("outside", ((Leg) result.get(2)).getMode());
 		Assert.assertEquals("outside", ((Activity) result.get(3)).getType());
 		Assert.assertEquals("car", ((Leg) result.get(4)).getMode());
-		Assert.assertEquals(20.0, ((Activity) result.get(1)).getEndTime(), 1e-3);
-		Assert.assertEquals(40.0, ((Activity) result.get(3)).getEndTime(), 1e-3);
+		Assert.assertEquals(20.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
+		Assert.assertEquals(40.0, ((Activity) result.get(3)).getEndTime().seconds(), 1e-3);
 		Assert.assertEquals(Id.createLinkId("A"), ((Activity) result.get(1)).getLinkId());
 		Assert.assertEquals(Id.createLinkId("B"), ((Activity) result.get(3)).getLinkId());
 	}

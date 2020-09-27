@@ -29,8 +29,8 @@ public class TeleportationTripProcessor implements TripProcessor {
 	public List<PlanElement> process(Activity firstActivity, List<PlanElement> trip, Activity secondActivity) {
 		Leg leg = (Leg) trip.get(0);
 
-		return process(firstActivity.getCoord(), secondActivity.getCoord(), leg.getTravelTime(), leg.getDepartureTime(),
-				leg.getMode(),
+		return process(firstActivity.getCoord(), secondActivity.getCoord(), leg.getTravelTime().seconds(),
+				leg.getDepartureTime().seconds(), leg.getMode(),
 				!extent.isInside(firstActivity.getCoord()) && !extent.isInside(secondActivity.getCoord()));
 	}
 

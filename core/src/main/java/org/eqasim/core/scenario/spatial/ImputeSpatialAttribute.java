@@ -11,18 +11,16 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.TripStructureUtils.StageActivityHandling;
 
 public class ImputeSpatialAttribute {
 	private final Geometry geometry;
 	private final GeometryFactory factory = new GeometryFactory();
-	private final StageActivityTypes stageActivityTypes;
 	private final String attribute;
 
-	public ImputeSpatialAttribute(Geometry geometry, String attribute, StageActivityTypes stageActivityTypes) {
+	public ImputeSpatialAttribute(Geometry geometry, String attribute) {
 		this.geometry = geometry;
-		this.stageActivityTypes = stageActivityTypes;
 		this.attribute = attribute;
 	}
 
@@ -32,7 +30,7 @@ public class ImputeSpatialAttribute {
 
 		for (Person person : population.getPersons().values()) {
 			for (Plan plan : person.getPlans()) {
-				for (Activity activity : TripStructureUtils.getActivities(plan, stageActivityTypes)) {
+				for (Activity activity : TripStructureUtils.getActivities(plan, StageActivityHandling.ExcludeStageActivities)) {
 					Point point = factory
 							.createPoint(new Coordinate(activity.getCoord().getX(), activity.getCoord().getY()));
 

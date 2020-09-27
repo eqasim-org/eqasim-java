@@ -22,6 +22,9 @@ import org.eqasim.sao_paulo.mode_choice.utilities.estimators.SaoPauloTaxiUtility
 import org.eqasim.sao_paulo.mode_choice.utilities.estimators.SaoPauloWalkUtilityEstimator;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloPersonPredictor;
 import org.eqasim.sao_paulo.mode_choice.utilities.predictors.SaoPauloTaxiPredictor;
+import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -30,10 +33,6 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-
-import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 
 public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;

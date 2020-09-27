@@ -13,10 +13,10 @@ import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.vehicles.MatsimVehicleWriter;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
-import org.matsim.vehicles.VehicleWriterV1;
 import org.matsim.vehicles.Vehicles;
 
 public class CreateTransitVehicles {
@@ -70,9 +70,9 @@ public class CreateTransitVehicles {
 			}
 		}
 
-		VehicleWriterV1 vw = new VehicleWriterV1(scenario.getTransitVehicles());
+		MatsimVehicleWriter vw = new MatsimVehicleWriter(scenario.getTransitVehicles());
 		vw.writeFile(args[1]);
-		
+
 		TransitScheduleWriter tsw = new TransitScheduleWriter(scenario.getTransitSchedule());
 		tsw.writeFile(args[2]);
 	}

@@ -6,10 +6,9 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariabl
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Singleton;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 @Singleton
 public class IDFSpatialPredictor extends CachedVariablePredictor<IDFSpatialVariables> {

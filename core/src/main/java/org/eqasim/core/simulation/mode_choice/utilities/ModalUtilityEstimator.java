@@ -1,23 +1,25 @@
 package org.eqasim.core.simulation.mode_choice.utilities;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
+import org.matsim.contribs.discrete_mode_choice.replanning.time_interpreter.TimeInterpreter;
 import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.ActivityFacilities;
 
-import ch.ethz.matsim.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator;
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import ch.ethz.matsim.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
-
-public class ModularUtilityEstimator extends AbstractTripRouterEstimator {
+public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
 	private final Map<String, UtilityEstimator> estimators;
 
-	public ModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
-			Map<String, UtilityEstimator> estimators) {
-		super(tripRouter, facilities);
+	public ModalUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
+			Map<String, UtilityEstimator> estimators, TimeInterpreter.Factory timeInterpreterFactory,
+			Collection<String> preroutedModes) {
+		super(tripRouter, facilities, timeInterpreterFactory, preroutedModes);
 		this.estimators = estimators;
 	}
 

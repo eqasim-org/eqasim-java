@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.eqasim.core.location_assignment.matsim.discretizer.FacilityTypeDiscretizerFactory;
 import org.eqasim.core.location_assignment.matsim.solver.MATSimAssignmentSolverBuilder;
-import org.eqasim.core.misc.InteractionStageActivityTypes;
 import org.eqasim.core.scenario.location_assignment.listener.StatisticsListener;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -20,7 +19,6 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.io.PopulationWriter;
-import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.MatsimFacilitiesReader;
 
@@ -30,7 +28,8 @@ public class RunLocationAssignment {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("population-path", "facilities-path", "quantiles-path", "distributions-path",
 						"output-path") //
-				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path", "require-pt-accessibility") //
+				.allowOptions("threads", "discretization-iterations", "random-seed", "batch-size", "statistics-path",
+						"require-pt-accessibility") //
 				.build();
 
 		// Setting up activity types
@@ -66,10 +65,9 @@ public class RunLocationAssignment {
 		DistanceSamplerFactory distanceSamplerFactory = new DistanceSamplerFactory(randomSeed);
 		distanceSamplerFactory.load(quantilesPath, distributionsPath);
 
-		StageActivityTypes stageActivityTypes = new InteractionStageActivityTypes();
-
 		// Set up solver
-		boolean requirePtAccessibility = cmd.getOption("require-pt-accessibility").map(Boolean::parseBoolean).orElse(false);
+		boolean requirePtAccessibility = cmd.getOption("require-pt-accessibility").map(Boolean::parseBoolean)
+				.orElse(false);
 		ProblemProvider problemProvider = new ProblemProvider(distanceSamplerFactory, discretizerFactory,
 				discretizationThresholds, requirePtAccessibility);
 
@@ -77,7 +75,6 @@ public class RunLocationAssignment {
 
 		builder.setVariableActivityTypes(relevantActivityTypes);
 		builder.setRandomSeed(randomSeed);
-		builder.setStageActivityTypes(stageActivityTypes);
 
 		builder.setDiscretizerProvider(problemProvider);
 		builder.setDistanceSamplerProvider(problemProvider);

@@ -6,20 +6,22 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.eqasim.core.components.transit.events.PublicTransitEvent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
+import org.matsim.api.core.v01.events.GenericEvent;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
+import org.matsim.api.core.v01.events.handler.GenericEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
-import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PopulationFactory;
@@ -27,19 +29,17 @@ import org.matsim.core.api.experimental.events.TeleportationArrivalEvent;
 import org.matsim.core.api.experimental.events.handler.TeleportationArrivalEventHandler;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.StageActivityTypes;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
 
 public class TripListener implements ActivityStartEventHandler, ActivityEndEventHandler, PersonDepartureEventHandler,
 		PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, LinkEnterEventHandler,
-		TeleportationArrivalEventHandler {
-	final private StageActivityTypes stageActivityTypes;
+		TeleportationArrivalEventHandler, GenericEventHandler {
 	final private MainModeIdentifier mainModeIdentifier;
 	final private Network network;
 	final private PopulationFactory factory;
-	final private Collection<String> networkRouteModes;
 
 	final private Collection<TripItem> trips = new LinkedList<>();
 	final private Map<Id<Person>, TripListenerItem> ongoing = new HashMap<>();
@@ -48,12 +48,9 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 	final private PersonAnalysisFilter personFilter;
 
-	public TripListener(Network network, StageActivityTypes stageActivityTypes, MainModeIdentifier mainModeIdentifier,
-			Collection<String> networkRouteModes, PersonAnalysisFilter personFilter) {
+	public TripListener(Network network, MainModeIdentifier mainModeIdentifier, PersonAnalysisFilter personFilter) {
 		this.network = network;
-		this.stageActivityTypes = stageActivityTypes;
 		this.mainModeIdentifier = mainModeIdentifier;
-		this.networkRouteModes = networkRouteModes;
 		this.factory = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation().getFactory();
 		this.personFilter = personFilter;
 	}
@@ -73,7 +70,7 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
-			if (!stageActivityTypes.isStageActivity(event.getActType())) {
+			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
 				Integer personTripIndex = tripIndex.get(event.getPersonId());
 				network.getLinks().get(event.getLinkId()).getCoord();
 
@@ -101,7 +98,7 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 	@Override
 	public void handleEvent(ActivityStartEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
-			if (stageActivityTypes.isStageActivity(event.getActType())) {
+			if (TripStructureUtils.isStageActivityType(event.getActType())) {
 				ongoing.get(event.getPersonId()).elements
 						.add(factory.createActivityFromLinkId(event.getActType(), event.getLinkId()));
 			} else {
@@ -110,15 +107,14 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 				if (trip != null) {
 					trip.returning = event.getActType().equals("home");
 					trip.followingPurpose = event.getActType();
-					trip.travelTime = event.getTime() - trip.startTime;
+					trip.travelTime = event.getTime() - trip.departureTime;
 					trip.mode = mainModeIdentifier.identifyMainMode(trip.elements);
 					trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
-					trip.networkDistance = getNetworkDistance(trip);
-					trip.crowflyDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
+					trip.euclideanDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
 					trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination,
-							trip.startTime, trip.travelTime, trip.networkDistance, trip.mode, trip.preceedingPurpose,
-							trip.followingPurpose, trip.returning, trip.crowflyDistance));
+							trip.departureTime, trip.travelTime, trip.vehicleDistance, trip.routedDistance, trip.mode,
+							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.euclideanDistance));
 				}
 			}
 		}
@@ -144,6 +140,11 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 				if (passengers.get(event.getVehicleId()).size() == 0) {
 					passengers.remove(event.getVehicleId());
 				}
+
+				// Last link is not traversed, so we should not count it!
+				TripListenerItem item = ongoing.get(event.getPersonId());
+				item.routedDistance -= item.lastAddedLinkDistance;
+				item.vehicleDistance -= item.lastAddedLinkDistance;
 			}
 		}
 	}
@@ -153,36 +154,34 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 		Collection<Id<Person>> personIds = passengers.get(event.getVehicleId());
 
 		if (personIds != null) {
-			personIds.forEach(id -> ongoing.get(id).route.add(event.getLinkId()));
+			personIds.forEach(id -> {
+				double linkDistance = network.getLinks().get(event.getLinkId()).getLength();
+				TripListenerItem item = ongoing.get(id);
+
+				item.routedDistance += linkDistance;
+				item.vehicleDistance += linkDistance;
+				item.lastAddedLinkDistance = linkDistance;
+			});
 		}
-	}
-
-	private double getNetworkDistance(TripListenerItem trip) {
-		if (networkRouteModes.contains(mainModeIdentifier.identifyMainMode(trip.elements))) {
-			double distance = 0.0;
-
-			if (trip.route.size() > 0) {
-				for (Id<Link> linkId : trip.route.subList(0, trip.route.size() - 1)) {
-					distance += network.getLinks().get(linkId).getLength();
-				}
-			}
-
-			return distance;
-		}
-
-		return trip.networkDistance;
 	}
 
 	@Override
 	public void handleEvent(TeleportationArrivalEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
 			TripListenerItem item = ongoing.get(event.getPersonId());
+			item.routedDistance += event.getDistance();
+		}
+	}
 
-			if (Double.isNaN(item.networkDistance)) {
-				item.networkDistance = 0.0;
+	@Override
+	public void handleEvent(GenericEvent event) {
+		if (event instanceof PublicTransitEvent) {
+			PublicTransitEvent transitEvent = (PublicTransitEvent) event;
+
+			if (personFilter.analyzePerson(transitEvent.getPersonId())) {
+				TripListenerItem item = ongoing.get(transitEvent.getPersonId());
+				item.vehicleDistance += transitEvent.getTravelDistance();
 			}
-
-			item.networkDistance += event.getDistance();
 		}
 	}
 }

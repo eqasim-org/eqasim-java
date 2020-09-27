@@ -14,7 +14,7 @@ import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.router.TransitRouter;
-import org.matsim.pt.routes.ExperimentalTransitRoute;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
@@ -43,6 +43,11 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 	@Override
 	public List<Leg> calculateRoute(Facility fromFacility, Facility toFacility, double departureTime, Person person) {
 		List<Leg> legs = delegate.calcRoute(fromFacility, toFacility, departureTime, person);
+
+		if (legs == null) {
+			return null;
+		}
+
 		double currentTime = departureTime;
 
 		for (int i = 0; i < legs.size(); i++) {
@@ -51,9 +56,10 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 			if (currentLeg.getMode().equals(TransportMode.pt)) {
 				try {
 					double departureAfterAdditionalTransfer = currentTime + additionalTransferTime;
-					double totalTravelTimeAfterAdditionalTransfer = currentLeg.getTravelTime() - additionalTransferTime;
+					double totalTravelTimeAfterAdditionalTransfer = currentLeg.getTravelTime().seconds()
+							- additionalTransferTime;
 
-					ExperimentalTransitRoute originalRoute = (ExperimentalTransitRoute) currentLeg.getRoute();
+					TransitPassengerRoute originalRoute = (TransitPassengerRoute) currentLeg.getRoute();
 					TransitRoute transitRoute = transitSchedule.getTransitLines().get(originalRoute.getLineId())
 							.getRoutes().get(originalRoute.getRouteId());
 
@@ -64,7 +70,7 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 					double totalTime = additionalTransferTime + connection.getWaitingTime()
 							+ connection.getInVehicleTime();
 
-					if (Math.abs(totalTime - currentLeg.getTravelTime()) > 1e-3) {
+					if (Math.abs(totalTime - currentLeg.getTravelTime().seconds()) > 1e-3) {
 						throw new IllegalStateException(String.format(
 								"Calculation of travel time is not consistent! Leg travel time: %s, Additional transfer time: %s, Waiting time: %s, In-vehicle time: %s",
 								currentLeg.getTravelTime(), additionalTransferTime, connection.getWaitingTime(),
@@ -86,7 +92,7 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 				} catch (NoConnectionFoundException e) {
 					throw new IllegalStateException("Cannot recover connection that the router produced.");
 				}
-			} else if (currentLeg.getMode().contains("walk") && !currentLeg.getMode().equals("walk")) {
+			} else if (currentLeg.getMode().contains("walk")) {
 				// We cannot update distances here yet, because not all access and egress stop
 				// indices are known, see below
 
@@ -95,7 +101,7 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 				throw new IllegalStateException("Can only enrich pt and *_walk legs");
 			}
 
-			currentTime += currentLeg.getTravelTime();
+			currentTime += currentLeg.getTravelTime().seconds();
 		}
 
 		for (int i = 0; i < legs.size(); i++) {

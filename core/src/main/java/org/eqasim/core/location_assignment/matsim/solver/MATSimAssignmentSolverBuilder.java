@@ -21,8 +21,6 @@ import org.eqasim.core.location_assignment.assignment.relaxation.RelaxedLocation
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDiscretizationThresholdProvider;
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDiscretizerProvider;
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDistanceSamplerProvider;
-import org.matsim.core.router.StageActivityTypes;
-import org.matsim.core.router.StageActivityTypesImpl;
 
 public class MATSimAssignmentSolverBuilder {
 	private LocationAssignmentObjectiveFunction objectiveFunction = null;
@@ -45,11 +43,10 @@ public class MATSimAssignmentSolverBuilder {
 	private int randomSeed = 0;
 
 	private Set<String> variableActivityTypes = new HashSet<>();
-	private StageActivityTypes stageActivityTypes = new StageActivityTypesImpl();
 
 	public MATSimAssignmentSolver build() {
 		Random random = new Random(randomSeed);
-		
+
 		if (relaxedLocationSolver == null) {
 			GravityInitialLocationGenerator initialLocationGenerator = new LateralDeviationGenerator(random,
 					lateralDeviationStd);
@@ -95,7 +92,7 @@ public class MATSimAssignmentSolverBuilder {
 		locationAssignmentSolverBuilder.setRelaxedLocationSolver(relaxedLocationSolver);
 		LocationAssignmentSolver solver = locationAssignmentSolverBuilder.build();
 
-		return new MATSimAssignmentSolver(solver, variableActivityTypes, stageActivityTypes);
+		return new MATSimAssignmentSolver(solver, variableActivityTypes);
 	}
 
 	public void setObjectiveFunction(LocationAssignmentObjectiveFunction objectiveFunction) {
@@ -157,9 +154,5 @@ public class MATSimAssignmentSolverBuilder {
 
 	public void setVariableActivityTypes(Set<String> variableActivityTypes) {
 		this.variableActivityTypes = variableActivityTypes;
-	}
-
-	public void setStageActivityTypes(StageActivityTypes stageActivityTypes) {
-		this.stageActivityTypes = stageActivityTypes;
 	}
 }

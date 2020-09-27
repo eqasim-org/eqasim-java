@@ -57,7 +57,7 @@ public class CalculateStopCategories {
 						info.railLines.add(line);
 					}
 
-					double departureOffset = stop.getDepartureOffset();
+					double departureOffset = stop.getDepartureOffset().seconds();
 
 					boolean isTerminus = route.getStops().get(0) == stop
 							|| route.getStops().get(route.getStops().size() - 1) == stop;

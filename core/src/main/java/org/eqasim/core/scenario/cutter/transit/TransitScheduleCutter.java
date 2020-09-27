@@ -100,11 +100,11 @@ public class TransitScheduleCutter {
 		List<TransitRouteStop> originalStopSequence = originalRoute.getStops();
 		List<TransitRouteStop> reducedStopSequence = reduceStopSequence(originalRoute.getStops());
 
-		if (reducedStopSequence.size() == 0) {
+		if (reducedStopSequence.size() < 2) {
 			return null;
 		} else {
-			double departureOffset = reducedStopSequence.get(0).getDepartureOffset()
-					- originalStopSequence.get(0).getDepartureOffset();
+			double departureOffset = reducedStopSequence.get(0).getDepartureOffset().seconds()
+					- originalStopSequence.get(0).getDepartureOffset().seconds();
 
 			Id<Link> routeStartLinkId = reducedStopSequence.get(0).getStopFacility().getLinkId();
 			Id<Link> routeEndLinkId = reducedStopSequence.get(reducedStopSequence.size() - 1).getStopFacility()

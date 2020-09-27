@@ -24,14 +24,11 @@ import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.StageActivityTypes;
-import org.matsim.core.router.TripRouter;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.config.TransitRouterConfigGroup;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
 
 public class PopulationCutterModule extends AbstractModule {
 	private final int numberOfThreads;
@@ -137,11 +134,5 @@ public class PopulationCutterModule extends AbstractModule {
 	public TransitTripProcessor provideTransitTripProcessor(TransitTripCrossingPointFinder transitPointFinder,
 			ScenarioExtent extent, TransitRouterConfigGroup routerConfig) {
 		return new TransitTripProcessor(transitPointFinder, extent, routerConfig.getAdditionalTransferTime());
-	}
-
-	@Provides
-	@Singleton
-	public StageActivityTypes provideStageActivityTypes(TripRouter tripRouter) {
-		return tripRouter.getStageActivityTypes();
 	}
 }

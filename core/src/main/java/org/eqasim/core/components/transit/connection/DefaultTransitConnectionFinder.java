@@ -88,7 +88,8 @@ public class DefaultTransitConnectionFinder implements TransitConnectionFinder {
 
 				// Find the corresponding departure
 				routeDeparture = departureFinder.findDeparture(transitRoute, accessStop, connectionDepartureTime);
-				double vehicleDepartureTime = accessStop.getDepartureOffset() + routeDeparture.getDepartureTime();
+				double vehicleDepartureTime = accessStop.getDepartureOffset().seconds()
+						+ routeDeparture.getDepartureTime();
 
 				// Find the stop with the given egress stop id that comes after the access stop
 				// and after the vehicle departure time
@@ -96,7 +97,7 @@ public class DefaultTransitConnectionFinder implements TransitConnectionFinder {
 				egressStop = transitRoute.getStops().get(egressStopIndex);
 
 				// Compute waiting time
-				inVehicleTime = egressStop.getArrivalOffset() - accessStop.getDepartureOffset();
+				inVehicleTime = egressStop.getArrivalOffset().seconds() - accessStop.getDepartureOffset().seconds();
 				waitingTime = totalTravelTime - inVehicleTime;
 
 				while (waitingTime < 0.0) {
@@ -115,7 +116,8 @@ public class DefaultTransitConnectionFinder implements TransitConnectionFinder {
 						// Find the corresponding departure
 						routeDeparture = departureFinder.findDeparture(transitRoute, accessStop,
 								connectionDepartureTime);
-						vehicleDepartureTime = accessStop.getDepartureOffset() + routeDeparture.getDepartureTime();
+						vehicleDepartureTime = accessStop.getDepartureOffset().seconds()
+								+ routeDeparture.getDepartureTime();
 
 						// Hopefully, now the waiting time fits, otherwise we have to do another round.
 					} else {
@@ -124,7 +126,7 @@ public class DefaultTransitConnectionFinder implements TransitConnectionFinder {
 					}
 
 					// Update in-vehicle time and waiting time
-					inVehicleTime = egressStop.getArrivalOffset() - accessStop.getDepartureOffset();
+					inVehicleTime = egressStop.getArrivalOffset().seconds() - accessStop.getDepartureOffset().seconds();
 					waitingTime = totalTravelTime - inVehicleTime;
 				}
 

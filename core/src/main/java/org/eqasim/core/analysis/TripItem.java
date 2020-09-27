@@ -9,29 +9,31 @@ public class TripItem {
 	public int personTripId;
 	public Coord origin;
 	public Coord destination;
-	public double startTime;
+	public double departureTime;
 	public double travelTime;
-	public double networkDistance;
+	public double vehicleDistance;
+	public double routedDistance;
 	public String mode;
 	public String followingPurpose;
-	public String preceedingPurpose;
+	public String precedingPurpose;
 	public boolean returning;
-	public double crowflyDistance;
+	public double euclideanDistance;
 
 	public TripItem(Id<Person> personId, int personTripId, Coord origin, Coord destination, double startTime,
-			double travelTime, double networkDistance, String mode, String preceedingPurpose, String followingPurpose,
-			boolean returning, double crowflyDistance) {
+			double travelTime, double vehicleDistance, double routedDistance, String mode, String precedingPurpose,
+			String followingPurpose, boolean returning, double euclideanDistance) {
 		this.personId = personId;
 		this.personTripId = personTripId;
 		this.origin = origin;
 		this.destination = destination;
-		this.startTime = startTime;
+		this.departureTime = startTime;
 		this.travelTime = travelTime;
-		this.networkDistance = networkDistance;
+		this.vehicleDistance = vehicleDistance;
+		this.routedDistance = routedDistance;
 		this.mode = mode;
 		this.followingPurpose = followingPurpose;
-		this.preceedingPurpose = preceedingPurpose;
+		this.precedingPurpose = precedingPurpose;
 		this.returning = returning;
-		this.crowflyDistance = crowflyDistance;
+		this.euclideanDistance = euclideanDistance;
 	}
 }

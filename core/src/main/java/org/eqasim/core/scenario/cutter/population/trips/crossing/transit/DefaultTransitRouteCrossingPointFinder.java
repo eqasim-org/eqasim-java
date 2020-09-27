@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
-import org.matsim.core.utils.misc.Time;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
@@ -51,24 +50,24 @@ public class DefaultTransitRouteCrossingPointFinder implements TransitRouteCross
 				TransitRouteStop insideStop = firstIsInside ? firstStop : secondStop;
 				TransitRouteStop outsideStop = firstIsInside ? secondStop : firstStop;
 
-				double outsideDepartureTime = routeDepartureTime + outsideStop.getDepartureOffset();
-				double insideDepartureTime = routeDepartureTime + insideStop.getDepartureOffset();
+				double insideDepartureTime = routeDepartureTime;
+				double outsideDepartureTime = routeDepartureTime;
 
 				// This happens if we cross the border only to reach the very last stop of the
 				// line.
-				if (Time.isUndefinedTime(insideDepartureTime)) {
-					insideDepartureTime = routeDepartureTime + insideStop.getArrivalOffset();
-				}
-
-				if (Time.isUndefinedTime(outsideDepartureTime)) {
-					outsideDepartureTime = routeDepartureTime + outsideStop.getArrivalOffset();
-				}
-
-				if (Time.isUndefinedTime(insideDepartureTime)) {
+				if (insideStop.getDepartureOffset().isDefined()) {
+					insideDepartureTime += insideStop.getDepartureOffset().seconds();
+				} else if (insideStop.getArrivalOffset().isDefined()) {
+					insideDepartureTime += insideStop.getArrivalOffset().seconds();
+				} else {
 					throw new IllegalStateException();
 				}
 
-				if (Time.isUndefinedTime(outsideDepartureTime)) {
+				if (outsideStop.getDepartureOffset().isDefined()) {
+					outsideDepartureTime += outsideStop.getDepartureOffset().seconds();
+				} else if (outsideStop.getArrivalOffset().isDefined()) {
+					outsideDepartureTime += outsideStop.getArrivalOffset().seconds();
+				} else {
 					throw new IllegalStateException();
 				}
 

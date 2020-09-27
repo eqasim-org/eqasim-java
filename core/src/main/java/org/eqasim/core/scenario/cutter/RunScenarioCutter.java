@@ -6,7 +6,6 @@ import java.net.MalformedURLException;
 import java.util.Optional;
 
 import org.eqasim.core.misc.InjectorBuilder;
-import org.eqasim.core.misc.InteractionStageActivityTypes;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.cutter.facilities.CleanHomeFacilities;
@@ -68,7 +67,7 @@ public class RunScenarioCutter {
 		ScenarioUtils.loadScenario(scenario);
 
 		// Check validity before cutting
-		ScenarioValidator scenarioValidator = new ScenarioValidator(new InteractionStageActivityTypes());
+		ScenarioValidator scenarioValidator = new ScenarioValidator();
 		scenarioValidator.checkScenario(scenario);
 
 		// Prepare road network

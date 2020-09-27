@@ -40,6 +40,7 @@ public class PopulationRouter {
 			thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 				@Override
 				public void uncaughtException(Thread t, Throwable e) {
+					e.printStackTrace();
 					throw new RuntimeException(e);
 				}
 			});

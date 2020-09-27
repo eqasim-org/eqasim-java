@@ -31,7 +31,7 @@ public class NetworkTripProcessor implements TripProcessor {
 
 		NetworkRoute route = (NetworkRoute) leg.getRoute();
 		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(leg.getMode(), route,
-				leg.getDepartureTime());
+				leg.getDepartureTime().seconds());
 
 		if (crossingPoints.size() > 0) {
 			List<PlanElement> result = new LinkedList<>();
@@ -61,7 +61,7 @@ public class NetworkTripProcessor implements TripProcessor {
 
 			if (extent.isInside(firstActivity.getCoord())) {
 				Activity activity = PopulationUtils.createActivityFromLinkId("outside", firstActivity.getLinkId());
-				activity.setEndTime(firstActivity.getEndTime());
+				activity.setEndTime(firstActivity.getEndTime().seconds());
 				result.add(activity);
 
 				result.add(PopulationUtils.createLeg("outside"));
@@ -69,7 +69,7 @@ public class NetworkTripProcessor implements TripProcessor {
 
 			if (extent.isInside(secondActivity.getCoord())) {
 				Activity activity = PopulationUtils.createActivityFromLinkId("outside", secondActivity.getLinkId());
-				activity.setEndTime(secondActivity.getStartTime());
+				activity.setEndTime(secondActivity.getStartTime().seconds());
 				result.add(activity);
 
 				result.add(PopulationUtils.createLeg("outside"));

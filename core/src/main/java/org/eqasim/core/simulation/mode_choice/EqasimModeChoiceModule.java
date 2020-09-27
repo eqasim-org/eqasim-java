@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.mode_choice;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +11,7 @@ import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
-import org.eqasim.core.simulation.mode_choice.utilities.ModularUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.ModalUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
@@ -22,6 +23,8 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.replanning.time_interpreter.TimeInterpreter;
 import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.ActivityFacilities;
 
@@ -37,8 +40,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String OUTSIDE_FILTER_NAME = "OutsideFilter";
 
 	public static final String UTILITY_ESTIMATOR_NAME = "EqasimUtilityEstimator";
-
-	public static final String TOUR_FINDER_NAME = "EqasimTourFinder";
 
 	public static final String CAR_ESTIMATOR_NAME = "CarUtilityEstimator";
 	public static final String PT_ESTIMATOR_NAME = "PtUtilityEstimator";
@@ -56,9 +57,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
 
-		bindTourFinder(TOUR_FINDER_NAME).to(UniversalTourFinder.class);
-
-		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModularUtilityEstimator.class);
+		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModalUtilityEstimator.class);
 
 		bind(CarPredictor.class);
 		bind(PtPredictor.class);
@@ -76,8 +75,9 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	public ModularUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
-			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config) {
+	public ModalUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
+			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config,
+			TimeInterpreter.Factory timeInterpreterFactory, DiscreteModeChoiceConfigGroup dmcConfig) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
 
 		for (Map.Entry<String, String> entry : config.getEstimators().entrySet()) {
@@ -91,7 +91,8 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			}
 		}
 
-		return new ModularUtilityEstimator(tripRouter, facilities, estimators);
+		return new ModalUtilityEstimator(tripRouter, facilities, estimators, timeInterpreterFactory,
+				Collections.emptySet()); // Here we may add "pt" etc. as pre-routed modes.
 	}
 
 	@Provides

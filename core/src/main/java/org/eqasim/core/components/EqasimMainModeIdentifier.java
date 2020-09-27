@@ -21,8 +21,7 @@ public class EqasimMainModeIdentifier implements MainModeIdentifier {
 
 		switch (singleLegMode) {
 		case TransportMode.transit_walk:
-		case TransportMode.access_walk:
-		case TransportMode.egress_walk:
+		case TransportMode.non_network_walk:
 			return TransportMode.pt;
 		default:
 			return TransportMode.walk;
