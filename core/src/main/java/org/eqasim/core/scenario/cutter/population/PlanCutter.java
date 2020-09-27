@@ -32,7 +32,13 @@ public class PlanCutter {
 		} else {
 			Activity virtualActivity = PopulationUtils.createActivityFromCoord(Constants.OUTSIDE_ACTIVITY_TYPE,
 					activity.getCoord());
-			virtualActivity.setEndTime(activity.getEndTime().seconds());
+			
+			if (activity.getEndTime().isDefined()) {
+				virtualActivity.setEndTime(activity.getEndTime().seconds());
+			} else {
+				virtualActivity.setEndTimeUndefined();
+			}
+			
 			virtualActivity.getAttributes().putAttribute(Constants.TYPE_BEFORE_CUTTING_ATTRIBUTE, activity.getType());
 
 			plan.add(virtualActivity);
