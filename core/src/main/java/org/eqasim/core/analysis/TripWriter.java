@@ -58,7 +58,7 @@ public class TripWriter {
 				"preceding_purpose", //
 				"following_purpose", //
 				"returning", //
-				"crowfly_distance" //
+				"euclidean_distance" //
 		});
 	}
 
@@ -107,7 +107,7 @@ public class TripWriter {
 				normalizeActivityType(String.valueOf(trip.precedingPurpose)), //
 				normalizeActivityType(String.valueOf(trip.followingPurpose)), //
 				String.valueOf(trip.returning), //
-				String.valueOf(trip.crowflyDistance * inputFactor * outputFactor) //
+				String.valueOf(trip.euclideanDistance * inputFactor * outputFactor) //
 		});
 	}
 }

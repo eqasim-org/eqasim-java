@@ -110,11 +110,11 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 					trip.travelTime = event.getTime() - trip.departureTime;
 					trip.mode = mainModeIdentifier.identifyMainMode(trip.elements);
 					trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
-					trip.crowflyDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
+					trip.euclideanDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
 					trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination,
 							trip.departureTime, trip.travelTime, trip.vehicleDistance, trip.routedDistance, trip.mode,
-							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.crowflyDistance));
+							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.euclideanDistance));
 				}
 			}
 		}

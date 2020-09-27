@@ -34,11 +34,11 @@ public class CalibrationDataProvider {
 				continue;
 			}
 			
-			if (trip.crowflyDistance == 0.0) {
+			if (trip.euclideanDistance == 0.0) {
 				continue;
 			}
 
-			tracker.addObservation(trip.mode, trip.crowflyDistance);
+			tracker.addObservation(trip.mode, trip.euclideanDistance);
 		}
 
 		CalibrationData data = new CalibrationData();

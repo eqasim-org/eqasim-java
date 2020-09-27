@@ -17,11 +17,11 @@ public class TripItem {
 	public String followingPurpose;
 	public String precedingPurpose;
 	public boolean returning;
-	public double crowflyDistance;
+	public double euclideanDistance;
 
 	public TripItem(Id<Person> personId, int personTripId, Coord origin, Coord destination, double startTime,
 			double travelTime, double vehicleDistance, double routedDistance, String mode, String precedingPurpose,
-			String followingPurpose, boolean returning, double crowflyDistance) {
+			String followingPurpose, boolean returning, double euclideanDistance) {
 		this.personId = personId;
 		this.personTripId = personTripId;
 		this.origin = origin;
@@ -34,6 +34,6 @@ public class TripItem {
 		this.followingPurpose = followingPurpose;
 		this.precedingPurpose = precedingPurpose;
 		this.returning = returning;
-		this.crowflyDistance = crowflyDistance;
+		this.euclideanDistance = euclideanDistance;
 	}
 }
