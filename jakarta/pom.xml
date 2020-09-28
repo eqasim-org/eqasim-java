@@ -17,6 +17,11 @@
 			<artifactId>core</artifactId>
 			<version>1.0.5</version>
 		</dependency>
+		<dependency>
+    		<groupId>org.matsim.contrib</groupId>
+    		<artifactId>roadpricing</artifactId>
+    	<version>0.10.1</version>
+</dependency>
 	</dependencies>
 	<profiles>
 		<profile>

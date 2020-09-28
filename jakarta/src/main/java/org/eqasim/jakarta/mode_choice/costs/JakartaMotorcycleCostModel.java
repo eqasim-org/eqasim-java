@@ -547,7 +547,7 @@ public class JakartaMotorcycleCostModel extends AbstractCostModel {
 				Leg leg = (Leg) element;
 				double departureTime = leg.getDepartureTime();
 				if (link.contains(leg.getRoute().getStartLinkId()) && ((departureTime> 7 *3600 && departureTime < 10* 3600)
-						|| (departureTime < 19* 3600 && departureTime > 16 *2400))) {
+						|| (departureTime < 19* 3600 && departureTime > 16 *3600))) {
 					total_km = total_km + leg.getRoute().getDistance() * 1e-3  ;
 				}
 				//System.out.println(leg.getRoute().getStartLinkId());

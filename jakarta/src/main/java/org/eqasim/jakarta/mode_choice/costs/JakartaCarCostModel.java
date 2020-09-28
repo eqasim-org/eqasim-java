@@ -547,7 +547,7 @@ public class JakartaCarCostModel extends AbstractCostModel {
 				Leg leg = (Leg) element;
 				double departureTime = leg.getDepartureTime();
 				if (link.contains(leg.getRoute().getStartLinkId()) && ((departureTime> 7 *3600 && departureTime < 10* 3600)
-						|| (departureTime < 19* 3600 && departureTime > 16 *2400))) {
+						|| (departureTime < 19* 3600 && departureTime > 16 *3600))) {
 					total_km = total_km + leg.getRoute().getDistance() * 1e-3  ;
 					
 				}
@@ -568,7 +568,7 @@ public class JakartaCarCostModel extends AbstractCostModel {
 			if (element instanceof Leg) {
 				Leg leg = (Leg) element;
 				if (link.contains(leg.getRoute().getStartLinkId()) && ((leg.getDepartureTime()> 6 *3600 && leg.getDepartureTime() < 10* 3600)
-						|| (leg.getDepartureTime() < 20* 3600 && leg.getDepartureTime() > 16 *2400))) {
+						|| (leg.getDepartureTime() < 20* 3600 && leg.getDepartureTime() > 16 *3600))) {
 					return true  ;
 					
 					
