@@ -7,21 +7,31 @@ import org.eqasim.core.components.transit.departure.DepartureFinder;
 import org.eqasim.core.components.transit.departure.DepartureFinder.NoDepartureFoundException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.pt.transitSchedule.TransitScheduleFactoryImpl;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 public class TestDefaultDepartureFinder {
 	@Test
 	public void testDefaultDepartureFinder() throws NoDepartureFoundException {
 		TransitScheduleFactory factory = new TransitScheduleFactoryImpl();
 
-		TransitRouteStop stop00 = factory.createTransitRouteStop(null, 0.0, 0.0);
-		TransitRouteStop stop45 = factory.createTransitRouteStop(null, 40.0 * 60.0, 45.0 * 60.0);
-		TransitRouteStop stop90 = factory.createTransitRouteStop(null, 85.0 * 60.0, 90.0 * 60.0);
+		TransitStopFacility facility00 = factory.createTransitStopFacility(Id.create("f00", TransitStopFacility.class),
+				new Coord(0.0, 0.0), false);
+		TransitRouteStop stop00 = factory.createTransitRouteStop(facility00, 0.0, 0.0);
+
+		TransitStopFacility facility45 = factory.createTransitStopFacility(Id.create("f45", TransitStopFacility.class),
+				new Coord(0.0, 0.0), false);
+		TransitRouteStop stop45 = factory.createTransitRouteStop(facility45, 40.0 * 60.0, 45.0 * 60.0);
+
+		TransitStopFacility facility90 = factory.createTransitStopFacility(Id.create("f90", TransitStopFacility.class),
+				new Coord(0.0, 0.0), false);
+		TransitRouteStop stop90 = factory.createTransitRouteStop(facility90, 85.0 * 60.0, 90.0 * 60.0);
 
 		TransitRoute route = factory.createTransitRoute(null, null, Arrays.asList(stop00, stop45, stop90), "pt");
 
@@ -34,22 +44,59 @@ public class TestDefaultDepartureFinder {
 
 		DepartureFinder finder = new DefaultDepartureFinder();
 
-		Assert.assertEquals(departureAt08, finder.findDeparture(route, stop00, 7.0 * 3600.0));
-		Assert.assertEquals(departureAt08, finder.findDeparture(route, stop00, 8.0 * 3600.0));
-		Assert.assertEquals(departureAt09, finder.findDeparture(route, stop00, 8.5 * 3600.0));
-		Assert.assertEquals(departureAt10, finder.findDeparture(route, stop00, 9.5 * 3600.0));
-		Assert.assertEquals(departureAt11, finder.findDeparture(route, stop00, 10.5 * 3600.0));
-		
+		Assert.assertEquals(departureAt08, finder.findNextDeparture(route, facility00.getId(), 7.0 * 3600.0).departure);
+		Assert.assertEquals(departureAt08, finder.findNextDeparture(route, facility00.getId(), 8.0 * 3600.0).departure);
+		Assert.assertEquals(departureAt09, finder.findNextDeparture(route, facility00.getId(), 8.5 * 3600.0).departure);
+		Assert.assertEquals(departureAt10, finder.findNextDeparture(route, facility00.getId(), 9.5 * 3600.0).departure);
+		Assert.assertEquals(departureAt11,
+				finder.findNextDeparture(route, facility00.getId(), 10.5 * 3600.0).departure);
+
 		boolean exceptionThrown = false;
 		try {
-			finder.findDeparture(route, stop00, 11.5 * 3600.0);
+			finder.findNextDeparture(route, facility00.getId(), 11.5 * 3600.0);
 		} catch (NoDepartureFoundException e) {
 			exceptionThrown = true;
 		}
 		Assert.assertTrue(exceptionThrown);
-		
-		Assert.assertEquals(departureAt10, finder.findDeparture(route, stop45, 10.5 * 3600.0));
-		Assert.assertEquals(departureAt09, finder.findDeparture(route, stop90, 10.0 * 3600.0));
 
+		Assert.assertEquals(departureAt10,
+				finder.findNextDeparture(route, facility45.getId(), 10.5 * 3600.0).departure);
+		Assert.assertEquals(departureAt09,
+				finder.findNextDeparture(route, facility90.getId(), 10.0 * 3600.0).departure);
+	}
+
+	@Test
+	public void testDepartureFinderWithMultiStop() throws NoDepartureFoundException {
+		TransitScheduleFactory factory = new TransitScheduleFactoryImpl();
+
+		TransitStopFacility facilityA = factory.createTransitStopFacility(Id.create("A", TransitStopFacility.class),
+				new Coord(0.0, 0.0), false);
+
+		TransitStopFacility facilityB = factory.createTransitStopFacility(Id.create("B", TransitStopFacility.class),
+				new Coord(0.0, 0.0), false);
+
+		TransitStopFacility facilityC = factory.createTransitStopFacility(Id.create("C", TransitStopFacility.class),
+				new Coord(0.0, 0.0), false);
+
+		// A -> B -> A -> C
+		// 0min -> 10min -> 20min -> 30min
+
+		TransitRouteStop stop00 = factory.createTransitRouteStop(facilityA, 0.0, 0.0);
+		TransitRouteStop stop10 = factory.createTransitRouteStop(facilityB, 10.0, 10.0);
+		TransitRouteStop stop20 = factory.createTransitRouteStop(facilityA, 20.0, 20.0);
+		TransitRouteStop stop30 = factory.createTransitRouteStop(facilityC, 30.0, 30.0);
+
+		{
+			TransitRoute route = factory.createTransitRoute(null, null, Arrays.asList(stop00, stop10, stop20, stop30),
+					"pt");
+
+			Departure departure = factory.createDeparture(Id.create("dep100", Departure.class), 100.0);
+			route.addDeparture(departure);
+
+			DepartureFinder finder = new DefaultDepartureFinder();
+
+			Assert.assertEquals(stop00, finder.findNextDeparture(route, facilityA.getId(), 0.0).stop);
+			Assert.assertEquals(stop20, finder.findNextDeparture(route, facilityA.getId(), 111.0).stop);
+		}
 	}
 }

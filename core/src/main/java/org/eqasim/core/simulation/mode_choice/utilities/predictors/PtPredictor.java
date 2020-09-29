@@ -2,7 +2,6 @@ package org.eqasim.core.simulation.mode_choice.utilities.predictors;
 
 import java.util.List;
 
-import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.matsim.api.core.v01.TransportMode;
@@ -10,6 +9,7 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.pt.routes.TransitPassengerRoute;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -51,12 +51,16 @@ public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 					waitingTime_min += leg.getTravelTime().seconds() / 60.0;
 					break;
 				case TransportMode.pt:
-					EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
+					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
-					inVehicleTime_min += route.getInVehicleTime() / 60.0;
+					double departureTime = leg.getDepartureTime().seconds();
+					double waitingTime = route.getBoardingTime().seconds() - departureTime;
+					double inVehicleTime = leg.getTravelTime().seconds() - waitingTime;
+
+					inVehicleTime_min += inVehicleTime / 60.0;
 
 					if (!isFirstWaitingTime) {
-						waitingTime_min += route.getWaitingTime() / 60.0;
+						waitingTime_min += waitingTime / 60.0;
 					} else {
 						isFirstWaitingTime = false;
 					}

@@ -1,7 +1,5 @@
 package org.eqasim.los_angeles.clean_population;
 
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRoute;
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRouteFactory;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -20,8 +18,6 @@ public class RemoveUnrealisticPersons {
 		Config config = ConfigUtils.createConfig();
 
 		Scenario scenario = ScenarioUtils.createMutableScenario(config);
-		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DefaultEnrichedTransitRoute.class,
-				new DefaultEnrichedTransitRouteFactory());
 		PopulationReader popReader = new PopulationReader(scenario);
 		popReader.readFile(args[0]);
 

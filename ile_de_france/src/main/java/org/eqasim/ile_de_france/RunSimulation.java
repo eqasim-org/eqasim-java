@@ -1,9 +1,14 @@
 package org.eqasim.ile_de_france;
 
+import java.util.Arrays;
+
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contribs.discrete_mode_choice.modules.TourFinderModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -20,6 +25,17 @@ public class RunSimulation {
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+		
+		EqasimConfigGroup.get(config).setUseScheduleBasedTransport(false);
+
+		config.transit().setUseTransit(true);
+		config.transit().setUsingTransitInMobsim(true);
+		config.vspExperimental().setGeneratingBoardingDeniedEvent(true);
+		config.controler().setLastIteration(0);
+
+		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
+		dmcConfig.setTourFinder(TourFinderModule.ACTIVITY_BASED);
+		dmcConfig.getActivityTourFinderConfigGroup().setActivityTypes(Arrays.asList("home", "outside"));
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
