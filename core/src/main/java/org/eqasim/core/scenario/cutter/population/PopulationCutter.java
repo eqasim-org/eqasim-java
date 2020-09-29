@@ -41,8 +41,9 @@ public class PopulationCutter {
 
 		for (int i = 0; i < numberOfThreads; i++) {
 			Thread thread = new Thread(new Worker(personIterator, progress, planCutterProvider));
-			thread.start();
 			thread.setUncaughtExceptionHandler(new ExceptionHandler());
+
+			thread.start();
 			threads.add(thread);
 		}
 
@@ -52,10 +53,11 @@ public class PopulationCutter {
 
 		progress.close();
 	}
-	
+
 	private class ExceptionHandler implements UncaughtExceptionHandler {
 		@Override
 		public void uncaughtException(Thread t, Throwable e) {
+			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 	}

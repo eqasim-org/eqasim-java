@@ -8,8 +8,6 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRoute;
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRouteFactory;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -65,8 +63,6 @@ public class EqasimConfigurator {
 	}
 
 	static public void configureScenario(Scenario scenario) {
-		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DefaultEnrichedTransitRoute.class,
-				new DefaultEnrichedTransitRouteFactory());
 	}
 
 	static public void adjustScenario(Scenario scenario) {

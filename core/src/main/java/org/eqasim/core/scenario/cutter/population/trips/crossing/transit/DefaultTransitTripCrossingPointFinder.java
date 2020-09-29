@@ -4,12 +4,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.teleportation.TeleportationCrossingPointFinder;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.pt.routes.TransitPassengerRoute;
 
 import com.google.inject.Inject;
 
@@ -49,7 +49,8 @@ public class DefaultTransitTripCrossingPointFinder implements TransitTripCrossin
 					break;
 				case "pt":
 					result.addAll(transitFinder
-							.findCrossingPoints((EnrichedTransitRoute) leg.getRoute(), leg.getDepartureTime().seconds())
+							.findCrossingPoints((TransitPassengerRoute) leg.getRoute(),
+									leg.getDepartureTime().seconds())
 							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
 					break;
 				default:
