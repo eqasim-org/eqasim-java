@@ -78,7 +78,7 @@ public class RunSimulation {
 		// This is not totally obvious, but we need to adjust the QSim components if we
 		// have AVs
 		controller.configureQSimComponents(configurator -> {
-			EqasimTransitQSimModule.configure(configurator);
+			EqasimTransitQSimModule.configure(configurator, config);
 			AVQSimModule.configureComponents(configurator);
 		});
 

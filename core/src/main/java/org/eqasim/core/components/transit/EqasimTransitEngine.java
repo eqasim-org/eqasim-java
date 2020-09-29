@@ -89,8 +89,8 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 			Leg leg = (Leg) ((PlanAgent) agent).getCurrentPlanElement();
 			EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
 
-			TransitLine transitLine = transitSchedule.getTransitLines().get(route.getTransitLineId());
-			TransitRoute transitRoute = transitLine.getRoutes().get(route.getTransitRouteId());
+			TransitLine transitLine = transitSchedule.getTransitLines().get(route.getLineId());
+			TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
 
 			TransitRouteStop accessStop = transitRoute.getStops().get(route.getAccessStopIndex());
 			TransitRouteStop egressStop = transitRoute.getStops().get(route.getEgressStopIndex());

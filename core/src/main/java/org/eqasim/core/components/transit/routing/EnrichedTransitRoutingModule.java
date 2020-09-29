@@ -52,13 +52,13 @@ public class EnrichedTransitRoutingModule implements RoutingModule {
 			if (legs.get(i).getMode().equals(TransportMode.pt)) {
 				EnrichedTransitRoute route = (EnrichedTransitRoute) legs.get(i).getRoute();
 
-				currentFacility = transitSchedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
-						.get(route.getTransitRouteId()).getStops().get(route.getEgressStopIndex()).getStopFacility();
+				currentFacility = transitSchedule.getTransitLines().get(route.getLineId()).getRoutes()
+						.get(route.getRouteId()).getStops().get(route.getEgressStopIndex()).getStopFacility();
 			} else {
 				EnrichedTransitRoute route = (EnrichedTransitRoute) legs.get(i + 1).getRoute();
 
-				currentFacility = transitSchedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
-						.get(route.getTransitRouteId()).getStops().get(route.getAccessStopIndex()).getStopFacility();
+				currentFacility = transitSchedule.getTransitLines().get(route.getLineId()).getRoutes()
+						.get(route.getRouteId()).getStops().get(route.getAccessStopIndex()).getStopFacility();
 			}
 
 			Activity activity = PopulationUtils.createActivityFromCoordAndLinkId(PtConstants.TRANSIT_ACTIVITY_TYPE,

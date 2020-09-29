@@ -30,8 +30,8 @@ public class DefaultTransitRouteCrossingPointFinder implements TransitRouteCross
 	public List<TransitRouteCrossingPoint> findCrossingPoints(EnrichedTransitRoute route, double departureTime) {
 		List<TransitRouteCrossingPoint> crossingPoints = new LinkedList<>();
 
-		TransitLine transitLine = schedule.getTransitLines().get(route.getTransitLineId());
-		TransitRoute transitRoute = transitLine.getRoutes().get(route.getTransitRouteId());
+		TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
+		TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
 
 		Departure departure = transitRoute.getDepartures().get(route.getDepartureId());
 		double routeDepartureTime = departure.getDepartureTime();

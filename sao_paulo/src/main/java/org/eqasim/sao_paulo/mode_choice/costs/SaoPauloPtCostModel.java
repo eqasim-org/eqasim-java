@@ -41,8 +41,8 @@ public class SaoPauloPtCostModel implements CostModel {
 				if (leg.getMode().contentEquals(mode)) {
 
 					TransitLine tl = scenario.getTransitSchedule().getTransitLines()
-							.get(((EnrichedTransitRoute) leg.getRoute()).getTransitLineId());
-					TransitRoute tr = tl.getRoutes().get(((EnrichedTransitRoute) leg.getRoute()).getTransitRouteId());
+							.get(((EnrichedTransitRoute) leg.getRoute()).getLineId());
+					TransitRoute tr = tl.getRoutes().get(((EnrichedTransitRoute) leg.getRoute()).getRouteId());
 					if (tr.getTransportMode().equals("subway") || tr.getTransportMode().equals("rail"))
 						n_Vehicles += 1;
 				}
@@ -62,8 +62,8 @@ public class SaoPauloPtCostModel implements CostModel {
 				if (leg.getMode().contentEquals(mode)) {
 
 					TransitLine tl = scenario.getTransitSchedule().getTransitLines()
-							.get(((EnrichedTransitRoute) leg.getRoute()).getTransitLineId());
-					TransitRoute tr = tl.getRoutes().get(((EnrichedTransitRoute) leg.getRoute()).getTransitRouteId());
+							.get(((EnrichedTransitRoute) leg.getRoute()).getLineId());
+					TransitRoute tr = tl.getRoutes().get(((EnrichedTransitRoute) leg.getRoute()).getRouteId());
 					if (tr.getTransportMode().equals("bus"))
 						n_Vehicles += 1;
 				}

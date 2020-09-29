@@ -23,6 +23,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private final static String TRIP_ANALYSIS_INTERVAL = "tripAnalysisInterval";
 	private final static String TRIP_ANALYSIS_DISTANCE_UNIT = "tripAnalysisDistanceUnit";
 
+	private final static String USE_SCHEDULE_BASED_TRANSPORT = "useScheduleBasedTransport";
+
 	private double sampleSize = 1.0;
 	private DistanceUnit distanceUnit = DistanceUnit.meter;
 
@@ -33,6 +35,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private int tripAnalysisInterval = 0;
 	private DistanceUnit tripAnalysisDistanceUnit = DistanceUnit.meter;
+
+	private boolean useScheduleBasedTransport = true;
 
 	public EqasimConfigGroup() {
 		super(GROUP_NAME);
@@ -222,5 +226,15 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(TRIP_ANALYSIS_DISTANCE_UNIT)
 	public void setTripAnalysisDistanceUnit(DistanceUnit tripAnalysisDistanceUnit) {
 		this.tripAnalysisDistanceUnit = tripAnalysisDistanceUnit;
+	}
+
+	@StringGetter(USE_SCHEDULE_BASED_TRANSPORT)
+	public boolean getUseScheduleBasedTransport() {
+		return useScheduleBasedTransport;
+	}
+
+	@StringSetter(USE_SCHEDULE_BASED_TRANSPORT)
+	public void setUseScheduleBasedTransport(boolean useScheduleBasedTransport) {
+		this.useScheduleBasedTransport = useScheduleBasedTransport;
 	}
 }

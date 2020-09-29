@@ -9,13 +9,14 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TestDefaultEnrichedTransitRoute {
 	@Test
 	public void testRouteInformatonSerialization() throws IOException {
-		DefaultEnrichedTransitRoute.RouteDescription description = new DefaultEnrichedTransitRoute.RouteDescription();
+		DefaultEnrichedTransitRoute.EnrichedRouteDescription description = new DefaultEnrichedTransitRoute.EnrichedRouteDescription();
 
 		description.transitLineId = Id.create("abc", TransitLine.class);
 		description.transitRouteId = Id.create("def", TransitRoute.class);
@@ -27,14 +28,17 @@ public class TestDefaultEnrichedTransitRoute {
 		description.inVehicleTime = 30.0;
 		description.transferTime = 55.0;
 
+		description.accessFacilityId = Id.create("af", TransitStopFacility.class);
+		description.egressFacilityId = Id.create("ef", TransitStopFacility.class);
+
 		String serialized = new ObjectMapper().writeValueAsString(description);
 
 		Assert.assertEquals(
-				"{\"inVehicleTime\":30.0,\"transferTime\":55.0,\"accessStopIndex\":20,\"egressStopindex\":40,\"transitRouteId\":\"def\",\"transitLineId\":\"abc\",\"departureId\":\"dep\"}",
+				"{\"transitRouteId\":\"def\",\"inVehicleTime\":30.0,\"transferTime\":55.0,\"accessStopIndex\":20,\"egressStopindex\":40,\"boardingTime\":\"undefined\",\"transitLineId\":\"abc\",\"accessFacilityId\":\"af\",\"egressFacilityId\":\"ef\",\"departureId\":\"dep\"}",
 				serialized);
 
-		DefaultEnrichedTransitRoute.RouteDescription deserialized = new ObjectMapper().readValue(serialized,
-				DefaultEnrichedTransitRoute.RouteDescription.class);
+		DefaultEnrichedTransitRoute.EnrichedRouteDescription deserialized = new ObjectMapper().readValue(serialized,
+				DefaultEnrichedTransitRoute.EnrichedRouteDescription.class);
 
 		Assert.assertEquals(20, deserialized.accessStopIndex);
 		Assert.assertEquals(40, deserialized.egressStopindex);
