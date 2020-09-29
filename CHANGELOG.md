@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Remove `EnrichedTransitRoute` and use default `TransitPassengerRoute`
 - Enable support for network-based public transport simulation by setting `eqasim.useScheduleBasedTransport` to `false` (it is activated by default)
 
 **1.1.0**
