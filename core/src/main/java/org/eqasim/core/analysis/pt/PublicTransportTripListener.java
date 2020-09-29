@@ -14,9 +14,11 @@ import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.events.handler.GenericEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.api.experimental.events.AgentWaitingForPtEvent;
+import org.matsim.core.api.experimental.events.handler.AgentWaitingForPtEventHandler;
 
-public class PublicTransportTripListener
-		implements PersonDepartureEventHandler, ActivityStartEventHandler, GenericEventHandler {
+public class PublicTransportTripListener implements PersonDepartureEventHandler, ActivityStartEventHandler,
+		GenericEventHandler, AgentWaitingForPtEventHandler {
 	final private Collection<PublicTransportTripItem> trips = new LinkedList<>();
 	final private Map<Id<Person>, Integer> tripIndices = new HashMap<>();
 
@@ -60,5 +62,11 @@ public class PublicTransportTripListener
 		} else {
 			tripIndices.compute(event.getPersonId(), (k, v) -> v + 1);
 		}
+	}
+
+	@Override
+	public void handleEvent(AgentWaitingForPtEvent event) {
+		throw new RuntimeException(
+				"So far, this analysis tool only works with schedule-based simulation. Your simulation input simulated public transport in the QSim.");
 	}
 }
