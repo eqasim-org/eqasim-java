@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class TestDefaultEnrichedTransitRoute {
 	@Test
 	public void testRouteInformatonSerialization() throws IOException {
-		DefaultEnrichedTransitRoute.RouteDescription description = new DefaultEnrichedTransitRoute.RouteDescription();
+		DefaultEnrichedTransitRoute.EnrichedRouteDescription description = new DefaultEnrichedTransitRoute.EnrichedRouteDescription();
 
 		description.transitLineId = Id.create("abc", TransitLine.class);
 		description.transitRouteId = Id.create("def", TransitRoute.class);
@@ -33,8 +33,8 @@ public class TestDefaultEnrichedTransitRoute {
 				"{\"inVehicleTime\":30.0,\"transferTime\":55.0,\"accessStopIndex\":20,\"egressStopindex\":40,\"transitRouteId\":\"def\",\"transitLineId\":\"abc\",\"departureId\":\"dep\"}",
 				serialized);
 
-		DefaultEnrichedTransitRoute.RouteDescription deserialized = new ObjectMapper().readValue(serialized,
-				DefaultEnrichedTransitRoute.RouteDescription.class);
+		DefaultEnrichedTransitRoute.EnrichedRouteDescription deserialized = new ObjectMapper().readValue(serialized,
+				DefaultEnrichedTransitRoute.EnrichedRouteDescription.class);
 
 		Assert.assertEquals(20, deserialized.accessStopIndex);
 		Assert.assertEquals(40, deserialized.egressStopindex);

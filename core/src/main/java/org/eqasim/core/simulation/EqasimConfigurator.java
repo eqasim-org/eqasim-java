@@ -60,7 +60,7 @@ public class EqasimConfigurator {
 		}
 
 		controller.configureQSimComponents(configurator -> {
-			EqasimTransitQSimModule.configure(configurator);
+			EqasimTransitQSimModule.configure(configurator, controller.getConfig());
 		});
 	}
 

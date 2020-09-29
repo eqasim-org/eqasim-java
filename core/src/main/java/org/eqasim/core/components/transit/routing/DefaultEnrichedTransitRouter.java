@@ -85,7 +85,9 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 					EnrichedTransitRoute enrichedRoute = new DefaultEnrichedTransitRoute(originalRoute.getStartLinkId(),
 							originalRoute.getEndLinkId(), distance, connection.getInVehicleTime(),
 							connection.getWaitingTime() + additionalTransferTime, accessStopIndex, egressStopIndex,
-							originalRoute.getLineId(), originalRoute.getRouteId(), connection.getDeparture().getId());
+							originalRoute.getLineId(), originalRoute.getRouteId(), connection.getDeparture().getId(),
+							originalRoute.getAccessStopId(), originalRoute.getEgressStopId(),
+							originalRoute.getBoardingTime());
 
 					currentLeg.setRoute(enrichedRoute);
 					currentLeg.setDepartureTime(currentTime);
@@ -114,17 +116,17 @@ public class DefaultEnrichedTransitRouter implements EnrichedTransitRouter {
 				if (i > 0) {
 					EnrichedTransitRoute preceedingRoute = (EnrichedTransitRoute) legs.get(i - 1).getRoute();
 
-					originCoord = transitSchedule.getTransitLines().get(preceedingRoute.getTransitLineId()).getRoutes()
-							.get(preceedingRoute.getTransitRouteId()).getStops()
-							.get(preceedingRoute.getEgressStopIndex()).getStopFacility().getCoord();
+					originCoord = transitSchedule.getTransitLines().get(preceedingRoute.getLineId()).getRoutes()
+							.get(preceedingRoute.getRouteId()).getStops().get(preceedingRoute.getEgressStopIndex())
+							.getStopFacility().getCoord();
 				}
 
 				if (i < legs.size() - 2) {
 					EnrichedTransitRoute followingRoute = (EnrichedTransitRoute) legs.get(i + 1).getRoute();
 
-					destinationCoord = transitSchedule.getTransitLines().get(followingRoute.getTransitLineId())
-							.getRoutes().get(followingRoute.getTransitRouteId()).getStops()
-							.get(followingRoute.getAccessStopIndex()).getStopFacility().getCoord();
+					destinationCoord = transitSchedule.getTransitLines().get(followingRoute.getLineId()).getRoutes()
+							.get(followingRoute.getRouteId()).getStops().get(followingRoute.getAccessStopIndex())
+							.getStopFacility().getCoord();
 				}
 
 				double beelineDistance = CoordUtils.calcEuclideanDistance(originCoord, destinationCoord);

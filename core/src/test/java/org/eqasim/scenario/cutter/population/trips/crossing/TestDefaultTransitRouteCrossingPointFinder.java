@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.pt.transitSchedule.TransitScheduleFactoryImpl;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
@@ -57,7 +58,7 @@ public class TestDefaultTransitRouteCrossingPointFinder {
 	}
 
 	final private static EnrichedTransitRoute routeMock = new DefaultEnrichedTransitRoute(null, null, 0.0, 0.0, 0.0, 3,
-			6, transitLine.getId(), transitRoute.getId(), departure.getId());
+			6, transitLine.getId(), transitRoute.getId(), departure.getId(), null, null, OptionalTime.undefined());
 
 	static ScenarioExtent createExtentMock(double... inside) {
 		List<Double> _inside = new LinkedList<>();
