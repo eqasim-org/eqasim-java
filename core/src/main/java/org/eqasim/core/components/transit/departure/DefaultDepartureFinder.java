@@ -1,5 +1,6 @@
 package org.eqasim.core.components.transit.departure;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,9 +20,28 @@ import com.google.inject.Singleton;
 public class DefaultDepartureFinder implements DepartureFinder {
 	@Override
 	public StopDeparture findNextDeparture(TransitRoute route, Id<TransitStopFacility> accessStopId,
-			double departureTime) throws NoDepartureFoundException {
-		List<TransitRouteStop> stopCandidates = route.getStops().stream()
-				.filter(s -> s.getStopFacility().getId().equals(accessStopId)).collect(Collectors.toList());
+			Id<TransitStopFacility> egressStopId, double departureTime) throws NoDepartureFoundException {
+		List<Id<TransitStopFacility>> stopIds = route.getStops().stream().map(s -> s.getStopFacility().getId())
+				.collect(Collectors.toList());
+
+		int firstAccessStopIndex = stopIds.indexOf(accessStopId);
+		int lastEgressStopIndex = stopIds.lastIndexOf(egressStopId);
+
+		if (firstAccessStopIndex == -1) {
+			throw new IllegalStateException("Access stop not found no route");
+		}
+
+		if (lastEgressStopIndex == -1) {
+			throw new IllegalStateException("Egress stop not found on route");
+		}
+
+		List<TransitRouteStop> stopCandidates = new LinkedList<>();
+
+		for (int i = firstAccessStopIndex; i <= lastEgressStopIndex; i++) {
+			if (stopIds.get(i).equals(accessStopId)) {
+				stopCandidates.add(route.getStops().get(i));
+			}
+		}
 
 		if (stopCandidates.size() == 0) {
 			throw new NoDepartureFoundException();

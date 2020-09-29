@@ -11,7 +11,7 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
  * corresponding Departure in the schedule
  */
 public interface DepartureFinder {
-	StopDeparture findNextDeparture(TransitRoute route, Id<TransitStopFacility> accessStopId, double departureTime)
+	StopDeparture findNextDeparture(TransitRoute route, Id<TransitStopFacility> accessStopId, Id<TransitStopFacility> egressStopId, double departureTime)
 			throws NoDepartureFoundException;
 
 	static public class NoDepartureFoundException extends Exception {

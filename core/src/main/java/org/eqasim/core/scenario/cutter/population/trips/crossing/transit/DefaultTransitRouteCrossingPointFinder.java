@@ -41,7 +41,7 @@ public class DefaultTransitRouteCrossingPointFinder implements TransitRouteCross
 			TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
 
 			StopDeparture stopDeparture = departureFinder.findNextDeparture(transitRoute, route.getAccessStopId(),
-					departureTime);
+					route.getEgressStopId(), departureTime);
 
 			Departure departure = stopDeparture.departure;
 			double routeDepartureTime = departure.getDepartureTime();

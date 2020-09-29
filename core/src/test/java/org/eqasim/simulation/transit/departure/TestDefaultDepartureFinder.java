@@ -44,25 +44,29 @@ public class TestDefaultDepartureFinder {
 
 		DepartureFinder finder = new DefaultDepartureFinder();
 
-		Assert.assertEquals(departureAt08, finder.findNextDeparture(route, facility00.getId(), 7.0 * 3600.0).departure);
-		Assert.assertEquals(departureAt08, finder.findNextDeparture(route, facility00.getId(), 8.0 * 3600.0).departure);
-		Assert.assertEquals(departureAt09, finder.findNextDeparture(route, facility00.getId(), 8.5 * 3600.0).departure);
-		Assert.assertEquals(departureAt10, finder.findNextDeparture(route, facility00.getId(), 9.5 * 3600.0).departure);
+		Assert.assertEquals(departureAt08,
+				finder.findNextDeparture(route, facility00.getId(), facility90.getId(), 7.0 * 3600.0).departure);
+		Assert.assertEquals(departureAt08,
+				finder.findNextDeparture(route, facility00.getId(), facility90.getId(), 8.0 * 3600.0).departure);
+		Assert.assertEquals(departureAt09,
+				finder.findNextDeparture(route, facility00.getId(), facility90.getId(), 8.5 * 3600.0).departure);
+		Assert.assertEquals(departureAt10,
+				finder.findNextDeparture(route, facility00.getId(), facility90.getId(), 9.5 * 3600.0).departure);
 		Assert.assertEquals(departureAt11,
-				finder.findNextDeparture(route, facility00.getId(), 10.5 * 3600.0).departure);
+				finder.findNextDeparture(route, facility00.getId(), facility90.getId(), 10.5 * 3600.0).departure);
 
 		boolean exceptionThrown = false;
 		try {
-			finder.findNextDeparture(route, facility00.getId(), 11.5 * 3600.0);
+			finder.findNextDeparture(route, facility00.getId(), facility90.getId(), 11.5 * 3600.0);
 		} catch (NoDepartureFoundException e) {
 			exceptionThrown = true;
 		}
 		Assert.assertTrue(exceptionThrown);
 
 		Assert.assertEquals(departureAt10,
-				finder.findNextDeparture(route, facility45.getId(), 10.5 * 3600.0).departure);
+				finder.findNextDeparture(route, facility45.getId(), facility90.getId(), 10.5 * 3600.0).departure);
 		Assert.assertEquals(departureAt09,
-				finder.findNextDeparture(route, facility90.getId(), 10.0 * 3600.0).departure);
+				finder.findNextDeparture(route, facility90.getId(), facility90.getId(), 10.0 * 3600.0).departure);
 	}
 
 	@Test
@@ -95,8 +99,52 @@ public class TestDefaultDepartureFinder {
 
 			DepartureFinder finder = new DefaultDepartureFinder();
 
-			Assert.assertEquals(stop00, finder.findNextDeparture(route, facilityA.getId(), 0.0).stop);
-			Assert.assertEquals(stop20, finder.findNextDeparture(route, facilityA.getId(), 111.0).stop);
+			Assert.assertEquals(stop00,
+					finder.findNextDeparture(route, facilityA.getId(), facilityC.getId(), 0.0).stop);
+			Assert.assertEquals(stop20,
+					finder.findNextDeparture(route, facilityA.getId(), facilityC.getId(), 111.0).stop);
+			Assert.assertEquals(stop20,
+					finder.findNextDeparture(route, facilityA.getId(), facilityC.getId(), 111.0).stop);
+		}
+
+		{
+			TransitRoute route = factory.createTransitRoute(null, null, Arrays.asList(stop00, stop10, stop20, stop30),
+					"pt");
+
+			// Departure 1: A (100), B (110), A (120), C (130)
+			// Departure 2: A (200), B (210), A (220), C (230)
+
+			// Departure time 115 -> so closest departure on this route is at the second A
+			// However, we want to go to B, so we need to take the next departure and choose
+			// the first A!
+
+			Departure departure100 = factory.createDeparture(Id.create("dep100", Departure.class), 100.0);
+			route.addDeparture(departure100);
+
+			Departure departure200 = factory.createDeparture(Id.create("dep200", Departure.class), 200.0);
+			route.addDeparture(departure200);
+
+			DepartureFinder finder = new DefaultDepartureFinder();
+
+			Assert.assertEquals(stop00,
+					finder.findNextDeparture(route, facilityA.getId(), facilityC.getId(), 0.0).stop);
+			Assert.assertEquals(departure100,
+					finder.findNextDeparture(route, facilityA.getId(), facilityC.getId(), 0.0).departure);
+
+			Assert.assertEquals(stop00,
+					finder.findNextDeparture(route, facilityA.getId(), facilityB.getId(), 0.0).stop);
+			Assert.assertEquals(departure100,
+					finder.findNextDeparture(route, facilityA.getId(), facilityB.getId(), 0.0).departure);
+
+			Assert.assertEquals(stop20,
+					finder.findNextDeparture(route, facilityA.getId(), facilityC.getId(), 115.0).stop);
+			Assert.assertEquals(departure100,
+					finder.findNextDeparture(route, facilityA.getId(), facilityC.getId(), 115.0).departure);
+
+			Assert.assertEquals(stop00,
+					finder.findNextDeparture(route, facilityA.getId(), facilityB.getId(), 115.0).stop);
+			Assert.assertEquals(departure200,
+					finder.findNextDeparture(route, facilityA.getId(), facilityB.getId(), 115.0).departure);
 		}
 	}
 }

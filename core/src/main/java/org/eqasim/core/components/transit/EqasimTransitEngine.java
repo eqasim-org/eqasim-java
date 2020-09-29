@@ -93,7 +93,7 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 
 			try {
 				StopDeparture stopDeparture = departureFinder.findNextDeparture(transitRoute, route.getAccessStopId(),
-						now);
+						route.getEgressStopId(), now);
 
 				double vehicleDepartureTime = stopDeparture.departure.getDepartureTime()
 						+ stopDeparture.stop.getDepartureOffset().seconds();
