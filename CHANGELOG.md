@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Added Corsica unit test case for running simulation and cutting French scenarios
 - Remove `EnrichedTransitRoute` and use default `TransitPassengerRoute`
 - Enable support for network-based public transport simulation by setting `eqasim.useScheduleBasedTransport` to `false` (it is activated by default)
 
