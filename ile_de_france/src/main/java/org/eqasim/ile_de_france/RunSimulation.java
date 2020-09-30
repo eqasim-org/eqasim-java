@@ -1,5 +1,8 @@
 package org.eqasim.ile_de_france;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 import org.eqasim.core.components.car_pt.routing.EqasimCarPtModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -15,6 +18,8 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+
+import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -39,6 +44,15 @@ public class RunSimulation {
 		params.setScoringThisActivityAtAll(false);
 
 		scoringConfig.addActivityParams(params);
+		
+		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
+				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
+
+		//And then you have an attribute "cachedModes". You should augment it with your "car_pt" mode:
+
+		 Collection<String> cachedModes = new HashSet<>(dmcConfig.getCachedModes());
+		 cachedModes.add("car_pt");
+		 dmcConfig.setCachedModes(cachedModes);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
