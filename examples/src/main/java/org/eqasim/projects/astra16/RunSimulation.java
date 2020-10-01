@@ -1,7 +1,6 @@
 package org.eqasim.projects.astra16;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.components.traffic.EqasimLinkSpeedCalculator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.calibration.CalibrationModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -15,8 +14,8 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.qnetsimengine.ConfigurableQNetworkFactory;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QNetworkFactory;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -72,17 +71,16 @@ public class RunSimulation {
 		controller.addOverridingModule(new TravelTimeComparisonModule());
 		AstraConfigurator.configureController(controller, cmd);
 
-		controller.addOverridingModule(new AbstractModule() {
-			@Provides
-			@Singleton
-			public QNetworkFactory provideQNetworkFactory(EventsManager events, Scenario scenario,
-					EqasimLinkSpeedCalculator linkSpeedCalculator) {
-				ConfigurableQNetworkFactory networkFactory = new ConfigurableQNetworkFactory(events, scenario);
-				return networkFactory;
+		controller.addOverridingQSimModule(new AbstractQSimModule() {
+			@Override
+			protected void configureQSim() {
 			}
 
-			@Override
-			public void install() {
+			@Provides
+			@Singleton
+			public QNetworkFactory provideQNetworkFactory(EventsManager events, Scenario scenario) {
+				ConfigurableQNetworkFactory networkFactory = new ConfigurableQNetworkFactory(events, scenario);
+				return networkFactory;
 			}
 		});
 
