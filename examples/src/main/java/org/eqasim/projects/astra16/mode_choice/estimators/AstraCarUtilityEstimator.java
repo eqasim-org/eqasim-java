@@ -11,6 +11,7 @@ import org.eqasim.projects.astra16.mode_choice.predictors.AstraPersonPredictor;
 import org.eqasim.projects.astra16.mode_choice.predictors.AstraTripPredictor;
 import org.eqasim.projects.astra16.mode_choice.variables.AstraPersonVariables;
 import org.eqasim.projects.astra16.mode_choice.variables.AstraTripVariables;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 
@@ -76,6 +77,9 @@ public class AstraCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateWorkUtility(tripVariables);
 		utility += estimateCityUtility(tripVariables);
+
+		Leg leg = (Leg) elements.get(0);
+		leg.getAttributes().putAttribute("isNew", true);
 
 		return utility;
 	}

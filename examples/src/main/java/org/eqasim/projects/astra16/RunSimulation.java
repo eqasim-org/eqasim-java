@@ -9,19 +9,12 @@ import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.mobsim.qsim.AbstractQSimModule;
-import org.matsim.core.mobsim.qsim.qnetsimengine.ConfigurableQNetworkFactory;
-import org.matsim.core.mobsim.qsim.qnetsimengine.QNetworkFactory;
 import org.matsim.core.scenario.ScenarioUtils;
-
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -61,6 +54,8 @@ public class RunSimulation {
 			}
 		}
 
+		// EqasimLinkSpeedCalcilator deactivated!
+
 		Controler controller = new Controler(scenario);
 		SwitzerlandConfigurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
@@ -70,19 +65,6 @@ public class RunSimulation {
 		controller.addOverridingModule(new AstraModule(cmd));
 		controller.addOverridingModule(new TravelTimeComparisonModule());
 		AstraConfigurator.configureController(controller, cmd);
-
-		/*controller.addOverridingQSimModule(new AbstractQSimModule() {
-			@Override
-			protected void configureQSim() {
-			}
-
-			@Provides
-			@Singleton
-			public QNetworkFactory provideQNetworkFactory(EventsManager events, Scenario scenario) {
-				ConfigurableQNetworkFactory networkFactory = new ConfigurableQNetworkFactory(events, scenario);
-				return networkFactory;
-			}
-		});*/
 
 		controller.run();
 	}

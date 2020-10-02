@@ -83,9 +83,15 @@ public class TravelTimeComparisonListener
 				double simulatedTravelTime = event.getTime() - departureTime;
 
 				Leg leg = getNextLeg(event.getPersonId());
-				double plannedTravelTime = leg.getTravelTime();
 
-				statistics.addValue(simulatedTravelTime - plannedTravelTime);
+				Boolean isNew = (Boolean) leg.getAttributes().getAttribute("isNew");
+
+				if (isNew != null && isNew) {
+					leg.getAttributes().removeAttribute("isNew");
+					double plannedTravelTime = leg.getTravelTime();
+
+					statistics.addValue(simulatedTravelTime - plannedTravelTime);
+				}
 			}
 		}
 	}
