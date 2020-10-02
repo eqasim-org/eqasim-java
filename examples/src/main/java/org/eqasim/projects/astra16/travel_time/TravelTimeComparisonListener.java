@@ -84,14 +84,14 @@ public class TravelTimeComparisonListener
 
 				Leg leg = getNextLeg(event.getPersonId());
 
-				// Boolean isNew = (Boolean) leg.getAttributes().getAttribute("isNew");
+				Boolean isNew = (Boolean) leg.getAttributes().getAttribute("isNew");
 
-				// if (isNew != null && isNew) {
-				// leg.getAttributes().removeAttribute("isNew");
-				double plannedTravelTime = leg.getTravelTime();
+				if (isNew != null && isNew) {
+					leg.getAttributes().putAttribute("isNew", false);
+					double plannedTravelTime = leg.getTravelTime();
 
-				statistics.addValue(simulatedTravelTime - plannedTravelTime);
-				// }
+					statistics.addValue(simulatedTravelTime - plannedTravelTime);
+				}
 			}
 		}
 	}
