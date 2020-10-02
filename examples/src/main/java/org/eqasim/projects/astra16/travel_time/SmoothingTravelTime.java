@@ -32,6 +32,8 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 	private final int numberOfTimeBins;
 	private final int numberOfLinks;
 
+	private final boolean fixTravelTime;
+
 	private final Map<Id<Link>, Integer> id2index = new HashMap<>();
 
 	private final double[][] cumulativeTravelTimes;
@@ -44,7 +46,7 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 	// Setup part: Handling indices and making space
 
 	public SmoothingTravelTime(double startTime, double endTime, double interval, double increasingAlpha,
-			double decreasingAlpha, boolean fixFreespeedTravelTime, Network network) {
+			double decreasingAlpha, boolean fixTravelTime, Network network) {
 		this.increasingAlpha = increasingAlpha;
 		this.decreasingAlpha = decreasingAlpha;
 
@@ -53,6 +55,8 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 
 		this.numberOfTimeBins = 1 + (int) Math.floor((endTime - startTime) / interval);
 		this.numberOfLinks = network.getLinks().size();
+
+		this.fixTravelTime = fixTravelTime;
 
 		this.cumulativeTravelTimes = new double[numberOfLinks][numberOfTimeBins];
 		this.travelTimeCounts = new double[numberOfLinks][numberOfTimeBins];
@@ -66,10 +70,6 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 			id2index.put(link.getId(), linkIndex);
 
 			double defaultValue = link.getLength() / link.getFreespeed();
-
-			if (fixFreespeedTravelTime) {
-				defaultValue = Math.floor(defaultValue) + 1.0;
-			}
 
 			this.defaults[linkIndex] = defaultValue;
 
@@ -102,15 +102,22 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 	@Override
 	public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
 		int linkIndex = getLinkIndex(link.getId());
+		double travelTime = Double.NaN;
 
 		if (Time.isUndefinedTime(time)) {
 			// Special case when OnlyTimeDependencyTravelDisutility requests the lower bound
-			return defaults[linkIndex];
+			travelTime = defaults[linkIndex];
+		} else {
+			int timeIndex = getTimeIndex(time);
+			// travelTime = Math.max(estimates[linkIndex][timeIndex], defaults[linkIndex]);
+			travelTime = estimates[linkIndex][timeIndex];
 		}
 
-		int timeIndex = getTimeIndex(time);
+		if (fixTravelTime) {
+			travelTime = Math.floor(travelTime) + 1.0;
+		}
 
-		return Math.max(estimates[linkIndex][timeIndex], defaults[linkIndex]);
+		return travelTime;
 	}
 
 	// Estimation part: After Mobsim, consolidate travel times

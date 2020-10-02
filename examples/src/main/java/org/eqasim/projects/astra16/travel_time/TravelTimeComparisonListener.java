@@ -11,10 +11,8 @@ import java.util.Map;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Leg;
@@ -24,10 +22,11 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
+import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.utils.charts.XYLineChart;
 
-public class TravelTimeComparisonListener implements PersonDepartureEventHandler, PersonArrivalEventHandler,
-		IterationEndsListener, LinkEnterEventHandler {
+public class TravelTimeComparisonListener
+		implements PersonDepartureEventHandler, PersonArrivalEventHandler, IterationEndsListener {
 	private final Population population;
 	private final OutputDirectoryHierarchy outputHierarchy;
 
@@ -39,8 +38,6 @@ public class TravelTimeComparisonListener implements PersonDepartureEventHandler
 	private final Map<Integer, Double> q90History = new HashMap<>();
 
 	private final Map<Id<Person>, PersonDepartureEvent> departureEvents = new HashMap<>();
-	private final Map<Id<Person>, Double> lastEnterEvents = new HashMap<>();
-
 	private final Map<Id<Person>, Integer> elementIndices = new HashMap<>();
 
 	public TravelTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, Population population) {
@@ -84,21 +81,14 @@ public class TravelTimeComparisonListener implements PersonDepartureEventHandler
 
 			if (departureEvent != null) {
 				double departureTime = departureEvent.getTime();
-				Double lastEnterTime = lastEnterEvents.remove(event.getPersonId());
-
-				if (lastEnterTime == null) {
-					lastEnterTime = departureTime;
-				}
-
-				double simulatedTravelTime = lastEnterTime - departureTime;
+				double simulatedTravelTime = event.getTime() - departureTime;
 
 				Leg leg = getNextLeg(event.getPersonId());
-
 				Boolean isNew = (Boolean) leg.getAttributes().getAttribute("isNew");
 
 				if (isNew != null && isNew) {
 					leg.getAttributes().putAttribute("isNew", false);
-					double plannedTravelTime = leg.getTravelTime();
+					double plannedTravelTime = ((NetworkRoute) leg.getRoute()).getTravelTime();
 
 					statistics.addValue(simulatedTravelTime - plannedTravelTime);
 				}
@@ -148,11 +138,5 @@ public class TravelTimeComparisonListener implements PersonDepartureEventHandler
 		statistics.clear();
 		departureEvents.clear();
 		elementIndices.clear();
-		lastEnterEvents.clear();
-	}
-
-	@Override
-	public void handleEvent(LinkEnterEvent event) {
-		lastEnterEvents.put(Id.createPersonId(event.getVehicleId()), event.getTime());
 	}
 }
