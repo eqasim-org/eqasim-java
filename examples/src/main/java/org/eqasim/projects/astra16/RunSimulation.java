@@ -4,6 +4,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.calibration.CalibrationModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.projects.astra16.travel_time.SmoothingTravelTimeModule;
 import org.eqasim.projects.astra16.travel_time.TravelTimeComparisonModule;
 import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
@@ -65,6 +66,8 @@ public class RunSimulation {
 		controller.addOverridingModule(new AstraModule(cmd));
 		controller.addOverridingModule(new TravelTimeComparisonModule());
 		AstraConfigurator.configureController(controller, cmd);
+
+		controller.addOverridingModule(new SmoothingTravelTimeModule());
 
 		controller.run();
 	}
