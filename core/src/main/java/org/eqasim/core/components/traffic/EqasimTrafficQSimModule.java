@@ -17,14 +17,14 @@ public class EqasimTrafficQSimModule extends AbstractQSimModule {
 
 	}
 
-	@Provides
+	/*@Provides
 	@Singleton
 	public QNetworkFactory provideQNetworkFactory(EventsManager events, Scenario scenario,
 			EqasimLinkSpeedCalculator linkSpeedCalculator) {
 		ConfigurableQNetworkFactory networkFactory = new ConfigurableQNetworkFactory(events, scenario);
 		networkFactory.setLinkSpeedCalculator(linkSpeedCalculator);
 		return networkFactory;
-	}
+	}*/
 
 	@Provides
 	@Singleton

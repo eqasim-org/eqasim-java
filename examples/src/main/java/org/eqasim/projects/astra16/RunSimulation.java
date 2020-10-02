@@ -71,7 +71,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new TravelTimeComparisonModule());
 		AstraConfigurator.configureController(controller, cmd);
 
-		controller.addOverridingQSimModule(new AbstractQSimModule() {
+		/*controller.addOverridingQSimModule(new AbstractQSimModule() {
 			@Override
 			protected void configureQSim() {
 			}
@@ -82,7 +82,7 @@ public class RunSimulation {
 				ConfigurableQNetworkFactory networkFactory = new ConfigurableQNetworkFactory(events, scenario);
 				return networkFactory;
 			}
-		});
+		});*/
 
 		controller.run();
 	}
