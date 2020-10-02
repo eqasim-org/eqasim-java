@@ -11,8 +11,10 @@ import java.util.Map;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
+import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Leg;
@@ -24,8 +26,8 @@ import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.charts.XYLineChart;
 
-public class TravelTimeComparisonListener
-		implements PersonDepartureEventHandler, PersonArrivalEventHandler, IterationEndsListener {
+public class TravelTimeComparisonListener implements PersonDepartureEventHandler, PersonArrivalEventHandler,
+		IterationEndsListener, LinkEnterEventHandler {
 	private final Population population;
 	private final OutputDirectoryHierarchy outputHierarchy;
 
@@ -37,6 +39,8 @@ public class TravelTimeComparisonListener
 	private final Map<Integer, Double> q90History = new HashMap<>();
 
 	private final Map<Id<Person>, PersonDepartureEvent> departureEvents = new HashMap<>();
+	private final Map<Id<Person>, Double> lastEnterEvents = new HashMap<>();
+
 	private final Map<Id<Person>, Integer> elementIndices = new HashMap<>();
 
 	public TravelTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, Population population) {
@@ -80,7 +84,9 @@ public class TravelTimeComparisonListener
 
 			if (departureEvent != null) {
 				double departureTime = departureEvent.getTime();
-				double simulatedTravelTime = event.getTime() - departureTime;
+				double lastEnterTime = lastEnterEvents.remove(event.getPersonId());
+
+				double simulatedTravelTime = lastEnterTime - departureTime;
 
 				Leg leg = getNextLeg(event.getPersonId());
 
@@ -138,5 +144,11 @@ public class TravelTimeComparisonListener
 		statistics.clear();
 		departureEvents.clear();
 		elementIndices.clear();
+		lastEnterEvents.clear();
+	}
+
+	@Override
+	public void handleEvent(LinkEnterEvent event) {
+		lastEnterEvents.put(Id.createPersonId(event.getVehicleId()), event.getTime());
 	}
 }

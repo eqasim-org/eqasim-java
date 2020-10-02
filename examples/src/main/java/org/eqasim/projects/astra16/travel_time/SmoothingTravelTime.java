@@ -151,11 +151,9 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 
 	private void handleLeaveLink(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
 		int linkIndex = getLinkIndex(linkId);
-		Double enterTime = enterTimes.get(linkIndex).get(vehicleId);
+		Double enterTime = enterTimes.get(linkIndex).remove(vehicleId);
 
 		if (enterTime != null) {
-			enterTimes.get(linkIndex).remove(vehicleId);
-
 			int startTimeIndex = getTimeIndex(enterTime);
 			int endTimeIndex = getTimeIndex(time);
 
