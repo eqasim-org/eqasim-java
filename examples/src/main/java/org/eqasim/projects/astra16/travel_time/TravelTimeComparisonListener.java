@@ -84,7 +84,11 @@ public class TravelTimeComparisonListener implements PersonDepartureEventHandler
 
 			if (departureEvent != null) {
 				double departureTime = departureEvent.getTime();
-				double lastEnterTime = lastEnterEvents.remove(event.getPersonId());
+				Double lastEnterTime = lastEnterEvents.remove(event.getPersonId());
+
+				if (lastEnterTime == null) {
+					lastEnterTime = departureTime;
+				}
 
 				double simulatedTravelTime = lastEnterTime - departureTime;
 
