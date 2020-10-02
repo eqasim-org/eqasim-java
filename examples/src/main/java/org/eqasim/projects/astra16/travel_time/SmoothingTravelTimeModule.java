@@ -24,7 +24,7 @@ public class SmoothingTravelTimeModule extends AbstractModule {
 
 		boolean fixFreespeedTravelTime = true;
 
-		double smoothingIncreasingAlpha = 0.9;
+		double smoothingIncreasingAlpha = 0.1; // 9;
 		double smoothingDecreasingAlpha = 0.1;
 
 		return new SmoothingTravelTime(startTime, endTime, interval, smoothingIncreasingAlpha, smoothingDecreasingAlpha,
