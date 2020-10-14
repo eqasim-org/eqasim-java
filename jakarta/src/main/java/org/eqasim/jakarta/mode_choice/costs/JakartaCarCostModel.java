@@ -581,8 +581,8 @@ public class JakartaCarCostModel extends AbstractCostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		return costParameters.carCost_KIDR_km * getInVehicleDistance_km(elements)
-				+ costParameters.carCharging_KIDR_km * getkmLink(elements);
+		return costParameters.carCost_KIDR_km * getInVehicleDistance_km(elements);
+				//+ costParameters.carCharging_KIDR_km * getkmLink(elements);
 	}
 	
 	//@Override

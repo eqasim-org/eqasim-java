@@ -6,6 +6,13 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.jakarta.eventhandling.MyEventHandler1;
+import org.eqasim.jakarta.eventhandling.MyEventHandler2;
+import org.eqasim.jakarta.eventhandling.MyEventHandler3;
+import org.eqasim.jakarta.eventhandling.MyEventHandler4;
+import org.eqasim.jakarta.eventhandling.MyEventHandler5;
+import org.eqasim.jakarta.eventhandling.MyEventHandler6;
+import org.eqasim.jakarta.eventhandling.MyEventHandler7;
 import org.eqasim.jakarta.mode_choice.JakartaModeChoiceModule;
 import org.eqasim.jakarta.roadpricing.JakartaMcRoadPricingModule;
 import org.matsim.api.core.v01.Scenario;
@@ -13,9 +20,10 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.roadpricing.RoadPricingModule;
+//import org.matsim.roadpricing.RoadPricingModule;
 
 
 
@@ -62,7 +70,21 @@ public class RunSimulation {
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);
 		controller.addOverridingModule(new JakartaMcRoadPricingModule());
-		controller.addOverridingModule(new RoadPricingModule());
+		// add the events handlers
+		controller.addOverridingModule(new AbstractModule(){
+			@Override public void install() {
+				this.addEventHandlerBinding().toInstance( new MyEventHandler1() );
+				this.addEventHandlerBinding().toInstance( new MyEventHandler2() );
+				this.addEventHandlerBinding().toInstance( new MyEventHandler3() );
+				this.addEventHandlerBinding().toInstance( new MyEventHandler4() );
+				this.addEventHandlerBinding().toInstance( new MyEventHandler5() );
+				this.addEventHandlerBinding().toInstance( new MyEventHandler6() );
+				this.addEventHandlerBinding().toInstance( new MyEventHandler7() );
+					}
+			  	
+				
+				});
+		//controller.addOverridingModule(new RoadPricingModule());
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new JakartaModeChoiceModule(cmd));
