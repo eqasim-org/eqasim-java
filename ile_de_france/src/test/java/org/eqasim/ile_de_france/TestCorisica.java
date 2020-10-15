@@ -52,11 +52,11 @@ public class TestCorisica {
 			Assert.assertEquals(3162, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/simulation_output/output_events.xml.gz");
-			Assert.assertEquals(8108, (long) counts.get("car"));
-			Assert.assertEquals(915, (long) counts.get("car_passenger"));
-			Assert.assertEquals(2094, (long) counts.get("walk"));
-			Assert.assertEquals(6, (long) counts.get("bike"));
-			Assert.assertEquals(58, (long) counts.get("pt"));
+			Assert.assertEquals(7782, (long) counts.get("car"));
+			Assert.assertEquals(894, (long) counts.get("car_passenger"));
+			Assert.assertEquals(2089, (long) counts.get("walk"));
+			Assert.assertEquals(2, (long) counts.get("bike"));
+			Assert.assertEquals(47, (long) counts.get("pt"));
 		}
 
 		// Cut the scenario based on output plans
@@ -70,7 +70,7 @@ public class TestCorisica {
 					"--output-path", "corsica_test", //
 			});
 
-			Assert.assertEquals(1290, countPersons("corsica_test/cut_population.xml.gz"));
+			Assert.assertEquals(1286, countPersons("corsica_test/cut_population.xml.gz"));
 		}
 
 		// Run the cut simulation
@@ -81,15 +81,15 @@ public class TestCorisica {
 					"--config:controler.outputDirectory", "corsica_test/cut_output", //
 			});
 
-			Assert.assertEquals(1290, countPersons("corsica_test/cut_output/output_plans.xml.gz"));
+			Assert.assertEquals(1286, countPersons("corsica_test/cut_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
-			Assert.assertEquals(3195, (long) counts.get("car"));
-			Assert.assertEquals(374, (long) counts.get("car_passenger"));
-			Assert.assertEquals(876, (long) counts.get("walk"));
+			Assert.assertEquals(2997, (long) counts.get("car"));
+			Assert.assertEquals(387, (long) counts.get("car_passenger"));
+			Assert.assertEquals(847, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
-			Assert.assertEquals(14, (long) counts.get("pt"));
-			Assert.assertEquals(128, (long) counts.get("outside"));
+			Assert.assertEquals(6, (long) counts.get("pt"));
+			Assert.assertEquals(95, (long) counts.get("outside"));
 		}
 	}
 

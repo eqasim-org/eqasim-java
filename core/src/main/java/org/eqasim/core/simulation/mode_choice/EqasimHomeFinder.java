@@ -17,6 +17,10 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 public class EqasimHomeFinder implements HomeFinder {
 	@Override
 	public Id<? extends BasicLocation> getHomeLocationId(List<DiscreteModeChoiceTrip> trips) {
+		if (trips.size() == 0) {
+			return null;
+		}
+
 		Id<? extends BasicLocation> leisureLocationId = null;
 
 		for (DiscreteModeChoiceTrip trip : trips) {
