@@ -10,7 +10,6 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.ConstraintModule;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
 import org.matsim.contribs.discrete_mode_choice.modules.EstimatorModule;
-import org.matsim.contribs.discrete_mode_choice.modules.HomeFinderModule;
 import org.matsim.contribs.discrete_mode_choice.modules.ModelModule.ModelType;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
 import org.matsim.contribs.discrete_mode_choice.modules.TourFinderModule;
@@ -113,7 +112,7 @@ public class GenerateConfig {
 		PlansCalcRouteConfigGroup routingConfig = config.plansCalcRoute();
 
 		config.plansCalcRoute().setNetworkModes(NETWORK_MODES);
-		
+
 		// TODO: Potentially defaults we should change after MATSim 12
 		config.plansCalcRoute().setInsertingAccessEgressWalk(false);
 		config.plansCalcRoute().setRoutingRandomness(0.0);
@@ -155,11 +154,11 @@ public class GenerateConfig {
 		dmcConfig.setModeAvailability("unknown");
 
 		dmcConfig.setTourConstraints(
-				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.FROM_TRIP_BASED));
+				Arrays.asList(EqasimModeChoiceModule.VEHICLE_TOUR_CONSTRAINT, ConstraintModule.FROM_TRIP_BASED));
 		dmcConfig.setTripConstraints(Arrays.asList(ConstraintModule.TRANSIT_WALK,
 				EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME, EqasimModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
 
-		dmcConfig.setHomeFinder(HomeFinderModule.ACTIVITY_BASED);
+		dmcConfig.setHomeFinder(EqasimModeChoiceModule.HOME_FINDER);
 		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,

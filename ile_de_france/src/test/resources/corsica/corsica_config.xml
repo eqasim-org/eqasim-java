@@ -10,7 +10,7 @@
 		<!-- Defines what happens if there is no feasible choice alternative for an agent: IGNORE_AGENT, INITIAL_CHOICE, EXCEPTION -->
 		<param name="fallbackBehaviour" value="EXCEPTION" />
 		<!-- Defines how home activities are identified. Built-in choices: FirstActivity, ActivityBased -->
-		<param name="homeFinder" value="ActivityBased" />
+		<param name="homeFinder" value="EqasimHomeFinder" />
 		<!-- Defines which ModeAvailability component to use. Built-in choices: Default, Car -->
 		<param name="modeAvailability" value="IDFModeAvailability" />
 		<!-- Main model type: Trip, Tour -->
@@ -20,7 +20,7 @@
 		<!-- Defines which Selector component to use. Built-in choices: Maximum, MultinomialLogit, Random -->
 		<param name="selector" value="MultinomialLogit" />
 		<!-- Defines a number of TourConstraint components that should be activated. Built-in choices: FromTripBased, VehicleContinuity, SubtourMode -->
-		<param name="tourConstraints" value="FromTripBased, VehicleContinuity" />
+		<param name="tourConstraints" value="FromTripBased, EqasimVehicleTourConstraint" />
 		<!-- Defines which TourEstimator component to use. Built-in choices: MATSimDayScoring, Cumulative, Uniform -->
 		<param name="tourEstimator" value="Cumulative" />
 		<!-- Defines a number of TourFilter components that should be activated. Built-in choices: TourLength -->
