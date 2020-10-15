@@ -67,8 +67,12 @@ public class RunSimulation {
 		config.qsim().setFlowCapFactor(1e9);
 		config.qsim().setStorageCapFactor(1e9);
 		
+		//config.controler().setOutputDirectory("output_lead");
+		config.controler().setOutputDirectory("output_lead_hub");
+		
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		freightConfig.setCarriersFile("/home/shoerl/lyon/data/carriers.xml");
+		//freightConfig.setCarriersFile("/home/shoerl/lyon/data/carriers.xml");
+		freightConfig.setCarriersFile("/home/shoerl/lyon/data/carriers_with_hubs.xml");
 		freightConfig.setCarriersVehicleTypesFile("/home/shoerl/lyon/freight_vehicle_types.xml");
 		freightConfig.setTravelTimeSliceWidth(900);
 
