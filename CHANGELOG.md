@@ -6,6 +6,10 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- No changes yet
+
+**1.2.0**
+
 - Properly perform mode choice for "free" activity chains or those which do not start or end with "home"
 - Added Corsica unit test case for running simulation and cutting French scenarios
 - Remove `EnrichedTransitRoute` and use default `TransitPassengerRoute`
