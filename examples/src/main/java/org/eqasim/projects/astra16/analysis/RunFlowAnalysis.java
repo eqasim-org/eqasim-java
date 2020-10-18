@@ -68,7 +68,7 @@ public class RunFlowAnalysis {
 				Coordinate toCoordinate = new Coordinate(toCoord.getX(), toCoord.getY());
 
 				if (link.getAllowedModes().contains("car")) {
-					Object[] attributes = new Object[61];
+					Object[] attributes = new Object[62];
 					attributes[0] = link.getId().toString();
 					attributes[1] = (String) link.getAttributes().getAttribute("osm:way:highway");
 
