@@ -137,8 +137,8 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 		while (!arrivals.isEmpty() && arrivals.peek().arrivalTime <= time) {
 			AgentArrival arrival = arrivals.poll();
 			arrival.agent.notifyArrivalOnLinkByNonNetworkMode(arrival.arrivalLinkId);
-			eventsManager.processEvent(arrival.event);
-			eventsManager.processEvent(new TeleportationArrivalEvent(arrival.arrivalTime, arrival.agent.getId(),
+			eventsManager.processEvent(new PublicTransitEvent(time, arrival.event));
+			eventsManager.processEvent(new TeleportationArrivalEvent(time, arrival.agent.getId(),
 					arrival.event.getTravelDistance(), "pt"));
 			arrival.agent.endLegAndComputeNextState(time);
 			internalInterface.arrangeNextAgentState(arrival.agent);
