@@ -44,6 +44,12 @@ public class OutsideActivityAdapter {
 						}
 					}
 				}
+
+				Activity lastActivity = (Activity) plan.getPlanElements().get(plan.getPlanElements().size() - 1);
+
+				if (lastActivity.getType().equals("outside")) {
+					lastActivity.setEndTimeUndefined();
+				}
 			}
 		}
 	}

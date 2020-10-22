@@ -12,15 +12,13 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.StageActivityTypesImpl;
-import org.matsim.pt.PtConstants;
 
 public class RunTripAnalysis {
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("output-path") //
 				.allowOptions("population-path", "events-path", "network-path") //
-				.allowOptions("stage-activity-types", "vehicle-modes") //
+				.allowOptions("vehicle-modes") //
 				.allowOptions("input-distance-units", "output-distance-units") //
 				.build();
 
@@ -39,11 +37,6 @@ public class RunTripAnalysis {
 
 		String outputPath = cmd.getOptionStrict("output-path");
 
-		String plainStageActivityTypes = cmd.getOption("stage-activity-types")
-				.orElse(PtConstants.TRANSIT_ACTIVITY_TYPE);
-		StageActivityTypesImpl stageActivityTypes = new StageActivityTypesImpl(Arrays
-				.asList(plainStageActivityTypes.split(",")).stream().map(s -> s.trim()).collect(Collectors.toSet()));
-
 		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
 
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
@@ -57,13 +50,12 @@ public class RunTripAnalysis {
 			new MatsimNetworkReader(network).readFile(networkPath);
 
 			String eventsPath = cmd.getOptionStrict("events-path");
-			TripListener tripListener = new TripListener(network, stageActivityTypes, mainModeIdentifier,
-					personAnalysisFilter);
+			TripListener tripListener = new TripListener(network, mainModeIdentifier, personAnalysisFilter);
 			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
 		} else {
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(vehicleModes, stageActivityTypes, mainModeIdentifier,
-					personAnalysisFilter).readTrips(populationPath);
+			trips = new TripReaderFromPopulation(vehicleModes, mainModeIdentifier, personAnalysisFilter)
+					.readTrips(populationPath);
 		}
 
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));

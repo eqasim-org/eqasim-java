@@ -20,12 +20,24 @@ import org.eqasim.projects.astra16.mode_choice.estimators.AstraPtUtilityEstimato
 import org.eqasim.projects.astra16.mode_choice.estimators.AstraWalkUtilityEstimator;
 import org.eqasim.projects.astra16.pricing.PricingModule;
 import org.eqasim.projects.astra16.pricing.model.AstraAvCostModel;
+import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.eqasim.projects.astra16.service_area.ServiceAreaModule;
 import org.eqasim.projects.astra16.waiting_time.WaitingTimeModule;
+import org.matsim.amodeus.components.dispatcher.single_heuristic.SingleHeuristicDispatcher;
+import org.matsim.amodeus.config.AmodeusConfigGroup;
+import org.matsim.amodeus.config.AmodeusModeConfig;
+import org.matsim.amodeus.config.modal.DispatcherConfig;
+import org.matsim.amodeus.config.modal.TimingConfig;
+import org.matsim.amodeus.config.modal.WaitingTimeConfig;
+import org.matsim.amodeus.framework.AmodeusQSimModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -33,16 +45,6 @@ import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
 import org.matsim.core.controler.Controler;
 import org.matsim.households.Household;
 
-import ch.ethz.matsim.av.config.AVConfigGroup;
-import ch.ethz.matsim.av.config.operator.DispatcherConfig;
-import ch.ethz.matsim.av.config.operator.OperatorConfig;
-import ch.ethz.matsim.av.config.operator.TimingConfig;
-import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
-import ch.ethz.matsim.av.dispatcher.single_heuristic.SingleHeuristicDispatcher;
-import ch.ethz.matsim.av.framework.AVModule;
-import ch.ethz.matsim.av.framework.AVQSimModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 
 public class AstraConfigurator extends EqasimConfigurator {
@@ -100,13 +102,14 @@ public class AstraConfigurator extends EqasimConfigurator {
 
 		// Add default AV configuration
 		AvConfigurator.configure(config);
-		eqasimConfig.setEstimator(AVModule.AV_MODE, AstraAvUtilityEstimator.NAME);
-		eqasimConfig.setCostModel(AVModule.AV_MODE, AstraAvCostModel.NAME);
+		eqasimConfig.setEstimator("av", AstraAvUtilityEstimator.NAME);
+		eqasimConfig.setCostModel("av", AstraAvCostModel.NAME);
 
 		// Set up AV
-		AVConfigGroup avConfig = AVConfigGroup.getOrCreate(config);
-		avConfig.setUseAccessAgress(true);
-		avConfig.setAllowedLinkMode("car"); // And later we also filter for operating area
+		AmodeusConfigGroup avConfig = AmodeusConfigGroup.get(config);
+		AmodeusModeConfig modeConfig = avConfig.getMode("av");
+
+		modeConfig.setUseAccessAgress(true);
 
 		avConfig.setVehicleAnalysisInterval(config.controler().getWriteEventsInterval());
 		avConfig.setPassengerAnalysisInterval(config.controler().getWriteEventsInterval());
@@ -116,13 +119,11 @@ public class AstraConfigurator extends EqasimConfigurator {
 		// Here we assume that all other config stuff has been handled before
 		AstraConfigGroup astraConfig = AstraConfigGroup.get(config);
 
-		OperatorConfig operatorConfig = AVConfigGroup.getOrCreate(config)
-				.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID);
+		AmodeusModeConfig operatorConfig = AmodeusConfigGroup.get(config).getMode("av");
 		operatorConfig.getGeneratorConfig().setNumberOfVehicles(astraConfig.getFleetSize());
 
-		operatorConfig.setCleanNetwork(true);
-
-		WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeConfig();
+		WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeEstimationConfig();
+		waitingTimeConfig.setEstimationLinkAttribute("avWaitingTimeGroup");
 		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
 		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
 		waitingTimeConfig.setEstimationInterval(15.0 * 60.0);
@@ -130,12 +131,31 @@ public class AstraConfigurator extends EqasimConfigurator {
 		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
 
 		TimingConfig timingConfig = operatorConfig.getTimingConfig();
-		timingConfig.setPickupDurationPerStop(120.0);
-		timingConfig.setDropoffDurationPerStop(60.0);
+		timingConfig.setMinimumPickupDurationPerStop(120.0);
+		timingConfig.setMinimumDropoffDurationPerStop(60.0);
+		timingConfig.setPickupDurationPerPassenger(0.0);
+		timingConfig.setDropoffDurationPerPassenger(0.0);
 
 		DispatcherConfig dispatcherConfig = operatorConfig.getDispatcherConfig();
 		dispatcherConfig.setType(SingleHeuristicDispatcher.TYPE);
 		dispatcherConfig.addParam("replanningInterval", String.valueOf(astraConfig.getDispatchInterval()));
+	}
+
+	static public void adjustNetwork(Scenario scenario) {
+		Network network = scenario.getNetwork();
+		ServiceArea serviceArea = new ServiceAreaModule().provideServiceArea(scenario.getConfig(),
+				AstraConfigGroup.get(scenario.getConfig()), network);
+
+		for (Link link : network.getLinks().values()) {
+			if (serviceArea.covers(link)) {
+				Set<String> modes = new HashSet<>(link.getAllowedModes());
+
+				if (modes.contains("car")) {
+					modes.add("av");
+					link.setAllowedModes(modes);
+				}
+			}
+		}
 	}
 
 	static public void adjustScenario(Scenario scenario) {
@@ -176,8 +196,8 @@ public class AstraConfigurator extends EqasimConfigurator {
 		controller.addOverridingModule(new PricingModule());
 
 		controller.configureQSimComponents(configurator -> {
-			EqasimTransitQSimModule.configure(configurator);
-			AVQSimModule.configureComponents(configurator);
+			EqasimTransitQSimModule.configure(configurator, controller.getConfig());
+			AmodeusQSimModule.activateModes(controller.getConfig()).configure(configurator);
 		});
 	}
 }

@@ -19,27 +19,30 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.matsim.amodeus.components.dispatcher.single_heuristic.SingleHeuristicDispatcher;
+import org.matsim.amodeus.components.generator.PopulationDensityGenerator;
+import org.matsim.amodeus.config.AmodeusConfigGroup;
+import org.matsim.amodeus.config.AmodeusModeConfig;
+import org.matsim.amodeus.config.modal.DispatcherConfig;
+import org.matsim.amodeus.config.modal.GeneratorConfig;
+import org.matsim.amodeus.config.modal.WaitingTimeConfig;
+import org.matsim.amodeus.framework.AmodeusModule;
+import org.matsim.amodeus.framework.AmodeusQSimModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 import org.opengis.feature.simple.SimpleFeature;
 
-import ch.ethz.matsim.av.config.AVConfigGroup;
-import ch.ethz.matsim.av.config.operator.DispatcherConfig;
-import ch.ethz.matsim.av.config.operator.GeneratorConfig;
-import ch.ethz.matsim.av.config.operator.OperatorConfig;
-import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
-import ch.ethz.matsim.av.dispatcher.single_heuristic.SingleHeuristicDispatcher;
-import ch.ethz.matsim.av.framework.AVModule;
-import ch.ethz.matsim.av.generator.PopulationDensityGenerator;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import com.google.common.collect.ImmutableSet;
 
 public final class AvConfigurator {
 	private AvConfigurator() {
@@ -49,17 +52,25 @@ public final class AvConfigurator {
 		// Set up DVRP
 		if (!config.getModules().containsKey(DvrpConfigGroup.GROUP_NAME)) {
 			config.addModule(new DvrpConfigGroup());
+
+			DvrpConfigGroup dvrpConfig = DvrpConfigGroup.get(config);
+			dvrpConfig.setNetworkModes(ImmutableSet.of("av"));
 		}
 
 		// Set up AV extension
-		if (!config.getModules().containsKey(AVConfigGroup.GROUP_NAME)) {
-			AVConfigGroup avConfig = AVConfigGroup.getOrCreate(config);
-			avConfig.setAllowedLinkMode("av");
+		if (!config.getModules().containsKey(AmodeusConfigGroup.GROUP_NAME)) {
+			AmodeusConfigGroup avConfig = AmodeusConfigGroup.get(config);
+
+			avConfig.setPassengerAnalysisInterval(1);
+			avConfig.setVehicleAnalysisInterval(1);
 
 			// Set up operator
-			OperatorConfig operatorConfig = new OperatorConfig();
-			avConfig.addOperator(operatorConfig);
+			AmodeusModeConfig operatorConfig = new AmodeusModeConfig("av");
+			avConfig.addMode(operatorConfig);
+
+			operatorConfig.setUseModeFilteredSubnetwork(true);
 			operatorConfig.setPredictRouteTravelTime(true); // Important for prediction!
+			operatorConfig.setPredictRoutePrice(true);
 
 			DispatcherConfig dispatcherConfig = operatorConfig.getDispatcherConfig();
 			dispatcherConfig.setType(SingleHeuristicDispatcher.TYPE);
@@ -68,7 +79,7 @@ public final class AvConfigurator {
 			generatorConfig.setType(PopulationDensityGenerator.TYPE);
 			generatorConfig.setNumberOfVehicles(10);
 
-			WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeConfig();
+			WaitingTimeConfig waitingTimeConfig = operatorConfig.getWaitingTimeEstimationConfig();
 			waitingTimeConfig.setEstimationAlpha(0.1);
 		}
 
@@ -89,12 +100,8 @@ public final class AvConfigurator {
 		dmcConfig.setCachedModes(cachedModes);
 
 		// Set up MATSim scoring (although we don't really use it - MATSim wants it)
-		ModeParams modeParams = new ModeParams(AVModule.AV_MODE);
+		ModeParams modeParams = new ModeParams("av");
 		config.planCalcScore().addModeParams(modeParams);
-
-		ActivityParams interactionParams = new ActivityParams("av interaction");
-		interactionParams.setTypicalDuration(3600.0);
-		config.planCalcScore().addActivityParams(interactionParams);
 
 		// Set up Eqasim (add AV cost model and estimator)
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
@@ -103,6 +110,11 @@ public final class AvConfigurator {
 
 		// Set up config group
 		EqasimAvConfigGroup.getOrCreate(config);
+
+		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
+		ActivityParams interactionParams = new ActivityParams("amodeus interaction");
+		interactionParams.setScoringThisActivityAtAll(false);
+		scoringConfig.addActivityParams(interactionParams);
 	}
 
 	// TODO: This will be included in the next version of DMC
@@ -172,8 +184,9 @@ public final class AvConfigurator {
 	}
 
 	static public void configureController(Controler controller, CommandLine cmd) {
-		controller.addOverridingModule(new AVModule());
 		controller.addOverridingModule(new DvrpModule());
+		controller.addOverridingModule(new AmodeusModule());
+		controller.addOverridingQSimModule(new AmodeusQSimModule());
 		controller.addOverridingModule(new AvModeChoiceModule(cmd));
 	}
 }

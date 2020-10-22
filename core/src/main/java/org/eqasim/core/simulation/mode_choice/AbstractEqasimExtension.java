@@ -5,12 +5,11 @@ import java.util.Map;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
+import org.matsim.contribs.discrete_mode_choice.modules.AbstractDiscreteModeChoiceExtension;
 
 import com.google.inject.Provider;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.MapBinder;
-
-import ch.ethz.matsim.discrete_mode_choice.modules.AbstractDiscreteModeChoiceExtension;
 
 public abstract class AbstractEqasimExtension extends AbstractDiscreteModeChoiceExtension {
 	private MapBinder<String, UtilityEstimator> estimatorBinder;

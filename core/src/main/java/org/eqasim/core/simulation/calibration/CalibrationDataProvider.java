@@ -22,7 +22,7 @@ public class CalibrationDataProvider {
 				reference.distanceBoundaries);
 
 		for (TripItem trip : tripListener.getTripItems()) {
-			if (trip.preceedingPurpose.equals("outside")) {
+			if (trip.precedingPurpose.equals("outside")) {
 				continue;
 			}
 
@@ -33,12 +33,12 @@ public class CalibrationDataProvider {
 			if (trip.mode.equals("outside")) {
 				continue;
 			}
-			
-			if (trip.crowflyDistance < 10.0) {
+
+			if (trip.euclideanDistance == 0.0) {
 				continue;
 			}
 
-			tracker.addObservation(trip.mode, trip.crowflyDistance);
+			tracker.addObservation(trip.mode, trip.euclideanDistance);
 		}
 
 		CalibrationData data = new CalibrationData();
@@ -61,7 +61,7 @@ public class CalibrationDataProvider {
 			for (String mode : modes) {
 				binDistribution.put(mode, tracker.getCounts().get(mode).get(i) / distanceNumberOfTrips);
 			}
-			
+
 			data.modeShareByDistance.add(binDistribution);
 		}
 

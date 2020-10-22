@@ -1,7 +1,5 @@
 package org.eqasim.core.components.headway;
 
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRoute;
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRouteFactory;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
@@ -31,8 +29,6 @@ public class RunImputeHeadway {
 				.orElse(Runtime.getRuntime().availableProcessors());
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DefaultEnrichedTransitRoute.class,
-				new DefaultEnrichedTransitRouteFactory());
 		ScenarioUtils.loadScenario(scenario);
 
 		Injector injector = new InjectorBuilder(scenario) //

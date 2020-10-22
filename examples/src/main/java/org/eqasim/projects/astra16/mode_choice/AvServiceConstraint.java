@@ -4,19 +4,17 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eqasim.projects.astra16.service_area.ServiceArea;
+import org.matsim.amodeus.routing.AmodeusRoute;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.constraints.AbstractTripConstraint;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraint;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraintFactory;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.RoutedTripCandidate;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 import org.matsim.core.utils.geometry.CoordUtils;
-
-import ch.ethz.matsim.av.framework.AVModule;
-import ch.ethz.matsim.av.routing.AVRoute;
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import ch.ethz.matsim.discrete_mode_choice.model.constraints.AbstractTripConstraint;
-import ch.ethz.matsim.discrete_mode_choice.model.trip_based.TripConstraint;
-import ch.ethz.matsim.discrete_mode_choice.model.trip_based.TripConstraintFactory;
-import ch.ethz.matsim.discrete_mode_choice.model.trip_based.candidates.RoutedTripCandidate;
-import ch.ethz.matsim.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 
 public class AvServiceConstraint extends AbstractTripConstraint {
 	static public final String NAME = "AVServiceConstraint";
@@ -32,7 +30,7 @@ public class AvServiceConstraint extends AbstractTripConstraint {
 	}
 
 	public boolean validateBeforeEstimation(DiscreteModeChoiceTrip trip, String mode, List<String> previousModes) {
-		if (mode.equals(AVModule.AV_MODE)) {
+		if (mode.equals("av")) {
 			// Require minimum distance
 
 			double directDistance_km = 1e-3 * CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
@@ -53,7 +51,7 @@ public class AvServiceConstraint extends AbstractTripConstraint {
 
 	public boolean validateAfterEstimation(DiscreteModeChoiceTrip trip, TripCandidate candidate,
 			List<TripCandidate> previousCandidates) {
-		if (candidate.getMode().equals(AVModule.AV_MODE)) {
+		if (candidate.getMode().equals("av")) {
 			RoutedTripCandidate routedCandidate = (RoutedTripCandidate) candidate;
 
 			double waitingTime_min = 0.0;
@@ -62,9 +60,9 @@ public class AvServiceConstraint extends AbstractTripConstraint {
 				if (element instanceof Leg) {
 					Leg leg = (Leg) element;
 
-					if (leg.getMode().equals(AVModule.AV_MODE)) {
-						AVRoute route = (AVRoute) leg.getRoute();
-						waitingTime_min += route.getWaitingTime() / 60.0;
+					if (leg.getMode().equals("av")) {
+						AmodeusRoute route = (AmodeusRoute) leg.getRoute();
+						waitingTime_min += route.getWaitingTime().seconds() / 60.0;
 					}
 				}
 			}

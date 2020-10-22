@@ -34,7 +34,6 @@ public class HeadwayImputerModule extends AbstractModule {
 	@Provides
 	public HeadwayImputer provideHeadwayImputer(Provider<HeadwayCalculator> calculatorProvider, Network network,
 			TripRouter tripRouter) {
-		return new HeadwayImputer(numberOfThreads, batchSize, replaceExistingHeadways,
-				tripRouter.getStageActivityTypes(), network, calculatorProvider);
+		return new HeadwayImputer(numberOfThreads, batchSize, replaceExistingHeadways, network, calculatorProvider);
 	}
 }

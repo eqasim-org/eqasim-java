@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.matsim.amodeus.components.generator.AmodeusIdentifiers;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
@@ -47,7 +48,7 @@ public class TravelTimeComparisonListener
 
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
-		if (!event.getPersonId().toString().startsWith("av:")) {
+		if (!AmodeusIdentifiers.isValid(event.getPersonId())) {
 			if (event.getLegMode().equals(TransportMode.car)) {
 				departureEvents.put(event.getPersonId(), event);
 			}
@@ -88,7 +89,7 @@ public class TravelTimeComparisonListener
 
 				if (isNew != null && isNew) {
 					leg.getAttributes().putAttribute("isNew", false);
-					double plannedTravelTime = ((NetworkRoute) leg.getRoute()).getTravelTime();
+					double plannedTravelTime = ((NetworkRoute) leg.getRoute()).getTravelTime().seconds();
 
 					statistics.addValue(simulatedTravelTime - plannedTravelTime);
 				}

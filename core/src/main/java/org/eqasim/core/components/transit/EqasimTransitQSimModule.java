@@ -1,7 +1,9 @@
 package org.eqasim.core.components.transit;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.departure.DepartureFinder;
 import org.matsim.core.api.experimental.events.EventsManager;
+import org.matsim.core.config.Config;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.QSim;
 import org.matsim.core.mobsim.qsim.components.QSimComponentsConfig;
@@ -16,7 +18,9 @@ public class EqasimTransitQSimModule extends AbstractQSimModule {
 
 	@Override
 	protected void configureQSim() {
-		addQSimComponentBinding(COMPONENT_NAME).to(EqasimTransitEngine.class);
+		if (EqasimConfigGroup.get(getConfig()).getUseScheduleBasedTransport()) {
+			addQSimComponentBinding(COMPONENT_NAME).to(EqasimTransitEngine.class);
+		}
 	}
 
 	@Provides
@@ -26,8 +30,10 @@ public class EqasimTransitQSimModule extends AbstractQSimModule {
 		return new EqasimTransitEngine(eventsManager, transitSchedule, departureFinder, qsim.getAgentCounter());
 	}
 
-	static public void configure(QSimComponentsConfig components) {
-		components.removeNamedComponent(TransitEngineModule.TRANSIT_ENGINE_NAME);
-		components.addNamedComponent(COMPONENT_NAME);
+	static public void configure(QSimComponentsConfig components, Config config) {
+		if (EqasimConfigGroup.get(config).getUseScheduleBasedTransport()) {
+			components.removeNamedComponent(TransitEngineModule.TRANSIT_ENGINE_NAME);
+			components.addNamedComponent(COMPONENT_NAME);
+		}
 	}
 }

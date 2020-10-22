@@ -10,6 +10,7 @@ import org.matsim.api.core.v01.population.PlanElement;
 
 public class TripListenerItem extends TripItem {
 	public List<PlanElement> elements = new LinkedList<>();
+	public double lastAddedLinkDistance = 0.0;
 
 	public TripListenerItem(Id<Person> personId, int personTripId, Coord origin, double startTime,
 			String startPurpose) {

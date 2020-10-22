@@ -12,21 +12,18 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 
 public class TripReaderFromPopulation {
 	final private Collection<String> networkModes;
-	final private StageActivityTypes stageActivityTypes;
 	final private MainModeIdentifier mainModeIdentifier;
 	final private PersonAnalysisFilter personFilter;
 
-	public TripReaderFromPopulation(Collection<String> networkModes, StageActivityTypes stageActivityTypes,
-			MainModeIdentifier mainModeIdentifier, PersonAnalysisFilter personFilter) {
+	public TripReaderFromPopulation(Collection<String> networkModes, MainModeIdentifier mainModeIdentifier,
+			PersonAnalysisFilter personFilter) {
 		this.networkModes = networkModes;
-		this.stageActivityTypes = stageActivityTypes;
 		this.mainModeIdentifier = mainModeIdentifier;
 		this.personFilter = personFilter;
 	}
@@ -43,8 +40,7 @@ public class TripReaderFromPopulation {
 
 		for (Person person : population.getPersons().values()) {
 			if (personFilter.analyzePerson(person.getId())) {
-				List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(person.getSelectedPlan(),
-						stageActivityTypes);
+				List<TripStructureUtils.Trip> trips = TripStructureUtils.getTrips(person.getSelectedPlan());
 
 				int personTripIndex = 0;
 
@@ -52,9 +48,10 @@ public class TripReaderFromPopulation {
 					boolean isHomeTrip = trip.getDestinationActivity().getType().equals("home");
 
 					tripItems.add(new TripItem(person.getId(), personTripIndex, trip.getOriginActivity().getCoord(),
-							trip.getDestinationActivity().getCoord(), trip.getOriginActivity().getEndTime(),
-							trip.getDestinationActivity().getStartTime() - trip.getOriginActivity().getEndTime(),
-							getNetworkDistance(trip), getRoutedDistance(trip),
+							trip.getDestinationActivity().getCoord(), trip.getOriginActivity().getEndTime().seconds(),
+							trip.getDestinationActivity().getStartTime().seconds()
+									- trip.getOriginActivity().getEndTime().seconds(),
+							getVehicleDistance(trip), getRoutedDistance(trip),
 							mainModeIdentifier.identifyMainMode(trip.getTripElements()),
 							trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
 							CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
@@ -69,32 +66,32 @@ public class TripReaderFromPopulation {
 	}
 
 	private double getRoutedDistance(TripStructureUtils.Trip trip) {
-		double routedDistance = 0.0;
+		double vehicleDistance = 0.0;
 
 		for (Leg leg : trip.getLegsOnly()) {
 			if (leg.getRoute() == null) {
-				routedDistance += Double.NaN;
+				vehicleDistance += Double.NaN;
 			} else {
-				routedDistance += leg.getRoute().getDistance();
+				vehicleDistance += leg.getRoute().getDistance();
 			}
 		}
 
-		return routedDistance;
+		return vehicleDistance;
 	}
 
-	private double getNetworkDistance(TripStructureUtils.Trip trip) {
-		double networkDistance = 0.0;
+	private double getVehicleDistance(TripStructureUtils.Trip trip) {
+		double routedDistance = 0.0;
 
 		for (Leg leg : trip.getLegsOnly()) {
 			if (networkModes.contains(leg.getMode())) {
 				if (leg.getRoute() == null) {
-					networkDistance += Double.NaN;
+					routedDistance += Double.NaN;
 				} else {
-					networkDistance += leg.getRoute().getDistance();
+					routedDistance += leg.getRoute().getDistance();
 				}
 			}
 		}
 
-		return networkDistance;
+		return routedDistance;
 	}
 }

@@ -14,20 +14,17 @@ import org.eqasim.projects.astra16.pricing.model.AstraAvCostModel;
 import org.eqasim.projects.astra16.pricing.model.PriceInterpolator;
 import org.eqasim.projects.astra16.pricing.tracker.BusinessModelTracker;
 import org.eqasim.projects.astra16.pricing.tracker.PricingTracker;
+import org.matsim.amodeus.analysis.FleetInformationListener;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-
-import ch.ethz.matsim.av.analysis.FleetDistanceListener;
-import ch.ethz.matsim.av.config.operator.OperatorConfig;
 
 public class PricingModule extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 		bindCostModel(AstraAvCostModel.NAME).to(AstraAvCostModel.class);
 
-		addEventHandlerBinding().to(BusinessModelUpdater.class);
 		addControlerListenerBinding().to(BusinessModelUpdater.class);
 
 		addControlerListenerBinding().to(PricingTracker.class);
@@ -61,9 +58,9 @@ public class PricingModule extends AbstractEqasimExtension {
 
 	@Singleton
 	@Provides
-	public BusinessModelUpdater provideBusinessModelUpdater(FleetDistanceListener distanceListener, BusinessModel model,
-			BusinessModelListener listener) {
-		return new BusinessModelUpdater(OperatorConfig.DEFAULT_OPERATOR_ID, distanceListener, model, listener);
+	public BusinessModelUpdater provideBusinessModelUpdater(FleetInformationListener distanceListener,
+			BusinessModel model, BusinessModelListener listener) {
+		return new BusinessModelUpdater(distanceListener, model, listener);
 	}
 
 	@Singleton

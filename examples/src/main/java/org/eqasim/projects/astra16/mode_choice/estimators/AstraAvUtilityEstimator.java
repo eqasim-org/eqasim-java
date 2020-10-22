@@ -14,10 +14,9 @@ import org.eqasim.projects.astra16.mode_choice.variables.AstraPersonVariables;
 import org.eqasim.projects.astra16.mode_choice.variables.AstraTripVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class AstraAvUtilityEstimator extends AvUtilityEstimator {
 	static public final String NAME = "AstraAvEstimator";

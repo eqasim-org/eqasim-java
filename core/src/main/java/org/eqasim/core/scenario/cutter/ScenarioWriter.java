@@ -10,7 +10,7 @@ import org.matsim.core.config.ConfigWriter;
 import org.matsim.facilities.FacilitiesWriter;
 import org.matsim.households.HouseholdsWriterV10;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
-import org.matsim.vehicles.VehicleWriterV1;
+import org.matsim.vehicles.MatsimVehicleWriter;
 
 public class ScenarioWriter {
 	private final String prefix;
@@ -40,7 +40,7 @@ public class ScenarioWriter {
 				.writeFile(new File(outputDirectory, prefix + "households.xml.gz").toString());
 		new TransitScheduleWriter(scenario.getTransitSchedule())
 				.writeFile(new File(outputDirectory, prefix + "transit_schedule.xml.gz").toString());
-		new VehicleWriterV1(scenario.getTransitVehicles())
+		new MatsimVehicleWriter(scenario.getTransitVehicles())
 				.writeFile(new File(outputDirectory, prefix + "transit_vehicles.xml.gz").toString());
 
 	}

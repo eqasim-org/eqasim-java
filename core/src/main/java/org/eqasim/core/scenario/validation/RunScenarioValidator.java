@@ -1,6 +1,5 @@
 package org.eqasim.core.scenario.validation;
 
-import org.eqasim.core.misc.InteractionStageActivityTypes;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -17,7 +16,7 @@ public class RunScenarioValidator {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 
-		ScenarioValidator scenarioValidator = new ScenarioValidator(new InteractionStageActivityTypes());
+		ScenarioValidator scenarioValidator = new ScenarioValidator();
 		scenarioValidator.checkScenario(scenario);
 	}
 }

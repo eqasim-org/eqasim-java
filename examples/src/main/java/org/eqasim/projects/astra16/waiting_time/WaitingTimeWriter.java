@@ -11,15 +11,14 @@ import java.util.Map;
 import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.eqasim.projects.astra16.service_area.ServiceAreaZone;
 import org.locationtech.jts.geom.Coordinate;
+import org.matsim.amodeus.config.modal.WaitingTimeConfig;
+import org.matsim.amodeus.waiting_time.WaitingTime;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.facilities.Facility;
-
-import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
-import ch.ethz.matsim.av.waiting_time.WaitingTime;
 
 public class WaitingTimeWriter {
 	private final WaitingTime waitingTime;

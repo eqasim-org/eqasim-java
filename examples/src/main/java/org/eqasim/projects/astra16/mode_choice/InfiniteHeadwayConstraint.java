@@ -5,11 +5,10 @@ import java.util.List;
 
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import ch.ethz.matsim.discrete_mode_choice.model.constraints.AbstractTripConstraint;
-import ch.ethz.matsim.discrete_mode_choice.model.trip_based.TripConstraint;
-import ch.ethz.matsim.discrete_mode_choice.model.trip_based.TripConstraintFactory;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.constraints.AbstractTripConstraint;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraint;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraintFactory;
 
 public class InfiniteHeadwayConstraint extends AbstractTripConstraint {
 	static public final String NAME = "InfiniteHeadway";

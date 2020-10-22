@@ -2,7 +2,6 @@ package org.eqasim.projects.astra16.mode_choice.predictors;
 
 import java.util.List;
 
-import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
@@ -13,12 +12,12 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Inject;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class AstraPtPredictor extends CachedVariablePredictor<AstraPtVariables> {
 	public final PtPredictor delegate;
@@ -45,14 +44,17 @@ public class AstraPtPredictor extends CachedVariablePredictor<AstraPtVariables> 
 				Leg leg = (Leg) element;
 
 				if (leg.getMode().equals(TransportMode.pt)) {
-					EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
-					TransitRoute transitRoute = schedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
-							.get(route.getTransitRouteId());
+					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+					TransitRoute transitRoute = schedule.getTransitLines().get(route.getLineId()).getRoutes()
+							.get(route.getRouteId());
+
+					double waitingTime_s = route.getBoardingTime().seconds() - leg.getDepartureTime().seconds();
+					double inVehicleTime_s = route.getTravelTime().seconds() - waitingTime_s;
 
 					if (transitRoute.getTransportMode().equals("rail")) {
-						railTravelTime_min += route.getInVehicleTime() / 60.0;
+						railTravelTime_min += inVehicleTime_s / 60.0;
 					} else {
-						busTravelTime_min += route.getInVehicleTime() / 60.0;
+						busTravelTime_min += inVehicleTime_s / 60.0;
 					}
 				}
 			}

@@ -1,6 +1,8 @@
 package org.eqasim.projects.dynamic_av.pricing.cost_calculator;
 
-import org.eqasim.projects.dynamic_av.pricing.cost_calculator.definitions.ScenarioDefinition;
+import org.eqasim.projects.astra16.pricing.cost_calculator.CostCalculator;
+import org.eqasim.projects.astra16.pricing.cost_calculator.CostCalculatorParameters;
+import org.eqasim.projects.astra16.pricing.cost_calculator.definitions.ScenarioDefinition;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -9,10 +9,8 @@ import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPredictorUti
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
-
-import ch.ethz.matsim.av.framework.AVModule;
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import ch.ethz.matsim.discrete_mode_choice.model.mode_availability.ModeAvailability;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 
 public class AstraModeAvailability implements ModeAvailability {
 	public static final String NAME = "AstraModeAvailability";
@@ -35,7 +33,7 @@ public class AstraModeAvailability implements ModeAvailability {
 			Coord homeLocation = SwissPredictorUtils.getHomeLocation(person);
 
 			if (homeLocation != null && serviceArea.covers(homeLocation)) {
-				modes.add(AVModule.AV_MODE);
+				modes.add("av");
 			}
 		}
 

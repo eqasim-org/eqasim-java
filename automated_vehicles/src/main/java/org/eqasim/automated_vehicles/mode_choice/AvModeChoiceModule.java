@@ -1,7 +1,6 @@
 package org.eqasim.automated_vehicles.mode_choice;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.Map;
 
 import org.eqasim.automated_vehicles.components.AvPersonAnalysisFilter;
@@ -19,6 +18,10 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.matsim.amodeus.analysis.FleetInformationListener;
+import org.matsim.amodeus.analysis.LinkFinder;
+import org.matsim.amodeus.config.AmodeusConfigGroup;
+import org.matsim.amodeus.config.AmodeusModeConfig;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -27,11 +30,6 @@ import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-
-import ch.ethz.matsim.av.analysis.FleetDistanceListener;
-import ch.ethz.matsim.av.analysis.LinkFinder;
-import ch.ethz.matsim.av.config.AVConfigGroup;
-import ch.ethz.matsim.av.config.operator.OperatorConfig;
 
 public class AvModeChoiceModule extends AbstractEqasimExtension {
 	static public final String AV_ESTIMATOR_NAME = "AvEstimator";
@@ -52,11 +50,18 @@ public class AvModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTripConstraintFactory(AV_WALK_CONSTRAINT_NAME).to(AvWalkConstraint.Factory.class);
 
-		addEventHandlerBinding().to(FleetDistanceListener.class);
 		addControlerListenerBinding().to(AvCostListener.class);
 		addControlerListenerBinding().to(AvCostWriter.class);
 
 		bind(PersonAnalysisFilter.class).to(AvPersonAnalysisFilter.class);
+		addControlerListenerBinding().to(FleetInformationListener.class);
+	}
+
+	@Provides
+	@Singleton
+	public FleetInformationListener provideFleetInformationListener(Network network) {
+		LinkFinder linkFinder = new LinkFinder(network);
+		return new FleetInformationListener("av", linkFinder);
 	}
 
 	@Provides
@@ -74,10 +79,10 @@ public class AvModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public AvCostListener provideAvCostListener(AvCostParameters parameters, FleetDistanceListener distanceListener,
-			AVConfigGroup config, EqasimConfigGroup eqasimConfig) {
-		int numberOfVehicles = config.getOperatorConfig(OperatorConfig.DEFAULT_OPERATOR_ID).getGeneratorConfig()
-				.getNumberOfVehicles();
+	public AvCostListener provideAvCostListener(AvCostParameters parameters, FleetInformationListener distanceListener,
+			AmodeusConfigGroup config, EqasimConfigGroup eqasimConfig) {
+		AmodeusModeConfig modeConfig = config.getMode("av");
+		int numberOfVehicles = modeConfig.getGeneratorConfig().getNumberOfVehicles();
 
 		return new AvCostListener(parameters, distanceListener, numberOfVehicles);
 	}
@@ -112,12 +117,5 @@ public class AvModeChoiceModule extends AbstractEqasimExtension {
 	@Named("av")
 	public CostModel provideCarCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
 		return getCostModel(factory, config, "av");
-	}
-
-	@Provides
-	@Singleton
-	public FleetDistanceListener provideFleetDistanceListener(Network network) {
-		LinkFinder linkFinder = new LinkFinder(network);
-		return new FleetDistanceListener(Collections.singleton(OperatorConfig.DEFAULT_OPERATOR_ID), linkFinder);
 	}
 }

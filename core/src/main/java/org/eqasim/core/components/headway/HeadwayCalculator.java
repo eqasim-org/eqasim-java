@@ -2,6 +2,7 @@ package org.eqasim.core.components.headway;
 
 import java.util.List;
 
+import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.facilities.Facility;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
@@ -20,12 +21,13 @@ public class HeadwayCalculator {
 		this.afterDepartureOffset = afterDepartureOffset;
 	}
 
-	public double calculateHeadway_min(Facility originFacility, Facility destinationFacilty, double departureTime) {
-		double earliestDepartureTime = departureTime - beforeDepartureOffset;
-		double latestDepartureTime = departureTime + afterDepartureOffset;
+	public double calculateHeadway_min(Facility originFacility, Facility destinationFacilty,
+			OptionalTime departureTime) {
+		double earliestDepartureTime = departureTime.seconds() - beforeDepartureOffset;
+		double latestDepartureTime = departureTime.seconds() + afterDepartureOffset;
 
 		List<RaptorRoute> routes = raptor.calcRoutes(originFacility, destinationFacilty, earliestDepartureTime,
-				departureTime, latestDepartureTime, null);
+				departureTime.seconds(), latestDepartureTime, null);
 
 		int numberOfPtRoutes = 0;
 
@@ -37,11 +39,11 @@ public class HeadwayCalculator {
 				}
 			}
 		}
-		
+
 		if (numberOfPtRoutes == 0) {
 			return Double.POSITIVE_INFINITY;
 		} else {
-			return  ((beforeDepartureOffset + afterDepartureOffset) / numberOfPtRoutes) / 60.0;
-		}		
+			return ((beforeDepartureOffset + afterDepartureOffset) / numberOfPtRoutes) / 60.0;
+		}
 	}
 }

@@ -18,7 +18,6 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.listener.AfterMobsimListener;
 import org.matsim.core.router.util.TravelTime;
-import org.matsim.core.utils.misc.Time;
 import org.matsim.vehicles.Vehicle;
 
 public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, LinkLeaveEventHandler,
@@ -104,7 +103,7 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 		int linkIndex = getLinkIndex(link.getId());
 		double travelTime = Double.NaN;
 
-		if (Time.isUndefinedTime(time)) {
+		if (!Double.isFinite(time)) {
 			// Special case when OnlyTimeDependencyTravelDisutility requests the lower bound
 			travelTime = defaults[linkIndex];
 		} else {

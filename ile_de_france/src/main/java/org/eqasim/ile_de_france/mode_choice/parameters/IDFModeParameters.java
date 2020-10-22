@@ -3,6 +3,18 @@ package org.eqasim.ile_de_france.mode_choice.parameters;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
 public class IDFModeParameters extends ModeParameters {
+	public class IDFCarParameters {
+		public double betaInsideUrbanArea;
+		public double betaCrossingUrbanArea;
+	}
+
+	public class IDFBikeParameters {
+		public double betaInsideUrbanArea;
+	}
+
+	public final IDFCarParameters idfCar = new IDFCarParameters();
+	public final IDFBikeParameters idfBike = new IDFBikeParameters();
+
 	public static IDFModeParameters buildDefault() {
 		IDFModeParameters parameters = new IDFModeParameters();
 
@@ -18,6 +30,9 @@ public class IDFModeParameters extends ModeParameters {
 		parameters.car.constantAccessEgressWalkTime_min = 4.0;
 		parameters.car.constantParkingSearchPenalty_min = 4.0;
 
+		parameters.idfCar.betaInsideUrbanArea = -0.5;
+		parameters.idfCar.betaCrossingUrbanArea = -1.0;
+
 		// PT
 		parameters.pt.alpha_u = 0.0;
 		parameters.pt.betaLineSwitch_u = -0.17;
@@ -26,13 +41,15 @@ public class IDFModeParameters extends ModeParameters {
 		parameters.pt.betaAccessEgressTime_u_min = -0.0804;
 
 		// Bike
-		parameters.bike.alpha_u = 0.0;
-		parameters.bike.betaTravelTime_u_min = -0.15;
+		parameters.bike.alpha_u = -2.0;
+		parameters.bike.betaTravelTime_u_min = -0.05;
 		parameters.bike.betaAgeOver18_u_a = -0.0496;
+
+		parameters.idfBike.betaInsideUrbanArea = 1.5;
 
 		// Walk
 		parameters.walk.alpha_u = 1.43;
-		parameters.walk.betaTravelTime_u_min = -0.09;
+		parameters.walk.betaTravelTime_u_min = -0.15;
 
 		return parameters;
 	}

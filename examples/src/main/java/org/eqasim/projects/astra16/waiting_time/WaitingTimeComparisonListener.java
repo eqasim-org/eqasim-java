@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.matsim.amodeus.components.generator.AmodeusIdentifiers;
+import org.matsim.amodeus.waiting_time.WaitingTime;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
@@ -21,9 +23,6 @@ import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.charts.XYLineChart;
 import org.matsim.facilities.Facility;
-
-import ch.ethz.matsim.av.framework.AVModule;
-import ch.ethz.matsim.av.waiting_time.WaitingTime;
 
 public class WaitingTimeComparisonListener
 		implements PersonDepartureEventHandler, PersonEntersVehicleEventHandler, IterationEndsListener {
@@ -46,15 +45,15 @@ public class WaitingTimeComparisonListener
 
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
-		if (event.getLegMode().equals(AVModule.AV_MODE)) {
+		if (event.getLegMode().equals("av")) {
 			departureEvents.put(event.getPersonId(), event);
 		}
 	}
 
 	@Override
 	public void handleEvent(PersonEntersVehicleEvent event) {
-		if (event.getVehicleId().toString().startsWith("av:")) {
-			if (!event.getPersonId().toString().startsWith("av:")) {
+		if (AmodeusIdentifiers.isValid(event.getVehicleId())) {
+			if (!AmodeusIdentifiers.isValid(event.getPersonId())) {
 				PersonDepartureEvent departureEvent = departureEvents.remove(event.getPersonId());
 
 				double departureTime = departureEvent.getTime();

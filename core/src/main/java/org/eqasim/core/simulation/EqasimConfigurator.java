@@ -8,20 +8,18 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRoute;
-import org.eqasim.core.components.transit.routing.DefaultEnrichedTransitRouteFactory;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.households.Household;
 
-import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
@@ -60,13 +58,11 @@ public class EqasimConfigurator {
 		}
 
 		controller.configureQSimComponents(configurator -> {
-			EqasimTransitQSimModule.configure(configurator);
+			EqasimTransitQSimModule.configure(configurator, controller.getConfig());
 		});
 	}
 
 	static public void configureScenario(Scenario scenario) {
-		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DefaultEnrichedTransitRoute.class,
-				new DefaultEnrichedTransitRouteFactory());
 	}
 
 	static public void adjustScenario(Scenario scenario) {
