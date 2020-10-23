@@ -32,6 +32,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
+				.allowOptions("clean-routes") //
 				.allowPrefixes("av-mode-parameter", "mode-parameter", "cost-parameter") //
 				.build();
 
@@ -56,32 +57,34 @@ public class RunSimulation {
 		config.plansCalcRoute().setInsertingAccessEgressWalk(false);
 		config.plansCalcRoute().setRoutingRandomness(0.0);
 
-		for (Person person : scenario.getPopulation().getPersons().values()) {
-			for (Plan plan : person.getPlans()) {
-				new TripsToLegsAlgorithm(new MainModeIdentifier() {
-					@Override
-					public String identifyMainMode(List<? extends PlanElement> tripElements) {
-						for (Leg leg : TripStructureUtils.getLegs(tripElements)) {
-							if (leg.getMode().equals("access_walk")) {
-								return "pt";
+		if (cmd.hasOption("clean-routes")) {
+			for (Person person : scenario.getPopulation().getPersons().values()) {
+				for (Plan plan : person.getPlans()) {
+					new TripsToLegsAlgorithm(new MainModeIdentifier() {
+						@Override
+						public String identifyMainMode(List<? extends PlanElement> tripElements) {
+							for (Leg leg : TripStructureUtils.getLegs(tripElements)) {
+								if (leg.getMode().equals("access_walk")) {
+									return "pt";
+								}
+
+								if (leg.getMode().equals("egress_walk")) {
+									return "pt";
+								}
+
+								if (leg.getMode().equals("transit_walk")) {
+									return "pt";
+								}
+
+								if (leg.getMode().equals("pt")) {
+									return "pt";
+								}
 							}
 
-							if (leg.getMode().equals("egress_walk")) {
-								return "pt";
-							}
-
-							if (leg.getMode().equals("transit_walk")) {
-								return "pt";
-							}
-
-							if (leg.getMode().equals("pt")) {
-								return "pt";
-							}
+							return ((Leg) tripElements.get(0)).getMode();
 						}
-
-						return ((Leg) tripElements.get(0)).getMode();
-					}
-				}).run(plan);
+					}).run(plan);
+				}
 			}
 		}
 
