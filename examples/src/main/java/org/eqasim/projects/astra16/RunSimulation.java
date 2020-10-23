@@ -1,5 +1,7 @@
 package org.eqasim.projects.astra16;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
@@ -45,6 +47,14 @@ public class RunSimulation {
 		SwitzerlandConfigurator.adjustScenario(scenario);
 		AstraConfigurator.adjustScenario(scenario);
 		AstraConfigurator.adjustNetwork(scenario);
+
+		// Travel time calculator
+		config.travelTimeCalculator().setAnalyzedModes(new HashSet<>(Arrays.asList("car", "car_passenger", "truck")));
+		config.travelTimeCalculator().setFilterModes(true);
+		config.travelTimeCalculator().setSeparateModes(false);
+
+		config.plansCalcRoute().setInsertingAccessEgressWalk(false);
+		config.plansCalcRoute().setRoutingRandomness(0.0);
 
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			for (Plan plan : person.getPlans()) {
