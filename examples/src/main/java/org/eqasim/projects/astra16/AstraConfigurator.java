@@ -23,7 +23,6 @@ import org.eqasim.projects.astra16.pricing.model.AstraAvCostModel;
 import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.eqasim.projects.astra16.service_area.ServiceAreaModule;
 import org.eqasim.projects.astra16.waiting_time.WaitingTimeModule;
-import org.matsim.amodeus.components.dispatcher.single_heuristic.SingleHeuristicDispatcher;
 import org.matsim.amodeus.config.AmodeusConfigGroup;
 import org.matsim.amodeus.config.AmodeusModeConfig;
 import org.matsim.amodeus.config.modal.DispatcherConfig;
@@ -137,8 +136,10 @@ public class AstraConfigurator extends EqasimConfigurator {
 		timingConfig.setDropoffDurationPerPassenger(0.0);
 
 		DispatcherConfig dispatcherConfig = operatorConfig.getDispatcherConfig();
-		dispatcherConfig.setType(SingleHeuristicDispatcher.TYPE);
+		dispatcherConfig.setType(astraConfig.getAlgorithm());
 		dispatcherConfig.addParam("replanningInterval", String.valueOf(astraConfig.getDispatchInterval()));
+		dispatcherConfig.addParam("rebalancingInterval", String.valueOf(astraConfig.getRebalancingInterval()));
+		dispatcherConfig.addParam("distanceHeuristics", String.valueOf(astraConfig.getDistanceHeuristic()));
 	}
 
 	static public void adjustNetwork(Scenario scenario) {

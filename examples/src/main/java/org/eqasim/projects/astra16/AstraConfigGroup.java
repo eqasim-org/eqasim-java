@@ -1,7 +1,10 @@
 package org.eqasim.projects.astra16;
 
+import org.matsim.amodeus.components.dispatcher.single_heuristic.SingleHeuristicDispatcher;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
+
+import amodeus.amodeus.dispatcher.util.DistanceHeuristics;
 
 public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String GROUP_NAME = "astra";
@@ -26,6 +29,9 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String MAXIMUM_WAIT_TIME_MIN = "maximumWaitTime_min";
 
 	static public final String DISPATCH_INTERVAL = "dispatchInterval";
+	static public final String ALGORITHM = "algorithm";
+	static public final String REBALANCING_INTERVAL = "rebalancingInterval";
+	static public final String DISTANCE_HEURISTIC = "distanceHeuristic";
 
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
@@ -47,6 +53,9 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double maximumWaitTime_min = 15;
 
 	private double dispatchInterval = 10.0;
+	private double rebalancingInterval = 600.0;
+	private String distanceHeuristic = DistanceHeuristics.EUCLIDEAN.toString();
+	private String algorithm = SingleHeuristicDispatcher.TYPE;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -190,6 +199,36 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(DISPATCH_INTERVAL)
 	public void setDispatchInterval(double dispatchInterval) {
 		this.dispatchInterval = dispatchInterval;
+	}
+
+	@StringGetter(REBALANCING_INTERVAL)
+	public double getRebalancingInterval() {
+		return rebalancingInterval;
+	}
+
+	@StringSetter(REBALANCING_INTERVAL)
+	public void setRebalancingInterval(double rebalancingInterval) {
+		this.rebalancingInterval = rebalancingInterval;
+	}
+
+	@StringGetter(DISTANCE_HEURISTIC)
+	public String getDistanceHeuristic() {
+		return distanceHeuristic;
+	}
+
+	@StringSetter(DISTANCE_HEURISTIC)
+	public void setDistanceHeuristic(String distanceHeuristic) {
+		this.distanceHeuristic = distanceHeuristic;
+	}
+
+	@StringGetter(ALGORITHM)
+	public String getAlgorithm() {
+		return algorithm;
+	}
+
+	@StringSetter(ALGORITHM)
+	public void setAlgorithm(String algorithm) {
+		this.algorithm = algorithm;
 	}
 
 	static public AstraConfigGroup get(Config config) {
