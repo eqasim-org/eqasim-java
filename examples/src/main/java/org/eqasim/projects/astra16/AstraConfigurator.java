@@ -140,6 +140,7 @@ public class AstraConfigurator extends EqasimConfigurator {
 		dispatcherConfig.addParam("replanningInterval", String.valueOf(astraConfig.getDispatchInterval()));
 		dispatcherConfig.addParam("rebalancingInterval", String.valueOf(astraConfig.getRebalancingInterval()));
 		dispatcherConfig.addParam("distanceHeuristics", String.valueOf(astraConfig.getDistanceHeuristic()));
+		dispatcherConfig.setPublishPeriod(900);
 	}
 
 	static public void adjustNetwork(Scenario scenario) {
