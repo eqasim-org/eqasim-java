@@ -1,5 +1,8 @@
 package org.eqasim.projects.astra16;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -41,9 +44,13 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.households.Household;
 
+import amodeus.amodeus.options.ScenarioOptions;
+import amodeus.amodeus.options.ScenarioOptionsBase;
+import amodeus.amodeus.prep.VirtualNetworkCreators;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 
 public class AstraConfigurator extends EqasimConfigurator {
@@ -141,6 +148,8 @@ public class AstraConfigurator extends EqasimConfigurator {
 		dispatcherConfig.addParam("rebalancingInterval", String.valueOf(astraConfig.getRebalancingInterval()));
 		dispatcherConfig.addParam("distanceHeuristics", String.valueOf(astraConfig.getDistanceHeuristic()));
 		dispatcherConfig.setPublishPeriod(900);
+		dispatcherConfig.setVirtualNetworkPath("virtualNetwork");
+		// dispatcherConfig.setTravelDataPath("travelData");
 	}
 
 	static public void adjustNetwork(Scenario scenario) {
@@ -200,6 +209,30 @@ public class AstraConfigurator extends EqasimConfigurator {
 		controller.configureQSimComponents(configurator -> {
 			EqasimTransitQSimModule.configure(configurator, controller.getConfig());
 			AmodeusQSimModule.activateModes(controller.getConfig()).configure(configurator);
+		});
+
+		controller.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				try {
+					URL workingDirectory = ConfigGroup.getInputFileURL(getConfig().getContext(), ".");
+					ScenarioOptions options = new ScenarioOptions(new File(workingDirectory.getPath()),
+							ScenarioOptionsBase.getDefault());
+
+					AstraConfigGroup config = AstraConfigGroup.get(getConfig());
+					String path = config.getOperatingAreaPath();
+
+					if (path.startsWith("/")) {
+						throw new RuntimeException();
+					}
+
+					options.setProperty("shapeFile", path);
+					options.setProperty("virtualNetworkCreator", VirtualNetworkCreators.SHAPEFILENETWORK.toString());
+
+					bind(ScenarioOptions.class).toInstance(options);
+				} catch (IOException e) {
+				}
+			}
 		});
 	}
 }
