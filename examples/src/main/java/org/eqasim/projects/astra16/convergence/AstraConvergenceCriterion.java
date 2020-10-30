@@ -79,8 +79,8 @@ public class AstraConvergenceCriterion implements IterationEndsListener, Termina
 			state.absoluteDifference = Math.abs(lastValue - mean);
 			state.relativeDifference = Math.abs((lastValue - mean) / mean);
 
-			state.absoluteChange = Math.abs(lastValue - firstValue);
-			state.relativeChange = Math.abs((lastValue - firstValue) / firstValue);
+			state.absoluteChange = Math.abs(lastValue - firstValue) / horizon;
+			state.relativeChange = Math.abs((lastValue - firstValue) / firstValue) / horizon;
 		}
 
 		return state;
