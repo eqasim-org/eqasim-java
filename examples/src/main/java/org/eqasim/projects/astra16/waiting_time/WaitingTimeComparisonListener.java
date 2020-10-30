@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.eqasim.projects.astra16.convergence.AstraConvergenceCriterion;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
@@ -29,6 +30,7 @@ public class WaitingTimeComparisonListener
 		implements PersonDepartureEventHandler, PersonEntersVehicleEventHandler, IterationEndsListener {
 	private final WaitingTime waitingTime;
 	private final OutputDirectoryHierarchy outputHierarchy;
+	private final AstraConvergenceCriterion criterion;
 
 	private final DescriptiveStatistics statistics = new DescriptiveStatistics();
 
@@ -39,9 +41,11 @@ public class WaitingTimeComparisonListener
 
 	private final Map<Id<Person>, PersonDepartureEvent> departureEvents = new HashMap<>();
 
-	public WaitingTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, WaitingTime waitingTime) {
+	public WaitingTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, WaitingTime waitingTime,
+			AstraConvergenceCriterion criterion) {
 		this.waitingTime = waitingTime;
 		this.outputHierarchy = outputHierarchy;
+		this.criterion = criterion;
 	}
 
 	@Override
@@ -124,5 +128,7 @@ public class WaitingTimeComparisonListener
 
 		statistics.clear();
 		departureEvents.clear();
+
+		criterion.addWaitingTimeError(statistics.getMean());
 	}
 }

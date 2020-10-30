@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.eqasim.projects.astra16.convergence.AstraConvergenceCriterion;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
@@ -29,6 +30,7 @@ public class TravelTimeComparisonListener
 		implements PersonDepartureEventHandler, PersonArrivalEventHandler, IterationEndsListener {
 	private final Population population;
 	private final OutputDirectoryHierarchy outputHierarchy;
+	private final AstraConvergenceCriterion criterion;
 
 	private final DescriptiveStatistics statistics = new DescriptiveStatistics();
 
@@ -40,9 +42,11 @@ public class TravelTimeComparisonListener
 	private final Map<Id<Person>, PersonDepartureEvent> departureEvents = new HashMap<>();
 	private final Map<Id<Person>, Integer> elementIndices = new HashMap<>();
 
-	public TravelTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, Population population) {
+	public TravelTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, Population population,
+			AstraConvergenceCriterion criterion) {
 		this.population = population;
 		this.outputHierarchy = outputHierarchy;
+		this.criterion = criterion;
 	}
 
 	@Override
@@ -138,5 +142,7 @@ public class TravelTimeComparisonListener
 		statistics.clear();
 		departureEvents.clear();
 		elementIndices.clear();
+
+		criterion.addTravelTimeError(statistics.getMean());
 	}
 }

@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.projects.astra16.convergence.AstraConvergenceCriterion;
 import org.eqasim.projects.astra16.pricing.business_model.BusinessModelData;
 import org.eqasim.projects.astra16.pricing.business_model.BusinessModelListener;
 import org.eqasim.projects.astra16.pricing.model.PriceInterpolator;
@@ -19,13 +20,16 @@ import org.matsim.core.utils.io.IOUtils;
 public class PricingTracker implements IterationEndsListener, BusinessModelListener {
 	private final PriceInterpolator interpolator;
 	private final OutputDirectoryHierarchy outputHierarchy;
+	private final AstraConvergenceCriterion criterion;
 
 	private final List<Double> activeValues = new LinkedList<>();
 	private final List<Double> nominalValues = new LinkedList<>();
 
-	public PricingTracker(PriceInterpolator interpolator, OutputDirectoryHierarchy outputHierarchy) {
+	public PricingTracker(PriceInterpolator interpolator, OutputDirectoryHierarchy outputHierarchy,
+			AstraConvergenceCriterion criterion) {
 		this.interpolator = interpolator;
 		this.outputHierarchy = outputHierarchy;
+		this.criterion = criterion;
 	}
 
 	@Override
@@ -69,6 +73,8 @@ public class PricingTracker implements IterationEndsListener, BusinessModelListe
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+
+		criterion.addPrice(activeValues.get(activeValues.size() - 1));
 	}
 
 	@Override

@@ -26,7 +26,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String MAXIMUM_WAIT_TIME_MIN = "maximumWaitTime_min";
 
 	static public final String DISPATCH_INTERVAL = "dispatchInterval";
-	static public final String WAITING_TIME_ESTIMATION_ALPHA = "waitingTimeEstimationAlpha";
+	static public final String WAITING_TIME_ESTIMATION_INCREASING_ALPHA = "waitingTimeEstimationIncreasingAlpha";
+	static public final String WAITING_TIME_ESTIMATION_DECREASING_ALPHA = "waitingTimeEstimationDecreasingAlpha";
 
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
@@ -48,7 +49,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double maximumWaitTime_min = 15;
 
 	private double dispatchInterval = 10.0;
-	private double waitingTimeEstimationAlpha = 0.1;
+	private double waitingTimeEstimationIncreasingAlpha = 0.1;
+	private double waitingTimeEstimationDecreasingAlpha = 0.1;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -194,14 +196,24 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 		this.dispatchInterval = dispatchInterval;
 	}
 
-	@StringGetter(WAITING_TIME_ESTIMATION_ALPHA)
-	public double getWaitingTimeEstimationAlpha() {
-		return waitingTimeEstimationAlpha;
+	@StringGetter(WAITING_TIME_ESTIMATION_INCREASING_ALPHA)
+	public double getWaitingTimeEstimationIncreasingAlpha() {
+		return waitingTimeEstimationIncreasingAlpha;
 	}
 
-	@StringSetter(WAITING_TIME_ESTIMATION_ALPHA)
-	public void setWaitingTimeEstimationAlpha(double waitingTimeEstimationAlpha) {
-		this.waitingTimeEstimationAlpha = waitingTimeEstimationAlpha;
+	@StringSetter(WAITING_TIME_ESTIMATION_INCREASING_ALPHA)
+	public void setWaitingTimeEstimationIncreasingAlpha(double waitingTimeEstimationIncreasingAlpha) {
+		this.waitingTimeEstimationIncreasingAlpha = waitingTimeEstimationIncreasingAlpha;
+	}
+
+	@StringGetter(WAITING_TIME_ESTIMATION_DECREASING_ALPHA)
+	public double getWaitingTimeEstimationDecreasingAlpha() {
+		return waitingTimeEstimationDecreasingAlpha;
+	}
+
+	@StringSetter(WAITING_TIME_ESTIMATION_DECREASING_ALPHA)
+	public void setWaitingTimeEstimationDecreasingAlpha(double waitingTimeEstimationDecreasingAlpha) {
+		this.waitingTimeEstimationDecreasingAlpha = waitingTimeEstimationDecreasingAlpha;
 	}
 
 	static public AstraConfigGroup get(Config config) {

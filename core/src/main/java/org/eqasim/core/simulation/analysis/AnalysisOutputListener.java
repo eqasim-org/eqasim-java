@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import org.eqasim.core.analysis.AstraConvergence;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.TripListener;
 import org.eqasim.core.analysis.TripWriter;
@@ -49,7 +50,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		if (tripAnalysisInterval > 0 && event.getIteration() % tripAnalysisInterval == 0) {
+		if ((tripAnalysisInterval > 0 && event.getIteration() % tripAnalysisInterval == 0)
+				|| AstraConvergence.IS_CONVERGED) {
 			isTripAnalysisActive = true;
 			event.getServices().getEvents().addHandler(tripAnalysisListener);
 		} else {

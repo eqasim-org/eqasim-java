@@ -2,6 +2,7 @@ package org.eqasim.projects.astra16.waiting_time;
 
 import java.util.Map;
 
+import org.eqasim.projects.astra16.convergence.AstraConvergenceCriterion;
 import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
@@ -43,8 +44,9 @@ public class WaitingTimeModule extends AbstractModule {
 	@Provides
 	@Singleton
 	public WaitingTimeComparisonListener provideWaitingTimeComparisonListener(
-			Map<Id<AVOperator>, WaitingTime> waitingTimes, OutputDirectoryHierarchy outputHierarchy) {
+			Map<Id<AVOperator>, WaitingTime> waitingTimes, OutputDirectoryHierarchy outputHierarchy,
+			AstraConvergenceCriterion criterion) {
 		WaitingTime waitingTime = waitingTimes.get(OperatorConfig.DEFAULT_OPERATOR_ID);
-		return new WaitingTimeComparisonListener(outputHierarchy, waitingTime);
+		return new WaitingTimeComparisonListener(outputHierarchy, waitingTime, criterion);
 	}
 }

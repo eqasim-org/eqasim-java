@@ -41,6 +41,7 @@ import ch.ethz.matsim.av.config.operator.WaitingTimeConfig;
 import ch.ethz.matsim.av.dispatcher.single_heuristic.SingleHeuristicDispatcher;
 import ch.ethz.matsim.av.framework.AVModule;
 import ch.ethz.matsim.av.framework.AVQSimModule;
+import ch.ethz.matsim.av.waiting_time.dynamic.DynamicWaitingTime;
 import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
@@ -126,8 +127,10 @@ public class AstraConfigurator extends EqasimConfigurator {
 		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
 		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
 		waitingTimeConfig.setEstimationInterval(15.0 * 60.0);
-		waitingTimeConfig.setEstimationAlpha(astraConfig.getWaitingTimeEstimationAlpha());
 		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
+
+		DynamicWaitingTime.INCREASING_ALPHA = astraConfig.getWaitingTimeEstimationIncreasingAlpha();
+		DynamicWaitingTime.DECREASING_ALPHA = astraConfig.getWaitingTimeEstimationDecreasingAlpha();
 
 		TimingConfig timingConfig = operatorConfig.getTimingConfig();
 		timingConfig.setPickupDurationPerStop(120.0);

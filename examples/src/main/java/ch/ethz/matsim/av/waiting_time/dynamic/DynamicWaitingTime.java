@@ -20,11 +20,15 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 	private final double[][] estimates;
 	private final double[][] defaultValues;
 
-	private final double alpha;
+	private final double increasingAlpha;
+	private final double decreasingAlpha;
 
 	private final double startTime;
 	private final double interval;
 	private final int numberOfTimeBins;
+
+	static public double INCREASING_ALPHA = 0.0;
+	static public double DECREASING_ALPHA = 0.0;
 
 	public DynamicWaitingTime(LinkGroupDefinition linkGroupDefinition, LinkWaitingTimeData linkWaitingTimeData,
 			double defaultWaitingTime, double startTime, double endTime, double interval, double alpha) {
@@ -47,7 +51,8 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 			}
 		}
 
-		this.alpha = alpha;
+		this.increasingAlpha = INCREASING_ALPHA;
+		this.decreasingAlpha = DECREASING_ALPHA;
 	}
 
 	private double[][] createDefaultValues(int numberOfGroups, int numberOfTimeBins) {
@@ -111,9 +116,11 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 				}
 
 				if (currentValue > previousValue) {
-					estimates[groupIndex][timeIndex] = alpha * previousValue + (1.0 - alpha) * currentValue;
+					estimates[groupIndex][timeIndex] = (1.0 - increasingAlpha) * previousValue
+							+ increasingAlpha * currentValue;
 				} else {
-					estimates[groupIndex][timeIndex] = (1.0 - alpha) * previousValue + alpha * currentValue;
+					estimates[groupIndex][timeIndex] = (1.0 - decreasingAlpha) * previousValue
+							+ decreasingAlpha * currentValue;
 				}
 
 				cumulativeValues[groupIndex][timeIndex] = 0.0;
