@@ -23,9 +23,8 @@ public class ConvergenceLogger implements IterationEndsListener {
 			ConvergenceCriterion criterion = entry.getValue();
 			String name = entry.getKey();
 
-			if (criterion.getValues().size() > 0) {
-
-				double metric = criterion.getValues().get(criterion.getValues().size() - 1);
+			if (criterion.getMetricValues().size() > 0) {
+				double metric = criterion.getValues().get(criterion.getMetricValues().size() - 1);
 				double threshold = criterion.getThreshold();
 				boolean isConverged = criterion.isConverged();
 
