@@ -111,7 +111,7 @@ public class DynamicWaitingTime implements WaitingTimeCollector, WaitingTime {
 				}
 
 				if (currentValue > previousValue) {
-					estimates[groupIndex][timeIndex] = alpha * previousValue + (1.0 - alpha) * currentValue;
+					estimates[groupIndex][timeIndex] = (1.0 - alpha) * previousValue + alpha * currentValue;
 				} else {
 					estimates[groupIndex][timeIndex] = (1.0 - alpha) * previousValue + alpha * currentValue;
 				}
