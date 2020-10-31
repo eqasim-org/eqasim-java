@@ -110,7 +110,7 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 		} else {
 			int timeIndex = getTimeIndex(time);
 			// travelTime = Math.max(estimates[linkIndex][timeIndex], defaults[linkIndex]);
-			travelTime = estimates[linkIndex][timeIndex];
+			travelTime = Math.max(estimates[linkIndex][timeIndex], defaults[linkIndex]);
 		}
 
 		return travelTime;
