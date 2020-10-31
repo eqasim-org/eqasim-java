@@ -87,7 +87,7 @@ public class AstraConvergenceCriterion implements IterationEndsListener, Termina
 	}
 
 	private boolean calculateConvergence() {
-		List<Integer> horizons = Arrays.asList(2, 25, 50, 100);
+		List<Integer> horizons = Arrays.asList(25, 50, 100);
 		List<String> slots = Arrays.asList("waitingTime", "travelTime", "price", "trips");
 
 		boolean converged = true;
