@@ -1,10 +1,7 @@
 package org.eqasim.projects.astra16.convergence;
 
-import java.util.Arrays;
-
+import org.eqasim.projects.astra16.convergence.metrics.AbsoluteMeanDifference;
 import org.eqasim.projects.astra16.convergence.metrics.AbsoluteMeanDistance;
-import org.eqasim.projects.astra16.convergence.metrics.RelativeMeanDifference;
-import org.eqasim.projects.astra16.convergence.metrics.RelativeMeanDistance;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.TerminationCriterion;
@@ -45,20 +42,26 @@ public class ConvergenceModule extends AbstractModule {
 					new ConvergenceCriterion("amodRequests", new RelativeDifference(10), 0.01));
 		}-*/
 
-		for (String slot : Arrays.asList("waitingTimeError", "travelTimeError", "activePrice", "amodRequests")) {
-			manager.addCriterion("mean_" + slot,
-					new ConvergenceCriterion(slot, new RelativeMeanDifference(50, 25), 0.01));
-		}
+		int horizon = 50;
+		int lag = 25;
 
-		for (String slot : Arrays.asList("activePrice", "amodRequests")) {
-			manager.addCriterion("relative_" + slot,
-					new ConvergenceCriterion(slot, new RelativeMeanDistance(50), 0.01));
-		}
+		manager.addCriterion("waitingTimeError",
+				new ConvergenceCriterion("waitingTimeError", new AbsoluteMeanDistance(horizon), 15.0));
+		manager.addCriterion("travelTimeError",
+				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDistance(horizon), 60.0));
+		manager.addCriterion("activePrice",
+				new ConvergenceCriterion("activePrice", new AbsoluteMeanDistance(horizon), 0.01));
+		manager.addCriterion("amodRequests",
+				new ConvergenceCriterion("amodRequests", new AbsoluteMeanDistance(horizon), 100));
 
-		manager.addCriterion("absolute_waitingTimeError",
-				new ConvergenceCriterion("waitingTimeError", new AbsoluteMeanDistance(50), 15.0));
-		manager.addCriterion("absolute_travelTimeError",
-				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDistance(50), 60.0));
+		manager.addCriterion("waitingTimeErrorMean",
+				new ConvergenceCriterion("waitingTimeError", new AbsoluteMeanDifference(horizon, lag), 1.0));
+		manager.addCriterion("travelTimeErrorMean",
+				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDifference(horizon, lag), 1.0));
+		manager.addCriterion("activePriceMean",
+				new ConvergenceCriterion("activePrice", new AbsoluteMeanDifference(horizon, lag), 0.01));
+		manager.addCriterion("amodRequestsMean",
+				new ConvergenceCriterion("amodRequests", new AbsoluteMeanDifference(horizon, lag), 100));
 
 		return manager;
 	}

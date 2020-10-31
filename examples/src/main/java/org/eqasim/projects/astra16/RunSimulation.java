@@ -24,13 +24,6 @@ public class RunSimulation {
 				.requireOptions("config-path") //
 				.allowPrefixes("av-mode-parameter", "mode-parameter", "cost-parameter") //
 				.build();
-		
-		double a = 5.23;
-		double b = Math.floor(a) + 1.0;
-		double c = Math.floor(b) + 1.0;
-		
-		System.out.println(a + " " + b + " " + c);
-		System.exit(1);
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), AstraConfigurator.getConfigGroups());
 		AstraConfigurator.configure(config);
