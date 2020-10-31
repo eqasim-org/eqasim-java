@@ -7,7 +7,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.projects.astra16.analysis.ConvergenceListener;
-import org.eqasim.projects.astra16.convergence.AstraConvergenceCriterion;
+import org.eqasim.projects.astra16.convergence.ConvergenceManager;
 import org.eqasim.projects.astra16.mode_choice.AstraModeAvailability;
 import org.eqasim.projects.astra16.mode_choice.AstraModeParameters;
 import org.eqasim.projects.astra16.mode_choice.InfiniteHeadwayConstraint;
@@ -27,7 +27,6 @@ import org.eqasim.switzerland.ovgk.OVGKCalculator;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.TerminationCriterion;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provides;
@@ -62,16 +61,13 @@ public class AstraModule extends AbstractEqasimExtension {
 
 		addEventHandlerBinding().to(ConvergenceListener.class);
 		addControlerListenerBinding().to(ConvergenceListener.class);
-
-		bind(TerminationCriterion.class).to(AstraConvergenceCriterion.class);
-		addControlerListenerBinding().to(AstraConvergenceCriterion.class);
 	}
 
 	@Provides
 	@Singleton
 	public ConvergenceListener provideConvergenceListener(OutputDirectoryHierarchy outputHierarchy,
-			AstraConvergenceCriterion criterion) {
-		return new ConvergenceListener(outputHierarchy, criterion);
+			ConvergenceManager convergenceManager) {
+		return new ConvergenceListener(outputHierarchy, convergenceManager);
 	}
 
 	@Provides
@@ -99,11 +95,5 @@ public class AstraModule extends AbstractEqasimExtension {
 			SwissModeAvailability delegate, ServiceArea serviceArea) {
 		boolean useAv = astraConfig.getFleetSize() > 0;
 		return new AstraModeAvailability(useAv, delegate, serviceArea);
-	}
-
-	@Singleton
-	@Provides
-	public AstraConvergenceCriterion provideAstraConvergenceCriterion() {
-		return new AstraConvergenceCriterion();
 	}
 }

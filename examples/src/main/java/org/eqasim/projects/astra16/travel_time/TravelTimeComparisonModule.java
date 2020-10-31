@@ -1,6 +1,6 @@
 package org.eqasim.projects.astra16.travel_time;
 
-import org.eqasim.projects.astra16.convergence.AstraConvergenceCriterion;
+import org.eqasim.projects.astra16.convergence.ConvergenceManager;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -18,7 +18,7 @@ public class TravelTimeComparisonModule extends AbstractModule {
 	@Provides
 	@Singleton
 	public TravelTimeComparisonListener provideTravelTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy,
-			Population population, AstraConvergenceCriterion criterion) {
-		return new TravelTimeComparisonListener(outputHierarchy, population, criterion);
+			Population population, ConvergenceManager convergenceManager) {
+		return new TravelTimeComparisonListener(outputHierarchy, population, convergenceManager);
 	}
 }

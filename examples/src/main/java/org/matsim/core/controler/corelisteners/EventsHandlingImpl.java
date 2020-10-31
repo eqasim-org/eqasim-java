@@ -26,7 +26,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eqasim.core.analysis.AstraConvergence;
-import org.eqasim.projects.astra16.convergence.AstraConvergenceCriterion;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.config.groups.ControlerConfigGroup.EventsFileFormat;
