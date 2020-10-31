@@ -25,7 +25,7 @@ public class ConvergenceWriter implements IterationEndsListener {
 		try {
 			BufferedWriter writer = IOUtils.getBufferedWriter(outputHierarchy.getOutputFilename("convergence.csv"));
 
-			List<String> header = Arrays.asList("slot", "name", "iteration", "value", "horizon", "metric", "threshold",
+			List<String> header = Arrays.asList("slot", "name", "iteration", "value", "metric", "threshold",
 					"converged", "class");
 			writer.write(String.join(",", header) + "\n");
 
@@ -39,7 +39,6 @@ public class ConvergenceWriter implements IterationEndsListener {
 							name, //
 							String.valueOf(i), //
 							String.valueOf(criterion.getValues().get(i)), //
-							String.valueOf(criterion.getHorizon()), //
 							String.valueOf(criterion.getMetricValues().get(i)), //
 							String.valueOf(criterion.getThreshold()), //
 							String.valueOf(criterion.isConverged()), //

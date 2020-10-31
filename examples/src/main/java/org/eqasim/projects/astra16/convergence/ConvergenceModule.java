@@ -2,9 +2,8 @@ package org.eqasim.projects.astra16.convergence;
 
 import java.util.Arrays;
 
-import org.eqasim.projects.astra16.convergence.metrics.AbsoluteDifference;
 import org.eqasim.projects.astra16.convergence.metrics.AbsoluteMeanDistance;
-import org.eqasim.projects.astra16.convergence.metrics.RelativeDifference;
+import org.eqasim.projects.astra16.convergence.metrics.RelativeMeanDifference;
 import org.eqasim.projects.astra16.convergence.metrics.RelativeMeanDistance;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -28,21 +27,38 @@ public class ConvergenceModule extends AbstractModule {
 	public ConvergenceManager provideConvergencemanager() {
 		ConvergenceManager manager = new ConvergenceManager();
 
-		for (int horizon : Arrays.asList(25, 50, 100)) {
-			manager.addCriterion("waitingTimeError_h" + horizon,
-					new ConvergenceCriterion("waitingTimeError", new AbsoluteMeanDistance(), 15.0, horizon));
-			manager.addCriterion("travelTimeError_h" + horizon,
-					new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDistance(), 60.0, horizon));
-			manager.addCriterion("activePrice_h" + horizon,
-					new ConvergenceCriterion("activePrice", new AbsoluteMeanDistance(), 0.01, horizon));
-			manager.addCriterion("amodRequests_h" + horizon,
-					new ConvergenceCriterion("amodRequests", new RelativeMeanDistance(), 0.01, horizon));
+		/*-if (false) {
+			for (int horizon : Arrays.asList(25, 50, 100)) {
+				manager.addCriterion("waitingTimeError_h" + horizon,
+						new ConvergenceCriterion("waitingTimeError", new AbsoluteMeanDistance(horizon), 15.0));
+				manager.addCriterion("travelTimeError_h" + horizon,
+						new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDistance(horizon), 60.0));
+				manager.addCriterion("activePrice_h" + horizon,
+						new ConvergenceCriterion("activePrice", new AbsoluteMeanDistance(horizon), 0.01));
+				manager.addCriterion("amodRequests_h" + horizon,
+						new ConvergenceCriterion("amodRequests", new RelativeMeanDistance(horizon), 0.01));
+			}
+		
+			manager.addCriterion("activePriceChange",
+					new ConvergenceCriterion("activePrice", new AbsoluteDifference(10), 0.01));
+			manager.addCriterion("amodRequestsChange",
+					new ConvergenceCriterion("amodRequests", new RelativeDifference(10), 0.01));
+		}-*/
+
+		for (String slot : Arrays.asList("waitingTimeError", "travelTimeError", "activePrice", "amodRequests")) {
+			manager.addCriterion("mean_" + slot,
+					new ConvergenceCriterion(slot, new RelativeMeanDifference(50, 25), 0.01));
 		}
 
-		manager.addCriterion("activePriceChange",
-				new ConvergenceCriterion("activePrice", new AbsoluteDifference(), 0.01, 10));
-		manager.addCriterion("amodRequestsChange",
-				new ConvergenceCriterion("amodRequests", new RelativeDifference(), 0.01, 10));
+		for (String slot : Arrays.asList("activePrice", "amodRequests")) {
+			manager.addCriterion("relative_" + slot,
+					new ConvergenceCriterion(slot, new RelativeMeanDistance(50), 0.01));
+		}
+
+		manager.addCriterion("absolute_waitingTimeError",
+				new ConvergenceCriterion("waitingTimeError", new AbsoluteMeanDistance(50), 15.0));
+		manager.addCriterion("absolute_travelTimeError",
+				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDistance(50), 60.0));
 
 		return manager;
 	}

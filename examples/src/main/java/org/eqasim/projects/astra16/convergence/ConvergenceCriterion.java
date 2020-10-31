@@ -7,31 +7,21 @@ import org.eqasim.projects.astra16.convergence.metrics.ConvergenceMetric;
 
 public class ConvergenceCriterion {
 	private final ConvergenceMetric metric;
-	private final int horizon;
 	private final double threshold;
 	private final String slot;
 
 	private final List<Double> values = new LinkedList<>();
 	private final List<Double> metricValues = new LinkedList<>();
 
-	public ConvergenceCriterion(String slot, ConvergenceMetric metric, double threshold, int horizon) {
+	public ConvergenceCriterion(String slot, ConvergenceMetric metric, double threshold) {
 		this.metric = metric;
-		this.horizon = horizon;
 		this.threshold = threshold;
 		this.slot = slot;
 	}
 
 	public void addValue(double value) {
 		values.add(value);
-
-		if (horizon == 0) {
-			metricValues.add(metric.computeMetric(values));
-		} else if (values.size() < horizon) {
-			metricValues.add(Double.POSITIVE_INFINITY);
-		} else {
-			List<Double> segment = values.subList(values.size() - horizon, values.size());
-			metricValues.add(metric.computeMetric(segment));
-		}
+		metricValues.add(metric.computeMetric(values));
 	}
 
 	public boolean isConverged() {
@@ -52,10 +42,6 @@ public class ConvergenceCriterion {
 
 	public String getSlot() {
 		return slot;
-	}
-
-	public int getHorizon() {
-		return horizon;
 	}
 
 	public double getThreshold() {

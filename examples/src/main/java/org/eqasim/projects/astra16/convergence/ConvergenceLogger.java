@@ -28,8 +28,7 @@ public class ConvergenceLogger implements IterationEndsListener {
 				double threshold = criterion.getThreshold();
 				boolean isConverged = criterion.isConverged();
 
-				logger.info(String.format("[Convergence] %s: %e <= %e ? %s", name, metric, threshold,
-						isConverged ? "yes" : "no"));
+				logger.info(String.format("%s: %e <= %e ? %s", name, metric, threshold, isConverged ? "yes" : "no"));
 
 				if (isConverged) {
 					numberOfFulfilledCriteria += 1;
@@ -39,7 +38,6 @@ public class ConvergenceLogger implements IterationEndsListener {
 			numberOfCriteria += 1;
 		}
 
-		logger.info(String.format("[Convergence] GENERAL: %d/%d criteria fulfilled", numberOfFulfilledCriteria,
-				numberOfCriteria));
+		logger.info(String.format("GENERAL: %d/%d criteria fulfilled", numberOfFulfilledCriteria, numberOfCriteria));
 	}
 }
