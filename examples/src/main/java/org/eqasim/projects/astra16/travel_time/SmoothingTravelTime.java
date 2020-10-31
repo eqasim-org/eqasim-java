@@ -32,8 +32,6 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 	private final int numberOfTimeBins;
 	private final int numberOfLinks;
 
-	private final boolean fixTravelTime;
-
 	private final Map<Id<Link>, Integer> id2index = new HashMap<>();
 
 	private final double[][] cumulativeTravelTimes;
@@ -56,8 +54,6 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 		this.numberOfTimeBins = 1 + (int) Math.floor((endTime - startTime) / interval);
 		this.numberOfLinks = network.getLinks().size();
 
-		this.fixTravelTime = fixTravelTime;
-
 		this.cumulativeTravelTimes = new double[numberOfLinks][numberOfTimeBins];
 		this.travelTimeCounts = new double[numberOfLinks][numberOfTimeBins];
 		this.estimates = new double[numberOfLinks][numberOfTimeBins];
@@ -70,6 +66,10 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 			id2index.put(link.getId(), linkIndex);
 
 			double defaultValue = link.getLength() / link.getFreespeed();
+
+			if (fixTravelTime) {
+				defaultValue = Math.floor(defaultValue) + 1.0;
+			}
 
 			this.defaults[linkIndex] = defaultValue;
 
@@ -111,10 +111,6 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 			int timeIndex = getTimeIndex(time);
 			// travelTime = Math.max(estimates[linkIndex][timeIndex], defaults[linkIndex]);
 			travelTime = estimates[linkIndex][timeIndex];
-		}
-
-		if (fixTravelTime) {
-			travelTime = Math.floor(travelTime) + 1.0;
 		}
 
 		return travelTime;
