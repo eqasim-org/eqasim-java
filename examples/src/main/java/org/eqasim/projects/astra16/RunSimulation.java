@@ -66,7 +66,11 @@ public class RunSimulation {
 		controller.addOverridingModule(new CalibrationModule());
 		controller.addOverridingModule(new AstraModule(cmd));
 		controller.addOverridingModule(new TravelTimeComparisonModule());
-		controller.addOverridingModule(new ConvergenceModule());
+
+		if (AstraConfigGroup.get(config).getFleetSize() > 0) {
+			controller.addOverridingModule(new ConvergenceModule());
+		}
+
 		AstraConfigurator.configureController(controller, cmd);
 
 		controller.addOverridingModule(new SmoothingTravelTimeModule());
