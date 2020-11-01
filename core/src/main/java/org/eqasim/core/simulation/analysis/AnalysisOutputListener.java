@@ -26,7 +26,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private static final String TRIPS_FILE_NAME = "trips.csv";
 
 	private final OutputDirectoryHierarchy outputDirectory;
-	private final int lastIteration;
+	private int lastIteration = -1;
 
 	private final TripListener tripAnalysisListener;
 	private final int tripAnalysisInterval;
@@ -39,7 +39,6 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	public AnalysisOutputListener(EqasimConfigGroup config, ControlerConfigGroup controllerConfig,
 			OutputDirectoryHierarchy outputDirectory, TripListener tripListener) {
 		this.outputDirectory = outputDirectory;
-		this.lastIteration = controllerConfig.getLastIteration();
 
 		this.scenarioDistanceUnit = config.getDistanceUnit();
 		this.analysisDistanceUnit = config.getTripAnalysisDistanceUnit();
@@ -57,6 +56,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		} else {
 			isTripAnalysisActive = false;
 		}
+
+		lastIteration = event.getIteration();
 	}
 
 	@Override

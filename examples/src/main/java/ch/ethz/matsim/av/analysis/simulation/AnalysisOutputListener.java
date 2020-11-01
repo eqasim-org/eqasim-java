@@ -33,7 +33,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private static final String VEHICLE_ACTIVITIES_FILE_NAME = "av_vehicle_activities.csv";
 
 	private final OutputDirectoryHierarchy outputDirectory;
-	private final int lastIteration;
+	private int lastIteration = -1;
 
 	private final int passengerAnalysisInterval;
 	private final PassengerAnalysisListener passengerAnalysisListener;
@@ -53,7 +53,6 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	public AnalysisOutputListener(AVConfigGroup config, ControlerConfigGroup controllerConfig,
 			OutputDirectoryHierarchy outputDirectory, Network network) {
 		this.outputDirectory = outputDirectory;
-		this.lastIteration = controllerConfig.getLastIteration();
 
 		this.passengerAnalysisInterval = config.getPassengerAnalysisInterval();
 		this.vehicleAnalysisInterval = config.getVehicleAnalysisInterval();
@@ -85,6 +84,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		if (enableFleetDistanceListener) {
 			event.getServices().getEvents().addHandler(fleetDistanceListener);
 		}
+
+		this.lastIteration = event.getIteration();
 	}
 
 	@Override
