@@ -16,7 +16,7 @@ public class ManagedConvergenceCriterion implements IterationEndsListener, Termi
 
 	@Override
 	public void notifyIterationEnds(IterationEndsEvent event) {
-		if (manager.isConverged() || event.getIteration() == 2) {
+		if (manager.isConverged()) {
 			AstraConvergence.IS_CONVERGED = true;
 			triggerIteration = event.getIteration() + 2;
 		}
