@@ -28,6 +28,7 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String DISPATCH_INTERVAL = "dispatchInterval";
 	static public final String WAITING_TIME_ESTIMATION_ALPHA = "waitingTimeEstimationAlpha";
 	static public final String TRAVEL_TIME_ESTIMATION_ALPHA = "travelTimeEstimationAlpha";
+	static public final String CONSIDER_CONVERGENCE_CRITERIA = "considerConvergenceCriteria";
 
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
@@ -51,6 +52,8 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double dispatchInterval = 10.0;
 	private double waitingTimeEstimationAlpha = 0.1;
 	private double travelTimeEstimationAlpha = 0.1;
+
+	private boolean considerConvergenceCriteria = true;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -214,6 +217,16 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(TRAVEL_TIME_ESTIMATION_ALPHA)
 	public void setTravelTimeEstimationAlpha(double travelTimeEstimationAlpha) {
 		this.travelTimeEstimationAlpha = travelTimeEstimationAlpha;
+	}
+
+	@StringGetter(CONSIDER_CONVERGENCE_CRITERIA)
+	public boolean getConsiderConvergenceCriteria() {
+		return considerConvergenceCriteria;
+	}
+
+	@StringSetter(CONSIDER_CONVERGENCE_CRITERIA)
+	public void setConsiderConvergenceCriteria(boolean considerConvergenceCriteria) {
+		this.considerConvergenceCriteria = considerConvergenceCriteria;
 	}
 
 	static public AstraConfigGroup get(Config config) {
