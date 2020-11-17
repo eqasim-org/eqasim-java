@@ -6,7 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Bugfix: Rare issue in `EqasimTransitEngine` leading to inconsistent ordering of event times
 
 **1.2.0**
 
