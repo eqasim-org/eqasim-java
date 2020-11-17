@@ -7,6 +7,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.projects.astra16.analysis.ConvergenceListener;
+import org.eqasim.projects.astra16.convergence.ConvergenceManager;
 import org.eqasim.projects.astra16.mode_choice.AstraModeAvailability;
 import org.eqasim.projects.astra16.mode_choice.AstraModeParameters;
 import org.eqasim.projects.astra16.mode_choice.InfiniteHeadwayConstraint;
@@ -64,8 +65,9 @@ public class AstraModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public ConvergenceListener provideConvergenceListener(OutputDirectoryHierarchy outputHierarchy) {
-		return new ConvergenceListener(outputHierarchy);
+	public ConvergenceListener provideConvergenceListener(OutputDirectoryHierarchy outputHierarchy,
+			ConvergenceManager convergenceManager) {
+		return new ConvergenceListener(outputHierarchy, convergenceManager);
 	}
 
 	@Provides

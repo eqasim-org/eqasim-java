@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import org.eqasim.core.analysis.AstraConvergence;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.TripListener;
 import org.eqasim.core.analysis.TripWriter;
@@ -25,7 +26,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private static final String TRIPS_FILE_NAME = "trips.csv";
 
 	private final OutputDirectoryHierarchy outputDirectory;
-	private final int lastIteration;
+	private int lastIteration = -1;
 
 	private final TripListener tripAnalysisListener;
 	private final int tripAnalysisInterval;
@@ -38,7 +39,6 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	public AnalysisOutputListener(EqasimConfigGroup config, ControlerConfigGroup controllerConfig,
 			OutputDirectoryHierarchy outputDirectory, TripListener tripListener) {
 		this.outputDirectory = outputDirectory;
-		this.lastIteration = controllerConfig.getLastIteration();
 
 		this.scenarioDistanceUnit = config.getDistanceUnit();
 		this.analysisDistanceUnit = config.getTripAnalysisDistanceUnit();
@@ -49,12 +49,15 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		if (tripAnalysisInterval > 0 && event.getIteration() % tripAnalysisInterval == 0) {
+		if ((tripAnalysisInterval > 0 && event.getIteration() % tripAnalysisInterval == 0)
+				|| AstraConvergence.IS_CONVERGED) {
 			isTripAnalysisActive = true;
 			event.getServices().getEvents().addHandler(tripAnalysisListener);
 		} else {
 			isTripAnalysisActive = false;
 		}
+
+		lastIteration = event.getIteration();
 	}
 
 	@Override

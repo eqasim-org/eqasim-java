@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eqasim.projects.astra16.convergence.ConvergenceManager;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -14,12 +15,14 @@ import org.matsim.core.utils.io.IOUtils;
 
 public class ConvergenceListener implements IterationEndsListener, PersonDepartureEventHandler {
 	private final OutputDirectoryHierarchy outputHierarchy;
+	private final ConvergenceManager convergenceManager;
 
 	private final List<Integer> trips = new LinkedList<>();
 	private int iterationTrips = 0;
 
-	public ConvergenceListener(OutputDirectoryHierarchy outputHierarchy) {
+	public ConvergenceListener(OutputDirectoryHierarchy outputHierarchy, ConvergenceManager convergenceManager) {
 		this.outputHierarchy = outputHierarchy;
+		this.convergenceManager = convergenceManager;
 	}
 
 	@Override
@@ -47,5 +50,7 @@ public class ConvergenceListener implements IterationEndsListener, PersonDepartu
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+
+		convergenceManager.addValue("amodRequests", trips.get(trips.size() - 1));
 	}
 }

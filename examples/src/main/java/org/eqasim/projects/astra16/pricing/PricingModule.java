@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.projects.astra16.AstraConfigGroup;
+import org.eqasim.projects.astra16.convergence.ConvergenceManager;
 import org.eqasim.projects.astra16.pricing.business_model.BusinessModel;
 import org.eqasim.projects.astra16.pricing.business_model.BusinessModelListener;
 import org.eqasim.projects.astra16.pricing.business_model.BusinessModelUpdater;
@@ -79,7 +80,7 @@ public class PricingModule extends AbstractEqasimExtension {
 	@Singleton
 	@Provides
 	public PricingTracker providePricingTracker(PriceInterpolator interpolator,
-			OutputDirectoryHierarchy outputHierarchy) {
-		return new PricingTracker(interpolator, outputHierarchy);
+			OutputDirectoryHierarchy outputHierarchy, ConvergenceManager convergenceManager) {
+		return new PricingTracker(interpolator, outputHierarchy, convergenceManager);
 	}
 }

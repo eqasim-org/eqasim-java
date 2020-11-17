@@ -133,7 +133,7 @@ public class AstraConfigurator extends EqasimConfigurator {
 		waitingTimeConfig.setEstimationStartTime(5.0 * 3600.0);
 		waitingTimeConfig.setEstimationEndTime(24.0 * 3600.0);
 		waitingTimeConfig.setEstimationInterval(15.0 * 60.0);
-		waitingTimeConfig.setEstimationAlpha(0.1);
+		waitingTimeConfig.setEstimationAlpha(astraConfig.getWaitingTimeEstimationAlpha());
 		waitingTimeConfig.setDefaultWaitingTime(10.0 * 60.0);
 
 		TimingConfig timingConfig = operatorConfig.getTimingConfig();

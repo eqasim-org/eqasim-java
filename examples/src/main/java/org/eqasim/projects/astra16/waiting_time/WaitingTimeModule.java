@@ -1,5 +1,6 @@
 package org.eqasim.projects.astra16.waiting_time;
 
+import org.eqasim.projects.astra16.convergence.ConvergenceManager;
 import org.eqasim.projects.astra16.service_area.ServiceArea;
 import org.matsim.amodeus.config.AmodeusConfigGroup;
 import org.matsim.amodeus.config.modal.WaitingTimeConfig;
@@ -39,7 +40,7 @@ public class WaitingTimeModule extends AbstractDvrpModeModule {
 	@Provides
 	@Singleton
 	public WaitingTimeComparisonListener provideWaitingTimeComparisonListener(@DvrpMode("av") WaitingTime waitingTime,
-			OutputDirectoryHierarchy outputHierarchy) {
-		return new WaitingTimeComparisonListener(outputHierarchy, waitingTime);
+			OutputDirectoryHierarchy outputHierarchy, ConvergenceManager convergenceManager) {
+		return new WaitingTimeComparisonListener(outputHierarchy, waitingTime, convergenceManager);
 	}
 }

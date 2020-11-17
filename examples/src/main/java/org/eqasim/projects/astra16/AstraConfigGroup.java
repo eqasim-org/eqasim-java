@@ -32,6 +32,9 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	static public final String ALGORITHM = "algorithm";
 	static public final String REBALANCING_INTERVAL = "rebalancingInterval";
 	static public final String DISTANCE_HEURISTIC = "distanceHeuristic";
+	static public final String WAITING_TIME_ESTIMATION_ALPHA = "waitingTimeEstimationAlpha";
+	static public final String TRAVEL_TIME_ESTIMATION_ALPHA = "travelTimeEstimationAlpha";
+	static public final String CONSIDER_CONVERGENCE_CRITERIA = "considerConvergenceCriteria";
 
 	private int fleetSize = 0;
 	private String operatingAreaPath = null;
@@ -56,6 +59,10 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	private double rebalancingInterval = 600.0;
 	private String distanceHeuristic = DistanceHeuristics.EUCLIDEAN.toString();
 	private String algorithm = SingleHeuristicDispatcher.TYPE;
+	private double waitingTimeEstimationAlpha = 0.1;
+	private double travelTimeEstimationAlpha = 0.1;
+
+	private boolean considerConvergenceCriteria = true;
 
 	public AstraConfigGroup() {
 		super(GROUP_NAME);
@@ -229,6 +236,36 @@ public class AstraConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(ALGORITHM)
 	public void setAlgorithm(String algorithm) {
 		this.algorithm = algorithm;
+	}
+
+	@StringGetter(WAITING_TIME_ESTIMATION_ALPHA)
+	public double getWaitingTimeEstimationAlpha() {
+		return waitingTimeEstimationAlpha;
+	}
+
+	@StringSetter(WAITING_TIME_ESTIMATION_ALPHA)
+	public void setWaitingTimeEstimationAlpha(double waitingTimeEstimationAlpha) {
+		this.waitingTimeEstimationAlpha = waitingTimeEstimationAlpha;
+	}
+
+	@StringGetter(TRAVEL_TIME_ESTIMATION_ALPHA)
+	public double getTravelTimeEstimationAlpha() {
+		return travelTimeEstimationAlpha;
+	}
+
+	@StringSetter(TRAVEL_TIME_ESTIMATION_ALPHA)
+	public void setTravelTimeEstimationAlpha(double travelTimeEstimationAlpha) {
+		this.travelTimeEstimationAlpha = travelTimeEstimationAlpha;
+	}
+
+	@StringGetter(CONSIDER_CONVERGENCE_CRITERIA)
+	public boolean getConsiderConvergenceCriteria() {
+		return considerConvergenceCriteria;
+	}
+
+	@StringSetter(CONSIDER_CONVERGENCE_CRITERIA)
+	public void setConsiderConvergenceCriteria(boolean considerConvergenceCriteria) {
+		this.considerConvergenceCriteria = considerConvergenceCriteria;
 	}
 
 	static public AstraConfigGroup get(Config config) {

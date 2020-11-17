@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.eqasim.projects.astra16.convergence.ConvergenceManager;
 import org.matsim.amodeus.components.generator.AmodeusIdentifiers;
 import org.matsim.amodeus.waiting_time.WaitingTime;
 import org.matsim.api.core.v01.Coord;
@@ -28,6 +29,7 @@ public class WaitingTimeComparisonListener
 		implements PersonDepartureEventHandler, PersonEntersVehicleEventHandler, IterationEndsListener {
 	private final WaitingTime waitingTime;
 	private final OutputDirectoryHierarchy outputHierarchy;
+	private final ConvergenceManager convergenceManager;
 
 	private final DescriptiveStatistics statistics = new DescriptiveStatistics();
 
@@ -38,9 +40,11 @@ public class WaitingTimeComparisonListener
 
 	private final Map<Id<Person>, PersonDepartureEvent> departureEvents = new HashMap<>();
 
-	public WaitingTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, WaitingTime waitingTime) {
+	public WaitingTimeComparisonListener(OutputDirectoryHierarchy outputHierarchy, WaitingTime waitingTime,
+			ConvergenceManager convergenceManager) {
 		this.waitingTime = waitingTime;
 		this.outputHierarchy = outputHierarchy;
+		this.convergenceManager = convergenceManager;
 	}
 
 	@Override
@@ -120,6 +124,8 @@ public class WaitingTimeComparisonListener
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		convergenceManager.addValue("waitingTimeError", statistics.getMean());
 
 		statistics.clear();
 		departureEvents.clear();

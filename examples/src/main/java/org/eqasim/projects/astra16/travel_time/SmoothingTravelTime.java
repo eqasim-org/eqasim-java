@@ -24,14 +24,13 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 		VehicleLeavesTrafficEventHandler, AfterMobsimListener {
 	private final double startTime;
 	private final double interval;
+	private final boolean fixTravelTime;
 
 	private final double increasingAlpha;
 	private final double decreasingAlpha;
 
 	private final int numberOfTimeBins;
 	private final int numberOfLinks;
-
-	private final boolean fixTravelTime;
 
 	private final Map<Id<Link>, Integer> id2index = new HashMap<>();
 
@@ -48,14 +47,13 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 			double decreasingAlpha, boolean fixTravelTime, Network network) {
 		this.increasingAlpha = increasingAlpha;
 		this.decreasingAlpha = decreasingAlpha;
+		this.fixTravelTime = fixTravelTime;
 
 		this.startTime = startTime;
 		this.interval = interval;
 
 		this.numberOfTimeBins = 1 + (int) Math.floor((endTime - startTime) / interval);
 		this.numberOfLinks = network.getLinks().size();
-
-		this.fixTravelTime = fixTravelTime;
 
 		this.cumulativeTravelTimes = new double[numberOfLinks][numberOfTimeBins];
 		this.travelTimeCounts = new double[numberOfLinks][numberOfTimeBins];
@@ -109,7 +107,7 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 		} else {
 			int timeIndex = getTimeIndex(time);
 			// travelTime = Math.max(estimates[linkIndex][timeIndex], defaults[linkIndex]);
-			travelTime = estimates[linkIndex][timeIndex];
+			travelTime = Math.max(estimates[linkIndex][timeIndex], defaults[linkIndex]);
 		}
 
 		if (fixTravelTime) {
