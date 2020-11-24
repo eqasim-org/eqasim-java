@@ -23,7 +23,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 public class AdaptNetwork {
 	
 	public static Map<Id<Link>, Double> parseCSV(String filepath) {
-		Map<Id<Link>, List<Double>> tabs = new HashMap<Id<Link>, List<Double>>();
+		//Map<Id<Link>, List<Double>> tabs = new HashMap<Id<Link>, List<Double>>();
     	Map<Id<Link>, Double> capacities = new HashMap<Id<Link>, Double>();
         String line = "";
         String cvsSplitBy = ",";
@@ -36,13 +36,13 @@ public class AdaptNetwork {
 
                 if (cpt > 0) {
 					Id<Link> lid = Id.createLinkId(currentLine[0]);
-					double cap = Double.parseDouble(currentLine[5]);
-					if (!tabs.containsKey(lid)) {
-						tabs.put(lid, new ArrayList<Double>());
-					} 
-					List<Double> l = tabs.get(lid);
-					l.add(cap);
-					tabs.put(lid, l);
+					double cap = Double.parseDouble(currentLine[2]);
+					/**if (!capacities.containsKey(lid)) {
+						capacities.put(lid, new ArrayList<Double>());
+					} **/
+					//List<Double> l = tabs.get(lid);
+					//l.add(cap);
+					capacities.put(lid, cap);
 				}
 				cpt += 1;
 
@@ -52,7 +52,7 @@ public class AdaptNetwork {
             e.printStackTrace();
         }
         
-        Iterator<Entry<Id<Link>, List<Double>>> it = tabs.entrySet().iterator();
+        /**Iterator<Entry<Id<Link>, List<Double>>> it = tabs.entrySet().iterator();
         while (it.hasNext()) {
 			Map.Entry<Id<Link>, List<Double>> pair = (Map.Entry<Id<Link>, List<Double>>)it.next();
         	Id<Link> idlink = pair.getKey();
@@ -64,7 +64,7 @@ public class AdaptNetwork {
         	double mean = total / l.size();
         	capacities.put(idlink, mean);
         	it.remove();
-        }
+        }**/
         
         return capacities;
     }
@@ -77,10 +77,10 @@ public class AdaptNetwork {
 		
 		for (Id<Link> key : links.keySet()) {
 			    Link l = links.get(key);
-			    //if (capacities.containsKey(key)) {
-			    if (true) {
+			    if (capacities.containsKey(key)) {
+			    //if (true) {
 			    	System.out.println("Before" + l.getCapacity());
-					l.setCapacity(1800.0 * l.getNumberOfLanes());
+					l.setCapacity(capacities.get(key));
 					System.out.println("After" + l.getCapacity());
 				}
 			}
@@ -101,7 +101,9 @@ public class AdaptNetwork {
 	
 	public static void main(String[] args) {
 		String networkpath = args[0];
+		System.out.println(networkpath);
 		String csvpath = args[1];
+		System.out.println(csvpath);
 		String outputpath = args[2];
 		
 		@SuppressWarnings("unused")

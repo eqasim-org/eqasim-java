@@ -3,7 +3,6 @@ package org.eqasim.core.analysis;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,7 @@ import org.matsim.api.core.v01.network.Link;
 
 public class ComputeDelayTrafficLights {
 	
-	IntersectionsReader ir = new IntersectionsReader();
+	IntersectionsReader ir = new IntersectionsReader(false);
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
 	Map<Id<Link>, double[]> capacities = new HashMap<>();	
 	Map<Id<Link>, Double> velocities = new HashMap<>();	

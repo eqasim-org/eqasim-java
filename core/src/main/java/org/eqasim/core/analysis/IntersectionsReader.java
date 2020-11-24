@@ -14,10 +14,25 @@ import org.w3c.dom.Element;
 
 public class IntersectionsReader {
 	
-	ArrayList<Intersection> intersections;
+	public enum FlowsTag{
+		Yes,
+		No
+	}
 	
-	public IntersectionsReader() {
+	ArrayList<Intersection> intersections;
+	ArrayList<IntersectionWithFlows> intersectionsFlows;
+	FlowsTag tag;
+	
+	public IntersectionsReader(boolean with_flows) {
 		this.intersections = new ArrayList<Intersection>();
+		this.intersectionsFlows = new ArrayList<IntersectionWithFlows>();
+		
+		if (with_flows) {
+			this.tag = FlowsTag.Yes;
+		}
+		else {
+			this.tag = FlowsTag.No;
+		}
 	}
 	
 	public void read_xml(String filepath) {
@@ -86,9 +101,14 @@ public class IntersectionsReader {
 	                	 }
 	                 }
 	                 
-	                 
-	                 Intersection current_inter = new Intersection(idnode, links, groups, label);
-	                 this.intersections.add(current_inter);
+	                 if (this.tag == FlowsTag.No) {
+	                	 Intersection current_inter = new Intersection(idnode, links, groups, label);
+	                	 this.intersections.add(current_inter);
+	                 }
+	                 else {
+	                	 IntersectionWithFlows current_inter = new IntersectionWithFlows(idnode, links, groups, label);
+	                	 this.intersectionsFlows.add(current_inter);
+	                 }
 	                 
 	             }    
 	             
@@ -103,7 +123,7 @@ public class IntersectionsReader {
 	
 	public static void main(String[] args) {
 		
-		IntersectionsReader ir = new IntersectionsReader();
+		IntersectionsReader ir = new IntersectionsReader(false);
 		ir.read_xml("/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/NEWOUTPUT.xml");
 	}
 

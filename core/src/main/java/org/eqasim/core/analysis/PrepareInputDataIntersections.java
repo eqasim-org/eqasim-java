@@ -20,7 +20,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 
 public class PrepareInputDataIntersections {
 	
-	IntersectionsReader ir = new IntersectionsReader();
+	IntersectionsReader ir = new IntersectionsReader(false);
 	Map<Id<Link>, double[] > hourlyCounts = new HashMap<Id<Link>, double[] > ();
 	Map<Id<Link>, double[]> capacities = new HashMap<>();	
 	Map<Id<Link>, Double> velocities = new HashMap<>();	
@@ -70,7 +70,6 @@ public class PrepareInputDataIntersections {
 		Map<Id<Link>, ? extends Link> links = net.getLinks();
 		
 		for (Id<Link> key : links.keySet()) {
-			    Link l = links.get(key);
 			    if (capacities.containsKey(key)) {
 			    	
 					this.capacities.put(key, capacities.get(key));
