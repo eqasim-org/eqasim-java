@@ -124,18 +124,18 @@ public class FlowMatricesIntersections {
 		for (int k=0; k< ir.intersectionsFlows.size(); k++ ) {
 			IntersectionWithFlows current_intersection = ir.intersectionsFlows.get(k);
 			Map<Id<Link>, ArrayList<Double>> allcap = new HashMap<Id<Link>, ArrayList<Double>>(); 
-			for (int h = 0 ; h < 31; h++) {
-				Map<Id<Link>, Double> excap = current_intersection.tampere_algorithm(h);
-				for (Id<Link> inl : excap.keySet()) {
-					if (! allcap.containsKey(inl)) {
-						ArrayList<Double> alvalues = new ArrayList<Double>();
-						allcap.put(inl, alvalues);
-					}
-					ArrayList<Double> ald = allcap.get(inl);
-					ald.add(excap.get(inl));
-					allcap.put(inl, ald);
+			//for (int h = 0 ; h < 31; h++) {
+			Map<Id<Link>, Double> excap = current_intersection.tampere_algorithm();
+			for (Id<Link> inl : excap.keySet()) {
+				if (! allcap.containsKey(inl)) {
+					ArrayList<Double> alvalues = new ArrayList<Double>();
+					allcap.put(inl, alvalues);
 				}
+				ArrayList<Double> ald = allcap.get(inl);
+				ald.add(excap.get(inl));
+				allcap.put(inl, ald);
 			}
+			//}
 			for (Id<Link> inlink : current_intersection.incoming_links) {
 				ArrayList<Double> caps = allcap.get(inlink);
 				current_intersection.output_capacities.put(inlink, Collections.max(caps));
@@ -178,7 +178,7 @@ public class FlowMatricesIntersections {
 	}
 	
 	public static void main(String[] args) {
-		String path_to_events = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/Last try/CP3_Webster/ITERS/it.60/60.events.xml.gz";
+		String path_to_events = "/home/asallard/Dokumente/Projects/Traffic lights - Zuerich/Simulation results/Last try/CP0_Webster/ITERS/it.60/60.events.xml.gz";
 		FlowMatricesIntersections fmi = new FlowMatricesIntersections(path_to_events, 0.1);
 		fmi.proceed_all_NTS_intersections();
 		fmi.write_csv();

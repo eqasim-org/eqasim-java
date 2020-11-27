@@ -66,7 +66,7 @@ public class IntersectionWithFlows {
 		}
 	}
 	
-	public Map<Id<Link>, Double > tampere_algorithm(int hour){
+	public Map<Id<Link>, Double > tampere_algorithm(){
 		Map<Id<Link>, Double > exact_cap = new HashMap<Id<Link>, Double >();
 		Map<Id<Link>, Map<Id<Link>, Double>> input_demand = new HashMap<Id<Link>, Map<Id<Link>, Double>>();
 		Map<Id<Link>, Double> entry_capacities = new HashMap<Id<Link>, Double>();
@@ -80,10 +80,28 @@ public class IntersectionWithFlows {
 			exit_capacities.put(outlink, this.capacities.get(outlink));
 		}
 		
+		Map<Id<Link>, Double> totals = new HashMap<Id<Link>, Double>();
 		for (Id<Link> inlink : this.incoming_links) {
 			Map<Id<Link>, Double> outtab = new HashMap<Id<Link>, Double>();
+			double total = 0;
 			for (Id<Link> outlink : this.outgoing_links) {
-				outtab.put(outlink, this.flows.get(inlink).get(outlink)[hour]);
+				double[] day_flows = this.flows.get(inlink).get(outlink);
+				double total_link = 0;
+				for (int n = 0; n < day_flows.length; n++) {
+					total_link += day_flows[n];
+					total += day_flows[n];
+				}
+				outtab.put(outlink, total);
+			}
+			input_demand.put(inlink, outtab);
+			totals.put(inlink, total);
+		}
+		for (Id<Link> inlink : this.incoming_links) {
+			Map<Id<Link>, Double> outtab = input_demand.get(inlink);
+			for (Id<Link> outlink : outtab.keySet()) {
+				double t = outtab.get(outlink);
+				t = t / totals.get(inlink) * entry_capacities.get(inlink);
+				outtab.put(outlink, t);
 			}
 			input_demand.put(inlink, outtab);
 		}
