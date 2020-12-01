@@ -55,6 +55,15 @@ public class CostCalculator {
 	private double calculateFixedCostPerVehiclePerDay(VehicleTypeDefinition vehicleType, int numberOfTrips, int numberOfVehicles) {
 		double cleaningCostPerYear = scenario.cleaningPrice * scenario.cleaningFrequencyPerTrip * (numberOfTrips / numberOfVehicles)
 				* 365.25;
+		
+		/*System.err.println("Per day: " + (0.0 //
+				+ vehicleType.insuranceCostPerYear //
+				+ vehicleType.taxCostPerYear //
+				+ vehicleType.parkingCostPerYear //
+				+ vehicleType.otherCostPerYear //
+		) / 365.25);*/
+		
+		/*System.err.println("Per trip: " + (scenario.cleaningPrice * scenario.cleaningFrequencyPerTrip));*/
 
 		return (0.0 //
 				+ vehicleType.insuranceCostPerYear //
@@ -70,6 +79,15 @@ public class CostCalculator {
 		double acquisition = vehicleType.acquisitionCostPerLifetime / scenario.vehicleLifetimeKm;
 		double interest = calculateInterestSum(vehicleType.acquisitionCostPerLifetime, scenario.interestRatePerYear,
 				scenario.creditPeriodYears, 1.0) / scenario.vehicleLifetimeKm;
+		
+		/*System.err.println("Per km: " + (0.0 //
+				+ acquisition //
+				+ interest //
+				+ vehicleType.maintenanceCostPerKm //
+				+ vehicleType.tireCostPerKm //
+				+ vehicleType.fuelCostPerKm //
+				+ vehicleType.otherCostPerKm //
+		));*/
 
 		return (0.0 //
 				+ acquisition //
@@ -82,6 +100,7 @@ public class CostCalculator {
 	}
 
 	private double calculateOverheadCostPerDay() {
+		//System.err.println("Overhead: " + (scenario.overheadCostPerVehiclePerDay + scenario.operationsManagementCostPerVehiclePerDay));
 		return scenario.overheadCostPerVehiclePerDay + scenario.operationsManagementCostPerVehiclePerDay;
 	}
 
@@ -96,7 +115,7 @@ public class CostCalculator {
 		VehicleTypeDefinition vehicleTypeDefinition = scenario.vehicleType.copy();
 		applyTechnologies(vehicleTypeDefinition);
 		applyVATDeducation(vehicleTypeDefinition);
-
+		
 		return calculateTotalCostPerVehiclePerDay(vehicleTypeDefinition, parameters.numberOfVehicles,
 				parameters.vehicleDistanceKm, parameters.numberOfTrips) * parameters.numberOfVehicles;
 	}
