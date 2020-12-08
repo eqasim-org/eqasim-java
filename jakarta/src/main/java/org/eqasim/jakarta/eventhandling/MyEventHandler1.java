@@ -40,7 +40,7 @@ public class MyEventHandler1 implements LinkEnterEventHandler {
 	
 	
 	private int getSlot(double time){
-		return (int)time/3600;
+		return ((int)time/3600)%24;
 	}
 
 	@Override
