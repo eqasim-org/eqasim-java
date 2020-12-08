@@ -1,11 +1,13 @@
 package org.eqasim.flow;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.locationtech.jts.geom.Coordinate;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -27,6 +29,11 @@ import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.core.router.util.LeastCostPathCalculator.Path;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.core.utils.gis.PolylineFeatureFactory;
+import org.matsim.core.utils.gis.ShapeFileWriter;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class RunFlowSimulation {
 	private final static Logger logger = Logger.getLogger(RunFlowSimulation.class);
@@ -35,8 +42,12 @@ public class RunFlowSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("network-path", "population-path") //
 				.allowOptions("earliest-departure-time", "latest-departure-time", "network-mode", "trip-mode",
-						"sampling-rate", "threads", "batch-size", "output-xml") //
+						"sampling-rate", "threads", "batch-size", "output-xml", "output-shp", "crs", "update-freespeed") //
 				.build();
+
+		if (cmd.hasOption("output-shp") && !cmd.hasOption("crs")) {
+			throw new IllegalStateException("CRS must be given if shape file should be written.");
+		}
 
 		double earliestDepartureTime = cmd.getOption("earliest-departure-time").map(Double::parseDouble)
 				.orElse(6.5 * 3600.0);
@@ -210,12 +221,55 @@ public class RunFlowSimulation {
 
 		for (Link link : links) {
 			link.getAttributes().putAttribute("travelTime", travelTimes.get(link.getId()));
-			link.getAttributes().putAttribute("flow", flow.get(link.getId()));
+			link.getAttributes().putAttribute("flow", flow.get(link.getId()) * scalingFactor);
 		}
 
 		logger.info("Writing output data ...");
 
+		if (cmd.hasOption("output-shp")) {
+			CoordinateReferenceSystem crs = MGC.getCRS(cmd.getOptionStrict("crs"));
+			Collection<SimpleFeature> features = new ArrayList<>(roadNetwork.getLinks().size());
+
+			PolylineFeatureFactory featureFactory = new PolylineFeatureFactory.Builder() //
+					.setCrs(crs) //
+					.setName("links") //
+					.addAttribute("linkId", String.class) //
+					.addAttribute("osmType", String.class) //
+					.addAttribute("travelTime", Double.class) //
+					.addAttribute("flow", Double.class) //
+					//
+					.create();
+
+			for (Link link : roadNetwork.getLinks().values()) {
+				String osmType = (String) link.getAttributes().getAttribute("osm:way:highway");
+
+				Coordinate fromCoord = new Coordinate(link.getFromNode().getCoord().getX(),
+						link.getFromNode().getCoord().getY());
+				Coordinate toCoord = new Coordinate(link.getToNode().getCoord().getX(),
+						link.getToNode().getCoord().getY());
+
+				SimpleFeature feature = featureFactory.createPolyline(new Coordinate[] { fromCoord, toCoord },
+						new Object[] { //
+								link.getId().toString(), //
+								osmType, //
+								(double) link.getAttributes().getAttribute("travelTime"), //
+								(double) link.getAttributes().getAttribute("flow"), //
+						//
+						}, null);
+				features.add(feature);
+			}
+
+			ShapeFileWriter.writeGeometries(features, cmd.getOptionStrict("output-shp"));
+		}
+
 		if (cmd.hasOption("output-xml")) {
+			if (cmd.getOption("update-freespeed").map(Boolean::parseBoolean).orElse(true)) {
+				for (Link link : links) {
+					double travelTime = (double) link.getAttributes().getAttribute("travelTime");
+					link.setFreespeed(link.getLength() / travelTime);
+				}
+			}
+
 			new NetworkWriter(roadNetwork).write(cmd.getOptionStrict("output-xml"));
 		}
 	}
