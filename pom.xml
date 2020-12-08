@@ -18,6 +18,8 @@
 		<module>san_francisco</module>
 		<module>los_angeles</module>
 		<module>auckland</module>
+		<module>quebec</module>
+		
 	</modules>
 
 	<properties>
