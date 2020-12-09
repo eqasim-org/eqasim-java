@@ -130,7 +130,7 @@ public class RunFlowSimulation {
 		// Perform MSA assignment
 		logger.info(String.format("Starting MSA assignment ..."));
 
-		double msaFactor = 0.1;
+		double msaFactor = 0.01;
 		double maximumDeviation = 0.01;
 		double convergenceShare = 0.01;
 		int maximumIterations = 1000;
@@ -148,8 +148,11 @@ public class RunFlowSimulation {
 
 			// Update travel times based on flows and MSA
 
+			double maximumTravelTimeDeviation = 0.0;
+			double meanTravelTimeDeviation = 0.0;
+
 			for (Link link : links) {
-				double linkCapacity = link.getCapacity() * capacityFactor;
+				double linkCapacity = link.getCapacity() * link.getNumberOfLanes() * capacityFactor;
 				double flowValue = flow.get(link.getId()) * scalingFactor;
 				double ratio = flowValue / linkCapacity;
 
@@ -160,7 +163,16 @@ public class RunFlowSimulation {
 				double updatedTravelTime = freeFlowTravelTime * (1.0 + 0.15 * Math.pow(ratio, 4.0));
 
 				travelTimes.put(link.getId(), (1.0 - msaFactor) * previousTravelTime + msaFactor * updatedTravelTime);
+
+				maximumTravelTimeDeviation = Math.max(maximumTravelTimeDeviation,
+						Math.abs(updatedTravelTime / previousTravelTime - 1.0));
+				meanTravelTimeDeviation += Math.abs(updatedTravelTime / previousTravelTime - 1.0);
 			}
+
+			meanTravelTimeDeviation /= links.size();
+
+			System.err.println("Max dev " + (1e2 * maximumTravelTimeDeviation) + "%" + " Mean dev "
+					+ (1e2 * meanTravelTimeDeviation) + "%");
 
 			// Select trips that have changed by more than the maximumGap
 
@@ -188,7 +200,8 @@ public class RunFlowSimulation {
 			double numberOfSelectedTrips = selectedTrips.size();
 			double numberOfTrips = trips.size();
 
-			if (numberOfSelectedTrips / numberOfTrips < convergenceShare || iteration >= maximumIterations) {
+			if ((numberOfSelectedTrips / numberOfTrips < convergenceShare) && (maximumTravelTimeDeviation < 0.01)
+					|| iteration >= maximumIterations) {
 				break; // Less than convergenceShare % of trips change by more than maximumGap
 			}
 
@@ -221,7 +234,8 @@ public class RunFlowSimulation {
 
 		for (Link link : links) {
 			link.getAttributes().putAttribute("travelTime", travelTimes.get(link.getId()));
-			link.getAttributes().putAttribute("flow", flow.get(link.getId()) * scalingFactor);
+			link.getAttributes().putAttribute("speed", link.getLength() / travelTimes.get(link.getId()));
+			link.getAttributes().putAttribute("flow", flow.get(link.getId()) * scalingFactor / capacityFactor);
 		}
 
 		logger.info("Writing output data ...");
@@ -236,6 +250,9 @@ public class RunFlowSimulation {
 					.addAttribute("linkId", String.class) //
 					.addAttribute("osmType", String.class) //
 					.addAttribute("travelTime", Double.class) //
+					.addAttribute("speed", Double.class) //
+					.addAttribute("capacity", Double.class) //
+					.addAttribute("lanes", Integer.class) //
 					.addAttribute("flow", Double.class) //
 					//
 					.create();
@@ -252,8 +269,11 @@ public class RunFlowSimulation {
 						new Object[] { //
 								link.getId().toString(), //
 								osmType, //
-								(double) link.getAttributes().getAttribute("travelTime"), //
-								(double) link.getAttributes().getAttribute("flow"), //
+								link.getAttributes().getAttribute("travelTime"), //
+								link.getAttributes().getAttribute("speed"), //
+								link.getCapacity(), //
+								link.getNumberOfLanes(), //
+								link.getAttributes().getAttribute("flow"), //
 						//
 						}, null);
 				features.add(feature);
