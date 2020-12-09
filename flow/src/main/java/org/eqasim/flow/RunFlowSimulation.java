@@ -149,7 +149,7 @@ public class RunFlowSimulation {
 			// Update travel times based on flows and MSA
 
 			for (Link link : links) {
-				double linkCapacity = link.getCapacity() * capacityFactor;
+				double linkCapacity = link.getCapacity() * link.getNumberOfLanes() * capacityFactor;
 				double flowValue = flow.get(link.getId()) * scalingFactor;
 				double ratio = flowValue / linkCapacity;
 
@@ -221,6 +221,7 @@ public class RunFlowSimulation {
 
 		for (Link link : links) {
 			link.getAttributes().putAttribute("travelTime", travelTimes.get(link.getId()));
+			link.getAttributes().putAttribute("speed", link.getLength() / travelTimes.get(link.getId()));
 			link.getAttributes().putAttribute("flow", flow.get(link.getId()) * scalingFactor);
 		}
 
@@ -236,6 +237,7 @@ public class RunFlowSimulation {
 					.addAttribute("linkId", String.class) //
 					.addAttribute("osmType", String.class) //
 					.addAttribute("travelTime", Double.class) //
+					.addAttribute("speed", Double.class) //
 					.addAttribute("flow", Double.class) //
 					//
 					.create();
@@ -253,6 +255,7 @@ public class RunFlowSimulation {
 								link.getId().toString(), //
 								osmType, //
 								(double) link.getAttributes().getAttribute("travelTime"), //
+								(double) link.getAttributes().getAttribute("speed"), //
 								(double) link.getAttributes().getAttribute("flow"), //
 						//
 						}, null);
