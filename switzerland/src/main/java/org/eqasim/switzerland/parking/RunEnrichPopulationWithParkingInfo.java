@@ -17,6 +17,7 @@ public class RunEnrichPopulationWithParkingInfo {
 
         CommandLine cmd = new CommandLine.Builder(args)
                 .requireOptions("input-population", "parking-info", "output-population")
+                .allowOptions("delimiter")
                 .build();
 
         // create population data container
@@ -28,7 +29,8 @@ public class RunEnrichPopulationWithParkingInfo {
         Population population = scenario.getPopulation();
 
         // read in parking info and enrich population
-        new PopulationParkingInfoEnricher(population).enrich(cmd.getOptionStrict("parking-info"), ";");
+        String delimiter = cmd.getOption("delimiter").orElse(",");
+        new PopulationParkingInfoEnricher(population).enrich(cmd.getOptionStrict("parking-info"), delimiter);
 
         // write out enriched population
         new PopulationWriter(population).write(cmd.getOptionStrict("output-population"));
