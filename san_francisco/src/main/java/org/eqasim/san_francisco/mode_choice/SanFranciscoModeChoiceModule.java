@@ -91,7 +91,7 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(
-			DiscreteModeChoiceConfigGroup dmcConfig, @Named("tour") HomeFinder homeFinder) {
+			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
 		return new VehicleTourConstraintWithCarPassenger.Factory(config.getRestrictedModes(), homeFinder);
 	}
@@ -99,7 +99,7 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			@Named("tour") HomeFinder homeFinder) {
+			HomeFinder homeFinder) {
 		return new WalkDurationConstraint.Factory();
 	}
 }

@@ -104,14 +104,14 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			@Named("tour") HomeFinder homeFinder, Config config) {
+			HomeFinder homeFinder, Config config) {
 		return new WalkDurationConstraint.Factory(config);
 	}
 	
 	@Provides
 	@Singleton
 	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(
-			DiscreteModeChoiceConfigGroup dmcConfig, @Named("tour") HomeFinder homeFinder) {
+			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
 		return new VehicleTourConstraintWithCarPassenger.Factory(config.getRestrictedModes(), homeFinder);
 	}
