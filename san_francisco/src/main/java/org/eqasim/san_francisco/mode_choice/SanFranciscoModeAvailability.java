@@ -40,9 +40,9 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 			bikeAvailability = false;
 		}
 
-		if (bikeAvailability) {
-			modes.add(TransportMode.bike);
-		}
+		//if (bikeAvailability) {
+		//	modes.add(TransportMode.bike);
+		//}
 
 		// Add special mode "outside" if applicable
 		Boolean isOutside = (Boolean) person.getAttributes().getAttribute("outside");
