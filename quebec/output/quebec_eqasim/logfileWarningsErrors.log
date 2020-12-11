@@ -1,0 +1,111 @@
+2020-12-10T14:50:18,959  WARN PrepareForSimImpl:222 'usePersonIdForMissingVehicleId' is deprecated. It will be removed soon.
+2020-12-10T14:50:19,076 ERROR MatsimRuntimeModifications:75 Getting uncaught Exception in Thread main
+com.google.inject.ProvisionException: Unable to provision, see the following errors:
+
+1) Error in custom provider, java.lang.NullPointerException
+  while locating ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory
+  while locating ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor
+    for the 1st parameter of ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorRoutingModuleProvider.<init>(SwissRailRaptorRoutingModuleProvider.java:28)
+  while locating ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorRoutingModuleProvider
+  while locating org.matsim.core.router.RoutingModule annotated with @com.google.inject.name.Named(value="pt")
+  while locating org.matsim.core.router.RoutingModule annotated with @com.google.inject.internal.Element(setName=,uniqueId=450, type=MAPBINDER, keyType=java.lang.String)
+  at org.matsim.core.router.TripRouter.<init>(TripRouter.java:103)
+  while locating org.matsim.core.router.TripRouter
+
+1 error
+	at com.google.inject.internal.InternalProvisionException.toProvisionException(InternalProvisionException.java:226) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.InjectorImpl$1.get(InjectorImpl.java:1053) ~[guice-4.2.2.jar:?]
+	at org.matsim.core.controler.PrepareForSimImpl.lambda$run$0(PrepareForSimImpl.java:173) ~[matsim-12.0.jar:?]
+	at org.matsim.core.population.algorithms.ParallelPersonAlgorithmUtils.run(ParallelPersonAlgorithmUtils.java:86) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.PrepareForSimImpl.run(PrepareForSimImpl.java:172) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.NewControler.prepareForSim(NewControler.java:113) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController$1.run(AbstractController.java:79) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:69) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:52) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController.run(AbstractController.java:88) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.NewControler.run(NewControler.java:82) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.Controler.run(Controler.java:249) [matsim-12.0.jar:?]
+	at org.eqasim.quebec.RunSimulation.main(RunSimulation.java:48) [classes/:?]
+Caused by: java.lang.NullPointerException
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData.create(SwissRailRaptorData.java:121) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.prepareData(SwissRailRaptorFactory.java:70) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.getData(SwissRailRaptorFactory.java:59) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.get(SwissRailRaptorFactory.java:53) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.get(SwissRailRaptorFactory.java:21) ~[matsim-12.0.jar:?]
+	at com.google.inject.internal.ProviderInternalFactory.provision(ProviderInternalFactory.java:85) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.BoundProviderFactory.provision(BoundProviderFactory.java:77) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ProviderInternalFactory.circularGet(ProviderInternalFactory.java:59) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.BoundProviderFactory.get(BoundProviderFactory.java:61) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.SingleParameterInjector.inject(SingleParameterInjector.java:42) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.SingleParameterInjector.getAll(SingleParameterInjector.java:65) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.provision(ConstructorInjector.java:113) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.construct(ConstructorInjector.java:91) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorBindingImpl$Factory.get(ConstructorBindingImpl.java:306) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.BoundProviderFactory.get(BoundProviderFactory.java:60) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.FactoryProxy.get(FactoryProxy.java:62) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.InjectorImpl$1.get(InjectorImpl.java:1050) ~[guice-4.2.2.jar:?]
+	at org.matsim.core.router.TripRouter.<init>(TripRouter.java:107) ~[matsim-12.0.jar:?]
+	at org.matsim.core.router.TripRouter$$FastClassByGuice$$40b051f1.newInstance(<generated>) ~[matsim-12.0.jar:?]
+	at com.google.inject.internal.DefaultConstructionProxyFactory$FastClassProxy.newInstance(DefaultConstructionProxyFactory.java:89) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.provision(ConstructorInjector.java:114) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.construct(ConstructorInjector.java:91) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorBindingImpl$Factory.get(ConstructorBindingImpl.java:306) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.InjectorImpl$1.get(InjectorImpl.java:1050) ~[guice-4.2.2.jar:?]
+	... 11 more
+2020-12-10T14:50:19,091 ERROR MatsimRuntimeModifications:81 ERROR --- This is an unexpected shutdown!
+2020-12-10T14:50:19,091 ERROR MatsimRuntimeModifications:84 Shutdown possibly caused by the following Exception:
+com.google.inject.ProvisionException: Unable to provision, see the following errors:
+
+1) Error in custom provider, java.lang.NullPointerException
+  while locating ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory
+  while locating ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor
+    for the 1st parameter of ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorRoutingModuleProvider.<init>(SwissRailRaptorRoutingModuleProvider.java:28)
+  while locating ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorRoutingModuleProvider
+  while locating org.matsim.core.router.RoutingModule annotated with @com.google.inject.name.Named(value="pt")
+  while locating org.matsim.core.router.RoutingModule annotated with @com.google.inject.internal.Element(setName=,uniqueId=450, type=MAPBINDER, keyType=java.lang.String)
+  at org.matsim.core.router.TripRouter.<init>(TripRouter.java:103)
+  while locating org.matsim.core.router.TripRouter
+
+1 error
+	at com.google.inject.internal.InternalProvisionException.toProvisionException(InternalProvisionException.java:226) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.InjectorImpl$1.get(InjectorImpl.java:1053) ~[guice-4.2.2.jar:?]
+	at org.matsim.core.controler.PrepareForSimImpl.lambda$run$0(PrepareForSimImpl.java:173) ~[matsim-12.0.jar:?]
+	at org.matsim.core.population.algorithms.ParallelPersonAlgorithmUtils.run(ParallelPersonAlgorithmUtils.java:86) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.PrepareForSimImpl.run(PrepareForSimImpl.java:172) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.NewControler.prepareForSim(NewControler.java:113) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController$1.run(AbstractController.java:79) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:69) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:52) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController.run(AbstractController.java:88) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.NewControler.run(NewControler.java:82) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.Controler.run(Controler.java:249) [matsim-12.0.jar:?]
+	at org.eqasim.quebec.RunSimulation.main(RunSimulation.java:48) [classes/:?]
+Caused by: java.lang.NullPointerException
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData.create(SwissRailRaptorData.java:121) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.prepareData(SwissRailRaptorFactory.java:70) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.getData(SwissRailRaptorFactory.java:59) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.get(SwissRailRaptorFactory.java:53) ~[matsim-12.0.jar:?]
+	at ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorFactory.get(SwissRailRaptorFactory.java:21) ~[matsim-12.0.jar:?]
+	at com.google.inject.internal.ProviderInternalFactory.provision(ProviderInternalFactory.java:85) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.BoundProviderFactory.provision(BoundProviderFactory.java:77) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ProviderInternalFactory.circularGet(ProviderInternalFactory.java:59) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.BoundProviderFactory.get(BoundProviderFactory.java:61) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.SingleParameterInjector.inject(SingleParameterInjector.java:42) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.SingleParameterInjector.getAll(SingleParameterInjector.java:65) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.provision(ConstructorInjector.java:113) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.construct(ConstructorInjector.java:91) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorBindingImpl$Factory.get(ConstructorBindingImpl.java:306) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.BoundProviderFactory.get(BoundProviderFactory.java:60) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.FactoryProxy.get(FactoryProxy.java:62) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.InjectorImpl$1.get(InjectorImpl.java:1050) ~[guice-4.2.2.jar:?]
+	at org.matsim.core.router.TripRouter.<init>(TripRouter.java:107) ~[matsim-12.0.jar:?]
+	at org.matsim.core.router.TripRouter$$FastClassByGuice$$40b051f1.newInstance(<generated>) ~[matsim-12.0.jar:?]
+	at com.google.inject.internal.DefaultConstructionProxyFactory$FastClassProxy.newInstance(DefaultConstructionProxyFactory.java:89) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.provision(ConstructorInjector.java:114) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorInjector.construct(ConstructorInjector.java:91) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.ConstructorBindingImpl$Factory.get(ConstructorBindingImpl.java:306) ~[guice-4.2.2.jar:?]
+	at com.google.inject.internal.InjectorImpl$1.get(InjectorImpl.java:1050) ~[guice-4.2.2.jar:?]
+	... 11 more
+2020-12-10T14:50:20,087 ERROR MatsimRuntimeModifications:99 ERROR --- MATSim unexpectedly terminated. Please check the output or the logfile with warnings and errors for hints.
+2020-12-10T14:50:20,087 ERROR MatsimRuntimeModifications:100 ERROR --- results should not be used for further analysis.
+2020-12-10T14:50:20,087 ERROR MatsimRuntimeModifications:104 ERROR --- This was an unexpected shutdown! See the log file for a possible reason.

@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.quebec.mode_choice.constraints.VehicleTourConstraintWithCarPassenger;
@@ -92,7 +93,7 @@ public class QuebecModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(
-			DiscreteModeChoiceConfigGroup dmcConfig, @Named("tour") HomeFinder homeFinder) {
+			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
 		return new VehicleTourConstraintWithCarPassenger.Factory(config.getRestrictedModes(), homeFinder);
 	}
@@ -100,7 +101,7 @@ public class QuebecModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			@Named("tour") HomeFinder homeFinder) {
+			HomeFinder homeFinder) {
 		return new WalkDurationConstraint.Factory();
 	}
 }

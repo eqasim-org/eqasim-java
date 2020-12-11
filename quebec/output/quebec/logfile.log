@@ -1,0 +1,50 @@
+2020-12-10T14:37:09,061  INFO Gbl:63 JVM: 11.0.9.1; Ubuntu; mixed mode, sharing; 64-bit
+2020-12-10T14:37:09,062  INFO Gbl:67 OS: Linux; 5.4.0-56-generic; amd64
+2020-12-10T14:37:09,063  INFO Gbl:70 CPU cores: 8
+2020-12-10T14:37:09,069  INFO Gbl:71 max. Memory: 3934.0MB (4125097984B)
+2020-12-10T14:37:09,075  INFO Gbl:109 MATSim-Build: r3047d3a9d4b11b836b6f2a61b9605de74420d5a2 (2020-06-04 11:51:49)
+2020-12-10T14:37:09,078  INFO ControlerListenerManagerImpl:107 calling notifyStartup on org.matsim.guice.DependencyGraphControlerListener
+2020-12-10T14:37:09,089  INFO MemoryObserver:41 used RAM: 156 MB  free: 146 MB  total: 303 MB
+2020-12-10T14:37:09,354  INFO ControlerListenerManagerImpl:107 calling notifyStartup on org.matsim.counts.CountsControlerListener
+2020-12-10T14:37:09,354  INFO ControlerListenerManagerImpl:107 calling notifyStartup on org.matsim.analysis.ModeStatsControlerListener
+2020-12-10T14:37:09,354  INFO ControlerListenerManagerImpl:107 calling notifyStartup on org.matsim.analysis.ScoreStatsControlerListener
+2020-12-10T14:37:09,355  INFO ControlerListenerManagerImpl:107 calling notifyStartup on org.matsim.contribs.discrete_mode_choice.modules.utils.ModeChoiceInTheLoopChecker
+2020-12-10T14:37:09,356 ERROR MatsimRuntimeModifications:75 Getting uncaught Exception in Thread main
+java.lang.IllegalStateException: Option strategy.maxAgentPlanMemorySize should be 1 if mode-choice-in-the-loop is enforced.
+	at org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator.checkModeChoiceInTheLoop(DiscreteModeChoiceConfigurator.java:123) ~[discrete_mode_choice-12.0.jar:?]
+	at org.matsim.contribs.discrete_mode_choice.modules.utils.ModeChoiceInTheLoopChecker.notifyStartup(ModeChoiceInTheLoopChecker.java:33) ~[discrete_mode_choice-12.0.jar:?]
+	at org.matsim.core.controler.ControlerListenerManagerImpl.fireControlerStartupEvent(ControlerListenerManagerImpl.java:108) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController$1.run(AbstractController.java:77) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:69) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:52) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController.run(AbstractController.java:88) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.NewControler.run(NewControler.java:82) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.Controler.run(Controler.java:249) [matsim-12.0.jar:?]
+	at org.eqasim.quebec.RunSimulation.main(RunSimulation.java:48) [classes/:?]
+2020-12-10T14:37:09,369  INFO MatsimRuntimeModifications:79 S H U T D O W N   ---   start shutdown.
+2020-12-10T14:37:09,369 ERROR MatsimRuntimeModifications:81 ERROR --- This is an unexpected shutdown!
+2020-12-10T14:37:09,369 ERROR MatsimRuntimeModifications:84 Shutdown possibly caused by the following Exception:
+java.lang.IllegalStateException: Option strategy.maxAgentPlanMemorySize should be 1 if mode-choice-in-the-loop is enforced.
+	at org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator.checkModeChoiceInTheLoop(DiscreteModeChoiceConfigurator.java:123) ~[discrete_mode_choice-12.0.jar:?]
+	at org.matsim.contribs.discrete_mode_choice.modules.utils.ModeChoiceInTheLoopChecker.notifyStartup(ModeChoiceInTheLoopChecker.java:33) ~[discrete_mode_choice-12.0.jar:?]
+	at org.matsim.core.controler.ControlerListenerManagerImpl.fireControlerStartupEvent(ControlerListenerManagerImpl.java:108) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController$1.run(AbstractController.java:77) ~[matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:69) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.MatsimRuntimeModifications.run(MatsimRuntimeModifications.java:52) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.AbstractController.run(AbstractController.java:88) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.NewControler.run(NewControler.java:82) [matsim-12.0.jar:?]
+	at org.matsim.core.controler.Controler.run(Controler.java:249) [matsim-12.0.jar:?]
+	at org.eqasim.quebec.RunSimulation.main(RunSimulation.java:48) [classes/:?]
+2020-12-10T14:37:09,370  INFO ControlerListenerManagerImpl:121 calling notifyShutdown on org.matsim.core.controler.corelisteners.EventsHandlingImpl
+2020-12-10T14:37:09,370  INFO ControlerListenerManagerImpl:121 calling notifyShutdown on org.matsim.core.controler.corelisteners.DumpDataAtEndImpl
+2020-12-10T14:37:09,370  INFO ControlerListenerManagerImpl:126 calling notifyShutdown on org.matsim.analysis.ModeStatsControlerListener
+2020-12-10T14:37:09,370  INFO ControlerListenerManagerImpl:126 calling notifyShutdown on org.matsim.analysis.ScoreStatsControlerListener
+2020-12-10T14:37:09,371  INFO ControlerListenerManagerImpl:126 calling notifyShutdown on org.matsim.analysis.IterationTravelStatsControlerListener
+2020-12-10T14:37:10,379  INFO IterationTravelStatsControlerListener:100 Writing all Person and Attributes to personscsv
+2020-12-10T14:37:10,529  INFO IterationTravelStatsControlerListener:134 ...done
+2020-12-10T14:37:10,529  INFO ControlerListenerManagerImpl:126 calling notifyShutdown on org.eqasim.core.simulation.analysis.AnalysisOutputListener
+2020-12-10T14:37:10,531  INFO ControlerListenerManagerImpl:129 all ControlerShutdownListeners called.
+2020-12-10T14:37:10,531 ERROR MatsimRuntimeModifications:99 ERROR --- MATSim unexpectedly terminated. Please check the output or the logfile with warnings and errors for hints.
+2020-12-10T14:37:10,531 ERROR MatsimRuntimeModifications:100 ERROR --- results should not be used for further analysis.
+2020-12-10T14:37:10,531  INFO MatsimRuntimeModifications:102 S H U T D O W N   ---   shutdown completed.
+2020-12-10T14:37:10,531 ERROR MatsimRuntimeModifications:104 ERROR --- This was an unexpected shutdown! See the log file for a possible reason.

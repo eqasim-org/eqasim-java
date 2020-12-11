@@ -1,0 +1,52 @@
+pattern	0+	5+	10+	15+	20+	25+	30+	35+	40+	45+	50+	55+	60+
+education---education	4	2	1	0	0	0	1	0	0	0	0	0	1
+education---home	401	160	92	62	65	23	18	8	10	8	8	7	105
+education---leisure	15	1	1	3	2	1	0	1	0	0	0	1	9
+education---other	40	0	2	4	4	0	0	1	1	0	0	0	6
+education---pt interaction	88	54	44	4	7	0	0	0	0	0	0	0	7
+education---shop	16	7	1	1	1	1	1	0	0	2	0	0	0
+education---work	5	1	0	1	0	2	0	2	0	0	0	1	0
+home---education	449	179	83	54	72	31	20	17	9	7	7	4	93
+home---home	8	2	0	0	0	0	0	0	0	0	0	0	0
+home---leisure	469	169	33	29	59	38	27	20	7	13	10	3	86
+home---other	648	292	65	57	45	42	30	28	21	19	7	5	46
+home---pt interaction	330	234	114	33	2	2	5	0	2	0	0	3	22
+home---shop	533	267	69	59	43	38	25	24	18	6	9	5	36
+home---work	1156	599	52	73	107	77	44	36	29	26	13	11	90
+leisure---education	6	0	0	1	1	0	0	0	0	0	0	0	0
+leisure---home	604	99	42	41	105	67	27	27	8	8	7	5	43
+leisure---leisure	93	27	5	4	2	4	0	3	4	1	1	0	1
+leisure---other	85	20	4	10	2	5	0	0	0	0	0	0	0
+leisure---pt interaction	25	24	17	4	1	0	2	0	1	0	0	0	5
+leisure---shop	74	24	5	13	5	2	3	0	0	1	1	1	3
+leisure---work	69	19	6	6	12	7	1	0	4	2	1	0	5
+other---education	16	2	0	1	0	1	0	0	0	0	0	0	1
+other---home	658	199	109	60	65	44	25	18	17	7	9	17	44
+other---leisure	90	16	4	7	2	3	2	1	1	1	0	0	2
+other---other	158	57	9	11	16	8	3	6	2	2	0	0	8
+other---pt interaction	29	23	17	7	0	0	0	1	0	2	0	0	9
+other---shop	132	30	11	9	4	4	2	1	0	0	0	2	1
+other---work	233	51	4	13	14	10	9	13	6	6	2	0	7
+pt interaction---education	94	84	19	17	2	0	0	0	0	0	0	0	21
+pt interaction---home	294	192	105	35	0	2	3	1	0	0	0	2	21
+pt interaction---leisure	35	29	12	14	1	0	1	2	0	0	0	0	3
+pt interaction---other	39	25	19	6	0	1	1	0	0	3	0	1	7
+pt interaction---pt interaction	752	324	359	357	267	252	196	153	119	92	63	41	91
+pt interaction---shop	50	24	18	9	2	1	0	0	1	0	1	0	2
+pt interaction---work	195	101	51	24	1	3	0	1	0	0	1	1	2
+shop---education	2	0	0	1	0	0	0	0	0	0	0	0	0
+shop---home	811	213	99	72	74	46	21	18	15	8	8	7	34
+shop---leisure	81	17	9	5	1	3	0	2	1	0	1	1	2
+shop---other	65	21	8	6	2	4	0	2	1	2	0	0	5
+shop---pt interaction	42	26	13	7	0	1	0	0	0	0	0	1	3
+shop---shop	344	50	17	23	14	9	2	4	0	0	0	2	7
+shop---work	57	11	3	1	4	4	0	1	2	1	0	1	2
+work---education	4	3	2	0	1	0	1	0	0	0	0	0	0
+work---home	722	552	271	93	75	63	33	25	18	17	19	17	152
+work---leisure	97	50	22	8	9	1	7	6	2	3	1	0	8
+work---other	124	88	61	19	18	11	8	5	7	3	1	4	20
+work---pt interaction	185	101	64	29	1	3	0	0	0	0	0	0	3
+work---shop	101	67	31	13	10	5	5	7	1	0	0	2	10
+work---work	126	45	6	6	9	5	1	1	0	0	2	2	2
+
+average trip duration: 920.2836627084495 seconds = 00:15:20
