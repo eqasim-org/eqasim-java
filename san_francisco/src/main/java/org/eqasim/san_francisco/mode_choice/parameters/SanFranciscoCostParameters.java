@@ -13,9 +13,9 @@ public class SanFranciscoCostParameters implements ParameterDefinition {
 		SanFranciscoCostParameters parameters = new SanFranciscoCostParameters();
 
 		parameters.carCost_USD_mile = 0.14;
-		parameters.ptCostPerTrip_USD_20km = 2.5;
-		parameters.ptCostPerTrip_USD_40km = 2.0;
-		parameters.ptCostPerTrip_USD_40plus_km = 1.5;
+		parameters.ptCostPerTrip_USD_20km = 3.0;
+		parameters.ptCostPerTrip_USD_40km = 2.5;
+		parameters.ptCostPerTrip_USD_40plus_km = 2.0;
 
 		return parameters;
 	}

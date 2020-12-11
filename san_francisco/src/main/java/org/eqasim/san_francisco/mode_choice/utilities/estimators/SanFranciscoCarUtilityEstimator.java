@@ -30,14 +30,14 @@ public class SanFranciscoCarUtilityEstimator extends CarUtilityEstimator {
 		this.predictor = predictor;
 	}
 
-	protected double estimateTravelTime(CarVariables variables_car) {
-		return parameters.sfCar.vot_min * variables_car.travelTime_min;
-	}
-
 	@Override
 	protected double estimateMonetaryCostUtility(CarVariables variables) {
 		return EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
 				parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
+	}
+
+	protected double estimateRegionalUtility(SanFranciscoPersonVariables variables) {
+		return (variables.cityTrip) ? parameters.sfCar.alpha_car_city : 0.0;
 	}
 
 	@Override
@@ -48,8 +48,16 @@ public class SanFranciscoCarUtilityEstimator extends CarUtilityEstimator {
 		double utility = 0.0;
 
 		utility += estimateConstantUtility();
-		utility += (estimateTravelTime(variables_car) + estimateMonetaryCostUtility(variables_car))
-				* (parameters.sfAvgHHLIncome.avg_hhl_income / variables.hhlIncome) * parameters.betaCost_u_MU;
+		utility += estimateTravelTimeUtility(variables_car);
+		utility += estimateRegionalUtility(variables);
+		utility += estimateAccessEgressTimeUtility(variables_car);
+		if (variables.hhlIncome == 0.0)
+			utility += parameters.betaCost_u_MU * estimateMonetaryCostUtility(variables_car) * Math.pow(
+					(10.000 / parameters.sfAvgHHLIncome.avg_hhl_income), parameters.sfIncomeElasticity.lambda_income);
+		else
+			utility += parameters.betaCost_u_MU * estimateMonetaryCostUtility(variables_car)
+					* Math.pow((variables.hhlIncome / parameters.sfAvgHHLIncome.avg_hhl_income),
+							parameters.sfIncomeElasticity.lambda_income);
 
 		return utility;
 	}
