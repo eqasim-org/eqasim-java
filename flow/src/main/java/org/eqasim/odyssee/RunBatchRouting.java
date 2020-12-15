@@ -23,7 +23,7 @@ public class RunBatchRouting {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size", "update-network-path") //
+				.allowOptions("threads", "batch-size", "update-network-path", "minimum-speed") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
@@ -48,6 +48,16 @@ public class RunBatchRouting {
 
 			for (Link link : updateNetwork.getLinks().values()) {
 				scenario.getNetwork().getLinks().get(link.getId()).setFreespeed(link.getFreespeed());
+			}
+
+			if (cmd.hasOption("minimum-speed")) {
+				double minimumSpeed = Double.parseDouble(cmd.getOptionStrict("minimum-speed"));
+
+				for (Link link : scenario.getNetwork().getLinks().values()) {
+					if (link.getFreespeed() < minimumSpeed) {
+						link.setFreespeed(minimumSpeed);
+					}
+				}
 			}
 		}
 
