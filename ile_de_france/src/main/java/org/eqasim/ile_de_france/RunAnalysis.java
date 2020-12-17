@@ -18,8 +18,8 @@ import org.matsim.core.events.MatsimEventsReader;
 
 public class RunAnalysis {
 	static public void main(String[] args) throws IOException {
-		String eventsPath = "output_lead_hub/output_events.xml.gz";
-		String outputPath = "output_lead_hub/flows.csv";
+		String eventsPath = "simulation_output/output_events.xml.gz";
+		String outputPath = "flows.csv";
 
 		FlowCollector collector = new FlowCollector();
 

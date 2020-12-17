@@ -68,12 +68,12 @@ public class RunSimulation {
 		config.qsim().setStorageCapFactor(1e9);
 		
 		//config.controler().setOutputDirectory("output_lead");
-		config.controler().setOutputDirectory("output_lead_hub");
+		config.controler().setOutputDirectory("/home/shoerl/lead/output/two_hubs/simulation_output");
 		
 		FreightConfigGroup freightConfig = ConfigUtils.addOrGetModule(config, FreightConfigGroup.class);
-		//freightConfig.setCarriersFile("/home/shoerl/lyon/data/carriers.xml");
-		freightConfig.setCarriersFile("/home/shoerl/lyon/data/carriers_with_hubs.xml");
-		freightConfig.setCarriersVehicleTypesFile("/home/shoerl/lyon/freight_vehicle_types.xml");
+		//freightConfig.setCarriersFile("/home/shoerl/lead/output/two_hubs/carriers.xml");
+		freightConfig.setCarriersFile("/home/shoerl/lead/output/two_hubs/carriers_with_hubs.xml");
+		freightConfig.setCarriersVehicleTypesFile("/home/shoerl/lead/data/freight_vehicle_types.xml");
 		freightConfig.setTravelTimeSliceWidth(900);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -158,6 +158,7 @@ public class RunSimulation {
 				algorithmBuilder.addCoreStateAndConstraintStuff(true);
 				
 				VehicleRoutingAlgorithm algorithm = algorithmBuilder.buildAlgorithm();
+				algorithm.setMaxIterations(100);
 
 				VehicleRoutingProblemSolution solution = Solutions.bestOf(algorithm.searchSolutions());
 				CarrierPlan plan = MatsimJspritFactory.createPlan(carrier, solution);
