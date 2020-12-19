@@ -28,7 +28,7 @@
 		<!-- Defines which TourFinder component to use. Built-in choices: PlanBased, ActivityBased, HomeBased -->
 		<param name="tourFinder" value="ActivityBased" />
 		<!-- Defines a number of TripConstraint components that should be activated. Built-in choices: VehicleContinuity, ShapeFile, LinkAttribute, TransitWalk -->
-		<param name="tripConstraints" value="PassengerConstraint, OutsideConstraint, TransitWalk" />
+		<param name="tripConstraints" value="OutsideConstraint, TransitWalk" />
 		<!-- Defines which TripEstimator component to use. Built-in choices: MATSimTripScoring, Uniform -->
 		<param name="tripEstimator" value="EqasimUtilityEstimator" />
 		<!-- Defines a number of TripFilter components that should be activated. Built-in choices:  -->
@@ -136,14 +136,14 @@
 		<!-- Default=0. First Iteration of a simulation. -->
 		<param name="firstIteration" value="0" />
 		<!-- Default=1000. Last Iteration of a simulation. -->
-		<param name="lastIteration" value="60" />
+		<param name="lastIteration" value="30" />
 		<!-- Defines which mobility simulation will be used. Currently supported: qsim JDEQSim 
 		Depending on the chosen mobsim, you'll have to add additional config modules to configure the corresponding mobsim.
 		For 'qsim', add a module 'qsim' to the config. -->
 		<param name="mobsim" value="qsim" />
 		<param name="outputDirectory" value="simulation_output" />
 		<!-- Possible values: failIfDirectoryExists, overwriteExistingFiles, deleteDirectoryIfExists -->
-		<param name="overwriteFiles" value="deleteDirectoryIfExists" />
+		<param name="overwriteFiles" value="overwriteExistingFiles" />
 		<!-- The type of routing (least cost path) algorithm used, may have the values: Dijkstra, FastDijkstra, AStarLandmarks or FastAStarLandmarks -->
 		<param name="routingAlgorithmType" value="FastAStarLandmarks" />
 		<!-- An identifier for the current run which is used as prefix for output files and mentioned in output xml files etc. -->
@@ -151,9 +151,9 @@
 		<!-- Comma-separated list of visualizer output file formats. `transims', `googleearth', and `otfvis'. -->
 		<param name="snapshotFormat" value="" />
 		<!-- iterationNumber % writeEventsInterval == 0 defines in which iterations events are written to a file. `0' disables events writing completely. -->
-		<param name="writeEventsInterval" value="60" />
+		<param name="writeEventsInterval" value="10" />
 		<!-- iterationNumber % writePlansInterval == 0 defines (hopefully) in which iterations plans are written to a file. `0' disables plans writing completely.  Some plans in early iterations are always written -->
-		<param name="writePlansInterval" value="60" />
+		<param name="writePlansInterval" value="10" />
 		<!-- iterationNumber % writeSnapshotsInterval == 0 defines in which iterations snapshots are written to a file. `0' disables snapshots writing completely -->
 		<param name="writeSnapshotsInterval" value="1" />
 		<!-- iterationNumber % writeEventsInterval == 0 defines in which iterations trips CSV are written to a file. `0' disables trips writing completely. -->

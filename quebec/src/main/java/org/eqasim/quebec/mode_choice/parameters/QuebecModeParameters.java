@@ -33,26 +33,26 @@ public class QuebecModeParameters extends ModeParameters {
 		QuebecModeParameters parameters = new QuebecModeParameters();
 
 		// Cost
-		parameters.qcPT.betaCOST_PT = -0.7166;
+		parameters.qcPT.betaCOST_PT = -0.7035;
 
 		// Car
 		parameters.car.alpha_u = 0.0;
-		parameters.car.betaTravelTime_u_min = -0.0790;
+		parameters.car.betaTravelTime_u_min = -0.0871;
 
 		
 		// Car Passenger
-		parameters.car_passenger.alpha_car_passenger = -1.9889;
-		parameters.car_passenger.betaTravelTime_u_min = -0.1123;
+		parameters.car_passenger.alpha_car_passenger = -1.8225;
+		parameters.car_passenger.betaTravelTime_u_min = -0.1243;
 
 
 		// PT
-		parameters.pt.alpha_u = -2.6977;
-		parameters.qcPT.betaTravelTime_u_min =  -0.0198;
+		parameters.pt.alpha_u = -1.0858;
+		parameters.qcPT.betaTravelTime_u_min =  -0.0225;
 
 
 		// Walk
-		parameters.walk.alpha_u = 0.0422;
-		parameters.walk.betaTravelTime_u_min = -0.1360 ;
+		parameters.walk.alpha_u = 0.2455;
+		parameters.walk.betaTravelTime_u_min = -0.1402 ;
 		
 
 		return parameters;
