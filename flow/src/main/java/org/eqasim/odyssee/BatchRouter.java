@@ -1,11 +1,14 @@
 package org.eqasim.odyssee;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -13,6 +16,7 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
+import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.TripStructureUtils;
@@ -24,11 +28,13 @@ class BatchRouter {
 	private final Injector injector;
 	private final int numberOfThreads;
 	private final int batchSize;
+	private final boolean saveLinks;
 
-	public BatchRouter(int numberOfThreads, int batchSize, Injector injector) {
+	public BatchRouter(int numberOfThreads, int batchSize, boolean saveLinks, Injector injector) {
 		this.injector = injector;
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
+		this.saveLinks = saveLinks;
 	}
 
 	public List<RoutingResult> process(List<RoutingTask> tasks) throws InterruptedException {
@@ -107,10 +113,18 @@ class BatchRouter {
 
 					double carTravelTime = 0.0;
 					double carDistance = 0.0;
+					Set<Id<Link>> linkIds = new HashSet<>();
 
 					for (Leg leg : TripStructureUtils.getLegs(carPlan)) {
 						carTravelTime += leg.getTravelTime().seconds();
 						carDistance += leg.getRoute().getDistance();
+
+						if (saveLinks) {
+							NetworkRoute route = (NetworkRoute) leg.getRoute();
+							linkIds.add(route.getStartLinkId());
+							linkIds.add(route.getEndLinkId());
+							linkIds.addAll(route.getLinkIds());
+						}
 					}
 
 					List<? extends PlanElement> ptPlan = router.calcRoute("pt", originFacility, destinationFacility,
@@ -125,7 +139,7 @@ class BatchRouter {
 					}
 
 					taskResults.add(new RoutingResult(task.personId, task.officeId, carTravelTime, carDistance,
-							ptTravelTime, ptDistance));
+							ptTravelTime, ptDistance, linkIds));
 				}
 
 				synchronized (results) {

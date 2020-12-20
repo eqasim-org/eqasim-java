@@ -1,11 +1,17 @@
 package org.eqasim.odyssee;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -23,7 +29,7 @@ public class RunBatchRouting {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size", "update-network-path", "minimum-speed") //
+				.allowOptions("threads", "batch-size", "update-network-path", "minimum-speed", "flow-output-path") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
@@ -61,15 +67,40 @@ public class RunBatchRouting {
 			}
 		}
 
+		boolean trackLinks = cmd.hasOption("flow-output-path");
+
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(EqasimConfigurator.getModules()) //
 				.build();
 
 		List<RoutingTask> tasks = new RoutingTaskReader().read(new File(cmd.getOptionStrict("input-path")));
 
-		BatchRouter router = new BatchRouter(numberOfThreads, batchSize, injector);
+		BatchRouter router = new BatchRouter(numberOfThreads, batchSize, trackLinks, injector);
 		List<RoutingResult> results = router.process(tasks);
 
 		new RoutingResultWriter(results).write(new File(cmd.getOptionStrict("output-path")));
+
+		if (trackLinks) {
+			Map<Id<Link>, Integer> flow = new HashMap<>();
+
+			for (RoutingResult result : results) {
+				result.linkIds.forEach(id -> flow.compute(id, (id_, c) -> c == null ? 1 : c + 1));
+			}
+
+			String flowPath = cmd.getOptionStrict("flow-output-path");
+
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(flowPath)));
+
+			writer.write(String.join(";", new String[] { "link_id", "count" }) + "\n");
+
+			for (Map.Entry<Id<Link>, Integer> entry : flow.entrySet()) {
+				writer.write(String.join(";", new String[] { //
+						entry.getKey().toString(), //
+						String.valueOf(entry.getValue()) //
+				}) + "\n");
+			}
+
+			writer.close();
+		}
 	}
 }
