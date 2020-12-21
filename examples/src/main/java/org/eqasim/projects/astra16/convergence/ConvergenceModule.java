@@ -34,7 +34,7 @@ public class ConvergenceModule extends AbstractModule {
 		int lag = 25;
 
 		manager.addCriterion("travelTimeError",
-				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDistance(horizon), 60.0));
+				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDistance(horizon), 0.0)); // 60.0
 
 		if (config.getFleetSize() > 0) {
 			manager.addCriterion("waitingTimeError",
@@ -47,7 +47,7 @@ public class ConvergenceModule extends AbstractModule {
 		}
 
 		manager.addCriterion("travelTimeErrorMean",
-				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDifference(horizon, lag), 1.0));
+				new ConvergenceCriterion("travelTimeError", new AbsoluteMeanDifference(horizon, lag), 0.0)); // 1.0
 
 		if (config.getFleetSize() > 0) {
 			manager.addCriterion("waitingTimeErrorMean",
