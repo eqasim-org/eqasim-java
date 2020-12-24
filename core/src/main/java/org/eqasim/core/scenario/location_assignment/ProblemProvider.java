@@ -13,7 +13,6 @@ import org.eqasim.core.location_assignment.matsim.setup.MATSimDiscretizationThre
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDiscretizerProvider;
 import org.eqasim.core.location_assignment.matsim.setup.MATSimDistanceSamplerProvider;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.core.population.PopulationUtils;
 
@@ -65,8 +64,8 @@ class ProblemProvider
 	@Override
 	public List<DistanceSampler> getDistanceSamplers(MATSimAssignmentProblem problem) {
 		return problem.getAllLegs().stream().map(leg -> {
-			double duration = PopulationUtils.getNextActivity(problem.getPlan(), leg).getStartTime()
-					- PopulationUtils.getPreviousActivity(problem.getPlan(), leg).getEndTime();
+			double duration = PopulationUtils.getNextActivity(problem.getPlan(), leg).getStartTime().seconds()
+					- PopulationUtils.getPreviousActivity(problem.getPlan(), leg).getEndTime().seconds();
 			return distanceSamplerFactory.createDistanceSampler(leg.getMode(), duration);
 		}).collect(Collectors.toList());
 	}

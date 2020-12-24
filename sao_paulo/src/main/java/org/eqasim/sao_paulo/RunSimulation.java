@@ -24,6 +24,10 @@ public class RunSimulation {
 				EqasimConfigurator.getConfigGroups());
 		EqasimConfigGroup.get(config).setTripAnalysisInterval(1);
 		cmd.applyConfiguration(config);
+		
+		config.controler().setLastIteration(0);
+		config.transit().setUseTransit(true);
+		config.transit().setUsingTransitInMobsim(true);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		EqasimConfigurator.configureScenario(scenario);

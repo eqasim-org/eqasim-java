@@ -7,6 +7,7 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -17,7 +18,6 @@ import org.matsim.core.scenario.ScenarioUtils;
 import ch.ethz.matsim.av.config.AVConfigGroup;
 import ch.ethz.matsim.av.config.operator.OperatorConfig;
 import ch.ethz.matsim.av.framework.AVQSimModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
 /**
  * This is an example run script that runs the Switzerland/Zurich scenario with
@@ -78,7 +78,7 @@ public class RunSimulation {
 		// This is not totally obvious, but we need to adjust the QSim components if we
 		// have AVs
 		controller.configureQSimComponents(configurator -> {
-			EqasimTransitQSimModule.configure(configurator);
+			EqasimTransitQSimModule.configure(configurator, config);
 			AVQSimModule.configureComponents(configurator);
 		});
 

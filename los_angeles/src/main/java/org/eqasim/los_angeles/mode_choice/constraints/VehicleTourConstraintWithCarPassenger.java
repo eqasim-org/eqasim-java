@@ -6,13 +6,12 @@ import java.util.List;
 import org.matsim.api.core.v01.BasicLocation;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
-
-import ch.ethz.matsim.discrete_mode_choice.components.utils.LocationUtils;
-import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import ch.ethz.matsim.discrete_mode_choice.model.tour_based.TourCandidate;
-import ch.ethz.matsim.discrete_mode_choice.model.tour_based.TourConstraint;
-import ch.ethz.matsim.discrete_mode_choice.model.tour_based.TourConstraintFactory;
+import org.matsim.contribs.discrete_mode_choice.components.utils.LocationUtils;
+import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourCandidate;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourConstraint;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourConstraintFactory;
 
 /**
  * This constraint makes sure that trips are continuous in the sense that

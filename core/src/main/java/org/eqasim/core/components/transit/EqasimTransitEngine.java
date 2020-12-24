@@ -6,8 +6,8 @@ import java.util.Set;
 
 import org.eqasim.core.components.transit.departure.DepartureFinder;
 import org.eqasim.core.components.transit.departure.DepartureFinder.NoDepartureFoundException;
+import org.eqasim.core.components.transit.departure.DepartureFinder.StopDeparture;
 import org.eqasim.core.components.transit.events.PublicTransitEvent;
-import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.PersonStuckEvent;
 import org.matsim.api.core.v01.network.Link;
@@ -20,10 +20,9 @@ import org.matsim.core.mobsim.qsim.InternalInterface;
 import org.matsim.core.mobsim.qsim.interfaces.AgentCounter;
 import org.matsim.core.mobsim.qsim.interfaces.DepartureHandler;
 import org.matsim.core.mobsim.qsim.interfaces.MobsimEngine;
-import org.matsim.pt.transitSchedule.api.Departure;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
-import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Singleton;
@@ -87,38 +86,32 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 	public boolean handleDeparture(double now, MobsimAgent agent, Id<Link> departureLinkId) {
 		if (agent.getMode().equals("pt")) {
 			Leg leg = (Leg) ((PlanAgent) agent).getCurrentPlanElement();
-			EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
+			TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
-			TransitLine transitLine = transitSchedule.getTransitLines().get(route.getTransitLineId());
-			TransitRoute transitRoute = transitLine.getRoutes().get(route.getTransitRouteId());
-
-			TransitRouteStop accessStop = transitRoute.getStops().get(route.getAccessStopIndex());
-			TransitRouteStop egressStop = transitRoute.getStops().get(route.getEgressStopIndex());
+			TransitLine transitLine = transitSchedule.getTransitLines().get(route.getLineId());
+			TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
 
 			try {
-				Departure departure = departureFinder.findDeparture(transitRoute, accessStop, now);
+				StopDeparture stopDeparture = departureFinder.findNextDeparture(transitRoute, route.getAccessStopId(),
+						route.getEgressStopId(), now);
 
-				double inVehicleTime = egressStop.getArrivalOffset() - accessStop.getDepartureOffset();
-				double vehicleDepartureTime = departure.getDepartureTime() + accessStop.getDepartureOffset();
+				double vehicleDepartureTime = stopDeparture.departure.getDepartureTime()
+						+ stopDeparture.stop.getDepartureOffset().seconds();
+
+				double waitingTime = route.getBoardingTime().seconds() - leg.getDepartureTime().seconds();
+				double inVehicleTime = leg.getTravelTime().seconds() - waitingTime;
+
 				double arrivalTime = vehicleDepartureTime + inVehicleTime;
-
-				if (arrivalTime < vehicleDepartureTime || arrivalTime < now) {
-					throw new IllegalStateException();
-				}
 
 				if (Math.abs(arrivalTime - now) < 1.0) {
 					arrivalTime = now + 1.0;
 				}
 
-				Id<Link> arrivalLinkId = egressStop.getStopFacility().getLinkId();
-
-				if (!accessStop.getStopFacility().getLinkId().equals(departureLinkId)) {
-					throw new IllegalStateException();
-				}
+				Id<Link> arrivalLinkId = transitSchedule.getFacilities().get(route.getEgressStopId()).getLinkId();
 
 				PublicTransitEvent transitEvent = new PublicTransitEvent(arrivalTime, agent.getId(),
-						transitLine.getId(), transitRoute.getId(), accessStop.getStopFacility().getId(),
-						egressStop.getStopFacility().getId(), vehicleDepartureTime, route.getDistance());
+						transitLine.getId(), transitRoute.getId(), route.getAccessStopId(), route.getEgressStopId(),
+						vehicleDepartureTime, route.getDistance());
 
 				internalInterface.registerAdditionalAgentOnLink(agent);
 				departures.add(new AgentDeparture(agent, vehicleDepartureTime, departureLinkId));
@@ -144,9 +137,9 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 		while (!arrivals.isEmpty() && arrivals.peek().arrivalTime <= time) {
 			AgentArrival arrival = arrivals.poll();
 			arrival.agent.notifyArrivalOnLinkByNonNetworkMode(arrival.arrivalLinkId);
-			eventsManager.processEvent(arrival.event);
-			eventsManager.processEvent(new TeleportationArrivalEvent(arrival.arrivalTime, arrival.agent.getId(),
-					arrival.event.getTravelDistance()));
+			eventsManager.processEvent(new PublicTransitEvent(time, arrival.event));
+			eventsManager.processEvent(new TeleportationArrivalEvent(time, arrival.agent.getId(),
+					arrival.event.getTravelDistance(), "pt"));
 			arrival.agent.endLegAndComputeNextState(time);
 			internalInterface.arrangeNextAgentState(arrival.agent);
 		}

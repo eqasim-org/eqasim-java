@@ -1,6 +1,27 @@
 # CHANGELOG
 
-- No changes yet
+This change log is written in descending order. Changes that happen after version
+`X` was released, are written *above* that version number, because they will be
+included in the (note yet determined) next version number.
+
+**Development version**
+
+- Bugfix: Rare issue in `EqasimTransitEngine` leading to inconsistent ordering of event times
+
+**1.2.0**
+
+- Properly perform mode choice for "free" activity chains or those which do not start or end with "home"
+- Added Corsica unit test case for running simulation and cutting French scenarios
+- Remove `EnrichedTransitRoute` and use default `TransitPassengerRoute`
+- Enable support for network-based public transport simulation by setting `eqasim.useScheduleBasedTransport` to `false` (it is activated by default)
+
+**1.1.0**
+
+- Cutter: Cut transit routes with only *one* stop are not included anymore
+- `ModularUtilityEstimator` -> `ModalUtilityEstimator`
+- Removed `UniversalTourFinder` in favor of well-configured `ActivityTourFinder`
+- Introduction of routed_distance (in contrary to Euclidean distance) and vehicle_distance (all distance covered link by link) into the trip analysis. Changed header, e.g. `preceding_purpose` and `following_purpose`, `euclidean_distance`
+- Update to *MATSim 12.0*
 
 **1.0.6**
 

@@ -18,7 +18,9 @@ import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class AnalysisOutputListener implements IterationStartsListener, IterationEndsListener, ShutdownListener {
 	private static final String TRIPS_FILE_NAME = "trips.csv";
 

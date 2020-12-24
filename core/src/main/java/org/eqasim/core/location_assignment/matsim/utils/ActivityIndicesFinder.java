@@ -11,16 +11,14 @@ import java.util.stream.IntStream;
 
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.TripStructureUtils.StageActivityHandling;
 
 public class ActivityIndicesFinder {
 	final private Set<String> variableActivityTypes;
-	final private StageActivityTypes stageActivityTypes;
 
-	public ActivityIndicesFinder(Set<String> variableActivityTypes, StageActivityTypes stageActivityTypes) {
+	public ActivityIndicesFinder(Set<String> variableActivityTypes) {
 		this.variableActivityTypes = variableActivityTypes;
-		this.stageActivityTypes = stageActivityTypes;
 	}
 
 	public Optional<ActivityTailIndices> findRightTailIndices(List<PlanElement> planElements) {
@@ -28,7 +26,8 @@ public class ActivityIndicesFinder {
 			throw new IllegalStateException("Plans should not contain stage activities for ActivityIndicesFinder");
 		}
 
-		List<Activity> activities = TripStructureUtils.getActivities(planElements, stageActivityTypes);
+		List<Activity> activities = TripStructureUtils.getActivities(planElements,
+				StageActivityHandling.ExcludeStageActivities);
 		List<Integer> activityIndices = getVariableIndices(activities);
 		List<Integer> tailIndices = getRightIndexTail(activityIndices, activities.size());
 
@@ -50,7 +49,8 @@ public class ActivityIndicesFinder {
 			throw new IllegalStateException("Plans should not contain stage activities for ActivityIndicesFinder");
 		}
 
-		List<Activity> activities = TripStructureUtils.getActivities(planElements, stageActivityTypes);
+		List<Activity> activities = TripStructureUtils.getActivities(planElements,
+				StageActivityHandling.ExcludeStageActivities);
 		List<Integer> activityIndices = getVariableIndices(activities);
 		List<Integer> tailIndices = getLeftIndexTail(activityIndices);
 
@@ -74,7 +74,8 @@ public class ActivityIndicesFinder {
 
 		List<ActivityIndices> result = new LinkedList<>();
 
-		List<Activity> activities = TripStructureUtils.getActivities(planElements, stageActivityTypes);
+		List<Activity> activities = TripStructureUtils.getActivities(planElements,
+				StageActivityHandling.ExcludeStageActivities);
 		List<Integer> activityIndices = activities.stream().map(planElements::indexOf).collect(Collectors.toList());
 
 		List<Integer> variableActivityIndices = getVariableIndices(activities);
@@ -179,6 +180,6 @@ public class ActivityIndicesFinder {
 
 	private long countStageActivities(List<PlanElement> planElements) {
 		return planElements.stream().filter(Activity.class::isInstance).map(Activity.class::cast).map(Activity::getType)
-				.filter(stageActivityTypes::isStageActivity).count();
+				.filter(TripStructureUtils::isStageActivityType).count();
 	}
 }

@@ -1,9 +1,14 @@
 package org.eqasim.core.components.transit.departure;
 
-import org.matsim.core.utils.misc.Time;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.matsim.api.core.v01.Id;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.google.inject.Singleton;
 
@@ -13,25 +18,50 @@ import com.google.inject.Singleton;
  */
 @Singleton
 public class DefaultDepartureFinder implements DepartureFinder {
-	/**
-	 * TODO: Fix this mess.
-	 */
-	static private double fixTime(double time) {
-		if (Time.isUndefinedTime(time)) {
-			return 24.0 * 3600.0 * 7.0;
-		} else {
-			return time;
-		}
-	}
-
 	@Override
-	public Departure findDeparture(TransitRoute route, TransitRouteStop accessStop, double departureTime)
-			throws NoDepartureFoundException {
-		double accessStopOffset = fixTime(accessStop.getDepartureOffset());
+	public StopDeparture findNextDeparture(TransitRoute route, Id<TransitStopFacility> accessStopId,
+			Id<TransitStopFacility> egressStopId, double departureTime) throws NoDepartureFoundException {
+		List<Id<TransitStopFacility>> stopIds = route.getStops().stream().map(s -> s.getStopFacility().getId())
+				.collect(Collectors.toList());
 
-		Departure result = route.getDepartures().values().stream()
-				.filter(d -> departureTime <= d.getDepartureTime() + accessStopOffset)
-				.min((a, b) -> Double.compare(a.getDepartureTime(), b.getDepartureTime())).orElse(null);
+		int firstAccessStopIndex = stopIds.indexOf(accessStopId);
+		int lastEgressStopIndex = stopIds.lastIndexOf(egressStopId);
+
+		if (firstAccessStopIndex == -1) {
+			throw new IllegalStateException("Access stop not found no route");
+		}
+
+		if (lastEgressStopIndex == -1) {
+			throw new IllegalStateException("Egress stop not found on route");
+		}
+
+		List<TransitRouteStop> stopCandidates = new LinkedList<>();
+
+		for (int i = firstAccessStopIndex; i <= lastEgressStopIndex; i++) {
+			if (stopIds.get(i).equals(accessStopId)) {
+				stopCandidates.add(route.getStops().get(i));
+			}
+		}
+
+		if (stopCandidates.size() == 0) {
+			throw new NoDepartureFoundException();
+		}
+
+		StopDeparture result = null;
+
+		for (Departure departure : route.getDepartures().values()) {
+			for (TransitRouteStop stopCandidate : stopCandidates) {
+				double stopOffset = stopCandidate.getDepartureOffset().seconds();
+				double candidateWaitingTime = (departure.getDepartureTime() + stopOffset) - departureTime;
+
+				if (candidateWaitingTime >= 0.0) {
+					if (result == null || (result.waitingTime > candidateWaitingTime)) {
+						result = new StopDeparture(departure, stopCandidate, candidateWaitingTime);
+						break;
+					}
+				}
+			}
+		}
 
 		if (result == null) {
 			throw new NoDepartureFoundException();

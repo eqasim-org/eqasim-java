@@ -35,6 +35,12 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 		this.travelDistance = travelDistance;
 	}
 
+	public PublicTransitEvent(double now, PublicTransitEvent delegate) {
+		this(now, delegate.getPersonId(), delegate.getTransitLineId(), delegate.getTransitRouteId(),
+				delegate.getAccessStopId(), delegate.getEgressStopId(), delegate.getVehicleDepartureTime(),
+				delegate.getTravelDistance());
+	}
+
 	public Id<TransitLine> getTransitLineId() {
 		return transitLineId;
 	}

@@ -50,14 +50,15 @@ public class TripWriter {
 				"origin_x", //
 				"origin_y", //
 				"destination_x", //
-				"destination_y", "start_time", //
+				"destination_y", "departure_time", //
 				"travel_time", //
-				"network_distance", //
+				"vehicle_distance", //
+				"routed_distance", //
 				"mode", //
-				"preceedingPurpose", //
-				"followingPurpose", //
+				"preceding_purpose", //
+				"following_purpose", //
 				"returning", //
-				"crowfly_distance" //
+				"euclidean_distance" //
 		});
 	}
 
@@ -98,14 +99,15 @@ public class TripWriter {
 				String.valueOf(trip.origin.getY()), //
 				String.valueOf(trip.destination.getX()), //
 				String.valueOf(trip.destination.getY()), //
-				String.valueOf(trip.startTime), //
+				String.valueOf(trip.departureTime), //
 				String.valueOf(trip.travelTime), //
-				String.valueOf(trip.networkDistance * inputFactor * outputFactor), //
+				String.valueOf(trip.vehicleDistance * inputFactor * outputFactor), //
+				String.valueOf(trip.routedDistance * inputFactor * outputFactor), //
 				String.valueOf(trip.mode), //
-				normalizeActivityType(String.valueOf(trip.preceedingPurpose)), //
+				normalizeActivityType(String.valueOf(trip.precedingPurpose)), //
 				normalizeActivityType(String.valueOf(trip.followingPurpose)), //
 				String.valueOf(trip.returning), //
-				String.valueOf(trip.crowflyDistance * inputFactor * outputFactor) //
+				String.valueOf(trip.euclideanDistance * inputFactor * outputFactor) //
 		});
 	}
 }

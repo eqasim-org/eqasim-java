@@ -1,10 +1,10 @@
 package org.eqasim.core.scenario.routing;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.population.Person;
@@ -35,14 +35,16 @@ public class PopulationRouter {
 		Iterator<? extends Person> personIterator = population.getPersons().values().iterator();
 		ParallelProgress progress = new ParallelProgress("Routing population ...", population.getPersons().size());
 
+		final AtomicBoolean errorOccured = new AtomicBoolean(false);
+
 		for (int i = 0; i < numberOfThreads; i++) {
 			Thread thread = new Thread(new Worker(personIterator, progress));
-			thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-				@Override
-				public void uncaughtException(Thread t, Throwable e) {
-					throw new RuntimeException(e);
-				}
+
+			thread.setUncaughtExceptionHandler((t, e) -> {
+				e.printStackTrace();
+				errorOccured.set(true);
 			});
+
 			threads.add(thread);
 		}
 
@@ -54,6 +56,10 @@ public class PopulationRouter {
 		}
 
 		progress.close();
+
+		if (errorOccured.get()) {
+			throw new RuntimeException("Found errors in routing threads");
+		}
 	}
 
 	private class Worker implements Runnable {

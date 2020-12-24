@@ -7,6 +7,13 @@ import java.util.List;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contribs.discrete_mode_choice.modules.ConstraintModule;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
+import org.matsim.contribs.discrete_mode_choice.modules.EstimatorModule;
+import org.matsim.contribs.discrete_mode_choice.modules.ModelModule.ModelType;
+import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
+import org.matsim.contribs.discrete_mode_choice.modules.TourFinderModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -17,14 +24,6 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
-
-import ch.ethz.matsim.discrete_mode_choice.modules.ConstraintModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
-import ch.ethz.matsim.discrete_mode_choice.modules.EstimatorModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.ModelModule.ModelType;
-import ch.ethz.matsim.discrete_mode_choice.modules.SelectorModule;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup.HomeType;
 
 public class GenerateConfig {
 	protected final List<String> ACTIVITY_TYPES = Arrays.asList("home", "work", "education", "shop", "leisure", "other",
@@ -114,6 +113,10 @@ public class GenerateConfig {
 
 		config.plansCalcRoute().setNetworkModes(NETWORK_MODES);
 
+		// TODO: Potentially defaults we should change after MATSim 12
+		config.plansCalcRoute().setInsertingAccessEgressWalk(false);
+		config.plansCalcRoute().setRoutingRandomness(0.0);
+
 		ModeRoutingParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
 		outsideParams.setBeelineDistanceFactor(1.0);
 		outsideParams.setTeleportedModeSpeed(1000.0);
@@ -128,6 +131,8 @@ public class GenerateConfig {
 
 		// Travel time calculator
 		config.travelTimeCalculator().setAnalyzedModes(new HashSet<>(NETWORK_MODES));
+		config.travelTimeCalculator().setFilterModes(true);
+		config.travelTimeCalculator().setSeparateModes(false);
 
 		// Discrete mode choice
 		DiscreteModeChoiceConfigurator.configureAsModeChoiceInTheLoop(config, 0.05);
@@ -144,15 +149,16 @@ public class GenerateConfig {
 		dmcConfig.setTourEstimator(EstimatorModule.CUMULATIVE);
 		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck"));
 
-		dmcConfig.setTourFinder(EqasimModeChoiceModule.TOUR_FINDER_NAME);
+		dmcConfig.setTourFinder(TourFinderModule.ACTIVITY_BASED);
+		dmcConfig.getActivityTourFinderConfigGroup().setActivityTypes(Arrays.asList("home", "outside"));
 		dmcConfig.setModeAvailability("unknown");
 
 		dmcConfig.setTourConstraints(
-				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.FROM_TRIP_BASED));
+				Arrays.asList(EqasimModeChoiceModule.VEHICLE_TOUR_CONSTRAINT, ConstraintModule.FROM_TRIP_BASED));
 		dmcConfig.setTripConstraints(Arrays.asList(ConstraintModule.TRANSIT_WALK,
 				EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME, EqasimModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
 
-		dmcConfig.getVehicleTourConstraintConfig().setHomeType(HomeType.USE_ACTIVITY_TYPE);
+		dmcConfig.setHomeFinder(EqasimModeChoiceModule.HOME_FINDER);
 		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,

@@ -3,6 +3,7 @@ package org.eqasim.core.scenario.cutter.population;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eqasim.core.misc.Constants;
 import org.eqasim.core.misc.ParallelProgress;
@@ -38,8 +39,15 @@ public class PopulationCutter {
 		ParallelProgress progress = new ParallelProgress("Cutting population ...", population.getPersons().size());
 		progress.start();
 
+		AtomicBoolean errorsOccured = new AtomicBoolean(false);
+
 		for (int i = 0; i < numberOfThreads; i++) {
 			Thread thread = new Thread(new Worker(personIterator, progress, planCutterProvider));
+			thread.setUncaughtExceptionHandler((t, e) -> {
+				e.printStackTrace();
+				errorsOccured.set(true);
+			});
+
 			thread.start();
 			threads.add(thread);
 		}
@@ -49,6 +57,10 @@ public class PopulationCutter {
 		}
 
 		progress.close();
+
+		if (errorsOccured.get()) {
+			throw new RuntimeException("Errors occured while cutting the population.");
+		}
 	}
 
 	private class Worker implements Runnable {

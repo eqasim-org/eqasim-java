@@ -6,8 +6,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariabl
 import org.eqasim.los_angeles.mode_choice.utilities.variables.LosAngelesPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class LosAngelesPersonPredictor extends CachedVariablePredictor<LosAngelesPersonVariables> {
 	@Override

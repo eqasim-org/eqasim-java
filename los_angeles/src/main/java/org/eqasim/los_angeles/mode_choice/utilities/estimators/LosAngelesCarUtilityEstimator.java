@@ -12,10 +12,9 @@ import org.eqasim.los_angeles.mode_choice.utilities.predictors.LosAngelesPersonP
 import org.eqasim.los_angeles.mode_choice.utilities.variables.LosAngelesPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
-
-import ch.ethz.matsim.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class LosAngelesCarUtilityEstimator extends CarUtilityEstimator {
 	private final LosAngelesModeParameters parameters;

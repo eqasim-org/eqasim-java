@@ -18,16 +18,15 @@ import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoCar
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoPTUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.estimators.SanFranciscoWalkUtilityEstimator;
 import org.eqasim.san_francisco.mode_choice.utilities.predictors.SanFranciscoPersonPredictor;
+import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-
-import ch.ethz.matsim.discrete_mode_choice.components.utils.home_finder.HomeFinder;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
-import ch.ethz.matsim.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 
 public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -92,7 +91,7 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public VehicleTourConstraintWithCarPassenger.Factory provideVehicleTourConstraintWithCarPassengerFactory(
-			DiscreteModeChoiceConfigGroup dmcConfig, @Named("tour") HomeFinder homeFinder) {
+			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
 		return new VehicleTourConstraintWithCarPassenger.Factory(config.getRestrictedModes(), homeFinder);
 	}
@@ -100,7 +99,7 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public WalkDurationConstraint.Factory provideWalkDurationConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			@Named("tour") HomeFinder homeFinder) {
+			HomeFinder homeFinder) {
 		return new WalkDurationConstraint.Factory();
 	}
 }
