@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.components.headway.HeadwayImputerModule;
-import org.eqasim.core.components.transit.routing.EnrichedTransitRouter;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.ile_de_france.analysis.pt_routing.BatchRouter.Result;
@@ -19,6 +18,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.pt.router.TransitRouter;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
@@ -59,7 +59,7 @@ public class RunBatchRouting {
 				.addOverridingModules(EqasimConfigurator.getModules()) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, false, interval)).build();
 
-		Provider<EnrichedTransitRouter> routerProvider = injector.getProvider(EnrichedTransitRouter.class);
+		Provider<TransitRouter> routerProvider = injector.getProvider(TransitRouter.class);
 		Provider<HeadwayCalculator> headwayCalculatorProvider = injector.getProvider(HeadwayCalculator.class);
 		TransitSchedule schedule = injector.getInstance(TransitSchedule.class);
 		Network network = injector.getInstance(Network.class);

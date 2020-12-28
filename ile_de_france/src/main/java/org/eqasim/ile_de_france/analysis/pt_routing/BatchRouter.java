@@ -6,8 +6,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eqasim.core.components.headway.HeadwayCalculator;
-import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
-import org.eqasim.core.components.transit.routing.EnrichedTransitRouter;
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.TransportMode;
@@ -16,12 +14,14 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.facilities.Facility;
+import org.matsim.pt.router.TransitRouter;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provider;
 
 public class BatchRouter {
-	private final Provider<EnrichedTransitRouter> routerProvider;
+	private final Provider<TransitRouter> routerProvider;
 	private final Provider<HeadwayCalculator> headwayCalculatorProvider;
 	private final TransitSchedule schedule;
 	private final Network network;
@@ -30,9 +30,8 @@ public class BatchRouter {
 	private final int numberOfThreads;
 	private final double interval;
 
-	public BatchRouter(Provider<EnrichedTransitRouter> routerProvider,
-			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
-			int batchSize, int numberOfThreads, double interval) {
+	public BatchRouter(Provider<TransitRouter> routerProvider, Provider<HeadwayCalculator> headwayCalculatorProvider,
+			TransitSchedule schedule, Network network, int batchSize, int numberOfThreads, double interval) {
 		this.routerProvider = routerProvider;
 		this.headwayCalculatorProvider = headwayCalculatorProvider;
 		this.batchSize = batchSize;
@@ -78,7 +77,7 @@ public class BatchRouter {
 
 		@Override
 		public void run() {
-			EnrichedTransitRouter router = routerProvider.get();
+			TransitRouter router = routerProvider.get();
 			HeadwayCalculator headwayCalculator = headwayCalculatorProvider.get();
 
 			while (true) {
@@ -105,11 +104,11 @@ public class BatchRouter {
 					Facility fromFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, fromCoord));
 					Facility toFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, toCoord));
 
-					List<Leg> legs = router.calculateRoute(fromFacility, toFacility, task.departureTime, null);
+					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
 
 					boolean isFirstVehicularLeg = true;
 					result.isOnlyWalk = 1;
-					
+
 					if (interval > 0.0) {
 						result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
 								task.departureTime);
@@ -119,47 +118,51 @@ public class BatchRouter {
 
 					for (Leg leg : legs) {
 						if (leg.getMode().equals(TransportMode.access_walk)) {
-							result.accessTravelTime_min += leg.getTravelTime() / 60.0;
+							result.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 							result.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
 						} else if (leg.getMode().equals(TransportMode.egress_walk)) {
-							result.egressTravelTime_min += leg.getTravelTime() / 60.0;
+							result.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 							result.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
 						} else if (leg.getMode().equals(TransportMode.transit_walk)) {
-							result.transferTravelTime_min += leg.getTravelTime() / 60.0;
+							result.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 							result.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
 						} else if (leg.getMode().equals(TransportMode.pt)) {
-							EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
+							TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+
+							double waitingTime = route.getBoardingTime().seconds() - leg.getDepartureTime().seconds();
 
 							if (isFirstVehicularLeg) {
-								result.initialWaitingTime_min += route.getWaitingTime() / 60.0;
+								result.initialWaitingTime_min += waitingTime / 60.0;
 								isFirstVehicularLeg = false;
 							} else {
 								result.numberOfTransfers += 1;
-								result.transferWaitingTime_min += route.getWaitingTime() / 60.0;
+								result.transferWaitingTime_min += waitingTime / 60.0;
 							}
 
-							String mode = schedule.getTransitLines().get(route.getTransitLineId()).getRoutes()
-									.get(route.getTransitRouteId()).getTransportMode();
+							String mode = schedule.getTransitLines().get(route.getLineId()).getRoutes()
+									.get(route.getRouteId()).getTransportMode();
+
+							double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
 
 							switch (mode) {
 							case "rail":
-								result.inVehicleTimeRail_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleTimeRail_min += inVehicleTime / 60.0;
 								result.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
 								break;
 							case "subway":
-								result.inVehicleTimeSubway_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleTimeSubway_min += inVehicleTime / 60.0;
 								result.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
 								break;
 							case "bus":
-								result.inVehicleTimeBus_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleTimeBus_min += inVehicleTime / 60.0;
 								result.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
 								break;
 							case "tram":
-								result.inVehicleTimeTram_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleTimeTram_min += inVehicleTime / 60.0;
 								result.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
 								break;
 							default:
-								result.inVehicleTimeOther_min += route.getInVehicleTime() / 60.0;
+								result.inVehicleTimeOther_min += inVehicleTime / 60.0;
 								result.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
 							}
 

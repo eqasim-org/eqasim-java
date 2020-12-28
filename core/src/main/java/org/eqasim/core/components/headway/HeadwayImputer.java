@@ -12,7 +12,6 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.router.LinkWrapperFacility;
-import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.facilities.Facility;
@@ -24,16 +23,14 @@ public class HeadwayImputer {
 	private final int batchSize;
 	private final boolean replaceExistingHeadways;
 
-	private final StageActivityTypes stageActivityTypes;
 	private final Network network;
 
 	private final Provider<HeadwayCalculator> calculatorProvider;
 
-	public HeadwayImputer(int numberOfThreads, int batchSize, boolean replaceExistingHeadways,
-			StageActivityTypes stageActivityTypes, Network network, Provider<HeadwayCalculator> calculatorProvider) {
+	public HeadwayImputer(int numberOfThreads, int batchSize, boolean replaceExistingHeadways, Network network,
+			Provider<HeadwayCalculator> calculatorProvider) {
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
-		this.stageActivityTypes = stageActivityTypes;
 		this.network = network;
 		this.calculatorProvider = calculatorProvider;
 		this.replaceExistingHeadways = replaceExistingHeadways;
@@ -85,7 +82,7 @@ public class HeadwayImputer {
 
 				for (Person person : localTasks) {
 					for (Plan plan : person.getPlans()) {
-						for (Trip trip : TripStructureUtils.getTrips(plan, stageActivityTypes)) {
+						for (Trip trip : TripStructureUtils.getTrips(plan)) {
 							Activity originActivity = trip.getOriginActivity();
 
 							if (originActivity.getAttributes().getAttribute("headway_min") == null
@@ -98,7 +95,7 @@ public class HeadwayImputer {
 								Facility destinationFacility = new LinkWrapperFacility(destinationLink);
 
 								double headway_min = calculator.calculateHeadway_min(originFacility,
-										destinationFacility, trip.getOriginActivity().getEndTime());
+										destinationFacility, trip.getOriginActivity().getEndTime().seconds());
 
 								trip.getOriginActivity().getAttributes().putAttribute("headway_min", headway_min);
 							}

@@ -34,10 +34,6 @@ import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 
 import com.google.inject.Injector;
 
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup.RangeQuerySettingsParameterSet;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup.RouteSelectorParameterSet;
-
 public class RunOriginDestinationRouting {
 	static public void main(String[] args)
 			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
@@ -51,22 +47,23 @@ public class RunOriginDestinationRouting {
 		cmd.applyConfiguration(config);
 		config.strategy().clearStrategySettings();
 
-		/*SwissRailRaptorConfigGroup raptorConfig = (SwissRailRaptorConfigGroup) config.getModules()
-				.get(SwissRailRaptorConfigGroup.GROUP);
-		raptorConfig.setUseRangeQuery(false);
-
-		RangeQuerySettingsParameterSet rangeConfig = new RangeQuerySettingsParameterSet();
-		rangeConfig.setMaxEarlierDeparture(30 * 60);
-		rangeConfig.setMaxLaterDeparture(30 * 60);
-		rangeConfig.getSubpopulations().add(null);
-		raptorConfig.addRangeQuerySettings(rangeConfig);
-		
-		RouteSelectorParameterSet selectorConfig = new RouteSelectorParameterSet();
-		selectorConfig.setBetaDepartureTime(0.0);
-		selectorConfig.setBetaTravelTime(1.0);
-		selectorConfig.setBetaTransfers(0.0);
-		selectorConfig.getSubpopulations().add(null);
-		raptorConfig.addRouteSelector(selectorConfig);*/
+		/*
+		 * SwissRailRaptorConfigGroup raptorConfig = (SwissRailRaptorConfigGroup)
+		 * config.getModules() .get(SwissRailRaptorConfigGroup.GROUP);
+		 * raptorConfig.setUseRangeQuery(false);
+		 * 
+		 * RangeQuerySettingsParameterSet rangeConfig = new
+		 * RangeQuerySettingsParameterSet(); rangeConfig.setMaxEarlierDeparture(30 *
+		 * 60); rangeConfig.setMaxLaterDeparture(30 * 60);
+		 * rangeConfig.getSubpopulations().add(null);
+		 * raptorConfig.addRangeQuerySettings(rangeConfig);
+		 * 
+		 * RouteSelectorParameterSet selectorConfig = new RouteSelectorParameterSet();
+		 * selectorConfig.setBetaDepartureTime(0.0);
+		 * selectorConfig.setBetaTravelTime(1.0); selectorConfig.setBetaTransfers(0.0);
+		 * selectorConfig.getSubpopulations().add(null);
+		 * raptorConfig.addRouteSelector(selectorConfig);
+		 */
 
 		for (String mode : Arrays.asList("transit_walk", "access_walk", "egress_walk")) {
 			ModeParams modeParams = config.planCalcScore().getOrCreateModeParams(mode);
@@ -92,7 +89,7 @@ public class RunOriginDestinationRouting {
 
 		if (cmd.hasOption("travel-times-path")) {
 			travelTime = RecordedTravelTime
-					.readBinary(IOUtils.getInputStream(cmd.getOptionStrict("travel-times-path")));
+					.readBinary(IOUtils.getInputStream(IOUtils.getFileUrl(cmd.getOptionStrict("travel-times-path"))));
 		}
 
 		final TravelTime fixedTravelTime = travelTime;

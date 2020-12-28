@@ -9,16 +9,14 @@ import java.io.OutputStreamWriter;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.core.router.StageActivityTypes;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.TripStructureUtils.StageActivityHandling;
 
 public class PersonUtilityWriter {
 	private final Population population;
-	private final StageActivityTypes stageActivityTypes;
 
-	public PersonUtilityWriter(Population population, StageActivityTypes stageActivityTypes) {
+	public PersonUtilityWriter(Population population) {
 		this.population = population;
-		this.stageActivityTypes = stageActivityTypes;
 	}
 
 	public void writeFile(File path) throws IOException {
@@ -32,7 +30,8 @@ public class PersonUtilityWriter {
 		for (Person person : population.getPersons().values()) {
 			double personUtility = Double.NaN;
 
-			for (Activity activity : TripStructureUtils.getActivities(person.getSelectedPlan(), stageActivityTypes)) {
+			for (Activity activity : TripStructureUtils.getActivities(person.getSelectedPlan(),
+					StageActivityHandling.ExcludeStageActivities)) {
 				Double tripUtility = (Double) activity.getAttributes().getAttribute("utility");
 
 				if (tripUtility != null) {

@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.eqasim.core.components.transit.routing.EnrichedTransitRoute;
+import org.eqasim.core.components.EqasimMainModeIdentifier;
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -32,6 +32,7 @@ import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.Facility;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.Vehicle;
@@ -94,12 +95,12 @@ public class DemandEstimator {
 		for (PlanElement element : elements) {
 			if (element instanceof Leg) {
 				Leg leg = (Leg) element;
-				travelTime += leg.getTravelTime();
+				travelTime += leg.getTravelTime().seconds();
 
 				if (leg.getMode().equals("pt")) {
 					if (isFirstPt) {
-						EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
-						travelTime -= route.getWaitingTime();
+						TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+						travelTime -= route.getBoardingTime().seconds() - leg.getDepartureTime().seconds();
 
 						isFirstPt = false;
 					}
@@ -132,9 +133,9 @@ public class DemandEstimator {
 				Leg leg = (Leg) element;
 
 				if (leg.getMode().equals("pt")) {
-					EnrichedTransitRoute route = (EnrichedTransitRoute) leg.getRoute();
+					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
-					if (route.getTransitLineId().toString().contains("GPE:")) {
+					if (route.getLineId().toString().contains("GPE:")) {
 						return true;
 					}
 				}
@@ -206,9 +207,8 @@ public class DemandEstimator {
 				for (Person person : tasks) {
 					int tripIndex = 0;
 
-					for (Trip trip : TripStructureUtils.getTrips(person.getSelectedPlan(),
-							tripRouter.getStageActivityTypes())) {
-						String mode = tripRouter.getMainModeIdentifier().identifyMainMode(trip.getTripElements());
+					for (Trip trip : TripStructureUtils.getTrips(person.getSelectedPlan())) {
+						String mode = new EqasimMainModeIdentifier().identifyMainMode(trip.getTripElements());
 
 						String originType = trip.getOriginActivity().getType();
 						String destinationType = trip.getDestinationActivity().getType();
