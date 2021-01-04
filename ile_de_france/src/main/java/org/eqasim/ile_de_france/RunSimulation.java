@@ -1,21 +1,21 @@
 package org.eqasim.ile_de_france;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.grand_paris.PersonUtilityModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
-import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonSelector;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-
-import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -43,7 +43,13 @@ public class RunSimulation {
 			controller.addOverridingModule(new EpsilonModule());
 
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
-			dmcConfig.setSelector(EpsilonSelector.NAME);
+			dmcConfig.setSelector(SelectorModule.MAXIMUM);
+
+			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+			eqasimConfig.setEstimator("car", "epsilon_car");
+			eqasimConfig.setEstimator("pt", "epsilon_pt");
+			eqasimConfig.setEstimator("bike", "epsilon_bike");
+			eqasimConfig.setEstimator("walk", "epsilon_walk");
 		}
 
 		controller.run();

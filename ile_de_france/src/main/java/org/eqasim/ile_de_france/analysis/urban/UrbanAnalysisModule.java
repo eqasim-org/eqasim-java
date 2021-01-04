@@ -3,7 +3,6 @@ package org.eqasim.ile_de_france.analysis.urban;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.router.TripRouter;
 
 import com.google.inject.Provides;
 
@@ -14,8 +13,7 @@ public class UrbanAnalysisModule extends AbstractModule {
 	}
 
 	@Provides
-	public UrbanTripListener provideUrbanTripListener(Population population, TripRouter router,
-			OutputDirectoryHierarchy outputHierarchy) {
-		return new UrbanTripListener(population, router.getStageActivityTypes(), outputHierarchy);
+	public UrbanTripListener provideUrbanTripListener(Population population, OutputDirectoryHierarchy outputHierarchy) {
+		return new UrbanTripListener(population, outputHierarchy);
 	}
 }

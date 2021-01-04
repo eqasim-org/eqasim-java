@@ -1,27 +1,59 @@
 package org.eqasim.ile_de_france.mode_choice.epsilon;
 
+import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.matsim.core.config.groups.GlobalConfigGroup;
 
+import com.google.inject.Key;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 
-import ch.ethz.matsim.discrete_mode_choice.modules.AbstractDiscreteModeChoiceExtension;
-
-public class EpsilonModule extends AbstractDiscreteModeChoiceExtension {
+public class EpsilonModule extends AbstractEqasimExtension {
 	@Provides
 	public GumbelEpsilonProvider provideGumbelEpsilonProvider(GlobalConfigGroup config) {
 		return new GumbelEpsilonProvider(config.getRandomSeed(), 1.0);
 	}
 
-	@Provides
-	@Singleton
-	public EpsilonSelector.Factory provideEpsilonSelectorFactory(EpsilonProvider epsilonProvider) {
-		return new EpsilonSelector.Factory(epsilonProvider);
+	@Override
+	protected void installEqasimExtension() {
+		bind(EpsilonProvider.class).to(GumbelEpsilonProvider.class);
+
+		bind(IDFCarUtilityEstimator.class);
+		bind(IDFBikeUtilityEstimator.class);
+		bind(PtUtilityEstimator.class);
+		bind(WalkUtilityEstimator.class);
+
+		bindUtilityEstimator("epsilon_car").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_car")));
+		bindUtilityEstimator("epsilon_pt").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_pt")));
+		bindUtilityEstimator("epsilon_bike").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_bike")));
+		bindUtilityEstimator("epsilon_walk").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_walk")));
 	}
 
-	@Override
-	protected void installExtension() {
-		bind(EpsilonProvider.class).to(GumbelEpsilonProvider.class);
-		bindTourSelectorFactory(EpsilonSelector.NAME).to(EpsilonSelector.Factory.class);
+	@Provides
+	@Named("epsilon_car")
+	EpsilonAdapter provideEpsilonCarEstimator(IDFCarUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
+		return new EpsilonAdapter("car", delegate, epsilonProvider);
+	}
+
+	@Provides
+	@Named("epsilon_pt")
+	EpsilonAdapter provideEpsilonPtEstimator(PtUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
+		return new EpsilonAdapter("pt", delegate, epsilonProvider);
+	}
+
+	@Provides
+	@Named("epsilon_bike")
+	EpsilonAdapter provideEpsilonBikeEstimator(IDFBikeUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
+		return new EpsilonAdapter("bike", delegate, epsilonProvider);
+	}
+
+	@Provides
+	@Named("epsilon_walk")
+	EpsilonAdapter provideEpsilonWalkEstimator(WalkUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
+		return new EpsilonAdapter("walk", delegate, epsilonProvider);
 	}
 }

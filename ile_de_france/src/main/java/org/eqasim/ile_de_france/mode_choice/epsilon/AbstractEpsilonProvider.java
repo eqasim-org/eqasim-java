@@ -5,6 +5,9 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.population.Person;
+
 public abstract class AbstractEpsilonProvider implements EpsilonProvider {
 	private final MessageDigest digest;
 	private final double maximumValue;
@@ -20,13 +23,15 @@ public abstract class AbstractEpsilonProvider implements EpsilonProvider {
 		}
 	}
 
-	protected double getUniformEpsilon(int hash) {
+	protected double getUniformEpsilon(Id<Person> personId, int tripIndex, String mode) {
 		digest.reset();
 
 		digest.update(ByteBuffer //
-				.allocate(8 + 1 * 4) // long + 3 * int
+				.allocate(8 + 3 * 4) // long + 3 * int
 				.putLong(randomSeed) //
-				.putInt(hash) //
+				.putInt(personId.index()) //
+				.putInt(tripIndex) //
+				.putInt(mode.hashCode()) //
 				.array() //
 		);
 
