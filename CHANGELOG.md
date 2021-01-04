@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Consider link / facility coordinates in plan-based trip analysis if network / facilities are provided
 - Bugfix: Rare issue in `EqasimTransitEngine` leading to inconsistent ordering of event times
 
 **1.2.0**
