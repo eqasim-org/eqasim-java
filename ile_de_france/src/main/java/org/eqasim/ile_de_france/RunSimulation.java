@@ -39,10 +39,10 @@ public class RunSimulation {
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new PersonUtilityModule());
 		controller.addOverridingModule(new UrbanAnalysisModule());
-		controller.addOverridingModule(new ModeShareModule());
 
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(false)) {
 			controller.addOverridingModule(new EpsilonModule());
+			controller.addOverridingModule(new ModeShareModule());
 
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 			dmcConfig.setSelector(SelectorModule.MAXIMUM);
