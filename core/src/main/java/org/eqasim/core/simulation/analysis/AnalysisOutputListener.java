@@ -33,6 +33,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	private final DistanceUnit scenarioDistanceUnit;
 	private final DistanceUnit analysisDistanceUnit;
+	
+	static public int convergenceIteration = Integer.MAX_VALUE;
 
 	@Inject
 	public AnalysisOutputListener(EqasimConfigGroup config, ControlerConfigGroup controllerConfig,
@@ -49,7 +51,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		if (tripAnalysisInterval > 0 && event.getIteration() % tripAnalysisInterval == 0) {
+		if (tripAnalysisInterval > 0 && (event.getIteration() % tripAnalysisInterval == 0 || event.getIteration() >= convergenceIteration)) {
 			isTripAnalysisActive = true;
 			event.getServices().getEvents().addHandler(tripAnalysisListener);
 		} else {
@@ -75,7 +77,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	@Override
 	public void notifyShutdown(ShutdownEvent event) {
 		try {
-			File iterationPath = new File(outputDirectory.getIterationFilename(lastIteration, TRIPS_FILE_NAME));
+			File iterationPath = new File(outputDirectory.getIterationFilename(convergenceIteration, TRIPS_FILE_NAME));
 			File outputPath = new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME));
 			Files.copy(iterationPath.toPath(), outputPath.toPath());
 		} catch (IOException e) {

@@ -7,18 +7,22 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.core.simulation.analysis.AnalysisOutputListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.TerminationCriterion;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
 
-public class ModeShareCriterion implements IterationEndsListener {
+public class ModeShareCriterion implements IterationEndsListener, TerminationCriterion {
+	public static int convergenceIteration = Integer.MAX_VALUE;
+
 	private final Population population;
 	private final MainModeIdentifier mainModeIdentifier;
 	private final OutputDirectoryHierarchy outputHierarchy;
@@ -28,12 +32,18 @@ public class ModeShareCriterion implements IterationEndsListener {
 	private final List<Double> updatedCounts = new LinkedList<>();
 	private final List<Double> totals = new LinkedList<>();
 	private final List<Double> updatedShares = new LinkedList<>();
+	private final List<Double> correctedShares = new LinkedList<>();
+
+	private final double dmcProbability;
+	private final double convergenceThreshold;
 
 	public ModeShareCriterion(MainModeIdentifier mainModeIdentifier, Population population,
-			OutputDirectoryHierarchy outputHierarchy) {
+			OutputDirectoryHierarchy outputHierarchy, double dmcProbability, double convergenceThreshold) {
 		this.population = population;
 		this.mainModeIdentifier = mainModeIdentifier;
 		this.outputHierarchy = outputHierarchy;
+		this.dmcProbability = dmcProbability;
+		this.convergenceThreshold = convergenceThreshold;
 	}
 
 	@Override
@@ -66,7 +76,17 @@ public class ModeShareCriterion implements IterationEndsListener {
 
 			updatedCounts.add((double) updatedPersons);
 			totals.add((double) totalPersons);
-			updatedShares.add((double) updatedPersons / (double) totalPersons);
+
+			double currentUpdatedShare = (double) updatedPersons / (double) totalPersons;
+			updatedShares.add(currentUpdatedShare);
+
+			double currentCorrectedShare = currentUpdatedShare / dmcProbability;
+			correctedShares.add(currentCorrectedShare);
+
+			if (currentCorrectedShare < convergenceThreshold) {
+				convergenceIteration = event.getIteration() + 1;
+				AnalysisOutputListener.convergenceIteration = event.getIteration() + 1;
+			}
 
 			// Writing
 
@@ -75,7 +95,7 @@ public class ModeShareCriterion implements IterationEndsListener {
 						.getBufferedWriter(outputHierarchy.getOutputFilename("mode_share_convergence.csv"));
 
 				writer.write(String.join(";", new String[] { //
-						"iteration", "updated_count", "total_count", "updated_share" //
+						"iteration", "updated_count", "total_count", "updated_share", "corrected_share" //
 				}) + "\n");
 
 				for (int i = 0; i < totals.size(); i++) {
@@ -83,7 +103,8 @@ public class ModeShareCriterion implements IterationEndsListener {
 							String.valueOf(i + 1), //
 							String.valueOf(updatedCounts.get(i)), //
 							String.valueOf(totals.get(i)), //
-							String.valueOf(updatedShares.get(i)) //
+							String.valueOf(updatedShares.get(i)), //
+							String.valueOf(correctedShares.get(i)) //
 					}) + "\n");
 				}
 
@@ -94,5 +115,10 @@ public class ModeShareCriterion implements IterationEndsListener {
 		}
 
 		personHashes.putAll(updatedHashes);
+	}
+
+	@Override
+	public boolean continueIterations(int iteration) {
+		return iteration <= convergenceIteration;
 	}
 }
