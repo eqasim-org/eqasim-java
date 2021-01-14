@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eqasim.core.simulation.analysis.AnalysisOutputListener;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
@@ -21,6 +22,8 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
 
 public class ModeShareCriterion implements IterationEndsListener, TerminationCriterion {
+	private final static Logger logger = Logger.getLogger(ModeShareCriterion.class);
+
 	public static int convergenceIteration = Integer.MAX_VALUE;
 
 	private final Population population;
@@ -83,9 +86,15 @@ public class ModeShareCriterion implements IterationEndsListener, TerminationCri
 			double currentCorrectedShare = currentUpdatedShare / dmcProbability;
 			correctedShares.add(currentCorrectedShare);
 
+			logger.warn(String.format("Convergence: %d/%d changes -> %.2f%% corected", updatedPersons, totalPersons,
+					100 * currentCorrectedShare));
+
 			if (currentCorrectedShare < convergenceThreshold) {
 				convergenceIteration = event.getIteration() + 1;
 				AnalysisOutputListener.convergenceIteration = event.getIteration() + 1;
+				logger.warn("Converging in iteration " + convergenceIteration);
+			} else {
+				logger.warn(String.format("Not converged yet (threshold is %.2f%%", 100 * convergenceThreshold));
 			}
 
 			// Writing
