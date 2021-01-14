@@ -13,7 +13,11 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class ModeShareModule extends AbstractModule {
-	private final static double CONVERGENCE_THRESHOLD = 0.01;
+	private final double convergenceThreshold;
+
+	public ModeShareModule(double convergenceThreshold) {
+		this.convergenceThreshold = convergenceThreshold;
+	}
 
 	@Override
 	public void install() {
@@ -39,6 +43,6 @@ public class ModeShareModule extends AbstractModule {
 		double dmcProbability = dmcWeight / totalWeight;
 
 		return new ModeShareCriterion(mainModeIdentifier, population, outputHierarchy, dmcProbability,
-				CONVERGENCE_THRESHOLD);
+				convergenceThreshold);
 	}
 }

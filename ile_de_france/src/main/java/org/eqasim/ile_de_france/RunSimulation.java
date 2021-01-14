@@ -22,7 +22,8 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-epsilon") //
+				.allowOptions("use-epsilon", "convergence-threshold") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
@@ -42,7 +43,9 @@ public class RunSimulation {
 
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(false)) {
 			controller.addOverridingModule(new EpsilonModule());
-			controller.addOverridingModule(new ModeShareModule());
+
+			double convergenceThreshold = cmd.getOption("convergence-threshold").map(Double::parseDouble).orElse(0.01);
+			controller.addOverridingModule(new ModeShareModule(convergenceThreshold));
 
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 			dmcConfig.setSelector(SelectorModule.MAXIMUM);
