@@ -19,9 +19,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>ch.ethz.matsim</groupId>
-			<artifactId>av</artifactId>
-			<version>1.0.2-matsim11</version>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>drt</artifactId>
+			<version>${matsim.version}</version>
 		</dependency>
 	</dependencies>
 </project>
