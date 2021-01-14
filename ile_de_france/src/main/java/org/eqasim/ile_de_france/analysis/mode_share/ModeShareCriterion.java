@@ -83,7 +83,7 @@ public class ModeShareCriterion implements IterationEndsListener, TerminationCri
 			double currentCorrectedShare = currentUpdatedShare / dmcProbability;
 			correctedShares.add(currentCorrectedShare);
 
-			if (currentCorrectedShare < convergenceThreshold && convergenceThreshold == Integer.MAX_VALUE) {
+			if (currentCorrectedShare < convergenceThreshold && convergenceIteration == Integer.MAX_VALUE) {
 				convergenceIteration = event.getIteration() + 1;
 				AnalysisOutputListener.convergenceIteration = event.getIteration() + 1;
 			}
