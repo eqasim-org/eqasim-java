@@ -3,6 +3,7 @@ package org.eqasim.ile_de_france;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.ile_de_france.analysis.flow.FlowModule;
 import org.eqasim.ile_de_france.analysis.mode_share.ModeShareModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.grand_paris.PersonUtilityModule;
@@ -22,7 +23,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("use-epsilon", "convergence-threshold") //
+				.allowOptions("use-epsilon", "convergence-threshold", "flow-path") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
 				.build();
 
@@ -55,6 +56,10 @@ public class RunSimulation {
 			eqasimConfig.setEstimator("pt", "epsilon_pt");
 			eqasimConfig.setEstimator("bike", "epsilon_bike");
 			eqasimConfig.setEstimator("walk", "epsilon_walk");
+		}
+
+		if (cmd.hasOption("flow-path")) {
+			controller.addOverridingModule(new FlowModule(cmd.getOptionStrict("flow-path")));
 		}
 
 		controller.run();
