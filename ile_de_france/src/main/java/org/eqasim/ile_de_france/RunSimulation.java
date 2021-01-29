@@ -6,6 +6,7 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.analysis.mode_share.ModeShareModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.flow.analysis.FlowModule;
+import org.eqasim.ile_de_france.flow.calibration.CapacityAdjustment;
 import org.eqasim.ile_de_france.grand_paris.PersonUtilityModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
@@ -24,7 +25,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("use-epsilon", "convergence-threshold", "flow-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "capacity") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
@@ -33,6 +34,8 @@ public class RunSimulation {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
+
+		new CapacityAdjustment(cmd).apply(config, scenario.getNetwork());
 
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);
