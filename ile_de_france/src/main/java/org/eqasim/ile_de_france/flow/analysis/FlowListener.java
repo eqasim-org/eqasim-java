@@ -1,4 +1,4 @@
-package org.eqasim.ile_de_france.analysis.flow;
+package org.eqasim.ile_de_france.flow.analysis;
 
 import java.io.File;
 import java.io.IOException;
