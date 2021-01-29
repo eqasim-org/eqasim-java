@@ -66,7 +66,8 @@ public class ExportNetworkToShapefile {
 						new Object[] { //
 								link.getId().toString(), //
 								link.getFromNode().getId().toString(), //
-								link.getToNode().getId().toString() //
+								link.getToNode().getId().toString(), //
+								link.getAttributes().getAttribute("osm:way:highway") //
 						}, null);
 
 				features.add(feature);
