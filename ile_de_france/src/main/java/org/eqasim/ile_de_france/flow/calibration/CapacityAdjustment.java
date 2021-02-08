@@ -12,26 +12,24 @@ public class CapacityAdjustment {
 	private final double minorFactor;
 
 	public CapacityAdjustment(CommandLine cmd) throws NumberFormatException, ConfigurationException {
-		this.majorFactor = Double.parseDouble(cmd.getOptionStrict("capacity:major"));
-		this.immediateFactor = Double.parseDouble(cmd.getOptionStrict("capacity:immediate"));
-		this.minorFactor = Double.parseDouble(cmd.getOptionStrict("capacity:minor"));
+		this.majorFactor = cmd.getOption("capacity:major").map(Double::parseDouble).orElse(1.0);
+		this.immediateFactor = cmd.getOption("capacity:immediate").map(Double::parseDouble).orElse(1.0);
+		this.minorFactor = cmd.getOption("capacity:minor").map(Double::parseDouble).orElse(1.0);
 	}
 
 	public void apply(Config config, Network network) {
-		double baseFactor = config.qsim().getFlowCapFactor();
-
-		config.qsim().setFlowCapFactor(1.0);
-		config.qsim().setStorageCapFactor(baseFactor);
-
 		for (Link link : network.getLinks().values()) {
-			String osmType = (String) link.getAttributes().getAttribute("osm:highway");
+			String osmType = (String) link.getAttributes().getAttribute("osm:way:highway");
 
-			if (osmType.contains("motorway") || osmType.contains("trunk")) {
-				link.setCapacity(link.getCapacity() * baseFactor * majorFactor);
-			} else if (osmType.contains("primary") || osmType.contains("secondary") || osmType.contains("tertiary")) {
-				link.setCapacity(link.getCapacity() * baseFactor * immediateFactor);
-			} else {
-				link.setCapacity(link.getCapacity() * baseFactor * minorFactor);
+			if (osmType != null) {
+				if (osmType.contains("motorway") || osmType.contains("trunk")) {
+					link.setCapacity(link.getCapacity() * majorFactor);
+				} else if (osmType.contains("primary") || osmType.contains("secondary")
+						|| osmType.contains("tertiary")) {
+					link.setCapacity(link.getCapacity() * immediateFactor);
+				} else {
+					link.setCapacity(link.getCapacity() * minorFactor);
+				}
 			}
 		}
 	}
