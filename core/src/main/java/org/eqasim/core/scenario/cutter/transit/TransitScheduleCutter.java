@@ -1,5 +1,6 @@
 package org.eqasim.core.scenario.cutter.transit;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class TransitScheduleCutter {
 		if (crossingPoints.size() == 0) {
 			if (!extent.isInside(originalSequence.get(0).getStopFacility().getCoord())) {
 				// The entire route is outside
-				return null;
+				return Collections.emptyList();
 			} else {
 				// The entire route is inside
 				return originalSequence;
@@ -50,8 +51,8 @@ public class TransitScheduleCutter {
 			StopSequenceCrossingPoint firstCrossingPoint = crossingPoints.get(0);
 			StopSequenceCrossingPoint lastCrossingPoint = crossingPoints.get(crossingPoints.size() - 1);
 
-			int firstIndex = firstCrossingPoint.isOutgoing ? 0 : firstCrossingPoint.index;
-			int lastIndex = lastCrossingPoint.isOutgoing ? lastCrossingPoint.index + 1 : originalSequence.size();
+			int firstIndex = firstCrossingPoint.isOutgoing ? 0 : firstCrossingPoint.index + 1;
+			int lastIndex = lastCrossingPoint.isOutgoing ? lastCrossingPoint.index : originalSequence.size();
 
 			return originalSequence.subList(firstIndex, lastIndex);
 		}
@@ -99,7 +100,7 @@ public class TransitScheduleCutter {
 		List<TransitRouteStop> originalStopSequence = originalRoute.getStops();
 		List<TransitRouteStop> reducedStopSequence = reduceStopSequence(originalRoute.getStops());
 
-		if (reducedStopSequence == null) {
+		if (reducedStopSequence.size() == 0) {
 			return null;
 		} else {
 			double departureOffset = reducedStopSequence.get(0).getDepartureOffset()
