@@ -34,7 +34,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 
 import ch.ethz.matsim.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 
-public class RunAdPTSimulation {
+public class RunAdPTAstraSimulation {
 	static public void main(String[] args) throws ConfigurationException, MalformedURLException, IOException {
 		// Some paramters added from AdPT
 		CommandLine cmd = new CommandLine.Builder(args) //
