@@ -11,20 +11,23 @@ import org.eqasim.ile_de_france.grand_paris.PersonUtilityModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
 import org.matsim.core.scenario.ScenarioUtils;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("use-epsilon", "convergence-threshold", "flow-path") //
+				.allowOptions("use-epsilon", "convergence-threshold", "flow-path", "fix-modes") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", "capacity") //
 				.build();
 
@@ -63,6 +66,18 @@ public class RunSimulation {
 
 		if (cmd.hasOption("flow-path")) {
 			controller.addOverridingModule(new FlowModule(cmd.getOptionStrict("flow-path")));
+		}
+
+		if (cmd.getOption("fix-modes").map(Boolean::parseBoolean).orElse(false)) {
+			for (StrategySettings strategy : config.strategy().getStrategySettings()) {
+				if (strategy.getStrategyName().equals(DiscreteModeChoiceModule.STRATEGY_NAME)) {
+					strategy.setStrategyName(DefaultStrategy.ReRoute);
+				}
+			}
+
+			if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(false)) {
+				throw new IllegalStateException("Cannot be used in combination");
+			}
 		}
 
 		controller.run();
