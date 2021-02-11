@@ -25,7 +25,6 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private static final String TRIPS_FILE_NAME = "trips.csv";
 
 	private final OutputDirectoryHierarchy outputDirectory;
-	private final int lastIteration;
 
 	private final TripListener tripAnalysisListener;
 	private final int tripAnalysisInterval;
@@ -33,14 +32,13 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	private final DistanceUnit scenarioDistanceUnit;
 	private final DistanceUnit analysisDistanceUnit;
-	
+
 	static public int convergenceIteration = Integer.MAX_VALUE;
 
 	@Inject
 	public AnalysisOutputListener(EqasimConfigGroup config, ControlerConfigGroup controllerConfig,
 			OutputDirectoryHierarchy outputDirectory, TripListener tripListener) {
 		this.outputDirectory = outputDirectory;
-		this.lastIteration = controllerConfig.getLastIteration();
 
 		this.scenarioDistanceUnit = config.getDistanceUnit();
 		this.analysisDistanceUnit = config.getTripAnalysisDistanceUnit();
@@ -51,7 +49,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		if (tripAnalysisInterval > 0 && (event.getIteration() % tripAnalysisInterval == 0 || event.getIteration() >= convergenceIteration)) {
+		if (tripAnalysisInterval > 0
+				&& (event.getIteration() % tripAnalysisInterval == 0 || event.getIteration() >= convergenceIteration)) {
 			isTripAnalysisActive = true;
 			event.getServices().getEvents().addHandler(tripAnalysisListener);
 		} else {
@@ -77,7 +76,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	@Override
 	public void notifyShutdown(ShutdownEvent event) {
 		try {
-			File iterationPath = new File(outputDirectory.getIterationFilename(convergenceIteration, TRIPS_FILE_NAME));
+			int iteration = event.getServices().getIterationNumber();
+			File iterationPath = new File(outputDirectory.getIterationFilename(iteration, TRIPS_FILE_NAME));
 			File outputPath = new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME));
 			Files.copy(iterationPath.toPath(), outputPath.toPath());
 		} catch (IOException e) {

@@ -23,7 +23,6 @@ public class FlowListener implements IterationStartsListener, IterationEndsListe
 	private static final String FLOWS_FILE_NAME = "flows.csv";
 
 	private final OutputDirectoryHierarchy outputDirectory;
-	private final int lastIteration;
 
 	private FlowHandler flowHandler;
 	private final int flowAnalysisInterval;
@@ -34,7 +33,6 @@ public class FlowListener implements IterationStartsListener, IterationEndsListe
 	public FlowListener(EqasimConfigGroup config, ControlerConfigGroup controllerConfig,
 			OutputDirectoryHierarchy outputDirectory, IdSet<Link> linkIds) {
 		this.outputDirectory = outputDirectory;
-		this.lastIteration = controllerConfig.getLastIteration();
 
 		this.flowAnalysisInterval = config.getTripAnalysisInterval();
 		this.linkIds = linkIds;
@@ -66,8 +64,8 @@ public class FlowListener implements IterationStartsListener, IterationEndsListe
 	@Override
 	public void notifyShutdown(ShutdownEvent event) {
 		try {
-			File iterationPath = new File(
-					outputDirectory.getIterationFilename(AnalysisOutputListener.convergenceIteration, FLOWS_FILE_NAME));
+			int iteration = event.getServices().getIterationNumber();
+			File iterationPath = new File(outputDirectory.getIterationFilename(iteration, FLOWS_FILE_NAME));
 			File outputPath = new File(outputDirectory.getOutputFilename(FLOWS_FILE_NAME));
 			Files.copy(iterationPath.toPath(), outputPath.toPath());
 		} catch (IOException e) {

@@ -78,6 +78,8 @@ public class RunSimulation {
 			if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(false)) {
 				throw new IllegalStateException("Cannot be used in combination");
 			}
+
+			DiscreteModeChoiceConfigGroup.getOrCreate(config).setEnforceSinglePlan(false);
 		}
 
 		controller.run();
