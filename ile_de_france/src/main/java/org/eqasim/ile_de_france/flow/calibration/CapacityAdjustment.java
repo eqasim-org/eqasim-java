@@ -8,13 +8,43 @@ import org.matsim.core.config.Config;
 
 public class CapacityAdjustment {
 	private final double majorFactor;
-	private final double immediateFactor;
+	private final double intermediateFactor;
 	private final double minorFactor;
+	private final double linkFactor;
 
 	public CapacityAdjustment(CommandLine cmd) throws NumberFormatException, ConfigurationException {
-		this.majorFactor = cmd.getOption("capacity:major").map(Double::parseDouble).orElse(1.0);
-		this.immediateFactor = cmd.getOption("capacity:immediate").map(Double::parseDouble).orElse(1.0);
-		this.minorFactor = cmd.getOption("capacity:minor").map(Double::parseDouble).orElse(1.0);
+		double majorFactor = 1.0;
+		double intermediateFactor = 1.0;
+		double minorFactor = 1.0;
+		double linkFactor = 1.0;
+
+		for (String option : cmd.getAvailableOptions()) {
+			if (option.startsWith("capacity:")) {
+				String slot = option.replace("capacity:", "");
+
+				switch (slot) {
+				case "major":
+					majorFactor = Double.parseDouble(cmd.getOptionStrict("capacity:major"));
+					break;
+				case "intermediate":
+					intermediateFactor = Double.parseDouble(cmd.getOptionStrict("intermediate"));
+					break;
+				case "minor":
+					minorFactor = Double.parseDouble(cmd.getOptionStrict("minor"));
+					break;
+				case "link":
+					linkFactor = Double.parseDouble(cmd.getOptionStrict("link"));
+					break;
+				default:
+					throw new IllegalStateException("Unknown slot: " + slot);
+				}
+			}
+		}
+
+		this.majorFactor = majorFactor;
+		this.intermediateFactor = intermediateFactor;
+		this.minorFactor = minorFactor;
+		this.linkFactor = linkFactor;
 	}
 
 	public void apply(Config config, Network network) {
@@ -24,11 +54,14 @@ public class CapacityAdjustment {
 			if (osmType != null) {
 				if (osmType.contains("motorway") || osmType.contains("trunk")) {
 					link.setCapacity(link.getCapacity() * majorFactor);
-				} else if (osmType.contains("primary") || osmType.contains("secondary")
-						|| osmType.contains("tertiary")) {
-					link.setCapacity(link.getCapacity() * immediateFactor);
+				} else if (osmType.contains("primary") || osmType.contains("secondary")) {
+					link.setCapacity(link.getCapacity() * intermediateFactor);
 				} else {
 					link.setCapacity(link.getCapacity() * minorFactor);
+				}
+
+				if (osmType.contains("_link")) {
+					link.setCapacity(link.getCapacity() * linkFactor);
 				}
 			}
 		}
