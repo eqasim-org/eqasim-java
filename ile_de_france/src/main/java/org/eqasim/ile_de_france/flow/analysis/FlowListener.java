@@ -3,9 +3,16 @@ package org.eqasim.ile_de_france.flow.analysis;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.AnalysisOutputListener;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.config.groups.ControlerConfigGroup;
@@ -29,6 +36,9 @@ public class FlowListener implements IterationStartsListener, IterationEndsListe
 
 	private final IdSet<Link> linkIds;
 
+	private final List<IdMap<Link, List<Integer>>> history = new LinkedList<>();
+	private final int historySize = 10;
+
 	@Inject
 	public FlowListener(EqasimConfigGroup config, ControlerConfigGroup controllerConfig,
 			OutputDirectoryHierarchy outputDirectory, IdSet<Link> linkIds) {
@@ -40,24 +50,48 @@ public class FlowListener implements IterationStartsListener, IterationEndsListe
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		if (flowAnalysisInterval > 0 && (event.getIteration() % flowAnalysisInterval == 0
-				|| event.getIteration() >= AnalysisOutputListener.convergenceIteration)) {
-			flowHandler = new FlowHandler(linkIds);
-			event.getServices().getEvents().addHandler(flowHandler);
-		}
+		flowHandler = new FlowHandler(linkIds);
+		event.getServices().getEvents().addHandler(flowHandler);
 	}
 
 	@Override
 	public void notifyIterationEnds(IterationEndsEvent event) {
-		try {
-			if (flowHandler != null) {
-				event.getServices().getEvents().removeHandler(flowHandler);
+		event.getServices().getEvents().removeHandler(flowHandler);
 
-				String path = outputDirectory.getIterationFilename(event.getIteration(), FLOWS_FILE_NAME);
-				new FlowWriter(flowHandler.getCounts()).write(path);
+		history.add(flowHandler.getCounts());
+
+		if (history.size() > historySize) {
+			history.remove(0);
+		}
+
+		if (flowAnalysisInterval > 0 && (event.getIteration() % flowAnalysisInterval == 0
+				|| event.getIteration() >= AnalysisOutputListener.convergenceIteration)) {
+			if (history.size() > 0) {
+				try {
+					IdMap<Link, List<Double>> aggregatedCounts = new IdMap<>(Link.class);
+					double scale = (double) history.size();
+
+					for (Id<Link> linkId : linkIds) {
+						aggregatedCounts.put(linkId, new ArrayList<>(Collections.nCopies(24, 0.0)));
+					}
+
+					for (IdMap<Link, List<Integer>> counts : history) {
+						for (Map.Entry<Id<Link>, List<Integer>> entry : counts.entrySet()) {
+							List<Integer> countValues = entry.getValue();
+							List<Double> aggregatedValues = aggregatedCounts.get(entry.getKey());
+
+							for (int h = 0; h < 24; h++) {
+								aggregatedValues.set(h, aggregatedValues.get(h) + (double) countValues.get(h) / scale);
+							}
+						}
+					}
+
+					String path = outputDirectory.getIterationFilename(event.getIteration(), FLOWS_FILE_NAME);
+					new FlowWriter(aggregatedCounts).write(path);
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		}
 	}
 

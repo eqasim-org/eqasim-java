@@ -11,9 +11,9 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.utils.io.IOUtils;
 
 public class FlowWriter {
-	private final IdMap<Link, List<Integer>> counts;
+	private final IdMap<Link, List<Double>> counts;
 
-	public FlowWriter(IdMap<Link, List<Integer>> counts) {
+	public FlowWriter(IdMap<Link, List<Double>> counts) {
 		this.counts = counts;
 	}
 
@@ -24,7 +24,7 @@ public class FlowWriter {
 				"link_id", "hour", "count" //
 		}) + "\n");
 
-		for (Map.Entry<Id<Link>, List<Integer>> entry : counts.entrySet()) {
+		for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
 			for (int hour = 0; hour < 24; hour++) {
 				writer.write(String.join(";", new String[] { //
 						entry.getKey().toString(), //
