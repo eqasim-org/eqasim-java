@@ -43,8 +43,8 @@ public class EqasimConfigurator {
 
 	static public List<AbstractQSimModule> getQSimModules() {
 		return Arrays.asList( //
-				new EqasimTransitQSimModule(), //
-				new EqasimTrafficQSimModule() //
+				new EqasimTransitQSimModule() //, //
+				// new EqasimTrafficQSimModule() //
 		);
 	}
 

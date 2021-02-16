@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.eqasim.core.simulation.analysis.AnalysisOutputListener;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
@@ -53,10 +54,19 @@ public class ModeShareCriterion implements IterationEndsListener, TerminationCri
 		for (Person person : population.getPersons().values()) {
 			Plan plan = person.getSelectedPlan();
 			int hash = person.getId().hashCode();
+			
+			int index = 0;
 
 			for (TripStructureUtils.Trip trip : TripStructureUtils.getTrips(plan)) {
 				String mode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
-				hash += mode.hashCode();
+				hash += index * mode.hashCode();
+				
+				for (Leg leg : trip.getLegsOnly()) {
+					if (leg.getMode().equals("car")) {
+						// Assign to 10 minute intervals
+						hash += index * (int) Math.floor(leg.getTravelTime().seconds() / 60.0 / 10.0);
+					}
+				}
 			}
 
 			updatedHashes.put(person.getId(), hash);

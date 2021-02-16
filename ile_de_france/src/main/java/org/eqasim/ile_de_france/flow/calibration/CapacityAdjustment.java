@@ -27,13 +27,13 @@ public class CapacityAdjustment {
 					majorFactor = Double.parseDouble(cmd.getOptionStrict("capacity:major"));
 					break;
 				case "intermediate":
-					intermediateFactor = Double.parseDouble(cmd.getOptionStrict("intermediate"));
+					intermediateFactor = Double.parseDouble(cmd.getOptionStrict("capacity:intermediate"));
 					break;
 				case "minor":
-					minorFactor = Double.parseDouble(cmd.getOptionStrict("minor"));
+					minorFactor = Double.parseDouble(cmd.getOptionStrict("capacity:minor"));
 					break;
 				case "link":
-					linkFactor = Double.parseDouble(cmd.getOptionStrict("link"));
+					linkFactor = Double.parseDouble(cmd.getOptionStrict("capacity:link"));
 					break;
 				default:
 					throw new IllegalStateException("Unknown slot: " + slot);
