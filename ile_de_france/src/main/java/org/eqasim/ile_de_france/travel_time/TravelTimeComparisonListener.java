@@ -160,8 +160,9 @@ public class TravelTimeComparisonListener implements PersonDepartureEventHandler
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(outputHierarchy.getOutputFilename("travel_time_error.csv"))));
 
-			writer.write(String.join(";", new String[] { "iteration", "mean", "median", "q10", "q90", "q99", "min", "max" })
-					+ "\n");
+			writer.write(
+					String.join(";", new String[] { "iteration", "mean", "median", "q10", "q90", "q99", "min", "max" })
+							+ "\n");
 
 			for (int iteration = 0; iteration < event.getIteration(); iteration++) {
 				if (meanHistory.containsKey(iteration)) {
@@ -208,7 +209,7 @@ public class TravelTimeComparisonListener implements PersonDepartureEventHandler
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		if (event.getIteration() % detailedAnalysisInterval == 0 && detailedAnalysisInterval > 0) {
+		if (detailedAnalysisInterval > 0 && event.getIteration() % detailedAnalysisInterval == 0) {
 			String path = outputHierarchy.getIterationFilename(event.getIteration(), "travel_time_comparision.csv");
 			detailedWriter = IOUtils.getBufferedWriter(path);
 

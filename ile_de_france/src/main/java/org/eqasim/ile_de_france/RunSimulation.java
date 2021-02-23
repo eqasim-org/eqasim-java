@@ -91,26 +91,33 @@ public class RunSimulation {
 			DiscreteModeChoiceConfigGroup.getOrCreate(config).setEnforceSinglePlan(false);
 		}
 
+		double comparisonStartTime = 0.0;
+		double comparisonEndTime = config.travelTimeCalculator().getMaxTime();
+
 		if (useVdf) {
 			VDFConfig vdfConfig = new VDFConfig();
 			controller.addOverridingModule(new VDFModule(vdfConfig));
 			controller.addOverridingQSimModule(new VDFQSimModule());
 
-			double convergenceThreshold = cmd.getOption("travel-time-convergence-threshold").map(Double::parseDouble)
-					.orElse(0.2);
-			controller.addOverridingModule(new TravelTimeComparisonModule(300.0, vdfConfig.startTime, vdfConfig.endTime,
-					convergenceThreshold, 20));
-
 			config.qsim().setStorageCapFactor(100000);
 			config.qsim().setFlowCapFactor(100000);
 			config.qsim().setStuckTime(24.0 * 3600.0);
 			config.qsim().setTrafficDynamics(TrafficDynamics.queue);
-			
-			config.controler().setWriteEventsInterval(20);
-			config.linkStats().setWriteLinkStatsInterval(0);
-			config.controler().setWriteTripsInterval(0);
-			config.controler().setWritePlansInterval(20);
+
+			// config.controler().setWriteEventsInterval(20);
+			// config.controler().setWritePlansInterval(20);
+
+			comparisonStartTime = vdfConfig.startTime;
+			comparisonEndTime = vdfConfig.endTime;
 		}
+
+		double convergenceThreshold = cmd.getOption("travel-time-convergence-threshold").map(Double::parseDouble)
+				.orElse(0.2);
+		controller.addOverridingModule(
+				new TravelTimeComparisonModule(300.0, comparisonStartTime, comparisonEndTime, convergenceThreshold, 0));
+
+		config.linkStats().setWriteLinkStatsInterval(0);
+		config.controler().setWriteTripsInterval(0);
 
 		controller.run();
 	}
