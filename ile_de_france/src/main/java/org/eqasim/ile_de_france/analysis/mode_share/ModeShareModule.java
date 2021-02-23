@@ -1,5 +1,6 @@
 package org.eqasim.ile_de_france.analysis.mode_share;
 
+import org.eqasim.ile_de_france.travel_time.TravelTimeComparisonListener;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.core.config.groups.StrategyConfigGroup;
@@ -28,7 +29,8 @@ public class ModeShareModule extends AbstractModule {
 	@Provides
 	@Singleton
 	ModeShareCriterion provideModeShareCriterion(MainModeIdentifier mainModeIdentifier, Population population,
-			OutputDirectoryHierarchy outputHierarchy, StrategyConfigGroup strategyConfig) {
+			OutputDirectoryHierarchy outputHierarchy, StrategyConfigGroup strategyConfig,
+			TravelTimeComparisonListener travelTimeListener) {
 		double dmcWeight = 0.0;
 		double totalWeight = 0.0;
 
@@ -43,6 +45,6 @@ public class ModeShareModule extends AbstractModule {
 		double dmcProbability = dmcWeight / totalWeight;
 
 		return new ModeShareCriterion(mainModeIdentifier, population, outputHierarchy, dmcProbability,
-				convergenceThreshold);
+				convergenceThreshold, travelTimeListener);
 	}
 }

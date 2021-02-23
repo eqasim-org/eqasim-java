@@ -43,17 +43,25 @@ public class EqasimConfigurator {
 
 	static public List<AbstractQSimModule> getQSimModules() {
 		return Arrays.asList( //
-				new EqasimTransitQSimModule() //, //
-				// new EqasimTrafficQSimModule() //
+				new EqasimTransitQSimModule(), //
+				new EqasimTrafficQSimModule() //
 		);
 	}
 
 	static public void configureController(Controler controller) {
+		configureController(controller, true);
+	}
+
+	static public void configureController(Controler controller, boolean useTrafficModule) {
 		for (AbstractModule module : getModules()) {
 			controller.addOverridingModule(module);
 		}
 
 		for (AbstractQSimModule module : getQSimModules()) {
+			if (module instanceof EqasimTrafficQSimModule && !useTrafficModule) {
+				continue;
+			}
+
 			controller.addOverridingQSimModule(module);
 		}
 

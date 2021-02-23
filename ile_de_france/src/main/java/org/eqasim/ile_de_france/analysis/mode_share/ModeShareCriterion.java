@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eqasim.core.simulation.analysis.AnalysisOutputListener;
+import org.eqasim.ile_de_france.travel_time.TravelTimeComparisonListener;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
@@ -19,6 +19,7 @@ import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.utils.charts.XYLineChart;
 import org.matsim.core.utils.io.IOUtils;
 
 public class ModeShareCriterion implements IterationEndsListener, TerminationCriterion {
@@ -38,13 +39,17 @@ public class ModeShareCriterion implements IterationEndsListener, TerminationCri
 	private final double dmcProbability;
 	private final double convergenceThreshold;
 
+	private final TravelTimeComparisonListener travelTimeListener;
+
 	public ModeShareCriterion(MainModeIdentifier mainModeIdentifier, Population population,
-			OutputDirectoryHierarchy outputHierarchy, double dmcProbability, double convergenceThreshold) {
+			OutputDirectoryHierarchy outputHierarchy, double dmcProbability, double convergenceThreshold,
+			TravelTimeComparisonListener travelTimeListener) {
 		this.population = population;
 		this.mainModeIdentifier = mainModeIdentifier;
 		this.outputHierarchy = outputHierarchy;
 		this.dmcProbability = dmcProbability;
 		this.convergenceThreshold = convergenceThreshold;
+		this.travelTimeListener = travelTimeListener;
 	}
 
 	@Override
@@ -54,19 +59,13 @@ public class ModeShareCriterion implements IterationEndsListener, TerminationCri
 		for (Person person : population.getPersons().values()) {
 			Plan plan = person.getSelectedPlan();
 			int hash = person.getId().hashCode();
-			
-			int index = 0;
+
+			int index = 1;
 
 			for (TripStructureUtils.Trip trip : TripStructureUtils.getTrips(plan)) {
 				String mode = mainModeIdentifier.identifyMainMode(trip.getTripElements());
 				hash += index * mode.hashCode();
-				
-				for (Leg leg : trip.getLegsOnly()) {
-					if (leg.getMode().equals("car")) {
-						// Assign to 10 minute intervals
-						hash += index * (int) Math.floor(leg.getTravelTime().seconds() / 60.0 / 10.0);
-					}
-				}
+				index++;
 			}
 
 			updatedHashes.put(person.getId(), hash);
@@ -93,7 +92,8 @@ public class ModeShareCriterion implements IterationEndsListener, TerminationCri
 			double currentCorrectedShare = currentUpdatedShare / dmcProbability;
 			correctedShares.add(currentCorrectedShare);
 
-			if (currentCorrectedShare < convergenceThreshold && convergenceIteration == Integer.MAX_VALUE) {
+			if (currentCorrectedShare < convergenceThreshold && convergenceIteration == Integer.MAX_VALUE
+					&& travelTimeListener.isConverged()) {
 				convergenceIteration = event.getIteration() + 1;
 				AnalysisOutputListener.convergenceIteration = event.getIteration() + 1;
 			}
@@ -122,6 +122,18 @@ public class ModeShareCriterion implements IterationEndsListener, TerminationCri
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+
+			// Plotting
+
+			Map<Integer, Double> history = new HashMap<>();
+
+			for (int i = 0; i < correctedShares.size(); i++) {
+				history.put(i, correctedShares.get(i));
+			}
+
+			XYLineChart chart = new XYLineChart("Mode share convergence", "Iteration", "Corr. share");
+			chart.addSeries("Corr. share", history);
+			chart.saveAsPng(outputHierarchy.getOutputFilename("mode_share_convergence.png"), 800, 600);
 		}
 
 		personHashes.putAll(updatedHashes);

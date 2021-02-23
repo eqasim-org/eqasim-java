@@ -10,6 +10,10 @@ import org.eqasim.ile_de_france.flow.calibration.CapacityAdjustment;
 import org.eqasim.ile_de_france.grand_paris.PersonUtilityModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
+import org.eqasim.ile_de_france.travel_time.TravelTimeComparisonModule;
+import org.eqasim.vdf.VDFConfig;
+import org.eqasim.vdf.VDFModule;
+import org.eqasim.vdf.VDFQSimModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
@@ -18,6 +22,7 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
 import org.matsim.core.config.groups.StrategyConfigGroup.StrategySettings;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
@@ -27,9 +32,12 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("use-epsilon", "convergence-threshold", "flow-path", "fix-modes") //
+				.allowOptions("use-epsilon", "mode-convergence-threshold", "travel-time-convergence-threshold",
+						"flow-path", "fix-modes", "use-vdf") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", "capacity") //
 				.build();
+
+		boolean useVdf = cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false);
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
@@ -41,7 +49,7 @@ public class RunSimulation {
 		new CapacityAdjustment(cmd).apply(config, scenario.getNetwork());
 
 		Controler controller = new Controler(scenario);
-		IDFConfigurator.configureController(controller);
+		IDFConfigurator.configureController(controller, !useVdf);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
@@ -51,7 +59,8 @@ public class RunSimulation {
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(false)) {
 			controller.addOverridingModule(new EpsilonModule());
 
-			double convergenceThreshold = cmd.getOption("convergence-threshold").map(Double::parseDouble).orElse(0.01);
+			double convergenceThreshold = cmd.getOption("mode-convergence-threshold").map(Double::parseDouble)
+					.orElse(0.01);
 			controller.addOverridingModule(new ModeShareModule(convergenceThreshold));
 
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
@@ -81,8 +90,27 @@ public class RunSimulation {
 
 			DiscreteModeChoiceConfigGroup.getOrCreate(config).setEnforceSinglePlan(false);
 		}
-		
-		// ATTENTION ! EqasimTrafficQSimModule was DEACTIVATED to run with VDF!
+
+		if (useVdf) {
+			VDFConfig vdfConfig = new VDFConfig();
+			controller.addOverridingModule(new VDFModule(vdfConfig));
+			controller.addOverridingQSimModule(new VDFQSimModule());
+
+			double convergenceThreshold = cmd.getOption("travel-time-convergence-threshold").map(Double::parseDouble)
+					.orElse(0.2);
+			controller.addOverridingModule(new TravelTimeComparisonModule(300.0, vdfConfig.startTime, vdfConfig.endTime,
+					convergenceThreshold, 20));
+
+			config.qsim().setStorageCapFactor(100000);
+			config.qsim().setFlowCapFactor(100000);
+			config.qsim().setStuckTime(24.0 * 3600.0);
+			config.qsim().setTrafficDynamics(TrafficDynamics.queue);
+			
+			config.controler().setWriteEventsInterval(20);
+			config.linkStats().setWriteLinkStatsInterval(0);
+			config.controler().setWriteTripsInterval(0);
+			config.controler().setWritePlansInterval(20);
+		}
 
 		controller.run();
 	}

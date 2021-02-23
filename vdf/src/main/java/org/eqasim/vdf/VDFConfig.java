@@ -5,4 +5,5 @@ public class VDFConfig {
 	public double endTime = 24.0 * 3600.0;
 	public double interval = 3600.0;
 	public double minimumSpeed = 5.0 / 3.6;
+	public int horizon = 10;
 }

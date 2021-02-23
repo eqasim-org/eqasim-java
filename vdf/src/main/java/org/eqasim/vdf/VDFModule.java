@@ -1,9 +1,11 @@
 package org.eqasim.vdf;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.vdf.function.BPRFunction;
 import org.eqasim.vdf.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 
 import com.google.inject.Provides;
@@ -26,15 +28,16 @@ public class VDFModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	public VDFTravelTime provideVDFTravelTime(Network network, VolumeDelayFunction vdf) {
+	public VDFTravelTime provideVDFTravelTime(Network network, VolumeDelayFunction vdf, QSimConfigGroup qsimConfig,
+			EqasimConfigGroup eqasimConfig) {
 		int numberOfIntervals = (int) Math.floor((config.endTime - config.startTime) / config.interval) + 1;
-		return new VDFTravelTime(config.startTime, config.interval, numberOfIntervals, config.minimumSpeed, network,
-				vdf);
+		return new VDFTravelTime(config.startTime, config.interval, numberOfIntervals, config.minimumSpeed,
+				qsimConfig.getFlowCapFactor(), network, vdf, eqasimConfig.getCrossingPenalty());
 	}
 
 	@Provides
 	@Singleton
 	public VDFTrafficHandler provideVDFTrafficHandler(Network network, VDFTravelTime travelTime) {
-		return new VDFTrafficHandler(network, travelTime);
+		return new VDFTrafficHandler(network, travelTime, config.horizon);
 	}
 }

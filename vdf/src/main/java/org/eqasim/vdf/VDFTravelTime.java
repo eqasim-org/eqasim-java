@@ -19,20 +19,24 @@ public class VDFTravelTime implements TravelTime {
 	private final double interval;
 	private final int numberOfIntervals;
 	private final double minimumSpeed;
+	private final double flowCapacityFactor;
+	private final double crossingPenalty;
 
 	private final Network network;
 	private final VolumeDelayFunction vdf;
 
 	private final IdMap<Link, List<Double>> travelTimes = new IdMap<>(Link.class);
 
-	public VDFTravelTime(double startTime, double interval, int numberOfIntervals, double minimumSpeed, Network network,
-			VolumeDelayFunction vdf) {
+	public VDFTravelTime(double startTime, double interval, int numberOfIntervals, double minimumSpeed,
+			double flowCapacityFacotor, Network network, VolumeDelayFunction vdf, double crossingPenalty) {
 		this.startTime = startTime;
 		this.interval = interval;
 		this.numberOfIntervals = numberOfIntervals;
 		this.network = network;
 		this.vdf = vdf;
 		this.minimumSpeed = minimumSpeed;
+		this.flowCapacityFactor = flowCapacityFacotor;
+		this.crossingPenalty = crossingPenalty;
 
 		for (Link link : network.getLinks().values()) {
 			double travelTime = Math.max(1.0,
@@ -47,24 +51,40 @@ public class VDFTravelTime implements TravelTime {
 		return travelTimes.get(link.getId()).get(i);
 	}
 
-	public void update(IdMap<Link, List<Integer>> counts) {
-		for (Map.Entry<Id<Link>, List<Integer>> entry : counts.entrySet()) {
+	public void update(IdMap<Link, List<Double>> counts) {
+		for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
 			Link link = network.getLinks().get(entry.getKey());
 
-			List<Integer> linkCounts = entry.getValue();
+			List<Double> linkCounts = entry.getValue();
 			List<Double> linkTravelTimes = travelTimes.get(entry.getKey());
 
 			for (int i = 0; i < numberOfIntervals; i++) {
 				double time = startTime + i * interval;
 
-				// Pass per hour, which is more familiar choice
-				double flow = 3600.0 * linkCounts.get(i) / interval;
-				double capacity = 3600.0 * link.getCapacity(time) / network.getCapacityPeriod();
+				// Pass per interval
+				double flow = linkCounts.get(i) / flowCapacityFactor;
+				double capacity = interval * link.getCapacity(time) / network.getCapacityPeriod();
 
 				double travelTime = Math.max(1.0,
 						Math.max(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));
-				linkTravelTimes.set(i, travelTime);
+				linkTravelTimes.set(i, considerCrossingPenalty(link, travelTime));
 			}
+		}
+	}
+
+	private double considerCrossingPenalty(Link link, double baseTravelTime) {
+		boolean isMajor = true;
+
+		for (Link other : link.getToNode().getInLinks().values()) {
+			if (other.getCapacity() >= link.getCapacity()) {
+				isMajor = false;
+			}
+		}
+
+		if (isMajor || link.getToNode().getInLinks().size() == 1) {
+			return baseTravelTime;
+		} else {
+			return baseTravelTime + crossingPenalty;
 		}
 	}
 
