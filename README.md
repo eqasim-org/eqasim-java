@@ -14,7 +14,7 @@ such as for:
 
 - [Île-de-France and Paris](https://github.com/eqasim-org/ile-de-france)
 - [California](https://github.com/eqasim-org/california)
-- [Sao Paulo](https://github.com/eqasim-org/california)
+- [Sao Paulo](https://github.com/eqasim-org/sao_paulo)
 
 To understand how to set up a simulation and run it, please refer to the
 respective repositories. To cut out smaller parts of existing simulations
