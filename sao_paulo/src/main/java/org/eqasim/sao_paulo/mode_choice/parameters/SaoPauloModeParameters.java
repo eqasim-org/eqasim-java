@@ -65,7 +65,7 @@ public class SaoPauloModeParameters extends ModeParameters {
 		parameters.spCar.alpha_car_city = -0.1597;
 
 		// PT
-		parameters.pt.alpha_u = -0.7938;
+		parameters.pt.alpha_u = -0.2;
 		parameters.pt.betaLineSwitch_u = 0.0;
 		parameters.pt.betaInVehicleTime_u_min = -0.0142;
 		parameters.pt.betaWaitingTime_u_min = -0.0142;
@@ -78,17 +78,17 @@ public class SaoPauloModeParameters extends ModeParameters {
 		parameters.bike.betaAgeOver18_u_a = 0.0;
 
 		// Walk
-		parameters.walk.alpha_u = 2.2218;
+		parameters.walk.alpha_u = 2.0;
 		parameters.walk.betaTravelTime_u_min = -0.1657;
 		parameters.spWalk.alpha_walk_city = 0.0;
 		
 		//Taxi
 		parameters.spTaxi.alpha_taxi_city = 0.0;
 		
-		parameters.spTaxi.beta_TravelTime_u_min = parameters.pt.betaInVehicleTime_u_min;
+		parameters.spTaxi.beta_TravelTime_u_min = -0.25;
 		parameters.spTaxi.betaWaitingTime_u_min = parameters.pt.betaWaitingTime_u_min;
 		parameters.spTaxi.betaAccessEgressWalkTime_min = parameters.pt.betaAccessEgressTime_u_min;
-		parameters.spTaxi.alpha_u = parameters.pt.alpha_u;
+		parameters.spTaxi.alpha_u = -3.0;
 		
 		return parameters;
 	}
