@@ -30,6 +30,24 @@ public class RunSimulation {
 		ScenarioUtils.loadScenario(scenario);
 		EqasimConfigurator.adjustScenario(scenario);
 		
+		Random random = new Random(0);
+		  
+		for (Person person : scenario.getPopulation().getPersons().values()) { 
+			for (Plan plan : person.getPlans()) {
+				for (Trip trip : TripStructureUtils.getTrips(plan)) { 
+					if (trip.getTripElements().size() == 1)	{
+						Leg leg = (Leg) trip.getTripElements().get(0);  
+						if (leg.getMode().equals("car")) { 
+							if (random.nextDouble() < 0.5) {
+		 						leg.setMode("walk"); 
+								leg.setRoute(null); 
+							} 
+						}
+					}
+				}
+			}
+		}
+		 
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
 		eqasimConfig.setEstimator("walk", "spWalkEstimator");
 		eqasimConfig.setEstimator("pt", "spPTEstimator");
