@@ -78,14 +78,14 @@ public class SaoPauloModeParameters extends ModeParameters {
 		parameters.bike.betaAgeOver18_u_a = 0.0;
 
 		// Walk
-		parameters.walk.alpha_u = 2.0;
-		parameters.walk.betaTravelTime_u_min = -0.1657;
+		parameters.walk.alpha_u = 2.2;
+		parameters.walk.betaTravelTime_u_min = -0.1257;
 		parameters.spWalk.alpha_walk_city = 0.0;
 		
 		//Taxi
 		parameters.spTaxi.alpha_taxi_city = 0.0;
 		
-		parameters.spTaxi.beta_TravelTime_u_min = -0.25;
+		parameters.spTaxi.beta_TravelTime_u_min = -0.15;
 		parameters.spTaxi.betaWaitingTime_u_min = parameters.pt.betaWaitingTime_u_min;
 		parameters.spTaxi.betaAccessEgressWalkTime_min = parameters.pt.betaAccessEgressTime_u_min;
 		parameters.spTaxi.alpha_u = -3.0;
