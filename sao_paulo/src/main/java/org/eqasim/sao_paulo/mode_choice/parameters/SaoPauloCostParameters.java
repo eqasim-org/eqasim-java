@@ -18,7 +18,7 @@ public class SaoPauloCostParameters implements ParameterDefinition {
 	public static SaoPauloCostParameters buildDefault() {
 		SaoPauloCostParameters parameters = new SaoPauloCostParameters();
 
-		parameters.carCost_BRL_km = 0.35;
+		parameters.carCost_BRL_km = 0.51;
 		
 		parameters.ptCostPerTrip_0Transfers_BRL = 4.3;
 		parameters.ptCostPerTrip_3Transfers_BRL = 7.48;
