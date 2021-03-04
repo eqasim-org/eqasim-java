@@ -45,10 +45,10 @@ public class SaoPauloCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateRegionalUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables_car);
 		if (variables.hhlIncome == 0.0)
-			utility += estimateMonetaryCostUtility(variables_car) * (parameters.spAvgHHLIncome.avg_hhl_income / 1.0);
+			utility += estimateMonetaryCostUtility(variables_car) * (parameters.spAvgHHLIncome.avg_hhl_income / parameters.spAvgHHLIncome.avg_hhl_income);
 		else
 			utility += estimateMonetaryCostUtility(variables_car)
-					* (parameters.spAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+					* (parameters.spAvgHHLIncome.avg_hhl_income / parameters.spAvgHHLIncome.avg_hhl_income);
 
 		return utility;
 	}
