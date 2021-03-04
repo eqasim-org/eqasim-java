@@ -60,7 +60,7 @@ public class RunAdaptConfig {
 		config.planCalcScore().addModeParams(ptParams);
 
 		ModeParams walkParams = new ModeParams("walk");
-		ptParams.setMarginalUtilityOfTraveling(
+		walkParams.setMarginalUtilityOfTraveling(
 				SaoPauloModeParameters.buildDefault().pt.betaAccessEgressTime_u_min * 60.0);
 
 		config.planCalcScore().addModeParams(walkParams);
