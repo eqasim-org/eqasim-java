@@ -53,10 +53,10 @@ public class SaoPauloPTUtilityEstimator  extends PtUtilityEstimator{
 		utility += estimateAgeUtility(person);
 		if (variables.hhlIncome == 0.0)
 			utility += estimateMonetaryCostUtility(variables_pt)
-			* (parameters.spAvgHHLIncome.avg_hhl_income / 1.0);
+			* (parameters.spAvgHHLIncome.avg_hhl_income / parameters.spAvgHHLIncome.avg_hhl_income);
 		else
 			utility += estimateMonetaryCostUtility(variables_pt)
-				* (parameters.spAvgHHLIncome.avg_hhl_income / variables.hhlIncome);
+				* (parameters.spAvgHHLIncome.avg_hhl_income / parameters.spAvgHHLIncome.avg_hhl_income);
 
 		return utility;
 	}
