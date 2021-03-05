@@ -24,42 +24,45 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter") //
+				.allowPrefixes("mode-parameter", "cost-parameter", "already-equilibrium") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				EqasimConfigurator.getConfigGroups());
 		EqasimConfigGroup.get(config).setTripAnalysisInterval(1);
 		cmd.applyConfiguration(config);
-				
+
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		EqasimConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		EqasimConfigurator.adjustScenario(scenario);
-		
-		Random random = new Random(0);
-		  
-		for (Person person : scenario.getPopulation().getPersons().values()) { 
-			for (Plan plan : person.getPlans()) {
-				for (Trip trip : TripStructureUtils.getTrips(plan)) { 
-					if (trip.getTripElements().size() == 1)	{
-						Leg leg = (Leg) trip.getTripElements().get(0);  
-						if (leg.getMode().equals("car")) { 
-							if (random.nextDouble() < 0.5) {
-		 						leg.setMode("walk"); 
-								leg.setRoute(null); 
-							} 
+		// the first check is for backwards compatibility
+		// it will be removed with the next synthesis release
+		if (!cmd.getOption("already-equilibrium").isPresent()
+				|| !Boolean.parseBoolean(cmd.getOption("already-equilibrium").get())) {
+			Random random = new Random(0);
+
+			for (Person person : scenario.getPopulation().getPersons().values()) {
+				for (Plan plan : person.getPlans()) {
+					for (Trip trip : TripStructureUtils.getTrips(plan)) {
+						if (trip.getTripElements().size() == 1) {
+							Leg leg = (Leg) trip.getTripElements().get(0);
+							if (leg.getMode().equals("car")) {
+								if (random.nextDouble() < 0.5) {
+									leg.setMode("walk");
+									leg.setRoute(null);
+								}
+							}
 						}
 					}
 				}
 			}
 		}
-		 
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
 		eqasimConfig.setEstimator("walk", "spWalkEstimator");
 		eqasimConfig.setEstimator("pt", "spPTEstimator");
 		eqasimConfig.setEstimator("car", "spCarEstimator");
-		eqasimConfig.setEstimator("taxi", "spTaxiEstimator");		
+		eqasimConfig.setEstimator("taxi", "spTaxiEstimator");
 
 		Controler controller = new Controler(scenario);
 		EqasimConfigurator.configureController(controller);
