@@ -21,7 +21,7 @@
   - ... by adding a new section **Development version** on top of the changelog and one bullet point "No changes yet"
 - Commit the changes to the new branch
 - Create a PR on Github and wait until the test have passed.
-- Merge the PR on Github in case three are no errors.
+- Merge the PR on Github in case there are no errors. Call the PR "Release X.X.X".
 - Locally, check out the updated `develop` branch
 - Run `git tag vX.X.X` to create the new verison tag
 - Run `git push --tags` to push the new version tag
