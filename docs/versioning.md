@@ -22,6 +22,9 @@
 - Commit the changes to the new branch
 - Create a PR on Github and wait until the test have passed.
 - Merge the PR on Github in case three are no errors.
+- Locally, check out the updated `develop` branch
+- Run `git tag vX.X.X` to create the new verison tag
+- Run `git push --tags` to push the new version tag
 - Run `mvn deploy` to deploy the Maven artifacts to Bintray
 
 ## What's next?
