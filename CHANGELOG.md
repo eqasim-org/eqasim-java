@@ -7,6 +7,7 @@ included in the (note yet determined) next version number.
 **Development version**
 
 - No changes yet
+
 **1.2.1**
 
 - Consider link / facility coordinates in plan-based trip analysis if network / facilities are provided
