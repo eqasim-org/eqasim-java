@@ -8,6 +8,11 @@ included in the (note yet determined) next version number.
 
 - Consider link / facility coordinates in plan-based trip analysis if network / facilities are provided
 - Bugfix: Rare issue in `EqasimTransitEngine` leading to inconsistent ordering of event times
+- Homefinder is updated in SF, LA, and SP. It is now in eqasim
+- Added business activity in LA and adapted config file accordingly
+- Recalibrated parameters and udpated car costs in SP
+- In SP run script we currently make car->walk to allow to reach equilibrium
+- SP config is updated 
 
 **1.2.0**
 
