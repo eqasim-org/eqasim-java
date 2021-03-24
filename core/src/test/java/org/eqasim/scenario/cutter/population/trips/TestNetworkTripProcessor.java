@@ -240,6 +240,11 @@ public class TestNetworkTripProcessor {
 			public double getFlowCapacityPerSec(double time) {
 				return 0;
 			}
+
+			@Override
+			public double getCapacityPeriod() {
+				return 0;
+			}
 		};
 	}
 }

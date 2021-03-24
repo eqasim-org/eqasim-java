@@ -23,7 +23,7 @@
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<matsim.version>13.0-2021w02-SNAPSHOT</matsim.version>
+		<matsim.version>13.0-2021w11-SNAPSHOT</matsim.version>
 	</properties>
 	<distributionManagement>
 		<repository>
