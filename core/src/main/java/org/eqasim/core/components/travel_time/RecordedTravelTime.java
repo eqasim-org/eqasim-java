@@ -18,6 +18,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
+import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.vehicles.Vehicle;
@@ -156,6 +157,10 @@ public class RecordedTravelTime implements TravelTime {
 
 		TravelTimeRecorder recorder = new TravelTimeRecorder(network, startTime, endTime, interval);
 		eventsManager.addHandler(recorder);
+
+		eventsManager.initProcessing();
+		new MatsimEventsReader(eventsManager).readFile(eventsPath.toString());
+		eventsManager.finishProcessing();
 
 		return recorder.getTravelTime(fallback);
 	}

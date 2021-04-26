@@ -6,7 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Bugfix: `RecordedTravelTime::readFromEvents` was not actually reading events.
 
 **1.2.1**
 
@@ -16,7 +16,7 @@ included in the (note yet determined) next version number.
 - Added business activity in LA and adapted config file accordingly
 - Recalibrated parameters and udpated car costs in SP
 - In SP run script we currently make car->walk to allow to reach equilibrium
-- SP config is updated 
+- SP config is updated
 
 **1.2.0**
 
