@@ -27,8 +27,8 @@
 	
 	<distributionManagement>
 		<repository>
-			<id>eqasim-bintray</id>
-			<url>https://api.bintray.com/maven/eqasim/eqasim/eqasim/;publish=1</url>
+			<id>github</id>
+			<url>https://maven.pkg.github.com/eqasim-org/eqasim-java</url>
 		</repository>
 	</distributionManagement>
 	
