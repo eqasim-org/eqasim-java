@@ -6,6 +6,9 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Updated `examples` with an example for running DRT in the Corsica test scenario
+- Remove `automated_vehicles` module, `drt` should be used now
+- Update MATSim to version `13.0`
 - Bugfix: `RecordedTravelTime::readFromEvents` was not actually reading events.
 
 **1.2.1**
