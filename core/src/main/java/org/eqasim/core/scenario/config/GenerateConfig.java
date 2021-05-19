@@ -22,6 +22,7 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.AccessEgressType;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 
@@ -114,7 +115,7 @@ public class GenerateConfig {
 		config.plansCalcRoute().setNetworkModes(NETWORK_MODES);
 
 		// TODO: Potentially defaults we should change after MATSim 12
-		config.plansCalcRoute().setInsertingAccessEgressWalk(false);
+		config.plansCalcRoute().setAccessEgressType(AccessEgressType.none);
 		config.plansCalcRoute().setRoutingRandomness(0.0);
 
 		ModeRoutingParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
