@@ -24,14 +24,14 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<matsim.version>13.0</matsim.version>
 	</properties>
-	
+
 	<distributionManagement>
 		<repository>
-			<id>github</id>
-			<url>https://maven.pkg.github.com/eqasim-org/eqasim-java</url>
+			<id>packagecloud-eqasim</id>
+			<url>packagecloud+https://packagecloud.io/eth-ivt/eqasim</url>
 		</repository>
 	</distributionManagement>
-	
+
 	<repositories>
 		<repository>
 			<id>osgeo</id>
@@ -121,5 +121,12 @@
 				</executions>
 			</plugin>
 		</plugins>
+		<extensions>
+			<extension>
+				<groupId>io.packagecloud.maven.wagon</groupId>
+				<artifactId>maven-packagecloud-wagon</artifactId>
+				<version>0.0.6</version>
+			</extension>
+		</extensions>
 	</build>
 </project>
