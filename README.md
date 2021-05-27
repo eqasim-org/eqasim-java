@@ -34,7 +34,7 @@ to your `pom.xml`:
 ```xml
 <repository>
     <id>eqasim</id>
-    <url>https://maven.pkg.github.com/eqasim-org/*</url>
+    <url>https://packagecloud.io/eth-ivt/eqasim/maven2</url>
 </repository>
 ```
 

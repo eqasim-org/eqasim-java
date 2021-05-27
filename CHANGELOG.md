@@ -6,7 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Shift to packagecloud
+- Shift to Github Actions for testing
 
 **1.3.0**
 
