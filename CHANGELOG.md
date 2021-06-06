@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Removed unmaintained Auckland scenario (check *v1.3.0* to recover)
 - Fix certificate issues while generating shaded jar
 - Shift to packagecloud
 - Shift to Github Actions for testing
