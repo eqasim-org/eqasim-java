@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Fix certificate issues while generating shaded jar
 - Shift to packagecloud
 - Shift to Github Actions for testing
 
