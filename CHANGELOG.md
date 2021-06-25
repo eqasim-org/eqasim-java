@@ -6,7 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Add example how to treat rejections in the examples
 
 **1.3.1**
 
