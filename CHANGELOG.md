@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Port analysis code from AMoDeus to DRT example
 - Add example how to treat rejections in the examples
 
 **1.3.1**
