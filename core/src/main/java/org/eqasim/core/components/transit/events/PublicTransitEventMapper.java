@@ -8,7 +8,7 @@ import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-public class PublicTransitEventMapper implements CustomEventMapper<PublicTransitEvent> {
+public class PublicTransitEventMapper implements CustomEventMapper {
 	@Override
 	public PublicTransitEvent apply(GenericEvent event) {
 		double arrivalTime = event.getTime();

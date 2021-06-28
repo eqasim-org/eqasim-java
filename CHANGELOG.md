@@ -6,7 +6,22 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Port analysis code from AMoDeus to DRT example
+- Add example how to treat rejections in the examples
+
+**1.3.1**
+
+- Removed unmaintained Auckland scenario (check *v1.3.0* to recover)
+- Fix certificate issues while generating shaded jar
+- Shift to packagecloud
+- Shift to Github Actions for testing
+
+**1.3.0**
+
+- Updated `examples` with an example for running DRT in the Corsica test scenario
+- Remove `automated_vehicles` module, `drt` should be used now
+- Update MATSim to version `13.0`
+- Bugfix: `RecordedTravelTime::readFromEvents` was not actually reading events.
 
 **1.2.1**
 
@@ -16,7 +31,7 @@ included in the (note yet determined) next version number.
 - Added business activity in LA and adapted config file accordingly
 - Recalibrated parameters and udpated car costs in SP
 - In SP run script we currently make car->walk to allow to reach equilibrium
-- SP config is updated 
+- SP config is updated
 
 **1.2.0**
 
