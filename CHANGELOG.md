@@ -6,6 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Make use of new convergence markers in MATSim
+- Change trips output file name to `eqasim_trips.csv`
 - Port analysis code from AMoDeus to DRT example
 - Add example how to treat rejections in the examples
 
