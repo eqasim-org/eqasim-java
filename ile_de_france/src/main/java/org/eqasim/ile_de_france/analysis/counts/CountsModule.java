@@ -21,7 +21,7 @@ public class CountsModule extends AbstractModule {
 
 	public CountsModule(CommandLine cmd) {
 		String[] links = cmd.getOption("count-links").orElse("").split(",");
-		this.linkIds = Arrays.asList(links).stream().map(s -> Id.createLinkId(s)).collect(Collectors.toSet());
+		this.linkIds = Arrays.asList(links).stream().map(s -> Id.createLinkId(s.trim())).collect(Collectors.toSet());
 	}
 
 	@Override

@@ -3,7 +3,9 @@ package org.eqasim.ile_de_france;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.analysis.counts.CountsModule;
+import org.eqasim.ile_de_france.analysis.stuck.StuckAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
+import org.eqasim.ile_de_france.convergence.ExternalConvergenceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -18,7 +20,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("count-links") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "osm-capacity") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
@@ -28,6 +30,8 @@ public class RunSimulation {
 		IDFConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
+		new OsmCapacityAdjustment(cmd).apply(config, scenario.getNetwork());
+
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
@@ -35,6 +39,8 @@ public class RunSimulation {
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new CountsModule(cmd));
+		controller.addOverridingModule(new StuckAnalysisModule());
+		controller.addOverridingModule(new ExternalConvergenceModule());
 		controller.run();
 	}
 }
