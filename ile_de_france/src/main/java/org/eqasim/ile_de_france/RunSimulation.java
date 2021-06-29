@@ -19,7 +19,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("count-links") //
+				.allowOptions("count-links", "external-convergence") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", "osm-capacity") //
 				.build();
 
@@ -38,9 +38,16 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new UrbanAnalysisModule());
-		controller.addOverridingModule(new CountsModule(cmd));
 		controller.addOverridingModule(new StuckAnalysisModule());
-		controller.addOverridingModule(new ExternalConvergenceModule());
+
+		if (cmd.hasOption("count-links")) {
+			controller.addOverridingModule(new CountsModule(cmd));
+		}
+
+		if (cmd.getOption("external-convergence").map(Boolean::parseBoolean).orElse(false)) {
+			controller.addOverridingModule(new ExternalConvergenceModule());
+		}
+
 		controller.run();
 	}
 }

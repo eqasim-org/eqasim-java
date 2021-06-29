@@ -1,8 +1,7 @@
 package org.eqasim.ile_de_france.analysis.counts;
 
-import java.util.Arrays;
+import java.io.File;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.matsim.api.core.v01.Id;
@@ -20,8 +19,11 @@ public class CountsModule extends AbstractModule {
 	private final Set<Id<Link>> linkIds;
 
 	public CountsModule(CommandLine cmd) {
-		String[] links = cmd.getOption("count-links").orElse("").split(",");
-		this.linkIds = Arrays.asList(links).stream().map(s -> Id.createLinkId(s.trim())).collect(Collectors.toSet());
+		try {
+			this.linkIds = new CountsReader().readLinks(new File(cmd.getOptionStrict("count-links")));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
