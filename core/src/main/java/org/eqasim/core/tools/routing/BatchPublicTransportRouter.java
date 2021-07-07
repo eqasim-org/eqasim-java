@@ -30,8 +30,9 @@ public class BatchPublicTransportRouter {
 	private final int numberOfThreads;
 	private final double interval;
 
-	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider, Provider<HeadwayCalculator> headwayCalculatorProvider,
-			TransitSchedule schedule, Network network, int batchSize, int numberOfThreads, double interval) {
+	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider,
+			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
+			int batchSize, int numberOfThreads, double interval) {
 		this.routerProvider = routerProvider;
 		this.headwayCalculatorProvider = headwayCalculatorProvider;
 		this.batchSize = batchSize;
@@ -116,14 +117,23 @@ public class BatchPublicTransportRouter {
 						result.headway_min = Double.NaN;
 					}
 
+					int currentIndex = 0;
+
 					for (Leg leg : legs) {
-						if (leg.getMode().equals(TransportMode.access_walk)) {
+						boolean isFirstLeg = currentIndex == 0;
+						boolean isLastLeg = currentIndex == legs.size() - 1;
+						currentIndex++;
+
+						if (leg.getMode().equals(TransportMode.access_walk)
+								|| (leg.getMode().equals(TransportMode.walk) && isFirstLeg)) {
 							result.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 							result.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
-						} else if (leg.getMode().equals(TransportMode.egress_walk)) {
+						} else if (leg.getMode().equals(TransportMode.egress_walk)
+								|| (leg.getMode().equals(TransportMode.walk) && isLastLeg)) {
 							result.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 							result.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
-						} else if (leg.getMode().equals(TransportMode.transit_walk)) {
+						} else if (leg.getMode().equals(TransportMode.transit_walk)
+								|| (leg.getMode().equals(TransportMode.walk) && !isFirstLeg && !isLastLeg)) {
 							result.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 							result.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
 						} else if (leg.getMode().equals(TransportMode.pt)) {
@@ -172,6 +182,17 @@ public class BatchPublicTransportRouter {
 						}
 					}
 
+					result.inVehicleTimeTotal_min = result.inVehicleTimeRail_min + result.inVehicleTimeSubway_min
+							+ result.inVehicleTimeBus_min + result.inVehicleTimeTram_min
+							+ result.inVehicleTimeOther_min;
+					result.inVehicleDistanceTotal_km = result.inVehicleDistanceRail_km
+							+ result.inVehicleDistanceSubway_km + result.inVehicleDistanceBus_km
+							+ result.inVehicleDistanceTram_km + result.inVehicleDistanceOther_km;
+					result.totalWalkTravelTime_min = result.accessTravelTime_min + result.egressTravelTime_min
+							+ result.transferTravelTime_min;
+					result.totalWalkDistance_km = result.accessDistance_km + result.egressDistance_km
+							+ result.transferDistance_km;
+
 					localResults.add(result);
 					progress.update();
 				}
@@ -204,22 +225,27 @@ public class BatchPublicTransportRouter {
 		public double egressTravelTime_min;
 		public double egressDistance_km;
 
+		public double transferTravelTime_min;
+		public double transferDistance_km;
+
+		public double totalWalkTravelTime_min;
+		public double totalWalkDistance_km;
+
 		public double inVehicleTimeRail_min;
 		public double inVehicleTimeSubway_min;
 		public double inVehicleTimeBus_min;
 		public double inVehicleTimeTram_min;
 		public double inVehicleTimeOther_min;
+		public double inVehicleTimeTotal_min;
 
 		public double inVehicleDistanceRail_km;
 		public double inVehicleDistanceSubway_km;
 		public double inVehicleDistanceBus_km;
 		public double inVehicleDistanceTram_km;
 		public double inVehicleDistanceOther_km;
+		public double inVehicleDistanceTotal_km;
 
 		public int numberOfTransfers;
-
-		public double transferTravelTime_min;
-		public double transferDistance_km;
 
 		public double initialWaitingTime_min;
 		public double transferWaitingTime_min;
