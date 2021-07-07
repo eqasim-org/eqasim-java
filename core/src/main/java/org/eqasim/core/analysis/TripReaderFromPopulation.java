@@ -21,6 +21,7 @@ import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.ActivityFacility;
 
@@ -95,11 +96,18 @@ public class TripReaderFromPopulation {
 					Coord originCoord = getCoordinate(person.getId(), trip.getOriginActivity());
 					Coord destinationCoord = getCoordinate(person.getId(), trip.getDestinationActivity());
 
+					OptionalTime originEndTime = trip.getOriginActivity().getEndTime();
+					OptionalTime destinationStartTime = trip.getDestinationActivity().getStartTime();
+
+					double departureTime = originEndTime.orElse(Double.NaN);
+					double duration = Double.NaN;
+
+					if (originEndTime.isDefined() && destinationStartTime.isDefined()) {
+						duration = destinationStartTime.seconds() - originEndTime.seconds();
+					}
+
 					tripItems.add(new TripItem(person.getId(), personTripIndex, originCoord, destinationCoord,
-							trip.getOriginActivity().getEndTime().seconds(),
-							trip.getDestinationActivity().getStartTime().seconds()
-									- trip.getOriginActivity().getEndTime().seconds(),
-							getVehicleDistance(trip), getRoutedDistance(trip),
+							departureTime, duration, getVehicleDistance(trip), getRoutedDistance(trip),
 							mainModeIdentifier.identifyMainMode(trip.getTripElements()),
 							trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
 							CoordUtils.calcEuclideanDistance(originCoord, destinationCoord)));

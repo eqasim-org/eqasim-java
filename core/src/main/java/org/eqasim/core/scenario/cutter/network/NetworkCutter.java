@@ -1,10 +1,16 @@
 package org.eqasim.core.scenario.cutter.network;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -16,7 +22,13 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Route;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
+import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.network.io.NetworkWriter;
 import org.matsim.core.population.routes.NetworkRoute;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.pt.PtConstants;
 import org.matsim.pt.transitSchedule.api.TransitLine;
@@ -149,5 +161,25 @@ public class NetworkCutter {
 		log.info("  Number of links before: " + originalNumberOfLinks);
 		log.info("  Number of nodes now: " + finalNumberOfNodes);
 		log.info("  Number of links now: " + finalNumberOfLinks);
+	}
+
+	static public void main(String[] args) throws MalformedURLException, IOException, InterruptedException {
+		Network fullNetwork = NetworkUtils.createNetwork();
+		new MatsimNetworkReader(fullNetwork).readFile("output_network.xml.gz");
+
+		Network roadNetwork = NetworkUtils.createNetwork();
+		new TransportModeNetworkFilter(fullNetwork).filter(roadNetwork, Collections.singleton("car"));
+
+		RoadNetwork roadNetwork2 = new RoadNetwork(roadNetwork);
+
+		ScenarioExtent extent = new ShapeScenarioExtent.Builder(new File("paris.shp"), Optional.empty(),
+				Optional.empty()).build();
+
+		MinimumNetworkFinder minimumNetworkFinder = new MinimumNetworkFinder(extent, roadNetwork2,
+				Runtime.getRuntime().availableProcessors(), 100);
+		new NetworkCutter(extent, ScenarioUtils.createScenario(ConfigUtils.createConfig()), minimumNetworkFinder)
+				.run(roadNetwork);
+
+		new NetworkWriter(roadNetwork).write("paris_network.xml.gz");
 	}
 }
