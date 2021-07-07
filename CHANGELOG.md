@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Add routing utilities based on scenarios
 - Fix bug in plan to CSV conversion when arrival activity start time is not set
 - Make use of new convergence markers in MATSim
 - Change trips output file name to `eqasim_trips.csv`
