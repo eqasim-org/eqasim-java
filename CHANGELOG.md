@@ -6,7 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Fix bug in plan to CSV conversion when arrival activity start time is not set
 
 **1.3.1**
 
