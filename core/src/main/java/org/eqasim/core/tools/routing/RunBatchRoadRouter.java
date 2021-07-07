@@ -3,6 +3,7 @@ package org.eqasim.core.tools.routing;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.eqasim.core.misc.InjectorBuilder;
@@ -15,6 +16,10 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.NetworkCleaner;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.scenario.ScenarioUtils;
 
@@ -26,6 +31,9 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
 public class RunBatchRoadRouter {
@@ -49,7 +57,22 @@ public class RunBatchRoadRouter {
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(EqasimConfigurator.getModules()).build();
+				.addOverridingModules(EqasimConfigurator.getModules()) //
+				.addOverridingModule(new AbstractModule() {
+					@Override
+					public void install() {
+					}
+
+					@Provides
+					@Singleton
+					@Named("car")
+					public Network provideCarNetwork(Network network) {
+						Network carNetwork = NetworkUtils.createNetwork();
+						new TransportModeNetworkFilter(network).filter(carNetwork, Collections.singleton("car"));
+						new NetworkCleaner().run(carNetwork);
+						return carNetwork;
+					}
+				}).build();
 
 		Network network = injector.getInstance(Key.get(Network.class, Names.named("car")));
 

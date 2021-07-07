@@ -107,93 +107,97 @@ public class BatchPublicTransportRouter {
 
 					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
 
-					boolean isFirstVehicularLeg = true;
-					result.isOnlyWalk = 1;
+					if (legs != null) {
+						boolean isFirstVehicularLeg = true;
+						result.isOnlyWalk = 1;
 
-					if (interval > 0.0) {
-						result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
-								task.departureTime);
-					} else {
-						result.headway_min = Double.NaN;
-					}
-
-					int currentIndex = 0;
-
-					for (Leg leg : legs) {
-						boolean isFirstLeg = currentIndex == 0;
-						boolean isLastLeg = currentIndex == legs.size() - 1;
-						currentIndex++;
-
-						if (leg.getMode().equals(TransportMode.access_walk)
-								|| (leg.getMode().equals(TransportMode.walk) && isFirstLeg)) {
-							result.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-							result.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
-						} else if (leg.getMode().equals(TransportMode.egress_walk)
-								|| (leg.getMode().equals(TransportMode.walk) && isLastLeg)) {
-							result.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-							result.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
-						} else if (leg.getMode().equals(TransportMode.transit_walk)
-								|| (leg.getMode().equals(TransportMode.walk) && !isFirstLeg && !isLastLeg)) {
-							result.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-							result.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
-						} else if (leg.getMode().equals(TransportMode.pt)) {
-							TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
-
-							double waitingTime = route.getBoardingTime().seconds() - leg.getDepartureTime().seconds();
-
-							if (isFirstVehicularLeg) {
-								result.initialWaitingTime_min += waitingTime / 60.0;
-								isFirstVehicularLeg = false;
-							} else {
-								result.numberOfTransfers += 1;
-								result.transferWaitingTime_min += waitingTime / 60.0;
-							}
-
-							String mode = schedule.getTransitLines().get(route.getLineId()).getRoutes()
-									.get(route.getRouteId()).getTransportMode();
-
-							double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
-
-							switch (mode) {
-							case "rail":
-								result.inVehicleTimeRail_min += inVehicleTime / 60.0;
-								result.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
-								break;
-							case "subway":
-								result.inVehicleTimeSubway_min += inVehicleTime / 60.0;
-								result.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
-								break;
-							case "bus":
-								result.inVehicleTimeBus_min += inVehicleTime / 60.0;
-								result.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
-								break;
-							case "tram":
-								result.inVehicleTimeTram_min += inVehicleTime / 60.0;
-								result.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
-								break;
-							default:
-								result.inVehicleTimeOther_min += inVehicleTime / 60.0;
-								result.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
-							}
-
-							result.isOnlyWalk = 0;
+						if (interval > 0.0) {
+							result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
+									task.departureTime);
 						} else {
-							throw new IllegalStateException();
+							result.headway_min = Double.NaN;
 						}
+
+						int currentIndex = 0;
+
+						for (Leg leg : legs) {
+							boolean isFirstLeg = currentIndex == 0;
+							boolean isLastLeg = currentIndex == legs.size() - 1;
+							currentIndex++;
+
+							if (leg.getMode().equals(TransportMode.access_walk)
+									|| (leg.getMode().equals(TransportMode.walk) && isFirstLeg)) {
+								result.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+								result.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
+							} else if (leg.getMode().equals(TransportMode.egress_walk)
+									|| (leg.getMode().equals(TransportMode.walk) && isLastLeg)) {
+								result.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+								result.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
+							} else if (leg.getMode().equals(TransportMode.transit_walk)
+									|| (leg.getMode().equals(TransportMode.walk) && !isFirstLeg && !isLastLeg)) {
+								result.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+								result.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
+							} else if (leg.getMode().equals(TransportMode.pt)) {
+								TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+
+								double waitingTime = route.getBoardingTime().seconds()
+										- leg.getDepartureTime().seconds();
+
+								if (isFirstVehicularLeg) {
+									result.initialWaitingTime_min += waitingTime / 60.0;
+									isFirstVehicularLeg = false;
+								} else {
+									result.numberOfTransfers += 1;
+									result.transferWaitingTime_min += waitingTime / 60.0;
+								}
+
+								String mode = schedule.getTransitLines().get(route.getLineId()).getRoutes()
+										.get(route.getRouteId()).getTransportMode();
+
+								double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
+
+								switch (mode) {
+								case "rail":
+									result.inVehicleTimeRail_min += inVehicleTime / 60.0;
+									result.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
+									break;
+								case "subway":
+									result.inVehicleTimeSubway_min += inVehicleTime / 60.0;
+									result.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
+									break;
+								case "bus":
+									result.inVehicleTimeBus_min += inVehicleTime / 60.0;
+									result.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
+									break;
+								case "tram":
+									result.inVehicleTimeTram_min += inVehicleTime / 60.0;
+									result.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
+									break;
+								default:
+									result.inVehicleTimeOther_min += inVehicleTime / 60.0;
+									result.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
+								}
+
+								result.isOnlyWalk = 0;
+							} else {
+								throw new IllegalStateException();
+							}
+						}
+
+						result.inVehicleTimeTotal_min = result.inVehicleTimeRail_min + result.inVehicleTimeSubway_min
+								+ result.inVehicleTimeBus_min + result.inVehicleTimeTram_min
+								+ result.inVehicleTimeOther_min;
+						result.inVehicleDistanceTotal_km = result.inVehicleDistanceRail_km
+								+ result.inVehicleDistanceSubway_km + result.inVehicleDistanceBus_km
+								+ result.inVehicleDistanceTram_km + result.inVehicleDistanceOther_km;
+						result.totalWalkTravelTime_min = result.accessTravelTime_min + result.egressTravelTime_min
+								+ result.transferTravelTime_min;
+						result.totalWalkDistance_km = result.accessDistance_km + result.egressDistance_km
+								+ result.transferDistance_km;
+
+						localResults.add(result);
 					}
 
-					result.inVehicleTimeTotal_min = result.inVehicleTimeRail_min + result.inVehicleTimeSubway_min
-							+ result.inVehicleTimeBus_min + result.inVehicleTimeTram_min
-							+ result.inVehicleTimeOther_min;
-					result.inVehicleDistanceTotal_km = result.inVehicleDistanceRail_km
-							+ result.inVehicleDistanceSubway_km + result.inVehicleDistanceBus_km
-							+ result.inVehicleDistanceTram_km + result.inVehicleDistanceOther_km;
-					result.totalWalkTravelTime_min = result.accessTravelTime_min + result.egressTravelTime_min
-							+ result.transferTravelTime_min;
-					result.totalWalkDistance_km = result.accessDistance_km + result.egressDistance_km
-							+ result.transferDistance_km;
-
-					localResults.add(result);
 					progress.update();
 				}
 

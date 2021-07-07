@@ -107,12 +107,12 @@ public class BatchRoadRouter {
 							null, null);
 
 					result.inVehicleTime_min = path.travelTime / 60.0;
-					result.inVehicleDistance_min = path.links.stream().mapToDouble(Link::getLength).sum();
+					result.inVehicleDistance_km = path.links.stream().mapToDouble(Link::getLength).sum() * 1e-3;
 
-					result.accessEuclideanDistance_m = CoordUtils.calcEuclideanDistance(fromCoord,
-							fromLink.getToNode().getCoord());
-					result.egressEuclideanDistance_m = CoordUtils.calcEuclideanDistance(toCoord,
-							toLink.getFromNode().getCoord());
+					result.accessEuclideanDistance_km = CoordUtils.calcEuclideanDistance(fromCoord,
+							fromLink.getToNode().getCoord()) * 1e-3;
+					result.egressEuclideanDistance_km = CoordUtils.calcEuclideanDistance(toCoord,
+							toLink.getFromNode().getCoord()) * 1e-3;
 
 					localResults.add(result);
 					progress.update();
@@ -140,11 +140,11 @@ public class BatchRoadRouter {
 	static public class Result {
 		public String identifier;
 
-		public double accessEuclideanDistance_m;
-		public double egressEuclideanDistance_m;
+		public double accessEuclideanDistance_km;
+		public double egressEuclideanDistance_km;
 
 		public double inVehicleTime_min;
-		public double inVehicleDistance_min;
+		public double inVehicleDistance_km;
 
 		Result(Task task) {
 			this.identifier = task.identifier;
