@@ -1,6 +1,7 @@
 package org.eqasim.examples.corsica_drt;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -8,7 +9,10 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.examples.corsica_drt.analysis.DvrpAnalsisModule;
 import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
+import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
+import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
@@ -46,7 +50,10 @@ import com.google.common.io.Resources;
  */
 public class RunCorsicaDrtSimulation {
 	static public void main(String[] args) throws ConfigurationException {
-		CommandLine cmd = new CommandLine.Builder(args).build();
+		CommandLine cmd = new CommandLine.Builder(args) //
+				.allowOptions("use-rejection-constraint") //
+				.allowPrefixes("mode-parameter", "cost-parameter") //
+				.build();
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
 
 		Config config = ConfigUtils.loadConfig(configUrl, IDFConfigurator.getConfigGroups());
@@ -103,6 +110,16 @@ public class RunCorsicaDrtSimulation {
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 			eqasimConfig.setCostModel("drt", "drt");
 			eqasimConfig.setEstimator("drt", "drt");
+
+			// Add rejection constraint
+			if (cmd.getOption("use-rejection-constraint").map(Boolean::parseBoolean).orElse(false)) {
+				Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
+				tripConstraints.add(RejectionConstraint.NAME);
+				dmcConfig.setTripConstraints(tripConstraints);
+			}
+
+			// Set analysis interval
+			eqasimConfig.setTripAnalysisInterval(1);
 		}
 
 		{ // Set up some defaults for MATSim scoring
@@ -140,6 +157,8 @@ public class RunCorsicaDrtSimulation {
 
 		{ // Add overrides for Corsica + DRT
 			controller.addOverridingModule(new CorsicaDrtModule(cmd));
+			controller.addOverridingModule(new RejectionModule(Arrays.asList("drt")));
+			controller.addOverridingModule(new DvrpAnalsisModule());
 		}
 
 		controller.run();

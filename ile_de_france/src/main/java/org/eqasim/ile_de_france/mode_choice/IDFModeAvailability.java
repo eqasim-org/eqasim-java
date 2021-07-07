@@ -22,7 +22,7 @@ public class IDFModeAvailability implements ModeAvailability {
 		// Check car availability
 		boolean carAvailability = true;
 
-		if (PersonUtils.getLicense(person).equals("no")) {
+		if ("no".equals(PersonUtils.getLicense(person))) {
 			carAvailability = false;
 		}
 
