@@ -14,15 +14,14 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.facilities.Facility;
-import org.matsim.pt.router.TransitRouter;
 import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
-import com.google.inject.Provider;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 
 public class BatchPublicTransportRouter {
-	private final Provider<TransitRouter> routerProvider;
-	private final Provider<HeadwayCalculator> headwayCalculatorProvider;
+	private final SwissRailRaptor.Builder routerBuilder;
+	private final HeadwayCalculator.Builder headwayCalculatorBuilder;
 	private final TransitSchedule schedule;
 	private final Network network;
 
@@ -30,11 +29,11 @@ public class BatchPublicTransportRouter {
 	private final int numberOfThreads;
 	private final double interval;
 
-	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider,
-			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
+	public BatchPublicTransportRouter(SwissRailRaptor.Builder routerBuilder,
+			HeadwayCalculator.Builder headwayCalculatorBuilder, TransitSchedule schedule, Network network,
 			int batchSize, int numberOfThreads, double interval) {
-		this.routerProvider = routerProvider;
-		this.headwayCalculatorProvider = headwayCalculatorProvider;
+		this.routerBuilder = routerBuilder;
+		this.headwayCalculatorBuilder = headwayCalculatorBuilder;
 		this.batchSize = batchSize;
 		this.numberOfThreads = numberOfThreads;
 		this.schedule = schedule;
@@ -78,8 +77,8 @@ public class BatchPublicTransportRouter {
 
 		@Override
 		public void run() {
-			TransitRouter router = routerProvider.get();
-			HeadwayCalculator headwayCalculator = headwayCalculatorProvider.get();
+			SwissRailRaptor router = routerBuilder.build();
+			HeadwayCalculator headwayCalculator = headwayCalculatorBuilder.build(router);
 
 			while (true) {
 				List<Task> localTasks = new ArrayList<>(batchSize);

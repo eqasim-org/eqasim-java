@@ -19,18 +19,16 @@ import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.geometry.CoordUtils;
 
-import com.google.inject.Provider;
-
 public class BatchRoadRouter {
-	private final Provider<LeastCostPathCalculatorFactory> routerFactoryProvider;
+	private final LeastCostPathCalculatorFactory routerFactory;
 	private final Network network;
 
 	private final int batchSize;
 	private final int numberOfThreads;
 
-	public BatchRoadRouter(Provider<LeastCostPathCalculatorFactory> routerFactoryProvider, Network network,
-			int batchSize, int numberOfThreads) {
-		this.routerFactoryProvider = routerFactoryProvider;
+	public BatchRoadRouter(LeastCostPathCalculatorFactory routerFactory, Network network, int batchSize,
+			int numberOfThreads) {
+		this.routerFactory = routerFactory;
 		this.batchSize = batchSize;
 		this.numberOfThreads = numberOfThreads;
 		this.network = network;
@@ -72,12 +70,10 @@ public class BatchRoadRouter {
 
 		@Override
 		public void run() {
-			LeastCostPathCalculatorFactory factory = routerFactoryProvider.get();
-
 			TravelTime travelTime = new FreeSpeedTravelTime();
 			TravelDisutility travelDisutility = new OnlyTimeDependentTravelDisutility(travelTime);
 
-			LeastCostPathCalculator router = factory.createPathCalculator(network, travelDisutility, travelTime);
+			LeastCostPathCalculator router = routerFactory.createPathCalculator(network, travelDisutility, travelTime);
 
 			while (true) {
 				List<Task> localTasks = new ArrayList<>(batchSize);

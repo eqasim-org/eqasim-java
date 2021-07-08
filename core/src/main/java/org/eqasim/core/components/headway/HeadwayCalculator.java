@@ -37,11 +37,24 @@ public class HeadwayCalculator {
 				}
 			}
 		}
-		
+
 		if (numberOfPtRoutes == 0) {
 			return Double.POSITIVE_INFINITY;
 		} else {
-			return  ((beforeDepartureOffset + afterDepartureOffset) / numberOfPtRoutes) / 60.0;
-		}		
+			return ((beforeDepartureOffset + afterDepartureOffset) / numberOfPtRoutes) / 60.0;
+		}
+	}
+
+	static public class Builder {
+		private double interval = 0.0;
+
+		public Builder withInterval(double interval) {
+			this.interval = interval;
+			return this;
+		}
+
+		public HeadwayCalculator build(SwissRailRaptor router) {
+			return new HeadwayCalculator(router, interval, interval);
+		}
 	}
 }
