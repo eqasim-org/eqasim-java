@@ -43,7 +43,7 @@ public class RunBatchRoadRouter {
 				.orElse(Runtime.getRuntime().availableProcessors());
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 
-		BatchRoadRouter batchRouter = new BatchRoadRouter(new SpeedyALTFactory(), network, batchSize, numberOfThreads);
+		BatchRoadRouter batchRouter = new BatchRoadRouter(new SpeedyALTFactory(), roadNetwork, batchSize, numberOfThreads);
 
 		CsvMapper mapper = new CsvMapper();
 
