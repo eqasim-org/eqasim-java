@@ -8,28 +8,25 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.util.TravelTime;
 
 import com.google.inject.Inject;
 
-public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFinder {
+public class EventBasedNetworkCrossingPointFinder implements NetworkCrossingPointFinder {
 	final private ScenarioExtent extent;
 	final private Network network;
-	final private Map<String, TravelTime> travelTimes;
 
 	@Inject
-	public DefaultNetworkCrossingPointFinder(ScenarioExtent extent, Network network,
-			Map<String, TravelTime> travelTimes) {
+	public EventBasedNetworkCrossingPointFinder(ScenarioExtent extent, Network network,
+			File eventsPath) {
 		this.extent = extent;
 		this.network = network;
 		this.travelTimes = travelTimes;
 	}
 
 	@Override
-	public List<NetworkCrossingPoint> findCrossingPoints(Person person, int tripIndex, String mode, NetworkRoute route,
-			double departureTime) {
+	public List<NetworkCrossingPoint> findCrossingPoints(String mode, NetworkRoute route, double departureTime) {
 		List<NetworkCrossingPoint> crossingPoints = new LinkedList<>();
 
 		List<Id<Link>> fullRoute = new LinkedList<>();
@@ -84,5 +81,9 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 		}
 
 		return true;
+	}
+	
+	static private class Trace {
+		
 	}
 }

@@ -9,6 +9,7 @@ import org.eqasim.core.scenario.cutter.population.trips.crossing.network.Network
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkCrossingPointFinder;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
@@ -26,12 +27,13 @@ public class NetworkTripProcessor implements TripProcessor {
 	}
 
 	@Override
-	public List<PlanElement> process(Activity firstActivity, List<PlanElement> trip, Activity secondActivity) {
+	public List<PlanElement> process(Person person, int tripIndex, Activity firstActivity, List<PlanElement> trip,
+			Activity secondActivity) {
 		Leg leg = (Leg) trip.get(0);
 
 		NetworkRoute route = (NetworkRoute) leg.getRoute();
-		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(leg.getMode(), route,
-				leg.getDepartureTime().seconds());
+		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(person, tripIndex,
+				leg.getMode(), route, leg.getDepartureTime().seconds());
 
 		if (crossingPoints.size() > 0) {
 			List<PlanElement> result = new LinkedList<>();
@@ -79,8 +81,10 @@ public class NetworkTripProcessor implements TripProcessor {
 		}
 	}
 
-	public List<PlanElement> process(String mode, NetworkRoute route, double departureTime, boolean allOutside) {
-		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(mode, route, departureTime);
+	public List<PlanElement> process(Person person, int tripIndex, String mode, NetworkRoute route,
+			double departureTime, boolean allOutside) {
+		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(person, tripIndex, mode,
+				route, departureTime);
 
 		if (crossingPoints.size() == 0) {
 			return Arrays.asList(PopulationUtils.createLeg(allOutside ? "outside" : mode));

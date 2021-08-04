@@ -10,6 +10,7 @@ import org.eqasim.core.scenario.cutter.population.trips.crossing.teleportation.T
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.PopulationUtils;
 
@@ -26,7 +27,8 @@ public class TeleportationTripProcessor implements TripProcessor {
 	}
 
 	@Override
-	public List<PlanElement> process(Activity firstActivity, List<PlanElement> trip, Activity secondActivity) {
+	public List<PlanElement> process(Person person, int tripIndex, Activity firstActivity, List<PlanElement> trip,
+			Activity secondActivity) {
 		Leg leg = (Leg) trip.get(0);
 
 		return process(firstActivity.getCoord(), secondActivity.getCoord(), leg.getTravelTime().seconds(),

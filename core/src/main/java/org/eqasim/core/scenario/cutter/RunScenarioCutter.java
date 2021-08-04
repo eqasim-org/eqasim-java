@@ -40,7 +40,7 @@ public class RunScenarioCutter {
 			throws ConfigurationException, MalformedURLException, IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path", "extent-path") //
-				.allowOptions("threads", "prefix", "extent-attribute", "extent-value") //
+				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "events-path") //
 				.build();
 
 		// Load some configuration
