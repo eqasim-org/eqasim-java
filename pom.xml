@@ -16,6 +16,7 @@
 		<module>examples</module>
 		<module>san_francisco</module>
 		<module>los_angeles</module>
+		<module>vdf</module>
 	</modules>
 
 	<properties>
