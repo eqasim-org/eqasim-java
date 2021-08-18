@@ -16,6 +16,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.utils.objectattributes.attributable.Attributes;
@@ -25,7 +26,7 @@ public class TestNetworkTripProcessor {
 		final private List<NetworkCrossingPoint> points = new LinkedList<>();
 
 		@Override
-		public List<NetworkCrossingPoint> findCrossingPoints(String mode, NetworkRoute route, double departureTime) {
+		public List<NetworkCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode, NetworkRoute route, double departureTime) {
 			return points;
 		}
 
@@ -68,7 +69,7 @@ public class TestNetworkTripProcessor {
 		// No crossing points
 		finderMock = new NetworkFinderMock();
 		processor = new NetworkTripProcessor(finderMock, scenarioExtentMock);
-		result = processor.process("car", null, 100.0, false);
+		result = processor.process(null, 0, "car", null, 100.0, false);
 
 		Assert.assertEquals(1, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -79,7 +80,7 @@ public class TestNetworkTripProcessor {
 		finderMock.add(new NetworkCrossingPoint(0, linkA, 10.0, 20.0, true));
 
 		processor = new NetworkTripProcessor(finderMock, scenarioExtentMock);
-		result = processor.process("car", null, 100.0, false);
+		result = processor.process(null, 0, "car", null, 100.0, false);
 
 		Assert.assertEquals(3, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -96,7 +97,7 @@ public class TestNetworkTripProcessor {
 		finderMock.add(new NetworkCrossingPoint(0, linkA, 10.0, 20.0, false));
 
 		processor = new NetworkTripProcessor(finderMock, scenarioExtentMock);
-		result = processor.process("car", null, 100.0, false);
+		result = processor.process(null, 0, "car", null, 100.0, false);
 
 		Assert.assertEquals(3, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -114,7 +115,7 @@ public class TestNetworkTripProcessor {
 		finderMock.add(new NetworkCrossingPoint(0, linkB, 30.0, 40.0, false));
 
 		processor = new NetworkTripProcessor(finderMock, scenarioExtentMock);
-		result = processor.process("car", null, 100.0, false);
+		result = processor.process(null, 0, "car", null, 100.0, false);
 
 		Assert.assertEquals(5, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
