@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Simplify cutting by introducing `--plans-path` option which is interpreted as relative to CWD
 - Location assignment functionality for scenario preparation functionality has been removed. A more advanced is used in the upstream Python pipelines for scenario generation.
 - Add volume-delay function module
 - Add routing utilities based on scenarios
