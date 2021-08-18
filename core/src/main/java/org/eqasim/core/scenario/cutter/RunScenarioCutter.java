@@ -85,7 +85,8 @@ public class RunScenarioCutter {
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(EqasimConfigurator.getModules()) //
-				.addOverridingModule(new PopulationCutterModule(extent, numberOfThreads, 40)) //
+				.addOverridingModule(
+						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.build();
 
