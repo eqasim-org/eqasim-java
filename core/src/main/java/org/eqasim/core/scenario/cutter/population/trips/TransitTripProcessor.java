@@ -8,7 +8,9 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.TransitTripCrossingPoint;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.TransitTripCrossingPointFinder;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.PopulationUtils;
 
@@ -25,7 +27,8 @@ public class TransitTripProcessor implements TripProcessor {
 	}
 
 	@Override
-	public List<PlanElement> process(Activity firstActivity, List<PlanElement> trip, Activity secondActivity) {
+	public List<PlanElement> process(Id<Person> personId, int firstLegIndex, Activity firstActivity,
+			List<PlanElement> trip, Activity secondActivity) {
 		return process(firstActivity.getCoord(), trip, secondActivity.getCoord(),
 				!extent.isInside(firstActivity.getCoord()) && !extent.isInside(secondActivity.getCoord()));
 	}
