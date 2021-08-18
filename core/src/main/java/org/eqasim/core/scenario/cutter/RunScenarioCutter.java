@@ -40,7 +40,7 @@ public class RunScenarioCutter {
 			throws ConfigurationException, MalformedURLException, IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path", "extent-path") //
-				.allowOptions("threads", "prefix", "extent-attribute", "extent-value") //
+				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path") //
 				.build();
 
 		// Load some configuration
@@ -61,6 +61,18 @@ public class RunScenarioCutter {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
 				EqasimConfigurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+
+		Optional<String> plansPath = cmd.getOption("plans-path");
+
+		if (plansPath.isPresent()) {
+			File plansFile = new File(plansPath.get());
+
+			if (!plansFile.exists()) {
+				throw new IllegalStateException("Plans file does not exist: " + plansPath);
+			} else {
+				config.plans().setInputFile(plansFile.getAbsolutePath());
+			}
+		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		EqasimConfigurator.configureScenario(scenario);
