@@ -21,124 +21,121 @@ public class DerivativeCriterion implements ConvergenceCriterion {
 	private final OutputDirectoryHierarchy outputHierarchy;
 
 	private final int horizon;
-	private final double firstDerivativeThresholdValue;
-	private final double secondDerivativeFactor;
+	private final int smoothing;
 
-	public DerivativeCriterion(OutputDirectoryHierarchy outputHierarchy, int horizon, double firstDerivativeThreshold,
-			double secondDerivativeFactor) {
+	private final double firstDerivativeThreshold;
+	private final double directionChangeThreshold;
+
+	private final int backlogShift;
+
+	public DerivativeCriterion(OutputDirectoryHierarchy outputHierarchy, int smoothing, int horizon,
+			double firstDerivativeThreshold, double directionChangeThreshold) {
+		this.smoothing = smoothing;
 		this.horizon = horizon;
-		this.firstDerivativeThresholdValue = firstDerivativeThreshold;
-		this.secondDerivativeFactor = secondDerivativeFactor;
+
+		this.firstDerivativeThreshold = firstDerivativeThreshold;
+		this.directionChangeThreshold = directionChangeThreshold;
+
 		this.outputHierarchy = outputHierarchy;
+
+		this.backlogShift = smoothing + horizon * 2 + 1;
 	}
 
 	@Override
 	public boolean checkConvergence(int iteration, ConvergenceSignal signal) {
-		List<Double> values = new ArrayList<>(Collections.nCopies(signal.getValues().size(), Double.NaN));
+		int samples = signal.getValues().size();
+		int backlogIteration = samples - backlogShift;
 
-		int smoothing = 10;
+		// Smooth values
 
-		for (int i = smoothing; i < values.size() - smoothing; i++) {
+		List<Double> values = new ArrayList<>(Collections.nCopies(samples, Double.NaN));
+
+		for (int i = smoothing; i < samples - smoothing; i++) {
 			values.set(i, signal.getValues().subList(i - smoothing, i + smoothing).stream().mapToDouble(d -> d)
 					.average().getAsDouble());
 		}
 
-		List<Double> firstDerivative = new ArrayList<>(Collections.nCopies(values.size(), Double.NaN));
-		List<Double> secondDerivative = new ArrayList<>(Collections.nCopies(values.size(), Double.NaN));
-		List<Boolean> directionChange = new ArrayList<>(Collections.nCopies(values.size(), true));
+		// Calculate first derivative
 
-		for (int i = horizon; i < values.size() - horizon; i++) {
+		List<Double> firstDerivative = new ArrayList<>(Collections.nCopies(samples, Double.NaN));
+
+		for (int i = horizon; i < samples - horizon; i++) {
 			firstDerivative.set(i, (values.get(i + horizon) - values.get(i - horizon)) / (2 * horizon));
 		}
 
-		for (int i = horizon; i < values.size() - horizon; i++) {
+		// Calculate direction change
+
+		List<Boolean> validMask = new ArrayList<>(Collections.nCopies(samples, false));
+
+		for (int i = horizon; i < samples - horizon; i++) {
 			double firstValue = firstDerivative.get(i - horizon);
 			double secondValue = firstDerivative.get(i + horizon);
 
+			boolean firstValid = Math.abs(firstValue) < directionChangeThreshold;
+			boolean secondValid = Math.abs(secondValue) < directionChangeThreshold;
+
 			if (Double.isFinite(firstValue) && Double.isFinite(secondValue)) {
-				if (Math.signum(firstValue) == Math.signum(secondValue)) {
-					directionChange.set(i, false);
+				if (firstValid && secondValid) {
+					validMask.set(i, true);
 				}
 			}
 		}
 
-		for (int i = horizon * 2; i < values.size() - horizon * 2; i++) {
-			secondDerivative.set(i,
-					(firstDerivative.get(i + horizon) - firstDerivative.get(i - horizon)) / (2 * horizon));
+		// Finished calculating indicators
+
+		List<Boolean> converged = new ArrayList<>(Collections.nCopies(samples, false));
+
+		for (int i = 0; i < samples; i++) {
+			boolean value = true;
+
+			value &= Math.abs(firstDerivative.get(i)) < firstDerivativeThreshold;
+			value &= validMask.get(i);
+
+			converged.set(i, value);
 		}
 
-		List<Double> firstDerivativeThreshold = new ArrayList<>(Collections.nCopies(values.size(), Double.NaN));
-		List<Double> secondDerivativeThreshold = new ArrayList<>(Collections.nCopies(values.size(), Double.NaN));
+		writeOutput(signal.getName(), signal.getValues(), values, firstDerivative, validMask, converged);
+		writeGraphs(signal.getName(), signal.getValues(), values, firstDerivative, validMask, converged,
+				backlogIteration);
 
-		double secondDerivativeThresholdBasis = Double.NaN;
-
-		for (int i = 0; i < values.size(); i++) {
-			// firstDerivativeThreshold.set(i, Math.abs(values.get(i)) *
-			// firstDerivativeThresholdValue);
-			firstDerivativeThreshold.set(i, firstDerivativeThresholdValue);
-
-			if (Double.isNaN(secondDerivativeThresholdBasis)
-					&& Math.abs(firstDerivative.get(i)) < firstDerivativeThresholdValue) {
-				secondDerivativeThresholdBasis = firstDerivative.get(i);
-			}
-
-			if (directionChange.get(i)) {
-				firstDerivativeThreshold.set(i, 0.0); // Double.NaN);
-			}
-		}
-
-		for (int i = 0; i < firstDerivative.size(); i++) {
-			// secondDerivativeThreshold.set(i, Math.abs(firstDerivative.get(i)) *
-			// secondDerivativeFactor);
-			secondDerivativeThreshold.set(i, Math.abs(firstDerivativeThresholdValue) * secondDerivativeFactor);
-		}
-
-		List<Boolean> converged = new ArrayList<>(Collections.nCopies(values.size(), false));
-		boolean isConverged = false;
-
-		for (int i = 0; i < values.size() - horizon * 2; i++) {
-			if (isConverged) {
-				converged.set(i + horizon * 2, true);
-			} else if (Math.abs(firstDerivative.get(i)) <= firstDerivativeThreshold.get(i)) {
-				// if (Math.abs(secondDerivative.get(i)) <= secondDerivativeThreshold.get(i)) {
-				if (!directionChange.get(i)) {
-					// isConverged = true;
-					converged.set(i + horizon * 2, true);
-				}
-				// }
-			}
-		}
-
-		writeOutput(signal.getName(), values, firstDerivative, secondDerivative, directionChange,
-				firstDerivativeThreshold, secondDerivativeThreshold, converged);
-		writeGraphs(signal.getName(), values, firstDerivative, secondDerivative, firstDerivativeThreshold,
-				secondDerivativeThreshold, converged);
-
-		return converged.get(converged.size() - 1);
+		return backlogIteration >= 0 && converged.get(backlogIteration);
 	}
 
-	private void writeOutput(String name, List<Double> values, List<Double> firstDerivative,
-			List<Double> secondDerivative, List<Boolean> directionChange, List<Double> firstDerivativeThreshold,
-			List<Double> secondDerivativeThreshold, List<Boolean> converged) {
+	private void writeOutput(String name, List<Double> values, List<Double> smoothedValues,
+			List<Double> firstDerivative, List<Boolean> validMask, List<Boolean> converged) {
 		try {
+			List<Double> firstDerivativeLowerThresholdSeries = new ArrayList<>(
+					Collections.nCopies(values.size(), firstDerivativeThreshold));
+
+			for (int i = 0; i < values.size(); i++) {
+				if (!validMask.get(i)) {
+					firstDerivativeLowerThresholdSeries.set(i, 0.0);
+				}
+			}
+
 			File outputPath = new File(outputHierarchy.getOutputFilename("convergence_deriv_" + name + ".csv"));
 
 			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
 
-			writer.write(String.join(";", new String[] { "iteration", "value", "first_derivative", "second_derivative",
-					"direction_change", "first_derivative_threshold", "second_derivative_threshold", "converged" })
-					+ "\n");
+			writer.write(String.join(";", new String[] { "iteration", "value", "smoothed_value", "first_derivative",
+					"valid_mask", "first_derivative_threshold", "converged", "backlog_converged" }) + "\n");
+
+			List<Boolean> backlogConverged = new ArrayList<>(Collections.nCopies(values.size(), false));
+
+			for (int i = backlogShift; i < values.size(); i++) {
+				backlogConverged.set(i, converged.get(i - backlogShift));
+			}
 
 			for (int i = 0; i < values.size(); i++) {
 				writer.write(String.join(";", new String[] { //
 						String.valueOf(i), //
 						String.valueOf(values.get(i)), //
+						String.valueOf(smoothedValues.get(i)), //
 						String.valueOf(firstDerivative.get(i)), //
-						String.valueOf(secondDerivative.get(i)), //
-						String.valueOf(directionChange.get(i)), //
-						String.valueOf(firstDerivativeThreshold.get(i)), //
-						String.valueOf(secondDerivativeThreshold.get(i)), //
+						String.valueOf(validMask.get(i)), //
+						String.valueOf(firstDerivativeLowerThresholdSeries.get(i)), //
 						String.valueOf(converged.get(i)), //
+						String.valueOf(backlogConverged.get(i)), //
 				}) + "\n");
 			}
 
@@ -148,53 +145,68 @@ public class DerivativeCriterion implements ConvergenceCriterion {
 		}
 	}
 
-	private Map<Integer, Double> createSeries(List<Double> values, boolean invert) {
+	private Map<Integer, Double> createSeries(List<Double> values) {
 		Map<Integer, Double> series = new TreeMap<>();
 
 		for (int i = 0; i < values.size(); i++) {
-			series.put(i, values.get(i) * (invert ? -1.0 : 1.0));
+			series.put(i, values.get(i));
 		}
 
 		return series;
 	}
 
-	private void writeGraphs(String name, List<Double> values, List<Double> firstDerivative,
-			List<Double> secondDerivative, List<Double> firstDerivativeThreshold,
-			List<Double> secondDerivativeThreshold, List<Boolean> converged) {
-		Map<Integer, Double> valueSeries = createSeries(values, false);
-		Map<Integer, Double> firstDerivativeSeries = createSeries(firstDerivative, false);
-		Map<Integer, Double> secondDerivativeSeries = createSeries(secondDerivative, false);
-		Map<Integer, Double> firstDerivativeLowerBoundSeries = createSeries(firstDerivativeThreshold, true);
-		Map<Integer, Double> firstDerivativeUpperBoundSeries = createSeries(firstDerivativeThreshold, false);
-		Map<Integer, Double> secondDerivativeLowerBoundSeries = createSeries(secondDerivativeThreshold, true);
-		Map<Integer, Double> secondDerivativeUpperBoundSeries = createSeries(secondDerivativeThreshold, false);
+	private void writeGraphs(String name, List<Double> values, List<Double> smoothedValues,
+			List<Double> firstDerivative, List<Boolean> validMask, List<Boolean> converged, int backlogIteration) {
+		// Prepare all series
+
+		Map<Integer, Double> valueSeries = createSeries(values);
+		Map<Integer, Double> smoothedValueSeries = createSeries(smoothedValues);
+		Map<Integer, Double> firstDerivativeSeries = createSeries(firstDerivative);
+
+		List<Double> firstDerivativeLowerThreshold = new ArrayList<>(
+				Collections.nCopies(values.size(), -firstDerivativeThreshold));
+		List<Double> firstDerivativeUpperThreshold = new ArrayList<>(
+				Collections.nCopies(values.size(), firstDerivativeThreshold));
+
+		for (int i = 0; i < values.size(); i++) {
+			if (!validMask.get(i)) {
+				firstDerivativeLowerThreshold.set(i, 0.0);
+				firstDerivativeUpperThreshold.set(i, 0.0);
+			}
+		}
+
+		Map<Integer, Double> constrainedFirstDerivativeLowerThresholdSeries = createSeries(
+				firstDerivativeLowerThreshold);
+		Map<Integer, Double> constrainedFirstDerivativeUpperThresholdSeries = createSeries(
+				firstDerivativeUpperThreshold);
+
+		// Prepare plots
 
 		{
 			File outputPath = new File(outputHierarchy.getOutputFilename("convergence_deriv_" + name + "_value.png"));
 			XYLineChart chart = new XYLineChart("Convergence: " + name + " (Value)", "Iteration", "Value");
 			chart.addSeries("Value", valueSeries);
+			chart.addSeries("Smoothed", smoothedValueSeries);
 			chart.saveAsPng(outputPath.toString(), 1280, 720);
 		}
 
 		{
 			File outputPath = new File(outputHierarchy.getOutputFilename("convergence_deriv_" + name + "_first.png"));
 			XYLineChart chart = new XYLineChart("Convergence: " + name + " (1st Derivative)", "Iteration", "Value");
-			chart.addSeries("1st Derivative", firstDerivativeSeries);
-			chart.addSeries("Lower bound", firstDerivativeLowerBoundSeries);
-			chart.addSeries("Upper bound", firstDerivativeUpperBoundSeries);
-			((XYPlot) chart.getChart().getPlot()).getRenderer().setSeriesPaint(1, Color.black);
-			((XYPlot) chart.getChart().getPlot()).getRenderer().setSeriesPaint(2, Color.black);
-			chart.saveAsPng(outputPath.toString(), 1280, 720);
-		}
 
-		{
-			File outputPath = new File(outputHierarchy.getOutputFilename("convergence_deriv_" + name + "_second.png"));
-			XYLineChart chart = new XYLineChart("Convergence: " + name + " (2nd Derivative)", "Iteration", "Value");
-			chart.addSeries("2nd Derivative", secondDerivativeSeries);
-			chart.addSeries("Lower bound", secondDerivativeLowerBoundSeries);
-			chart.addSeries("Upper bound", secondDerivativeUpperBoundSeries);
+			chart.addSeries("1st Derivative", firstDerivativeSeries);
+			chart.addSeries("Lower bound", constrainedFirstDerivativeLowerThresholdSeries);
+			chart.addSeries("Upper bound", constrainedFirstDerivativeUpperThresholdSeries);
+
 			((XYPlot) chart.getChart().getPlot()).getRenderer().setSeriesPaint(1, Color.black);
 			((XYPlot) chart.getChart().getPlot()).getRenderer().setSeriesPaint(2, Color.black);
+
+			if (backlogIteration >= 0) {
+				chart.addSeries("Indicator", new double[] { backlogIteration, backlogIteration },
+						new double[] { -firstDerivativeThreshold, firstDerivativeThreshold });
+				((XYPlot) chart.getChart().getPlot()).getRenderer().setSeriesPaint(3, Color.blue);
+			}
+
 			chart.saveAsPng(outputPath.toString(), 1280, 720);
 		}
 	}

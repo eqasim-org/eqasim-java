@@ -31,9 +31,10 @@ public class ModeShareListener implements PersonDepartureEventHandler, Iteration
 	public ModeShareListener(OutputDirectoryHierarchy outputHierarchy,
 			ConvergenceTerminationCriterion terminationCriterion) {
 		ConvergenceCriterion criterion = new DerivativeCriterion(outputHierarchy, //
+				10, // Smoothing
 				10, // Horizon
 				0.01 * 0.01 * 0.5, // First derivative threshold
-				0.01 // Second derivative factor
+				0.01 * 0.01 * 0.5 * 0.01 // Direction change threshold
 		);
 
 		for (String mode : modes) {
