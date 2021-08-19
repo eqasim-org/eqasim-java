@@ -81,27 +81,4 @@ public class NetworkTripProcessor implements TripProcessor {
 			return result;
 		}
 	}
-
-	public List<PlanElement> process(Id<Person> personId, int firstLegIndex, String mode, NetworkRoute route,
-			double departureTime, boolean allOutside) {
-		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(personId, firstLegIndex,
-				mode, route, departureTime);
-
-		if (crossingPoints.size() == 0) {
-			return Arrays.asList(PopulationUtils.createLeg(allOutside ? "outside" : mode));
-		} else {
-			List<PlanElement> result = new LinkedList<>();
-
-			result.add(PopulationUtils.createLeg(crossingPoints.get(0).isOutgoing ? mode : "outside"));
-
-			for (NetworkCrossingPoint point : crossingPoints) {
-				Activity activity = PopulationUtils.createActivityFromLinkId("outside", point.link.getId());
-				activity.setEndTime(point.leaveTime);
-				result.add(activity);
-				result.add(PopulationUtils.createLeg(point.isOutgoing ? "outside" : mode));
-			}
-
-			return result;
-		}
-	}
 }

@@ -20,10 +20,9 @@ import com.google.inject.Inject;
 public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFinder {
 	final private ScenarioExtent extent;
 	final private Network network;
-	
+
 	final private Map<String, TravelTime> travelTimes;
 	final private LinkTimingRegistry timingRegistry;
-	
 
 	@Inject
 	public DefaultNetworkCrossingPointFinder(ScenarioExtent extent, Network network,
@@ -35,7 +34,8 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 	}
 
 	@Override
-	public List<NetworkCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode, NetworkRoute route, double departureTime) {
+	public List<NetworkCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode,
+			NetworkRoute route, double departureTime) {
 		List<NetworkCrossingPoint> crossingPoints = new LinkedList<>();
 
 		List<Id<Link>> fullRoute = new LinkedList<>();
@@ -61,12 +61,12 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 
 			if (fromIsInside != toIsInside) {
 				Optional<LinkTimingData> timingData = timingRegistry.getTimingData(personId, legIndex, linkId);
-				
+
 				if (timingData.isPresent()) {
 					enterTime = timingData.get().enterTime;
 					leaveTime = timingData.get().leaveTime;
 				}
-				
+
 				crossingPoints.add(new NetworkCrossingPoint(index, link, enterTime, leaveTime, fromIsInside));
 			}
 
