@@ -7,8 +7,10 @@ import java.util.List;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkCrossingPoint;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkCrossingPointFinder;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.NetworkRoute;
@@ -26,12 +28,13 @@ public class NetworkTripProcessor implements TripProcessor {
 	}
 
 	@Override
-	public List<PlanElement> process(Activity firstActivity, List<PlanElement> trip, Activity secondActivity) {
+	public List<PlanElement> process(Id<Person> personId, int firstLegIndex, Activity firstActivity,
+			List<PlanElement> trip, Activity secondActivity) {
 		Leg leg = (Leg) trip.get(0);
 
 		NetworkRoute route = (NetworkRoute) leg.getRoute();
-		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(leg.getMode(), route,
-				leg.getDepartureTime().seconds());
+		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(personId, firstLegIndex,
+				leg.getMode(), route, leg.getDepartureTime().seconds());
 
 		if (crossingPoints.size() > 0) {
 			List<PlanElement> result = new LinkedList<>();
@@ -49,7 +52,7 @@ public class NetworkTripProcessor implements TripProcessor {
 		} else if (crossingPointFinder.isInside(route)) {
 			return Arrays.asList(PopulationUtils.createLeg(leg.getMode()));
 		} else {
-			// The route is outside. This does not means that both (or any) activity is
+			// The route is outside. This does not mean that both (or any) activity is
 			// actually outside. These are mainly special cases in which the route is
 			// outside, but some activity is inside, across the border, because the link is
 			// parallel to the border. We put an outside activity right next to the inside
@@ -73,27 +76,6 @@ public class NetworkTripProcessor implements TripProcessor {
 				result.add(activity);
 
 				result.add(PopulationUtils.createLeg("outside"));
-			}
-
-			return result;
-		}
-	}
-
-	public List<PlanElement> process(String mode, NetworkRoute route, double departureTime, boolean allOutside) {
-		List<NetworkCrossingPoint> crossingPoints = crossingPointFinder.findCrossingPoints(mode, route, departureTime);
-
-		if (crossingPoints.size() == 0) {
-			return Arrays.asList(PopulationUtils.createLeg(allOutside ? "outside" : mode));
-		} else {
-			List<PlanElement> result = new LinkedList<>();
-
-			result.add(PopulationUtils.createLeg(crossingPoints.get(0).isOutgoing ? mode : "outside"));
-
-			for (NetworkCrossingPoint point : crossingPoints) {
-				Activity activity = PopulationUtils.createActivityFromLinkId("outside", point.link.getId());
-				activity.setEndTime(point.leaveTime);
-				result.add(activity);
-				result.add(PopulationUtils.createLeg(point.isOutgoing ? "outside" : mode));
 			}
 
 			return result;
