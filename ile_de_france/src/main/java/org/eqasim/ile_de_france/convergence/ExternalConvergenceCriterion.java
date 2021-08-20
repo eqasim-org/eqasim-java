@@ -53,28 +53,36 @@ public class ExternalConvergenceCriterion implements TerminationCriterion, Start
 	}
 
 	private boolean getNextResponse(ConvergenceSignal signal) {
+		ConvergenceOutputFrame outputFrame = new ConvergenceOutputFrame();
+		outputFrame.sequence = sequence++;
+		outputFrame.signal = signal;
+
+		logger.info("Waiting for response on " + signal.toString() + " (seq " + outputFrame.sequence + ")");
+
 		try {
-			ConvergenceOutputFrame outputFrame = new ConvergenceOutputFrame();
-			outputFrame.sequence = sequence++;
-			outputFrame.signal = signal;
-
-			logger.info("Waiting for response on " + signal.toString() + " (seq " + outputFrame.sequence + ")");
 			mapper.writeValue(outputFile, outputFrame);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
+		try {
 			while (true) {
 				Thread.sleep((long) (interval * 1000.0));
 
 				if (inputFile.exists()) {
-					ConvergenceInputFrame inputFrame = mapper.readValue(inputFile, ConvergenceInputFrame.class);
+					try {
+						ConvergenceInputFrame inputFrame = mapper.readValue(inputFile, ConvergenceInputFrame.class);
 
-					if (inputFrame.sequence == outputFrame.sequence) {
-						logger.info(
-								"Received response on " + signal.toString() + " (seq " + outputFrame.sequence + ")");
-						return inputFrame.response;
+						if (inputFrame.sequence == outputFrame.sequence) {
+							logger.info("Received response on " + signal.toString() + " (seq " + outputFrame.sequence
+									+ ")");
+							return inputFrame.response;
+						}
+					} catch (IOException e) {
 					}
 				}
 			}
-		} catch (IOException | InterruptedException e) {
+		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 	}
