@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.matsim.api.core.v01.Id;
@@ -18,8 +20,16 @@ public class CountsReader {
 		Set<Id<Link>> linkIds = new HashSet<>();
 
 		String line = null;
+		List<String> header = null;
+
 		while ((line = reader.readLine()) != null) {
-			linkIds.add(Id.createLinkId(line.trim()));
+			List<String> row = Arrays.asList(line.trim().split(";"));
+
+			if (header == null) {
+				header = row;
+			} else {
+				linkIds.add(Id.createLinkId(row.get(header.indexOf("link_id")).trim()));
+			}
 		}
 
 		reader.close();
