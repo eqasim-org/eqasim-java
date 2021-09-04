@@ -15,10 +15,12 @@ import org.matsim.api.core.v01.network.Network;
 public class CountsWriter {
 	private final Map<Id<Link>, List<Integer>> counts;
 	private final Network network;
+	private final double scalingFactor;
 
-	public CountsWriter(Map<Id<Link>, List<Integer>> counts, Network network) {
+	public CountsWriter(Map<Id<Link>, List<Integer>> counts, Network network, double scalingFactor) {
 		this.counts = counts;
 		this.network = network;
+		this.scalingFactor = scalingFactor;
 	}
 
 	public void write(File path) throws IOException {
@@ -31,7 +33,7 @@ public class CountsWriter {
 				writer.write(String.join(";", new String[] { //
 						item.getKey().toString(), //
 						String.valueOf(hour), //
-						String.valueOf(item.getValue().get(hour)), //
+						String.valueOf(item.getValue().get(hour) * scalingFactor), //
 						String.valueOf(network.getLinks().get(item.getKey()).getNumberOfLanes()), //
 				}) + "\n");
 			}

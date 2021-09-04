@@ -63,7 +63,7 @@ public class CountsListener implements IterationStartsListener, IterationEndsLis
 			try {
 				File outputPath = new File(
 						outputDirectoryHierarchy.getIterationFilename(event.getIteration(), OUTPUT_FILE));
-				new CountsWriter(handler.getCounts(), network).write(outputPath);
+				new CountsWriter(handler.getCounts(), network, 1.0 / eqasimConfig.getSampleSize()).write(outputPath);
 			} catch (IOException e) {
 			}
 		}
