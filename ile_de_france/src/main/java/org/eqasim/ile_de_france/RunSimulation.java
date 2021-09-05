@@ -22,7 +22,8 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("count-links", "external-convergence") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter", "osm-capacity") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
+						OsmNetworkAdjustment.SPEED_PREFIX) //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
@@ -31,8 +32,8 @@ public class RunSimulation {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		
-		new OsmCapacityAdjustment(cmd).apply(config, scenario.getNetwork());
+
+		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
 
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);
@@ -45,17 +46,19 @@ public class RunSimulation {
 		if (cmd.hasOption("count-links")) {
 			controller.addOverridingModule(new CountsModule(cmd));
 		}
-		
-		controller.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				addEventHandlerBinding().to(ModeShareListener.class);
-				addControlerListenerBinding().to(ModeShareListener.class);
 
-				bind(ConvergenceTerminationCriterion.class).asEagerSingleton();
-				bind(TerminationCriterion.class).to(ConvergenceTerminationCriterion.class);
-			}
-		});
+		if (config.controler().getLastIteration() == 0) {
+			controller.addOverridingModule(new AbstractModule() {
+				@Override
+				public void install() {
+					addEventHandlerBinding().to(ModeShareListener.class);
+					addControlerListenerBinding().to(ModeShareListener.class);
+
+					bind(ConvergenceTerminationCriterion.class).asEagerSingleton();
+					bind(TerminationCriterion.class).to(ConvergenceTerminationCriterion.class);
+				}
+			});
+		}
 
 		controller.run();
 	}
