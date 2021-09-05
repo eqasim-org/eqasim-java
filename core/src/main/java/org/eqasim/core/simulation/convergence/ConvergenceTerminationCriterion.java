@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.eqasim.core.simulation.convergence.criterion.ConvergenceCriterion;
+import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.TerminationCriterion;
 import org.matsim.core.utils.charts.XYLineChart;
@@ -26,9 +27,15 @@ public class ConvergenceTerminationCriterion implements TerminationCriterion {
 	private final Collection<Tuple<ConvergenceSignal, ConvergenceCriterion>> criteria = new LinkedList<>();
 	private final Map<Integer, Double> history = new TreeMap<>();
 
+	private final int firstIteration;
+	private final int lastIteration;
+
 	@Inject
-	public ConvergenceTerminationCriterion(OutputDirectoryHierarchy outputHierarchy) {
+	public ConvergenceTerminationCriterion(OutputDirectoryHierarchy outputHierarchy,
+			ControlerConfigGroup controllerConfig) {
 		this.outputHierarchy = outputHierarchy;
+		this.firstIteration = controllerConfig.getFirstIteration();
+		this.lastIteration = controllerConfig.getLastIteration();
 	}
 
 	public void addCriterion(ConvergenceSignal signal, ConvergenceCriterion criterion) {
@@ -37,7 +44,11 @@ public class ConvergenceTerminationCriterion implements TerminationCriterion {
 
 	@Override
 	public boolean mayTerminateAfterIteration(int iteration) {
-		if (iteration > 0) {
+		if (iteration >= lastIteration) {
+			return true;
+		}
+
+		if (iteration > firstIteration) {
 			int active = 0;
 
 			for (Tuple<ConvergenceSignal, ConvergenceCriterion> pair : criteria) {

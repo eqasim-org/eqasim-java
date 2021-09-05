@@ -98,7 +98,7 @@ public class DerivativeCriterion implements ConvergenceCriterion {
 		writeGraphs(signal.getName(), signal.getValues(), values, firstDerivative, validMask, converged,
 				backlogIteration);
 
-		return backlogIteration >= 0 && converged.get(backlogIteration) || iteration >= 500;
+		return backlogIteration >= 0 && converged.get(backlogIteration);
 	}
 
 	private void writeOutput(String name, List<Double> values, List<Double> smoothedValues,
