@@ -32,8 +32,10 @@ public class ConvergenceSignal {
 	}
 
 	public void addValue(int iteration, double value) {
-		this.values.add(value);
-		this.iterations.add(iteration);
+		if (!this.iterations.contains(iteration)) {
+			this.values.add(value);
+			this.iterations.add(iteration);
+		}
 	}
 
 	public void write(File outputFile) {
