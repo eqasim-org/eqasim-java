@@ -1,9 +1,11 @@
 package org.eqasim.ile_de_france;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eqasim.core.simulation.convergence.ConvergenceSignal;
 import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
@@ -17,19 +19,18 @@ import org.matsim.core.controler.events.IterationStartsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-
-@Singleton
 public class ModeShareListener implements PersonDepartureEventHandler, IterationStartsListener, IterationEndsListener {
 	private final List<String> modes = Arrays.asList("car", "pt", "bike", "walk");
 
 	private final Map<String, ConvergenceSignal> signals = new HashMap<>();
 	private final Map<String, Integer> tripCount = new HashMap<>();
 
-	@Inject
+	private final OutputDirectoryHierarchy outputHierarchy;
+
 	public ModeShareListener(OutputDirectoryHierarchy outputHierarchy,
-			ConvergenceTerminationCriterion terminationCriterion) {
+			ConvergenceTerminationCriterion terminationCriterion, Optional<File> signalInputPath) {
+		this.outputHierarchy = outputHierarchy;
+
 		ConvergenceCriterion criterion = new DerivativeCriterion(outputHierarchy, //
 				20, // Smoothing
 				10, // Horizon
@@ -39,6 +40,11 @@ public class ModeShareListener implements PersonDepartureEventHandler, Iteration
 
 		for (String mode : modes) {
 			ConvergenceSignal signal = new ConvergenceSignal(mode);
+
+			if (signalInputPath.isPresent()) {
+				signal.read(new File(signalInputPath.get(), "signal_" + mode + ".csv"));
+			}
+
 			signals.put(mode, signal);
 
 			terminationCriterion.addCriterion(signal, criterion);
@@ -59,6 +65,7 @@ public class ModeShareListener implements PersonDepartureEventHandler, Iteration
 		for (String mode : modes) {
 			double share = (double) tripCount.get(mode) / total;
 			signals.get(mode).addValue(event.getIteration(), share);
+			signals.get(mode).write(new File(outputHierarchy.getOutputFilename("signal_" + mode + ".csv")));
 		}
 	}
 

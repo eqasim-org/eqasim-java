@@ -1,5 +1,8 @@
 package org.eqasim.ile_de_france;
 
+import java.io.File;
+import java.util.Optional;
+
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -14,14 +17,18 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.TerminationCriterion;
 import org.matsim.core.scenario.ScenarioUtils;
+
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("count-links", "external-convergence") //
+				.allowOptions("count-links", "external-convergence", "signal-input-path") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX) //
 				.build();
@@ -56,6 +63,14 @@ public class RunSimulation {
 
 					bind(ConvergenceTerminationCriterion.class).asEagerSingleton();
 					bind(TerminationCriterion.class).to(ConvergenceTerminationCriterion.class);
+				}
+
+				@Provides
+				@Singleton
+				public ModeShareListener provideModeShareListener(OutputDirectoryHierarchy outputHierarchy,
+						ConvergenceTerminationCriterion terminationCriterion) {
+					Optional<File> signalInputPath = cmd.getOption("signal-input-path").map(p -> new File(p));
+					return new ModeShareListener(outputHierarchy, terminationCriterion, signalInputPath);
 				}
 			});
 		}
