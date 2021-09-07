@@ -54,26 +54,24 @@ public class RunSimulation {
 			controller.addOverridingModule(new CountsModule(cmd));
 		}
 
-		if (config.controler().getLastIteration() == 0) {
-			controller.addOverridingModule(new AbstractModule() {
-				@Override
-				public void install() {
-					addEventHandlerBinding().to(ModeShareListener.class);
-					addControlerListenerBinding().to(ModeShareListener.class);
+		controller.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				addEventHandlerBinding().to(ModeShareListener.class);
+				addControlerListenerBinding().to(ModeShareListener.class);
 
-					bind(ConvergenceTerminationCriterion.class).asEagerSingleton();
-					bind(TerminationCriterion.class).to(ConvergenceTerminationCriterion.class);
-				}
+				bind(ConvergenceTerminationCriterion.class).asEagerSingleton();
+				bind(TerminationCriterion.class).to(ConvergenceTerminationCriterion.class);
+			}
 
-				@Provides
-				@Singleton
-				public ModeShareListener provideModeShareListener(OutputDirectoryHierarchy outputHierarchy,
-						ConvergenceTerminationCriterion terminationCriterion) {
-					Optional<File> signalInputPath = cmd.getOption("signal-input-path").map(p -> new File(p));
-					return new ModeShareListener(outputHierarchy, terminationCriterion, signalInputPath);
-				}
-			});
-		}
+			@Provides
+			@Singleton
+			public ModeShareListener provideModeShareListener(OutputDirectoryHierarchy outputHierarchy,
+					ConvergenceTerminationCriterion terminationCriterion) {
+				Optional<File> signalInputPath = cmd.getOption("signal-input-path").map(p -> new File(p));
+				return new ModeShareListener(outputHierarchy, terminationCriterion, signalInputPath);
+			}
+		});
 
 		controller.run();
 	}
