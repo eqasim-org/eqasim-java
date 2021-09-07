@@ -48,24 +48,20 @@ public class ConvergenceTerminationCriterion implements TerminationCriterion {
 			return true;
 		}
 
-		if (iteration > firstIteration) {
-			int active = 0;
+		int active = 0;
 
-			for (Tuple<ConvergenceSignal, ConvergenceCriterion> pair : criteria) {
-				if (!pair.getSecond().checkConvergence(iteration, pair.getFirst())) {
-					active += 1;
-				}
+		for (Tuple<ConvergenceSignal, ConvergenceCriterion> pair : criteria) {
+			if (!pair.getSecond().checkConvergence(iteration, pair.getFirst())) {
+				active += 1;
 			}
-
-			history.put(iteration, (double) active);
-
-			writeOutput();
-			createGraph();
-
-			return active == 0;
-		} else {
-			return false;
 		}
+
+		history.put(iteration, (double) active);
+
+		writeOutput();
+		createGraph();
+
+		return active == 0;
 	}
 
 	@Override
