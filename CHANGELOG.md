@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Set routing parameter for waiting time in Île-de-France to -1.0
 - Allow cutter to process events to (1) perform routing based on recorded travel time, and (2) find crossing points based on the actual link enter/leave times of a previous simulation
 - Simplify cutting by introducing `--plans-path` option which is interpreted as relative to CWD
 - Location assignment functionality for scenario preparation functionality has been removed. A more advanced is used in the upstream Python pipelines for scenario generation.
