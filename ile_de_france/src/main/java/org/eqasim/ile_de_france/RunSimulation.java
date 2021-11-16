@@ -12,6 +12,9 @@ import org.eqasim.ile_de_france.analysis.stuck.StuckAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
+import org.eqasim.vdf.VDFConfigGroup;
+import org.eqasim.vdf.VDFModule;
+import org.eqasim.vdf.VDFQSimModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -38,6 +41,7 @@ public class RunSimulation {
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
+		config.addModule(new VDFConfigGroup());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -69,6 +73,11 @@ public class RunSimulation {
 			eqasimConfig.setEstimator("pt", "epsilon_pt");
 			eqasimConfig.setEstimator("bike", "epsilon_bike");
 			eqasimConfig.setEstimator("walk", "epsilon_walk");
+		}
+		
+		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
+			controller.addOverridingModule(new VDFModule());
+			controller.addOverridingQSimModule(new VDFQSimModule());
 		}
 
 		controller.addOverridingModule(new AbstractModule() {
