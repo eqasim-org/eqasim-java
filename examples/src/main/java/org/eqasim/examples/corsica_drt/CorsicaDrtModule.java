@@ -83,9 +83,9 @@ public class CorsicaDrtModule extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	@Named("drt")
+	@Named("sharing:velib")
 	public CostModel provideCarCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
-		return getCostModel(factory, config, "drt");
+		return getCostModel(factory, config, "sharing:velib");
 	}
 
 }

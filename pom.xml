@@ -42,6 +42,10 @@
 			<id>matsim</id>
 			<url>https://repo.matsim.org/repository/matsim</url>
 		</repository>
+		<repository>
+			<id>eth-ivt-sharing</id>
+			<url>https://packagecloud.io/eth-ivt/sharing/maven2</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -99,6 +103,11 @@
 			<artifactId>junit</artifactId>
 			<version>4.13.1</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>sharing</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 	</dependencies>
 

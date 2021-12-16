@@ -20,7 +20,7 @@ public class DrtPredictor extends CachedVariablePredictor<DrtVariables> {
 	private CostModel costModel;
 
 	@Inject
-	public DrtPredictor(@Named("drt") CostModel costModel) {
+	public DrtPredictor(@Named("sharing:velib") CostModel costModel) {
 		this.costModel = costModel;
 	}
 
@@ -36,12 +36,13 @@ public class DrtPredictor extends CachedVariablePredictor<DrtVariables> {
 			case TransportMode.walk:
 				accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
 				break;
-			case "drt":
-				DrtRoute route = (DrtRoute) leg.getRoute();
+			// Modified due to exception in routing Module( No DRT)
+			case "sharing:velib":
+				Leg segment= (Leg)	leg;
 
 				// We use worst case here
-				travelTime_min = route.getMaxTravelTime() / 60.0;
-				waitingTime_min = route.getMaxWaitTime() / 60.0;
+				travelTime_min = segment.getTravelTime().seconds()/ 60.0;
+				waitingTime_min = 0.0;
 
 				cost_MU = costModel.calculateCost_MU(person, trip, elements);
 

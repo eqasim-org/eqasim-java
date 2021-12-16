@@ -12,7 +12,7 @@ public class DrtCostModel extends AbstractCostModel {
 	private final CorsicaDrtCostParameters parameters;
 
 	public DrtCostModel(CorsicaDrtCostParameters parameters) {
-		super("drt");
+		super("sharing:velib");
 		this.parameters = parameters;
 	}
 

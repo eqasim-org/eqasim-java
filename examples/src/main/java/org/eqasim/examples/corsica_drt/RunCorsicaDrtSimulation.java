@@ -28,6 +28,8 @@ import org.matsim.contrib.drt.run.MultiModeDrtModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
+import org.matsim.contrib.sharing.run.SharingConfigGroup;
+import org.matsim.contrib.sharing.run.SharingServiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -62,35 +64,40 @@ public class RunCorsicaDrtSimulation {
 		config.qsim().setFlowCapFactor(1e9);
 		config.qsim().setStorageCapFactor(1e9);
 
-		{ // Configure DVRP
-			DvrpConfigGroup dvrpConfig = new DvrpConfigGroup();
-			config.addModule(dvrpConfig);
-		}
+//		{ // Configure DVRP
+//			DvrpConfigGroup dvrpConfig = new DvrpConfigGroup();
+//			config.addModule(dvrpConfig);
+//		}
+//
+//		MultiModeDrtConfigGroup multiModeDrtConfig = new MultiModeDrtConfigGroup();
+//
+//		{ // Configure DRT
+//			config.addModule(multiModeDrtConfig);
+//
+//			DrtConfigGroup drtConfig = new DrtConfigGroup();
+//			drtConfig.setMode("drt");
+//			drtConfig.setOperationalScheme(OperationalScheme.door2door);
+//			drtConfig.setStopDuration(15.0);
+//			drtConfig.setMaxWaitTime(600.0);
+//			drtConfig.setMaxTravelTimeAlpha(1.5);
+//			drtConfig.setMaxTravelTimeBeta(300.0);
+//			drtConfig.setVehiclesFile(Resources.getResource("corsica_drt/drt_vehicles.xml").toString());
+//
+//			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
+//			drtConfig.addDrtInsertionSearchParams(searchParams);
+//
+//			multiModeDrtConfig.addDrtConfig(drtConfig);
+//			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.planCalcScore(), config.plansCalcRoute());
+//
+//			// Additional requirements
+//			config.qsim().setStartTime(0.0);
+//			config.qsim().setSimStarttimeInterpretation(StarttimeInterpretation.onlyUseStarttime);
+//		}
 
-		MultiModeDrtConfigGroup multiModeDrtConfig = new MultiModeDrtConfigGroup();
 
-		{ // Configure DRT
-			config.addModule(multiModeDrtConfig);
 
-			DrtConfigGroup drtConfig = new DrtConfigGroup();
-			drtConfig.setMode("drt");
-			drtConfig.setOperationalScheme(OperationalScheme.door2door);
-			drtConfig.setStopDuration(15.0);
-			drtConfig.setMaxWaitTime(600.0);
-			drtConfig.setMaxTravelTimeAlpha(1.5);
-			drtConfig.setMaxTravelTimeBeta(300.0);
-			drtConfig.setVehiclesFile(Resources.getResource("corsica_drt/drt_vehicles.xml").toString());
 
-			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
-			drtConfig.addDrtInsertionSearchParams(searchParams);
 
-			multiModeDrtConfig.addDrtConfig(drtConfig);
-			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.planCalcScore(), config.plansCalcRoute());
-
-			// Additional requirements
-			config.qsim().setStartTime(0.0);
-			config.qsim().setSimStarttimeInterpretation(StarttimeInterpretation.onlyUseStarttime);
-		}
 
 		cmd.applyConfiguration(config);
 
@@ -103,13 +110,13 @@ public class RunCorsicaDrtSimulation {
 			// Add DRT to cached modes
 			Set<String> cachedModes = new HashSet<>();
 			cachedModes.addAll(dmcConfig.getCachedModes());
-			cachedModes.add("drt");
+			cachedModes.add("sharing:velib");
 			dmcConfig.setCachedModes(cachedModes);
 
 			// Set up choice model
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-			eqasimConfig.setCostModel("drt", "drt");
-			eqasimConfig.setEstimator("drt", "drt");
+			eqasimConfig.setCostModel("sharing:velib", "drt");
+			eqasimConfig.setEstimator("sharing:velib", "drt");
 
 			// Add rejection constraint
 			///Try Pull
@@ -124,7 +131,7 @@ public class RunCorsicaDrtSimulation {
 		}
 
 		{ // Set up some defaults for MATSim scoring
-			ModeParams modeParams = new ModeParams("drt");
+			ModeParams modeParams = new ModeParams("sharing:velib");
 			config.planCalcScore().addModeParams(modeParams);
 		}
 
@@ -140,26 +147,26 @@ public class RunCorsicaDrtSimulation {
 
 		Controler controller = new Controler(scenario);
 		IDFConfigurator.configureController(controller);
-		controller.addOverridingModule(new EqasimAnalysisModule());
+//		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 
-		{ // Configure controller for DRT
-			controller.addOverridingModule(new DvrpModule());
-			controller.addOverridingModule(new MultiModeDrtModule());
-
-			controller.configureQSimComponents(components -> {
-				DvrpQSimComponents.activateAllModes(multiModeDrtConfig).configure(components);
-
-				// Need to re-do this as now it is combined with DRT
-				EqasimTransitQSimModule.configure(components, config);
-			});
-		}
+//		{ // Configure controller for DRT
+//			controller.addOverridingModule(new DvrpModule());
+//			controller.addOverridingModule(new MultiModeDrtModule());
+//
+//			controller.configureQSimComponents(components -> {
+//				DvrpQSimComponents.activateAllModes(multiModeDrtConfig).configure(components);
+//
+//				// Need to re-do this as now it is combined with DRT
+//				EqasimTransitQSimModule.configure(components, config);
+//			});
+//		}
 
 		{ // Add overrides for Corsica + DRT
 			controller.addOverridingModule(new CorsicaDrtModule(cmd));
-			controller.addOverridingModule(new RejectionModule(Arrays.asList("drt")));
-			controller.addOverridingModule(new DvrpAnalsisModule());
+			controller.addOverridingModule(new RejectionModule(Arrays.asList("sharing:velib")));
+//			controller.addOverridingModule(new DvrpAnalsisModule());
 		}
 
 		controller.run();
