@@ -112,6 +112,7 @@ public class RunCorsicaDrtSimulation {
 			eqasimConfig.setEstimator("drt", "drt");
 
 			// Add rejection constraint
+			///Try Pull
 			if (cmd.getOption("use-rejection-constraint").map(Boolean::parseBoolean).orElse(false)) {
 				Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 				tripConstraints.add(RejectionConstraint.NAME);
