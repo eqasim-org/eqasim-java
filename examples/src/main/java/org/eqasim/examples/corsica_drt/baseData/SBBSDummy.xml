@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE service SYSTEM "src/main/resources/dtd/sharing_service_v1.dtd">
+
+<service>
+	<stations>
+		<station id="0" link="55217" capacity="1000"/>
+		<station id="1" link="33999" capacity="1000"/>
+		<station id="2" link="38530" capacity="1000"/>
+		<station id="3" link="35546" capacity="1000"/>
+		<station id="4" link="44436" capacity="1000"/>
+	</stations>
+	<vehicles>
+		<vehicle id="0" startLink="33999" startStation="1"/>
+		<vehicle id="1" startLink="44436" startStation="4"/>
+		<vehicle id="2" startLink="38530" startStation="2"/>
+		<vehicle id="3" startLink="38530" startStation="2"/>
+		<vehicle id="4" startLink="44436" startStation="4"/>
+		<vehicle id="5" startLink="38530" startStation="2"/>
+		<vehicle id="6" startLink="55217" startStation="0"/>
+		<vehicle id="7" startLink="38530" startStation="2"/>
+		<vehicle id="8" startLink="33999" startStation="1"/>
+		<vehicle id="9" startLink="38530" startStation="2"/>
+		<vehicle id="10" startLink="55217" startStation="0"/>
+		<vehicle id="11" startLink="33999" startStation="1"/>
+		<vehicle id="12" startLink="38530" startStation="2"/>
+		<vehicle id="13" startLink="55217" startStation="0"/>
+		<vehicle id="14" startLink="35546" startStation="3"/>
+		<vehicle id="15" startLink="44436" startStation="4"/>
+		<vehicle id="16" startLink="33999" startStation="1"/>
+		<vehicle id="17" startLink="55217" startStation="0"/>
+		<vehicle id="18" startLink="55217" startStation="0"/>
+		<vehicle id="19" startLink="55217" startStation="0"/>
+		<vehicle id="20" startLink="35546" startStation="3"/>
+		<vehicle id="21" startLink="35546" startStation="3"/>
+		<vehicle id="22" startLink="38530" startStation="2"/>
+		<vehicle id="23" startLink="38530" startStation="2"/>
+		<vehicle id="24" startLink="35546" startStation="3"/>
+		<vehicle id="25" startLink="35546" startStation="3"/>
+		<vehicle id="26" startLink="55217" startStation="0"/>
+		<vehicle id="27" startLink="44436" startStation="4"/>
+		<vehicle id="28" startLink="55217" startStation="0"/>
+		<vehicle id="29" startLink="38530" startStation="2"/>
+		<vehicle id="30" startLink="38530" startStation="2"/>
+		<vehicle id="31" startLink="35546" startStation="3"/>
+		<vehicle id="32" startLink="55217" startStation="0"/>
+		<vehicle id="33" startLink="33999" startStation="1"/>
+		<vehicle id="34" startLink="44436" startStation="4"/>
+		<vehicle id="35" startLink="44436" startStation="4"/>
+		<vehicle id="36" startLink="55217" startStation="0"/>
+		<vehicle id="37" startLink="38530" startStation="2"/>
+		<vehicle id="38" startLink="33999" startStation="1"/>
+		<vehicle id="39" startLink="35546" startStation="3"/>
+		<vehicle id="40" startLink="44436" startStation="4"/>
+		<vehicle id="41" startLink="44436" startStation="4"/>
+		<vehicle id="42" startLink="55217" startStation="0"/>
+		<vehicle id="43" startLink="44436" startStation="4"/>
+		<vehicle id="44" startLink="44436" startStation="4"/>
+		<vehicle id="45" startLink="35546" startStation="3"/>
+		<vehicle id="46" startLink="33999" startStation="1"/>
+		<vehicle id="47" startLink="38530" startStation="2"/>
+		<vehicle id="48" startLink="44436" startStation="4"/>
+		<vehicle id="49" startLink="38530" startStation="2"/>
+		<vehicle id="50" startLink="38530" startStation="2"/>
+	</vehicles>
+</service>
