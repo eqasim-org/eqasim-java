@@ -38,8 +38,9 @@ public class RunBatchPublicTransportRouter {
 				.allowOptions("threads", "batch-size", "interval", "transfer-utility") //
 				.build();
 
+		EqasimConfigurator configurator = new EqasimConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				EqasimConfigurator.getConfigGroups());
+				configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		if (cmd.hasOption("transfer-utility")) {
@@ -47,7 +48,7 @@ public class RunBatchPublicTransportRouter {
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		EqasimConfigurator.configureScenario(scenario);
+		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
@@ -56,7 +57,7 @@ public class RunBatchPublicTransportRouter {
 		double interval = (double) cmd.getOption("interval").map(Integer::parseInt).orElse(0);
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(EqasimConfigurator.getModules()) //
+				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, false, interval)).build();
 
 		Provider<TransitRouter> routerProvider = injector.getProvider(TransitRouter.class);

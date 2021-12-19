@@ -2,6 +2,7 @@ package org.eqasim.examples.corsica_convergence;
 
 import java.net.URL;
 
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -32,18 +33,19 @@ public class RunCorsicaConvergenceSimulation {
 				.build();
 
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
-		Config config = ConfigUtils.loadConfig(configUrl, IDFConfigurator.getConfigGroups());
+		IDFConfigurator configurator = new IDFConfigurator();
+		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
 
 		config.controler().setLastIteration(1000);
 		config.qsim().setFlowCapFactor(1e6);
 		config.addModule(new VDFConfigGroup());
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		IDFConfigurator.configureScenario(scenario);
+		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
 		Controler controller = new Controler(scenario);
-		IDFConfigurator.configureController(controller);
+		configurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));

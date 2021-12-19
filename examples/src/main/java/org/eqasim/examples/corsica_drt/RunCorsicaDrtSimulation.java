@@ -56,7 +56,8 @@ public class RunCorsicaDrtSimulation {
 				.build();
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
 
-		Config config = ConfigUtils.loadConfig(configUrl, IDFConfigurator.getConfigGroups());
+		IDFConfigurator configurator = new IDFConfigurator();
+		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
 
 		config.controler().setLastIteration(2);
 		config.qsim().setFlowCapFactor(1e9);
@@ -128,7 +129,7 @@ public class RunCorsicaDrtSimulation {
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		IDFConfigurator.configureScenario(scenario);
+		configurator.configureScenario(scenario);
 
 		{ // Add DRT route factory
 			scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class,
@@ -138,7 +139,7 @@ public class RunCorsicaDrtSimulation {
 		ScenarioUtils.loadScenario(scenario);
 
 		Controler controller = new Controler(scenario);
-		IDFConfigurator.configureController(controller);
+		configurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));

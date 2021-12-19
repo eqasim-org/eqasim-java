@@ -135,6 +135,7 @@ public class TestSpecialModeChoiceCases {
 	static private Set<String> findChains(List<DiscreteModeChoiceTrip> trips, int samples)
 			throws ConfigurationException, NoFeasibleChoiceException {
 		// I) Create configuration that is usually generated for eqasim simulations
+		EqasimConfigurator configurator = new EqasimConfigurator();
 		Config config = ConfigUtils.createConfig();
 		CommandLine cmd = new CommandLine.Builder(new String[] {}).build();
 
@@ -148,7 +149,7 @@ public class TestSpecialModeChoiceCases {
 		// Now create the model
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(EqasimConfigurator.getModules()) //
+				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new EqasimModeChoiceModule()) //
 				.addOverridingModule(new StaticModeAvailabilityModule()) //
 				.build();

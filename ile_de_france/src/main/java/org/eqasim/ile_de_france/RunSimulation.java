@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Optional;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -35,23 +36,30 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("count-links", "external-convergence", "signal-input-path", "use-epsilon") //
+				.allowOptions("count-links", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX) //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), IDFConfigurator.getConfigGroups());
+		boolean useVdf = cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false);
+		IDFConfigurator configurator = new IDFConfigurator();
+
+		if (useVdf) {
+			configurator.getQSimModules().removeIf(m -> m instanceof EqasimTrafficQSimModule);
+		}
+
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		config.addModule(new VDFConfigGroup());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		IDFConfigurator.configureScenario(scenario);
+		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
 		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
 
 		Controler controller = new Controler(scenario);
-		IDFConfigurator.configureController(controller);
+		configurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
@@ -74,8 +82,8 @@ public class RunSimulation {
 			eqasimConfig.setEstimator("bike", "epsilon_bike");
 			eqasimConfig.setEstimator("walk", "epsilon_walk");
 		}
-		
-		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
+
+		if (useVdf) {
 			controller.addOverridingModule(new VDFModule());
 			controller.addOverridingQSimModule(new VDFQSimModule());
 		}

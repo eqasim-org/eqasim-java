@@ -17,7 +17,8 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		ConfigAdapter.run(args, EqasimConfigurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		EqasimConfigurator configurator = new EqasimConfigurator();
+		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config) {

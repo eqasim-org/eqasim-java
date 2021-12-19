@@ -11,7 +11,8 @@ import org.matsim.core.config.Config;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		ConfigAdapter.run(args, IDFConfigurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		IDFConfigurator configurator = new IDFConfigurator();
+		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config) {
