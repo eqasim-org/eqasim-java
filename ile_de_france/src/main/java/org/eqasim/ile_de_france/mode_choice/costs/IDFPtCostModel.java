@@ -98,6 +98,10 @@ public class IDFPtCostModel implements CostModel {
 		 * a price per distance. TODO: A more detailed analysis would be good to have!
 		 */
 
+		// TODO: Why don't we just follow the route here and sum up the distance? The
+		// calculation above is certainly not true if someone takes an RER towards Paris
+		// but does not enter the city.
+
 		return 0.25 * calculateBasisDistance_km(trip);
 	}
 }
