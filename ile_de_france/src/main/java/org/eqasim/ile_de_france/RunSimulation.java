@@ -36,7 +36,8 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("count-links", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf") //
+				.allowOptions("count-links", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
+						"line-switch-utility") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX) //
 				.build();
@@ -65,6 +66,11 @@ public class RunSimulation {
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new StuckAnalysisModule());
+
+		if (cmd.hasOption("line-switch-utility")) {
+			double lineSwitchUtility = Double.parseDouble(cmd.getOptionStrict("line-switch-utility"));
+			config.planCalcScore().setUtilityOfLineSwitch(lineSwitchUtility);
+		}
 
 		if (cmd.hasOption("count-links")) {
 			controller.addOverridingModule(new CountsModule(cmd));
