@@ -26,7 +26,7 @@ public class CountsWriter {
 	public void write(File path) throws IOException {
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path)));
 
-		writer.write(String.join(";", new String[] { "link_id", "hour", "count", "lanes" }) + "\n");
+		writer.write(String.join(";", new String[] { "link_id", "hour", "count", "lanes", "osm" }) + "\n");
 
 		for (Map.Entry<Id<Link>, List<Integer>> item : counts.entrySet()) {
 			for (int hour = 0; hour < 24; hour++) {
@@ -35,6 +35,8 @@ public class CountsWriter {
 						String.valueOf(hour), //
 						String.valueOf(item.getValue().get(hour) * scalingFactor), //
 						String.valueOf(network.getLinks().get(item.getKey()).getNumberOfLanes()), //
+						String.valueOf(
+								network.getLinks().get(item.getKey()).getAttributes().getAttribute("osm:way:highway")) //
 				}) + "\n");
 			}
 		}
