@@ -3,11 +3,15 @@ package org.eqasim.core.scenario.cutter.population.trips.crossing.network;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingData;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingRegistry;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.util.TravelTime;
 
@@ -16,18 +20,22 @@ import com.google.inject.Inject;
 public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFinder {
 	final private ScenarioExtent extent;
 	final private Network network;
+
 	final private Map<String, TravelTime> travelTimes;
+	final private LinkTimingRegistry timingRegistry;
 
 	@Inject
 	public DefaultNetworkCrossingPointFinder(ScenarioExtent extent, Network network,
-			Map<String, TravelTime> travelTimes) {
+			Map<String, TravelTime> travelTimes, LinkTimingRegistry timingRegistry) {
 		this.extent = extent;
 		this.network = network;
 		this.travelTimes = travelTimes;
+		this.timingRegistry = timingRegistry;
 	}
 
 	@Override
-	public List<NetworkCrossingPoint> findCrossingPoints(String mode, NetworkRoute route, double departureTime) {
+	public List<NetworkCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode,
+			NetworkRoute route, double departureTime) {
 		List<NetworkCrossingPoint> crossingPoints = new LinkedList<>();
 
 		List<Id<Link>> fullRoute = new LinkedList<>();
@@ -52,6 +60,13 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 			boolean toIsInside = extent.isInside(link.getToNode().getCoord());
 
 			if (fromIsInside != toIsInside) {
+				Optional<LinkTimingData> timingData = timingRegistry.getTimingData(personId, legIndex, linkId);
+
+				if (timingData.isPresent()) {
+					enterTime = timingData.get().enterTime;
+					leaveTime = timingData.get().leaveTime;
+				}
+
 				crossingPoints.add(new NetworkCrossingPoint(index, link, enterTime, leaveTime, fromIsInside));
 			}
 

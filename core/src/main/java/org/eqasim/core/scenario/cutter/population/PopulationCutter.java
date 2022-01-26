@@ -96,7 +96,8 @@ public class PopulationCutter {
 					List<Plan> oldPlans = new LinkedList<>();
 
 					for (Plan oldPlan : person.getPlans()) {
-						List<PlanElement> newPlanElements = planCutter.processPlan(oldPlan.getPlanElements());
+						List<PlanElement> newPlanElements = planCutter.processPlan(person.getId(),
+								oldPlan.getPlanElements());
 
 						Plan newPlan = populationFactory.createPlan();
 

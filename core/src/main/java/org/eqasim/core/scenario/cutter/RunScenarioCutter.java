@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Optional;
 
+import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
@@ -40,7 +41,7 @@ public class RunScenarioCutter {
 			throws ConfigurationException, MalformedURLException, IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path", "extent-path") //
-				.allowOptions("threads", "prefix", "extent-attribute", "extent-value") //
+				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
 				.build();
 
 		// Load some configuration
@@ -63,6 +64,18 @@ public class RunScenarioCutter {
 				configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
+		Optional<String> plansPath = cmd.getOption("plans-path");
+
+		if (plansPath.isPresent()) {
+			File plansFile = new File(plansPath.get());
+
+			if (!plansFile.exists()) {
+				throw new IllegalStateException("Plans file does not exist: " + plansPath);
+			} else {
+				config.plans().setInputFile(plansFile.getAbsolutePath());
+			}
+		}
+
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
@@ -74,10 +87,20 @@ public class RunScenarioCutter {
 		// Prepare road network
 		RoadNetwork roadNetwork = new RoadNetwork(scenario.getNetwork());
 
+		// Optionally, load travel time
+		Optional<RecordedTravelTime> travelTime = Optional.empty();
+
+		if (cmd.hasOption("events-path")) {
+			travelTime = Optional.of(RecordedTravelTime.readFromEvents( //
+					new File(cmd.getOptionStrict("events-path")), roadNetwork, config));
+		}
+
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
-				.addOverridingModule(new PopulationCutterModule(extent, numberOfThreads, 40)) //
+				.addOverridingModule(
+						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
+				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.build();
 
 		PopulationCutter populationCutter = populationCutterInjector.getInstance(PopulationCutter.class);
@@ -128,6 +151,7 @@ public class RunScenarioCutter {
 		Injector routingInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
+				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.build();
 
 		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);

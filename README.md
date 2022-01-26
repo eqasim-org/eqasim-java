@@ -7,7 +7,7 @@ for the agent- and activity-based transport simulation framework [MATSim](https:
 This repository contains the Java parts of the project which extend MATSim and
 provide functionality to generate the simulation data.
 
-Therefore, this repository has to functions: First, to provide the code to run
+Therefore, this repository has two functions: First, to provide the code to run
 `eqasim` simulations (and extend them), second, to act as a dependency for the
 various pipelines that generate runnable MATSim scenarios from raw data sets,
 such as for:
