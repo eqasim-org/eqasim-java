@@ -27,15 +27,15 @@ public class RunSimulation {
 				.allowPrefixes("mode-parameter", "cost-parameter", "already-equilibrium") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				EqasimConfigurator.getConfigGroups());
+		EqasimConfigurator configurator = new EqasimConfigurator();
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		EqasimConfigGroup.get(config).setTripAnalysisInterval(1);
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		EqasimConfigurator.configureScenario(scenario);
+		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
-		EqasimConfigurator.adjustScenario(scenario);
+		configurator.adjustScenario(scenario);
 		// the first check is for backwards compatibility
 		// it will be removed with the next synthesis release
 		if (!cmd.getOption("already-equilibrium").isPresent()
@@ -65,7 +65,7 @@ public class RunSimulation {
 		eqasimConfig.setEstimator("taxi", "spTaxiEstimator");
 
 		Controler controller = new Controler(scenario);
-		EqasimConfigurator.configureController(controller);
+		configurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new SaoPauloModeChoiceModule(cmd));

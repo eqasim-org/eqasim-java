@@ -17,13 +17,14 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		ConfigAdapter.run(args, EqasimConfigurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		EqasimConfigurator configurator = new EqasimConfigurator();
+		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config) {
 		// Ignore some input files
-		//config.transit().setVehiclesFile(null);
-		//config.households().setInputFile(null);
+		// config.transit().setVehiclesFile(null);
+		// config.households().setInputFile(null);
 
 		// Set up mode choice
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
@@ -64,12 +65,11 @@ public class RunAdaptConfig {
 				SaoPauloModeParameters.buildDefault().pt.betaAccessEgressTime_u_min * 60.0);
 
 		config.planCalcScore().addModeParams(walkParams);
-		
+
 		// update transit parameters
 		config.transitRouter().setDirectWalkFactor(100.0);
 		config.transitRouter().setMaxBeelineWalkConnectionDistance(400.0);
 		config.transitRouter().setSearchRadius(1300.0);
-		
 
 	}
 }
