@@ -146,9 +146,10 @@ public class TestSpecialModeChoiceCases {
 		EqasimConfigGroup.get(config).setEstimator("bike", EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
 
 		// Now create the model
+		EqasimConfigurator configurator = new EqasimConfigurator();
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(EqasimConfigurator.getModules()) //
+				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new EqasimModeChoiceModule()) //
 				.addOverridingModule(new StaticModeAvailabilityModule()) //
 				.build();
