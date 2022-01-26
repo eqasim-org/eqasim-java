@@ -1,6 +1,7 @@
 package org.eqasim.core.simulation;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.eqasim.core.components.EqasimComponentsModule;
@@ -24,31 +25,44 @@ import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
 public class EqasimConfigurator {
-	static public ConfigGroup[] getConfigGroups() {
-		return new ConfigGroup[] { //
+	protected final List<ConfigGroup> configGroups = new LinkedList<>();
+	protected final List<AbstractModule> modules = new LinkedList<>();
+	protected final List<AbstractQSimModule> qsimModules = new LinkedList<>();
+
+	public EqasimConfigurator() {
+		configGroups.addAll(Arrays.asList( //
 				new SwissRailRaptorConfigGroup(), //
 				new EqasimConfigGroup(), //
 				new DiscreteModeChoiceConfigGroup(), //
-				new CalibrationConfigGroup() };
-	}
+				new CalibrationConfigGroup() //
+		));
 
-	static public List<AbstractModule> getModules() {
-		return Arrays.asList( //
+		modules.addAll(Arrays.asList( //
 				new SwissRailRaptorModule(), //
 				new EqasimTransitModule(), //
 				new DiscreteModeChoiceModule(), //
 				new EqasimComponentsModule() //
-		);
-	}
+		));
 
-	static public List<AbstractQSimModule> getQSimModules() {
-		return Arrays.asList( //
+		qsimModules.addAll(Arrays.asList( //
 				new EqasimTransitQSimModule(), //
 				new EqasimTrafficQSimModule() //
-		);
+		));
 	}
 
-	static public void configureController(Controler controller) {
+	public ConfigGroup[] getConfigGroups() {
+		return configGroups.toArray(new ConfigGroup[configGroups.size()]);
+	}
+
+	public List<AbstractModule> getModules() {
+		return modules;
+	}
+
+	public List<AbstractQSimModule> getQSimModules() {
+		return qsimModules;
+	}
+
+	public void configureController(Controler controller) {
 		for (AbstractModule module : getModules()) {
 			controller.addOverridingModule(module);
 		}
@@ -62,10 +76,10 @@ public class EqasimConfigurator {
 		});
 	}
 
-	static public void configureScenario(Scenario scenario) {
+	public void configureScenario(Scenario scenario) {
 	}
 
-	static public void adjustScenario(Scenario scenario) {
+	public void adjustScenario(Scenario scenario) {
 		for (Household household : scenario.getHouseholds().getHouseholds().values()) {
 			for (Id<Person> memberId : household.getMemberIds()) {
 				Person person = scenario.getPopulation().getPersons().get(memberId);

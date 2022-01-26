@@ -44,12 +44,12 @@ public class RunBatchRoadRouter {
 				.allowOptions("threads", "batch-size") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				EqasimConfigurator.getConfigGroups());
+		EqasimConfigurator configurator = new EqasimConfigurator();
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		EqasimConfigurator.configureScenario(scenario);
+		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
@@ -57,7 +57,7 @@ public class RunBatchRoadRouter {
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(EqasimConfigurator.getModules()) //
+				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new AbstractModule() {
 					@Override
 					public void install() {

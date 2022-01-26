@@ -12,7 +12,8 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		ConfigAdapter.run(args, IDFConfigurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		IDFConfigurator configurator = new IDFConfigurator();
+		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config) {
@@ -29,7 +30,7 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
-		
+
 		// Potentially should be moved to the general GenerateConfig class. Wait time
 		// should matter for routing!
 		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
