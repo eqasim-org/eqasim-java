@@ -60,8 +60,7 @@ public class RunScenarioCutter {
 
 		// Load scenario
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		Optional<String> plansPath = cmd.getOption("plans-path");

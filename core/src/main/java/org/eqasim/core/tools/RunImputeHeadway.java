@@ -22,8 +22,7 @@ public class RunImputeHeadway {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 		config.strategy().clearStrategySettings();
 

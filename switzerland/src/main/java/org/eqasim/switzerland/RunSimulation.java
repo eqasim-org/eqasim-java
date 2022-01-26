@@ -19,8 +19,7 @@ public class RunSimulation {
 				.build();
 
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);

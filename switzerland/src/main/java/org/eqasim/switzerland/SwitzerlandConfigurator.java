@@ -7,6 +7,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.households.Household;
 
 public class SwitzerlandConfigurator extends EqasimConfigurator {
+	@Override
 	public void adjustScenario(Scenario scenario) {
 		super.adjustScenario(scenario);
 

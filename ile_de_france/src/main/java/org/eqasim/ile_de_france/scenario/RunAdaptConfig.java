@@ -30,7 +30,7 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
-		
+
 		// Potentially should be moved to the general GenerateConfig class. Wait time
 		// should matter for routing!
 		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();

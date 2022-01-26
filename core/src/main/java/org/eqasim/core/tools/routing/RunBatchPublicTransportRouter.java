@@ -39,8 +39,7 @@ public class RunBatchPublicTransportRouter {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
 		if (cmd.hasOption("transfer-utility")) {

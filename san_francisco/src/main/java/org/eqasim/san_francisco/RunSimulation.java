@@ -22,8 +22,7 @@ public class RunSimulation {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		EqasimConfigGroup.get(config).setTripAnalysisInterval(5);
 		EqasimConfigGroup.get(config).setDistanceUnit(DistanceUnit.foot);
 		cmd.applyConfiguration(config);
