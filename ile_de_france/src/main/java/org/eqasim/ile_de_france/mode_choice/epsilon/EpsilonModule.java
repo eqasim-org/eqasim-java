@@ -1,6 +1,9 @@
 package org.eqasim.ile_de_france.mode_choice.epsilon;
 
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
+import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonAdapter;
+import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
+import org.eqasim.core.simulation.mode_choice.epsilon.GumbelEpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityEstimator;

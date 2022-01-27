@@ -1,4 +1,4 @@
-package org.eqasim.ile_de_france.mode_choice.epsilon;
+package org.eqasim.core.simulation.mode_choice.epsilon;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
