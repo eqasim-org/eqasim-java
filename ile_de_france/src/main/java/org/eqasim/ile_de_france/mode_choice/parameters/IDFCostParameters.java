@@ -4,11 +4,13 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 
 public class IDFCostParameters implements ParameterDefinition {
 	public double carCost_EUR_km = 0.0;
-
+	public double ptCost_EUR_h = 0.0;
+	
 	public static IDFCostParameters buildDefault() {
 		IDFCostParameters parameters = new IDFCostParameters();
 
 		parameters.carCost_EUR_km = 0.15;
+		parameters.ptCost_EUR_h = 1.50;
 
 		return parameters;
 	}

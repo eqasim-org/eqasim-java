@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
+import org.eqasim.ile_de_france.mode_choice.costs.NantesPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityEstimator;
@@ -43,13 +44,25 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bind(IDFPersonPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(IDFCarCostModel.class);
-		bindCostModel(PT_COST_MODEL_NAME).to(IDFPtCostModel.class);
 
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(IDFCarUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(IDFBikeUtilityEstimator.class);
 		bind(IDFSpatialPredictor.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
+
+		String costModel = commandLine.getOption("cost-model").orElse("idf");
+
+		switch (costModel) {
+		case "idf":
+			bindCostModel(PT_COST_MODEL_NAME).to(IDFPtCostModel.class);
+			break;
+		case "nantes":
+			bindCostModel(PT_COST_MODEL_NAME).to(NantesPtCostModel.class);
+			break;
+		default:
+			throw new IllegalStateException();
+		}
 	}
 
 	@Provides
