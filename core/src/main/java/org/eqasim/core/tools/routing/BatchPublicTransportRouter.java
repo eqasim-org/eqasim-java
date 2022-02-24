@@ -194,6 +194,9 @@ public class BatchPublicTransportRouter {
 									partialInformation.mode = transitMode;
 									partialInformation.lineId = transitLine.getId().toString();
 									partialInformation.routeId = transitRoute.getId().toString();
+									partialInformation.accessTime = route.getBoardingTime().seconds();
+									partialInformation.egressTime = leg.getDepartureTime().seconds()
+											+ leg.getTravelTime().seconds();
 									routeInformation.add(partialInformation);
 								}
 							} else {
@@ -294,5 +297,8 @@ public class BatchPublicTransportRouter {
 		public String lineId;
 		public String routeId;
 		public String mode;
+
+		public double accessTime;
+		public double egressTime;
 	}
 }
