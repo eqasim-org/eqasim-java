@@ -20,6 +20,11 @@ To understand how to set up a simulation and run it, please refer to the
 respective repositories. To cut out smaller parts of existing simulations
 check out how to use this repository to [create simulation cut-outs](docs/cutting.md).
 
+## Main reference
+
+The main research reference for the eqasim-java framework:
+> Hörl, S. and M. Balac (2021) [Introducing the eqasim pipeline: From raw data to agent-based transport simulation](https://www.researchgate.net/publication/351676356_Introducing_the_eqasim_pipeline_From_raw_data_to_agent-based_transport_simulation), _Procedia Computer Science_, 184, 712-719.
+
 ## Versioning and Packging
 
 [![Build Status](https://travis-ci.com/eqasim-org/eqasim-java.svg?branch=develop)](https://travis-ci.com/eqasim-org/eqasim-java)
