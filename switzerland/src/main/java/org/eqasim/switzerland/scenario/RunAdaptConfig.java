@@ -8,8 +8,11 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+
 
 public class RunAdaptConfig {
+
 	static public void main(String[] args) throws ConfigurationException {
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator();
 		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
@@ -28,5 +31,22 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
+
+		// adapting Scoring config with custom activities
+		if (CustomActivities.hasCustomActivities) {
+			PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
+
+			for (String activityType : CustomActivities.activityTypes) {
+				PlanCalcScoreConfigGroup.ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
+
+				if (activityParams == null) {
+					activityParams = new PlanCalcScoreConfigGroup.ActivityParams(activityType);
+					config.planCalcScore().addActivityParams(activityParams);
+				}
+
+				activityParams.setScoringThisActivityAtAll(false);
+			}
+		}
+
 	}
 }
