@@ -1,21 +1,21 @@
 package org.eqasim.switzerland.scenario;
 
-import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.core.config.*;
 import org.matsim.core.config.CommandLine.ConfigurationException;
-import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+
 
 
 public class RunAdaptConfig {
 
 	static public void main(String[] args) throws ConfigurationException {
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator();
-		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		SwissConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config) {
@@ -49,4 +49,5 @@ public class RunAdaptConfig {
 		}
 
 	}
+
 }
