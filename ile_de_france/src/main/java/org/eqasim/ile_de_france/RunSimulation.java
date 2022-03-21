@@ -26,6 +26,16 @@ public class RunSimulation {
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
+		// if there is a vehicles file defined in config, manually assign them to their agents
+		if (config.vehicles().getVehiclesFile() != null) {
+			for (Person person : scenario.getPopulation().getPersons().values()) {
+				Id<Vehicle> vehicleId = Id.createVehicleId(person.getId());
+				Map<String, Id<Vehicle>> modeVehicle = new HashMap<>();
+				modeVehicle.put("car", vehicleId);
+				VehicleUtils.insertVehicleIdsIntoAttributes(person, modeVehicle);
+			}
+		}
+		
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
