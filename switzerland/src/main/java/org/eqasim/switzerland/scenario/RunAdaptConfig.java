@@ -33,10 +33,10 @@ public class RunAdaptConfig {
 		dmcConfig.setModeAvailability(SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
 
 		// adapting Scoring config with custom activities
-		if (CustomActivities.hasCustomActivities) {
+		if (SwissConfigAdapter.hasCustomActivities) {
 			PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
 
-			for (String activityType : CustomActivities.activityTypes) {
+			for (String activityType : SwissConfigAdapter.activityTypes) {
 				PlanCalcScoreConfigGroup.ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
 
 				if (activityParams == null) {
