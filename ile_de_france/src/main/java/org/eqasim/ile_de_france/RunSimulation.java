@@ -92,6 +92,8 @@ public class RunSimulation {
 		if (useVdf) {
 			controller.addOverridingModule(new VDFModule());
 			controller.addOverridingQSimModule(new VDFQSimModule());
+			config.qsim().setStorageCapFactor(1e9);
+			config.qsim().setFlowCapFactor(1e9);
 		}
 
 		controller.addOverridingModule(new AbstractModule() {
