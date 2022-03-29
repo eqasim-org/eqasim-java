@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.misc.ParallelProgress;
@@ -17,6 +18,7 @@ import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.router.TransitRouter;
 import org.matsim.pt.routes.TransitPassengerRoute;
+import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -190,10 +192,13 @@ public class BatchPublicTransportRouter {
 								result.isOnlyWalk = 0;
 
 								if (writeRoute) {
+									Departure departure = findDeparture(route, transitRoute);
+
 									RouteInformation partialInformation = new RouteInformation();
 									partialInformation.mode = transitMode;
 									partialInformation.lineId = transitLine.getId().toString();
 									partialInformation.routeId = transitRoute.getId().toString();
+									partialInformation.vehicleId = departure.getVehicleId().toString();
 									partialInformation.accessTime = route.getBoardingTime().seconds();
 									partialInformation.egressTime = leg.getDepartureTime().seconds()
 											+ leg.getTravelTime().seconds();
@@ -234,6 +239,26 @@ public class BatchPublicTransportRouter {
 				}
 			}
 		}
+	}
+
+	private static Departure findDeparture(TransitPassengerRoute passengerRoute, TransitRoute route) {
+		double boardingTime = passengerRoute.getBoardingTime().seconds();
+
+		List<Double> accessOffsets = route.getStops().stream() //
+				.filter(stop -> stop.getStopFacility().getId().equals(passengerRoute.getAccessStopId())) //
+				.map(stop -> stop.getArrivalOffset().seconds()).collect(Collectors.toList());
+
+		for (Departure departure : route.getDepartures().values()) {
+			if (departure.getDepartureTime() <= boardingTime) {
+				for (double offset : accessOffsets) {
+					if (departure.getDepartureTime() + offset == boardingTime) {
+						return departure;
+					}
+				}
+			}
+		}
+
+		throw new IllegalStateException("Departure not found");
 	}
 
 	static public class Task {
@@ -296,6 +321,7 @@ public class BatchPublicTransportRouter {
 	static public class RouteInformation {
 		public String lineId;
 		public String routeId;
+		public String vehicleId;
 		public String mode;
 
 		public double accessTime;
