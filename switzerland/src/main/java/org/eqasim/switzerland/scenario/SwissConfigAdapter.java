@@ -28,7 +28,7 @@ public class SwissConfigAdapter {
         new ConfigWriter(config).write(cmd.getOptionStrict("output-path"));
     }
 
-    public static void setCustomActivities (String activityList) {
+    protected static void setCustomActivities (String activityList) {
         hasCustomActivities = true;
         activityTypes = Arrays.asList(activityList.split("\\s*,\\s*"));
     }
