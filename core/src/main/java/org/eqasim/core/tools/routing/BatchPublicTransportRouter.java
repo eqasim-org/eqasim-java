@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
@@ -23,8 +24,6 @@ import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Provider;
 
 public class BatchPublicTransportRouter {
@@ -36,11 +35,10 @@ public class BatchPublicTransportRouter {
 	private final int batchSize;
 	private final int numberOfThreads;
 	private final double interval;
-	private final boolean writeRoute;
 
 	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider,
 			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
-			int batchSize, int numberOfThreads, double interval, boolean writeRoute) {
+			int batchSize, int numberOfThreads, double interval) {
 		this.routerProvider = routerProvider;
 		this.headwayCalculatorProvider = headwayCalculatorProvider;
 		this.batchSize = batchSize;
@@ -48,12 +46,14 @@ public class BatchPublicTransportRouter {
 		this.schedule = schedule;
 		this.network = network;
 		this.interval = interval;
-		this.writeRoute = writeRoute;
 	}
 
-	public Collection<Result> run(Collection<Task> tasks) throws InterruptedException {
+	public Pair<Collection<TripInformation>, Collection<LegInformation>> run(Collection<Task> tasks)
+			throws InterruptedException {
 		Iterator<Task> taskIterator = tasks.iterator();
-		List<Result> results = new ArrayList<>(tasks.size());
+
+		List<TripInformation> tripResults = new ArrayList<>(tasks.size());
+		List<LegInformation> legResults = new ArrayList<>(tasks.size());
 
 		ParallelProgress progress = new ParallelProgress("Routing trips ...", tasks.size());
 		progress.start();
@@ -61,7 +61,7 @@ public class BatchPublicTransportRouter {
 		List<Thread> threads = new ArrayList<>(numberOfThreads);
 
 		for (int i = 0; i < numberOfThreads; i++) {
-			Thread thread = new Thread(new Worker(taskIterator, results, progress));
+			Thread thread = new Thread(new Worker(taskIterator, tripResults, legResults, progress));
 			threads.add(thread);
 			thread.start();
 		}
@@ -71,17 +71,20 @@ public class BatchPublicTransportRouter {
 		}
 
 		progress.close();
-		return results;
+		return Pair.of(tripResults, legResults);
 	}
 
 	private class Worker implements Runnable {
 		private final Iterator<Task> taskIterator;
-		private final Collection<Result> results;
+		private final Collection<TripInformation> tripResults;
+		private final Collection<LegInformation> legResults;
 		private final ParallelProgress progress;
 
-		private Worker(Iterator<Task> taskIterator, Collection<Result> results, ParallelProgress progress) {
+		private Worker(Iterator<Task> taskIterator, Collection<TripInformation> tripResults,
+				Collection<LegInformation> legResults, ParallelProgress progress) {
 			this.taskIterator = taskIterator;
-			this.results = results;
+			this.tripResults = tripResults;
+			this.legResults = legResults;
 			this.progress = progress;
 		}
 
@@ -103,10 +106,11 @@ public class BatchPublicTransportRouter {
 					}
 				}
 
-				List<Result> localResults = new ArrayList<>(localTasks.size());
+				List<TripInformation> localTripResults = new ArrayList<>(localTasks.size());
+				List<LegInformation> localLegResults = new ArrayList<>(localTasks.size() * 3);
 
 				for (Task task : localTasks) {
-					Result result = new Result(task);
+					TripInformation tripInformation = new TripInformation(task);
 
 					Coord fromCoord = new Coord(task.originX, task.originY);
 					Coord toCoord = new Coord(task.destinationX, task.destinationY);
@@ -115,17 +119,17 @@ public class BatchPublicTransportRouter {
 					Facility toFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, toCoord));
 
 					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
-					List<RouteInformation> routeInformation = new LinkedList<>();
+					List<LegInformation> routeInformation = new LinkedList<>();
 
 					if (legs != null) {
 						boolean isFirstVehicularLeg = true;
-						result.isOnlyWalk = 1;
+						tripInformation.isOnlyWalk = 1;
 
 						if (interval > 0.0) {
-							result.headway_min = headwayCalculator.calculateHeadway_min(fromFacility, toFacility,
-									task.departureTime);
+							tripInformation.headway_min = headwayCalculator.calculateHeadway_min(fromFacility,
+									toFacility, task.departureTime);
 						} else {
-							result.headway_min = Double.NaN;
+							tripInformation.headway_min = Double.NaN;
 						}
 
 						int currentIndex = 0;
@@ -137,16 +141,16 @@ public class BatchPublicTransportRouter {
 
 							if (leg.getMode().equals(TransportMode.access_walk)
 									|| (leg.getMode().equals(TransportMode.walk) && isFirstLeg)) {
-								result.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-								result.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
+								tripInformation.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+								tripInformation.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
 							} else if (leg.getMode().equals(TransportMode.egress_walk)
 									|| (leg.getMode().equals(TransportMode.walk) && isLastLeg)) {
-								result.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-								result.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
+								tripInformation.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+								tripInformation.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
 							} else if (leg.getMode().equals(TransportMode.transit_walk)
 									|| (leg.getMode().equals(TransportMode.walk) && !isFirstLeg && !isLastLeg)) {
-								result.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-								result.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
+								tripInformation.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+								tripInformation.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
 							} else if (leg.getMode().equals(TransportMode.pt)) {
 								TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
@@ -154,11 +158,11 @@ public class BatchPublicTransportRouter {
 										- leg.getDepartureTime().seconds();
 
 								if (isFirstVehicularLeg) {
-									result.initialWaitingTime_min += waitingTime / 60.0;
+									tripInformation.initialWaitingTime_min += waitingTime / 60.0;
 									isFirstVehicularLeg = false;
 								} else {
-									result.numberOfTransfers += 1;
-									result.transferWaitingTime_min += waitingTime / 60.0;
+									tripInformation.numberOfTransfers += 1;
+									tripInformation.transferWaitingTime_min += waitingTime / 60.0;
 								}
 
 								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
@@ -169,73 +173,69 @@ public class BatchPublicTransportRouter {
 
 								switch (transitMode) {
 								case "rail":
-									result.inVehicleTimeRail_min += inVehicleTime / 60.0;
-									result.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
+									tripInformation.inVehicleTimeRail_min += inVehicleTime / 60.0;
+									tripInformation.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
 									break;
 								case "subway":
-									result.inVehicleTimeSubway_min += inVehicleTime / 60.0;
-									result.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
+									tripInformation.inVehicleTimeSubway_min += inVehicleTime / 60.0;
+									tripInformation.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
 									break;
 								case "bus":
-									result.inVehicleTimeBus_min += inVehicleTime / 60.0;
-									result.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
+									tripInformation.inVehicleTimeBus_min += inVehicleTime / 60.0;
+									tripInformation.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
 									break;
 								case "tram":
-									result.inVehicleTimeTram_min += inVehicleTime / 60.0;
-									result.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
+									tripInformation.inVehicleTimeTram_min += inVehicleTime / 60.0;
+									tripInformation.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
 									break;
 								default:
-									result.inVehicleTimeOther_min += inVehicleTime / 60.0;
-									result.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
+									tripInformation.inVehicleTimeOther_min += inVehicleTime / 60.0;
+									tripInformation.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
 								}
 
-								result.isOnlyWalk = 0;
+								tripInformation.isOnlyWalk = 0;
 
-								if (writeRoute) {
+								{ // Legs
 									Departure departure = findDeparture(route, transitRoute);
 
-									RouteInformation partialInformation = new RouteInformation();
-									partialInformation.mode = transitMode;
-									partialInformation.lineId = transitLine.getId().toString();
-									partialInformation.routeId = transitRoute.getId().toString();
-									partialInformation.vehicleId = departure.getVehicleId().toString();
-									partialInformation.accessTime = route.getBoardingTime().seconds();
-									partialInformation.egressTime = leg.getDepartureTime().seconds()
+									LegInformation legInformation = new LegInformation();
+									legInformation.identifier = task.identifier;
+									legInformation.legIndex = currentIndex;
+									legInformation.mode = transitMode;
+									legInformation.lineId = transitLine.getId().toString();
+									legInformation.routeId = transitRoute.getId().toString();
+									legInformation.vehicleId = departure.getVehicleId().toString();
+									legInformation.accessTime = route.getBoardingTime().seconds();
+									legInformation.egressTime = leg.getDepartureTime().seconds()
 											+ leg.getTravelTime().seconds();
-									routeInformation.add(partialInformation);
+
+									localLegResults.add(legInformation);
 								}
 							} else {
 								throw new IllegalStateException();
 							}
 						}
 
-						result.inVehicleTimeTotal_min = result.inVehicleTimeRail_min + result.inVehicleTimeSubway_min
-								+ result.inVehicleTimeBus_min + result.inVehicleTimeTram_min
-								+ result.inVehicleTimeOther_min;
-						result.inVehicleDistanceTotal_km = result.inVehicleDistanceRail_km
-								+ result.inVehicleDistanceSubway_km + result.inVehicleDistanceBus_km
-								+ result.inVehicleDistanceTram_km + result.inVehicleDistanceOther_km;
-						result.totalWalkTravelTime_min = result.accessTravelTime_min + result.egressTravelTime_min
-								+ result.transferTravelTime_min;
-						result.totalWalkDistance_km = result.accessDistance_km + result.egressDistance_km
-								+ result.transferDistance_km;
+						tripInformation.inVehicleTimeTotal_min = tripInformation.inVehicleTimeRail_min
+								+ tripInformation.inVehicleTimeSubway_min + tripInformation.inVehicleTimeBus_min
+								+ tripInformation.inVehicleTimeTram_min + tripInformation.inVehicleTimeOther_min;
+						tripInformation.inVehicleDistanceTotal_km = tripInformation.inVehicleDistanceRail_km
+								+ tripInformation.inVehicleDistanceSubway_km + tripInformation.inVehicleDistanceBus_km
+								+ tripInformation.inVehicleDistanceTram_km + tripInformation.inVehicleDistanceOther_km;
+						tripInformation.totalWalkTravelTime_min = tripInformation.accessTravelTime_min
+								+ tripInformation.egressTravelTime_min + tripInformation.transferTravelTime_min;
+						tripInformation.totalWalkDistance_km = tripInformation.accessDistance_km
+								+ tripInformation.egressDistance_km + tripInformation.transferDistance_km;
 
-						if (writeRoute) {
-							try {
-								result.route = new ObjectMapper().writeValueAsString(routeInformation);
-							} catch (JsonProcessingException e) {
-								e.printStackTrace();
-							}
-						}
-
-						localResults.add(result);
+						localTripResults.add(tripInformation);
 					}
 
 					progress.update();
 				}
 
-				synchronized (results) {
-					results.addAll(localResults);
+				synchronized (tripResults) {
+					tripResults.addAll(localTripResults);
+					legResults.addAll(localLegResults);
 				}
 			}
 		}
@@ -273,7 +273,7 @@ public class BatchPublicTransportRouter {
 		public double departureTime;
 	}
 
-	static public class Result {
+	static public class TripInformation {
 		public String identifier;
 
 		public double accessTravelTime_min;
@@ -313,12 +313,15 @@ public class BatchPublicTransportRouter {
 
 		public String route;
 
-		Result(Task task) {
+		TripInformation(Task task) {
 			this.identifier = task.identifier;
 		}
 	}
 
-	static public class RouteInformation {
+	static public class LegInformation {
+		public String identifier;
+		public int legIndex;
+
 		public String lineId;
 		public String routeId;
 		public String vehicleId;
