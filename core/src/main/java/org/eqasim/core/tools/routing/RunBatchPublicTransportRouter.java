@@ -4,13 +4,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.components.headway.HeadwayImputerModule;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.tools.routing.BatchPublicTransportRouter.Result;
+import org.eqasim.core.tools.routing.BatchPublicTransportRouter.LegInformation;
 import org.eqasim.core.tools.routing.BatchPublicTransportRouter.Task;
+import org.eqasim.core.tools.routing.BatchPublicTransportRouter.TripInformation;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -35,7 +38,7 @@ public class RunBatchPublicTransportRouter {
 			IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size", "interval", "transfer-utility", "write-route") //
+				.allowOptions("threads", "batch-size", "interval", "transfer-utility", "output-legs-path") //
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
@@ -54,7 +57,7 @@ public class RunBatchPublicTransportRouter {
 				.orElse(Runtime.getRuntime().availableProcessors());
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 		double interval = (double) cmd.getOption("interval").map(Integer::parseInt).orElse(0);
-		boolean writeRoute = cmd.getOption("write-route").map(Boolean::parseBoolean).orElse(false);
+		Optional<String> outputLegsPath = cmd.getOption("output-legs-path");
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
@@ -66,7 +69,7 @@ public class RunBatchPublicTransportRouter {
 		Network network = injector.getInstance(Network.class);
 
 		BatchPublicTransportRouter batchRouter = new BatchPublicTransportRouter(routerProvider,
-				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval, writeRoute);
+				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval);
 
 		CsvMapper mapper = new CsvMapper();
 
@@ -78,13 +81,26 @@ public class RunBatchPublicTransportRouter {
 				.readValues(inputFile);
 		List<Task> tasks = taskIterator.readAll();
 
-		Collection<Result> results = batchRouter.run(tasks);
+		Pair<Collection<TripInformation>, Collection<LegInformation>> results = batchRouter.run(tasks);
+		Collection<TripInformation> tripResults = results.getLeft();
+		Collection<LegInformation> legResults = results.getRight();
 
-		File outputFile = new File(cmd.getOptionStrict("output-path"));
-		CsvSchema resultSchema = mapper.typedSchemaFor(Result.class).withHeader().withColumnSeparator(',');
+		{
+			File outputFile = new File(cmd.getOptionStrict("output-path"));
+			CsvSchema resultSchema = mapper.typedSchemaFor(TripInformation.class).withHeader().withColumnSeparator(',');
 
-		SequenceWriter writer = mapper.writerWithTypedSchemaFor(Result.class).with(resultSchema)
-				.writeValues(outputFile);
-		writer.writeAll(results);
+			SequenceWriter writer = mapper.writerWithTypedSchemaFor(TripInformation.class).with(resultSchema)
+					.writeValues(outputFile);
+			writer.writeAll(tripResults);
+		}
+
+		if (outputLegsPath.isPresent()) {
+			File outputFile = new File(outputLegsPath.get());
+			CsvSchema resultSchema = mapper.typedSchemaFor(LegInformation.class).withHeader().withColumnSeparator(',');
+
+			SequenceWriter writer = mapper.writerWithTypedSchemaFor(LegInformation.class).with(resultSchema)
+					.writeValues(outputFile);
+			writer.writeAll(legResults);
+		}
 	}
 }
