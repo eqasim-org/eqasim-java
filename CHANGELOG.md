@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Add air pollution emissions computation and analysis
 - Add fixed epsilon functionality
 - Transform scenario configurators to proper classes (formerly static methods)
 - Set routing parameter for waiting time in Île-de-France to -1.0
