@@ -1,7 +1,6 @@
 package org.eqasim.examples.corsica_drt.mode_choice.utilities;
 
-import java.util.List;
-
+import com.google.inject.Inject;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.examples.corsica_drt.mode_choice.parameters.CorsicaDrtModeParameters;
@@ -9,7 +8,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-import com.google.inject.Inject;
+import java.util.List;
 
 public class DrtUtilityEstimator implements UtilityEstimator {
 	private final CorsicaDrtModeParameters parameters;

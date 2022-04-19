@@ -1,7 +1,7 @@
 package org.eqasim.examples.corsica_drt.mode_choice.utilities;
 
-import java.util.List;
-
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
@@ -13,14 +13,13 @@ import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.core.router.TripStructureUtils;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import java.util.List;
 
 public class DrtPredictor extends CachedVariablePredictor<DrtVariables> {
 	private CostModel costModel;
 
 	@Inject
-	public DrtPredictor(@Named("sharing:velib") CostModel costModel) {
+	public DrtPredictor(@Named("drt") CostModel costModel) {
 		this.costModel = costModel;
 	}
 
@@ -36,13 +35,12 @@ public class DrtPredictor extends CachedVariablePredictor<DrtVariables> {
 			case TransportMode.walk:
 				accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
 				break;
-			// Modified due to exception in routing Module( No DRT)
-			case "sharing:velib":
-				Leg segment= (Leg)	leg;
+			case "drt":
+				DrtRoute route = (DrtRoute) leg.getRoute();
 
 				// We use worst case here
-				travelTime_min = segment.getTravelTime().seconds()/ 60.0;
-				waitingTime_min = 0.0;
+				travelTime_min = route.getMaxTravelTime() / 60.0;
+				waitingTime_min = route.getMaxWaitTime() / 60.0;
 
 				cost_MU = costModel.calculateCost_MU(person, trip, elements);
 
