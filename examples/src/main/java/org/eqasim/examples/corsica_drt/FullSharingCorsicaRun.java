@@ -103,7 +103,7 @@ public class FullSharingCorsicaRun {
 
 
 			Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
-			//tripConstraints.add("ShapeFile");
+			tripConstraints.add("ShapeFile");
 			tripConstraints.add("SHARING_PT_CONSTRAINT");
 			Set<String> tripFilters = new HashSet<>(Arrays.asList("TourLengthFilter"));
 			dmcConfig.setTripConstraints(tripConstraints);
