@@ -6,6 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+develop
+- Add option for configuring custom activities in the Switzerland config file
 - Add air pollution emissions computation and analysis
 - Add fixed epsilon functionality
 - Transform scenario configurators to proper classes (formerly static methods)
