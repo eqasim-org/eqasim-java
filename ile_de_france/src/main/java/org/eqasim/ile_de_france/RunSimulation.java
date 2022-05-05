@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.analysis.counts.CountsModule;
+import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.stuck.StuckAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
@@ -57,6 +58,10 @@ public class RunSimulation {
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 
+		{
+			config.planCalcScore().setMarginalUtlOfWaiting_utils_hr(-1.0);
+		}
+
 		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
 
 		Controler controller = new Controler(scenario);
@@ -66,6 +71,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new StuckAnalysisModule());
+		controller.addOverridingModule(new DelayAnalysisModule());
 
 		if (cmd.hasOption("line-switch-utility")) {
 			double lineSwitchUtility = Double.parseDouble(cmd.getOptionStrict("line-switch-utility"));
