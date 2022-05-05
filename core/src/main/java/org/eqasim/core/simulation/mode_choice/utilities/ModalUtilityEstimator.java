@@ -9,17 +9,17 @@ import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
-import org.matsim.contribs.discrete_mode_choice.replanning.time_interpreter.TimeInterpreter;
 import org.matsim.core.router.TripRouter;
+import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.facilities.ActivityFacilities;
 
 public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
 	private final Map<String, UtilityEstimator> estimators;
 
 	public ModalUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
-			Map<String, UtilityEstimator> estimators, TimeInterpreter.Factory timeInterpreterFactory,
+			Map<String, UtilityEstimator> estimators, TimeInterpretation timeInterpretation,
 			Collection<String> preroutedModes) {
-		super(tripRouter, facilities, timeInterpreterFactory, preroutedModes);
+		super(tripRouter, facilities, timeInterpretation, preroutedModes);
 		this.estimators = estimators;
 	}
 
