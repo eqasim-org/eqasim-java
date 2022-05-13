@@ -39,8 +39,10 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.RoutingModule;
+import org.matsim.core.router.RoutingRequest;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.facilities.Facility;
+import org.matsim.core.utils.timing.TimeInterpretationModule;
+import org.matsim.utils.objectattributes.attributable.Attributes;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -152,6 +154,7 @@ public class TestSpecialModeChoiceCases {
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new EqasimModeChoiceModule()) //
 				.addOverridingModule(new StaticModeAvailabilityModule()) //
+				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
 
 		DiscreteModeChoiceModel model = injector.getInstance(DiscreteModeChoiceModel.class);
@@ -185,7 +188,7 @@ public class TestSpecialModeChoiceCases {
 		destinationActivity.setMaximumDuration(3600.0);
 
 		DiscreteModeChoiceTrip trip = new DiscreteModeChoiceTrip(originActivity, destinationActivity, "walk",
-				Collections.emptyList(), 0, trips.size(), trips.size());
+				Collections.emptyList(), 0, trips.size(), trips.size(), new Attributes());
 		trips.add(trip);
 	}
 
@@ -210,8 +213,7 @@ public class TestSpecialModeChoiceCases {
 		}
 
 		@Override
-		public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
-				Person person) {
+		public List<? extends PlanElement> calcRoute(RoutingRequest request) {
 			Leg leg = populationFactory.createLeg("doesn't matter");
 			leg.setTravelTime(3600.0);
 

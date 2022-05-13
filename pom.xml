@@ -22,7 +22,7 @@
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<matsim.version>13.0</matsim.version>
+		<matsim.version>14.0</matsim.version>
 	</properties>
 
 	<distributionManagement>
@@ -91,6 +91,12 @@
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>discrete_mode_choice</artifactId>
+			<version>${matsim.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>emissions</artifactId>
 			<version>${matsim.version}</version>
 		</dependency>
 

@@ -6,6 +6,10 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+develop
+- Add option for configuring custom activities in the Switzerland config file
+- Add air pollution emissions computation and analysis
+- Add fixed epsilon functionality
 - Transform scenario configurators to proper classes (formerly static methods)
 - Set routing parameter for waiting time in Île-de-France to -1.0
 - Allow cutter to process events to (1) perform routing based on recorded travel time, and (2) find crossing points based on the actual link enter/leave times of a previous simulation
