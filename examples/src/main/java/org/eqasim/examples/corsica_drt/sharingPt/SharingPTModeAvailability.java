@@ -17,12 +17,12 @@ public class SharingPTModeAvailability implements ModeAvailability {
         // Modes that are always available
         modes.add(TransportMode.walk);
         modes.add(TransportMode.pt);
-        modes.add("sharing:bikeShare");
-        //modes.add("sharing:eScooter");
+        //modes.add("sharing:bikeShare");
+//        modes.add("sharing:eScooter");
         modes.add("Sharing_PT");
         modes.add("PT_Sharing");
         modes.add("Sharing_PT_Sharing");
-        //modes.add("escooterPT");
+//        modes.add("escooterPT");
 
         // Check car availability
         boolean carAvailability = true;

@@ -19,6 +19,12 @@ public class KraussBikeShareCostModel extends AbstractCostModel {
 
         }
 
+    public KraussBikeShareCostModel(KraussCostParameters parameters , String name) {
+        super(name);
+        this.parameters = parameters;
+
+    }
+
        @Override
         protected double getInVehicleDistance_km(List<? extends PlanElement> elements){
            double inVehicleDistance=0.0;

@@ -1,46 +1,34 @@
 package org.eqasim.examples.corsica_drt;
 
-import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
+import com.google.common.io.Resources;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.examples.corsica_drt.analysis.DvrpAnalsisModule;
 import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
 import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
-import org.matsim.contrib.drt.optimizer.insertion.SelectiveInsertionSearchParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.DrtConfigGroup.OperationalScheme;
-import org.matsim.contrib.drt.run.DrtConfigs;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
-import org.matsim.contrib.drt.run.MultiModeDrtModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
-import org.matsim.contrib.dvrp.run.DvrpModule;
-import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
-import org.matsim.contrib.sharing.run.SharingConfigGroup;
-import org.matsim.contrib.sharing.run.SharingServiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
-import org.matsim.core.config.groups.QSimConfigGroup.StarttimeInterpretation;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
-import com.google.common.io.Resources;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This is an example run script that runs the Corsica test scenario with an
@@ -143,7 +131,7 @@ public class RunCorsicaDrtSimulation {
 
             Controler controller = new Controler(scenario);
             IDFConfigurator.configureController(controller);
-//		controller.addOverridingModule(new EqasimAnalysisModule());
+		controller.addOverridingModule(new EqasimAnalysisModule());
             controller.addOverridingModule(new EqasimModeChoiceModule());
             controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 

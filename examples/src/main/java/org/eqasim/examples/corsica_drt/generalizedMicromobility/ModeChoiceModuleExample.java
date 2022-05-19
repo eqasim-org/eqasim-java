@@ -1,4 +1,4 @@
-package org.eqasim.examples.corsica_drt.sharingPt;
+package org.eqasim.examples.corsica_drt.generalizedMicromobility;
 
 import com.google.common.io.Resources;
 import com.google.inject.Provider;
@@ -11,14 +11,14 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.examples.corsica_drt.CleanModeChoice.costs.GeneralizedBikeShareCostModel;
-import org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedCostParameters;
-import org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedMultimodal.*;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussBikeShareCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussCarCostModel;
+import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussEScooterCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussPTCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters;
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.*;
 import org.eqasim.examples.corsica_drt.mode_choice.utilities.*;
+import org.eqasim.examples.corsica_drt.sharingPt.*;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -34,8 +34,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Map;
+import java.util.Set;
 
-public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
+import static org.geotools.feature.type.DateUtil.isEqual;
+
+public class ModeChoiceModuleExample extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
 	public static final String MODE_AVAILABILITY_NAME = "IDFModeAvailability";
@@ -60,7 +63,7 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 				.build();
 		ScenarioUtils.loadScenario(scenario);
 
-			SharingPTModeChoiceModule module=new SharingPTModeChoiceModule(cmd,scenario);
+			ModeChoiceModuleExample module=new ModeChoiceModuleExample(cmd,scenario);
 			GeneralizedBikeShareCostModel try1= module.provideBikeShareCostModel(configGroup,"Perro");
 			GeneralizedBikeShareCostModel try2= module.provideBikeShareCostModel(configGroup,"Cat");
 			GeneralizedBikeShareCostModel try3= module.provideBikeShareCostModel(configGroup,"Horse");
@@ -72,7 +75,7 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 		}
 		String xs="x";
 	}
-	public SharingPTModeChoiceModule(CommandLine commandLine, Scenario scenario) {
+	public ModeChoiceModuleExample(CommandLine commandLine, Scenario scenario) {
 		this.commandLine = commandLine;
 		this.scenario = scenario;
 	}
@@ -164,9 +167,9 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 		bindCostModel("pt").to(KraussPTCostModel.class);
 		bind(KraussPTPredictor.class);
 
-		//Bind BikeShare
-
-		// Bind Bike Share 2
+//		//Bind BikeShare
+//
+//		// Bind Bike Share 2
 //		KraussBikeShareCostModel temporalCostModel=provideSharingCostModel(provideCostParameters((EqasimConfigGroup) this.scenario.getConfig().getModules().get("eqasim")));
 //		bindCostModel("sharing:bikeShare").toInstance(temporalCostModel);
 //		// Bind The Predictor
@@ -180,7 +183,7 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 //		} catch (ConfigurationException e) {
 //			e.printStackTrace();
 //		}
-
+//
 //		// Bind Estimtor
 //		KraussBikeShareEstimator bikeShareEstimator=provideBikeShareEstimator("sharing:bikeShare",tempModeParameters,temporalPredictor,kPersonPred);
 //		bindUtilityEstimator("sharing:bikeShare").toInstance(bikeShareEstimator);
@@ -188,50 +191,39 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 //		bindCostModel("sharing:bikeShare").toInstance(temporalCostModel);
 //		//bindCostModel("sharing:bikeShare").to(KraussBikeShareCostModel.class);
 //		bind(KraussBikeSharePredictor.class);
-//
-//		//Bind eScooter
-//		bindUtilityEstimator("sharing:eScooter").to(KraussEScooterEstimator.class);
-//		bindCostModel("sharing:eScooter").to(KraussEScooterCostModel.class);
-//		bind(KraussEScooterPredictor.class);
-		bindModeAvailability("KModeAvailability").to(SharingPTModeAvailability.class);
 
-		// Bind the estimators
-		// Register the estimator
 
-//
+		//bindCostModel("sharing:bikeShare").to(GeneralizedBikeShareCostModel.class);
+//		GeneralizedBikeShareEstimator generalEstimator=null;
+//		try {
+//			generalEstimator=this.addSharingServiceToEqasim((EqasimConfigGroup) this.scenario.getConfig().getModules().get("eqasim"),this.commandLine,"sharing:bikeShare");
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		bindUtilityEstimator("sharing:bikeShare").toInstance(generalEstimator);
+//		try {
+//			bindCostModel("sharing:bikeShare").toInstance(new org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedBikeShareCostModel("sharing:bikeShare",this.provideCostParameters((EqasimConfigGroup)this.scenario.getConfig().getModules().get("eqasim"),this.commandLine)));
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+		//Bind eScooter
+		bindUtilityEstimator("sharing:eScooter").to(KraussEScooterEstimator.class);
+		bindCostModel("sharing:eScooter").to(KraussEScooterCostModel.class);
+		bind(KraussEScooterPredictor.class);
+		//bindModeAvailability("KModeAvailability").to(SharingPTModeAvailability.class);
+
+//		// Bind the estimators
+//		// Register the estimator
 //		bindUtilityEstimator("Sharing_PT").to(SharingPTEstimator.class);
 //		bindUtilityEstimator("PT_Sharing").to(PTSharingEstimator.class);
-		//bindUtilityEstimator("Sharing_PT_Sharing").to(SharingPTSharingEstimator.class);
-
-		GeneralizedBikeSharePTBikeShareEstimator generalEstimator=null;
-		try {
-			generalEstimator=this.addSharingServiceSharingPTSharing((EqasimConfigGroup) this.scenario.getConfig().getModules().get("eqasim"),this.commandLine,"bikeShare");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		bindUtilityEstimator("Sharing_PT_Sharing").toInstance(generalEstimator);
-		GeneralizedBikeSharePTEstimator BS_PT_Estimator=null;
-		try {
-			BS_PT_Estimator=this.addSharingServiceSharingPT((EqasimConfigGroup) this.scenario.getConfig().getModules().get("eqasim"),this.commandLine,"bikeShare");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		bindUtilityEstimator("Sharing_PT").toInstance(BS_PT_Estimator);
-		GeneralizedPTBikeShareEstimator PT_BS_Estimator=null;
-		try {
-			PT_BS_Estimator=this.addSharingServicePTSharing((EqasimConfigGroup) this.scenario.getConfig().getModules().get("eqasim"),this.commandLine,"bikeShare");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		bindUtilityEstimator("PT_Sharing").toInstance(PT_BS_Estimator);
-
-		// Bind sharing PT Predictor
+//		bindUtilityEstimator("Sharing_PT_Sharing").to(SharingPTSharingEstimator.class);
+//		// Bind sharing PT Predictor
 //		bind(SharingPTPredictor.class);
 //		bind(PTSharingPredictor.class);
-//		bind(SharingPTSharingPredictorModifications.class);
-
-		PTStationFinder finder= new PTStationFinder(this.scenario.getTransitSchedule().getFacilities());
-		bindTripConstraintFactory("SHARING_PT_CONSTRAINT").toInstance(provideSharingPTTTripConstraint(finder,scenario,"Sharing"));
+//		bind(SharingPTSharingPredictor.class);
+//
+//
+//		bindTripConstraintFactory("SHARING_PT_CONSTRAINT").to(SharingPTTripConstraint.Factory.class);
 		bind(KraussPersonPredictor.class);
 	}
 
@@ -327,106 +319,111 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 		return getCostModel(factory, config, "pt");
 	}
 
-	public void createBikeShareEstimator(CommandLine cmnd){
-		KraussCostParameters kraussCostParameters = null;
-		try {
-			Class<?> costParamClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters");
-			Method costConstructor=costParamClass.getMethod("buildDefault");
-			kraussCostParameters= (KraussCostParameters) costConstructor.invoke(kraussCostParameters,null);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			e.printStackTrace();
-		}
-		// Create Cost Model
-		KraussCarCostModel kCarCostModel=null;
-		Class carCostModelClass;
-		Class[] arguments=new Class[]{KraussCostParameters.class,String.class};
-		String mode="carProxy";
-		Object[] argumentsInput= new Object[]{kraussCostParameters,mode};
-		try {
-			carCostModelClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.cost.KraussCarCostModel");
 
-			Constructor costConstructor=carCostModelClass.getConstructor(arguments);
-			kCarCostModel= (KraussCarCostModel) createObject(costConstructor,argumentsInput);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
+	public static void validateSharingCostParameters(GeneralizedCostParameters parameterDefinition) throws Exception {
+		Set<String> sharingKMCosts= parameterDefinition.sharingKMCosts.keySet();
+		Set<String> sharingBookingCosts=  parameterDefinition.sharingBookingCosts.keySet();
+		boolean isEqual = isEqual(sharingBookingCosts,sharingKMCosts);
+		if (isEqual==false) {
+			throw new  IllegalArgumentException(" One of the sharing modes does not have booking or km cost");
 		}
-		// Create CarPredictor
-		KraussCarPredictor kCarEstimator=null;
-		Class estimatorClass;
-		Class[] argumentsEstimator=new Class[]{CostModel.class,SharingPTParameters.class,Boolean.class};
-		Boolean isStatic=true;
-		SharingPTParameters sharingPtParam=SharingPTParameters.buildDefault();
-		Object[] argumentsInputCarPredictor= new Object[]{kCarCostModel,sharingPtParam, true};
-		try {
-			estimatorClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussCarPredictor");
+	}
 
-			Constructor predictorConstructor=estimatorClass.getConstructor(argumentsEstimator);
-			kCarEstimator= (KraussCarPredictor) createObject(predictorConstructor,argumentsInputCarPredictor);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		}
-		// Create CarPredictor
-		KraussCarEstimator carEstimator=null;
-		Class estimatorCarClass;
-		Class[] argumentsEst=new Class[]{SharingPTParameters.class,KraussCarPredictor.class, KraussPersonPredictor.class,Boolean.class};
-		KraussPersonPredictor kPersonPred=new KraussPersonPredictor();
-		Object[] argumentsInputCarEstimator= new Object[]{sharingPtParam,kCarEstimator,kPersonPred, true};
-		try {
-			estimatorCarClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.utilities.KraussCarEstimator");
-
-			Constructor estimatorConstructor=estimatorCarClass.getConstructor(argumentsEst);
-			carEstimator= (KraussCarEstimator) createObject(estimatorConstructor,argumentsInputCarEstimator);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		}
-	}
-	private GeneralizedBikeSharePTBikeShareEstimator addSharingServiceSharingPTSharing(EqasimConfigGroup config, CommandLine commandLine, String name) throws Exception {
-		GeneralizedCostParameters costParameters=GeneralizedCostParameters.provideCostParameters(config,commandLine);
-		GeneralizedMultimodalCostModel costModel=new GeneralizedMultimodalCostModel(name,costParameters);
-		GeneralizedBikeSharingPTBikeSharingPredictor predictor =new GeneralizedBikeSharingPTBikeSharingPredictor(costModel,costParameters,name, "bike");
-		KraussPersonPredictor personPredictor=new KraussPersonPredictor();
-		SharingPTParameters modeParams= new SharingPTModeChoiceModule(commandLine,null).provideModeChoiceParameters(config);
-		GeneralizedBikeSharePTBikeShareEstimator estimator=new GeneralizedBikeSharePTBikeShareEstimator(modeParams,predictor,name);
-		return estimator;
-	}
-	private GeneralizedBikeSharePTEstimator addSharingServiceSharingPT(EqasimConfigGroup config, CommandLine commandLine, String name) throws Exception {
-		GeneralizedCostParameters costParameters=GeneralizedCostParameters.provideCostParameters(config,commandLine);
-		GeneralizedMultimodalCostModel costModel=new GeneralizedMultimodalCostModel(name,costParameters);
-		GeneralizedBikeSharePTPredictor predictor = new GeneralizedBikeSharePTPredictor(costModel,costParameters,name, "bike");
-		KraussPersonPredictor personPredictor=new KraussPersonPredictor();
-		SharingPTParameters modeParams= new SharingPTModeChoiceModule(commandLine,null).provideModeChoiceParameters(config);
-		GeneralizedBikeSharePTEstimator estimator= new GeneralizedBikeSharePTEstimator(modeParams,predictor,name);
-		return estimator;
-	}
-	private GeneralizedPTBikeShareEstimator addSharingServicePTSharing(EqasimConfigGroup config, CommandLine commandLine, String name) throws Exception {
-		GeneralizedCostParameters costParameters=GeneralizedCostParameters.provideCostParameters(config,commandLine);
-		GeneralizedMultimodalCostModel costModel=new GeneralizedMultimodalCostModel(name,costParameters);
-		GeneralizedPTBikeSharePredictor predictor = new GeneralizedPTBikeSharePredictor(costModel,costParameters,name, "bike");
-		KraussPersonPredictor personPredictor=new KraussPersonPredictor();
-		SharingPTParameters modeParams= new SharingPTModeChoiceModule(commandLine,null).provideModeChoiceParameters(config);
-		GeneralizedPTBikeShareEstimator estimator= new GeneralizedPTBikeShareEstimator(modeParams,predictor,name);
-		return estimator;
-	}
 
 //	@Provides
 //	@Singleton
-	public SharingPTTripConstraint.Factory provideSharingPTTTripConstraint(
-			PTStationFinder stationFinder,Scenario scenario,String name) {
+	public static GeneralizedCostParameters provideCostParameters(EqasimConfigGroup config, CommandLine commandLine) throws Exception {
+		GeneralizedCostParameters parameters = GeneralizedCostParameters.buildDefault();
 
-		return new SharingPTTripConstraint.Factory(stationFinder, scenario,name);
+		if (config.getCostParametersPath() != null) {
+			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
+		}
+
+		GeneralizedCostParameters.applyCommandLineMicromobility("cost-parameter",commandLine,parameters);
+		return parameters;
 	}
+	private  GeneralizedBikeShareEstimator addSharingServiceToEqasim(EqasimConfigGroup config,CommandLine commandLine, String name) throws Exception {
+		GeneralizedCostParameters costParameters=GeneralizedCostParameters.provideCostParameters(config,commandLine);
+		org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedBikeShareCostModel costModel=new org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedBikeShareCostModel(name,costParameters);
+		GeneralizedBikeSharePredictor bikePredictor=new GeneralizedBikeSharePredictor(costModel,name);
+		KraussPersonPredictor personPredictor=new KraussPersonPredictor();
+		SharingPTParameters modeParams= new SharingPTModeChoiceModule(commandLine,null).provideModeChoiceParameters(config);
+		GeneralizedBikeShareEstimator bikeEstimator=new GeneralizedBikeShareEstimator(modeParams,bikePredictor,personPredictor,name);
+		return bikeEstimator;
+	}
+//	public KraussBikeShareEstimator createBikeShareEstimator(CommandLine cmnd){
+//		KraussCostParameters kraussCostParameters = null;
+//		try {
+//			Class<?> costParamClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters");
+//			Method costConstructor=costParamClass.getMethod("buildDefault");
+//			kraussCostParameters= (KraussCostParameters) costConstructor.invoke(kraussCostParameters,null);
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (NoSuchMethodException e) {
+//			e.printStackTrace();
+//		} catch (IllegalAccessException e) {
+//			e.printStackTrace();
+//		} catch (InvocationTargetException e) {
+//			e.printStackTrace();
+//		}
+//		// Create Cost Model
+//		KraussCarCostModel kCarCostModel=null;
+//		Class carCostModelClass;
+//		Class[] arguments=new Class[]{KraussCostParameters.class,String.class};
+//		String mode="carProxy";
+//		Object[] argumentsInput= new Object[]{kraussCostParameters,mode};
+//		try {
+//			carCostModelClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.cost.KraussCarCostModel");
+//
+//			Constructor costConstructor=carCostModelClass.getConstructor(arguments);
+//			kCarCostModel= (KraussCarCostModel) createObject(costConstructor,argumentsInput);
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (NoSuchMethodException e) {
+//			e.printStackTrace();
+//		}
+//		// Create CarPredictor
+//		KraussCarPredictor kCarEstimator=null;
+//		Class estimatorClass;
+//		Class[] argumentsEstimator=new Class[]{CostModel.class,SharingPTParameters.class,Boolean.class};
+//		Boolean isStatic=true;
+//		SharingPTParameters sharingPtParam=SharingPTParameters.buildDefault();
+//		Object[] argumentsInputCarPredictor= new Object[]{kCarCostModel,sharingPtParam, true};
+//		try {
+//			estimatorClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussCarPredictor");
+//
+//			Constructor predictorConstructor=estimatorClass.getConstructor(argumentsEstimator);
+//			kCarEstimator= (KraussCarPredictor) createObject(predictorConstructor,argumentsInputCarPredictor);
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (NoSuchMethodException e) {
+//			e.printStackTrace();
+//		}
+//		// Create CarPredictor
+//		KraussCarEstimator carEstimator=null;
+//		Class estimatorCarClass;
+//		Class[] argumentsEst=new Class[]{SharingPTParameters.class,KraussCarPredictor.class, KraussPersonPredictor.class,Boolean.class};
+//		KraussPersonPredictor kPersonPred=new KraussPersonPredictor();
+//		Object[] argumentsInputCarEstimator= new Object[]{sharingPtParam,kCarEstimator,kPersonPred, true};
+//		try {
+//			estimatorCarClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.utilities.KraussCarEstimator");
+//
+//			Constructor estimatorConstructor=estimatorCarClass.getConstructor(argumentsEst);
+//			carEstimator= (KraussCarEstimator) createObject(estimatorConstructor,argumentsInputCarEstimator);
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		} catch (NoSuchMethodException e) {
+//			e.printStackTrace();
+//		}
+//	}
+
+//	@Provides
+//	@Singleton
+//	public SharingPTTripConstraint.Factory provideSharingPTTTripConstraint(
+//			PTStationFinder stationFinder,Scenario scenario) {
+//
+//		return new SharingPTTripConstraint.Factory(stationFinder, scenario);
+//	}
 	public static Object createObject(Constructor constructor,
 									  Object[] arguments) {
 

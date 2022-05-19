@@ -1,12 +1,19 @@
 package org.eqasim.core.simulation.mode_choice.cost;
 
-import java.util.List;
-
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
 
+import java.util.List;
+
 public abstract class AbstractCostModel implements CostModel {
+
+
 	private final String mode;
+
+
+	public String getMode() {
+		return mode;
+	}
 
 	protected AbstractCostModel(String mode) {
 		this.mode = mode;

@@ -1,11 +1,9 @@
-package org.eqasim.examples.corsica_drt;
+package org.eqasim.examples.corsica_drt.generalizedMicromobility;
 
 import com.google.common.io.Resources;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.examples.corsica_drt.sharingPt.SharingPTModeChoiceModule;
-import org.eqasim.examples.corsica_drt.sharingPt.SharingPTModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
@@ -17,11 +15,9 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoic
 import org.matsim.core.config.*;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
-import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.pt.config.TransitRouterConfigGroup;
 
 import java.net.URL;
 import java.util.*;
@@ -34,9 +30,9 @@ import java.util.*;
  * the ile_de_france module and the additional fleet definition file is located
  * in the resources of the examples module.
  */
-public class FullSharingCorsicaRun {
+public class ModeChoiceExample {
 	static public void main(String[] args) throws ConfigurationException {
-			CommandLine cmd = new CommandLine.Builder(args) //
+		CommandLine cmd = new CommandLine.Builder(args) //
 				.allowOptions("use-rejection-constraint") //
 				.allowPrefixes("mode-parameter", "cost-parameter","sharing-mode-name") //
 				.build();
@@ -44,8 +40,7 @@ public class FullSharingCorsicaRun {
 
 		Config config = ConfigUtils.loadConfig(configUrl, IDFConfigurator.getConfigGroups());
 
-		config.controler().setLastIteration(10);
-		config.controler().setOutputDirectory("./outputOfTheCreatorAdditionalBikeShare/");
+		config.controler().setLastIteration(3);
 		config.qsim().setFlowCapFactor(1e9);
 		config.qsim().setStorageCapFactor(1e9);
 		final String PEDELEC = "pedelec";
@@ -94,9 +89,6 @@ public class FullSharingCorsicaRun {
 		config.planCalcScore().addActivityParams(bookingParams);
 
 		cmd.applyConfiguration(config);
-		TransitRouterConfigGroup transitRouting = (TransitRouterConfigGroup) config.getModules().get("transitRouter");
-		transitRouting.setDirectWalkFactor(10000);
-
 
 		{ // Add the DRT mode to the choice model
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
@@ -104,13 +96,12 @@ public class FullSharingCorsicaRun {
 
 			Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 			tripConstraints.add("ShapeFile");
-			tripConstraints.add("SHARING_PT_CONSTRAINT");
 			Set<String> tripFilters = new HashSet<>(Arrays.asList("TourLengthFilter"));
 			dmcConfig.setTripConstraints(tripConstraints);
 			//dmcConfig.removeParameterSet(erasedSet);
 			ConfigGroup set = dmcConfig.createParameterSet("tripConstraint:ShapeFile");
 			set.addParam("constrainedModes", "sharing:bikeShare");
-			set.addParam("path", "C:\\Users\\juan_\\Desktop\\TUM\\Semester 4\\Matsim\\eqasim-java-develop\\ile_de_france\\src\\main\\resources\\corsica\\extentTry.shp");
+			set.addParam("path", "C:\\Users\\juan_\\Desktop\\TUM\\Semester5\\Thesis\\eqasim-java\\ile_de_france\\src\\main\\resources\\corsica\\extent.shp");
 			set.addParam("requirement", "BOTH");
 			dmcConfig.addParameterSet(set);
 
@@ -122,11 +113,7 @@ public class FullSharingCorsicaRun {
 			Set<String> cachedModes = new HashSet<>();
 			cachedModes.addAll(dmcConfig.getCachedModes());
 //			cachedModes.add("drt");
-			cachedModes.add("Sharing_PT");
-			cachedModes.add("PT_Sharing");
-			cachedModes.add("Sharing_PT_Sharing");
-//			cachedModes.add("pedelec");
-//			cachedModes.add("sharing:bikeShare");
+			cachedModes.add("pedelec");
 			dmcConfig.setCachedModes(cachedModes);
 			dmcConfig.setModeAvailability("KModeAvailability");
 		}
@@ -136,18 +123,11 @@ public class FullSharingCorsicaRun {
 
 			// Set up choice model
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-// Eqasim config definition to add the mode car_pt estimation
-
-		eqasimConfig.setEstimator("Sharing_PT", "Sharing_PT");
-		eqasimConfig.setEstimator("PT_Sharing", "PT_Sharing");
-		eqasimConfig.setEstimator("Sharing_PT_Sharing","Sharing_PT_Sharing");
-
-
 
 			//Key Apart from modifying the  binders , add the neww estimators, etc etc 
 			eqasimConfig.setEstimator("bike","KBike");
-//			eqasimConfig.setCostModel("sharing:bikeShare","sharing:bikeShare");
-//			eqasimConfig.setEstimator("sharing:bikeShare","sharing:bikeShare");
+			eqasimConfig.setCostModel("sharing:bikeShare","sharing:bikeShare");
+			eqasimConfig.setEstimator("sharing:bikeShare","sharing:bikeShare");
 		    eqasimConfig.setEstimator("pt","KPT");
 
 		    eqasimConfig.setEstimator("car","KCar");
@@ -156,41 +136,6 @@ public class FullSharingCorsicaRun {
 			eqasimConfig.setTripAnalysisInterval(1);
 
 //
-
-		// Scoring config definition to add the mode cat_pt parameters
-		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
-		PlanCalcScoreConfigGroup.ModeParams sharingPTParams = new PlanCalcScoreConfigGroup.ModeParams("Sharing_PT");
-		PlanCalcScoreConfigGroup.ModeParams pTSharingParams = new PlanCalcScoreConfigGroup.ModeParams("PT_Sharing");
-		PlanCalcScoreConfigGroup.ModeParams SharingPTSharingParams = new PlanCalcScoreConfigGroup.ModeParams("Sharing_PT_Sharing");
-		scoringConfig.addModeParams(SharingPTSharingParams);
-		scoringConfig.addModeParams(sharingPTParams);
-		scoringConfig.addModeParams(pTSharingParams);
-
-		// "car_pt interaction" definition
-		PlanCalcScoreConfigGroup.ActivityParams paramsSharingPTInterAct = new PlanCalcScoreConfigGroup.ActivityParams("SharingPT_Interaction");
-		paramsSharingPTInterAct.setTypicalDuration(100.0);
-		paramsSharingPTInterAct.setScoringThisActivityAtAll(false);
-
-		// "pt_car interaction" definition
-		PlanCalcScoreConfigGroup.ActivityParams paramsPTSharingInterAct = new PlanCalcScoreConfigGroup.ActivityParams("PTSharing_Interaction");
-		paramsPTSharingInterAct.setTypicalDuration(100.0);
-		paramsPTSharingInterAct.setScoringThisActivityAtAll(false);
-
-		// Adding "car_pt interaction" to the scoring
-		scoringConfig.addActivityParams(paramsSharingPTInterAct);
-		scoringConfig.addActivityParams(paramsPTSharingInterAct);
-
-
-		// Adding "car_pt interaction" to the scoring
-		scoringConfig.addActivityParams(paramsPTSharingInterAct);
-		scoringConfig.addActivityParams(paramsSharingPTInterAct);
-
-		for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
-			if(strategy.getName().equals("DiscreteModeChoice")) {
-				strategy.setWeight(1000000000.0);
-			}
-		}
-
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		IDFConfigurator.configureScenario(scenario);
@@ -209,10 +154,9 @@ public class FullSharingCorsicaRun {
 		IDFConfigurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
-		controller.addOverridingModule(new SharingPTModeChoiceModule(cmd,scenario));
-		controller.addOverridingModule(new SharingPTModule(scenario));
-
+//		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
+		controller.addOverridingModule(new ModeChoiceModuleExample(cmd,scenario));
+		controller.addOverridingModule(new MicroMobilityModeEqasimModeChoiceModule(cmd,scenario,"sharing:bikeShare","C:\\Users\\juan_\\Desktop\\TUM\\Semester5\\Thesis\\MATSim_Root\\SBBSDummy.xml"));
      	//controller.addOverridingModule(new MultiModalModule());
 		//controller.addOverridingModule(new SwissRailRaptorModule());
 		new NetworkCleaner().run(scenario.getNetwork());

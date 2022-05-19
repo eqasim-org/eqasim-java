@@ -1,19 +1,18 @@
 package org.eqasim.core.simulation.mode_choice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.MapType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.log4j.Logger;
+import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.log4j.Logger;
-import org.matsim.core.config.CommandLine;
-import org.matsim.core.config.CommandLine.ConfigurationException;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.MapType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 public interface ParameterDefinition {
 	final static Logger logger = Logger.getLogger(ParameterDefinition.class);
@@ -41,13 +40,13 @@ public interface ParameterDefinition {
 			String value = entry.getValue();
 
 			try {
-				String[] parts = option.split("\\.");
+				String[] parts = option.split("\\.");// divide el punto
 				int numberOfParts = parts.length;
 
 				Object activeObject = parameterDefinition;
 
 				for (int i = 0; i < parts.length; i++) {
-					Field field = activeObject.getClass().getField(parts[i]);
+					Field field = activeObject.getClass().getField(parts[i]);// coge el campo
 
 					if (i == numberOfParts - 1) {
 						// We need to set the value

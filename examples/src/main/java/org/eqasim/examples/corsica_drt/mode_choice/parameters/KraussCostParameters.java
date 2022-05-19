@@ -2,6 +2,8 @@ package org.eqasim.examples.corsica_drt.mode_choice.parameters;
 
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 
+import java.util.HashMap;
+
 public class KraussCostParameters implements ParameterDefinition {
     public double carCost_Km;
     public double bookingCostBikeShare;
@@ -9,6 +11,9 @@ public class KraussCostParameters implements ParameterDefinition {
     public double bookingCostEScooter;
     public double eScooterCost_km;
     public double pTTicketCost;
+    public HashMap<String, Double> sharingBookingCosts;
+    public HashMap<String, Double> sharingKMCost;
+
 
     public  static KraussCostParameters buildDefault(){
         KraussCostParameters parameters = new KraussCostParameters();

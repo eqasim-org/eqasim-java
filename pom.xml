@@ -141,6 +141,7 @@
 			<artifactId>bicycle</artifactId>
 			<version>14.0-SNAPSHOT</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>

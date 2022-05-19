@@ -2,11 +2,11 @@ package org.eqasim.examples.corsica_drt.mode_choice.utilities;
 
 import com.google.inject.Inject;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
-import org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussModeParameters;
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussBikeSharePredictor;
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussPersonPredictor;
 import org.eqasim.examples.corsica_drt.mode_choice.variables.KraussBikeShareVariables;
 import org.eqasim.examples.corsica_drt.mode_choice.variables.KraussEqasimPersonVariables;
+import org.eqasim.examples.corsica_drt.sharingPt.SharingPTParameters;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -14,11 +14,17 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import java.util.List;
 
 public class KraussBikeShareEstimator implements UtilityEstimator {
-    private final KraussModeParameters parameters;
+    private final SharingPTParameters parameters;
     private final KraussBikeSharePredictor predictor;
 
     @Inject
-    public KraussBikeShareEstimator(KraussModeParameters parameters, KraussBikeSharePredictor predictor, KraussPersonPredictor personPredictor) {
+    public KraussBikeShareEstimator(SharingPTParameters parameters, KraussBikeSharePredictor predictor, KraussPersonPredictor personPredictor) {
+        this.parameters = parameters;
+        this.predictor = predictor;
+
+    }
+
+    public KraussBikeShareEstimator(SharingPTParameters parameters, KraussBikeSharePredictor predictor, KraussPersonPredictor personPredictor, String name) {
         this.parameters = parameters;
         this.predictor = predictor;
 

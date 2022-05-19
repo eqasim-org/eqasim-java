@@ -1,7 +1,5 @@
-package org.eqasim.examples.corsica_drt.mode_choice.predictors;
+package org.eqasim.examples.corsica_drt.generalizedMicromobility;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
@@ -14,8 +12,9 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import java.util.List;
 
-public class KraussBikeSharePredictor extends CachedVariablePredictor<KraussBikeShareVariables> {
+public class GeneralizedBikeSharePredictor extends CachedVariablePredictor<KraussBikeShareVariables> {
     private CostModel costModel;
+    public static final String BIKE_SHARE_MODE="Shared-Bike";
     double sharedBikeSpeed = 6.11;// Proxy of 22kph
     double travelTime_min = 0.0;
     double accessTime_min = 0.0;
@@ -24,12 +23,12 @@ public class KraussBikeSharePredictor extends CachedVariablePredictor<KraussBike
     double cost_MU = 0.0;
     double parkingTime_min = 1;// Proxy
 
-
-    @Inject
-    public KraussBikeSharePredictor(@Named("sharing:bikeShare") CostModel costModel) {
-        this.costModel = costModel;
-    }
-    public KraussBikeSharePredictor(CostModel costModel,String name) {
+//
+//    @Inject
+//    public GeneralizedBikeSharePredictor(@Named("sharing:bikeShare") CostModel costModel) {
+//        this.costModel = costModel;
+//    }
+    public GeneralizedBikeSharePredictor(CostModel costModel, String name) {
         this.costModel = costModel;
     }
     @Override
@@ -78,8 +77,8 @@ public class KraussBikeSharePredictor extends CachedVariablePredictor<KraussBike
                     }
 
                 }
-                // Checks the travel time in Shared Vehicle
-                if (leg.getMode() == "bike") {
+                // Checks the travel time in Shared Vehicle( Bike for Standard Test)
+                if (leg.getMode() == BIKE_SHARE_MODE) {
                     travelTime_min=+leg.getRoute().getTravelTime().seconds()/60;
 
                 }

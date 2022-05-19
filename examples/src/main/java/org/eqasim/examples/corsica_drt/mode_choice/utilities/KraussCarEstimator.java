@@ -24,7 +24,11 @@ public class KraussCarEstimator implements UtilityEstimator {
         this.predictor = predictor;
 
     }
+    public KraussCarEstimator(SharingPTParameters parameters, KraussCarPredictor predictor, KraussPersonPredictor personPredictor, Boolean isStatic) {
+        this.parameters = parameters;
+        this.predictor = predictor;
 
+    }
 
 
     protected double estimateTravelTimeUtility(KraussCarVariables variables) {

@@ -1,22 +1,23 @@
-package org.eqasim.examples.corsica_drt.sharingPt;
+package org.eqasim.examples.corsica_drt.sharingPt.GeneralizedSharingPT;
 
-import com.google.inject.Inject;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussPersonPredictor;
 import org.eqasim.examples.corsica_drt.mode_choice.variables.KraussEqasimPersonVariables;
+import org.eqasim.examples.corsica_drt.sharingPt.SharingPTParameters;
+import org.eqasim.examples.corsica_drt.sharingPt.SharingPTSharingPredictorOG;
+import org.eqasim.examples.corsica_drt.sharingPt.SharingPTVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import java.util.List;
 
-public class SharingPTSharingEstimator implements UtilityEstimator {
+public class GeneralizedSharingPTSharingEstimator implements UtilityEstimator {
 
     private final SharingPTParameters parameters;
-    private final SharingPTSharingPredictorModifications sharingPTPredictor;
-    // REEPLACE SharingPTSharingPredictorOG if Experiment gone wrong
-    @Inject
-    public SharingPTSharingEstimator(SharingPTParameters parameters, SharingPTSharingPredictorModifications sharingPTPredictor) {
+    private final SharingPTSharingPredictorOG sharingPTPredictor;
+
+    public GeneralizedSharingPTSharingEstimator(SharingPTParameters parameters, SharingPTSharingPredictorOG sharingPTPredictor) {
         this.parameters = parameters;
         this.sharingPTPredictor = sharingPTPredictor;
     }

@@ -1,5 +1,6 @@
 package org.eqasim.examples.corsica_drt.mode_choice.cost;
 
+import com.google.inject.Inject;
 import org.eqasim.core.simulation.mode_choice.cost.AbstractCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters;
 import org.matsim.api.core.v01.TransportMode;
@@ -14,6 +15,7 @@ public class KraussMicroMobilityCostModel extends AbstractCostModel {
 
     private final KraussCostParameters parameters;
         public final String proxyMode;
+        @Inject
         public KraussMicroMobilityCostModel(KraussCostParameters parameters, String mode) {
             super(mode);
             this.parameters = parameters;

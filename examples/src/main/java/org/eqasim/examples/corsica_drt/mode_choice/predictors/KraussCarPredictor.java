@@ -23,6 +23,10 @@ public class KraussCarPredictor  extends CachedVariablePredictor<KraussCarVariab
         this.parameters = parameters;
     }
 
+    public KraussCarPredictor(CostModel costModel, SharingPTParameters parameters,Boolean isStatic) {
+        this.costModel = costModel;
+        this.parameters = parameters;
+    }
     @Override
     public KraussCarVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         Leg leg= (Leg) elements.get(0);

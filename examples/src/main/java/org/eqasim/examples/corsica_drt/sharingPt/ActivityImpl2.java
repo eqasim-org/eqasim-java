@@ -12,7 +12,7 @@ import org.matsim.utils.objectattributes.attributable.Attributes;
 public class ActivityImpl2  implements Activity {
     private double endTime ;
     private double startTime ;
-    private double dur ;
+    private OptionalTime dur ;
     private String type;
     private Coord coord = null;
     private Id<Link> linkId = null;
@@ -54,7 +54,7 @@ public class ActivityImpl2  implements Activity {
 
     @Override
     public OptionalTime getMaximumDuration() {
-        return null;
+        return this.dur;
     }
 
     public final String getType() {
@@ -106,7 +106,7 @@ public class ActivityImpl2  implements Activity {
 
 
     public void setMaximumDuration(double dur) {
-        this.dur = dur;
+        this.dur =  OptionalTime.defined(dur);
     }
 
     @Override

@@ -18,6 +18,12 @@ public class KraussCarCostModel extends AbstractCostModel {
 
     }
 
+    public KraussCarCostModel(KraussCostParameters parameters,String mode) {
+        super(mode);
+        this.parameters = parameters;
+
+    }
+
 
 
     @Override

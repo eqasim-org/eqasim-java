@@ -2,7 +2,32 @@ package org.eqasim.examples.corsica_drt.sharingPt;
 
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
+import java.util.HashMap;
+
 public class SharingPTParameters extends ModeParameters {
+
+
+    public static void main(String[] args) {
+        SharingPTParameters parameters=buildDefault();
+
+
+        HashMap<String,Object>sp= parameters.sharingParameters;
+        String mode="bikeShare";
+        if(mode=="bikeShare"){
+            BikeShareParameters bsP= (BikeShareParameters) sp.get("bikeShare");
+            System.out.println(bsP.alpha_u);
+        }
+        Object bs=sp.get("bikeShare");
+        Object es=sp.get("eScooter");
+        bs=(BikeShareParameters)bs;
+        Double x=((BikeShareParameters) bs).alpha_u;
+
+
+
+    }
+    public class SharedMobilityParameters{
+
+    }
     public class CarParameters {
         public double alpha_u = 0.0;
         public double betaTravelTime_u_min = 0.0;
@@ -126,7 +151,7 @@ public class SharingPTParameters extends ModeParameters {
         public double pool=0.0;
         public double personConstant=0.0;
     }
-    public static class EScooterParameters{
+    public static class EScooterParameters {
         public double alpha_u = 0.0;
         public double betaTravelTime_u_min = 0.0;
 
@@ -261,13 +286,14 @@ public class SharingPTParameters extends ModeParameters {
     public final BikeShareParameters bikeShare = new BikeShareParameters();
     public final SharingPTMixParameters combinedSharingPT=new SharingPTMixParameters();
     public final PTSharingMixParameters combinedPTSharing=new PTSharingMixParameters();
-
+    public  HashMap<String,Object> sharingParameters=new HashMap<>();
 
     public static SharingPTParameters buildDefault() {
         // This is a copy & paste
 
         SharingPTParameters parameters = new SharingPTParameters();
-
+        parameters.sharingParameters.put("bikeShare",parameters.bikeShare);
+        parameters.sharingParameters.put("eScooter",parameters.eScooter);
         // Cost
         parameters.betaCost_u_MU = -1.886;
         parameters.lambdaCost=-1.414;

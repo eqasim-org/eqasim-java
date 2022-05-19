@@ -6,8 +6,10 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.contrib.sharing.io.*;
-import org.matsim.contrib.sharing.service.SharingStation;
+import org.matsim.contrib.sharing.io.DefaultSharingServiceSpecification;
+import org.matsim.contrib.sharing.io.ImmutableSharingVehicleSpecification;
+import org.matsim.contrib.sharing.io.SharingServiceSpecification;
+import org.matsim.contrib.sharing.io.SharingServiceWriter;
 import org.matsim.contrib.sharing.service.SharingVehicle;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
@@ -17,9 +19,7 @@ import org.matsim.core.utils.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 public class ReadFreeFloatingGBFS {
 

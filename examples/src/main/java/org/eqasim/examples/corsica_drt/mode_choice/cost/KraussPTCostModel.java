@@ -17,6 +17,7 @@ public class KraussPTCostModel extends AbstractCostModel {
         this.parameters = parameters;
     }
 
+
     @Override
     public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         return (parameters.pTTicketCost);
