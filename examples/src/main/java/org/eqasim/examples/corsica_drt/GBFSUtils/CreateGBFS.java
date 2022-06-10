@@ -3,6 +3,7 @@ package org.eqasim.examples.corsica_drt.GBFSUtils;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
@@ -20,7 +21,7 @@ public class CreateGBFS {
 
 
         createGBFSVehicleTypes();
-        createStations(11,2,"2",10,bounds[2],bounds[3],bounds[0],bounds[1]);
+//        createStations(11,2,"2",10,bounds[2],bounds[3],bounds[0],bounds[1]);
         createStationsStatus(10);
         createGeoFencingZone(5,15.3,85.2,0.0,23.2);
     }
@@ -51,37 +52,80 @@ public class CreateGBFS {
         }
 
     }
-
-    public static void createStations(Integer lastUpdated,Integer ttl,String version,int numberOfStations,Double xMax,Double yMax,Double xMin,Double yMin){
+    public static JSONObject createVehicleStatus(JSONArray vehicles){
         JSONObject obj=new JSONObject();
-        obj.put("last_updated", lastUpdated);
-        obj.put("ttl",ttl);
-        obj.put("version",version);
+        obj.put("last_updated", 1640887163);
+        obj.put("ttl",0);
+        obj.put("version","3.0");
         JSONObject data=new JSONObject();
-        JSONArray stations=new JSONArray();
-
-        for(int i=0;i<numberOfStations;i++){
-            Double xCoord= (Math.random() * ((xMax - xMin) + 1)) + xMin;
-            Double yCoord= (Math.random() * ((yMax - yMin) + 1)) + yMin;
-            stations.add(createStaticStation(String.valueOf(i),String.valueOf(i),xCoord,yCoord,"Su-Th 05:00-22:00; Fr-Sa 05:00-01:00",
-                    "underground_parking",false,"+33109874321","true"
-                    ,createVehDockCapacity(2,9,1,"b","a","c",3)));
-        }
-
-        data.put("stations",stations);
+        data.put("vehicles",vehicles);
         obj.put("data",data);
+        return obj;
 
+    }
+//    public static void createStations(Integer lastUpdated,Integer ttl,String version,int numberOfStations,Coord coord,Double xMin,Double yMin){
+//        JSONObject obj=new JSONObject();
+//        obj.put("last_updated", lastUpdated);
+//        obj.put("ttl",ttl);
+//        obj.put("version",version);
+//        JSONObject data=new JSONObject();
+//        JSONArray stations=new JSONArray();
+//
+//        for(int i=0;i<numberOfStations;i++){
+//
+//            stations.add(createStaticStation(String.valueOf(i),String.valueOf(i), coord.getY(), coord.getX(),"Su-Th 05:00-22:00; Fr-Sa 05:00-01:00",
+//                    "underground_parking",false,"+33109874321","true"
+//                    ,createVehDockCapacity(2,9,1,"b","a","c",3)));
+//        }
+//
+//        data.put("stations",stations);
+//        obj.put("data",data);
+//
+//
+//        System.out.println(obj);
+//        try{
+//            FileWriter file = new FileWriter("staticStations.json");
+//            file.write(obj.toJSONString());
+//            file.close();
+//        }catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//
+//    }
+    public static JSONObject createFreeVehicle(String id,String lastReport, Double lat,Double lon, String isReserved,String isDisabled,String vehicleType){
+        JSONObject obj= new JSONObject();
+//        "last_reported":1609866109,
+//                "lat":12.34,
+//                "lon":56.78,
+//                "is_reserved":false,
+//                "is_disabled":false,
+//                "vehicle_type_id":"abc123",
 
-        System.out.println(obj);
-        try{
-            FileWriter file = new FileWriter("staticStations.json");
-            file.write(obj.toJSONString());
-            file.close();
-        }catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        obj.put("last_reported",lastReport);
+        obj.put("lat",lat);
+        obj.put("lon",lon);
+        obj.put("vehicle_id",id);
+        obj.put("is_reserved",isReserved);
+        obj.put("is_reserved",isReserved);
+        obj.put("vehicle_type_id",vehicleType);
 
+        return(obj);
+    }
+    public static JSONArray createFreeVehicles(Network network,int numberOfVehicles,String mode, String fromCrs){
+        JSONArray vehiclesArray=new JSONArray();
+        Object[] nodesKeys =network.getNodes().keySet().toArray();
+//        CoordinateTransformation ct= TransformationFactory.getCoordinateTransformation(fromCrs,TransformationFactory.WGS84);
+        for ( int i=0; i<=numberOfVehicles;i++){
+            Object nodeKey = nodesKeys[new Random().nextInt(nodesKeys.length)];
+            Coord coordNode=network.getNodes().get(nodeKey).getCoord();
+//            coordNode=ct.transform(coordNode);
+             JSONObject vehicle=createFreeVehicle(String.valueOf(i),"proxy", coordNode.getY(), coordNode.getX(), "false","false",mode);
+             vehiclesArray.add(vehicle);
+
+        };
+
+        return( vehiclesArray);
     }
     public static JSONObject createVehDockCapacity(int cap1,int cap2,int cap3,String id1,
                                                    String id2, String id3, int numbVehTypes){
@@ -106,9 +150,12 @@ public class CreateGBFS {
 
     public static JSONObject createStaticStation(String id,String name,Double lat, Double longitude,String openingHours,
                                                  String parkingType,Boolean parkingHoop,String contactPhone,
-                                                 String chargingStation, JSONObject vehTypeDockCapacity){
+                                                 Boolean chargingStation, JSONObject vehTypeDockCapacity,int numVeh){
 
         JSONObject obj= new JSONObject();
+        int docCapacity=3;
+        if(numVeh!=0){docCapacity= (int) Math.round(numVeh*2.5);
+        };
         obj.put("id",id);
         obj.put("name",name);
         obj.put("lat",lat);
@@ -118,6 +165,7 @@ public class CreateGBFS {
         obj.put("parking_type",parkingType);
         obj.put("contact_phone",contactPhone);
         obj.put("is_charging_station",chargingStation);
+        obj.put("capacity",docCapacity);
         obj.put("vehicle_type_dock_capacity",vehTypeDockCapacity);
         return(obj);
 
@@ -254,15 +302,7 @@ public class CreateGBFS {
         int dType0=0;
         int dType1=0;
         int dType2=0;
-        int min=0;
-        int max=numDocksAvai;
-        Random r= new Random();
 
-        do{
-            dType0=r.nextInt(max-min)+min;
-            dType1=r.nextInt(max-min)+min;
-            dType2=r.nextInt(max-min)+min;
-        }while(dType0+dType1+dType2!=max);
         dock0 = new JSONObject();
         vehicle_type_ids = createVehicleTypeIds(id1, id2, id3);
         dock0.put("vehicle_type_ids", vehicle_type_ids);
@@ -281,8 +321,8 @@ public class CreateGBFS {
         obj.put("num_vehicles_available",numVehAva);
         obj.put("num_vehicles_disabled",numVehDis);
 
-        JSONArray vehTypes=createVehicleTypeStation(id1,id2,id3,numVehAva);
-        obj.put("vehicle_types_available",vehTypes);
+//        JSONArray vehTypes=createVehicleTypeStation(id1,id2,id3,numVehAva);
+//        obj.put("vehicle_types_available",vehTypes);
 
 
         return(obj);
@@ -290,7 +330,11 @@ public class CreateGBFS {
 
         public static JSONArray createVehicleTypeStation(String id1,String id2,String id3,Integer numVehAva){
         Integer min=0;
-        int max=numVehAva;
+        int max=1;
+        if(numVehAva>0){
+            max=numVehAva;
+        }
+
         Random r= new Random();
         int nID1=0;
         int nID2=0;

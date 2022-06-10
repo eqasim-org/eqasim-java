@@ -26,7 +26,7 @@ public class KraussEScooterEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateConstantUtility() {
-		return parameters.eScooter.personConstant;
+		return parameters.eScooter.alpha_u;
 	}
 	protected double estimatePersonalUtility(Person person, DiscreteModeChoiceTrip trip,List<? extends PlanElement> elements){
 		KraussPersonPredictor personPredictor=new KraussPersonPredictor();

@@ -30,7 +30,7 @@ public class GeneralizedBikeShareEstimator implements UtilityEstimator {
     }
 
     protected double estimateConstantUtility() {
-        return parameters.bikeShare.personConstant;
+        return parameters.bikeShare.alpha_u;
     }
     protected double estimatePersonalUtility(Person person, DiscreteModeChoiceTrip trip,List<? extends PlanElement> elements){
         KraussPersonPredictor personPredictor=new KraussPersonPredictor();
@@ -39,6 +39,7 @@ public class GeneralizedBikeShareEstimator implements UtilityEstimator {
         double bikeAcc=personVariables.getBikeAcc()*parameters.bikeShare.betaBikeAcc;
         double carAcc=personVariables.getCarAccessibility()*parameters.bikeShare.betaCarAcc;
         double pTAcc=personVariables.getPtPass()*parameters.bikeShare.betaPTPass;
+
         return(ageU+bikeAcc+carAcc+pTAcc);
     }
     protected double estimateTravelTimeUtility(KraussBikeShareVariables variables) {
@@ -50,7 +51,10 @@ public class GeneralizedBikeShareEstimator implements UtilityEstimator {
     }
 
     protected double estimateMonetaryCostUtility(KraussBikeShareVariables variables) {
-        return parameters.betaCost_u_MU * variables.cost;
+        double coeff=-Math.exp( parameters.betaCost_u_MU);
+        double utility=-Math.exp( parameters.betaCost_u_MU) * variables.cost;
+        return utility;
+
     }
 
     protected double estimateEgressTimeUtility(KraussBikeShareVariables variables) {
@@ -72,13 +76,26 @@ public class GeneralizedBikeShareEstimator implements UtilityEstimator {
         double utility = 0.0;
 
         utility += estimateConstantUtility();
+
         utility += estimateTravelTimeUtility(variables);
         utility += estimateAccessTimeUtility(variables);
         utility += estimateMonetaryCostUtility(variables);
         utility += estimateEgressTimeUtility(variables);
         utility+= estimateParkingTimeUtility(variables);
-        utility+=estimatePedelecUtility(variables);
+
         utility+=estimatePersonalUtility(person,trip,elements);
+
+       Double uMC = estimateMonetaryCostUtility(variables);
+       if(uMC>0){
+           System.out.println("unitary utility money is Not Zero"+String.valueOf(uMC));
+       }
+
+        Double uTT=estimateTravelTimeUtility(variables);
+        Double uAT=estimateAccessTimeUtility(variables);
+        Double uET=estimateEgressTimeUtility(variables);
+        Double uPT=estimateParkingTimeUtility(variables);
+        Double uP=estimatePersonalUtility(person,trip,elements);
+
         return utility;
     }
 

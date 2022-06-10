@@ -1,14 +1,14 @@
 package org.eqasim.ile_de_france.mode_choice;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.population.PersonUtils;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 public class IDFModeAvailability implements ModeAvailability {
 	@Override

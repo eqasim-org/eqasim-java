@@ -26,24 +26,15 @@ public class GeneralizedStationBasedConstraint extends AbstractTripConstraint {
     public static String name;
     public static String serviceScheme;
     private final InteractionFinder interactionFinder;
-//    public void injectRoutingModule(   Map<String, Provider<RoutingModule>> routingModuleProviders) {
-//
-//
-//           this.routingModules=routingModuleProviders.get("sharing:"+name).get();
-//
-//    }
+
     @Inject
     public GeneralizedStationBasedConstraint(PTStationFinder stationFinder, Scenario scenario, String name,InteractionFinder interactionFinder) {
         this.stationFinder=stationFinder;
         this.scenario=scenario;
         this.name=name;
         this.interactionFinder=interactionFinder;
-
-
-
     }
     public boolean validateBeforeEstimation(DiscreteModeChoiceTrip trip, String mode, List<String> previousModes) {
-////        injectRoutingModule();
         Boolean validation=true;
         Facility stationInitial = null;
         Facility finalStation = null;

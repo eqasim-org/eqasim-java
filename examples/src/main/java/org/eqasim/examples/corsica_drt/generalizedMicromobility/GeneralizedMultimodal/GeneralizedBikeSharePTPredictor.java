@@ -81,7 +81,7 @@ public class GeneralizedBikeSharePTPredictor extends CachedVariablePredictor<Sha
             PlanElement accessStage=accessSplit.get(i);
             if(accessStage instanceof Activity){
                 Activity activitySharing=(Activity)accessStage;
-                //Verify Type of ACtivity
+                //Verify Type of Activity
                 accessTravelTime += (activitySharing.getMaximumDuration().seconds());
             }
             else{

@@ -14,7 +14,7 @@ import java.util.Map;
 public class PTStationFinder {
     private final Map<Id<TransitStopFacility>, TransitStopFacility> stopsFacilities;
 
-    public PTStationFinder(Map<Id<TransitStopFacility>, TransitStopFacility> stopsFacilities) {
+    public PTStationFinder(Map<Id<TransitStopFacility>, TransitStopFacility>stopsFacilities) {
         this.stopsFacilities = stopsFacilities;
     }
     // Based on Activity location
@@ -51,17 +51,6 @@ public class PTStationFinder {
         double distance = 0.0;
         Coord homeXY = null;
         TransitStopFacility closestStopFacility=null;
-//        for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
-//            if (element instanceof Activity) {
-//                Activity activity = (Activity) element;
-//
-//                if (activity.getType().equals("home")) {
-//                    homeXY = activity.getCoord();
-//                }
-//
-//            }
-//
-//        }
 
         for (Id<TransitStopFacility> stop:stopsFacilities.keySet()) {
             distance = CoordUtils.calcEuclideanDistance(stopsFacilities.get(stop).getCoord(), origActivity.getCoord());

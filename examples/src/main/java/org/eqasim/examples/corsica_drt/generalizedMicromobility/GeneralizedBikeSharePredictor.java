@@ -13,7 +13,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import java.util.List;
 
 public class GeneralizedBikeSharePredictor extends CachedVariablePredictor<KraussBikeShareVariables> {
-    private CostModel costModel;
+    private GeneralizedBikeShareCostModel costModel;
     public static final String BIKE_SHARE_MODE="Shared-Bike";
     double sharedBikeSpeed = 6.11;// Proxy of 22kph
     double travelTime_min = 0.0;
@@ -23,13 +23,8 @@ public class GeneralizedBikeSharePredictor extends CachedVariablePredictor<Kraus
     double cost_MU = 0.0;
     double parkingTime_min = 1;// Proxy
 
-//
-//    @Inject
-//    public GeneralizedBikeSharePredictor(@Named("sharing:bikeShare") CostModel costModel) {
-//        this.costModel = costModel;
-//    }
     public GeneralizedBikeSharePredictor(CostModel costModel, String name) {
-        this.costModel = costModel;
+        this.costModel = (GeneralizedBikeShareCostModel) costModel;
     }
     @Override
     public KraussBikeShareVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -100,7 +95,6 @@ public class GeneralizedBikeSharePredictor extends CachedVariablePredictor<Kraus
 
         double cost=costModel.calculateCost_MU(person,trip,elements);
         double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-
         return new KraussBikeShareVariables(travelTime_min, accessTime_min, egressTime_min, 0, 0, 0, 0, 0,cost);
     }
 }

@@ -1,27 +1,9 @@
 package org.eqasim.core.analysis;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-
 import org.eqasim.core.components.transit.events.PublicTransitEvent;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.events.ActivityEndEvent;
-import org.matsim.api.core.v01.events.ActivityStartEvent;
-import org.matsim.api.core.v01.events.GenericEvent;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
-import org.matsim.api.core.v01.events.PersonDepartureEvent;
-import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
-import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
-import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
-import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
-import org.matsim.api.core.v01.events.handler.GenericEventHandler;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
+import org.matsim.api.core.v01.events.*;
+import org.matsim.api.core.v01.events.handler.*;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PopulationFactory;
@@ -33,6 +15,8 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
+
+import java.util.*;
 
 public class TripListener implements ActivityStartEventHandler, ActivityEndEventHandler, PersonDepartureEventHandler,
 		PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, LinkEnterEventHandler,
@@ -108,7 +92,12 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 					trip.returning = event.getActType().equals("home");
 					trip.followingPurpose = event.getActType();
 					trip.travelTime = event.getTime() - trip.departureTime;
+
+					if(trip.elements.size()>11){
+						String x="uwu";
+					}
 					trip.mode = mainModeIdentifier.identifyMainMode(trip.elements);
+
 					trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
 					trip.euclideanDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 

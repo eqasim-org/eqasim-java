@@ -123,8 +123,8 @@ public class SharingMultiple {
 //
 //        // Enable QSim components
 //        controller.configureQSimComponents(SharingUtils.configureQSim(sharingConfig));
-         MicromobilityUtils.addSharingService(controller,config,"Shared-Bike","Station Based",10000.0,null,"shared_taxi_vehicles_stations.xml","BikeSharing");
-         MicromobilityUtils.addSharingService(controller, config, "eScooter", "Free Floating", 100.0, null, "shared_taxi_vehicles_stations.xml", "eScooter");
+         MicromobilityUtils.addSharingService(controller,config,"Shared-Bike","Station Based",10000.0,null,"shared_taxi_vehicles_stations.xml","BikeSharing", "No");
+         MicromobilityUtils.addSharingService(controller, config, "eScooter", "Free Floating", 100.0, null, "shared_taxi_vehicles_stations.xml", "eScooter", "Yes");
         controller.addOverridingModule(new SharingModule());
 
         // Enable QSim components

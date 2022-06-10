@@ -30,11 +30,11 @@ public class KraussCarPredictor  extends CachedVariablePredictor<KraussCarVariab
     @Override
     public KraussCarVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         Leg leg= (Leg) elements.get(0);
-        double egressTime=parameters.car.egressTime;
-        double accessTime=parameters.car.accessTime;
-        double parkingTime=parameters.car.parkingTime;
+        double egressTime=parameters.car.egressTime/60;
+        double accessTime=parameters.car.accessTime/60;
+        double parkingTime=parameters.car.parkingTime/60;
         double cost=costModel.calculateCost_MU(person,trip,elements);
-        double travelTime=leg.getTravelTime().seconds();
+        double travelTime=leg.getTravelTime().seconds()/60;
         return (new KraussCarVariables(travelTime,accessTime,egressTime,parkingTime,cost));
     }
 }

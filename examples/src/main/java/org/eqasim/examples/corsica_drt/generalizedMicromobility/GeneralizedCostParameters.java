@@ -4,20 +4,16 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
-import org.eqasim.examples.corsica_drt.generalizedMicromobility.testingUtils.RouteTestImpl;
-import org.eqasim.examples.corsica_drt.generalizedMicromobility.testingUtils.newPopFactory2;
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussPersonPredictor;
 import org.eqasim.examples.corsica_drt.sharingPt.SharingPTModeChoiceModule;
 import org.eqasim.examples.corsica_drt.sharingPt.SharingPTParameters;
-import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.population.*;
-import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.core.config.CommandLine;
 
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import static org.geotools.feature.type.DateUtil.isEqual;
 
@@ -29,84 +25,84 @@ public class GeneralizedCostParameters implements ParameterDefinition {
     public double eScooterCost_km;
     public double pTTicketCost;
     public HashMap<String, Double> sharingBookingCosts;
-    public HashMap<String, Double> sharingKMCosts;
+    public HashMap<String, Double> sharingMinCosts;
 
-    public static void main(String[] args) throws Exception {
-        CommandLine cmd = new CommandLine.Builder(args) //
-                .allowOptions("use-rejection-constraint") //
-                .allowPrefixes("mode-parameter", "cost-parameter") //
-                .build();
-        GeneralizedCostParameters parameters = GeneralizedCostParameters.buildDefault();
-        GeneralizedCostParameters.applyCommandLineMicromobility("cost-parameter", cmd, parameters);
-        List<? extends PlanElement> sharingAccess = null;
-        PopulationFactory popFact = new newPopFactory2(null);
-        Leg walk = popFact.createLeg("walk");
-        walk.setDepartureTime((9 * 60 * 60) + (59 * 60));
-        walk.setTravelTime(60);
-        Route walkRoute1 = new RouteTestImpl();
-        walkRoute1.setDistance(100.0);
-        walkRoute1.setTravelTime(60.0);
-        walk.setRoute(walkRoute1);
-        Activity booking = ((newPopFactory2) popFact).createTestActivity("sharing booking interaction", ((10 * 60 * 60) + 60), (10 * 60 * 60), new Coord(0, 1));
-        booking.setMaximumDuration(60);
-        booking.getMaximumDuration();
-        Leg walk2 = popFact.createLeg("walk");
-        walk2.setDepartureTime((10 * 60 * 60) + (60));
-        walk2.setTravelTime(0);
-        Route walkRoute2 = new RouteTestImpl();
-        walkRoute2.setDistance(0);
-        walkRoute2.setTravelTime(0);
-        Activity pickUp = ((newPopFactory2) popFact).createTestActivity("sharing pickup interaction", ((10 * 60 * 60) + 60), ((10 * 60 * 60) + 60), new Coord(0, 1));
-        pickUp.setMaximumDuration(60);
-        Leg bikeLeg = popFact.createLeg("bike");
-        bikeLeg.setDepartureTime((10 * 60 * 60) + (60));
-        bikeLeg.setTravelTime(15 * 60);
-        Route bikeRoute = new RouteTestImpl();
-        bikeRoute.setDistance(4000);
-        bikeRoute.setTravelTime(15 * 60);
-        bikeLeg.setRoute(bikeRoute);
-
-        Activity dropOff = ((newPopFactory2) popFact).createTestActivity("sharing dropoff interaction", ((10 * 60 * 60) + (15 * 60)), ((10 * 60 * 60) + (15 * 60)), new Coord(15, 20));
-        dropOff.setMaximumDuration(60);
-
-        Leg walk3 = popFact.createLeg("walk");
-        walk3.setDepartureTime((10 * 60 * 60) + (15 * 60));
-        walk3.setTravelTime(5 * 60);
-        Route walkRoute3 = new RouteTestImpl();
-        walkRoute3.setDistance(100);
-        walkRoute3.setTravelTime(5 * 60);
-        walk3.setRoute(walkRoute3);
-
-        List<PlanElement> sharingEgress = new LinkedList<>();
-        sharingEgress.add((PlanElement) walk);
-        sharingEgress.add((PlanElement) booking);
-        sharingEgress.add((PlanElement) walk2);
-        sharingEgress.add((PlanElement) pickUp);
-        sharingEgress.add((PlanElement) bikeLeg);
-        sharingEgress.add((PlanElement) dropOff);
-        sharingEgress.add((PlanElement) walk3);
-        GeneralizedBikeShareCostModel costModel = new GeneralizedBikeShareCostModel("BikeShareStandard", parameters);
-        Double distance = costModel.getInVehicleDistance_km(sharingEgress);
-        Double cost = costModel.calculateCost_MU(null, null, sharingEgress);
-
-        GeneralizedBikeShareEstimator estimator = buildDefault().addSharingServiceToEqasim(new EqasimConfigGroup(), cmd, "BikeShareStandard");
-
-        DiscreteModeChoiceTrip trip = new DiscreteModeChoiceTrip(booking, dropOff, "walk",
-                Collections.emptyList(), 0, 0, 0);
-
-        Person personProx = popFact.createPerson(Id.createPersonId("person"));
-        personProx.getAttributes().putAttribute("age_a", 25);
-        personProx.getAttributes().putAttribute("bikeAvailability", "some");
-        personProx.getAttributes().putAttribute("carAvailavility", "none");
-        personProx.getAttributes().putAttribute("hasPtSubscription", false);
-        personProx.getAttributes().putAttribute("age", 25);
-
-        Double utility = estimator.estimateUtility(personProx, trip, sharingEgress);
-        String x = "Uwu";
-
-
-    }
-
+//    public static void main(String[] args) throws Exception {
+//        CommandLine cmd = new CommandLine.Builder(args) //
+//                .allowOptions("use-rejection-constraint") //
+//                .allowPrefixes("mode-parameter", "cost-parameter") //
+//                .build();
+//        GeneralizedCostParameters parameters = GeneralizedCostParameters.buildDefault();
+//        GeneralizedCostParameters.applyCommandLineMicromobility("cost-parameter", cmd, parameters);
+//        List<? extends PlanElement> sharingAccess = null;
+//        PopulationFactory popFact = new newPopFactory2(null);
+//        Leg walk = popFact.createLeg("walk");
+//        walk.setDepartureTime((9 * 60 * 60) + (59 * 60));
+//        walk.setTravelTime(60);
+//        Route walkRoute1 = new RouteTestImpl();
+//        walkRoute1.setDistance(100.0);
+//        walkRoute1.setTravelTime(60.0);
+//        walk.setRoute(walkRoute1);
+//        Activity booking = ((newPopFactory2) popFact).createTestActivity("sharing booking interaction", ((10 * 60 * 60) + 60), (10 * 60 * 60), new Coord(0, 1));
+//        booking.setMaximumDuration(60);
+//        booking.getMaximumDuration();
+//        Leg walk2 = popFact.createLeg("walk");
+//        walk2.setDepartureTime((10 * 60 * 60) + (60));
+//        walk2.setTravelTime(0);
+//        Route walkRoute2 = new RouteTestImpl();
+//        walkRoute2.setDistance(0);
+//        walkRoute2.setTravelTime(0);
+//        Activity pickUp = ((newPopFactory2) popFact).createTestActivity("sharing pickup interaction", ((10 * 60 * 60) + 60), ((10 * 60 * 60) + 60), new Coord(0, 1));
+//        pickUp.setMaximumDuration(60);
+//        Leg bikeLeg = popFact.createLeg("bike");
+//        bikeLeg.setDepartureTime((10 * 60 * 60) + (60));
+//        bikeLeg.setTravelTime(15 * 60);
+//        Route bikeRoute = new RouteTestImpl();
+//        bikeRoute.setDistance(4000);
+//        bikeRoute.setTravelTime(15 * 60);
+//        bikeLeg.setRoute(bikeRoute);
+//
+//        Activity dropOff = ((newPopFactory2) popFact).createTestActivity("sharing dropoff interaction", ((10 * 60 * 60) + (15 * 60)), ((10 * 60 * 60) + (15 * 60)), new Coord(15, 20));
+////        dropOff.setMaximumDuration(60);
+//
+//        Leg walk3 = popFact.createLeg("walk");
+//        walk3.setDepartureTime((10 * 60 * 60) + (15 * 60));
+//        walk3.setTravelTime(5 * 60);
+//        Route walkRoute3 = new RouteTestImpl();
+//        walkRoute3.setDistance(100);
+//        walkRoute3.setTravelTime(5 * 60);
+//        walk3.setRoute(walkRoute3);
+//
+//        List<PlanElement> sharingEgress = new LinkedList<>();
+//        sharingEgress.add((PlanElement) walk);
+//        sharingEgress.add((PlanElement) booking);
+//        sharingEgress.add((PlanElement) walk2);
+//        sharingEgress.add((PlanElement) pickUp);
+//        sharingEgress.add((PlanElement) bikeLeg);
+//        sharingEgress.add((PlanElement) dropOff);
+//        sharingEgress.add((PlanElement) walk3);
+//        GeneralizedBikeShareCostModel costModel = new GeneralizedBikeShareCostModel("BikeShareStandard", parameters);
+//        Double distance = costModel.getInVehicleDistance_km(sharingEgress);
+//        Double cost = costModel.calculateCost_MU(null, null, sharingEgress);
+//
+//        GeneralizedBikeShareEstimator estimator = buildDefault().addSharingServiceToEqasim(new EqasimConfigGroup(), cmd, "BikeShareStandard");
+//
+//        DiscreteModeChoiceTrip trip = new DiscreteModeChoiceTrip(booking, dropOff, "walk",
+//                Collections.emptyList(), 0, 0, 0);
+//
+//        Person personProx = popFact.createPerson(Id.createPersonId("person"));
+//        personProx.getAttributes().putAttribute("age_a", 25);
+//        personProx.getAttributes().putAttribute("bikeAvailability", "some");
+//        personProx.getAttributes().putAttribute("carAvailavility", "none");
+//        personProx.getAttributes().putAttribute("hasPtSubscription", false);
+//        personProx.getAttributes().putAttribute("age", 25);
+//
+//        Double utility = estimator.estimateUtility(personProx, trip, sharingEgress);
+//        String x = "Uwu";
+//
+//
+//    }
+//
     public static void applyCommandLineMicromobility(String prefix, CommandLine cmd, ParameterDefinition parameterDefinition) throws Exception {
         Map<String, String> values = new HashMap<>();
 
@@ -134,7 +130,7 @@ public class GeneralizedCostParameters implements ParameterDefinition {
             try {
                 String[] parts = option.split("\\.");
                 int numberOfParts = parts.length;
-                if (parts[0].equals("sharingBookingCosts") || parts[0].equals("sharingKMCosts")) {
+                if (parts[0].equals("sharingBookingCosts") || parts[0].equals("sharingMinCosts")) {
                     Object activeObject = parameterDefinition;
 
 
@@ -201,21 +197,20 @@ public class GeneralizedCostParameters implements ParameterDefinition {
 
     public static GeneralizedCostParameters buildDefault() {
         GeneralizedCostParameters parameters = new GeneralizedCostParameters();
-
-        parameters.carCost_Km = 0.30;
+        parameters.carCost_Km= 0.5;
+        parameters.pTTicketCost=1.8;
         parameters.sharingBookingCosts = new HashMap<String, Double>();
         parameters.sharingBookingCosts.put("Standard BikeShare", 0.25);
-        parameters.sharingKMCosts = new HashMap<String, Double>();
-        parameters.sharingKMCosts.put("Standard BikeShare", 1.0);
+        parameters.sharingMinCosts = new HashMap<String, Double>();
+        parameters.sharingMinCosts.put("Standard BikeShare", 1.0);
         parameters.sharingBookingCosts.put("Standard eScooter", 0.5);
-        parameters.sharingKMCosts.put("Standard eScooter", 0.5);
-        parameters.pTTicketCost = 3;
+        parameters.sharingMinCosts.put("Standard eScooter", 0.5);
 
         return parameters;
     }
 
     public static void validateSharingCostParameters(GeneralizedCostParameters parameterDefinition) throws Exception {
-        Set<String> sharingKMCosts = parameterDefinition.sharingKMCosts.keySet();
+        Set<String> sharingKMCosts = parameterDefinition.sharingMinCosts.keySet();
         Set<String> sharingBookingCosts = parameterDefinition.sharingBookingCosts.keySet();
         boolean isEqual = isEqual(sharingBookingCosts, sharingKMCosts);
         if (isEqual == false) {

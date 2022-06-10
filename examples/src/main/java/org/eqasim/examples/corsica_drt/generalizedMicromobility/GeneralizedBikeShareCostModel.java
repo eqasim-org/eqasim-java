@@ -15,33 +15,34 @@ public class GeneralizedBikeShareCostModel extends AbstractCostModel {
         super("sharing:"+mode);
         this.parameters=parameters;
     }
-    @Override
-    protected double getInVehicleDistance_km(List<? extends PlanElement> elements){
-        double inVehicleDistance=0.0;
 
+    protected double getInVehicleTime_min(List<? extends PlanElement> elements){
+        double inVehicleDistance=0.0;
+        double inVehicleTime=0.0;
 
         for (PlanElement element :elements){
             if(element instanceof Leg){
                 element=(Leg)element;
                 // Need To Change to "BikeShare"
-                if(((Leg) element).getMode().equals("Bike-Share")){
-                    inVehicleDistance=+((Leg) element).getRoute().getDistance();
+                if(((Leg) element).getMode().equals("Shared-Bike")){
+                    inVehicleTime=+((Leg)element).getRoute().getTravelTime().seconds()/60;
 
                 }
             }
 
         }
 
-        return (inVehicleDistance/1000);
+        return(inVehicleTime);
     }
     @Override
     public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-        double tripDistance_km = getInVehicleDistance_km(elements);
+
+        double tripTime_min=getInVehicleTime_min(elements);
         double cost=0;
 
         Double sharingBookingCost=parameters.sharingBookingCosts.get(super.getMode());
-        Double sharingKmCost=parameters.sharingKMCosts.get(super.getMode());
-        cost= parameters.sharingBookingCosts.get(this.getMode())+ parameters.sharingKMCosts.get(this.getMode())*tripDistance_km;
+        Double sharingMinCost=parameters.sharingMinCosts.get(super.getMode());
+        cost= sharingBookingCost+(sharingMinCost*tripTime_min);
 
         return (cost);
     }

@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedCostParameters;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussBikeShareCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussCarCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussEScooterCostModel;
@@ -97,7 +98,7 @@ public class KraussConstantModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public KraussBikeShareCostModel provideSharingCostModel(KraussCostParameters parameters) {
+	public KraussBikeShareCostModel provideSharingCostModel(GeneralizedCostParameters parameters) {
 		return new KraussBikeShareCostModel(parameters);
 	}
 
@@ -116,14 +117,14 @@ public class KraussConstantModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public KraussCarCostModel provideCarCostModel(KraussCostParameters parameters) {
+	public KraussCarCostModel provideCarCostModel(GeneralizedCostParameters parameters) {
 		return new KraussCarCostModel(parameters);
 	}
 
 
 	@Provides
 	@Singleton
-	public KraussPTCostModel providePTCostModel(KraussCostParameters parameters) {
+	public KraussPTCostModel providePTCostModel(GeneralizedCostParameters parameters) {
 		return new KraussPTCostModel(parameters);
 	}
 	@Provides

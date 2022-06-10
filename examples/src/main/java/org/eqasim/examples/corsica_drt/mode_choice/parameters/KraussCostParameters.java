@@ -18,12 +18,12 @@ public class KraussCostParameters implements ParameterDefinition {
     public  static KraussCostParameters buildDefault(){
         KraussCostParameters parameters = new KraussCostParameters();
 
-        parameters.carCost_Km= 0.30;
+        parameters.carCost_Km= 0.15;
         parameters.bookingCostBikeShare = 0.25;
         parameters.bikeShareCost_Km=1;
         parameters.bookingCostEScooter = 0.5;
         parameters.eScooterCost_km=0.5;
-        parameters.pTTicketCost=3;
+        parameters.pTTicketCost=1.8;
 
         return parameters;
     }

@@ -28,7 +28,7 @@ public class KraussPTEstimator implements UtilityEstimator {
 
 
     protected double estimateConstantUtility() {
-        return parameters.pt.personConstant;
+        return parameters.pt.alpha_u;
     }
     protected double estimatePersonalUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements){
         KraussPersonPredictor personPredictor=new KraussPersonPredictor();
@@ -48,7 +48,7 @@ public class KraussPTEstimator implements UtilityEstimator {
     }
 
     protected double estimateMonetaryCostUtility(KraussPTVariables variables) {
-        return parameters.betaCost_u_MU * variables.cost;
+        return -Math.exp(parameters.betaCost_u_MU) * variables.cost;
     }
 
     protected double estimateEgressTimeUtility(KraussPTVariables variables) {

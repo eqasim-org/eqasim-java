@@ -14,7 +14,7 @@ public class GeneralizedEScooterCostModel extends AbstractCostModel {
 
 
         public GeneralizedEScooterCostModel(String mode,GeneralizedCostParameters parameters) {
-            super(mode);
+            super("sharing:"+mode);
             this.parameters = parameters;
 
         }
@@ -22,29 +22,34 @@ public class GeneralizedEScooterCostModel extends AbstractCostModel {
        @Override
         protected double getInVehicleDistance_km(List<? extends PlanElement> elements){
            double inVehicleDistance=0.0;
+           double inVehicleTime=0.0;
 
 
                 for (PlanElement element :elements){
                     if(element instanceof Leg){
                         element=(Leg)element;
                         if(((Leg) element).getMode()== "eScooter"){
+                            inVehicleTime=+((Leg)element).getRoute().getTravelTime().seconds()/60;
                             inVehicleDistance=+((Leg) element).getRoute().getDistance();
                         }
                     }
 
                 }
 
-            return (inVehicleDistance/1000);
+//            return (inVehicleDistance/1000);
+           return(inVehicleTime);
         }
 
         @Override
         public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
             double tripDistance_km = getInVehicleDistance_km(elements);
+            double tripTime_min=getInVehicleDistance_km(elements);
             double cost=0;
 
             Double sharingBookingCost=parameters.sharingBookingCosts.get(super.getMode());
-            Double sharingKmCost=parameters.sharingKMCosts.get(super.getMode());
-            cost= parameters.sharingBookingCosts.get(this.getMode())+ parameters.sharingKMCosts.get(this.getMode())*tripDistance_km;
+            //Double sharingKmCost=parameters.sharingKMCosts.get(super.getMode());
+            Double sharingMinCost=parameters.sharingMinCosts.get(super.getMode());
+            cost= sharingBookingCost+(sharingMinCost*tripTime_min);
 
             return (cost);
         }

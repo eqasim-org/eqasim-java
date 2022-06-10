@@ -48,7 +48,7 @@ public class GeneralizedPTBikeShareEstimator implements UtilityEstimator {
         double bikeAcc=personVariables.getBikeAcc()*parameters.bikeShare.betaBikeAcc;
         double carAcc=personVariables.getCarAccessibility()*parameters.bikeShare.betaCarAcc;
         double pTAcc=personVariables.getPtPass()*parameters.bikeShare.betaPTPass;
-        return(ageU+bikeAcc+carAcc+pTAcc);
+        return(ageU+bikeAcc+pTAcc+carAcc);
     }
 
     protected double estimateTravelTimeUtilitySharing(SharingPTVariables variables) {
@@ -60,7 +60,10 @@ public class GeneralizedPTBikeShareEstimator implements UtilityEstimator {
     }
 
     protected double estimateMonetaryCostUtilitySharing(SharingPTVariables variables) {
-        return parameters.betaCost_u_MU * variables.cost_Sharing;
+        double utility=-Math.exp( parameters.betaCost_u_MU) * variables.cost;
+
+        return utility;
+
     }
 
     protected double estimateEgressTimeUtilitySharing(SharingPTVariables variables) {
@@ -70,9 +73,7 @@ public class GeneralizedPTBikeShareEstimator implements UtilityEstimator {
     protected double estimateParkingTimeUtilitySharing(SharingPTVariables variables){
         return parameters.bikeShare.betaParkingTime_u_min*variables.parkingTime_u_min_Sharing;
     }
-    protected double estimatePedelecUtilitySharing(SharingPTVariables variables){
-        return parameters.bikeShare.betaPedelec*variables.pedelec;
-    }
+
     protected double estimateTravelTimeUtilityPT(SharingPTVariables variables) {
         return parameters.pt.betaTravelTime_u_min * variables.travelTime_u_min;
     }
@@ -82,7 +83,7 @@ public class GeneralizedPTBikeShareEstimator implements UtilityEstimator {
     }
 
     protected double estimateMonetaryCostUtilityPT(SharingPTVariables variables) {
-        return parameters.betaCost_u_MU * variables.cost;
+        return -Math.exp(parameters.betaCost_u_MU) * variables.cost;
     }
 
     protected double estimateEgressTimeUtilityPT(SharingPTVariables variables) {
@@ -106,7 +107,7 @@ public class GeneralizedPTBikeShareEstimator implements UtilityEstimator {
         utility += estimateMonetaryCostUtilitySharing(variables);
         utility += estimateEgressTimeUtilitySharing(variables);
         utility+= estimateParkingTimeUtilitySharing(variables);
-        utility+=estimatePedelecUtilitySharing(variables);
+
         utility+=estimatePersonalUtilitySharing(person,trip,elements);
         utility += estimateTravelTimeUtilityPT(variables);
         utility += estimateAccessTimeUtilityPT(variables);

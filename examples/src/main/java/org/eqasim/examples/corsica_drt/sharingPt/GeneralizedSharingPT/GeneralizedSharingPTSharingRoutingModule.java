@@ -93,8 +93,18 @@ public class GeneralizedSharingPTSharingRoutingModule implements RoutingModule {
             allElements.add(interactionActivtySharingPT);
             allElements.addAll(ptElements);
             allElements.add(interactionActivtyPTSharing);
+            if(sharingEgress.isEmpty()){
+                String x="uwu";
+            }
             allElements.addAll(sharingEgress);
-
+        for( PlanElement element :allElements){
+            if(element instanceof  Leg){
+                Leg leg=(Leg)element;
+                if(leg.getMode().equals("car")){
+                    System.out.println("ouch");
+                }
+            }
+        }
             return allElements;
 
     }

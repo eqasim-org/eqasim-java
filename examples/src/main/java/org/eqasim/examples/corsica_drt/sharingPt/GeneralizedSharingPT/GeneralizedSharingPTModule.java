@@ -22,6 +22,7 @@ public class GeneralizedSharingPTModule extends AbstractDvrpModeModule {
         String modePTName=super.getMode()+"_PT";
         String pTmodeName="PT_"+super.getMode();
         String modePTModeName=super.getMode()+"_PT_"+super.getMode();
+
         bindModal(GeneralizedSharingPTRoutingModule.class).toProvider(modalProvider(getter -> {
             Scenario scenario = getter.get(Scenario.class);
             RoutingModule accessEgressRoutingModule = getter.getNamed(RoutingModule.class, "sharing:"+ super.getMode());
@@ -31,8 +32,7 @@ public class GeneralizedSharingPTModule extends AbstractDvrpModeModule {
         }));
 
         addRoutingModuleBinding(modePTName).to(modalKey(GeneralizedSharingPTRoutingModule.class));
-       // addRoutingModuleBinding("Sharing_PT").to(SharingPTRoutingModule.class);
-        // Binds the  routing module for PT+ sharing egress
+
 
         bindModal(GeneralizedPTSharingRoutingModule.class).toProvider(modalProvider(getter -> {
             Scenario scenario = getter.get(Scenario.class);
@@ -51,30 +51,6 @@ public class GeneralizedSharingPTModule extends AbstractDvrpModeModule {
             return new GeneralizedSharingPTSharingRoutingModule(accessEgressRoutingModule,mainModeRoutingModule,scenario.getNetwork(),scenario.getTransitSchedule().getFacilities());
         }));
 
-
         addRoutingModuleBinding(modePTModeName).to(modalKey(GeneralizedSharingPTSharingRoutingModule.class));
     }
-
-//    @Provides
-//    public SharingPTRoutingModule provideSharingPTRoutingModule(@Named("pt") RoutingModule ptRoutingModule, @Named("sharing:bikeShare")RoutingModule sharingRoutingModule, Network network){
-//
-//
-//        return new SharingPTRoutingModule(sharingRoutingModule,ptRoutingModule, network,scenario.getTransitSchedule().getFacilities());
-//    }
-
-//    @Provides
-//    public SharingPTSharingRoutingModule provideSharingPTSharingRoutingModule(@Named("pt") RoutingModule ptRoutingModule, @Named("sharing:bikeShare")RoutingModule sharingRoutingModule,Network network){
-//
-//        return new SharingPTSharingRoutingModule(sharingRoutingModule,ptRoutingModule, network,scenario.getTransitSchedule().getFacilities());
-//    }
-//    @Provides
-//    public PTSharingRoutingModule providePTSharingRoutingModule(@Named("pt") RoutingModule ptRoutingModule, @Named("sharing:bikeShare")RoutingModule sharingRoutingModule, Network network){
-//        return new PTSharingRoutingModule(sharingRoutingModule,ptRoutingModule, network,scenario.getTransitSchedule().getFacilities());
-//    }
-//    @Provides
-//    public PTStationFinder provideStationFinder(Scenario scenario) {
-//
-//        return new PTStationFinder(scenario.getTransitSchedule().getFacilities());
-//
-//    }
 }

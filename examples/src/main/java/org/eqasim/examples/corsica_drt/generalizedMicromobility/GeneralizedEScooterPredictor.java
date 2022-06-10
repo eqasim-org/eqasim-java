@@ -1,6 +1,5 @@
 package org.eqasim.examples.corsica_drt.generalizedMicromobility;
 
-import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.examples.corsica_drt.mode_choice.variables.KraussEScooterVariables;
@@ -13,7 +12,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import java.util.List;
 
 public class GeneralizedEScooterPredictor extends CachedVariablePredictor<KraussEScooterVariables> {
-    private CostModel costModel;
+    private GeneralizedEScooterCostModel costModel;
     String name;
     double sharedEscooterSpeed = 4;// Proxy of 22kph
     double travelTime_min = 0.0;
@@ -23,7 +22,7 @@ public class GeneralizedEScooterPredictor extends CachedVariablePredictor<Krauss
     double cost_MU = 0.0;
     double parkingTime_min = 1;// Proxy
 
-    public GeneralizedEScooterPredictor( CostModel costModel, String name) {
+    public GeneralizedEScooterPredictor( GeneralizedEScooterCostModel costModel, String name) {
         this.costModel = costModel;
         this.name=name;
     }

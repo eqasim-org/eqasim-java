@@ -20,13 +20,14 @@ public class KraussEqasimPersonVariables extends PersonVariables {
         return maasPass;
     }
 
-
+    Double randomCost;
     public KraussEqasimPersonVariables(int age_a, int bikeAcc, int carAccessibility, int ptPass, int maasPass) {
         super(age_a);
         this.bikeAcc = bikeAcc;
         this.carAccessibility = carAccessibility;
         this.ptPass = ptPass;
         this.maasPass = maasPass;
+
     }
 
     public int getPtPass() {

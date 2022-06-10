@@ -1,28 +1,18 @@
 package org.eqasim.core.scenario.cutter.extent;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.*;
 import org.matsim.api.core.v01.Coord;
 import org.opengis.feature.simple.SimpleFeature;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.*;
 
 public class ShapeScenarioExtent implements ScenarioExtent {
 	private final GeometryFactory factory = new GeometryFactory();
@@ -111,6 +101,7 @@ public class ShapeScenarioExtent implements ScenarioExtent {
 			dataStore.dispose();
 
 			if (polygons.size() > 1) {
+
 				throw new IllegalStateException("Found more than one polygon that match to the filter.");
 			}
 

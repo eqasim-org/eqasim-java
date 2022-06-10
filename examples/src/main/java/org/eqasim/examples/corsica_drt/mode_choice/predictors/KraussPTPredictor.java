@@ -49,9 +49,7 @@ public class KraussPTPredictor extends CachedVariablePredictor<KraussPTVariables
                             if (leg.getMode() == "walk") {
                                 accessTime_min += leg.getTravelTime().seconds() / 60.0;
                             }
-                            else if(leg.getMode()=="bike"){
-                                /// Rellenar esto cuando lo haga multimodal
-                            }
+
                             if (leg.getMode() == "pt") {
                                 TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
                                 double departureTime = leg.getDepartureTime().seconds();

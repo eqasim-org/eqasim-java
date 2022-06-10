@@ -1,7 +1,7 @@
 package org.eqasim.examples.corsica_drt.mode_choice.cost;
 
 import org.eqasim.core.simulation.mode_choice.cost.AbstractCostModel;
-import org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters;
+import org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedCostParameters;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -11,15 +11,15 @@ import java.util.List;
 
 public class KraussBikeShareCostModel extends AbstractCostModel {
 
-    private final KraussCostParameters parameters;
+    private final GeneralizedCostParameters parameters;
 
-        public KraussBikeShareCostModel(KraussCostParameters parameters) {
+        public KraussBikeShareCostModel(GeneralizedCostParameters parameters) {
             super("sharing:bikeShare");
             this.parameters = parameters;
 
         }
 
-    public KraussBikeShareCostModel(KraussCostParameters parameters , String name) {
+    public KraussBikeShareCostModel(GeneralizedCostParameters parameters , String name) {
         super(name);
         this.parameters = parameters;
 

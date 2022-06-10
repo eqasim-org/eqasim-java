@@ -40,7 +40,7 @@ public class KraussCarEstimator implements UtilityEstimator {
     }
 
     protected double estimateMonetaryCostUtility(KraussCarVariables variables) {
-        return parameters.lambdaCost * variables.cost;
+        return -Math.exp(parameters.betaCost_u_MU) * variables.cost;
     }
 
     protected double estimateEgressTimeUtility(KraussCarVariables variables) {
@@ -57,13 +57,13 @@ public class KraussCarEstimator implements UtilityEstimator {
         KraussCarVariables variables = predictor.predict(person, trip, elements);
 
         double utility = 0.0;
-
-
         utility += estimateTravelTimeUtility(variables);
         utility += estimateAccessTimeUtility(variables);
         utility += estimateMonetaryCostUtility(variables);
         utility += estimateEgressTimeUtility(variables);
         utility+= estimateParkingTimeUtility(variables);
+        utility=utility*parameters.car.pool;
+
         return utility;
     }
 }

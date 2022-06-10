@@ -17,17 +17,17 @@ public class GeneralizedModeAvailability implements ModeAvailability {
 
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
-        CommandLine cmd = new CommandLine.Builder(args) //
-                .allowOptions("use-rejection-constraint") //
-                .allowPrefixes("mode-parameter", "cost-parameter","sharing-mode-name") //
-                .build();
+//        CommandLine cmd = new CommandLine.Builder(args) //
+//                .allowOptions("use-rejection-constraint") //
+//                .allowPrefixes("sharing-mode-name") //
+//                .build();
 //        GeneralizedModeAvailability modeAvailability = GeneralizedModeAvailability.buildDefault();
 //        try {
 //            GeneralizedModeAvailability.applyCommandLineAvailability("sharing-mode-name",cmd,modeAvailability);
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }
-        System.out.println("uwu");
+//        System.out.println("uwu");
 
 
     }
@@ -46,9 +46,9 @@ public class GeneralizedModeAvailability implements ModeAvailability {
                     Collection<String> reeplacement = (Collection<String>) field.get(activeObject);
                     String[] parts = option.split(":");// divide el punto
                     String[] parts2 = parts[1].split("\\.");
-
-                    if (parts2.length == 1) {
-                        reeplacement.add("sharing:" + (option.split(":")[1]));
+                    if(parts2[0].equals("Service_Name")){
+                        reeplacement.add("sharing:" + cmd.getOptionStrict(option));
+                        //reeplacement.add("sharing:" + (option.split(":")[1]));
                     }
 
                 }
@@ -57,6 +57,7 @@ public class GeneralizedModeAvailability implements ModeAvailability {
             applyIntermodalMap(modeAvailability, values);
         }
     }
+
     static public void applyIntermodalMap(GeneralizedModeAvailability modeAvailability,Map<String,String> values) {
         for (Map.Entry<String, String> entry : values.entrySet()) {
             String option = entry.getKey();
@@ -64,12 +65,14 @@ public class GeneralizedModeAvailability implements ModeAvailability {
                 try {
                     String[] parts = option.split("\\.");// divide el punto
                     if(parts.length!=1) {
-                        if (parts[1].equals("Intermodal")) {
-                            Collection<String> reeplacement = modeAvailability.modes;
-                            reeplacement.add(parts[0] + "_PT");
-                            reeplacement.add(parts[0] + "_PT_" + parts[0]);
-                            reeplacement.add("PT_" + parts[0]);
-                            System.out.println("uwu");
+                        if (parts[0].equals("Multimodal")) {
+                            if(value.equals("Yes")){
+                                Collection<String> reeplacement = modeAvailability.modes;
+                                reeplacement.add(parts[1] + "_PT");
+                                reeplacement.add(parts[1] + "_PT_" + parts[1]);
+                                reeplacement.add("PT_" + parts[1]);
+                            }
+
                         }
                     }
                 } catch (Exception e) {

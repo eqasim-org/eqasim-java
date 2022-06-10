@@ -31,7 +31,7 @@ public class KraussBikeShareEstimator implements UtilityEstimator {
     }
 
     protected double estimateConstantUtility() {
-        return parameters.bikeShare.personConstant;
+        return parameters.bikeShare.alpha_u;
     }
     protected double estimatePersonalUtility(Person person, DiscreteModeChoiceTrip trip,List<? extends PlanElement> elements){
         KraussPersonPredictor personPredictor=new KraussPersonPredictor();

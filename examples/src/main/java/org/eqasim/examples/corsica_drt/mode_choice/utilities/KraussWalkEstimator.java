@@ -30,7 +30,7 @@ public class KraussWalkEstimator  implements UtilityEstimator {
 
 
     protected double estimateConstantUtility() {
-        return parameters.walk.personConstant;
+        return parameters.walk.alpha_u;
     }
     protected double estimatePersonalUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements){
         KraussPersonPredictor personPredictor=new KraussPersonPredictor();
@@ -39,7 +39,7 @@ public class KraussWalkEstimator  implements UtilityEstimator {
         double bikeAcc=personVariables.getBikeAcc()*parameters.walk.betaBikeAcc;
         double pTAcc=personVariables.getPtPass()*parameters.walk.betaPTPass;
         double carAcc=personVariables.getCarAccessibility()+parameters.walk.betaCarAcc;
-        return(ageU+bikeAcc+pTAcc+carAcc);
+        return(ageU+bikeAcc+pTAcc+carAcc+parameters.walk.sigma);
     }
     protected double estimateTravelTimeUtility(WalkVariables variables) {
         return parameters.walk.betaTravelTime_u_min * variables.travelTime_min;

@@ -46,7 +46,7 @@ public class GeneralizedMultimodalCostModel extends AbstractCostModel {
         double tripDistance_km = getInVehicleDistance_km(elements);
         double cost=0;
 
-        cost= parameters.sharingBookingCosts.get("sharing:"+mode)+ parameters.sharingKMCosts.get("sharing:"+mode)*tripDistance_km;
+        cost= parameters.sharingBookingCosts.get("sharing:"+mode)+ parameters.sharingMinCosts.get("sharing:"+mode)*tripDistance_km;
 
         return (cost);
     }

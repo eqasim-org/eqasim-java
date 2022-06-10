@@ -16,7 +16,7 @@ import org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedMulti
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussBikeShareCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussCarCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussPTCostModel;
-import org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters;
+
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.*;
 import org.eqasim.examples.corsica_drt.mode_choice.utilities.*;
 import org.eqasim.ile_de_france.IDFConfigurator;
@@ -82,11 +82,11 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 		//Bind Parameters
 			bind(ModeParameters.class).to(SharingPTParameters.class);
 		// Create Cost Parameters
-		KraussCostParameters kraussCostParameters = null;
+		GeneralizedCostParameters kraussCostParameters = null;
 		try {
-			Class<?> costParamClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters");
+			Class<?> costParamClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.parameters.GeneralizedCostParameters");
 			Method costConstructor=costParamClass.getMethod("buildDefault");
-			kraussCostParameters= (KraussCostParameters) costConstructor.invoke(kraussCostParameters,null);
+			kraussCostParameters= (GeneralizedCostParameters) costConstructor.invoke(kraussCostParameters,null);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
@@ -99,7 +99,7 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 		// Create Cost Model
 		KraussCarCostModel kCarCostModel=null;
 		Class carCostModelClass;
-		Class[] arguments=new Class[]{KraussCostParameters.class,String.class};
+		Class[] arguments=new Class[]{GeneralizedCostParameters.class,String.class};
 		String mode="carProxy";
 		Object[] argumentsInput= new Object[]{kraussCostParameters,mode};
 		try {
@@ -265,7 +265,7 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 
 
    public GeneralizedBikeShareCostModel provideBikeShareCostModel(EqasimConfigGroup config, String name){
-		KraussCostParameters costParameters= provideCostParameters(config);
+		GeneralizedCostParameters costParameters= provideCostParameters(config);
 	   GeneralizedBikeShareCostModel bikeShareCostModel= new GeneralizedBikeShareCostModel(costParameters,name);
 	   return(bikeShareCostModel);
    }
@@ -276,14 +276,14 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public KraussBikeShareCostModel provideSharingCostModel(KraussCostParameters parameters) {
+	public KraussBikeShareCostModel provideSharingCostModel(GeneralizedCostParameters parameters) {
 		return new KraussBikeShareCostModel(parameters);
 	}
 
 	@Provides
 	@Singleton
-	public KraussCostParameters provideCostParameters(EqasimConfigGroup config) {
-		KraussCostParameters parameters = KraussCostParameters.buildDefault();
+	public GeneralizedCostParameters provideCostParameters(EqasimConfigGroup config) {
+		GeneralizedCostParameters parameters = GeneralizedCostParameters.buildDefault();
 
 		if (config.getCostParametersPath() != null) {
 			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
@@ -295,16 +295,17 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public KraussCarCostModel provideCarCostModel(KraussCostParameters parameters) {
+	public KraussCarCostModel provideCarCostModel(GeneralizedCostParameters parameters) {
 		return new KraussCarCostModel(parameters);
 	}
 
 
 	@Provides
 	@Singleton
-	public KraussPTCostModel providePTCostModel(KraussCostParameters parameters) {
+	public KraussPTCostModel providePTCostModel(GeneralizedCostParameters parameters) {
 		return new KraussPTCostModel(parameters);
 	}
+
 	@Provides
 	@Named("sharing:bikeShare")
 	public CostModel provideCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
@@ -328,11 +329,11 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 	}
 
 	public void createBikeShareEstimator(CommandLine cmnd){
-		KraussCostParameters kraussCostParameters = null;
+		GeneralizedCostParameters kraussCostParameters = null;
 		try {
-			Class<?> costParamClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.parameters.KraussCostParameters");
+			Class<?> costParamClass=Class.forName("org.eqasim.examples.corsica_drt.mode_choice.parameters.GeneralizedCostParameters");
 			Method costConstructor=costParamClass.getMethod("buildDefault");
-			kraussCostParameters= (KraussCostParameters) costConstructor.invoke(kraussCostParameters,null);
+			kraussCostParameters= (GeneralizedCostParameters) costConstructor.invoke(kraussCostParameters,null);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
@@ -345,7 +346,7 @@ public class SharingPTModeChoiceModule extends AbstractEqasimExtension {
 		// Create Cost Model
 		KraussCarCostModel kCarCostModel=null;
 		Class carCostModelClass;
-		Class[] arguments=new Class[]{KraussCostParameters.class,String.class};
+		Class[] arguments=new Class[]{GeneralizedCostParameters.class,String.class};
 		String mode="carProxy";
 		Object[] argumentsInput= new Object[]{kraussCostParameters,mode};
 		try {
