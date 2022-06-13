@@ -47,12 +47,12 @@ public class CalibrationOutputListener implements IterationEndsListener, Shutdow
 		this.outputDirectory = outputDirectory;
 		this.lastIteration = controllerConfig.getLastIteration();
 
-		this.tripAnalysisInterval = eqasimConfig.getTripAnalysisInterval();
+		this.tripAnalysisInterval = eqasimConfig.getAnalysisInterval();
 		this.tripAnalysisListener = tripListener;
 
 		this.config = config;
 
-		if (eqasimConfig.getTripAnalysisInterval() < 1) {
+		if (eqasimConfig.getAnalysisInterval() < 1) {
 			logger.warn("To use calibration output, the tripAnalysisInterval must be > 0");
 		}
 	}

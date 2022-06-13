@@ -32,16 +32,11 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private final OutputDirectoryHierarchy outputDirectory;
 
 	private final TripListener tripAnalysisListener;
-	private final int tripAnalysisInterval;
-	private boolean isTripAnalysisActive = false;
-
 	private final LegListener legAnalysisListener;
-	private final int legAnalysisInterval;
-	private boolean isLegAnalysisActive = false;
-
 	private final PublicTransportTripListener ptAnalysisListener;
-	private final int ptAnalysisInterval;
-	private boolean isPtAnalysisActive = false;
+
+	private final int analysisInterval;
+	private boolean isAnalysisActive = false;
 
 	private final DistanceUnit scenarioDistanceUnit;
 	private final DistanceUnit analysisDistanceUnit;
@@ -52,43 +47,24 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		this.outputDirectory = outputDirectory;
 
 		this.scenarioDistanceUnit = config.getDistanceUnit();
-		this.analysisDistanceUnit = config.getTripAnalysisDistanceUnit();
+		this.analysisDistanceUnit = config.getAnalysisDistanceUnit();
 
-		this.tripAnalysisInterval = config.getTripAnalysisInterval();
+		this.analysisInterval = config.getAnalysisInterval();
+
 		this.tripAnalysisListener = tripListener;
-
-		this.legAnalysisInterval = config.getLegAnalysisInterval();
 		this.legAnalysisListener = legListener;
-
-		this.ptAnalysisInterval = config.getPublicTransportAnalysisInterval();
 		this.ptAnalysisListener = ptListener;
 	}
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		isTripAnalysisActive = false;
+		isAnalysisActive = false;
 
-		if (tripAnalysisInterval > 0) {
-			if (event.getIteration() % tripAnalysisInterval == 0 || event.isLastIteration()) {
-				isTripAnalysisActive = true;
+		if (analysisInterval > 0) {
+			if (event.getIteration() % analysisInterval == 0 || event.isLastIteration()) {
+				isAnalysisActive = true;
 				event.getServices().getEvents().addHandler(tripAnalysisListener);
-			}
-		}
-
-		isLegAnalysisActive = false;
-
-		if (legAnalysisInterval > 0) {
-			if (event.getIteration() % legAnalysisInterval == 0 || event.isLastIteration()) {
-				isLegAnalysisActive = true;
 				event.getServices().getEvents().addHandler(legAnalysisListener);
-			}
-		}
-
-		isPtAnalysisActive = false;
-
-		if (ptAnalysisInterval > 0) {
-			if (event.getIteration() % ptAnalysisInterval == 0 || event.isLastIteration()) {
-				isPtAnalysisActive = true;
 				event.getServices().getEvents().addHandler(ptAnalysisListener);
 			}
 		}
@@ -97,27 +73,19 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	@Override
 	public void notifyIterationEnds(IterationEndsEvent event) {
 		try {
-			if (isTripAnalysisActive) {
+			if (isAnalysisActive) {
 				event.getServices().getEvents().removeHandler(tripAnalysisListener);
-
-				String path = outputDirectory.getIterationFilename(event.getIteration(), TRIPS_FILE_NAME);
-				new TripWriter(tripAnalysisListener.getTripItems(), scenarioDistanceUnit, analysisDistanceUnit)
-						.write(path);
-			}
-
-			if (isLegAnalysisActive) {
 				event.getServices().getEvents().removeHandler(legAnalysisListener);
-
-				String path = outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME);
-				new LegWriter(legAnalysisListener.getLegItems(), scenarioDistanceUnit, analysisDistanceUnit)
-						.write(path);
-			}
-
-			if (isPtAnalysisActive) {
 				event.getServices().getEvents().removeHandler(ptAnalysisListener);
 
-				String path = outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME);
-				new PublicTransportTripWriter(ptAnalysisListener.getTripItems()).write(path);
+				new TripWriter(tripAnalysisListener.getTripItems(), scenarioDistanceUnit, analysisDistanceUnit)
+						.write(outputDirectory.getIterationFilename(event.getIteration(), TRIPS_FILE_NAME));
+
+				new LegWriter(legAnalysisListener.getLegItems(), scenarioDistanceUnit, analysisDistanceUnit)
+						.write(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME));
+
+				new PublicTransportTripWriter(ptAnalysisListener.getTripItems())
+						.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -127,23 +95,12 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	@Override
 	public void notifyShutdown(ShutdownEvent event) {
 		try {
-			File iterationPath = new File(outputDirectory.getIterationFilename(event.getIteration(), TRIPS_FILE_NAME));
-			File outputPath = new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME));
-			Files.copy(iterationPath.toPath(), outputPath.toPath());
-		} catch (IOException e) {
-		}
-
-		try {
-			File iterationPath = new File(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME));
-			File outputPath = new File(outputDirectory.getOutputFilename(LEGS_FILE_NAME));
-			Files.copy(iterationPath.toPath(), outputPath.toPath());
-		} catch (IOException e) {
-		}
-
-		try {
-			File iterationPath = new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
-			File outputPath = new File(outputDirectory.getOutputFilename(PT_FILE_NAME));
-			Files.copy(iterationPath.toPath(), outputPath.toPath());
+			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), TRIPS_FILE_NAME)).toPath(),
+					new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME)).toPath());
+			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME)).toPath(),
+					new File(outputDirectory.getOutputFilename(LEGS_FILE_NAME)).toPath());
+			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
+					new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
 		} catch (IOException e) {
 		}
 	}
