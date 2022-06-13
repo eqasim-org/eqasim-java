@@ -1,4 +1,4 @@
-package org.eqasim.core.analysis.trips;
+package org.eqasim.core.analysis.run;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -10,6 +10,11 @@ import org.apache.log4j.Logger;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.trips.TripItem;
+import org.eqasim.core.analysis.trips.TripListener;
+import org.eqasim.core.analysis.trips.TripReaderFromEvents;
+import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
+import org.eqasim.core.analysis.trips.TripWriter;
 import org.eqasim.core.components.EqasimMainModeIdentifier;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;

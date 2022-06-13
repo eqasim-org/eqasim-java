@@ -1,8 +1,12 @@
-package org.eqasim.core.analysis.pt;
+package org.eqasim.core.analysis.run;
 
 import java.io.IOException;
 import java.util.Collection;
 
+import org.eqasim.core.analysis.pt.PublicTransportLegItem;
+import org.eqasim.core.analysis.pt.PublicTransportLegListener;
+import org.eqasim.core.analysis.pt.PublicTransportLegReader;
+import org.eqasim.core.analysis.pt.PublicTransportLegWriter;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 

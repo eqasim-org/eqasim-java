@@ -1,4 +1,4 @@
-package org.eqasim.core.analysis.legs;
+package org.eqasim.core.analysis.run;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -10,6 +10,11 @@ import org.apache.log4j.Logger;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.legs.LegItem;
+import org.eqasim.core.analysis.legs.LegListener;
+import org.eqasim.core.analysis.legs.LegReaderFromEvents;
+import org.eqasim.core.analysis.legs.LegReaderFromPopulation;
+import org.eqasim.core.analysis.legs.LegWriter;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
