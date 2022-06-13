@@ -6,15 +6,15 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
 
-public class PublicTransportTripWriter {
-	final private Collection<PublicTransportTripItem> trips;
+public class PublicTransportLegWriter {
+	final private Collection<PublicTransportLegItem> trips;
 	final private String delimiter;
 
-	public PublicTransportTripWriter(Collection<PublicTransportTripItem> trips) {
+	public PublicTransportLegWriter(Collection<PublicTransportLegItem> trips) {
 		this(trips, ";");
 	}
 
-	public PublicTransportTripWriter(Collection<PublicTransportTripItem> trips, String delimiter) {
+	public PublicTransportLegWriter(Collection<PublicTransportLegItem> trips, String delimiter) {
 		this.trips = trips;
 		this.delimiter = delimiter;
 	}
@@ -25,7 +25,7 @@ public class PublicTransportTripWriter {
 		writer.write(formatHeader() + "\n");
 		writer.flush();
 
-		for (PublicTransportTripItem trip : trips) {
+		for (PublicTransportLegItem trip : trips) {
 			writer.write(formatTrip(trip) + "\n");
 			writer.flush();
 		}
@@ -46,7 +46,7 @@ public class PublicTransportTripWriter {
 		});
 	}
 
-	private String formatTrip(PublicTransportTripItem trip) {
+	private String formatTrip(PublicTransportLegItem trip) {
 		return String.join(delimiter, new String[] { //
 				trip.personId.toString(), //
 				String.valueOf(trip.personTripId), //

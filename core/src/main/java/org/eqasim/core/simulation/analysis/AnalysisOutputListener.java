@@ -9,8 +9,8 @@ import org.eqasim.core.analysis.LegListener;
 import org.eqasim.core.analysis.LegWriter;
 import org.eqasim.core.analysis.TripListener;
 import org.eqasim.core.analysis.TripWriter;
-import org.eqasim.core.analysis.pt.PublicTransportTripListener;
-import org.eqasim.core.analysis.pt.PublicTransportTripWriter;
+import org.eqasim.core.analysis.pt.PublicTransportLegListener;
+import org.eqasim.core.analysis.pt.PublicTransportLegWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
@@ -33,7 +33,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	private final TripListener tripAnalysisListener;
 	private final LegListener legAnalysisListener;
-	private final PublicTransportTripListener ptAnalysisListener;
+	private final PublicTransportLegListener ptAnalysisListener;
 
 	private final int analysisInterval;
 	private boolean isAnalysisActive = false;
@@ -43,7 +43,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	@Inject
 	public AnalysisOutputListener(EqasimConfigGroup config, OutputDirectoryHierarchy outputDirectory,
-			TripListener tripListener, LegListener legListener, PublicTransportTripListener ptListener) {
+			TripListener tripListener, LegListener legListener, PublicTransportLegListener ptListener) {
 		this.outputDirectory = outputDirectory;
 
 		this.scenarioDistanceUnit = config.getDistanceUnit();
@@ -84,7 +84,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				new LegWriter(legAnalysisListener.getLegItems(), scenarioDistanceUnit, analysisDistanceUnit)
 						.write(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME));
 
-				new PublicTransportTripWriter(ptAnalysisListener.getTripItems())
+				new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
 						.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
 			}
 		} catch (IOException e) {

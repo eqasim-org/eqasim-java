@@ -4,7 +4,7 @@ import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.LegListener;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.TripListener;
-import org.eqasim.core.analysis.pt.PublicTransportTripListener;
+import org.eqasim.core.analysis.pt.PublicTransportLegListener;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.router.MainModeIdentifier;
@@ -35,8 +35,8 @@ public class EqasimAnalysisModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	public PublicTransportTripListener providePublicTransportListener(Network network,
+	public PublicTransportLegListener providePublicTransportListener(Network network,
 			PersonAnalysisFilter personFilter) {
-		return new PublicTransportTripListener();
+		return new PublicTransportLegListener();
 	}
 }
