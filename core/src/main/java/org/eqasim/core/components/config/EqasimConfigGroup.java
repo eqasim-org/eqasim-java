@@ -21,6 +21,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private final static String COST_PARAMETERS_PATH = "costParametersPath";
 
 	private final static String TRIP_ANALYSIS_INTERVAL = "tripAnalysisInterval";
+	private final static String LEG_ANALYSIS_INTERVAL = "tripAnalysisInterval";
+	private final static String PUBLIC_TRANSPORT_ANALYSIS_INTERVAL = "publicTransportAnalysisInterval";
 	private final static String TRIP_ANALYSIS_DISTANCE_UNIT = "tripAnalysisDistanceUnit";
 
 	private final static String USE_SCHEDULE_BASED_TRANSPORT = "useScheduleBasedTransport";
@@ -34,6 +36,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private String costParametersPath = null;
 
 	private int tripAnalysisInterval = 0;
+	private int legAnalysisInterval = 0;
+	private int publicTransportAnalysisInterval = 0;
 	private DistanceUnit tripAnalysisDistanceUnit = DistanceUnit.meter;
 
 	private boolean useScheduleBasedTransport = true;
@@ -206,6 +210,26 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(TRIP_ANALYSIS_INTERVAL)
 	public void setTripAnalysisInterval(int tripAnalysisInterval) {
 		this.tripAnalysisInterval = tripAnalysisInterval;
+	}
+
+	@StringGetter(LEG_ANALYSIS_INTERVAL)
+	public int getLegAnalysisInterval() {
+		return legAnalysisInterval;
+	}
+
+	@StringSetter(LEG_ANALYSIS_INTERVAL)
+	public void setLegAnalysisInterval(int legAnalysisInterval) {
+		this.legAnalysisInterval = legAnalysisInterval;
+	}
+
+	@StringGetter(PUBLIC_TRANSPORT_ANALYSIS_INTERVAL)
+	public int getPublicTransportAnalysisInterval() {
+		return publicTransportAnalysisInterval;
+	}
+
+	@StringSetter(PUBLIC_TRANSPORT_ANALYSIS_INTERVAL)
+	public void setPublicTransportAnalysisInterval(int publicTransportAnalysisInterval) {
+		this.publicTransportAnalysisInterval = publicTransportAnalysisInterval;
 	}
 
 	@StringGetter(DISTANCE_UNIT)

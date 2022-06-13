@@ -38,6 +38,7 @@ public class PublicTransportTripWriter {
 		return String.join(delimiter, new String[] { //
 				"person_id", //
 				"person_trip_id", //
+				"leg_index", //
 				"access_stop_id", //
 				"egress_stop_id", //
 				"transit_line_id", //
@@ -49,6 +50,7 @@ public class PublicTransportTripWriter {
 		return String.join(delimiter, new String[] { //
 				trip.personId.toString(), //
 				String.valueOf(trip.personTripId), //
+				String.valueOf(trip.legIndex), //
 				trip.accessStopId.toString(), //
 				trip.egressStopId.toString(), //
 				trip.transitLineId.toString(), //
