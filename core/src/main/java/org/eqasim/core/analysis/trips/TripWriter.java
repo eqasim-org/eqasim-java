@@ -1,10 +1,12 @@
-package org.eqasim.core.analysis;
+package org.eqasim.core.analysis.trips;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
+
+import org.eqasim.core.analysis.DistanceUnit;
 
 public class TripWriter {
 	final private Collection<TripItem> trips;

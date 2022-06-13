@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eqasim.core.analysis.TripItem;
-import org.eqasim.core.analysis.TripListener;
+import org.eqasim.core.analysis.trips.TripItem;
+import org.eqasim.core.analysis.trips.TripListener;
 
 public class CalibrationDataProvider {
 	private final TripListener tripListener;
