@@ -1,4 +1,4 @@
-package org.eqasim.core.analysis;
+package org.eqasim.core.analysis.trips;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -6,19 +6,21 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
 
-public class LegWriter {
-	final private Collection<LegItem> legs;
+import org.eqasim.core.analysis.DistanceUnit;
+
+public class TripWriter {
+	final private Collection<TripItem> trips;
 	final private String delimiter;
 
 	final private DistanceUnit inputUnit;
 	final private DistanceUnit outputUnit;
 
-	public LegWriter(Collection<LegItem> legs, DistanceUnit inputUnit, DistanceUnit outputUnit) {
-		this(legs, inputUnit, outputUnit, ";");
+	public TripWriter(Collection<TripItem> trips, DistanceUnit inputUnit, DistanceUnit outputUnit) {
+		this(trips, inputUnit, outputUnit, ";");
 	}
 
-	public LegWriter(Collection<LegItem> legs, DistanceUnit inputUnit, DistanceUnit outputUnit, String delimiter) {
-		this.legs = legs;
+	public TripWriter(Collection<TripItem> trips, DistanceUnit inputUnit, DistanceUnit outputUnit, String delimiter) {
+		this.trips = trips;
 		this.delimiter = delimiter;
 		this.inputUnit = inputUnit;
 		this.outputUnit = outputUnit;
@@ -30,8 +32,8 @@ public class LegWriter {
 		writer.write(formatHeader() + "\n");
 		writer.flush();
 
-		for (LegItem leg : legs) {
-			writer.write(formatLeg(leg) + "\n");
+		for (TripItem trip : trips) {
+			writer.write(formatTrip(trip) + "\n");
 			writer.flush();
 		}
 
@@ -39,11 +41,14 @@ public class LegWriter {
 		writer.close();
 	}
 
+	private String normalizeActivityType(String activityType) {
+		return activityType.replaceAll("_[0-9]+$", "");
+	}
+
 	private String formatHeader() {
 		return String.join(delimiter, new String[] { //
 				"person_id", //
 				"person_trip_id", //
-				"leg_index", //
 				"origin_x", //
 				"origin_y", //
 				"destination_x", //
@@ -52,6 +57,9 @@ public class LegWriter {
 				"vehicle_distance", //
 				"routed_distance", //
 				"mode", //
+				"preceding_purpose", //
+				"following_purpose", //
+				"returning", //
 				"euclidean_distance" //
 		});
 	}
@@ -82,24 +90,26 @@ public class LegWriter {
 		return factor;
 	}
 
-	private String formatLeg(LegItem leg) {
+	private String formatTrip(TripItem trip) {
 		double inputFactor = getUnitFactor(inputUnit);
 		double outputFactor = 1.0 / getUnitFactor(outputUnit);
 
 		return String.join(delimiter, new String[] { //
-				leg.personId.toString(), //
-				String.valueOf(leg.personTripId), //
-				String.valueOf(leg.legIndex), //
-				String.valueOf(leg.origin.getX()), //
-				String.valueOf(leg.origin.getY()), //
-				String.valueOf(leg.destination.getX()), //
-				String.valueOf(leg.destination.getY()), //
-				String.valueOf(leg.departureTime), //
-				String.valueOf(leg.travelTime), //
-				String.valueOf(leg.vehicleDistance * inputFactor * outputFactor), //
-				String.valueOf(leg.routedDistance * inputFactor * outputFactor), //
-				String.valueOf(leg.mode), //
-				String.valueOf(leg.euclideanDistance * inputFactor * outputFactor) //
+				trip.personId.toString(), //
+				String.valueOf(trip.personTripId), //
+				String.valueOf(trip.origin.getX()), //
+				String.valueOf(trip.origin.getY()), //
+				String.valueOf(trip.destination.getX()), //
+				String.valueOf(trip.destination.getY()), //
+				String.valueOf(trip.departureTime), //
+				String.valueOf(trip.travelTime), //
+				String.valueOf(trip.vehicleDistance * inputFactor * outputFactor), //
+				String.valueOf(trip.routedDistance * inputFactor * outputFactor), //
+				String.valueOf(trip.mode), //
+				normalizeActivityType(String.valueOf(trip.precedingPurpose)), //
+				normalizeActivityType(String.valueOf(trip.followingPurpose)), //
+				String.valueOf(trip.returning), //
+				String.valueOf(trip.euclideanDistance * inputFactor * outputFactor) //
 		});
 	}
 }

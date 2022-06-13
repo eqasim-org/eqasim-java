@@ -1,4 +1,4 @@
-package org.eqasim.core.analysis;
+package org.eqasim.core.analysis.legs;
 
 import java.util.Collection;
 

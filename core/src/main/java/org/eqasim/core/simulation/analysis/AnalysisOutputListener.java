@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import org.eqasim.core.analysis.DistanceUnit;
-import org.eqasim.core.analysis.LegListener;
-import org.eqasim.core.analysis.LegWriter;
-import org.eqasim.core.analysis.TripListener;
-import org.eqasim.core.analysis.TripWriter;
+import org.eqasim.core.analysis.legs.LegListener;
+import org.eqasim.core.analysis.legs.LegWriter;
 import org.eqasim.core.analysis.pt.PublicTransportLegListener;
 import org.eqasim.core.analysis.pt.PublicTransportLegWriter;
+import org.eqasim.core.analysis.trips.TripListener;
+import org.eqasim.core.analysis.trips.TripWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
