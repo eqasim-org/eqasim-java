@@ -6,7 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-develop
+- Automatically produce analysis output for legs and public transport information
+- Move analysis classes to `org.eqasim.core.analysis.run`
 - Add option for configuring custom activities in the Switzerland config file
 - Add air pollution emissions computation and analysis
 - Add fixed epsilon functionality
