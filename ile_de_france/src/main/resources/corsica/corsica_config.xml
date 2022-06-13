@@ -189,8 +189,8 @@
 		<param name="modeParametersPath" value="null" />
 		<param name="sampleSize" value="0.01" />
 		<!-- Possible values: kilometer, meter, mile, foot -->
-		<param name="tripAnalysisDistanceUnit" value="meter" />
-		<param name="tripAnalysisInterval" value="60" />
+		<param name="analysisDistanceUnit" value="meter" />
+		<param name="analysisInterval" value="60" />
 		<param name="useScheduleBasedTransport" value="true" />
 		<parameterset type="cost_model" >
 			<param name="mode" value="car" />

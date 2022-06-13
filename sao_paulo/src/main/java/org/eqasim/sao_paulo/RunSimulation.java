@@ -29,7 +29,7 @@ public class RunSimulation {
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
-		EqasimConfigGroup.get(config).setTripAnalysisInterval(1);
+		EqasimConfigGroup.get(config).setAnalysisInterval(1);
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
