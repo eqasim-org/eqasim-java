@@ -32,7 +32,16 @@ public class TestCorisica {
 
 	@After
 	public void tearDown() throws IOException {
-		FileUtils.deleteDirectory(new File("corsica_test"));
+		// FileUtils.deleteDirectory(new File("corsica_test"));
+	}
+	
+	@Test
+	public void testNetworkWalk() throws ConfigurationException, InterruptedException {
+		RunSimulation.main(new String[] { //
+				"--config-path", "corsica_test/corsica_config.xml", //
+				"--config:controler.lastIteration", "2", // ,
+				"--config:controler.outputDirectory", "corsica_test/simulation_output", //
+		});
 	}
 
 	@Test

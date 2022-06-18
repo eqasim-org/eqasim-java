@@ -16,7 +16,7 @@ public class IDFModeAvailability implements ModeAvailability {
 		Collection<String> modes = new HashSet<>();
 
 		// Modes that are always available
-		modes.add(TransportMode.walk);
+		modes.add("network_walk");
 		modes.add(TransportMode.pt);
 
 		// Check car availability

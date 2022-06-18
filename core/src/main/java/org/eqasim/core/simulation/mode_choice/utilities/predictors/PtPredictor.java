@@ -45,6 +45,7 @@ public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 				switch (leg.getMode()) {
 				case TransportMode.walk:
 				case TransportMode.non_network_walk:
+				case "network_walk":
 					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
 					break;
 				case TransportMode.transit_walk:
