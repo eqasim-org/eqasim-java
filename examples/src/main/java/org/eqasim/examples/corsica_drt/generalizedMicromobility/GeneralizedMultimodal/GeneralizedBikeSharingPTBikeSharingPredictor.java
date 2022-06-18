@@ -37,8 +37,8 @@ public class GeneralizedBikeSharingPTBikeSharingPredictor extends CachedVariable
     public SharingPTVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 
         // Find the index in which changes modes by  interactions
-        Integer accessIndex=findIndex(elements,"SharingPT_Interaction");
-        Integer egressIndex=findIndex(elements,"PTSharing_Interaction");
+        Integer accessIndex=findIndex(elements,"SharingPT interaction");
+        Integer egressIndex=findIndex(elements,"PTSharing interaction");
         // Splits the multimodal trip into its access,egress, pt segments
         List<? extends PlanElement> accessSplit=elements.subList(0,accessIndex);
         List<? extends PlanElement> ptSplit=elements.subList(accessIndex+1,egressIndex);

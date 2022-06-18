@@ -2,15 +2,16 @@ package org.eqasim.examples.corsica_drt.TestingComputation;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.google.common.io.Resources;
+
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.examples.corsica_drt.generalizedMicromobility.MicromobilityUtils;
 import org.eqasim.examples.corsica_drt.generalizedMicromobility.ModeChoiceModuleExample;
-
 import org.eqasim.examples.corsica_drt.generalizedMicromobility.SharingRaptorUtils;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.ModelModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.*;
@@ -26,66 +27,66 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Scanner;
 
-public class Densities {
+public class CostStructures {
     public static void main(String[] args) throws CommandLine.ConfigurationException, FileNotFoundException, IllegalAccessException {
 
 
-        String baseName = ".\\ComputationScenarios\\Scenario";
-        String[] statDensity = new String[]{"8", "10", "12", "14"};
-        String[] vehDensity = new String[]{"2", "4", "6", "8", "10", "20", "30"};
-        String baseDirect = ".\\GBFSInputs\\";
-        String[] simParams = new String[]{};
-        for (int i = 1; i < 3; i++) {
+        String baseName=".\\CostScenarios\\Scenario";
+
+        String[] simParams= new String[]{};
+        String[] costUnlock=new String[]{"0","0.25","0.5","0.75","1","1.25","1.5","1.75","2"};
+        String[] costMin =new String[]{"0","0.05","0.1","0.15","0.2","0.25","0.3","0.35","0.4"};
+        for (int i=1;i<3;i++) {
             String fileName = baseName + String.valueOf(i) + ".txt";
             simParams = parseParams(fileName);
 
-            for (int j = 0; j <1; j += 1) {
-                for (int k = 0; k < 4; k++) {
-//                    if (i == 1) {
-//                        if(j<4){
-//
-//                        }else {
-//                            simParams = parseParams(fileName);
-////                        String stationInf=baseDirect+"StationInformation_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
-////                        String stationStatus=baseDirect+"StationStatus_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
-//                            String stationInf = baseDirect + "StationInformation_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
-//                            String stationStatus = baseDirect + "StationStatus_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
-//                            simParams[3] = stationInf;
-//                            simParams[5] = stationStatus;
-//                            CommandLine cmd = new CommandLine.Builder(simParams) //
-//                                    .allowOptions("use-rejection-constraint") //
-//                                    .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
-//                                    .build();
-//                            runAsSMMFramework(cmd, i, vehDensity[j], statDensity[k]);
-//                            String uwu = "x";
-//                        }
-//                    }
-                }
+            for ( int j=0;j<1;j+=1){
+                if(i==1){
+                    simParams = parseParams(fileName);
+                    simParams[15]= String.valueOf(costUnlock[4]);
+                    simParams[17]= String.valueOf(costMin[j]);
+                    CommandLine cmd = new CommandLine.Builder(simParams) //
+                            .allowOptions("use-rejection-constraint") //
+                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+                            .build();
+//                    runAsSMMFramework(cmd,i,(j));
 
-                    if (i == 2) {
-
-                        simParams = parseParams(fileName);
-                        String vehStatus = baseDirect + "VehicleStatus_VD_" + vehDensity[j] + ".json";
-                        simParams[3] = vehStatus;
-                        CommandLine cmd = new CommandLine.Builder(simParams) //
-                                .allowOptions("use-rejection-constraint") //
-                                .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
-                                .build();
-                        runAsSMMFramework(cmd, i, vehDensity[j], String.valueOf(0));
-                    }
-
+                    simParams = parseParams(fileName);
+                    simParams[15]= String.valueOf(costUnlock[j]);
+                    simParams[17]= String.valueOf(costMin[4]);
+                    cmd = new CommandLine.Builder(simParams) //
+                            .allowOptions("use-rejection-constraint") //
+                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+                            .build();
+                    runAsSMMFramework(cmd,i*100,(j));
 
                 }
-
+//                if(i==2){
+//                    simParams = parseParams(fileName);
+//                    simParams[13]= String.valueOf(costUnlock[4]);
+//                    simParams[15]= String.valueOf(costMin[j]);
+//                    CommandLine cmd = new CommandLine.Builder(simParams) //
+//                            .allowOptions("use-rejection-constraint") //
+//                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+//                            .build();
+//                    runAsSMMFramework(cmd,i,(j));
+//                    simParams = parseParams(fileName);
+//                    simParams[13]= String.valueOf(costUnlock[j]);
+//                    simParams[15]= String.valueOf(costMin[4]);
+//                     cmd = new CommandLine.Builder(simParams) //
+//                            .allowOptions("use-rejection-constraint") //
+//                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+//                            .build();
+//                    runAsSMMFramework(cmd,i*100,(j));
+//                }
             }
+
         }
 
+    }
 
 
-
-
-
-    public static void runAsSMMFramework(CommandLine cmd, Integer i,String j, String k) throws IllegalAccessException, CommandLine.ConfigurationException {
+    public static void runAsSMMFramework(CommandLine cmd, Integer i,Integer j) throws IllegalAccessException, CommandLine.ConfigurationException {
         URL configUrl = Resources.getResource("corsica/corsica_config.xml");
         Config config = ConfigUtils.loadConfig(configUrl, IDFConfigurator.getConfigGroups());
 
@@ -94,15 +95,15 @@ public class Densities {
         config.qsim().setStorageCapFactor(1e9);
 
         // Write out all events (DEBUG)
-        config.controler().setWriteEventsInterval(50);
-        config.controler().setWritePlansInterval(50);
-        config.controler().setLastIteration(50);
-
-        String baseDirectory="./DensitiesSMMResultsIfItStillWorksCommon/Scenario";
-        String nameScenario=baseDirectory+String.valueOf(i)+"_SD"+k+"_VD_"+j;
+        config.controler().setWriteEventsInterval(1);
+        config.controler().setWritePlansInterval(1);
+        config.controler().setLastIteration(25);
+        String baseDirectory="./CostSMMResultsLDNoInter/Scenario";
+        String nameScenario=baseDirectory+String.valueOf(i)+"_"+String.valueOf(j);
         config.controler().setOutputDirectory(nameScenario);
 //        // Set up controller (no specific settings needed for scenario)
         Controler controller = new Controler(config);
+
 
         // Set up choice model
         EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
@@ -114,7 +115,6 @@ public class Densities {
                 strategy.setWeight(0.8);
             }
         }
-
         for(String option: cmd.getAvailableOptions()){
             String x=option;
             String value= (cmd.getOptionStrict(option));
@@ -135,6 +135,8 @@ public class Densities {
         eqasimConfig.setEstimator("walk","KWalk");
         eqasimConfig.setCostModel("pt","pt");
         eqasimConfig.setCostModel("car","car");
+        eqasimConfig.setCostModel("pt","pt");
+        eqasimConfig.setCostModel("car","car");
         config.strategy().setFractionOfIterationsToDisableInnovation(0.9);
 //        // Set analysis interval
         eqasimConfig.setTripAnalysisInterval(1);
@@ -143,9 +145,8 @@ public class Densities {
         Scenario scenario = ScenarioUtils.createScenario(config);
         scenario= ScenarioUtils.loadScenario(config);
         IDFConfigurator.configureScenario(scenario);
-
-
         IDFConfigurator.configureController(controller);
+        controller.addOverridingModule( new DiscreteModeChoiceModule());
         controller.addOverridingModule(new EqasimAnalysisModule());
         controller.addOverridingModule(new EqasimModeChoiceModule());
         controller.addOverridingModule( new ModeChoiceModuleExample(cmd,scenario));
@@ -165,22 +166,22 @@ public class Densities {
         {
             StrategyConfigGroup.StrategySettings strat=new StrategyConfigGroup.StrategySettings();
             strat.setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice);
-            strat.setWeight(0.05);
+            strat.setWeight(0.2);
             config.strategy().addStrategySettings(strat);
 
         }
         {
             StrategyConfigGroup.StrategySettings strat=new StrategyConfigGroup.StrategySettings();
             strat.setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.KeepLastSelected);
-            strat.setWeight(0.95);
+            strat.setWeight(0.8);
             config.strategy().addStrategySettings(strat);
 
         }
         config.strategy().setFractionOfIterationsToDisableInnovation(0.9);
-        config.controler().setWriteEventsInterval(5);
-        config.controler().setWritePlansInterval(5);
-        config.controler().setLastIteration(5);
-        String baseDirectory="./ComputationalSRResultsIfItStillWorks/Scenario";
+        config.controler().setWriteEventsInterval(1);
+        config.controler().setWritePlansInterval(1);
+        config.controler().setLastIteration(50);
+        String baseDirectory="./ComputationalSRResults/Scenario";
         String nameScenario=baseDirectory+String.valueOf(i);
         config.controler().setOutputDirectory(nameScenario);
         Scenario scenario = ScenarioUtils.loadScenario(config);

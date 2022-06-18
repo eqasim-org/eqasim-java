@@ -9,7 +9,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.examples.corsica_drt.CleanModeChoice.costs.GeneralizedBikeShareCostModel;
+
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussBikeShareCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussCarCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussPTCostModel;
@@ -106,7 +106,7 @@ public class ModeChoiceModuleExample extends AbstractEqasimExtension {
 
    public GeneralizedBikeShareCostModel provideBikeShareCostModel(EqasimConfigGroup config, String name) throws Exception {
 		GeneralizedCostParameters costParameters= provideCostParameters(config);
-	   GeneralizedBikeShareCostModel bikeShareCostModel= new GeneralizedBikeShareCostModel(costParameters,name);
+	   GeneralizedBikeShareCostModel bikeShareCostModel= new GeneralizedBikeShareCostModel(name, costParameters);
 	   return(bikeShareCostModel);
    }
 

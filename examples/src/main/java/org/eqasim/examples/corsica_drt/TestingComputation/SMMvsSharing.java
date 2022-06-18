@@ -23,15 +23,16 @@ import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class SMMvsSharing {
     public static void main(String[] args) throws CommandLine.ConfigurationException, FileNotFoundException, IllegalAccessException {
 
 
-        String baseName="C:\\Users\\juan_\\Desktop\\TUM\\Semester5\\Thesis\\eqasimMicromobility\\ComputationScenarios\\Scenario";
+        String baseName=".\\ComputationScenarios\\Scenario";
         String[] simParams= new String[]{};
-        for (int i=2;i<7;i++){
+        for (int i=5;i<7;i++){
             String fileName=baseName+String.valueOf(i)+".txt";
             simParams=parseParams(fileName);
             CommandLine cmd = new CommandLine.Builder(simParams) //
@@ -45,7 +46,7 @@ public class SMMvsSharing {
     }
 
 
-    public static void runAsSMMFramework(CommandLine cmd, Integer i) throws IllegalAccessException {
+    public static void runAsSMMFramework(CommandLine cmd, Integer i) throws IllegalAccessException, CommandLine.ConfigurationException {
         URL configUrl = Resources.getResource("corsica/corsica_config.xml");
         Config config = ConfigUtils.loadConfig(configUrl, IDFConfigurator.getConfigGroups());
 
@@ -56,8 +57,8 @@ public class SMMvsSharing {
         // Write out all events (DEBUG)
         config.controler().setWriteEventsInterval(1);
         config.controler().setWritePlansInterval(1);
-        config.controler().setLastIteration(100);
-        String baseDirectory="./ComputationalSMMResults/Scenario";
+        config.controler().setLastIteration(50);
+        String baseDirectory="./ComputationalSMMResults2/Scenario";
         String nameScenario=baseDirectory+String.valueOf(i);
         config.controler().setOutputDirectory(nameScenario);
 //        // Set up controller (no specific settings needed for scenario)
@@ -75,12 +76,23 @@ public class SMMvsSharing {
         eqasimConfig.setCostModel("car","car");
         config.strategy().setFractionOfIterationsToDisableInnovation(0.9);
 //        // Set analysis interval
-        eqasimConfig.setTripAnalysisInterval(100);
-        DiscreteModeChoiceConfigGroup dmcConfig=DiscreteModeChoiceConfigGroup.getOrCreate(config);
-        dmcConfig.setModelType(ModelModule.ModelType.Trip);
-        Collection<String> tripF=  dmcConfig.getTripFilters();
-        tripF.removeAll(tripF);
-        dmcConfig.setTripFilters(tripF);
+
+
+        eqasimConfig.setTripAnalysisInterval(5);
+        for(String option: cmd.getAvailableOptions()){
+            String x=option;
+             String value= (cmd.getOptionStrict(option));
+            if(value.equals("No")){
+                DiscreteModeChoiceConfigGroup dmcConfig=DiscreteModeChoiceConfigGroup.getOrCreate(config);
+                dmcConfig.setModelType(ModelModule.ModelType.Trip);
+                Collection<String> tripF=  dmcConfig.getTripFilters();
+                tripF.removeAll(tripF);
+                dmcConfig.setTripFilters(tripF);
+                break;
+
+            }
+        }
+
 
         for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
             if(strategy.getStrategyName().equals("DiscreteModeChoice")) {
@@ -131,8 +143,8 @@ public class SMMvsSharing {
         config.strategy().setFractionOfIterationsToDisableInnovation(0.9);
         config.controler().setWriteEventsInterval(1);
         config.controler().setWritePlansInterval(1);
-        config.controler().setLastIteration(100);
-        String baseDirectory="./ComputationalSRResults/Scenario";
+        config.controler().setLastIteration(50);
+        String baseDirectory="./ComputationalSRResults2/Scenario";
         String nameScenario=baseDirectory+String.valueOf(i);
         config.controler().setOutputDirectory(nameScenario);
         Scenario scenario = ScenarioUtils.loadScenario(config);

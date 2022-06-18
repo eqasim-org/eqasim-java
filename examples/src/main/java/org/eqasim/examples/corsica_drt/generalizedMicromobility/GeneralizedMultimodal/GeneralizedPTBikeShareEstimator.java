@@ -115,7 +115,7 @@ public class GeneralizedPTBikeShareEstimator implements UtilityEstimator {
         utility += estimateEgressTimeUtilityPT(variables);
         utility +=estimateChangeLineUtilityPT(variables);
         utility+=estimatePersonalUtilityPT(person,trip,elements);
-        return utility;
+        return 100.0;
     }
 
 }

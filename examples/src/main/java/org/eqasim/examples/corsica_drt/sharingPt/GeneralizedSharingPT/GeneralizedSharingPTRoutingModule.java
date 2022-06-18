@@ -78,7 +78,7 @@ public class GeneralizedSharingPTRoutingModule implements RoutingModule {
 
             // Creation interaction between car and pt
             Link prLink = NetworkUtils.getNearestLink(network, ptStop.getCoord());
-            Activity interactionActivtyCarPt = PopulationUtils.createActivityFromCoordAndLinkId("SharingPT_Interaction",
+            Activity interactionActivtyCarPt = PopulationUtils.createActivityFromCoordAndLinkId("SharingPT interaction",
                    ptStop.getCoord(), prLink.getId());
             interactionActivtyCarPt.setMaximumDuration(300);// 5 min
 

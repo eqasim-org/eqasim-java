@@ -34,7 +34,7 @@ public class GeneralizedBikeSharePTPredictor extends CachedVariablePredictor<Sha
     public SharingPTVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 
         // Find the index in which changes modes by  interactions
-        Integer accessIndex=findIndex(elements,"SharingPT_Interaction");
+        Integer accessIndex=findIndex(elements,"SharingPT interaction");
 
         // Splits the multimodal trip into its access,egress, pt segments
         List<? extends PlanElement> accessSplit=elements.subList(0,accessIndex);
@@ -109,7 +109,7 @@ public class GeneralizedBikeSharePTPredictor extends CachedVariablePredictor<Sha
                     PlanElement nextElement = accessSplit.get(i + 1);
                     if (nextElement instanceof Activity) {
                         Activity nextActivity = (Activity) nextElement;
-                        if (nextActivity.getType() == "sharing booking interaction") {
+                        if (nextActivity.getType() .equals("sharing booking interaction")||nextActivity.getType() .equals("sharing pickup interaction")) {
                             if (leg.getMode() == "walk") {
                                 accessTime_min += leg.getTravelTime().seconds() / 60.0;
                             }
@@ -127,7 +127,7 @@ public class GeneralizedBikeSharePTPredictor extends CachedVariablePredictor<Sha
                     if (previous instanceof Activity) {
                         Activity nextActivity = (Activity) previous;
                         if (nextActivity.getType() == "sharing dropoff interaction") {
-                            if (leg.getMode() == "walk") {
+                            if (leg.getMode().equals ("walk")) {
                                 egressTime_min += leg.getTravelTime().seconds() / 60.0;
                             }
 

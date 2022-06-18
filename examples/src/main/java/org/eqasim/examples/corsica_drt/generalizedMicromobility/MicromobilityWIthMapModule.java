@@ -4,12 +4,14 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.examples.corsica_drt.GBFSUtils.SharingPTTripWriter;
 import org.eqasim.examples.corsica_drt.generalizedMicromobility.GeneralizedMultimodal.*;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.KraussBikeShareCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussBikeSharePredictor;
 import org.eqasim.examples.corsica_drt.mode_choice.predictors.KraussPersonPredictor;
 import org.eqasim.examples.corsica_drt.mode_choice.utilities.KraussBikeShareEstimator;
 import org.eqasim.examples.corsica_drt.sharingPt.*;
+import org.matsim.analysis.TripsAndLegsCSVWriter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.sharing.io.DefaultSharingServiceSpecification;
@@ -17,6 +19,7 @@ import org.matsim.contrib.sharing.io.SharingServiceReader;
 import org.matsim.contrib.sharing.io.SharingServiceSpecification;
 import org.matsim.contrib.sharing.routing.InteractionFinder;
 import org.matsim.contrib.sharing.routing.StationBasedInteractionFinder;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraintFactory;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.utils.collections.QuadTree;
@@ -50,7 +53,7 @@ public class MicromobilityWIthMapModule extends AbstractEqasimExtension {
 		// Create Cost Parameters
 		String name = service.get("Service_Name");
 		String mode = service.get("Mode");
-
+		bind(TripsAndLegsCSVWriter.CustomTripsWriterExtension.class).to(SharingPTTripWriter.class).asEagerSingleton();
 
 //		GeneralizedBikeShareEstimator generalEstimator = null;
 //		try {
@@ -455,7 +458,7 @@ public class MicromobilityWIthMapModule extends AbstractEqasimExtension {
 			String mode,String name) {
 		return new GeneralizedSharedMicroMobilityConstraint.Factory(mode,name);
 	}
-	public SharingPTTripConstraint2.Factory provideSharingPTTTripConstraint2(
+	public TripConstraintFactory provideSharingPTTTripConstraint2(
 			PTStationFinder2 stationFinder, Scenario scenario, String name) {
 		return new SharingPTTripConstraint2.Factory(stationFinder, scenario,name);
 	}

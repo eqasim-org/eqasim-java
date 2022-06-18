@@ -75,7 +75,7 @@ public class GeneralizedSharingPTSharingRoutingModule implements RoutingModule {
 
             // Creation interaction between car and pt
             Link prLink = NetworkUtils.getNearestLink(network, ptStop.getCoord());
-            Activity interactionActivtySharingPT = PopulationUtils.createActivityFromCoordAndLinkId("SharingPT_Interaction",
+            Activity interactionActivtySharingPT = PopulationUtils.createActivityFromCoordAndLinkId("SharingPT interaction",
                    ptStop.getCoord(), prLink.getId());
             interactionActivtySharingPT.setMaximumDuration(300);// 5 min
             PlanElement finalElement=ptElements.get(ptElements.size()-1);
@@ -84,7 +84,7 @@ public class GeneralizedSharingPTSharingRoutingModule implements RoutingModule {
              List<? extends PlanElement> sharingEgress = sharingRoutingModule.calcRoute(ptDestination, toFacility,egressDeparture,
                 null);
         Link egressLink = NetworkUtils.getNearestLink(network, ptDestination.getCoord());
-        Activity interactionActivtyPTSharing = PopulationUtils.createActivityFromCoordAndLinkId("PTSharing_Interaction",
+        Activity interactionActivtyPTSharing = PopulationUtils.createActivityFromCoordAndLinkId("PTSharing interaction",
                 ptDestination.getCoord(), egressLink.getId());
         interactionActivtyPTSharing.setMaximumDuration(300);// 5 min
          // Creation full trip

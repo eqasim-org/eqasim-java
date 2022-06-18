@@ -7,7 +7,6 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.examples.corsica_drt.generalizedMicromobility.MicromobilityUtils;
 import org.eqasim.examples.corsica_drt.generalizedMicromobility.ModeChoiceModuleExample;
-
 import org.eqasim.examples.corsica_drt.generalizedMicromobility.SharingRaptorUtils;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.matsim.api.core.v01.Scenario;
@@ -26,66 +25,27 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Scanner;
 
-public class Densities {
+public class BSSMultimodality {
     public static void main(String[] args) throws CommandLine.ConfigurationException, FileNotFoundException, IllegalAccessException {
 
 
-        String baseName = ".\\ComputationScenarios\\Scenario";
-        String[] statDensity = new String[]{"8", "10", "12", "14"};
-        String[] vehDensity = new String[]{"2", "4", "6", "8", "10", "20", "30"};
-        String baseDirect = ".\\GBFSInputs\\";
-        String[] simParams = new String[]{};
-        for (int i = 1; i < 3; i++) {
-            String fileName = baseName + String.valueOf(i) + ".txt";
-            simParams = parseParams(fileName);
+        String baseName=".\\MultimodalityScenarios\\Scenario";
+        String[] simParams= new String[]{};
+        for (int i=4;i<5;i++){
+            String fileName=baseName+String.valueOf(i)+".txt";
+            simParams=parseParams(fileName);
+            CommandLine cmd = new CommandLine.Builder(simParams) //
+                    .allowOptions("use-rejection-constraint") //
+                    .allowPrefixes("mode-parameter", "cost-parameter","sharing-mode-name") //
+                    .build();
+            runAsSMMFramework(cmd,i);
 
-            for (int j = 0; j <1; j += 1) {
-                for (int k = 0; k < 4; k++) {
-//                    if (i == 1) {
-//                        if(j<4){
-//
-//                        }else {
-//                            simParams = parseParams(fileName);
-////                        String stationInf=baseDirect+"StationInformation_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
-////                        String stationStatus=baseDirect+"StationStatus_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
-//                            String stationInf = baseDirect + "StationInformation_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
-//                            String stationStatus = baseDirect + "StationStatus_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
-//                            simParams[3] = stationInf;
-//                            simParams[5] = stationStatus;
-//                            CommandLine cmd = new CommandLine.Builder(simParams) //
-//                                    .allowOptions("use-rejection-constraint") //
-//                                    .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
-//                                    .build();
-//                            runAsSMMFramework(cmd, i, vehDensity[j], statDensity[k]);
-//                            String uwu = "x";
-//                        }
-//                    }
-                }
-
-                    if (i == 2) {
-
-                        simParams = parseParams(fileName);
-                        String vehStatus = baseDirect + "VehicleStatus_VD_" + vehDensity[j] + ".json";
-                        simParams[3] = vehStatus;
-                        CommandLine cmd = new CommandLine.Builder(simParams) //
-                                .allowOptions("use-rejection-constraint") //
-                                .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
-                                .build();
-                        runAsSMMFramework(cmd, i, vehDensity[j], String.valueOf(0));
-                    }
-
-
-                }
-
-            }
         }
 
+    }
 
 
-
-
-
-    public static void runAsSMMFramework(CommandLine cmd, Integer i,String j, String k) throws IllegalAccessException, CommandLine.ConfigurationException {
+    public static void runAsSMMFramework(CommandLine cmd, Integer i) throws IllegalAccessException, CommandLine.ConfigurationException {
         URL configUrl = Resources.getResource("corsica/corsica_config.xml");
         Config config = ConfigUtils.loadConfig(configUrl, IDFConfigurator.getConfigGroups());
 
@@ -94,40 +54,18 @@ public class Densities {
         config.qsim().setStorageCapFactor(1e9);
 
         // Write out all events (DEBUG)
-        config.controler().setWriteEventsInterval(50);
-        config.controler().setWritePlansInterval(50);
+        config.controler().setWriteEventsInterval(1);
+        config.controler().setWritePlansInterval(1);
         config.controler().setLastIteration(50);
-
-        String baseDirectory="./DensitiesSMMResultsIfItStillWorksCommon/Scenario";
-        String nameScenario=baseDirectory+String.valueOf(i)+"_SD"+k+"_VD_"+j;
+        String baseDirectory="./MultiModalityResultsZeroCost/Scenario";
+        String nameScenario=baseDirectory+String.valueOf(i);
         config.controler().setOutputDirectory(nameScenario);
 //        // Set up controller (no specific settings needed for scenario)
         Controler controller = new Controler(config);
 
         // Set up choice model
         EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-        for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
-            if(strategy.getStrategyName().equals("DiscreteModeChoice")) {
-                strategy.setWeight(0.2);
-            }
-            if(strategy.getStrategyName().equals(DefaultPlanStrategiesModule.DefaultSelector.KeepLastSelected)) {
-                strategy.setWeight(0.8);
-            }
-        }
 
-        for(String option: cmd.getAvailableOptions()){
-            String x=option;
-            String value= (cmd.getOptionStrict(option));
-            if(value.equals("No")){
-                DiscreteModeChoiceConfigGroup dmcConfig=DiscreteModeChoiceConfigGroup.getOrCreate(config);
-                dmcConfig.setModelType(ModelModule.ModelType.Trip);
-                Collection<String> tripF=  dmcConfig.getTripFilters();
-                tripF.removeAll(tripF);
-                dmcConfig.setTripFilters(tripF);
-                break;
-
-            }
-        }
         //Key Apart from modifying the  binders , add the neww estimators, etc etc
         eqasimConfig.setEstimator("bike","KBike");
         eqasimConfig.setEstimator("pt","KPT");
@@ -137,8 +75,26 @@ public class Densities {
         eqasimConfig.setCostModel("car","car");
         config.strategy().setFractionOfIterationsToDisableInnovation(0.9);
 //        // Set analysis interval
-        eqasimConfig.setTripAnalysisInterval(1);
 
+
+        eqasimConfig.setTripAnalysisInterval(5);
+
+                DiscreteModeChoiceConfigGroup dmcConfig=DiscreteModeChoiceConfigGroup.getOrCreate(config);
+                dmcConfig.setModelType(ModelModule.ModelType.Trip);
+                Collection<String> tripF=  dmcConfig.getTripFilters();
+                tripF.removeAll(tripF);
+                dmcConfig.setTripFilters(tripF);
+
+
+
+        for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
+            if(strategy.getStrategyName().equals("DiscreteModeChoice")) {
+                strategy.setWeight(0.2);
+            }
+            if(strategy.getStrategyName().equals(DefaultPlanStrategiesModule.DefaultSelector.KeepLastSelected)) {
+                strategy.setWeight(0.8);
+            }
+        }
 
         Scenario scenario = ScenarioUtils.createScenario(config);
         scenario= ScenarioUtils.loadScenario(config);
@@ -165,22 +121,23 @@ public class Densities {
         {
             StrategyConfigGroup.StrategySettings strat=new StrategyConfigGroup.StrategySettings();
             strat.setStrategyName(DefaultPlanStrategiesModule.DefaultStrategy.SubtourModeChoice);
-            strat.setWeight(0.05);
+            strat.setWeight(0.2);
             config.strategy().addStrategySettings(strat);
 
         }
         {
             StrategyConfigGroup.StrategySettings strat=new StrategyConfigGroup.StrategySettings();
-            strat.setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.KeepLastSelected);
-            strat.setWeight(0.95);
+            strat.setStrategyName(DefaultPlanStrategiesModule.DefaultSelector.ChangeExpBeta);
+            strat.setWeight(0.8);
             config.strategy().addStrategySettings(strat);
 
         }
+
         config.strategy().setFractionOfIterationsToDisableInnovation(0.9);
-        config.controler().setWriteEventsInterval(5);
-        config.controler().setWritePlansInterval(5);
-        config.controler().setLastIteration(5);
-        String baseDirectory="./ComputationalSRResultsIfItStillWorks/Scenario";
+        config.controler().setWriteEventsInterval(1);
+        config.controler().setWritePlansInterval(1);
+        config.controler().setLastIteration(50);
+        String baseDirectory="./ComputationalSRResults2/Scenario";
         String nameScenario=baseDirectory+String.valueOf(i);
         config.controler().setOutputDirectory(nameScenario);
         Scenario scenario = ScenarioUtils.loadScenario(config);
@@ -192,9 +149,10 @@ public class Densities {
             throw new RuntimeException(e);
         }
         controller.addOverridingModule(new SwissRailRaptorModule());
-        controller.run();
         ConfigWriter cw= new ConfigWriter(config);
         cw.write("CorsicaRaptorConfig.xml");
+        controller.run();
+
     }
     public static String[] parseParams(String file) throws FileNotFoundException {
         File txt = new File(file);
