@@ -40,7 +40,7 @@ public class CostStructures {
             String fileName = baseName + String.valueOf(i) + ".txt";
             simParams = parseParams(fileName);
 
-            for ( int j=0;j<1;j+=1){
+            for ( int j=1;j<9;j+=1){
                 if(i==1){
                     simParams = parseParams(fileName);
                     simParams[15]= String.valueOf(costUnlock[4]);
@@ -49,7 +49,7 @@ public class CostStructures {
                             .allowOptions("use-rejection-constraint") //
                             .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
                             .build();
-//                    runAsSMMFramework(cmd,i,(j));
+                    runAsSMMFramework(cmd,i,(j));
 
                     simParams = parseParams(fileName);
                     simParams[15]= String.valueOf(costUnlock[j]);
@@ -61,24 +61,24 @@ public class CostStructures {
                     runAsSMMFramework(cmd,i*100,(j));
 
                 }
-//                if(i==2){
-//                    simParams = parseParams(fileName);
-//                    simParams[13]= String.valueOf(costUnlock[4]);
-//                    simParams[15]= String.valueOf(costMin[j]);
-//                    CommandLine cmd = new CommandLine.Builder(simParams) //
-//                            .allowOptions("use-rejection-constraint") //
-//                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
-//                            .build();
-//                    runAsSMMFramework(cmd,i,(j));
-//                    simParams = parseParams(fileName);
-//                    simParams[13]= String.valueOf(costUnlock[j]);
-//                    simParams[15]= String.valueOf(costMin[4]);
-//                     cmd = new CommandLine.Builder(simParams) //
-//                            .allowOptions("use-rejection-constraint") //
-//                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
-//                            .build();
-//                    runAsSMMFramework(cmd,i*100,(j));
-//                }
+                if(i==2){
+                    simParams = parseParams(fileName);
+                    simParams[13]= String.valueOf(costUnlock[4]);
+                    simParams[15]= String.valueOf(costMin[j]);
+                    CommandLine cmd = new CommandLine.Builder(simParams) //
+                            .allowOptions("use-rejection-constraint") //
+                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+                            .build();
+                    runAsSMMFramework(cmd,i,(j));
+                    simParams = parseParams(fileName);
+                    simParams[13]= String.valueOf(costUnlock[j]);
+                    simParams[15]= String.valueOf(costMin[4]);
+                     cmd = new CommandLine.Builder(simParams) //
+                            .allowOptions("use-rejection-constraint") //
+                            .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+                            .build();
+                    runAsSMMFramework(cmd,i*100,(j));
+                }
             }
 
         }

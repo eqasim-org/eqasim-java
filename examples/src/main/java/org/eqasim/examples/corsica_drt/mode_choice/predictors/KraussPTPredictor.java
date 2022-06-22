@@ -34,6 +34,9 @@ public class KraussPTPredictor extends CachedVariablePredictor<KraussPTVariables
         double waitingTime_min = 0.0;
         double accessTime_min = 0.0;
         double egressTime_min=0.0;
+        if(elements.size()>2){
+            String u="W";
+        }
 
         for (int i=0;i<elements.size();i++) {
             PlanElement element = elements.get(i);

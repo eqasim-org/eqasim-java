@@ -31,35 +31,33 @@ public class Densities {
 
 
         String baseName = ".\\ComputationScenarios\\Scenario";
-        String[] statDensity = new String[]{"8", "10", "12", "14"};
-        String[] vehDensity = new String[]{"2", "4", "6", "8", "10", "20", "30"};
-        String baseDirect = ".\\GBFSInputs\\";
+        String[] statDensity = new String[]{"4", "6", "8", "10"};
+        String[] vehDensity = new String[]{"4", "6", "8", "10"};
+        String baseDirect = ".\\UpdatedGBFSInputs\\";
         String[] simParams = new String[]{};
         for (int i = 1; i < 3; i++) {
             String fileName = baseName + String.valueOf(i) + ".txt";
             simParams = parseParams(fileName);
 
-            for (int j = 0; j <1; j += 1) {
+            for (int j = 0; j <4; j += 1) {
                 for (int k = 0; k < 4; k++) {
-//                    if (i == 1) {
-//                        if(j<4){
-//
-//                        }else {
-//                            simParams = parseParams(fileName);
-////                        String stationInf=baseDirect+"StationInformation_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
-////                        String stationStatus=baseDirect+"StationStatus_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
-//                            String stationInf = baseDirect + "StationInformation_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
-//                            String stationStatus = baseDirect + "StationStatus_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
-//                            simParams[3] = stationInf;
-//                            simParams[5] = stationStatus;
-//                            CommandLine cmd = new CommandLine.Builder(simParams) //
-//                                    .allowOptions("use-rejection-constraint") //
-//                                    .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
-//                                    .build();
-//                            runAsSMMFramework(cmd, i, vehDensity[j], statDensity[k]);
-//                            String uwu = "x";
-//                        }
-//                    }
+                    if (i == 1) {
+
+                            simParams = parseParams(fileName);
+//                        String stationInf=baseDirect+"StationInformation_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
+//                        String stationStatus=baseDirect+"StationStatus_SD_"+statDensity[j]+"_VD_"+vehDensity[k]+".json";
+                            String stationInf = baseDirect + "StationInformation_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
+                            String stationStatus = baseDirect + "StationStatus_SD_" + statDensity[k] + "_VD_" + vehDensity[j] + ".json";
+                            simParams[3] = stationInf;
+                            simParams[5] = stationStatus;
+                            CommandLine cmd = new CommandLine.Builder(simParams) //
+                                    .allowOptions("use-rejection-constraint") //
+                                    .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+                                    .build();
+                            runAsSMMFramework(cmd, i, vehDensity[j], statDensity[k]);
+                            String uwu = "x";
+
+                    }
                 }
 
                     if (i == 2) {
@@ -98,7 +96,7 @@ public class Densities {
         config.controler().setWritePlansInterval(50);
         config.controler().setLastIteration(50);
 
-        String baseDirectory="./DensitiesSMMResultsIfItStillWorksCommon/Scenario";
+        String baseDirectory="./DensitiesSMMResults/Scenario";
         String nameScenario=baseDirectory+String.valueOf(i)+"_SD"+k+"_VD_"+j;
         config.controler().setOutputDirectory(nameScenario);
 //        // Set up controller (no specific settings needed for scenario)

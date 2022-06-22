@@ -76,14 +76,16 @@ public class GeneralizedStationBasedConstraint2 extends AbstractTripConstraint {
 
         }
 
+
         return validation;
     }
 
     @Override
     public boolean validateAfterEstimation(DiscreteModeChoiceTrip trip, TripCandidate candidate, List<TripCandidate> previousCandidates){
         int counterPT=0;
+        Boolean validation=true;
         DefaultRoutedTripCandidate candidate2= (DefaultRoutedTripCandidate) candidate;
-        if (candidate.getMode()==name+"_PT"||candidate.getMode()=="PT_"+name||candidate.getMode()==name+"_PT_"+name){
+        if (candidate.getMode().equals(name+"_PT")||candidate.getMode().equals("PT_"+name)||candidate.getMode().equals(name+"_PT_"+name)){
             List<? extends PlanElement>listLegs=candidate2.getRoutedPlanElements();
             Iterator phases=listLegs.iterator();
             while(phases.hasNext()){
@@ -99,9 +101,21 @@ public class GeneralizedStationBasedConstraint2 extends AbstractTripConstraint {
         }
         if(counterPT==0&&(candidate.getMode().equals(name+"_PT")||candidate.getMode().equals("PT_"+name)||candidate.getMode().equals(name+"_PT_"+name))){
 
-            return false;}
+            validation= false;}
         else{
-            return true;}
+            validation=true;}
+
+
+        if(candidate.getMode().equals("PT_"+name)){
+            if(counterPT>0){
+                System.out.println("Its Working");
+            }
+
+            if(validation==true){
+
+            }
+        }
+        return validation;
     }
     public static class Factory implements TripConstraintFactory {
         private final  PTStationFinder2 stationFinder;

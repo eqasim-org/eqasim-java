@@ -32,7 +32,7 @@ public class SMMvsSharing {
 
         String baseName=".\\ComputationScenarios\\Scenario";
         String[] simParams= new String[]{};
-        for (int i=5;i<7;i++){
+        for (int i=1;i<7;i++){
             String fileName=baseName+String.valueOf(i)+".txt";
             simParams=parseParams(fileName);
             CommandLine cmd = new CommandLine.Builder(simParams) //
@@ -58,7 +58,7 @@ public class SMMvsSharing {
         config.controler().setWriteEventsInterval(1);
         config.controler().setWritePlansInterval(1);
         config.controler().setLastIteration(50);
-        String baseDirectory="./ComputationalSMMResults2/Scenario";
+        String baseDirectory="./ComputationalSMMResults3/Scenario";
         String nameScenario=baseDirectory+String.valueOf(i);
         config.controler().setOutputDirectory(nameScenario);
 //        // Set up controller (no specific settings needed for scenario)
@@ -79,19 +79,12 @@ public class SMMvsSharing {
 
 
         eqasimConfig.setTripAnalysisInterval(5);
-        for(String option: cmd.getAvailableOptions()){
-            String x=option;
-             String value= (cmd.getOptionStrict(option));
-            if(value.equals("No")){
+
                 DiscreteModeChoiceConfigGroup dmcConfig=DiscreteModeChoiceConfigGroup.getOrCreate(config);
                 dmcConfig.setModelType(ModelModule.ModelType.Trip);
                 Collection<String> tripF=  dmcConfig.getTripFilters();
                 tripF.removeAll(tripF);
                 dmcConfig.setTripFilters(tripF);
-                break;
-
-            }
-        }
 
 
         for (StrategyConfigGroup.StrategySettings strategy : config.strategy().getStrategySettings()) {
@@ -144,7 +137,7 @@ public class SMMvsSharing {
         config.controler().setWriteEventsInterval(1);
         config.controler().setWritePlansInterval(1);
         config.controler().setLastIteration(50);
-        String baseDirectory="./ComputationalSRResults2/Scenario";
+        String baseDirectory="./ComputationalSRResults3/Scenario";
         String nameScenario=baseDirectory+String.valueOf(i);
         config.controler().setOutputDirectory(nameScenario);
         Scenario scenario = ScenarioUtils.loadScenario(config);

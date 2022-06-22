@@ -77,8 +77,8 @@ public class RandomStationServiceCorsica {
         // Based on the Population per zone calculate number of vehicles
         for(String id:shapeMap.keySet()){
             int populationArea=shapeMap.get(id);
-            double veh=(populationArea/100)*densityVeh;
 
+            double veh=(populationArea/100)*densityVeh;
             vehiclesCounter+=veh;
             shapeMap.replace(id, (int) Math.round(veh));
 
@@ -332,7 +332,7 @@ public class RandomStationServiceCorsica {
 
         // Saves the Station Status GBFS
         try{
-            FileWriter file = new FileWriter("./GBFSInputs/StationStatus_SD_"+stationDensity+"_VD_"+vehDensity+"MultiModal.json");
+            FileWriter file = new FileWriter("./UpdatedGBFSInputs/StationStatus_SD_"+stationDensity+"_VD_"+vehDensity+".json");
             file.write(obj.toJSONString());
             file.close();
         }catch (IOException e) {
@@ -341,7 +341,7 @@ public class RandomStationServiceCorsica {
         }
         // Saves the Station Information GBFS
         try{
-            FileWriter file = new FileWriter("./GBFSInputs/StationInformation_SD_"+stationDensity+"_VD_"+vehDensity+"MultiModal.json");
+            FileWriter file = new FileWriter("./UpdatedGBFSInputs/StationInformation_SD_"+stationDensity+"_VD_"+vehDensity+".json");
             file.write(stationsGBFS.toJSONString());
             file.close();
         }catch (IOException e) {
@@ -381,7 +381,7 @@ public class RandomStationServiceCorsica {
 
         JSONObject vehicleStatus=CreateGBFS.createVehicleStatus(vehiclesArray);
         try{
-            FileWriter file = new FileWriter("./GBFSInputs/VehicleStatus_VD_"+vehDensity+"_Multimodal.json");
+            FileWriter file = new FileWriter("./UpdatedGBFSInputs/VehicleStatus_VD_"+vehDensity+".json");
             file.write(vehicleStatus.toJSONString());
             file.close();
         }catch (IOException e) {

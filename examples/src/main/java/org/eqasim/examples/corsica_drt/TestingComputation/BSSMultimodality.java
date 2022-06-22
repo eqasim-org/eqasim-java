@@ -31,15 +31,18 @@ public class BSSMultimodality {
 
         String baseName=".\\MultimodalityScenarios\\Scenario";
         String[] simParams= new String[]{};
-        for (int i=4;i<5;i++){
-            String fileName=baseName+String.valueOf(i)+".txt";
-            simParams=parseParams(fileName);
-            CommandLine cmd = new CommandLine.Builder(simParams) //
-                    .allowOptions("use-rejection-constraint") //
-                    .allowPrefixes("mode-parameter", "cost-parameter","sharing-mode-name") //
-                    .build();
-            runAsSMMFramework(cmd,i);
+        for (int i=6;i<7;i++){
+            if(i!=5) {
 
+
+                String fileName = baseName + String.valueOf(i) + ".txt";
+                simParams = parseParams(fileName);
+                CommandLine cmd = new CommandLine.Builder(simParams) //
+                        .allowOptions("use-rejection-constraint") //
+                        .allowPrefixes("mode-parameter", "cost-parameter", "sharing-mode-name") //
+                        .build();
+                runAsSMMFramework(cmd, i);
+            }
         }
 
     }

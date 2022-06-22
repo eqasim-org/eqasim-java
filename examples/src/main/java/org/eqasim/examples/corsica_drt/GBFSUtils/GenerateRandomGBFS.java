@@ -23,53 +23,53 @@ public class GenerateRandomGBFS {
         Population population = scenario.getPopulation();
         HashMap<String, HashMap<String, Station>> lastItStations = null;
         HashMap<String, HashMap<String, Vehicle>> lastItVeh = null;
-//        int stationDensity = 6;
-//        for (int vehicleDensity = 6; vehicleDensity <= 30; vehicleDensity += 10) {
-//            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
-//            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
-//            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
-//
-//        }
-//
-//        lastItStations = null;
-//        stationDensity = 8;
-//        lastItVeh= null;
-//        for (int vehicleDensity = 10; vehicleDensity <= 30; vehicleDensity += 10) {
-//            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
-//            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
-//            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
-//            lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
-//        }
-//        lastItStations = null;
-//        lastItVeh= null;
-//        stationDensity = 10;
-//        for (int vehicleDensity = 10; vehicleDensity <= 30; vehicleDensity += 10) {
-//            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
-//            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
-//            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
-//            lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
-//        }
-//        lastItStations = null;
-//        stationDensity = 12;
-//        lastItVeh= null;
-//        for (int vehicleDensity = 10; vehicleDensity <= 30; vehicleDensity += 10) {
-//            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
-//            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
-//            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
-//            lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
-//        }
-//        lastItStations = null;
-//        lastItVeh= null;
-//        stationDensity=14;
-//        for (int vehicleDensity = 10; vehicleDensity <= 30; vehicleDensity += 10) {
-//            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
-//            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
-//            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
-//            lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
-//        }
+        int stationDensity = 2;
+        for (int vehicleDensity = 4; vehicleDensity <= 10; vehicleDensity += 2) {
+            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
+            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
+           // lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
+
+        }
+
+        lastItStations = null;
+        stationDensity = 4;
+        lastItVeh= null;
+        for (int vehicleDensity = 4; vehicleDensity <= 10; vehicleDensity += 2) {
+            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
+            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
+            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
+         //   lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
+        }
+        lastItStations = null;
+        lastItVeh= null;
+        stationDensity = 6;
+        for (int vehicleDensity = 4; vehicleDensity <= 10; vehicleDensity += 2) {
+            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
+            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
+            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
+           // lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
+        }
+        lastItStations = null;
+        stationDensity = 8;
+        lastItVeh= null;
+        for (int vehicleDensity = 4; vehicleDensity <= 10; vehicleDensity += 2) {
+            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
+            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
+            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
+            //lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
+        }
+        lastItStations = null;
+        lastItVeh= null;
+        stationDensity=10;
+        for (int vehicleDensity = 4; vehicleDensity <= 10; vehicleDensity += 2) {
+            Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
+            Map<String, Integer> vehicles = RandomStationServiceCorsica.calculateNumberofStations("C:\\Users\\juan_\\Desktop\\Corsica-shp\\shape\\Corsica1x1km2grid.shp", stationDensity, "UNIQUE_ID", map);
+            lastItStations = RandomStationServiceCorsica.createGBFSStationBased2(vehicles, map, polygons, scenario, String.valueOf(vehicleDensity), String.valueOf(stationDensity), lastItStations);
+            //lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
+        }
 
         lastItVeh= null;
-        for (int vehicleDensity = 5; vehicleDensity <= 30; vehicleDensity +=5) {
+        for (int vehicleDensity = 4; vehicleDensity <= 10; vehicleDensity += 2) {
             Map<String, Integer> map = RandomStationServiceCorsica.calculateNumberofVehicles(polygons, vehicleDensity, "UNIQUE_ID", population);
             lastItVeh=  RandomStationServiceCorsica.createGBFSFreeFloating(map, polygons, scenario, String.valueOf(vehicleDensity),lastItVeh);
         }
