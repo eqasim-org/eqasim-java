@@ -1,0 +1,16 @@
+--sharing-mode-name:Service_Name.standardeScooter
+standardeScooter
+--sharing-mode-name:FreeVehiclesGBFS.standardeScooter
+.\UpdatedGBFSInputs\VehicleStatus_VD_10.json
+--sharing-mode-name:Scheme.standardeScooter
+Free-floating
+--sharing-mode-name:Mode.standardeScooter
+eScooter
+--sharing-mode-name:Multimodal.standardeScooter
+No
+--sharing-mode-name:AccessEgress_Distance.standardeScooter
+210
+--cost-parameter:sharingBookingCosts.standardeScooter
+1
+--cost-parameter:sharingMinCosts.standardeScooter
+0.15
