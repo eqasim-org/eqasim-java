@@ -20,8 +20,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private final static String MODE_PARAMETERS_PATH = "modeParametersPath";
 	private final static String COST_PARAMETERS_PATH = "costParametersPath";
 
-	private final static String TRIP_ANALYSIS_INTERVAL = "tripAnalysisInterval";
-	private final static String TRIP_ANALYSIS_DISTANCE_UNIT = "tripAnalysisDistanceUnit";
+	private final static String ANALYSIS_INTERVAL = "analysisInterval";
+	private final static String ANALYSIS_DISTANCE_UNIT = "analysisDistanceUnit";
 
 	private final static String USE_SCHEDULE_BASED_TRANSPORT = "useScheduleBasedTransport";
 
@@ -33,8 +33,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private String modeParametersPath = null;
 	private String costParametersPath = null;
 
-	private int tripAnalysisInterval = 0;
-	private DistanceUnit tripAnalysisDistanceUnit = DistanceUnit.meter;
+	private int analysisInterval = 0;
+	private DistanceUnit analysisDistanceUnit = DistanceUnit.meter;
 
 	private boolean useScheduleBasedTransport = true;
 
@@ -198,14 +198,14 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 		this.costParametersPath = costParametersPath;
 	}
 
-	@StringGetter(TRIP_ANALYSIS_INTERVAL)
-	public int getTripAnalysisInterval() {
-		return tripAnalysisInterval;
+	@StringGetter(ANALYSIS_INTERVAL)
+	public int getAnalysisInterval() {
+		return analysisInterval;
 	}
 
-	@StringSetter(TRIP_ANALYSIS_INTERVAL)
-	public void setTripAnalysisInterval(int tripAnalysisInterval) {
-		this.tripAnalysisInterval = tripAnalysisInterval;
+	@StringSetter(ANALYSIS_INTERVAL)
+	public void setAnalysisInterval(int analysisInterval) {
+		this.analysisInterval = analysisInterval;
 	}
 
 	@StringGetter(DISTANCE_UNIT)
@@ -218,14 +218,14 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 		this.distanceUnit = distanceUnit;
 	}
 
-	@StringGetter(TRIP_ANALYSIS_DISTANCE_UNIT)
-	public DistanceUnit getTripAnalysisDistanceUnit() {
-		return tripAnalysisDistanceUnit;
+	@StringGetter(ANALYSIS_DISTANCE_UNIT)
+	public DistanceUnit getAnalysisDistanceUnit() {
+		return analysisDistanceUnit;
 	}
 
-	@StringSetter(TRIP_ANALYSIS_DISTANCE_UNIT)
-	public void setTripAnalysisDistanceUnit(DistanceUnit tripAnalysisDistanceUnit) {
-		this.tripAnalysisDistanceUnit = tripAnalysisDistanceUnit;
+	@StringSetter(ANALYSIS_DISTANCE_UNIT)
+	public void setAnalysisDistanceUnit(DistanceUnit analysisDistanceUnit) {
+		this.analysisDistanceUnit = analysisDistanceUnit;
 	}
 
 	@StringGetter(USE_SCHEDULE_BASED_TRANSPORT)

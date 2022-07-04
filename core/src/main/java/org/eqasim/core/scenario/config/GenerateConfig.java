@@ -78,7 +78,7 @@ public class GenerateConfig {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setCrossingPenalty(3.0);
 		eqasimConfig.setSampleSize(sampleSize);
-		eqasimConfig.setTripAnalysisInterval(DEFAULT_ITERATIONS);
+		eqasimConfig.setAnalysisInterval(DEFAULT_ITERATIONS);
 
 		// Scoring config
 		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
