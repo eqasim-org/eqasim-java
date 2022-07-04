@@ -15,8 +15,6 @@ import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
-// TODO: will need to be updated after the matsim 14 release to profit from https://github.com/matsim-org/matsim-libs/pull/1859
-
 public class RunComputeEmissionsGrid {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {

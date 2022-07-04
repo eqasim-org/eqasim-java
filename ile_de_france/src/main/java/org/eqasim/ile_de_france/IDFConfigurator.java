@@ -15,6 +15,8 @@ import java.util.Map;
 public class IDFConfigurator extends EqasimConfigurator {
     public void adjustScenario(Scenario scenario) {
         // if there is a vehicles file defined in config, manually assign them to their agents
+        // TODO : since matsim 14 it is now possible to assign vehicles directly in the xml file.
+        //  That should be the preferred way of assigning vehicles.
         Config config = scenario.getConfig();
         if (config.qsim().getVehiclesSource() == QSimConfigGroup.VehiclesSource.fromVehiclesData) {
             for (Person person : scenario.getPopulation().getPersons().values()) {

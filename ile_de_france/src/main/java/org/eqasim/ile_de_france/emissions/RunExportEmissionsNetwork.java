@@ -25,7 +25,7 @@ import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.*;
 
-// TODO: will need to be updated after the matsim 14 release to profit from https://github.com/matsim-org/matsim-libs/pull/1859
+// TODO: will need to be updated after the matsim 15 release to profit from https://github.com/matsim-org/matsim-libs/pull/2081
 
 public class RunExportEmissionsNetwork {
 
@@ -45,6 +45,7 @@ public class RunExportEmissionsNetwork {
         int timeBinSize = Integer.parseInt(cmd.getOption("time-bin-size").orElse("3600"));
 
         EventsManager eventsManager = EventsUtils.createEventsManager();
+
         EmissionsOnLinkEventHandler handler = new EmissionsOnLinkEventHandler(timeBinSize);
 
         EmissionEventsReader eventsReader = new EmissionEventsReader(eventsManager);
