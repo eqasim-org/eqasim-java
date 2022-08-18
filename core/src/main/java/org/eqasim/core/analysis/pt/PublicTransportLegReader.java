@@ -8,14 +8,14 @@ import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 
-public class PublicTransportTripReader {
-	final private PublicTransportTripListener tripListener;
+public class PublicTransportLegReader {
+	final private PublicTransportLegListener tripListener;
 
-	public PublicTransportTripReader(PublicTransportTripListener tripListener) {
+	public PublicTransportLegReader(PublicTransportLegListener tripListener) {
 		this.tripListener = tripListener;
 	}
 
-	public Collection<PublicTransportTripItem> readTrips(String eventsPath) {
+	public Collection<PublicTransportLegItem> readTrips(String eventsPath) {
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		eventsManager.addHandler(tripListener);
 

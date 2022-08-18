@@ -17,12 +17,13 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.AgentWaitingForPtEvent;
 import org.matsim.core.api.experimental.events.handler.AgentWaitingForPtEventHandler;
 
-public class PublicTransportTripListener implements PersonDepartureEventHandler, ActivityStartEventHandler,
+public class PublicTransportLegListener implements PersonDepartureEventHandler, ActivityStartEventHandler,
 		GenericEventHandler, AgentWaitingForPtEventHandler {
-	final private Collection<PublicTransportTripItem> trips = new LinkedList<>();
+	final private Collection<PublicTransportLegItem> trips = new LinkedList<>();
 	final private Map<Id<Person>, Integer> tripIndices = new HashMap<>();
+	final private Map<Id<Person>, Integer> legIndices = new HashMap<>();
 
-	public Collection<PublicTransportTripItem> getTripItems() {
+	public Collection<PublicTransportLegItem> getTripItems() {
 		return trips;
 	}
 
@@ -33,8 +34,9 @@ public class PublicTransportTripListener implements PersonDepartureEventHandler,
 	}
 
 	public void handleEvent(PublicTransitEvent event) {
-		trips.add(new PublicTransportTripItem(event.getPersonId(), //
+		trips.add(new PublicTransportLegItem(event.getPersonId(), //
 				tripIndices.get(event.getPersonId()), //
+				legIndices.get(event.getPersonId()), //
 				event.getAccessStopId(), //
 				event.getEgressStopId(), //
 				event.getTransitLineId(), //
@@ -59,8 +61,10 @@ public class PublicTransportTripListener implements PersonDepartureEventHandler,
 	public void handleEvent(PersonDepartureEvent event) {
 		if (!tripIndices.containsKey(event.getPersonId())) {
 			tripIndices.put(event.getPersonId(), 0);
+			legIndices.put(event.getPersonId(), 0);
 		} else {
 			tripIndices.compute(event.getPersonId(), (k, v) -> v + 1);
+			legIndices.compute(event.getPersonId(), (k, v) -> v + 1);
 		}
 	}
 

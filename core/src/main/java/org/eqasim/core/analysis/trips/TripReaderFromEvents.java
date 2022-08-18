@@ -1,4 +1,4 @@
-package org.eqasim.core.analysis;
+package org.eqasim.core.analysis.trips;
 
 import java.util.Collection;
 

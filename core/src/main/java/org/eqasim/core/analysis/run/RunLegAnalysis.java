@@ -1,4 +1,4 @@
-package org.eqasim.core.analysis;
+package org.eqasim.core.analysis.run;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -7,7 +7,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
-import org.eqasim.core.components.EqasimMainModeIdentifier;
+import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
+import org.eqasim.core.analysis.DistanceUnit;
+import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.legs.LegItem;
+import org.eqasim.core.analysis.legs.LegListener;
+import org.eqasim.core.analysis.legs.LegReaderFromEvents;
+import org.eqasim.core.analysis.legs.LegReaderFromPopulation;
+import org.eqasim.core.analysis.legs.LegWriter;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -16,13 +23,12 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.MatsimFacilitiesReader;
 
-public class RunTripAnalysis {
-	private final static Logger logger = Logger.getLogger(RunTripAnalysis.class);
+public class RunLegAnalysis {
+	private final static Logger logger = Logger.getLogger(RunLegAnalysis.class);
 
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
@@ -57,12 +63,10 @@ public class RunTripAnalysis {
 
 		String outputPath = cmd.getOptionStrict("output-path");
 
-		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
-
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
 
-		Collection<TripItem> trips = null;
+		Collection<LegItem> legs = null;
 
 		if (cmd.hasOption("events-path")) {
 			String networkPath = cmd.getOptionStrict("network-path");
@@ -70,8 +74,8 @@ public class RunTripAnalysis {
 			new MatsimNetworkReader(network).readFile(networkPath);
 
 			String eventsPath = cmd.getOptionStrict("events-path");
-			TripListener tripListener = new TripListener(network, mainModeIdentifier, personAnalysisFilter);
-			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
+			LegListener legListener = new LegListener(network, personAnalysisFilter);
+			legs = new LegReaderFromEvents(legListener).readLegs(eventsPath);
 		} else {
 			Network network = null;
 			ActivityFacilities facilities = null;
@@ -93,13 +97,13 @@ public class RunTripAnalysis {
 			}
 
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(vehicleModes, mainModeIdentifier, personAnalysisFilter,
-					Optional.ofNullable(network), Optional.ofNullable(facilities)).readTrips(populationPath);
+			legs = new LegReaderFromPopulation(vehicleModes, personAnalysisFilter, Optional.ofNullable(network),
+					Optional.ofNullable(facilities)).readLegs(populationPath);
 		}
 
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));
 		DistanceUnit outputUnit = DistanceUnit.valueOf(cmd.getOption("output-distance-unit").orElse("meter"));
 
-		new TripWriter(trips, inputUnit, outputUnit).write(outputPath);
+		new LegWriter(legs, inputUnit, outputUnit).write(outputPath);
 	}
 }
