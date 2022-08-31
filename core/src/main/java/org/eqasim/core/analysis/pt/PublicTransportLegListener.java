@@ -44,6 +44,10 @@ public class PublicTransportLegListener implements PersonDepartureEventHandler, 
 		Id<TransitStopArea> accessAreaId = schedule.getFacilities().get(event.getAccessStopId()).getStopAreaId();
 		Id<TransitStopArea> egressAreaId = schedule.getFacilities().get(event.getEgressStopId()).getStopAreaId();
 
+		String routeMode = schedule.getTransitLines().get(event.getTransitLineId()) //
+				.getRoutes().get(event.getTransitRouteId())//
+				.getTransportMode();
+		
 		trips.add(new PublicTransportLegItem(event.getPersonId(), //
 				tripIndices.get(event.getPersonId()), //
 				legIndices.get(event.getPersonId()), //
@@ -52,7 +56,8 @@ public class PublicTransportLegListener implements PersonDepartureEventHandler, 
 				event.getTransitLineId(), //
 				event.getTransitRouteId(), //
 				accessAreaId, //
-				egressAreaId//
+				egressAreaId, //
+				routeMode //
 		));
 	}
 
