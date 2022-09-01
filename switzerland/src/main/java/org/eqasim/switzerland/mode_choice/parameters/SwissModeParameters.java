@@ -10,6 +10,23 @@ public class SwissModeParameters extends ModeParameters {
 
 	public class SwissBikeParameters {
 		public double betaStatedPreferenceRegion3_u = 0.0;
+
+		//new
+		public double betaAge = 0.0;
+		public double betaIsFemale = 0.0;
+		public double betaIsWorkTrip = 0.0;
+		public double betaTravelTime_hour = 0.0;
+		public double betaPropS1L1 = 0.0;
+		public double betaPropS2L1 = 0.0;
+		public double betaPropS3L1 = 0.0;
+		public double betaPropS4L1 = 0.0;
+		public double betaPropS1L2 = 0.0;
+		public double betaPropS2L2 = 0.0;
+		public double betaPropS3L2 = 0.0;
+		public double betaPropS4L2 = 0.0;
+		public double lambdaRCD = 0.0;
+		public double referenceDist = 0.0;
+
 	}
 
 	public final SwissCarParameters swissCar = new SwissCarParameters();
@@ -42,10 +59,26 @@ public class SwissModeParameters extends ModeParameters {
 
 		// Bike
 		parameters.bike.alpha_u = 0.344;
-		parameters.bike.betaTravelTime_u_min = -0.09;
+		parameters.bike.betaTravelTime_u_min = -0.09; //g/ what does u_ mean?
 		parameters.bike.betaAgeOver18_u_a = -0.049;
 
 		parameters.swissBike.betaStatedPreferenceRegion3_u = -0.366;
+
+		//new
+		parameters.swissBike.betaAge = 0.0;
+		parameters.swissBike.betaIsFemale = 0.0;
+		parameters.swissBike.betaIsWorkTrip = 0.0;
+		parameters.swissBike.betaTravelTime_hour = 0.0;
+		parameters.swissBike.betaPropS1L1 = 0.0;
+		parameters.swissBike.betaPropS2L1 = 0.0;
+		parameters.swissBike.betaPropS3L1 = 0.0;
+		parameters.swissBike.betaPropS4L1 = 0.0;
+		parameters.swissBike.betaPropS1L2 = 0.0;
+		parameters.swissBike.betaPropS2L2 = 0.0;
+		parameters.swissBike.betaPropS3L2 = 0.0;
+		parameters.swissBike.betaPropS4L2 = 0.0;
+		parameters.swissBike.lambdaRCD = 0.0;
+		parameters.swissBike.referenceDist = 0.0;
 
 		// Walk
 		parameters.walk.alpha_u = 1.3;
