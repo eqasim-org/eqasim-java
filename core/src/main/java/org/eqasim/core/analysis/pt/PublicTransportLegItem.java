@@ -21,9 +21,12 @@ public class PublicTransportLegItem {
 	public Id<TransitStopArea> accessAreaId;
 	public Id<TransitStopArea> egressAreaId;
 
+	public String transitMode;
+
 	public PublicTransportLegItem(Id<Person> personId, int personTripId, int legIndex,
 			Id<TransitStopFacility> accessStopId, Id<TransitStopFacility> egressStopId, Id<TransitLine> transitLineId,
-			Id<TransitRoute> transitRouteId, Id<TransitStopArea> accessAreaId, Id<TransitStopArea> egressAreaId) {
+			Id<TransitRoute> transitRouteId, Id<TransitStopArea> accessAreaId, Id<TransitStopArea> egressAreaId,
+			String transitMode) {
 		this.personId = personId;
 		this.personTripId = personTripId;
 		this.legIndex = legIndex;
@@ -36,5 +39,7 @@ public class PublicTransportLegItem {
 
 		this.accessAreaId = accessAreaId;
 		this.egressAreaId = egressAreaId;
+
+		this.transitMode = transitMode;
 	}
 }

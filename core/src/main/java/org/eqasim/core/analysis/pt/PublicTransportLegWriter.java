@@ -44,7 +44,8 @@ public class PublicTransportLegWriter {
 				"transit_line_id", //
 				"transit_route_id", //
 				"access_area_id", //
-				"egress_area_id" //
+				"egress_area_id", //
+				"transit_mode" //
 		});
 	}
 
@@ -58,7 +59,8 @@ public class PublicTransportLegWriter {
 				trip.transitLineId.toString(), //
 				trip.transitRouteId.toString(), //
 				trip.accessAreaId == null ? "" : trip.accessAreaId.toString(), //
-				trip.egressAreaId == null ? "" : trip.egressAreaId.toString() //
+				trip.egressAreaId == null ? "" : trip.egressAreaId.toString(), //
+				trip.transitMode //
 		});
 	}
 }
