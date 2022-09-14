@@ -21,12 +21,12 @@ import org.matsim.core.population.routes.NetworkRoute;
 
 public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariables> {
     private final Scenario scenario;
-    public final BikePredictor delegate;
+    public final BikePredictor bikePredictor;
 
     @Inject
     public SwissBikePredictor(Scenario scenario, BikePredictor bikePredictor) {
         this.scenario = scenario;
-        this.delegate = bikePredictor;
+        this.bikePredictor = bikePredictor;
     }
 
     @Override
