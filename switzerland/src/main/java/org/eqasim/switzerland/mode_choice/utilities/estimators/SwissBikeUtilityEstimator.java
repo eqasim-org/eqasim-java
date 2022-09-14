@@ -3,28 +3,33 @@ package org.eqasim.switzerland.mode_choice.utilities.estimators;
 import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissBikePredictor;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissTripPredictor;
 import org.eqasim.switzerland.mode_choice.utilities.variables.SwissBikeVariables;
 import org.eqasim.switzerland.mode_choice.utilities.variables.SwissPersonVariables;
+import org.eqasim.switzerland.mode_choice.utilities.variables.SwissTripVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import java.lang.Math;
 
 import com.google.inject.Inject;
 
 public class SwissBikeUtilityEstimator implements UtilityEstimator {
 	private final SwissModeParameters swissModeParameters;
 	private final SwissPersonPredictor swissPersonPredictor;
+	private final SwissTripPredictor swissTripPredictor;
 	private final SwissBikePredictor swissBikePredictor;
 
 
 	@Inject
 	public SwissBikeUtilityEstimator(SwissModeParameters swissModeParameters, SwissPersonPredictor swissPersonPredictor,
-			SwissBikePredictor swissBikePredictor) {
+			SwissBikePredictor swissBikePredictor, SwissTripPredictor swissTripPredictor) {
+
 		this.swissModeParameters = swissModeParameters;
+		this.swissTripPredictor = swissTripPredictor;
 		this.swissPersonPredictor = swissPersonPredictor;
 		this.swissBikePredictor = swissBikePredictor;
 
@@ -38,7 +43,6 @@ public class SwissBikeUtilityEstimator implements UtilityEstimator {
 		return (personVariables.statedPreferenceRegion == 3) ? swissModeParameters.swissBike.betaStatedPreferenceRegion3_u : 0.0;
 	}
 
-	//new
 	protected double estimateAgeUtility(SwissPersonVariables personVariables) {
 		return swissModeParameters.swissBike.betaAge * personVariables.age;
 	}
@@ -51,15 +55,15 @@ public class SwissBikeUtilityEstimator implements UtilityEstimator {
 		}
 	}
 
-	protected double estimateWorkTripUtility(SwissBikeVariables bikeVariables) {
-		if (bikeVariables.isWorkTrip){
+	protected double estimateWorkTripUtility(SwissTripVariables tripVariables) {
+		if (tripVariables.isWorkTrip){
 			return swissModeParameters.swissBike.betaIsWorkTrip;}
 		else {
 			return 0.0;
 		}
 	}
 	protected double estimateTravelTimeUtility(SwissBikeVariables bikeVariables) {
-		return swissModeParameters.swissBike.betaTravelTime_hour * bikeVariables.travelTime_hour;
+		return swissModeParameters.swissBike.betaTravelTime_hour * bikeVariables.travelTime_min/60;
 	}
 
 	protected double estimateRoadConditionsUtility(SwissBikeVariables bikeVariables) {
@@ -71,20 +75,22 @@ public class SwissBikeUtilityEstimator implements UtilityEstimator {
 				swissModeParameters.swissBike.betaPropS2L2 * bikeVariables.propS2L2 +
 				swissModeParameters.swissBike.betaPropS3L2 * bikeVariables.propS3L2 +
 				swissModeParameters.swissBike.betaPropS4L2 * bikeVariables.propS4L2)*
-				Math.pow((bikeVariables.routedDistance/swissModeParameters.swissBike.referenceDist),(swissModeParameters.swissBike.lambdaRCD));
+				EstimatorUtils.interaction(bikeVariables.routedDistance, swissModeParameters.swissBike.referenceRoutedDistance_km, swissModeParameters.swissBike.lambdaRCD);
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SwissPersonVariables personVariables = swissPersonPredictor.predictVariables(person, trip, elements);
 		SwissBikeVariables bikeVariables = swissBikePredictor.predictVariables(person, trip, elements);
+		SwissTripVariables tripVariables = swissTripPredictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
-
+		utility += estimateConstantUtility();
 		utility += estimateRegionalUtility(personVariables);
+
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateFemaleUtility(personVariables);
-		utility += estimateWorkTripUtility(bikeVariables);
+		utility += estimateWorkTripUtility(tripVariables);
 		utility += estimateTravelTimeUtility(bikeVariables);
 		utility += estimateRoadConditionsUtility(bikeVariables);
 

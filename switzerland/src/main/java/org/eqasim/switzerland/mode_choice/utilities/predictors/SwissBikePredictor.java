@@ -5,9 +5,7 @@ import java.util.List;
 import com.google.inject.Inject;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
 import org.eqasim.switzerland.mode_choice.utilities.variables.SwissBikeVariables;
-import org.eqasim.switzerland.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -35,16 +33,7 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
             throw new IllegalStateException("We do not support multi-stage bike trips yet.");
         }
 
-
-        boolean isWorkTrip = false;
-        if (trip.getDestinationActivity().getType().equals("work")){
-            isWorkTrip = true;
-        }
-
         Leg leg = (Leg) elements.get(0);
-
-        double travelTime_hour = leg.getTravelTime().seconds() / 3600.0;
-//        double travelTime_min = ((Leg) elements.get(0)).getTravelTime().seconds() / 60.0;
 
         double S1L1 = 0;
         double S2L1 = 0;
@@ -111,8 +100,8 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
 
 
 
-        return new SwissBikeVariables(isWorkTrip, travelTime_hour,
-                propS1L1, propS2L1, propS3L1,propS4L1,propS1L2,propS2L2,propS3L2,propS4L2, routedDistance);
+        return new SwissBikeVariables(bikePredictor.predict(person,trip,elements),
+                propS1L1, propS2L1, propS3L1,propS4L1,propS1L2,propS2L2,propS3L2,propS4L2, routedDistance); //g/ what unit is distance?
 
 
     }
