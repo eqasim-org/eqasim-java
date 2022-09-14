@@ -13,11 +13,11 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import com.google.inject.Inject;
 
 public class SwissPersonPredictor extends CachedVariablePredictor<SwissPersonVariables> {
-	public final PersonPredictor delegate;
+	public final PersonPredictor personPredictor;
 
 	@Inject
 	public SwissPersonPredictor(PersonPredictor personPredictor) {
-		this.delegate = personPredictor;
+		this.personPredictor = personPredictor;
 	}
 
 	@Override
@@ -37,7 +37,7 @@ public class SwissPersonPredictor extends CachedVariablePredictor<SwissPersonVar
 			isFemale = true ;
 		}
 
-		return new SwissPersonVariables(delegate.predictVariables(person, trip, elements), homeLocation,
+		return new SwissPersonVariables(personPredictor.predictVariables(person, trip, elements), homeLocation,
 				hasGeneralSubscription, hasHalbtaxSubscription, hasRegionalSubscription, statedPreferenceRegion,
 				isFemale,age);
 	}
