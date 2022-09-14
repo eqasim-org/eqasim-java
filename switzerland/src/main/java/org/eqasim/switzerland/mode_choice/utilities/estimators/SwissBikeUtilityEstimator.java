@@ -2,7 +2,7 @@ package org.eqasim.switzerland.mode_choice.utilities.estimators;
 
 import java.util.List;
 
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissBikePredictor;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
@@ -15,7 +15,7 @@ import java.lang.Math;
 
 import com.google.inject.Inject;
 
-public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
+public class SwissBikeUtilityEstimator implements UtilityEstimator {
 	private final SwissModeParameters swissModeParameters;
 	private final SwissPersonPredictor swissPersonPredictor;
 	private final SwissBikePredictor swissBikePredictor;
@@ -24,11 +24,14 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 	@Inject
 	public SwissBikeUtilityEstimator(SwissModeParameters swissModeParameters, SwissPersonPredictor swissPersonPredictor,
 			SwissBikePredictor swissBikePredictor) {
-		super(swissModeParameters, swissPersonPredictor.delegate, swissBikePredictor.delegate);
 		this.swissModeParameters = swissModeParameters;
 		this.swissPersonPredictor = swissPersonPredictor;
 		this.swissBikePredictor = swissBikePredictor;
 
+	}
+	
+	protected double estimateConstantUtility() {
+		return swissModeParameters.bike.alpha_u;
 	}
 
 	protected double estimateRegionalUtility(SwissPersonVariables personVariables) {
@@ -78,7 +81,6 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 
 		double utility = 0.0;
 
-		utility += super.estimateUtility(person, trip, elements);
 		utility += estimateRegionalUtility(personVariables);
 		utility += estimateAgeUtility(personVariables);
 		utility += estimateFemaleUtility(personVariables);
