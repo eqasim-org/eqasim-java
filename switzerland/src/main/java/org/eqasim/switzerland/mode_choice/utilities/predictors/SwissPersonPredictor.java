@@ -21,17 +21,15 @@ public class SwissPersonPredictor extends CachedVariablePredictor<SwissPersonVar
 	}
 
 	@Override
-	protected SwissPersonVariables predict(Person person, DiscreteModeChoiceTrip trip,
-			List<? extends PlanElement> elements) {
+	public SwissPersonVariables predict(Person person, DiscreteModeChoiceTrip trip,
+										List<? extends PlanElement> elements) {
 		Coord homeLocation = SwissPredictorUtils.getHomeLocation(person);
 		boolean hasGeneralSubscription = SwissPredictorUtils.hasGeneralSubscription(person);
 		boolean hasHalbtaxSubscription = SwissPredictorUtils.hasHalbtaxSubscription(person);
 		boolean hasRegionalSubscription = SwissPredictorUtils.hasRegionalSubscription(person);
 		int statedPreferenceRegion = SwissPredictorUtils.getStatedPreferenceRegion(person);
 
-		//new
 		int age = (int) person.getAttributes().getAttribute("age");
-
 		boolean isFemale = false;
 		if (person.getAttributes().getAttribute("sex").equals("f")){
 			isFemale = true ;

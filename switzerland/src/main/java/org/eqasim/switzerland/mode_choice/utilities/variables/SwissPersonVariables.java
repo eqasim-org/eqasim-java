@@ -1,7 +1,5 @@
 package org.eqasim.switzerland.mode_choice.utilities.variables;
 
-import com.google.inject.Inject;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 import org.matsim.api.core.v01.Coord;
 
@@ -29,7 +27,7 @@ public class SwissPersonVariables extends PersonVariables {
 		this.hasRegionalSubscription = hasRegionalSubscription;
 
 		this.statedPreferenceRegion = statedPreferenceRegion;
-		//new
+
 		this.isFemale =isFemale;
 		this.age=age;
 	}

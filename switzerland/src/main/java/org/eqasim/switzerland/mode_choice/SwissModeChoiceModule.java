@@ -13,6 +13,8 @@ import org.eqasim.switzerland.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissBikeUtilityEstimator;
 import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissCarUtilityEstimator;
+import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissPtUtilityEstimator;
+import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissWalkUtilityEstimator;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -26,6 +28,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String MODE_AVAILABILITY_NAME = "SwissModeAvailability";
 	static public final String CAR_ESTIMATOR_NAME = "SwissCarEstimator";
 	static public final String BIKE_ESTIMATOR_NAME = "SwissBikeEstimator";
+	static public final String WALK_ESTIMATOR_NAME = "SwissWalkEstimator";
+	static public final String PT_ESTIMATOR_NAME = "SwissPtEstimator";
 	static public final String CAR_COST_MODEL_NAME = "SwissCarCostModel";
 	static public final String PT_COST_MODEL_NAME = "SwissPtCostModel";
 
@@ -39,6 +43,9 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(SwissCarUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(SwissBikeUtilityEstimator.class);
+
+		bindUtilityEstimator(PT_ESTIMATOR_NAME).to(SwissPtUtilityEstimator.class);
+		bindUtilityEstimator(WALK_ESTIMATOR_NAME).to(SwissWalkUtilityEstimator.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SwissPtCostModel.class);
