@@ -2,6 +2,7 @@ package org.eqasim.switzerland.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.WalkVariables;
@@ -16,7 +17,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
 
-public class SwissWalkUtilityEstimator extends WalkUtilityEstimator {
+public class SwissWalkUtilityEstimator implements UtilityEstimator {
     private final SwissModeParameters swissModeParameters;
     private final SwissPersonPredictor swissPersonPredictor;
     private final SwissTripPredictor swissTripPredictor;
@@ -26,12 +27,16 @@ public class SwissWalkUtilityEstimator extends WalkUtilityEstimator {
     @Inject
     public SwissWalkUtilityEstimator(SwissModeParameters swissModeParameters, SwissPersonPredictor swissPersonPredictor,
                                      SwissTripPredictor swissTripPredictor, WalkPredictor walkPredictor) {
-        super(swissModeParameters, walkPredictor);
+
         this.swissModeParameters = swissModeParameters;
         this.swissPersonPredictor = swissPersonPredictor;
         this.swissTripPredictor = swissTripPredictor;
         this.walkPredictor = walkPredictor;
 
+    }
+
+    protected double estimateConstantUtility() {
+        return swissModeParameters.walk.alpha_u;
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
@@ -66,7 +71,7 @@ public class SwissWalkUtilityEstimator extends WalkUtilityEstimator {
 
         double utility = 0.0;
 
-        utility += super.estimateUtility(person, trip, elements);
+        utility += estimateConstantUtility();
         utility += estimateAgeUtility(personVariables);
         utility += estimateFemaleUtility(personVariables);
         utility += estimateWorkTripUtility(tripVariables);

@@ -2,6 +2,7 @@ package org.eqasim.switzerland.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
@@ -22,7 +23,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
 
-public class SwissCarUtilityEstimator extends CarUtilityEstimator {
+public class SwissCarUtilityEstimator implements UtilityEstimator {
 	private final SwissModeParameters swissModeParameters;
 	private final SwissPersonPredictor swissPersonPredictor;
 	private final SwissTripPredictor swissTripPredictor;
@@ -31,12 +32,15 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 	@Inject
 	public SwissCarUtilityEstimator(SwissModeParameters swissModeParameters, SwissCarPredictor swissCarPredictor,
 			SwissPersonPredictor swissPersonPredictor,SwissTripPredictor swissTripPredictor) {
-		super(swissModeParameters, swissCarPredictor.delegate);
 
 		this.swissPersonPredictor = swissPersonPredictor;
 		this.swissModeParameters = swissModeParameters;
 		this.swissTripPredictor = swissTripPredictor;
 		this.swissCarPredictor = swissCarPredictor;
+	}
+
+	protected double estimateConstantUtility() {
+		return swissModeParameters.car.alpha_u;
 	}
 
 	protected double estimateRegionalUtility(SwissPersonVariables personVariables) {
@@ -86,7 +90,7 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 
 		double utility = 0.0;
 
-		utility += super.estimateUtility(person, trip, elements);
+		utility += estimateConstantUtility();
 		utility += estimateRegionalUtility(personVariables);
 
 		utility += estimateAgeUtility(personVariables);
