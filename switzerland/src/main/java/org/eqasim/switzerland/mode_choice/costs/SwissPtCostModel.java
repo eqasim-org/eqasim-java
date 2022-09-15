@@ -25,36 +25,42 @@ public class SwissPtCostModel extends AbstractCostModel {
 		this.predictor = predictor;
 	}
 
-	protected double calculateHomeDistance_km(SwissPersonVariables variables, DiscreteModeChoiceTrip trip) {
-		double originHomeDistance_km = CoordUtils.calcEuclideanDistance(variables.homeLocation,
-				trip.getOriginActivity().getCoord()) * 1e-3;
-		double destinationHomeDistance_km = CoordUtils.calcEuclideanDistance(variables.homeLocation,
-				trip.getDestinationActivity().getCoord()) * 1e-3;
-		return Math.max(originHomeDistance_km, destinationHomeDistance_km);
-	}
+//	protected double calculateHomeDistance_km(SwissPersonVariables variables, DiscreteModeChoiceTrip trip) {
+//		double originHomeDistance_km = CoordUtils.calcEuclideanDistance(variables.homeLocation,
+//				trip.getOriginActivity().getCoord()) * 1e-3;
+//		double destinationHomeDistance_km = CoordUtils.calcEuclideanDistance(variables.homeLocation,
+//				trip.getDestinationActivity().getCoord()) * 1e-3;
+//		return Math.max(originHomeDistance_km, destinationHomeDistance_km);
+//	}
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SwissPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
+		double payableDistance_km = getInVehicleDistance_km(elements);
+
+		double fullCost_CHF = Math.max(parameters.ptMinimumCost_CHF,
+				parameters.ptCost_CHF_km * payableDistance_km);
+
 		if (variables.hasGeneralSubscription) {
 			return 0.0;
 		}
 
-		if (variables.hasRegionalSubscription) {
-			double homeDistance_km = calculateHomeDistance_km(variables, trip);
-
-			if (homeDistance_km <= parameters.ptRegionalRadius_km) {
-				return 0.0;
-			}
-		}
-
-		double fullCost_CHF = Math.max(parameters.ptMinimumCost_CHF,
-				parameters.ptCost_CHF_km * getInVehicleDistance_km(elements));
-
+		double percentOfFarePaid = 1.0;
 		if (variables.hasHalbtaxSubscription) {
-			return fullCost_CHF * 0.5;
+			percentOfFarePaid = 0.5;
 		}
+
+		if (variables.hasRegionalSubscription) {
+			return Math.max(0, (payableDistance_km - parameters.ptRegionalInVehicleDistance_km) * parameters.ptCost_CHF_km * percentOfFarePaid);
+		}
+//		if (variables.hasRegionalSubscription) {
+//			double homeDistance_km = calculateHomeDistance_km(variables, trip);
+//
+//			if (homeDistance_km <= parameters.ptRegionalRadius_km) {
+//				return 0.0;
+//			}
+//		}
 
 		return fullCost_CHF;
 	}

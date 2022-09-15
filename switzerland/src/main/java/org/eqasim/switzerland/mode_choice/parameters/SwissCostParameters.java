@@ -10,15 +10,19 @@ public class SwissCostParameters implements ParameterDefinition {
 
 	public double ptRegionalRadius_km = 0.0;
 
+	public double ptRegionalInVehicleDistance_km = 0.0;
+
 	public static SwissCostParameters buildDefault() {
 		SwissCostParameters parameters = new SwissCostParameters();
 
 		parameters.carCost_CHF_km = 0.26;
 
-		parameters.ptCost_CHF_km = 0.6;
-		parameters.ptMinimumCost_CHF = 2.7;
+		parameters.ptCost_CHF_km = 0.5;
+		parameters.ptMinimumCost_CHF = 0.0; //g/ not used
 
-		parameters.ptRegionalRadius_km = 15.0;
+		parameters.ptRegionalRadius_km = 0.0; //g/ not used
+
+		parameters.ptRegionalInVehicleDistance_km = 10.0;
 
 		return parameters;
 	}
