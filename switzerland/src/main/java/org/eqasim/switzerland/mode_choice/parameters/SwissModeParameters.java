@@ -47,7 +47,7 @@ public class SwissModeParameters extends ModeParameters {
 		public double betaIsFemale = 0.0;
 		public double betaIsWorkTrip = 0.0;
 		public double betaInVehicleTime_hour = 0.0;
-		public double betaTransferTime_hour = 0.0;
+		public double betaWaitingTime_hour = 0.0;
 		public double betaAccessEgressTime_hour = 0.0;
 	}
 
@@ -90,7 +90,7 @@ public class SwissModeParameters extends ModeParameters {
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
-		parameters.pt.betaLineSwitch_u = -0.0; //g/ not used
+		parameters.pt.betaLineSwitch_u = -0.0; //<---change
 		parameters.pt.betaInVehicleTime_u_min = -0.0; //g/ not used
 		parameters.pt.betaWaitingTime_u_min = -0.0; //g/ not used
 		parameters.pt.betaAccessEgressTime_u_min = -0.0; //g/ not used
@@ -101,7 +101,7 @@ public class SwissModeParameters extends ModeParameters {
 
 		parameters.swissPt.betaAccessEgressTime_hour =-1.66;
 		parameters.swissPt.betaInVehicleTime_hour =-2.47;
-		parameters.swissPt.betaTransferTime_hour =-1.19;
+		parameters.swissPt.betaWaitingTime_hour =-1.19;//<---change
 
 		// Bike
 		parameters.bike.alpha_u = -0.684;

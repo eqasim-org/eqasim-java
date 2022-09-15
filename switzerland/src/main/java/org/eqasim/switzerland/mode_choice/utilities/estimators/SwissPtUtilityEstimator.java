@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.switzerland.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPtPredictor;
@@ -55,19 +54,26 @@ public class SwissPtUtilityEstimator implements UtilityEstimator {
             return 0.0;
         }
     }
-
-    protected double estimateAccessEgressTimeUtility(SwissPtVariables ptVariables) {
-        return swissModeParameters.swissPt.betaAccessEgressTime_hour * ptVariables.accessEgressTime_min/60;
-    }
-
     protected double estimateInVehicleTimeUtility(SwissPtVariables ptVariables) {
         return swissModeParameters.swissPt.betaInVehicleTime_hour * ptVariables.inVehicleTime_min/60;
     }
 
     protected double estimateMonetaryCostUtility(SwissPtVariables ptVariables) {
-        return swissModeParameters.betaCost_RD * EstimatorUtils.interaction(ptVariables.routedDistance, //g/ what unit is distance?
+        return swissModeParameters.betaCost_RD * EstimatorUtils.interaction(ptVariables.routedInVehicleDistance_km,
                 swissModeParameters.referenceRoutedDistance_km, swissModeParameters.lambdaCostRoutedDistance) * ptVariables.cost_MU;
     }
+
+    protected double estimateWaitingTimeUtility(SwissPtVariables ptVariables) {
+        return swissModeParameters.swissPt.betaWaitingTime_hour * ptVariables.waitingTime_min/60; //g/ waiting time here is calculated the same way as transfer time in data
+    }
+
+    protected double estimateLineSwitchUtility(SwissPtVariables ptVariables)  {
+        return swissModeParameters.pt.betaLineSwitch_u * ptVariables.numberOfLineSwitches; //g/ this is the same as transfers
+    }
+    protected double estimateAccessEgressTimeUtility(SwissPtVariables ptVariables) {
+        return swissModeParameters.swissPt.betaAccessEgressTime_hour * ptVariables.accessEgressTime_min/60;
+    }
+
 
 
     @Override
@@ -85,6 +91,8 @@ public class SwissPtUtilityEstimator implements UtilityEstimator {
         utility += estimateAccessEgressTimeUtility(ptVariables);
         utility += estimateInVehicleTimeUtility(ptVariables);
         utility += estimateMonetaryCostUtility(ptVariables);
+        utility += estimateWaitingTimeUtility(ptVariables);
+        utility += estimateLineSwitchUtility(ptVariables);
 
 
         return utility;

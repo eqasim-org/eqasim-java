@@ -12,19 +12,19 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import java.util.List;
 
 public class SwissCarPredictor extends CachedVariablePredictor<SwissCarVariables> {
-    public final CarPredictor delegate;
+    public final CarPredictor carPredictor;
 
     @Inject
     public SwissCarPredictor(CarPredictor carPredictor) {
-        this.delegate = carPredictor;
+        this.carPredictor = carPredictor;
     }
 
     @Override
     public SwissCarVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 
         Leg leg = (Leg) elements.get(0);
-        double routedDistance = leg.getRoute().getDistance();
+        double routedDistance_km = leg.getRoute().getDistance()/1000.0;
 
-        return new SwissCarVariables(delegate.predict(person,trip,elements),routedDistance);//g/ what unit is distance?
+        return new SwissCarVariables(carPredictor.predict(person,trip,elements),routedDistance_km);
     }
 }

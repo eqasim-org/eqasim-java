@@ -75,7 +75,7 @@ public class SwissBikeUtilityEstimator implements UtilityEstimator {
 				swissModeParameters.swissBike.betaPropS2L2 * bikeVariables.propS2L2 +
 				swissModeParameters.swissBike.betaPropS3L2 * bikeVariables.propS3L2 +
 				swissModeParameters.swissBike.betaPropS4L2 * bikeVariables.propS4L2)*
-				EstimatorUtils.interaction(bikeVariables.routedDistance, swissModeParameters.swissBike.referenceRoutedDistance_km, swissModeParameters.swissBike.lambdaRCD);
+				EstimatorUtils.interaction(bikeVariables.routedDistance_km, swissModeParameters.swissBike.referenceRoutedDistance_km, swissModeParameters.swissBike.lambdaRCD);
 	}
 
 	@Override

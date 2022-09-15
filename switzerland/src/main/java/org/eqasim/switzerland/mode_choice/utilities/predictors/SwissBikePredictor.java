@@ -44,7 +44,7 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
         double S3L2 = 0;
         double S4L2 = 0;
 
-        double routedDistance = leg.getRoute().getDistance();
+        double routedDistance_km = leg.getRoute().getDistance()/1000.0;
 
         Network network = scenario.getNetwork();
         Id<Link> startLinkId = leg.getRoute().getStartLinkId();
@@ -57,51 +57,51 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
             Link link = network.getLinks().get(linkId);
             double numberLanes = link.getNumberOfLanes();
             double freespeed = link.getFreespeed();
-            double linkLength = link.getLength();
+            double linkLength_km = link.getLength()/1000.0;
             if (numberLanes ==1){
                 if (freespeed <= 8.33333){ // <=30km/h
-                    S1L1 += linkLength;
+                    S1L1 += linkLength_km;
                 }
                 if ((freespeed > 8.33333)&(freespeed <= 13.8889)){ // <=50km/h
-                    S2L1 += linkLength;
+                    S2L1 += linkLength_km;
                 }
                 if ((freespeed > 13.8889)&(freespeed <= 16.6667)){ // <=60km/h
-                    S3L1 += linkLength;
+                    S3L1 += linkLength_km;
                 }
                 if (freespeed > 16.6667) { // > 60km/h
-                    S4L1 += linkLength;
+                    S4L1 += linkLength_km;
                 }
             }
             if (numberLanes > 1){
                 if (freespeed <= 8.33333){
-                    S1L2 += linkLength;
+                    S1L2 += linkLength_km;
                 }
                 if ((freespeed > 8.33333)&(freespeed <= 13.8889)){
-                    S2L2 += linkLength;
+                    S2L2 += linkLength_km;
                 }
                 if ((freespeed > 13.8889)&(freespeed <= 16.6667)){
-                    S3L2 += linkLength;
+                    S3L2 += linkLength_km;
                 }
                 if (freespeed > 16.6667) {
-                    S4L2 += linkLength;
+                    S4L2 += linkLength_km;
                 }
             }
 
         }
 
-        double propS1L1 = S1L1/routedDistance;
-        double propS2L1 = S2L1/routedDistance;
-        double propS3L1 = S3L1/routedDistance;
-        double propS4L1 = S4L1/routedDistance;
-        double propS1L2 = S1L2/routedDistance;
-        double propS2L2 = S2L2/routedDistance;
-        double propS3L2 = S3L2/routedDistance;
-        double propS4L2 = S4L2/routedDistance;
+        double propS1L1 = S1L1/routedDistance_km;
+        double propS2L1 = S2L1/routedDistance_km;
+        double propS3L1 = S3L1/routedDistance_km;
+        double propS4L1 = S4L1/routedDistance_km;
+        double propS1L2 = S1L2/routedDistance_km;
+        double propS2L2 = S2L2/routedDistance_km;
+        double propS3L2 = S3L2/routedDistance_km;
+        double propS4L2 = S4L2/routedDistance_km;
 
 
 
         return new SwissBikeVariables(bikePredictor.predict(person,trip,elements),
-                propS1L1, propS2L1, propS3L1,propS4L1,propS1L2,propS2L2,propS3L2,propS4L2, routedDistance); //g/ what unit is distance?
+                propS1L1, propS2L1, propS3L1,propS4L1,propS1L2,propS2L2,propS3L2,propS4L2, routedDistance_km);
 
 
     }

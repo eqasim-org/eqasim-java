@@ -78,7 +78,7 @@ public class SwissCarUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateMonetaryCostUtility(SwissCarVariables carVariables) {
-		return swissModeParameters.betaCost_RD * EstimatorUtils.interaction(carVariables.routedDistance,
+		return swissModeParameters.betaCost_RD * EstimatorUtils.interaction(carVariables.routedDistance_km,
 				swissModeParameters.referenceRoutedDistance_km, swissModeParameters.lambdaCostRoutedDistance) * carVariables.cost_MU;
 	}
 
