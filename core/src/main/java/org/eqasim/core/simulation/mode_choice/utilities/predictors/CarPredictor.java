@@ -25,11 +25,11 @@ public class CarPredictor extends CachedVariablePredictor<CarVariables> {
 
 	@Override
 	public CarVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		if (elements.size() > 1) {
-			throw new IllegalStateException("We do not support multi-stage car trips yet.");
-		}
+//		if (elements.size() > 1) {
+//			throw new IllegalStateException("We do not support multi-stage car trips yet.");
+//		}
 
-		Leg leg = (Leg) elements.get(0);
+		Leg leg = (Leg) elements.get(2);
 
 		double travelTime_min = leg.getTravelTime().seconds() / 60.0 + parameters.car.constantParkingSearchPenalty_min;
 		double cost_MU = costModel.calculateCost_MU(person, trip, elements);

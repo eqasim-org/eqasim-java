@@ -7,6 +7,8 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.switzerland.mode_choice.constraints.BikeConstraint;
+import org.eqasim.switzerland.mode_choice.constraints.WalkConstraint;
 import org.eqasim.switzerland.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.mode_choice.costs.SwissPtCostModel;
 import org.eqasim.switzerland.mode_choice.parameters.SwissCostParameters;
@@ -15,12 +17,15 @@ import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissBikeUtilityE
 import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissCarUtilityEstimator;
 import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissPtUtilityEstimator;
 import org.eqasim.switzerland.mode_choice.utilities.estimators.SwissWalkUtilityEstimator;
-import org.eqasim.switzerland.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.mode_choice.utilities.predictors.*;
+import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import org.matsim.core.config.Config;
 
 public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -51,6 +56,13 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bindCostModel(PT_COST_MODEL_NAME).to(SwissPtCostModel.class);
 
 		bind(SwissPersonPredictor.class);
+		bind(SwissCarPredictor.class);
+		bind(SwissPtPredictor.class);
+		bind(SwissBikePredictor.class);
+		bind(SwissTripPredictor.class);
+
+		bindTripConstraintFactory("WalkConstraint").to(WalkConstraint.Factory.class);
+		bindTripConstraintFactory("BikeConstraint").to(BikeConstraint.Factory.class);
 
 		bind(ModeParameters.class).to(SwissModeParameters.class).asEagerSingleton();
 	}
@@ -80,5 +92,19 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
+	}
+
+	@Provides
+	@Singleton
+	public WalkConstraint.Factory provideWalkConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
+																			   HomeFinder homeFinder, Config config) {
+		return new WalkConstraint.Factory(config);
+	}
+
+	@Provides
+	@Singleton
+	public BikeConstraint.Factory provideBikeConstraintFactory(DiscreteModeChoiceConfigGroup dmcConfig,
+															   HomeFinder homeFinder, Config config) {
+		return new BikeConstraint.Factory(config);
 	}
 }

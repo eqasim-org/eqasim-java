@@ -15,9 +15,10 @@ public class SwissBikeVariables extends BikeVariables {
     public final double propS3L2;
     public final double propS4L2;
     public final double routedDistance_km;
+    public final double averageUphillGradient;
 
     public SwissBikeVariables(BikeVariables delegate,double propS1L1, double propS2L1, double propS3L1, double propS4L1, double propS1L2,
-                              double propS2L2, double propS3L2, double propS4L2, double routedDistance_km){
+                              double propS2L2, double propS3L2, double propS4L2, double routedDistance_km, double averageUphillGradient){
 
         super(delegate.travelTime_min);
         this.propS1L1=propS1L1;
@@ -29,6 +30,7 @@ public class SwissBikeVariables extends BikeVariables {
         this.propS3L2=propS3L2;
         this.propS4L2=propS4L2;
         this.routedDistance_km=routedDistance_km;
+        this.averageUphillGradient = averageUphillGradient;
     }
 
 }

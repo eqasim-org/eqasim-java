@@ -78,6 +78,11 @@ public class SwissBikeUtilityEstimator implements UtilityEstimator {
 				EstimatorUtils.interaction(bikeVariables.routedDistance_km, swissModeParameters.swissBike.referenceRoutedDistance_km, swissModeParameters.swissBike.lambdaRCD);
 	}
 
+	protected double estimateAverageUphillGradientUtility(SwissBikeVariables bikeVariables) {
+		return swissModeParameters.swissBike.betaAverageUphillGradient * bikeVariables.averageUphillGradient *
+				EstimatorUtils.interaction(bikeVariables.routedDistance_km, swissModeParameters.swissBike.referenceRoutedDistance_km, swissModeParameters.swissBike.lambdaGD);
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SwissPersonVariables personVariables = swissPersonPredictor.predictVariables(person, trip, elements);
@@ -93,6 +98,8 @@ public class SwissBikeUtilityEstimator implements UtilityEstimator {
 		utility += estimateWorkTripUtility(tripVariables);
 		utility += estimateTravelTimeUtility(bikeVariables);
 		utility += estimateRoadConditionsUtility(bikeVariables);
+		utility += estimateAverageUphillGradientUtility(bikeVariables);
+
 
 		return utility;
 	}

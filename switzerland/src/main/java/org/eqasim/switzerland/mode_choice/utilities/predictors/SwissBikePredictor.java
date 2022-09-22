@@ -1,10 +1,12 @@
 package org.eqasim.switzerland.mode_choice.utilities.predictors;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.inject.Inject;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.switzerland.mode_choice.utilities.variables.SwissBikeVariables;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -29,38 +31,43 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
 
     @Override
     public SwissBikeVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-        if (elements.size() > 1) {
-            throw new IllegalStateException("We do not support multi-stage bike trips yet.");
-        }
+//        if (elements.size() > 1) {
+//            throw new IllegalStateException("We do not support multi-stage bike trips yet.");
+//        }
+        Leg leg = (Leg) elements.get(2);
 
-        Leg leg = (Leg) elements.get(0);
+        double S1L1 = 0.0;
+        double S2L1 = 0.0;
+        double S3L1 = 0.0;
+        double S4L1 = 0.0;
+        double S1L2 = 0.0;
+        double S2L2 = 0.0;
+        double S3L2 = 0.0;
+        double S4L2 = 0.0;
 
-        double S1L1 = 0;
-        double S2L1 = 0;
-        double S3L1 = 0;
-        double S4L1 = 0;
-        double S1L2 = 0;
-        double S2L2 = 0;
-        double S3L2 = 0;
-        double S4L2 = 0;
+        double totalUphillDistance = 0.0;
+        double totalUphillRise = 0.0;
 
-        double routedDistance_km = leg.getRoute().getDistance()/1000.0;
+        double routedDistance_km = leg.getRoute().getDistance()/1000.0; ///g/ what if routed distance on bike leg is zero?
 
         Network network = scenario.getNetwork();
         Id<Link> startLinkId = leg.getRoute().getStartLinkId();
         Id<Link> endLinkId = leg.getRoute().getEndLinkId();
 
-        List<Id<Link>> linkIdList = ((NetworkRoute) leg.getRoute()).getLinkIds();// use (NetworkRoute) to use method getLinkIds
+        List<Id<Link>> linkIdList;
+        linkIdList = ((NetworkRoute) leg.getRoute()).getLinkIds();// use (NetworkRoute) to use method getLinkIds
         linkIdList.add(startLinkId);
         linkIdList.add(endLinkId);
         for (Id<Link> linkId: linkIdList){
             Link link = network.getLinks().get(linkId);
+
             double numberLanes = link.getNumberOfLanes();
             double freespeed = link.getFreespeed();
             double linkLength_km = link.getLength()/1000.0;
-            if (numberLanes ==1){
+
+            if (numberLanes == 1){
                 if (freespeed <= 8.33333){ // <=30km/h
-                    S1L1 += linkLength_km;
+                    S1L1 += linkLength_km; //g/ is it possible that the agent does not use the whole length of the link?
                 }
                 if ((freespeed > 8.33333)&(freespeed <= 13.8889)){ // <=50km/h
                     S2L1 += linkLength_km;
@@ -86,7 +93,18 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
                     S4L2 += linkLength_km;
                 }
             }
+            double gradient = (Double) link.getAttributes().getAttribute("gradient");
+            if (gradient > 0.0){
+                totalUphillDistance += link.getLength();
+                totalUphillRise += gradient * link.getLength();
+            }
+        }
 
+        double averageUphillGradient;
+        if (totalUphillDistance == 0.0){
+            averageUphillGradient = 0.0; // to avoid division by zero errors
+        } else {
+            averageUphillGradient = totalUphillRise/totalUphillDistance;
         }
 
         double propS1L1 = S1L1/routedDistance_km;
@@ -101,7 +119,7 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
 
 
         return new SwissBikeVariables(bikePredictor.predict(person,trip,elements),
-                propS1L1, propS2L1, propS3L1,propS4L1,propS1L2,propS2L2,propS3L2,propS4L2, routedDistance_km);
+                propS1L1, propS2L1, propS3L1,propS4L1,propS1L2,propS2L2,propS3L2,propS4L2, routedDistance_km,averageUphillGradient);
 
 
     }

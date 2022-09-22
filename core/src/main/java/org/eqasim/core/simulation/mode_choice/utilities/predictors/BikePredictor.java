@@ -11,7 +11,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 public class BikePredictor extends CachedVariablePredictor<BikeVariables> {
 	@Override
 	public BikeVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		double travelTime_min = ((Leg) elements.get(0)).getTravelTime().seconds() / 60.0;
+		double travelTime_min = ((Leg) elements.get(2)).getTravelTime().seconds() / 60.0;
 
 		return new BikeVariables(travelTime_min);
 	}

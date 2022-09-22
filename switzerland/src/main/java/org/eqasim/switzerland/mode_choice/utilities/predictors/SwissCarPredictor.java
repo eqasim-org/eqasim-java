@@ -22,7 +22,7 @@ public class SwissCarPredictor extends CachedVariablePredictor<SwissCarVariables
     @Override
     public SwissCarVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 
-        Leg leg = (Leg) elements.get(0);
+        Leg leg = (Leg) elements.get(2);
         double routedDistance_km = leg.getRoute().getDistance()/1000.0;
 
         return new SwissCarVariables(carPredictor.predict(person,trip,elements),routedDistance_km);

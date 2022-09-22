@@ -30,8 +30,11 @@ public class SwissModeParameters extends ModeParameters {
 		public double betaPropS2L2 = 0.0;
 		public double betaPropS3L2 = 0.0;
 		public double betaPropS4L2 = 0.0;
-		public double lambdaRCD = 0.0;
+		public double lambdaRCD = 0.0; // RCD is Road Conditions interacted with Distance
 		public double referenceRoutedDistance_km = 0.0;
+
+		public double betaAverageUphillGradient = 0.0;
+		public double lambdaGD = 0.0; // GD is Gradient interacted with Distance
 
 	}
 
@@ -51,7 +54,7 @@ public class SwissModeParameters extends ModeParameters {
 		public double betaAccessEgressTime_hour = 0.0;
 	}
 
-	public double betaCost_RD = 0.0;
+	public double betaCost_RD = 0.0; //RD is routed distance as opposed to euclidean distance
 	public double lambdaCostRoutedDistance = 0.0;
 	public double referenceRoutedDistance_km = 0.0;
 
@@ -119,6 +122,9 @@ public class SwissModeParameters extends ModeParameters {
 		parameters.swissBike.betaPropS4L2 = -1.29;
 		parameters.swissBike.lambdaRCD = 0.0; //g/ no interaction term, use as 0
 		parameters.swissBike.referenceRoutedDistance_km = 0.0; //g/ no interaction term, use as 0
+
+		parameters.swissBike.betaAverageUphillGradient = 0.0; //not used here yet
+		parameters.swissBike.lambdaGD = 0.0; //not used here yet
 
 		parameters.swissBike.betaAge = -0.000618;
 		parameters.swissBike.betaIsFemale = -0.0794;
