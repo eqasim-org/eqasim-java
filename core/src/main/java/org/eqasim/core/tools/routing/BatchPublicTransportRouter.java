@@ -14,8 +14,11 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.LinkWrapperFacility;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.router.TransitRouter;
 import org.matsim.pt.routes.TransitPassengerRoute;
@@ -118,10 +121,10 @@ public class BatchPublicTransportRouter {
 					Facility fromFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, fromCoord));
 					Facility toFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, toCoord));
 
-					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
+					List<? extends PlanElement> elements = router.calcRoute(DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, task.departureTime, null));
 					List<LegInformation> routeInformation = new LinkedList<>();
 
-					if (legs != null) {
+					if (elements != null) {
 						boolean isFirstVehicularLeg = true;
 						tripInformation.isOnlyWalk = 1;
 
@@ -134,6 +137,7 @@ public class BatchPublicTransportRouter {
 
 						int currentIndex = 0;
 
+						List<Leg> legs = TripStructureUtils.getLegs(elements);
 						for (Leg leg : legs) {
 							boolean isFirstLeg = currentIndex == 0;
 							boolean isLastLeg = currentIndex == legs.size() - 1;
