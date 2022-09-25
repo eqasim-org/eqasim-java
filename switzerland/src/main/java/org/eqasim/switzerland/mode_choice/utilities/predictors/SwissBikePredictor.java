@@ -2,11 +2,13 @@ package org.eqasim.switzerland.mode_choice.utilities.predictors;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.google.inject.Inject;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
 import org.eqasim.switzerland.mode_choice.utilities.variables.SwissBikeVariables;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -21,12 +23,12 @@ import org.matsim.core.population.routes.NetworkRoute;
 
 public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariables> {
     private final Scenario scenario;
-    public final BikePredictor bikePredictor;
+
 
     @Inject
-    public SwissBikePredictor(Scenario scenario, BikePredictor bikePredictor) {
+    public SwissBikePredictor(Scenario scenario) {
         this.scenario = scenario;
-        this.bikePredictor = bikePredictor;
+
     }
 
     @Override
@@ -35,6 +37,8 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
 //            throw new IllegalStateException("We do not support multi-stage bike trips yet.");
 //        }
         Leg leg = (Leg) elements.get(2);
+
+        double travelTime_min = leg.getTravelTime().seconds() / 60.0;
 
         double S1L1 = 0.0;
         double S2L1 = 0.0;
@@ -56,9 +60,10 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
 
         List<Id<Link>> linkIdList;
         linkIdList = ((NetworkRoute) leg.getRoute()).getLinkIds();// use (NetworkRoute) to use method getLinkIds
-        linkIdList.add(startLinkId);
-        linkIdList.add(endLinkId);
-        for (Id<Link> linkId: linkIdList){
+        List<Id<Link>> editLinkIdList = new ArrayList<>(linkIdList); // maybe this solves the problem of adding directly to linkIdList
+        editLinkIdList.add(startLinkId); //g/ maybe use half of the start or end of the link
+        editLinkIdList.add(endLinkId);
+        for (Id<Link> linkId: editLinkIdList){
             Link link = network.getLinks().get(linkId);
 
             double numberLanes = link.getNumberOfLanes();
@@ -93,7 +98,13 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
                     S4L2 += linkLength_km;
                 }
             }
-            double gradient = (Double) link.getAttributes().getAttribute("gradient");
+            double gradient;
+            if (!link.getAttributes().getAsMap().containsKey("gradient")){ // if there is no gradient in network (links with same start and end node)
+                gradient = 0.0;
+            }
+            else{
+                gradient = (Double) link.getAttributes().getAttribute("gradient");
+            }
             if (gradient > 0.0){
                 totalUphillDistance += link.getLength();
                 totalUphillRise += gradient * link.getLength();
@@ -118,7 +129,7 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
 
 
 
-        return new SwissBikeVariables(bikePredictor.predict(person,trip,elements),
+        return new SwissBikeVariables(travelTime_min,
                 propS1L1, propS2L1, propS3L1,propS4L1,propS1L2,propS2L2,propS3L2,propS4L2, routedDistance_km,averageUphillGradient);
 
 

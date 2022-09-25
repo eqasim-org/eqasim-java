@@ -4,7 +4,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 
-public class SwissBikeVariables extends BikeVariables {
+public class SwissBikeVariables implements BaseVariables {
 
     public final double propS1L1;
     public final double propS2L1;
@@ -16,11 +16,13 @@ public class SwissBikeVariables extends BikeVariables {
     public final double propS4L2;
     public final double routedDistance_km;
     public final double averageUphillGradient;
+    public final double travelTime_min;
 
-    public SwissBikeVariables(BikeVariables delegate,double propS1L1, double propS2L1, double propS3L1, double propS4L1, double propS1L2,
+
+    public SwissBikeVariables(double travelTime_min,double propS1L1, double propS2L1, double propS3L1, double propS4L1, double propS1L2,
                               double propS2L2, double propS3L2, double propS4L2, double routedDistance_km, double averageUphillGradient){
 
-        super(delegate.travelTime_min);
+        this.travelTime_min = travelTime_min;
         this.propS1L1=propS1L1;
         this.propS2L1=propS2L1;
         this.propS3L1=propS3L1;
