@@ -49,6 +49,15 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
         double S3L2 = 0.0;
         double S4L2 = 0.0;
 
+        double propS1L1 = 0.0;
+        double propS2L1 = 0.0;
+        double propS3L1 = 0.0;
+        double propS4L1 = 0.0;
+        double propS1L2 = 0.0;
+        double propS2L2 = 0.0;
+        double propS3L2 = 0.0;
+        double propS4L2 = 0.0;
+
         double totalUphillDistance = 0.0;
         double totalUphillRise = 0.0;
 
@@ -61,7 +70,7 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
         List<Id<Link>> linkIdList;
         linkIdList = ((NetworkRoute) leg.getRoute()).getLinkIds();// use (NetworkRoute) to use method getLinkIds
         List<Id<Link>> editLinkIdList = new ArrayList<>(linkIdList); // maybe this solves the problem of adding directly to linkIdList
-        editLinkIdList.add(startLinkId); //g/ maybe use half of the start or end of the link
+        editLinkIdList.add(startLinkId); //g/ maybe use half of the start or end of the link?
         editLinkIdList.add(endLinkId);
         for (Id<Link> linkId: editLinkIdList){
             Link link = network.getLinks().get(linkId);
@@ -74,10 +83,10 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
                 if (freespeed <= 8.33333){ // <=30km/h
                     S1L1 += linkLength_km; //g/ is it possible that the agent does not use the whole length of the link?
                 }
-                if ((freespeed > 8.33333)&(freespeed <= 13.8889)){ // <=50km/h
+                if ((freespeed > 8.33333)&&(freespeed <= 13.8889)){ // <=50km/h
                     S2L1 += linkLength_km;
                 }
-                if ((freespeed > 13.8889)&(freespeed <= 16.6667)){ // <=60km/h
+                if ((freespeed > 13.8889)&&(freespeed <= 16.6667)){ // <=60km/h
                     S3L1 += linkLength_km;
                 }
                 if (freespeed > 16.6667) { // > 60km/h
@@ -88,10 +97,10 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
                 if (freespeed <= 8.33333){
                     S1L2 += linkLength_km;
                 }
-                if ((freespeed > 8.33333)&(freespeed <= 13.8889)){
+                if ((freespeed > 8.33333)&&(freespeed <= 13.8889)){
                     S2L2 += linkLength_km;
                 }
-                if ((freespeed > 13.8889)&(freespeed <= 16.6667)){
+                if ((freespeed > 13.8889)&&(freespeed <= 16.6667)){
                     S3L2 += linkLength_km;
                 }
                 if (freespeed > 16.6667) {
@@ -118,15 +127,16 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
             averageUphillGradient = totalUphillRise/totalUphillDistance;
         }
 
-        double propS1L1 = S1L1/routedDistance_km;
-        double propS2L1 = S2L1/routedDistance_km;
-        double propS3L1 = S3L1/routedDistance_km;
-        double propS4L1 = S4L1/routedDistance_km;
-        double propS1L2 = S1L2/routedDistance_km;
-        double propS2L2 = S2L2/routedDistance_km;
-        double propS3L2 = S3L2/routedDistance_km;
-        double propS4L2 = S4L2/routedDistance_km;
-
+        if (routedDistance_km > 0.0){ // to avoid distance/0 => infinity
+            propS1L1 = S1L1/routedDistance_km;
+            propS2L1 = S2L1/routedDistance_km;
+            propS3L1 = S3L1/routedDistance_km;
+            propS4L1 = S4L1/routedDistance_km;
+            propS1L2 = S1L2/routedDistance_km;
+            propS2L2 = S2L2/routedDistance_km;
+            propS3L2 = S3L2/routedDistance_km;
+            propS4L2 = S4L2/routedDistance_km;
+        }
 
 
         return new SwissBikeVariables(travelTime_min,
