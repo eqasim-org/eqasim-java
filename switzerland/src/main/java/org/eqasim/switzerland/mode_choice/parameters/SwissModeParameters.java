@@ -121,7 +121,7 @@ public class SwissModeParameters extends ModeParameters {
 		parameters.swissBike.betaPropS3L2 = -2.89;
 		parameters.swissBike.betaPropS4L2 = -0.853;
 		parameters.swissBike.lambdaRCD = 0.0; //g/ no interaction term, use as 0
-		parameters.swissBike.referenceRoutedDistance_km = 0.0; //g/ no interaction term, use as 0
+		parameters.swissBike.referenceRoutedDistance_km = 2.0; //g/ for use with gradient interaction term
 
 		parameters.swissBike.betaAverageUphillGradient = -9.95;
 		parameters.swissBike.lambdaGD = 0.751;
