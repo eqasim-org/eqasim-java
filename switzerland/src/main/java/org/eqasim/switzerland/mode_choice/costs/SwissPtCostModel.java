@@ -62,6 +62,6 @@ public class SwissPtCostModel extends AbstractCostModel {
 //			}
 //		}
 
-		return fullCost_CHF;
+		return fullCost_CHF * percentOfFarePaid;
 	}
 }
