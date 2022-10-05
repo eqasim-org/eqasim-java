@@ -2,12 +2,12 @@ package org.eqasim.examples.corsica_parking.mode_choice.utilities.predictors;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.examples.corsica_parking.components.parking.ParkingListener;
-import org.eqasim.core.simulation.mode_choice.cost.CostModel;
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.examples.corsica_parking.mode_choice.utilities.variables.CarWithParkingVariables;
+import org.eqasim.examples.corsica_parking.mode_choice.utilities.variables.CorsicaParkingCarVariables;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -16,26 +16,30 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import java.util.List;
 
-public class CarWithParkingPredictor extends CachedVariablePredictor<CarWithParkingVariables> {
+public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaParkingCarVariables> {
 	private final CostModel costModel;
 	private final ModeParameters parameters;
 	private final ParkingListener parkingListener;
 
 	@Inject
-	public CarWithParkingPredictor(ModeParameters parameters, @Named("car") CostModel costModel,
-								   ParkingListener parkingListener) {
+	public CorsicaParkingCarPredictor(ModeParameters parameters, @Named("car") CostModel costModel,
+									  ParkingListener parkingListener) {
 		this.costModel = costModel;
 		this.parameters = parameters;
 		this.parkingListener = parkingListener;
 	}
 
 	@Override
-	public CarWithParkingVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	public CorsicaParkingCarVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		double travelTime_min = 0.0;
 		double accessEgressTime_min = 0.0;
 
 		for (PlanElement element : elements) {
 			if (element instanceof Leg) {
+
+
+				// element.getAttributes().getAttribute("parkingStrategy");
+
 				if (((Leg) element).getMode().equals("car")) {
 					travelTime_min += ((Leg) element).getTravelTime().seconds() / 60.0;
 				} else if (((Leg) element).getMode().equals("walk")) {
@@ -61,7 +65,7 @@ public class CarWithParkingPredictor extends CachedVariablePredictor<CarWithPark
 
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
 
-		return new CarWithParkingVariables(travelTime_min, parkingSearchTime_min, cost_MU, parkingCost_MU, euclideanDistance_km, accessEgressTime_min);
+		return new CorsicaParkingCarVariables(travelTime_min, parkingSearchTime_min, cost_MU, parkingCost_MU, euclideanDistance_km, accessEgressTime_min);
 	}
 
 }
