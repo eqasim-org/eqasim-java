@@ -6,7 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Fix bug in EqasimTransitQSimModule: first check if EqasimConfigGroup has TransitEngineModule before removing it
 
 **1.3.1**
 
