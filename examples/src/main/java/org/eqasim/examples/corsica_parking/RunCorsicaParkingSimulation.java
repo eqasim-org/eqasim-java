@@ -11,7 +11,9 @@ import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.contrib.parking.parkingsearch.evaluation.ParkingSlotVisualiser;
@@ -30,9 +32,11 @@ import org.matsim.facilities.ActivityFacilitiesFactory;
 import org.matsim.facilities.ActivityFacilitiesFactoryImpl;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.ActivityOption;
+import org.matsim.households.Household;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 public class RunCorsicaParkingSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -45,9 +49,9 @@ public class RunCorsicaParkingSimulation {
 		IDFConfigurator configurator = new IDFConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 
-		config.controler().setWritePlansInterval(5);
-		config.controler().setWriteEventsInterval(5);
-		config.controler().setLastIteration(5);
+		config.controler().setWritePlansInterval(20);
+		config.controler().setWriteEventsInterval(20);
+		config.controler().setLastIteration(20);
 		if (cmd.getOption("output-path").isPresent()) {
 			config.controler().setOutputDirectory(cmd.getOptionStrict("output-path"));
 		}
@@ -83,6 +87,28 @@ public class RunCorsicaParkingSimulation {
 		configurator.adjustScenario(scenario);
 
 		{ // clean up scenario
+
+			// add parking at home for 90% of households and parking at work for 50% of people
+			Random random = new Random(1);
+			for (Household household : scenario.getHouseholds().getHouseholds().values()) {
+				boolean hasParkingAtHome = random.nextInt(1) < 0.9;
+
+				for (Id<Person> personId : household.getMemberIds()) {
+					boolean hasParkingAtWork = random.nextInt(1) < 0.5;
+
+					for (PlanElement element : scenario.getPopulation().getPersons().get(personId).getSelectedPlan().getPlanElements()) {
+						if (element instanceof Activity) {
+							if (((Activity) element).getType().equals("home")) {
+								element.getAttributes().putAttribute("parkingAvailable", hasParkingAtHome);
+							}
+							if (((Activity) element).getType().equals("work")) {
+								element.getAttributes().putAttribute("parkingAvailable", hasParkingAtWork);
+							}
+						}
+					}
+				}
+			}
+
 			// remove persons with only one activity
 			List<Id<Person>> personIds = new LinkedList<>();
 			for (Person person : scenario.getPopulation().getPersons().values()){
@@ -107,6 +133,7 @@ public class RunCorsicaParkingSimulation {
 					scenario.getActivityFacilities().addActivityFacility(activityFacility);
 				}
 			}
+
 		}
 
 		Controler controller = new Controler(scenario);
