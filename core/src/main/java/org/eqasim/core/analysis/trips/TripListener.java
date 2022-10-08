@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.components.transit.events.PublicTransitEvent;
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
@@ -23,6 +24,7 @@ import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PopulationFactory;
@@ -33,6 +35,9 @@ import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.pt.transitSchedule.api.TransitRoute;
+import org.matsim.pt.transitSchedule.api.TransitRouteStop;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
 public class TripListener implements ActivityStartEventHandler, ActivityEndEventHandler, PersonDepartureEventHandler,
@@ -49,11 +54,22 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 	final private PersonAnalysisFilter personFilter;
 
+	final private ScenarioExtent scenarioExtent;
+
+	final private TransitSchedule transitSchedule;
+
+
 	public TripListener(Network network, MainModeIdentifier mainModeIdentifier, PersonAnalysisFilter personFilter) {
+		this(network, mainModeIdentifier, personFilter, null, null);
+	}
+
+	public TripListener(Network network, MainModeIdentifier mainModeIdentifier, PersonAnalysisFilter personFilter, ScenarioExtent scenarioExtent, TransitSchedule transitSchedule) {
 		this.network = network;
 		this.mainModeIdentifier = mainModeIdentifier;
 		this.factory = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation().getFactory();
 		this.personFilter = personFilter;
+		this.scenarioExtent = scenarioExtent;
+		this.transitSchedule = transitSchedule;
 	}
 
 	public Collection<TripItem> getTripItems() {
@@ -81,9 +97,13 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 					personTripIndex = personTripIndex + 1;
 				}
 
-				ongoing.put(event.getPersonId(), new TripListenerItem(event.getPersonId(), personTripIndex,
-						network.getLinks().get(event.getLinkId()).getCoord(), event.getTime(), event.getActType()));
-
+				TripListenerItem tripListenerItem = new TripListenerItem(event.getPersonId(), personTripIndex,
+						network.getLinks().get(event.getLinkId()).getCoord(), event.getTime(), event.getActType());
+				tripListenerItem.originScope = this.scenarioExtent == null ? "inside" : this.scenarioExtent.isInside(tripListenerItem.origin) ? "inside": "outside";
+				if(tripListenerItem.originScope.equals("inside")) {
+					tripListenerItem.tripScope = "inside";
+				}
+				ongoing.put(event.getPersonId(), tripListenerItem);
 				tripIndex.put(event.getPersonId(), personTripIndex);
 			}
 		}
@@ -111,11 +131,18 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 					trip.travelTime = event.getTime() - trip.departureTime;
 					trip.mode = mainModeIdentifier.identifyMainMode(trip.elements);
 					trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
+					trip.destinationScope = this.scenarioExtent == null ? "" : this.scenarioExtent.isInside(trip.destination) ? "inside" : "outside";
+					if(trip.destinationScope.equals("inside")) {
+						trip.tripScope = "inside";
+					}
+					if(trip.tripScope.equals("") && this.scenarioExtent != null) {
+						trip.tripScope = "outside";
+					}
 					trip.euclideanDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
 					trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination,
 							trip.departureTime, trip.travelTime, trip.vehicleDistance, trip.routedDistance, trip.mode,
-							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.euclideanDistance));
+							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.euclideanDistance, trip.originScope, trip.destinationScope, trip.tripScope));
 				}
 			}
 		}
@@ -156,9 +183,12 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 		if (personIds != null) {
 			personIds.forEach(id -> {
-				double linkDistance = network.getLinks().get(event.getLinkId()).getLength();
+				Link link = network.getLinks().get(event.getLinkId());
+				double linkDistance = link.getLength();
 				TripListenerItem item = ongoing.get(id);
-
+				if(this.scenarioExtent != null && this.scenarioExtent.isInside(link.getCoord())) {
+					item.tripScope = "inside";
+				}
 				item.routedDistance += linkDistance;
 				item.vehicleDistance += linkDistance;
 				item.lastAddedLinkDistance = linkDistance;
@@ -182,6 +212,24 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 			if (personFilter.analyzePerson(transitEvent.getPersonId())) {
 				TripListenerItem item = ongoing.get(transitEvent.getPersonId());
 				item.vehicleDistance += transitEvent.getTravelDistance();
+				if(this.scenarioExtent != null) {
+					TransitRoute transitRoute = this.transitSchedule.getTransitLines().get(transitEvent.getTransitLineId()).getRoutes().get(transitEvent.getTransitRouteId());
+					for(TransitRouteStop transitRouteStop: transitRoute.getStops()) {
+						if(this.scenarioExtent.isInside(transitRouteStop.getStopFacility().getCoord())){
+							item.tripScope = "inside";
+							break;
+						}
+					}
+					if(item.tripScope.equals("inside")) {
+						return;
+					}
+					for(Id<Link> linkId: transitRoute.getRoute().getLinkIds()) {
+						if(this.scenarioExtent.isInside(network.getLinks().get(linkId).getCoord())) {
+							item.tripScope = "inside";
+							break;
+						}
+					}
+				}
 			}
 		}
 	}

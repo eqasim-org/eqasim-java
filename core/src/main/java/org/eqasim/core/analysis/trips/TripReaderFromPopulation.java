@@ -111,7 +111,7 @@ public class TripReaderFromPopulation {
 							departureTime, duration, getVehicleDistance(trip), getRoutedDistance(trip),
 							mainModeIdentifier.identifyMainMode(trip.getTripElements()),
 							trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
-							CoordUtils.calcEuclideanDistance(originCoord, destinationCoord)));
+							CoordUtils.calcEuclideanDistance(originCoord, destinationCoord), "", "", ""));
 
 					personTripIndex++;
 				}

@@ -15,6 +15,6 @@ public class TripListenerItem extends TripItem {
 	public TripListenerItem(Id<Person> personId, int personTripId, Coord origin, double startTime,
 			String startPurpose) {
 		super(personId, personTripId, origin, null, startTime, Double.NaN, 0.0, 0.0, "unknown", startPurpose, "unknown",
-				false, Double.NaN);
+				false, Double.NaN, "", "", "");
 	}
 }
