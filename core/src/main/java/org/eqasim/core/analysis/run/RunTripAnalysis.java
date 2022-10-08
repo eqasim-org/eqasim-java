@@ -1,6 +1,7 @@
 package org.eqasim.core.analysis.run;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -38,6 +39,7 @@ public class RunTripAnalysis {
 				.allowOptions("population-path", "events-path", "network-path", "facilities-path") //
 				.allowOptions("vehicle-modes") //
 				.allowOptions("input-distance-units", "output-distance-units") //
+				.allowOptions("main-mode-identifier")
 				.build();
 
 		run(cmd, new DefaultPersonAnalysisFilter());
@@ -65,12 +67,33 @@ public class RunTripAnalysis {
 
 		String outputPath = cmd.getOptionStrict("output-path");
 
-		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
+		MainModeIdentifier mainModeIdentifier;
+		if(cmd.hasOption("main-mode-identifier")) {
+			try {
+				Class<?> mainModeIdentifierClass = Class.forName(cmd.getOptionStrict("main-mode-identifier"));
+				boolean foundMainModeIdentifierInterface = false;
+				for(Class<?> classObject : mainModeIdentifierClass.getInterfaces()) {
+					if(classObject.equals(MainModeIdentifier.class)) {
+						foundMainModeIdentifierInterface = true;
+						break;
+					}
+				}
+				if(!foundMainModeIdentifierInterface) {
+					throw new IllegalStateException("The provided class " + cmd.getOptionStrict("main-mode-identifier") + " does not implement the MainModeIdentifier interface");
+				}
+				mainModeIdentifier = (MainModeIdentifier) mainModeIdentifierClass.getConstructor().newInstance();
+			} catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+					 NoSuchMethodException | ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}else {
+			mainModeIdentifier = new EqasimMainModeIdentifier();
+		}
 
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
 
-		Collection<TripItem> trips = null;
+		Collection<TripItem> trips;
 
 		if (cmd.hasOption("events-path")) {
 			String networkPath = cmd.getOptionStrict("network-path");
