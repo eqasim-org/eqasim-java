@@ -68,8 +68,16 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 				hasParking = Boolean.parseBoolean(destinationActivity.getAttributes().getAttribute("parkingAvailable").toString());
 			}
 
+			// if they have parking, set search strategy to drive directly to destination
+			if (hasParking) {
+				carLeg.getAttributes().putAttribute("parkingSearchStrategy", "driveToDestination");
+			}
 			// if they do not have parking, they need to search and pay for it
-			if (!hasParking) {
+			else {
+				// for now, search on street
+				// TODO: however, we first need to provide options to choose between on-street and garage parking
+				carLeg.getAttributes().putAttribute("parkingSearchStrategy", "searchForOnStreetParking");
+
 				// estimate parking search time
 				double arrivalTime = trip.getDepartureTime() + travelTime_min * 60.0;
 				Coord destinationCoord = trip.getDestinationActivity().getCoord();
