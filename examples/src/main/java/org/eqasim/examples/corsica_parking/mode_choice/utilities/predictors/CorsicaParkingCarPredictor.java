@@ -55,37 +55,38 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 			Leg carLeg = (Leg) elements.get(2);
 			Leg egressWalk = (Leg) elements.get(4);
 
+			// Compute trip attribute estimates
 			accessEgressTime_min = (accessWalk.getTravelTime().seconds() + egressWalk.getTravelTime().seconds()) / 60.0;
 			travelTime_min = carLeg.getTravelTime().seconds() / 60.0;
 			travelCost_MU = costModel.calculateCost_MU(person, trip, elements);
 			euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+
+			// Determine whether we have dedicated parking
+			boolean hasParking = false;
+			Activity destinationActivity = trip.getDestinationActivity();
+			if (destinationActivity.getType().equals("home") | destinationActivity.getType().equals("work")) {
+				hasParking = Boolean.parseBoolean(destinationActivity.getAttributes().getAttribute("parkingAvailable").toString());
+			}
+
+			// if they do not have parking, they need to search and pay for it
+			if (!hasParking) {
+				// estimate parking search time
+				double arrivalTime = trip.getDepartureTime() + travelTime_min * 60.0;
+				Coord destinationCoord = trip.getDestinationActivity().getCoord();
+				parkingSearchTime_min = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, arrivalTime) / 60.0;
+
+				// compute parking costs based on destination activity duration
+				double actEndTime = parkingListener.getEndTime();
+				if (trip.getDestinationActivity().getEndTime().isDefined()) {
+					actEndTime = trip.getDestinationActivity().getEndTime().seconds();
+				}
+				double nextActivityDuration = actEndTime - arrivalTime;
+				parkingCost_MU = nextActivityDuration / 3600.0 * 1.0;
+			}
 		}
 
 		else {
 			throw new IllegalStateException("Car trip contains " + elements.size() + " legs! Not sure what to do here.");
-		}
-
-		// Determine whether we have dedicated parking
-		boolean hasParking = false;
-		Activity destinationActivity = trip.getDestinationActivity();
-		if (destinationActivity.getType().equals("home") | destinationActivity.getType().equals("work")) {
-			hasParking = Boolean.parseBoolean(destinationActivity.getAttributes().getAttribute("parkingAvailable").toString());
-		}
-
-		// if they do not have parking, they need to search and pay for it
-		if (!hasParking) {
-			// estimate parking search time
-			double arrivalTime = trip.getDepartureTime() + travelTime_min * 60.0;
-			Coord destinationCoord = trip.getDestinationActivity().getCoord();
-			parkingSearchTime_min = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, arrivalTime) / 60.0;
-
-			// compute parking costs based on destination activity duration
-			double actEndTime = parkingListener.getEndTime();
-			if (trip.getDestinationActivity().getEndTime().isDefined()) {
-				actEndTime = trip.getDestinationActivity().getEndTime().seconds();
-			}
-			double nextActivityDuration = actEndTime - arrivalTime;
-			parkingCost_MU = nextActivityDuration / 3600.0 * 1.0;
 		}
 
 		return new CorsicaParkingCarVariables(travelTime_min, parkingSearchTime_min,  travelCost_MU, parkingCost_MU,
