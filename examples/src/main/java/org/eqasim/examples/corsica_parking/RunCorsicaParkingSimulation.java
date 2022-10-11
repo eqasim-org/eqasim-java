@@ -49,9 +49,9 @@ public class RunCorsicaParkingSimulation {
 		IDFConfigurator configurator = new IDFConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 
-		config.controler().setWritePlansInterval(20);
-		config.controler().setWriteEventsInterval(20);
-		config.controler().setLastIteration(20);
+		config.controler().setWritePlansInterval(5);
+		config.controler().setWriteEventsInterval(5);
+		config.controler().setLastIteration(5);
 		if (cmd.getOption("output-path").isPresent()) {
 			config.controler().setOutputDirectory(cmd.getOptionStrict("output-path"));
 		}
@@ -60,7 +60,7 @@ public class RunCorsicaParkingSimulation {
 			ParkingSearchConfigGroup parkingSearchConfigGroup = new ParkingSearchConfigGroup();
 
 			// set parameters
-			parkingSearchConfigGroup.setParkingSearchStrategy(ParkingSearchStrategy.DistanceMemory);
+			parkingSearchConfigGroup.setParkingSearchStrategy(ParkingSearchStrategy.Random);
 
 			// add to config
 			config.addModule(parkingSearchConfigGroup);
@@ -154,7 +154,6 @@ public class RunCorsicaParkingSimulation {
 					addControlerListenerBinding().toInstance(visualiser);
 				}
 			});
-
 			SetupParking.installParkingModules(controller);
 
 			// Add parking listeners
