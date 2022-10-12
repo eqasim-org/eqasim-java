@@ -169,8 +169,15 @@ public class ParkingAgentLogic implements DynAgentLogic {
 			this.lastParkActionState = LastParkActionState.CARTRIP;
 			isinitialLocation = false;
 			Leg currentLeg = (Leg) this.currentPlanElement;
+
+			// get parking search strategy from current leg, or set default to drive to searchForOnStreetParking
+			String parkingSearchStrategy = "searchForOnStreetParking";
+			if (currentLeg.getAttributes().getAsMap().containsKey("parkingSearchStrategy")) {
+				parkingSearchStrategy = currentLeg.getAttributes().getAttribute("parkingSearchStrategy").toString();
+			}
+
 			//this could be Car, Carsharing, Motorcylce, or whatever else mode we have, so we want our leg to reflect this.
-			return new ParkingDynLeg(currentLeg.getMode(), actualRoute, parkingLogic, parkingManager, currentlyAssignedVehicleId, timer, events);
+			return new ParkingDynLeg(currentLeg.getMode(), actualRoute, parkingLogic, parkingManager, currentlyAssignedVehicleId, timer, events, parkingSearchStrategy);
 		
 		}
 		else throw new RuntimeException("parking location mismatch");
