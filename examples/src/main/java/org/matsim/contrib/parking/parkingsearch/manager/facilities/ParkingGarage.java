@@ -2,15 +2,18 @@ package org.matsim.contrib.parking.parkingsearch.manager.facilities;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.facilities.ActivityFacility;
+import org.matsim.facilities.ActivityFacilityImpl;
 
-public class ParkingGarage implements ParkingFacility {
+public class ParkingGarage extends ActivityFacilityImpl implements ParkingFacility {
 
+    private final Id<ParkingFacility> parkingFacilityId;
     private final String parkingType = ParkingFacilityType.Garage.toString();
 
-    private final Coord coordReference = new Coord(0, 0);
-    private final Coord coordParking;
+    private final Coord coordReference = new Coord(1229608.0, 6179070.0);
 
     private final double hourlyRateBase = 5.28;
     private final double hourlyRateDistanceCoefficient = -0.82;
@@ -18,9 +21,13 @@ public class ParkingGarage implements ParkingFacility {
     private final double maxParkingDuration = Double.MAX_VALUE;
     private final boolean isAllowedToPark = true;
 
-    public ParkingGarage(Coord coordParking) {
-        this.coordParking = coordParking;
+    public ParkingGarage(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId) {
+        super(id, coordParking, linkId);
+        this.parkingFacilityId = Id.create(id, ParkingFacility.class);
     }
+
+    @Override
+    public Id<ParkingFacility> getParkingFacilityId() { return parkingFacilityId; }
 
     @Override
     public String getParkingType() {
@@ -35,8 +42,8 @@ public class ParkingGarage implements ParkingFacility {
     @Override
     public double getParkingCost(double startTime, double endTime) {
         double parkingDuration = endTime - startTime;
-        double distanceToHB = CoordUtils.calcEuclideanDistance(coordParking, coordReference) / 1e3;
-        return (hourlyRateBase + hourlyRateDistanceCoefficient * distanceToHB) * parkingDuration;
+        double distanceToReferenceCoordKm = CoordUtils.calcEuclideanDistance(this.getCoord(), coordReference) / 1e3;
+        return (hourlyRateBase + hourlyRateDistanceCoefficient * distanceToReferenceCoordKm) * parkingDuration;
     }
 
     @Override
@@ -44,8 +51,4 @@ public class ParkingGarage implements ParkingFacility {
         return isAllowedToPark;
     }
 
-    @Override
-    public Coord getCoord() {
-        return coordParking;
-    }
 }

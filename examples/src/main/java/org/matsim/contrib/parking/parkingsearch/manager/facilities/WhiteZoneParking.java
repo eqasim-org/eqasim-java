@@ -2,18 +2,28 @@ package org.matsim.contrib.parking.parkingsearch.manager.facilities;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.facilities.ActivityFacility;
+import org.matsim.facilities.ActivityFacilityImpl;
 
-public class WhiteZoneParking implements ParkingFacility {
+public class WhiteZoneParking extends ActivityFacilityImpl implements ParkingFacility {
 
+    private final Id<ParkingFacility> parkingFacilityId;
     private final double maxParkingDuration;
-    private final Coord coordParking;
     private final String parkingType;
 
-    public WhiteZoneParking(Coord coordParking, double maxParkingDuration, String parkingType) {
-        this.coordParking = coordParking;
+    public WhiteZoneParking(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId,
+                            double maxParkingDuration, String parkingType) {
+        super(id, coordParking, linkId);
+        this.parkingFacilityId = Id.create(id, ParkingFacility.class);
         this.maxParkingDuration = maxParkingDuration;
         this.parkingType = parkingType;
+    }
+
+    @Override
+    public Id<ParkingFacility> getParkingFacilityId() {
+        return parkingFacilityId;
     }
 
     @Override
@@ -114,11 +124,6 @@ public class WhiteZoneParking implements ParkingFacility {
         }
 
         return !(endTime > mustLeaveByTime);
-    }
-
-    @Override
-    public Coord getCoord() {
-        return coordParking;
     }
 
 }

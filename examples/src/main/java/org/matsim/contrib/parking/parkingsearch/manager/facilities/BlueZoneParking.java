@@ -2,18 +2,24 @@ package org.matsim.contrib.parking.parkingsearch.manager.facilities;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.facilities.ActivityFacility;
+import org.matsim.facilities.ActivityFacilityImpl;
 
-public class BlueZoneParking implements ParkingFacility {
+public class BlueZoneParking extends ActivityFacilityImpl implements ParkingFacility {
 
+    private final Id<ParkingFacility> parkingFacilityId;
     private final String parkingType = ParkingFacilityType.BlueZone.toString();
     private final double maxParkingDuration = 3600;
 
-    private final Coord coordParking;
-
-    public BlueZoneParking(Coord coordParking) {
-        this.coordParking = coordParking;
+    public BlueZoneParking(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId) {
+        super(id, coordParking, linkId);
+        this.parkingFacilityId = Id.create(id, ParkingFacility.class);
     }
+
+    @Override
+    public Id<ParkingFacility> getParkingFacilityId() { return parkingFacilityId; }
 
     @Override
     public String getParkingType() {
@@ -57,11 +63,6 @@ public class BlueZoneParking implements ParkingFacility {
         }
 
         return !(endTime > mustLeaveByTime);
-    }
-
-    @Override
-    public Coord getCoord() {
-        return coordParking;
     }
 
 }

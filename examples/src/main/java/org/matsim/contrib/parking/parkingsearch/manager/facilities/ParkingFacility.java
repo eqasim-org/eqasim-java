@@ -1,11 +1,12 @@
 package org.matsim.contrib.parking.parkingsearch.manager.facilities;
 
-import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.facilities.ActivityFacility;
 
-public interface ParkingFacility {
+public interface ParkingFacility extends ActivityFacility{
+
+    Id<ParkingFacility> getParkingFacilityId();
 
     String getParkingType();
 
@@ -14,7 +15,5 @@ public interface ParkingFacility {
     double getParkingCost(double startTime, double endTime);
 
     boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId);
-
-    Coord getCoord();
 
 }
