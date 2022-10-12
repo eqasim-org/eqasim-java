@@ -6,6 +6,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.facilities.*;
+import org.matsim.vehicles.Vehicle;
 
 import java.util.Set;
 
@@ -15,13 +16,13 @@ public class DedicatedParking extends ActivityFacilityImpl implements ParkingFac
     private final String parkingType = ParkingFacilityType.DedicatedParking.toString();
     private final double maxParkingDuration = Double.MAX_VALUE;
     private final Id<ParkingFacility> parkingFacilityId;
-    private Set<Id<Person>> allowedPersons;
+    private Set<Id<Vehicle>> allowedVehicles;
 
     public DedicatedParking(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId,
-                            Set<Id<Person>> allowedPersons, double capacity) {
+                            Set<Id<Vehicle>> allowedVehicles, double capacity) {
         super(id, coordParking, linkId);
         this.parkingFacilityId = Id.create(id, ParkingFacility.class);
-        this.allowedPersons = allowedPersons;
+        this.allowedVehicles = allowedVehicles;
 
         // add parking activity option with capacity
         ActivityFacilitiesFactory facilitiesFactory = new ActivityFacilitiesFactoryImpl();
@@ -29,10 +30,6 @@ public class DedicatedParking extends ActivityFacilityImpl implements ParkingFac
         activityOption.setCapacity(capacity);
         this.addActivityOption(activityOption);
     }
-
-//    public DedicatedParking(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId) {
-//        this(id, coordParking, linkId, new LinkedList<>());
-//    }
 
     @Override
     public Id<ParkingFacility> getParkingFacilityId() { return parkingFacilityId; }
@@ -55,7 +52,7 @@ public class DedicatedParking extends ActivityFacilityImpl implements ParkingFac
     // dedicated parking is only permitted for allowed persons
     @Override
     public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId) {
-        return allowedPersons.contains(personId);
+        return allowedVehicles.contains(personId);
     }
 
 }

@@ -14,6 +14,8 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.core.router.TripRouter;
+import org.matsim.core.router.util.LeastCostPathCalculator;
 
 import java.util.List;
 
@@ -21,13 +23,20 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 	private final CostModel costModel;
 	private final ModeParameters parameters;
 	private final ParkingListener parkingListener;
+//	private final LeastCostPathCalculator leastCostPathCalculator;
+	private final TripRouter tripRouter;
 
 	@Inject
 	public CorsicaParkingCarPredictor(ModeParameters parameters, @Named("car") CostModel costModel,
-									  ParkingListener parkingListener) {
+									  ParkingListener parkingListener,
+//									  LeastCostPathCalculator leastCostPathCalculator,
+									  TripRouter tripRouter) {
 		this.costModel = costModel;
 		this.parameters = parameters;
 		this.parkingListener = parkingListener;
+//		this.leastCostPathCalculator = leastCostPathCalculator;
+		this.tripRouter = tripRouter;
+
 	}
 
 	@Override
@@ -92,6 +101,8 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 				parkingCost_MU = nextActivityDuration / 3600.0 * 1.0;
 			}
 		}
+
+//		leastCostPathCalculator.calcLeastCostPath(node, node, 1000, null, null);
 
 		else {
 			throw new IllegalStateException("Car trip contains " + elements.size() + " legs! Not sure what to do here.");

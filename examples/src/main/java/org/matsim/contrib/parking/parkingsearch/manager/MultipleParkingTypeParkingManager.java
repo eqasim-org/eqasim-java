@@ -67,9 +67,9 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
 
             switch (parkingFacilityType) {
                 case DedicatedParking:
-                    Set<Id<Person>> allowedPersons = (Set<Id<Person>>) facility.getAttributes().getAttribute("allowedPersons");
+                    Set<Id<Vehicle>> allowedVehicles = (Set<Id<Vehicle>>) facility.getAttributes().getAttribute("allowedVehicles");
                     parkingFacility = new DedicatedParking(parkingId, parkingCoord, parkingLinkId,
-                            allowedPersons, parkingCapacity);
+                            allowedVehicles, parkingCapacity);
                     break;
                 case BlueZone:
                     parkingFacility = new BlueZoneParking(parkingId, parkingCoord, parkingLinkId, parkingCapacity);
