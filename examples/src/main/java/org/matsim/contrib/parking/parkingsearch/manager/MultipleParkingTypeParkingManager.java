@@ -22,11 +22,14 @@ package org.matsim.contrib.parking.parkingsearch.manager;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.contrib.parking.parkingsearch.manager.facilities.*;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
 
@@ -34,14 +37,14 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * @author  jbischoff, schlenther
+ * @author  ctchervenkov
  *
  */
 public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
 
     protected Map<Id<Link>, Integer> capacity = new HashMap<>();
     protected Map<Id<ActivityFacility>, MutableLong> occupation = new HashMap<>();
-    protected Map<Id<ActivityFacility>, ActivityFacility> parkingFacilities;
+    protected Map<Id<ActivityFacility>, ParkingFacility> parkingFacilities;
     protected Map<Id<Vehicle>, Id<ActivityFacility>> parkingLocations = new HashMap<>();
     protected Map<Id<Vehicle>, Id<ActivityFacility>> parkingReservation = new HashMap<>();
     protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new HashMap<>();
@@ -52,11 +55,45 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
     @Inject
     public MultipleParkingTypeParkingManager(Scenario scenario) {
         this.network = scenario.getNetwork();
-        parkingFacilities = scenario.getActivityFacilities()
-                .getFacilitiesForActivityType(ParkingUtils.PARKACTIVITYTYPE);
+        this.parkingFacilities = new HashMap<>();
+        for (ActivityFacility facility : scenario.getActivityFacilities().getFacilitiesForActivityType(ParkingUtils.PARKACTIVITYTYPE).values()) {
+            Id<ActivityFacility> parkingId = facility.getId();
+            Coord parkingCoord = facility.getCoord();
+            Id<Link> parkingLinkId = facility.getLinkId();
+            ParkingFacilityType parkingFacilityType = ParkingFacilityType.valueOf(facility.getAttributes().getAttribute("parkingFacilityType").toString());
+            double parkingCapacity = facility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
+
+            ParkingFacility parkingFacility;
+
+            switch (parkingFacilityType) {
+                case DedicatedParking:
+                    Set<Id<Person>> allowedPersons = (Set<Id<Person>>) facility.getAttributes().getAttribute("allowedPersons");
+                    parkingFacility = new DedicatedParking(parkingId, parkingCoord, parkingLinkId,
+                            allowedPersons, parkingCapacity);
+                    break;
+                case BlueZone:
+                    parkingFacility = new BlueZoneParking(parkingId, parkingCoord, parkingLinkId, parkingCapacity);
+                    break;
+                case LowTariffWhiteZone:
+                    parkingFacility = new WhiteZoneParking(parkingId, parkingCoord, parkingLinkId,
+                            3600, ParkingFacilityType.LowTariffWhiteZone.toString(), parkingCapacity);
+                    break;
+                case HighTariffWhiteZone:
+                    parkingFacility = new WhiteZoneParking(parkingId, parkingCoord, parkingLinkId,
+                            3600, ParkingFacilityType.HighTariffWhiteZone.toString(), parkingCapacity);
+                    break;
+                case Garage:
+                    parkingFacility = new ParkingGarage(parkingId, parkingCoord, parkingLinkId, parkingCapacity);
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + parkingFacilityType);
+            }
+
+            this.parkingFacilities.putIfAbsent(facility.getId(), parkingFacility);
+        }
         Logger.getLogger(getClass()).info(parkingFacilities.toString());
 
-        for (ActivityFacility fac : this.parkingFacilities.values()) {
+        for (ParkingFacility fac : this.parkingFacilities.values()) {
             Id<Link> linkId = fac.getLinkId();
             Set<Id<ActivityFacility>> parkingOnLink = new HashSet<>();
             if (this.facilitiesPerLink.containsKey(linkId)) {

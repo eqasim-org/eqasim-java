@@ -4,8 +4,8 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.facilities.ActivityFacility;
-import org.matsim.facilities.ActivityFacilityImpl;
+import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.facilities.*;
 
 public class BlueZoneParking extends ActivityFacilityImpl implements ParkingFacility {
 
@@ -13,10 +13,26 @@ public class BlueZoneParking extends ActivityFacilityImpl implements ParkingFaci
     private final String parkingType = ParkingFacilityType.BlueZone.toString();
     private final double maxParkingDuration = 3600;
 
-    public BlueZoneParking(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId) {
+    public BlueZoneParking(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId, double capacity) {
         super(id, coordParking, linkId);
         this.parkingFacilityId = Id.create(id, ParkingFacility.class);
+
+        // add parking activity option with capacity
+        ActivityFacilitiesFactory facilitiesFactory = new ActivityFacilitiesFactoryImpl();
+        ActivityOption activityOption = facilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
+        activityOption.setCapacity(capacity);
+        this.addActivityOption(activityOption);
+
     }
+
+//    public BlueZoneParking(ActivityFacility activityFacility) {
+//        this(activityFacility.getId(), activityFacility.getCoord(), activityFacility.getLinkId(), 0);
+//
+//        // copy activity options
+//        for (ActivityOption activityOption : activityFacility.getActivityOptions().values()) {
+//            this.addActivityOption(activityOption);
+//        }
+//    }
 
     @Override
     public Id<ParkingFacility> getParkingFacilityId() { return parkingFacilityId; }

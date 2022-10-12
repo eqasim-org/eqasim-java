@@ -4,8 +4,8 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.facilities.ActivityFacility;
-import org.matsim.facilities.ActivityFacilityImpl;
+import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.facilities.*;
 
 public class WhiteZoneParking extends ActivityFacilityImpl implements ParkingFacility {
 
@@ -14,11 +14,17 @@ public class WhiteZoneParking extends ActivityFacilityImpl implements ParkingFac
     private final String parkingType;
 
     public WhiteZoneParking(Id<ActivityFacility> id, Coord coordParking, Id<Link> linkId,
-                            double maxParkingDuration, String parkingType) {
+                            double maxParkingDuration, String parkingType, double capacity) {
         super(id, coordParking, linkId);
         this.parkingFacilityId = Id.create(id, ParkingFacility.class);
         this.maxParkingDuration = maxParkingDuration;
         this.parkingType = parkingType;
+
+        // add parking activity option with capacity
+        ActivityFacilitiesFactory facilitiesFactory = new ActivityFacilitiesFactoryImpl();
+        ActivityOption activityOption = facilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
+        activityOption.setCapacity(capacity);
+        this.addActivityOption(activityOption);
     }
 
     @Override
