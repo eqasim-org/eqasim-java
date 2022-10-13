@@ -23,13 +23,14 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.dynagent.DriverDynLeg;
 import org.matsim.contrib.parking.parkingsearch.events.StartParkingSearchEvent;
-import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
+import org.matsim.contrib.parking.parkingsearch.manager.MultipleParkingTypeParkingManager;
 import org.matsim.contrib.parking.parkingsearch.search.ParkingSearchLogic;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.mobsim.framework.MobsimTimer;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.misc.OptionalTime;
+import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.List;
@@ -41,16 +42,17 @@ public class DriveToDestinationDynLeg implements DriverDynLeg {
     protected Tuple<Id<Link>, Id<Link>> currentAndNextParkLink = null;
     protected Id<Link> currentLinkId;
     protected boolean parkingMode = false;
-    protected ParkingSearchManager parkingManager;
+//    protected ParkingSearchManager parkingManager;
+    protected MultipleParkingTypeParkingManager parkingManager;
     protected Id<Vehicle> vehicleId;
     protected ParkingSearchLogic logic;
     protected MobsimTimer timer;
     protected EventsManager events;
     protected boolean hasFoundParking = false;
-    protected String parkingSearchStrategy;
+    private final Id<ActivityFacility> parkingFacilityId;
 
-    public DriveToDestinationDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
-                                    Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events) {
+    public DriveToDestinationDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, MultipleParkingTypeParkingManager parkingManager,
+                                    Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, Id<ActivityFacility> parkingFacilityId) {
         this.mode = mode;
         this.route = route;
         this.currentLinkIdx = -1;
@@ -60,23 +62,23 @@ public class DriveToDestinationDynLeg implements DriverDynLeg {
         this.vehicleId = vehicleId;
         this.timer = timer;
         this.events = events;
+        this.parkingFacilityId = parkingFacilityId;
     }
 
     @Override
     public void movedOverNode(Id<Link> newLinkId) {
         currentLinkIdx++;
         currentLinkId = newLinkId;
+        double time = timer.getTimeOfDay();
         if (!parkingMode) {
             if (currentLinkId.equals(this.getDestinationLinkId())) {
                 this.parkingMode = true;
-                this.events.processEvent(new StartParkingSearchEvent(timer.getTimeOfDay(), vehicleId, currentLinkId));
-                hasFoundParking = parkingManager.reserveSpaceIfVehicleCanParkHere(vehicleId, currentLinkId);
+                this.events.processEvent(new StartParkingSearchEvent(time, vehicleId, currentLinkId));
+                hasFoundParking = parkingManager.reserveSpaceAtFacilityIdIfAvailable(vehicleId, parkingFacilityId, time, time);
             }
         } else {
-            hasFoundParking = parkingManager.reserveSpaceIfVehicleCanParkHere(vehicleId, currentLinkId);
-
+            hasFoundParking = parkingManager.reserveSpaceAtFacilityIdIfAvailable(vehicleId, parkingFacilityId, time, time);
         }
-
     }
 
     @Override

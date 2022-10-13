@@ -27,7 +27,6 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.*;
 import org.matsim.facilities.ActivityFacility;
@@ -110,7 +109,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
     public boolean reserveSpaceIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId) {
         boolean canPark = false;
 
-        if (linkIdHasAvailableParkingForVehicle(linkId, vehicleId)) {
+        if (linkIdHasAvailableParkingForVehicle(linkId, vehicleId, 0, 0)) {
             canPark = true;
             // Logger.getLogger(getClass()).info("veh: "+vehicleId+" link
             // "+linkId + " can park "+canPark);
@@ -119,8 +118,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
         return canPark;
     }
 
-    private boolean linkIdHasAvailableParkingForVehicle(Id<Link> linkId, Id<Vehicle> vid) {
-        // Logger.getLogger(getClass()).info("link "+linkId+" vehicle "+vid);
+    private boolean linkIdHasAvailableParkingForVehicle(Id<Link> linkId, Id<Vehicle> vehicleId, double startTime, double endTime) {
         if (!this.facilitiesPerLink.containsKey(linkId)) {
             // this implies: If no parking facility is present, we suppose that
             // we can park freely (i.e. the matsim standard approach)
@@ -132,19 +130,57 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
             return true;
         }
         Set<Id<ActivityFacility>> parkingFacilitiesAtLink = this.facilitiesPerLink.get(linkId);
-        for (Id<ActivityFacility> fac : parkingFacilitiesAtLink) {
-            double cap = this.parkingFacilities.get(fac).getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE)
-                    .getCapacity();
-            if (this.occupation.get(fac).doubleValue() < cap) {
+        for (Id<ActivityFacility> facilityId : parkingFacilitiesAtLink) {
+
+            ParkingFacility parkingFacility = this.parkingFacilities.get(facilityId);
+
+            // check if the vehicle is allowed to park in this facility
+            if (!parkingFacility.isAllowedToPark(startTime, endTime, Id.createPersonId(vehicleId))) {
+                continue;
+            }
+
+            // check if there is remaining capacity
+            double capacity = parkingFacility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
+            if (this.occupation.get(facilityId).doubleValue() < capacity) {
                 // Logger.getLogger(getClass()).info("occ:
                 // "+this.occupation.get(fac).toString()+" cap: "+cap);
-                this.occupation.get(fac).increment();
-                this.parkingReservation.put(vid, fac);
+                this.occupation.get(facilityId).increment();
+                this.parkingReservation.put(vehicleId, facilityId);
 
                 return true;
             }
         }
         return false;
+    }
+
+    public boolean reserveSpaceAtFacilityIdIfAvailable(Id<Vehicle> vehicleId, Id<ActivityFacility> facilityId, double startTime, double endTime) {
+        boolean canPark = facilityIdHasAvailableParkingForVehicle(facilityId, vehicleId, startTime, endTime);
+        if (canPark) {
+            reserveSpaceAtFacilityId(vehicleId, facilityId);
+        }
+        return canPark;
+    }
+
+    private void reserveSpaceAtFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> facilityId){
+        this.occupation.get(facilityId).increment();
+        this.parkingReservation.put(vehicleId, facilityId);
+    }
+
+    private boolean facilityIdHasAvailableParkingForVehicle(Id<ActivityFacility> facilityId, Id<Vehicle> vehicleId, double startTime, double endTime){
+        // first check if the facility is actually in the list of parking facilities
+        if (!this.parkingFacilities.containsKey(facilityId)){
+            return false;
+        }
+        ParkingFacility parkingFacility = this.parkingFacilities.get(facilityId);
+
+        // check if the vehicle is allowed to park in this facility
+        if (!parkingFacility.isAllowedToPark(startTime, endTime, Id.createPersonId(vehicleId))) {
+            return false;
+        }
+
+        // check if there is remaining capacity
+        double capacity = parkingFacility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
+        return this.occupation.get(facilityId).doubleValue() < capacity;
     }
 
     @Override
@@ -192,6 +228,46 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
             this.occupation.get(fac).decrement();
             return true;
         }
+    }
+
+    @Override
+    public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
+        return false;
+    }
+
+    @Override
+    public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime) {
+        return false;
+    }
+
+    @Override
+    public Id<Link> getVehicleParkingLocationLinkId(Id<Vehicle> vehicleId) {
+        return null;
+    }
+
+    @Override
+    public Id<ActivityFacility> getVehicleParkingLocationParkingFacilityId(Id<Vehicle> vehicleId) {
+        return null;
+    }
+
+    @Override
+    public boolean parkVehicleAtLinkId(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime) {
+        return false;
+    }
+
+    @Override
+    public boolean parkVehicleAtParkingFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime) {
+        return false;
+    }
+
+    @Override
+    public boolean unParkVehicleAtLinkId(Id<Vehicle> vehicleId, Id<Link> linkId, double toTime) {
+        return false;
+    }
+
+    @Override
+    public boolean unParkVehicleAtParkingFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double toTime) {
+        return false;
     }
 
     @Override

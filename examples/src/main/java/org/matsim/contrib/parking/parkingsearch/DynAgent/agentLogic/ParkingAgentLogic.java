@@ -29,10 +29,13 @@ import org.matsim.contrib.dynagent.*;
 import org.matsim.contrib.parking.parkingsearch.DynAgent.*;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.contrib.parking.parkingsearch.manager.MultipleParkingTypeParkingManager;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.VehicleTeleportationLogic;
 import org.matsim.contrib.parking.parkingsearch.routing.ParkingRouter;
+import org.matsim.contrib.parking.parkingsearch.search.BenensonParkingSearchLogic;
 import org.matsim.contrib.parking.parkingsearch.search.ParkingSearchLogic;
+import org.matsim.contrib.parking.parkingsearch.search.RandomParkingSearchLogic;
 import org.matsim.contrib.parking.parkingsearch.sim.ParkingSearchConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.mobsim.framework.MobsimTimer;
@@ -40,6 +43,7 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.core.utils.misc.Time;
+import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.Facility;
 import org.matsim.vehicles.Vehicle;
 
@@ -71,7 +75,8 @@ public class ParkingAgentLogic implements DynAgentLogic {
 	protected Iterator<PlanElement> planElemIter;
 	protected Plan plan;
 	protected PlanElement currentPlanElement;
-	protected ParkingSearchManager parkingManager;
+//	protected ParkingSearchManager parkingManager;
+	protected MultipleParkingTypeParkingManager parkingManager;
 	private RoutingModule walkRouter;
 	private Network network;
 	protected ParkingRouter parkingRouter;
@@ -89,8 +94,8 @@ public class ParkingAgentLogic implements DynAgentLogic {
 	 * @param plan
 	 *            (always starts with Activity)
 	 */
-	public ParkingAgentLogic(Plan plan, ParkingSearchManager parkingManager, RoutingModule walkRouter, Network network,
-							 ParkingRouter parkingRouter, EventsManager events, ParkingSearchLogic parkingLogic, MobsimTimer timer,
+	public ParkingAgentLogic(Plan plan, MultipleParkingTypeParkingManager parkingManager, RoutingModule walkRouter, Network network,
+							 ParkingRouter parkingRouter, EventsManager events, MobsimTimer timer,
 							 VehicleTeleportationLogic teleportationLogic, ParkingSearchConfigGroup configGroup) {
 		planElemIter = plan.getPlanElements().iterator();
 		this.plan = plan;
@@ -100,10 +105,8 @@ public class ParkingAgentLogic implements DynAgentLogic {
 		this.parkingRouter = parkingRouter;
 		this.timer = timer;
 		this.events = events;
-		this.parkingLogic = parkingLogic;
 		this.teleportationLogic = teleportationLogic;
 		this.configGroup = configGroup;
-
 
 	}
 
@@ -175,15 +178,8 @@ public class ParkingAgentLogic implements DynAgentLogic {
 			ParkingSearchStrategy parkingSearchStrategy = ParkingSearchStrategy.valueOf(currentLeg.getAttributes().getAttribute("parkingSearchStrategy").toString());
 			switch (parkingSearchStrategy) {
 				case Random:
-					return new ParkingDynLeg(currentLeg.getMode(), actualRoute, parkingLogic, parkingManager, currentlyAssignedVehicleId, timer, events);
-				case Benenson:
-					return new BenensonDynLeg(currentLeg.getMode(), actualRoute, parkingLogic, parkingManager, currentlyAssignedVehicleId, timer, events);
-				case DistanceMemory:
-					return new DistanceMemoryDynLeg(currentLeg.getMode(), actualRoute, parkingLogic, parkingManager, currentlyAssignedVehicleId, timer, events);
-				case DriveToDestination:
-					return new DriveToDestinationDynLeg(currentLeg.getMode(), actualRoute, parkingLogic, parkingManager, currentlyAssignedVehicleId, timer, events);
-				case DriveToGarage:
-					return new DriveToGarageDynLeg(currentLeg.getMode(), actualRoute, parkingLogic, parkingManager, currentlyAssignedVehicleId, timer, events);
+					return new ParkingDynLeg(currentLeg.getMode(), actualRoute, new RandomParkingSearchLogic(this.network),
+							parkingManager, currentlyAssignedVehicleId, timer, events);
 				default:
 					throw new IllegalStateException("Unexpected value: " + parkingSearchStrategy.toString());
 			}
