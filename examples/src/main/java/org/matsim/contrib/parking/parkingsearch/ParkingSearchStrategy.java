@@ -22,6 +22,6 @@ public enum ParkingSearchStrategy {
 	Random,
 	Benenson,
 	DistanceMemory,
-	DriveToDestination,
+	DriveToParkingFacility,
 	DriveToGarage
 }

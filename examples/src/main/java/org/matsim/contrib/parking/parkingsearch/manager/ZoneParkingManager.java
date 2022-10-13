@@ -85,7 +85,7 @@ public class ZoneParkingManager extends FacilityBasedParkingManager {
 
 	
 	@Override
-	public boolean parkVehicleHere(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
+	public boolean parkVehicleAtLinkId(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
 		if (parkVehicleAtLink(vehicleId, linkId, time)) {
 			for(String zone : this.linksOfZone.keySet()){
 				if(linksOfZone.get(zone).contains(linkId) && this.facilitiesPerLink.containsKey(linkId)){
@@ -108,7 +108,7 @@ public class ZoneParkingManager extends FacilityBasedParkingManager {
 	}
 	
 	@Override
-	public boolean unParkVehicleHere(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
+	public boolean unParkVehicle(Id<Vehicle> vehicleId, double time) {
 		if (!this.parkingLocations.containsKey(vehicleId)) {
 			return true;
 			// we assume the person parks somewhere else

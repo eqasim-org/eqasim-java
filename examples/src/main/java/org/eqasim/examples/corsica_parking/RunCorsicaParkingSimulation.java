@@ -131,6 +131,7 @@ public class RunCorsicaParkingSimulation {
 
 									String parkingId = "dedicated_parking_facility_" + ((Activity) element).getFacilityId().toString();
 									Id<ActivityFacility> activityFacilityId = Id.create(parkingId, ActivityFacility.class);
+									element.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
 
 									ActivityFacilities activityFacilities = scenario.getActivityFacilities();
 									if (!activityFacilities.getFacilities().containsKey(activityFacilityId)) {
@@ -150,7 +151,8 @@ public class RunCorsicaParkingSimulation {
 
 									if (previousLeg != null) {
 										if (previousLeg.getMode().equals("car")) {
-											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToDestination.toString());
+											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
+											previousLeg.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
 										}
 									}
 								}
@@ -163,6 +165,7 @@ public class RunCorsicaParkingSimulation {
 
 									String parkingId = "dedicated_parking_facility_" + ((Activity) element).getFacilityId().toString();
 									Id<ActivityFacility> activityFacilityId = Id.create(parkingId, ActivityFacility.class);
+									element.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
 
 									ActivityFacilities activityFacilities = scenario.getActivityFacilities();
 									if (!activityFacilities.getFacilities().containsKey(activityFacilityId)) {
@@ -172,17 +175,18 @@ public class RunCorsicaParkingSimulation {
 										activityOption.setCapacity(Integer.MAX_VALUE);
 										activityFacility.addActivityOption(activityOption);
 										activityFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.DedicatedParking.toString());
-										Set<Id<Person>> allowedPersons = new HashSet<>();
-										allowedPersons.add(personId);
-										activityFacility.getAttributes().putAttribute("allowedPersons", allowedPersons);
+										Set<Id<Vehicle>> allowedVehicles = new HashSet<>();
+										allowedVehicles.add(Id.createVehicleId(personId));
+										activityFacility.getAttributes().putAttribute("allowedVehicles", allowedVehicles);
 										scenario.getActivityFacilities().addActivityFacility(activityFacility);
 									} else {
-										((Set<Id<Person>>) activityFacilities.getFacilities().get(activityFacilityId).getAttributes().getAttribute("allowedPersons")).add(personId);
+										((Set<Id<Vehicle>>) activityFacilities.getFacilities().get(activityFacilityId).getAttributes().getAttribute("allowedVehicles")).add(Id.createVehicleId(personId));
 									}
 
 									if (previousLeg != null) {
 										if (previousLeg.getMode().equals("car")) {
-											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToDestination.toString());
+											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
+											previousLeg.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
 										}
 									}
 								}

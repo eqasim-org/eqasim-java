@@ -47,10 +47,10 @@ public class ParkingDynLeg implements DriverDynLeg {
     protected MobsimTimer timer;
     protected EventsManager events;
     protected boolean hasFoundParking = false;
-    protected String parkingSearchStrategy;
+    protected double departFromParkingFacilityTime;
 
     public ParkingDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
-                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events) {
+                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, double departFromParkingFacilityTime) {
         this.mode = mode;
         this.route = route;
         this.currentLinkIdx = -1;
@@ -60,21 +60,22 @@ public class ParkingDynLeg implements DriverDynLeg {
         this.vehicleId = vehicleId;
         this.timer = timer;
         this.events = events;
+        this.departFromParkingFacilityTime = departFromParkingFacilityTime;
     }
 
     @Override
     public void movedOverNode(Id<Link> newLinkId) {
         currentLinkIdx++;
         currentLinkId = newLinkId;
+        double currentTime = timer.getTimeOfDay();
         if (!parkingMode) {
             if (currentLinkId.equals(this.getDestinationLinkId())) {
                 this.parkingMode = true;
-                this.events.processEvent(new StartParkingSearchEvent(timer.getTimeOfDay(), vehicleId, currentLinkId));
-                hasFoundParking = parkingManager.reserveSpaceIfVehicleCanParkHere(vehicleId, currentLinkId);
+                this.events.processEvent(new StartParkingSearchEvent(currentTime, vehicleId, currentLinkId));
+                hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, currentLinkId, currentTime, departFromParkingFacilityTime);
             }
         } else {
-            hasFoundParking = parkingManager.reserveSpaceIfVehicleCanParkHere(vehicleId, currentLinkId);
-
+            hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, currentLinkId, currentTime, departFromParkingFacilityTime);
         }
 
     }

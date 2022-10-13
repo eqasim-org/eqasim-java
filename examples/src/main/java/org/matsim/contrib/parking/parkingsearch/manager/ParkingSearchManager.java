@@ -19,11 +19,12 @@
 
 package org.matsim.contrib.parking.parkingsearch.manager;
 
-import java.util.List;
-
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
+
+import java.util.List;
 
 /**
  * @author  jbischoff
@@ -31,10 +32,16 @@ import org.matsim.vehicles.Vehicle;
  */
 public interface ParkingSearchManager {
 
-	boolean reserveSpaceIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId);
-	Id<Link> getVehicleParkingLocation(Id<Vehicle> vehicleId);
-	boolean parkVehicleHere(Id<Vehicle> vehicleId, Id<Link> linkId, double time);
-	boolean unParkVehicleHere(Id<Vehicle> vehicleId, Id<Link> linkId, double time);
+	boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime);
+	boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime);
+
+	Id<Link> getVehicleParkingLocationLinkId(Id<Vehicle> vehicleId);
+	Id<ActivityFacility> getVehicleParkingLocationParkingFacilityId(Id<Vehicle> vehicleId);
+
+	boolean parkVehicleAtLinkId(Id<Vehicle> vehicleId, Id<Link> linkId, double time);
+	boolean parkVehicleAtParkingFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double time);
+
+	boolean unParkVehicle(Id<Vehicle> vehicleId, double time);
 
 	List<String> produceStatistics();
 	void reset(int iteration);

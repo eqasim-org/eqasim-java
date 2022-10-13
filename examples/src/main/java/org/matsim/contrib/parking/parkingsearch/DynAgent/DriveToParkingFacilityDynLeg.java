@@ -30,11 +30,12 @@ import org.matsim.core.mobsim.framework.MobsimTimer;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.misc.OptionalTime;
+import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.List;
 
-public class DriveToGarageDynLeg implements DriverDynLeg {
+public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
     protected final NetworkRoute route;
     protected int currentLinkIdx;
     protected final String mode;
@@ -47,10 +48,12 @@ public class DriveToGarageDynLeg implements DriverDynLeg {
     protected MobsimTimer timer;
     protected EventsManager events;
     protected boolean hasFoundParking = false;
-    protected String parkingSearchStrategy;
+    private final Id<ActivityFacility> parkingFacilityId;
+    private final double departFromParkingFacilityTime;
 
-    public DriveToGarageDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
-                               Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events) {
+    public DriveToParkingFacilityDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
+                                        Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, Id<ActivityFacility> parkingFacilityId,
+                                        double departFromParkingFacilityTime) {
         this.mode = mode;
         this.route = route;
         this.currentLinkIdx = -1;
@@ -60,23 +63,24 @@ public class DriveToGarageDynLeg implements DriverDynLeg {
         this.vehicleId = vehicleId;
         this.timer = timer;
         this.events = events;
+        this.parkingFacilityId = parkingFacilityId;
+        this.departFromParkingFacilityTime = departFromParkingFacilityTime;
     }
 
     @Override
     public void movedOverNode(Id<Link> newLinkId) {
         currentLinkIdx++;
         currentLinkId = newLinkId;
+        double currentTime = timer.getTimeOfDay();
         if (!parkingMode) {
             if (currentLinkId.equals(this.getDestinationLinkId())) {
                 this.parkingMode = true;
-                this.events.processEvent(new StartParkingSearchEvent(timer.getTimeOfDay(), vehicleId, currentLinkId));
-                hasFoundParking = parkingManager.reserveSpaceIfVehicleCanParkHere(vehicleId, currentLinkId);
+                this.events.processEvent(new StartParkingSearchEvent(currentTime, vehicleId, currentLinkId));
+                hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(vehicleId, parkingFacilityId, currentTime, departFromParkingFacilityTime);
             }
         } else {
-            hasFoundParking = parkingManager.reserveSpaceIfVehicleCanParkHere(vehicleId, currentLinkId);
-
+            hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(vehicleId, parkingFacilityId, currentTime, departFromParkingFacilityTime);
         }
-
     }
 
     @Override

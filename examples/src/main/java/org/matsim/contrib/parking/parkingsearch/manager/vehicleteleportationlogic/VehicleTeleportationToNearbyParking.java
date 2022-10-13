@@ -62,10 +62,11 @@ public class VehicleTeleportationToNearbyParking implements VehicleTeleportation
 			return vehicleLinkId;
 		} 
 		Id<Link> parkingLinkId = agentLinkId;
-		while (!this.manager.reserveSpaceIfVehicleCanParkHere(vehicleId, parkingLinkId)){
+		// TODO: Understand why we bother doing this?
+		while (!this.manager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, parkingLinkId, time, time)){
 			parkingLinkId = parkingLogic.getNextLink(parkingLinkId, vehicleId, mode);
 		}
-		manager.parkVehicleHere(vehicleId, parkingLinkId, time);
+		manager.parkVehicleAtLinkId(vehicleId, parkingLinkId, time);
 		return parkingLinkId;
 	}
 	

@@ -9,13 +9,16 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtil
 import org.eqasim.examples.corsica_parking.components.parking.ParkingListener;
 import org.eqasim.examples.corsica_parking.mode_choice.utilities.variables.CorsicaParkingCarVariables;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.router.util.LeastCostPathCalculator;
+import org.matsim.facilities.ActivityFacility;
 
 import java.util.List;
 
@@ -79,13 +82,15 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 
 			// if they have parking, set search strategy to drive directly to destination
 			if (hasParking) {
-				carLeg.getAttributes().putAttribute("parkingSearchStrategy", "driveToDestination");
+				carLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
+				Id<ActivityFacility> parkingFacilityId = Id.create(destinationActivity.getAttributes().getAttribute("parkingFacilityId").toString(), ActivityFacility.class);
+				carLeg.getAttributes().putAttribute("parkingFacilityId", parkingFacilityId);
 			}
 			// if they do not have parking, they need to search and pay for it
 			else {
 				// for now, search on street
 				// TODO: however, we first need to provide options to choose between on-street and garage parking
-				carLeg.getAttributes().putAttribute("parkingSearchStrategy", "searchForOnStreetParking");
+				carLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.Random.toString());
 
 				// estimate parking search time
 				double arrivalTime = trip.getDepartureTime() + travelTime_min * 60.0;

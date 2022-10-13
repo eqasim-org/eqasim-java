@@ -47,7 +47,7 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 	protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new HashMap<>();
 	protected Map<Id<Link>, Set<Id<ActivityFacility>>> facilitiesPerLink = new HashMap<>();
 
-    protected Network network;
+	protected Network network;
 
 	@Inject
 	public FacilityBasedParkingManager(Scenario scenario) {
@@ -70,8 +70,16 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 	}
 
 	@Override
-	public boolean reserveSpaceIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId) {
+	public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
+		boolean canPark = false;
 
+		if (linkIdHasAvailableParkingForVehicle(linkId, vehicleId)) {
+			canPark = true;
+			// Logger.getLogger(getClass()).info("veh: "+vehicleId+" link
+			// "+linkId + " can park "+canPark);
+		}
+
+		return canPark;
 	}
 
 	private boolean linkIdHasAvailableParkingForVehicle(Id<Link> linkId, Id<Vehicle> vid) {
@@ -103,7 +111,29 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 	}
 
 	@Override
-	public Id<Link> getVehicleParkingLocation(Id<Vehicle> vehicleId) {
+	public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime) {
+		double cap = this.parkingFacilities.get(parkingFacilityId).getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
+		if (this.occupation.get(parkingFacilityId).doubleValue() < cap) {
+			// Logger.getLogger(getClass()).info("occ:
+			// "+this.occupation.get(fac).toString()+" cap: "+cap);
+			this.occupation.get(parkingFacilityId).increment();
+			this.parkingReservation.put(vehicleId, parkingFacilityId);
+
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public Id<ActivityFacility> getVehicleParkingLocationParkingFacilityId(Id<Vehicle> vehicleId) {
+		if (this.parkingLocations.containsKey(vehicleId)) {
+			return this.parkingFacilities.get(this.parkingLocations.get(vehicleId)).getId();
+		} else
+			return null;
+	}
+
+	@Override
+	public Id<Link> getVehicleParkingLocationLinkId(Id<Vehicle> vehicleId) {
 		if (this.parkingLocations.containsKey(vehicleId)) {
 			return this.parkingFacilities.get(this.parkingLocations.get(vehicleId)).getLinkId();
 		} else if (this.parkingLocationsOutsideFacilities.containsKey(vehicleId)) {
@@ -113,90 +143,45 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 	}
 
 	@Override
-	public boolean parkVehicleHere(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
-        return parkVehicleAtLink(vehicleId, linkId, time);
-	}
-
-	protected boolean parkVehicleAtLink(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
-
-
+	public boolean parkVehicleAtLinkId(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
+		return parkVehicleAtLink(vehicleId, linkId, time);
 	}
 
 	@Override
-	public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
-		boolean canPark = false;
-
-		if (linkIdHasAvailableParkingForVehicle(linkId, vehicleId)) {
-			canPark = true;
-			// Logger.getLogger(getClass()).info("veh: "+vehicleId+" link
-			// "+linkId + " can park "+canPark);
-		}
-
-		return canPark;
-	}
-
-	@Override
-	public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime) {
+	public boolean parkVehicleAtParkingFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double time) {
 		return false;
 	}
 
-	@Override
-	public Id<Link> getVehicleParkingLocationLinkId(Id<Vehicle> vehicleId) {
-		return null;
-	}
-
-	@Override
-	public Id<ActivityFacility> getVehicleParkingLocationParkingFacilityId(Id<Vehicle> vehicleId) {
-		return null;
-	}
-
-	@Override
-	public boolean parkVehicleAtLinkId(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime) {
+	protected boolean parkVehicleAtLink(Id<Vehicle> vehicleId, Id<Link> linkId, double time) {
 		Set<Id<ActivityFacility>> parkingFacilitiesAtLink = this.facilitiesPerLink.get(linkId);
 		if (parkingFacilitiesAtLink == null) {
 			this.parkingLocationsOutsideFacilities.put(vehicleId, linkId);
 			return true;
 		} else {
-			Id<ActivityFacility> facilityId = this.parkingReservation.remove(vehicleId);
-			if (facilityId != null) {
-				this.parkingLocations.put(vehicleId, facilityId);
+			Id<ActivityFacility> fac = this.parkingReservation.remove(vehicleId);
+			if (fac != null) {
+				this.parkingLocations.put(vehicleId, fac);
 				return true;
 			} else {
 				throw new RuntimeException("no parking reservation found for vehicle " + vehicleId.toString()
 						+ "arrival on link " + linkId + " with parking restriction");
 			}
 		}
+
 	}
 
 	@Override
-	public boolean parkVehicleAtParkingFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime) {
-		Id<ActivityFacility> facilityId = this.parkingReservation.remove(vehicleId);
-		if (facilityId != null) {
-			this.parkingLocations.put(vehicleId, facilityId);
-			return true;
-		} else {
-			throw new RuntimeException("no parking reservation found for vehicle " + vehicleId.toString()
-					+ "at facility " + parkingFacilityId);
-		}
-	}
-
-	@Override
-	public boolean unParkVehicleAtLinkId(Id<Vehicle> vehicleId, Id<Link> linkId, double toTime) {
+	public boolean unParkVehicle(Id<Vehicle> vehicleId, double time) {
 		if (!this.parkingLocations.containsKey(vehicleId)) {
 			this.parkingLocationsOutsideFacilities.remove(vehicleId);
 			return true;
 
 			// we assume the person parks somewhere else
 		} else {
-			Id<ActivityFacility> facilityId = this.parkingLocations.remove(vehicleId);
-			this.occupation.get(facilityId).decrement();
+			Id<ActivityFacility> fac = this.parkingLocations.remove(vehicleId);
+			this.occupation.get(fac).decrement();
 			return true;
 		}
-	}
-
-	@Override
-	public boolean unParkVehicleAtParkingFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double toTime) {
-		return false;
 	}
 
 	@Override
@@ -222,7 +207,7 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 		}
 		return allSpaces;
 	}
-	
+
 	public double getNrOfFreeParkingSpacesOnLink (Id<Link> linkId){
 		double allFreeSpaces = 0;
 		Set<Id<ActivityFacility>> parkingFacilitiesAtLink = this.facilitiesPerLink.get(linkId);
@@ -242,5 +227,5 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 	public void reset(int iteration) {
 	}
 
-	
+
 }
