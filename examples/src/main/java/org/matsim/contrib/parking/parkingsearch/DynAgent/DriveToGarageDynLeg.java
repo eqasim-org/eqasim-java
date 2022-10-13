@@ -19,8 +19,6 @@
 
 package org.matsim.contrib.parking.parkingsearch.DynAgent;
 
-import java.util.List;
-
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.dynagent.DriverDynLeg;
@@ -34,7 +32,9 @@ import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.vehicles.Vehicle;
 
-public class ParkingDynLeg implements DriverDynLeg {
+import java.util.List;
+
+public class DriveToGarageDynLeg implements DriverDynLeg {
     protected final NetworkRoute route;
     protected int currentLinkIdx;
     protected final String mode;
@@ -49,8 +49,8 @@ public class ParkingDynLeg implements DriverDynLeg {
     protected boolean hasFoundParking = false;
     protected String parkingSearchStrategy;
 
-    public ParkingDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
-                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events) {
+    public DriveToGarageDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
+                               Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events) {
         this.mode = mode;
         this.route = route;
         this.currentLinkIdx = -1;
