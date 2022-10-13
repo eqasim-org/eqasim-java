@@ -150,7 +150,7 @@ public class RunCorsicaParkingSimulation {
 
 									if (previousLeg != null) {
 										if (previousLeg.getMode().equals("car")) {
-											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", "driveToDestination");
+											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToDestination.toString());
 										}
 									}
 								}
@@ -182,7 +182,7 @@ public class RunCorsicaParkingSimulation {
 
 									if (previousLeg != null) {
 										if (previousLeg.getMode().equals("car")) {
-											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", "driveToDestination");
+											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToDestination.toString());
 										}
 									}
 								}
@@ -190,7 +190,7 @@ public class RunCorsicaParkingSimulation {
 							else {
 								if (previousLeg != null) {
 									if (previousLeg.getMode().equals("car")) {
-										previousLeg.getAttributes().putAttribute("parkingSearchStrategy", "searchForOnStreetParking");
+										previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.Random.toString());
 									}
 								}
 							}
