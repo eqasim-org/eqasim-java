@@ -124,6 +124,14 @@ public class RunCorsicaParkingSimulation {
 
 					for (PlanElement element : scenario.getPopulation().getPersons().get(personId).getSelectedPlan().getPlanElements()) {
 						if (element instanceof Activity) {
+
+							// default parking search strategy for all car legs
+							if (previousLeg != null) {
+								if (previousLeg.getMode().equals("car")) {
+									previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.Random.toString());
+								}
+							}
+
 							if (((Activity) element).getType().equals("home")) {
 
 								element.getAttributes().putAttribute("parkingAvailable", hasParkingAtHome);
@@ -214,13 +222,6 @@ public class RunCorsicaParkingSimulation {
 											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
 											previousLeg.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
 										}
-									}
-								}
-							}
-							else {
-								if (previousLeg != null) {
-									if (previousLeg.getMode().equals("car")) {
-										previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.Random.toString());
 									}
 								}
 							}
