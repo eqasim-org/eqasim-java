@@ -2,6 +2,7 @@ package org.eqasim.examples.corsica_parking.mode_choice.utilities.predictors;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.log4j.Logger;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
@@ -10,36 +11,96 @@ import org.eqasim.examples.corsica_parking.components.parking.ParkingListener;
 import org.eqasim.examples.corsica_parking.mode_choice.utilities.variables.CorsicaParkingCarVariables;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
+import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
+import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacilityType;
+import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingGarage;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.core.router.TripRouter;
-import org.matsim.core.router.util.LeastCostPathCalculator;
+import org.matsim.core.utils.collections.QuadTree;
+import org.matsim.facilities.ActivityFacilitiesImpl;
 import org.matsim.facilities.ActivityFacility;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaParkingCarVariables> {
 	private final CostModel costModel;
 	private final ModeParameters parameters;
 	private final ParkingListener parkingListener;
-//	private final LeastCostPathCalculator leastCostPathCalculator;
 	private final TripRouter tripRouter;
+
+	private final Map<Id<ActivityFacility>, ParkingFacility> garageFacilities = new HashMap<>();
+	private QuadTree<ParkingFacility> garageFacilitiesQuadTree;
+
+	private static final Logger log = Logger.getLogger(ActivityFacilitiesImpl.class);
 
 	@Inject
 	public CorsicaParkingCarPredictor(ModeParameters parameters, @Named("car") CostModel costModel,
 									  ParkingListener parkingListener,
-//									  LeastCostPathCalculator leastCostPathCalculator,
+									  Scenario scenario,
 									  TripRouter tripRouter) {
 		this.costModel = costModel;
 		this.parameters = parameters;
 		this.parkingListener = parkingListener;
-//		this.leastCostPathCalculator = leastCostPathCalculator;
 		this.tripRouter = tripRouter;
 
+		// population garage facilities map
+		for (ActivityFacility facility : scenario.getActivityFacilities().getFacilitiesForActivityType(ParkingFacilityType.Garage.toString()).values()) {
+			// create a garage parking object
+			Id<ActivityFacility> parkingId = facility.getId();
+			Coord parkingCoord = facility.getCoord();
+			Id<Link> parkingLinkId = facility.getLinkId();
+			double parkingCapacity = facility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
+
+			// add to map
+			ParkingFacility parkingFacility = new ParkingGarage(parkingId, parkingCoord, parkingLinkId, parkingCapacity);
+			this.garageFacilities.putIfAbsent(facility.getId(), parkingFacility);
+		}
+	}
+
+	synchronized private void buildQuadTree() {
+		/* the method must be synchronized to ensure we only build one quadTree
+		 * in case that multiple threads call a method that requires the quadTree.
+		 */
+		if (this.garageFacilitiesQuadTree != null) {
+			return;
+		}
+		double startTime = System.currentTimeMillis();
+		double minx = Double.POSITIVE_INFINITY;
+		double miny = Double.POSITIVE_INFINITY;
+		double maxx = Double.NEGATIVE_INFINITY;
+		double maxy = Double.NEGATIVE_INFINITY;
+		for (ParkingFacility n : this.garageFacilities.values()) {
+			if (n.getCoord().getX() < minx) { minx = n.getCoord().getX(); }
+			if (n.getCoord().getY() < miny) { miny = n.getCoord().getY(); }
+			if (n.getCoord().getX() > maxx) { maxx = n.getCoord().getX(); }
+			if (n.getCoord().getY() > maxy) { maxy = n.getCoord().getY(); }
+		}
+		minx -= 1.0;
+		miny -= 1.0;
+		maxx += 1.0;
+		maxy += 1.0;
+		// yy the above four lines are problematic if the coordinate values are much smaller than one. kai, oct'15
+
+		log.info("building parking garage QuadTree for nodes: xrange(" + minx + "," + maxx + "); yrange(" + miny + "," + maxy + ")");
+		QuadTree<ParkingFacility> quadTree = new QuadTree<>(minx, miny, maxx, maxy);
+		for (ParkingFacility n : this.garageFacilities.values()) {
+			quadTree.put(n.getCoord().getX(), n.getCoord().getY(), n);
+		}
+		/* assign the quadTree at the very end, when it is complete.
+		 * otherwise, other threads may already start working on an incomplete quadtree
+		 */
+		this.garageFacilitiesQuadTree = quadTree;
+		log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
 	}
 
 	@Override
@@ -88,7 +149,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 			}
 			// if they do not have parking, they need to search and pay for it
 			else {
-				// for now, search on street
+				// we need to choose whether to parking on street or in a parking garage
 				// TODO: however, we first need to provide options to choose between on-street and garage parking
 				carLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.Random.toString());
 

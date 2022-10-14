@@ -27,8 +27,6 @@ import org.matsim.contrib.dvrp.run.DvrpModes;
 import org.matsim.contrib.dvrp.trafficmonitoring.DvrpTravelTimeModule;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
-import org.matsim.contrib.parking.parkingsearch.evaluation.ParkingSlotVisualiser;
-import org.matsim.contrib.parking.parkingsearch.manager.FacilityBasedParkingManager;
 import org.matsim.contrib.parking.parkingsearch.manager.MultipleParkingTypeParkingManager;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacilityType;
@@ -39,7 +37,6 @@ import org.matsim.contrib.parking.parkingsearch.routing.WithinDayParkingRouter;
 import org.matsim.contrib.parking.parkingsearch.sim.ParkingSearchConfigGroup;
 import org.matsim.contrib.parking.parkingsearch.sim.ParkingSearchPopulationModule;
 import org.matsim.contrib.parking.parkingsearch.sim.ParkingSearchQSimModule;
-import org.matsim.contrib.parking.parkingsearch.sim.SetupParking;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -54,7 +51,10 @@ import org.matsim.core.mobsim.qsim.components.StandardQSimComponentConfigurator;
 import org.matsim.core.router.AStarEuclideanFactory;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.facilities.*;
+import org.matsim.facilities.ActivityFacilities;
+import org.matsim.facilities.ActivityFacilitiesFactory;
+import org.matsim.facilities.ActivityFacility;
+import org.matsim.facilities.ActivityOption;
 import org.matsim.households.Household;
 import org.matsim.vehicles.Vehicle;
 
@@ -108,16 +108,17 @@ public class RunCorsicaParkingSimulation {
 		ScenarioUtils.loadScenario(scenario);
 		configurator.adjustScenario(scenario);
 
+		ActivityFacilities activityFacilities = scenario.getActivityFacilities();
+		ActivityFacilitiesFactory activityFacilitiesFactory = activityFacilities.getFactory();
+
+		Random random = new Random(1);
 		{ // clean up scenario
 			// add parking at home for 90% of households and parking at work for 50% of people
-			Random random = new Random(1);
-			ActivityFacilitiesFactory facilitiesFactory = new ActivityFacilitiesFactoryImpl();
-
 			for (Household household : scenario.getHouseholds().getHouseholds().values()) {
-				boolean hasParkingAtHome = random.nextInt(1) < 0.9;
+				boolean hasParkingAtHome = random.nextDouble() < 0.9;
 
 				for (Id<Person> personId : household.getMemberIds()) {
-					boolean hasParkingAtWork = random.nextInt(1) < 0.5;
+					boolean hasParkingAtWork = random.nextDouble() < 0.5;
 
 					Leg previousLeg = null;
 
@@ -133,19 +134,32 @@ public class RunCorsicaParkingSimulation {
 									Id<ActivityFacility> activityFacilityId = Id.create(parkingId, ActivityFacility.class);
 									element.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
 
-									ActivityFacilities activityFacilities = scenario.getActivityFacilities();
 									if (!activityFacilities.getFacilities().containsKey(activityFacilityId)) {
-										ActivityFacility activityFacility = facilitiesFactory.createActivityFacility(activityFacilityId,
+
+										// create parking facility
+										ActivityFacility activityFacility = activityFacilitiesFactory.createActivityFacility(activityFacilityId,
 												((Activity) element).getCoord(), ((Activity) element).getLinkId());
-										ActivityOption activityOption = facilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
+
+										// add parking activity type as an option with capacity
+										ActivityOption activityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
 										activityOption.setCapacity(Integer.MAX_VALUE);
 										activityFacility.addActivityOption(activityOption);
+
+										// add parking facility type as an option to allow future filtering
+										ActivityOption parkingFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.DedicatedParking.toString());
+										activityFacility.addActivityOption(parkingFacilityTypeOption);
+
+										// add facility attributes (type, allowed vehicles)
 										activityFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.DedicatedParking.toString());
 										Set<Id<Vehicle>> allowedVehicles = new HashSet<>();
 										allowedVehicles.add(Id.createVehicleId(personId));
 										activityFacility.getAttributes().putAttribute("allowedVehicles", allowedVehicles);
-										scenario.getActivityFacilities().addActivityFacility(activityFacility);
+
+										// add facility to facilities
+										activityFacilities.addActivityFacility(activityFacility);
+
 									} else {
+										// add vehicle id to set of vehicle ids
 										((Set<Id<Vehicle>>) activityFacilities.getFacilities().get(activityFacilityId).getAttributes().getAttribute("allowedVehicles")).add(Id.createVehicleId(personId));
 									}
 
@@ -167,19 +181,31 @@ public class RunCorsicaParkingSimulation {
 									Id<ActivityFacility> activityFacilityId = Id.create(parkingId, ActivityFacility.class);
 									element.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
 
-									ActivityFacilities activityFacilities = scenario.getActivityFacilities();
 									if (!activityFacilities.getFacilities().containsKey(activityFacilityId)) {
-										ActivityFacility activityFacility = facilitiesFactory.createActivityFacility(activityFacilityId,
+
+										// create parking facility
+										ActivityFacility activityFacility = activityFacilitiesFactory.createActivityFacility(activityFacilityId,
 												((Activity) element).getCoord(), ((Activity) element).getLinkId());
-										ActivityOption activityOption = facilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
+
+										// add parking activity type as an option with capacity
+										ActivityOption activityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
 										activityOption.setCapacity(Integer.MAX_VALUE);
 										activityFacility.addActivityOption(activityOption);
+
+										// add parking facility type as an option to allow future filtering
+										ActivityOption parkingFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.DedicatedParking.toString());
+										activityFacility.addActivityOption(parkingFacilityTypeOption);
+
+										// add facility attributes (type, allowed vehicles)
 										activityFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.DedicatedParking.toString());
 										Set<Id<Vehicle>> allowedVehicles = new HashSet<>();
 										allowedVehicles.add(Id.createVehicleId(personId));
 										activityFacility.getAttributes().putAttribute("allowedVehicles", allowedVehicles);
-										scenario.getActivityFacilities().addActivityFacility(activityFacility);
+
+										// add facility to facilities
+										activityFacilities.addActivityFacility(activityFacility);
 									} else {
+										// add vehicle id to set of vehicle ids
 										((Set<Id<Vehicle>>) activityFacilities.getFacilities().get(activityFacilityId).getAttributes().getAttribute("allowedVehicles")).add(Id.createVehicleId(personId));
 									}
 
@@ -218,16 +244,52 @@ public class RunCorsicaParkingSimulation {
 			}
 
 			// create 10 blue-zone parking spaces per link
+			// also create parking garages on 1% of links
 			for (Link link : scenario.getNetwork().getLinks().values()) {
 				if (link.getAllowedModes().contains("car")) {
 					String parkingId = "blue_parking_link_" + link.getId().toString();
-					ActivityFacility activityFacility = facilitiesFactory.createActivityFacility(Id.create(parkingId, ActivityFacility.class),
+
+					// create parking facility
+					ActivityFacility activityFacility = activityFacilitiesFactory.createActivityFacility(Id.create(parkingId, ActivityFacility.class),
 							link.getCoord(), link.getId());
-					ActivityOption activityOption = facilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
+
+					// add parking activity type as an option with capacity
+					ActivityOption activityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
 					activityOption.setCapacity(10);
 					activityFacility.addActivityOption(activityOption);
+
+					// add parking facility type as an option to allow future filtering
+					ActivityOption parkingFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.BlueZone.toString());
+					activityFacility.addActivityOption(parkingFacilityTypeOption);
+
+					// add facility attributes (type, allowed vehicles)
 					activityFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.BlueZone.toString());
-					scenario.getActivityFacilities().addActivityFacility(activityFacility);
+
+					// add facility to facilities
+					activityFacilities.addActivityFacility(activityFacility);
+
+					if (random.nextDouble() < 0.01) {
+						String garageId = "garage_link_" + link.getId().toString();
+
+						// create parking facility
+						ActivityFacility garageFacility = activityFacilitiesFactory.createActivityFacility(Id.create(garageId, ActivityFacility.class),
+								link.getCoord(), link.getId());
+
+						// add parking activity type as an option with capacity
+						ActivityOption garageActivityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
+						garageActivityOption.setCapacity(100);
+						garageFacility.addActivityOption(garageActivityOption);
+
+						// add parking facility type as an option to allow future filtering
+						ActivityOption garageFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.Garage.toString());
+						garageFacility.addActivityOption(garageFacilityTypeOption);
+
+						// add facility attributes (type, allowed vehicles)
+						garageFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.Garage.toString());
+
+						// add facility to facilities
+						activityFacilities.addActivityFacility(garageFacility);
+					}
 				}
 			}
 
