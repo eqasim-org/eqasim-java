@@ -25,9 +25,13 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
         PersonArrivalEventHandler, IterationEndsListener {
 
     private final Map<Id<Person>, Double> personIdParkingSearchStart = new HashMap<>();
-    private final Map<Id<Person>, Double> personIdParkingSearchTimes = new HashMap<>();
-    private final Map<Id<Node>, double[]> arrivalCount = new HashMap<>();
+    private final Map<Id<Person>, Double> personIdParkingSearchTime = new HashMap<>();
+    private final Map<Id<Person>, Double> personIdParkingTime = new HashMap<>();
+
     private final Map<Id<Node>, double[]> parkingSearchTimes = new HashMap<>();
+    private final Map<Id<Node>, double[]> egressTimes = new HashMap<>();
+
+    private final Map<Id<Node>, double[]> arrivalCount = new HashMap<>();
 
     private final Vehicle2DriverEventHandler vehicle2DriverEventHandler;
     private final RoadNetwork network;
@@ -51,6 +55,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
 
         for (Id<Node> nodeId : network.getNodes().keySet()) {
             parkingSearchTimes.putIfAbsent(nodeId, new double[numberOfBins]);
+            egressTimes.putIfAbsent(nodeId, new double[numberOfBins]);
             arrivalCount.putIfAbsent(nodeId, new double[numberOfBins]);
         }
     }
@@ -68,7 +73,10 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
         // check if person is in parking search phase
         if (personIdParkingSearchStart.containsKey(personId)) {
             double searchTime = event.getTime() - personIdParkingSearchStart.remove(personId);
-            personIdParkingSearchTimes.put(personId, searchTime);
+            personIdParkingSearchTime.put(personId, searchTime);
+
+            // record the parking time
+            personIdParkingTime.put(personId, event.getTime());
         }
     }
 
@@ -77,12 +85,13 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
     public void handleEvent(PersonArrivalEvent event) {
         Id<Person> personId = event.getPersonId();
 
-        if (personIdParkingSearchTimes.containsKey(personId)) {
+        if (personIdParkingSearchTime.containsKey(personId)) {
             if (event.getLegMode().equals(TransportMode.walk)) {
 
                 // extract relevant search variables
-                double parkingSearchTime = personIdParkingSearchTimes.remove(personId);
+                double parkingSearchTime = personIdParkingSearchTime.remove(personId);
                 double arrivalTime = event.getTime();
+                double egressTime = arrivalTime - personIdParkingTime.remove(personId);
                 Coord destinationCoord = network.getLinks().get(event.getLinkId()).getFromNode().getCoord();
 
                 // get affected nodes within query radius
@@ -94,6 +103,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
                     int timeBin = getTimeBin(startTime, arrivalTime, interval);
 
                     parkingSearchTimes.get(nodeId)[timeBin] += parkingSearchTime;
+                    egressTimes.get(nodeId)[timeBin] += egressTime;
                     arrivalCount.get(nodeId)[timeBin] += 1;
 
                 }
@@ -109,6 +119,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
             for (int i = 0; i<numberOfBins; i++) {
                 if (arrivalCount.get(nodeId)[i] > 0) {
                     parkingSearchTimes.get(nodeId)[i] /= arrivalCount.get(nodeId)[i];
+                    egressTimes.get(nodeId)[i] /= arrivalCount.get(nodeId)[i];
                 }
             }
         }
@@ -117,10 +128,12 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
     @Override
     public void reset(int iteration) {
         parkingSearchTimes.clear();
+        egressTimes.clear();
         arrivalCount.clear();
 
         for (Id<Node> nodeId : network.getNodes().keySet()) {
             parkingSearchTimes.putIfAbsent(nodeId, new double[numberOfBins]);
+            egressTimes.putIfAbsent(nodeId, new double[numberOfBins]);
             arrivalCount.putIfAbsent(nodeId, new double[numberOfBins]);
         }
     }
@@ -137,6 +150,16 @@ public class ParkingListener implements StartParkingSearchEventHandler, PersonLe
     public double getParkingSearchTimeAtCoordAtTime(Coord coord, double time) {
         int timeBin = getTimeBin(startTime, time, interval);
         return getParkingSearchTimesAtCoord(coord)[timeBin];
+    }
+
+    public double[] getEgressTimesAtCoord(Coord coord) {
+        Id<Node> nodeId = network.getNearestNode(coord).getId();
+        return egressTimes.get(nodeId);
+    }
+
+    public double getEgressTimeAtCoordAtTime(Coord coord, double time) {
+        int timeBin = getTimeBin(startTime, time, interval);
+        return getEgressTimesAtCoord(coord)[timeBin];
     }
 
     public double getStartTime() {

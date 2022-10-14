@@ -240,7 +240,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 				double onStreetSearchStartTime = trip.getDepartureTime() + networkRouteToDestination.getTravelTime().seconds();
 				Coord destinationCoord = trip.getDestinationActivity().getCoord();
 				double onStreetCandidateTravelTime_sec = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
-				double onStreetCandidateEgressTime_sec = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
+				double onStreetCandidateEgressTime_sec = parkingListener.getEgressTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
 				double onStreetArrivalTime = onStreetSearchStartTime + onStreetCandidateTravelTime_sec;
 				double onStreetCandidateParkingCost = new WhiteZoneParking(null, null, null,
 						30*3600, ParkingFacilityType.LowTariffWhiteZone.toString(), 1e3)
