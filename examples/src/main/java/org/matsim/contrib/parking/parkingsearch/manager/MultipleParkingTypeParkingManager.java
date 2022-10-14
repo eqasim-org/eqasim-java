@@ -49,6 +49,8 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
     protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new HashMap<>();
     protected Map<Id<Link>, Set<Id<ActivityFacility>>> facilitiesPerLink = new HashMap<>();
 
+    private Map<Id<Vehicle>, Map<Id<ActivityFacility>, Double>> parkingReservationLog = new HashMap<>();
+
     protected Network network;
 
     @Inject
@@ -127,6 +129,8 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
             double capacity = parkingFacility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
             if (this.occupation.get(facilityId).doubleValue() < capacity) {
                 reserveSpaceAtFacilityId(vehicleId, facilityId);
+                this.parkingReservationLog.putIfAbsent(vehicleId, new HashMap<>());
+                this.parkingReservationLog.get(vehicleId).put(facilityId, fromTime);
                 return true;
             }
         }
@@ -138,6 +142,8 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
         boolean canPark = parkingFacilityIdHasAvailableParkingForVehicle(parkingFacilityId, vehicleId, fromTime, toTime);
         if (canPark) {
             reserveSpaceAtFacilityId(vehicleId, parkingFacilityId);
+            this.parkingReservationLog.putIfAbsent(vehicleId, new HashMap<>());
+            this.parkingReservationLog.get(vehicleId).put(parkingFacilityId, fromTime);
         }
         return canPark;
     }
@@ -183,9 +189,9 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
             this.parkingLocationsOutsideFacilities.put(vehicleId, linkId);
             return true;
         } else {
-            Id<ActivityFacility> fac = this.parkingReservation.remove(vehicleId);
-            if (fac != null) {
-                this.parkingLocations.put(vehicleId, fac);
+            Id<ActivityFacility> facilityId = this.parkingReservation.remove(vehicleId);
+            if (facilityId != null) {
+                this.parkingLocations.put(vehicleId, facilityId);
                 return true;
             } else {
                 throw new RuntimeException("no parking reservation found for vehicle " + vehicleId.toString()
