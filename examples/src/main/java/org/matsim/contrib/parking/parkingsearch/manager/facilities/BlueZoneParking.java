@@ -22,17 +22,7 @@ public class BlueZoneParking extends ActivityFacilityImpl implements ParkingFaci
         ActivityOption activityOption = facilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
         activityOption.setCapacity(capacity);
         this.addActivityOption(activityOption);
-
     }
-
-//    public BlueZoneParking(ActivityFacility activityFacility) {
-//        this(activityFacility.getId(), activityFacility.getCoord(), activityFacility.getLinkId(), 0);
-//
-//        // copy activity options
-//        for (ActivityOption activityOption : activityFacility.getActivityOptions().values()) {
-//            this.addActivityOption(activityOption);
-//        }
-//    }
 
     @Override
     public Id<ParkingFacility> getParkingFacilityId() { return parkingFacilityId; }
