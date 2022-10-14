@@ -72,7 +72,7 @@ public class WhiteZoneParking extends ActivityFacilityImpl implements ParkingFac
             fee += calculateParkingFee(paidDuration);
         }
 
-        return fee;
+        return Math.max(fee, 0.0);
     }
 
     private double calculateParkingFee(double duration) {

@@ -51,8 +51,9 @@ public class ParkingGarage extends ActivityFacilityImpl implements ParkingFacili
     @Override
     public double getParkingCost(double startTime, double endTime) {
         double parkingDuration_hour = (endTime - startTime) / 3600.0;
-        double distanceToReferenceCoordKm = CoordUtils.calcEuclideanDistance(this.getCoord(), coordReference) / 1e3;
-        return (hourlyRateBase + hourlyRateDistanceCoefficient * distanceToReferenceCoordKm) * parkingDuration_hour;
+//        double distanceToReferenceCoordKm = CoordUtils.calcEuclideanDistance(this.getCoord(), coordReference) / 1e3;
+//        return (hourlyRateBase + hourlyRateDistanceCoefficient * distanceToReferenceCoordKm) * parkingDuration_hour;
+        return Math.max(hourlyRateBase * parkingDuration_hour, 0.0);
     }
 
     @Override
