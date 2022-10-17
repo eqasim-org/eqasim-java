@@ -75,8 +75,11 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
         if (!parkingMode) {
             if (currentLinkId.equals(this.getDestinationLinkId())) {
                 this.parkingMode = true;
-                this.events.processEvent(new StartParkingSearchEvent(currentTime, vehicleId, currentLinkId));
                 hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(vehicleId, parkingFacilityId, currentTime, departFromParkingFacilityTime);
+                // trigger a parking search start event only if parking is not found at intended destination
+                if (!hasFoundParking) {
+                    this.events.processEvent(new StartParkingSearchEvent(currentTime, vehicleId, currentLinkId));
+                }
             }
         } else {
             hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(vehicleId, parkingFacilityId, currentTime, departFromParkingFacilityTime);
