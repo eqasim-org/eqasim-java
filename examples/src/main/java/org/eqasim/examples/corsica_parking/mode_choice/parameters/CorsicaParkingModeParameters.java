@@ -26,8 +26,8 @@ public class CorsicaParkingModeParameters extends IDFModeParameters {
 		parameters.idfCar.betaCrossingUrbanArea = -1.0;
 
 		// Car parking parameters
-		parameters.carParking.betaParkingSearchTime_u_min = -0.1;
-		parameters.carParking.betaParkingCost_u_MU = -0.1;
+		parameters.carParking.betaParkingSearchTime_u_min = -0.06;
+		parameters.carParking.betaParkingCost_u_MU = -0.206;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
