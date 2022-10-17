@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariabl
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.examples.corsica_parking.components.parking.ParkingListener;
 import org.eqasim.examples.corsica_parking.mode_choice.utilities.variables.CorsicaParkingCarVariables;
+import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -24,13 +25,10 @@ import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacili
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingGarage;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.WhiteZoneParking;
 import org.matsim.contrib.parking.parkingsearch.routing.ParkingRouter;
-import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourCandidate;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.MultinomialLogitSelector;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.UtilityCandidate;
 import org.matsim.core.population.routes.NetworkRoute;
-import org.matsim.core.router.TeleportationRoutingModule;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.facilities.ActivityFacilitiesImpl;
@@ -41,6 +39,7 @@ import java.util.*;
 public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaParkingCarVariables> {
 	private final CostModel costModel;
 	private final ModeParameters parameters;
+	private final IDFCostParameters costParameters;
 	private final ParkingListener parkingListener;
 	private final ParkingRouter router;
 	private final Scenario scenario;
@@ -53,11 +52,13 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 
 	@Inject
 	public CorsicaParkingCarPredictor(ModeParameters parameters, @Named("car") CostModel costModel,
+									  IDFCostParameters costParameters,
 									  ParkingListener parkingListener,
 									  Scenario scenario,
 									  ParkingRouter router) {
 		this.costModel = costModel;
 		this.parameters = parameters;
+		this.costParameters = costParameters;
 		this.parkingListener = parkingListener;
 		this.scenario = scenario;
 		this.router = router;
@@ -202,7 +203,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 				}
 				ParkingFacility parkingGarage = this.garageFacilitiesQuadTree.getClosest(destinationActivity.getCoord().getX(),
 						destinationActivity.getCoord().getY());
-				double distanceNearestGarage_km = CoordUtils.calcEuclideanDistance(parkingGarage.getCoord(), destinationActivity.getCoord()) / 1e3;
+				double distanceNearestGarage_m = CoordUtils.calcEuclideanDistance(parkingGarage.getCoord(), destinationActivity.getCoord());
 
 				// 4 - Generate candidate parking options
 				MultinomialLogitSelector selector = new MultinomialLogitSelector(Double.MIN_NORMAL, Double.MAX_VALUE, false);
@@ -211,7 +212,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 				double parkingEndTime = trip.getDestinationActivity().getEndTime().orElse(30 * 3600.0);
 
 				// check if there is a garage option
-				if (distanceNearestGarage_km <= 1)  {
+				if (distanceNearestGarage_m <= 1e3)  {
 					// get route to parking garage
 					NetworkRoute networkRouteToGarage = this.router.getRouteFromParkingToDestination(parkingGarage.getLinkId(),
 							carLeg.getDepartureTime().seconds() + networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds(),
@@ -224,11 +225,17 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 
 					// if we can park there, generate the candidate
 					if (parkingGarage.isAllowedToPark(garageParkingStartTime, parkingEndTime, person.getId())) {
-						double garageCandidateTravelTime_sec = networkRouteToGarage.getTravelTime().orElse(0.0);
-						double garageCandidateEgressTime_sec = distanceNearestGarage_km * 1.4 * 3600.0 / 5;
+						double garageCandidateTravelDistance_m = networkRouteToGarage.getDistance();
+						double garageCandidateTravelTime_sec = networkRouteToGarage.getTravelTime().seconds();
+						double garageCandidateEgressDistance_m = distanceNearestGarage_m * 1.4;
+						double garageCandidateEgressTime_sec = garageCandidateEgressDistance_m / 1e3 * 3600.0 / 5;
 						double garageCandidateParkingCost = parkingGarage.getParkingCost(garageParkingStartTime, parkingEndTime);
-						selector.addCandidate(new ParkingCandidate("garage", garageCandidateTravelTime_sec,
-								garageCandidateEgressTime_sec, garageCandidateParkingCost));
+
+						selector.addCandidate(new ParkingCandidate("garage",
+								garageCandidateTravelTime_sec, garageCandidateTravelDistance_m,
+								0.0, 0.0,
+								garageCandidateEgressTime_sec, garageCandidateEgressDistance_m,
+								garageCandidateParkingCost));
 					}
 				}
 
@@ -236,19 +243,29 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 				// TODO: current approach is only valid for the random walk,
 				//  which assumes we first travel to our destination before starting our search
 
-				// estimate on-street parking search characteristics
+				// get search start time and coord
 				double onStreetSearchStartTime = trip.getDepartureTime() + networkRouteToDestination.getTravelTime().seconds();
 				Coord destinationCoord = trip.getDestinationActivity().getCoord();
-				double onStreetCandidateTravelTime_sec = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
+
+				// get estimate from listener
+				double onStreetCandidateSearchTime_sec = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
+				double onStreetCandidateSearchDistance_m = parkingListener.getParkingSearchDistanceAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
 				double onStreetCandidateEgressTime_sec = parkingListener.getEgressTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
-				double onStreetArrivalTime = onStreetSearchStartTime + onStreetCandidateTravelTime_sec;
+				double onStreetCandidateEgressDistance_m = parkingListener.getEgressDistanceAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
+
+				// compute parking costs
+				double onStreetArrivalTime = onStreetSearchStartTime + onStreetCandidateSearchTime_sec;
 				double onStreetCandidateParkingCost = new WhiteZoneParking(null, null, null,
 						30*3600, ParkingFacilityType.LowTariffWhiteZone.toString(), 1e3)
 						.getParkingCost(onStreetArrivalTime, parkingEndTime);
 
-				onStreetCandidateTravelTime_sec += networkRouteFromParkingSearchStartToDestination.getTravelTime().seconds();
-				selector.addCandidate(new ParkingCandidate("onStreet", onStreetCandidateTravelTime_sec,
-						onStreetCandidateEgressTime_sec, onStreetCandidateParkingCost));
+				double onStreetCandidateTravelTime_sec = networkRouteFromParkingSearchStartToDestination.getTravelTime().seconds() + onStreetCandidateSearchTime_sec;
+				double onStreetCandidateTravelDistance_m = networkRouteFromParkingSearchStartToDestination.getDistance() + onStreetCandidateSearchDistance_m;
+				selector.addCandidate(new ParkingCandidate("onStreet",
+						onStreetCandidateTravelTime_sec, onStreetCandidateTravelDistance_m,
+						0.0, 0.0,
+						onStreetCandidateEgressTime_sec, onStreetCandidateEgressDistance_m,
+						onStreetCandidateParkingCost));
 
 				// 5 - Select parking option
 
@@ -259,18 +276,18 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 				if (selectedCandidate.getName().equals("garage")) {
 					selectedSearchStrategy = ParkingSearchStrategy.DriveToParkingFacility;
 					travelTime_min = (networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds() + selectedCandidate.getTravelTime()) / 60.0;
-					travelCost_MU = 0.0;
+					travelCost_MU = costParameters.carCost_EUR_km * (networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance()) / 1e3;
 					accessEgressTime_min = 2 * selectedCandidate.getEgressTime() / 60.0;
-					parkingSearchTime_min = 0.0;
+					parkingSearchTime_min = selectedCandidate.getSearchTime() / 60.0;
 					parkingCost_MU = selectedCandidate.getParkingCost();
 					carLeg.getAttributes().putAttribute("parkingSearchStrategy", selectedSearchStrategy.toString());
 					carLeg.getAttributes().putAttribute("parkingFacilityId", parkingGarage.getId());
 				} else {
 					selectedSearchStrategy = ParkingSearchStrategy.Random;
 					travelTime_min = networkRouteToDestination.getTravelTime().seconds() / 60.0;
-					travelCost_MU = 0.0;
+					travelCost_MU = costParameters.carCost_EUR_km * (networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance()) / 1e3;
 					accessEgressTime_min = 2 * selectedCandidate.getEgressTime() / 60.0;
-					parkingSearchTime_min = (selectedCandidate.getTravelTime() - networkRouteFromParkingSearchStartToDestination.getTravelTime().seconds()) / 60.0;
+					parkingSearchTime_min = selectedCandidate.getSearchTime() / 60.0;
 					parkingCost_MU = selectedCandidate.getParkingCost();
 					carLeg.getAttributes().putAttribute("parkingSearchStrategy", selectedSearchStrategy.toString());
 					carLeg.getAttributes().removeAttribute("parkingFacilityId");
@@ -290,14 +307,25 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 	private class ParkingCandidate implements UtilityCandidate {
 		private String name;
 		private double travelTime;
+		private double travelDistance;
+		private double searchTime;
+		private double searchDistance;
 		private double egressTime;
+		private double egressDistance;
 		private double parkingCost;
 		private ParkingChoiceModelParameters parameters = new ParkingChoiceModelParameters();
 
-		public ParkingCandidate(String name, double travelTime, double egressTime, double cost) {
+		public ParkingCandidate(String name, double travelTime, double travelDistance,
+								double searchTime, double searchDistance,
+								double egressTime, double egressDistance,
+								double cost) {
 			this.name = name;
 			this.travelTime = travelTime;
+			this.travelDistance = travelDistance;
+			this.searchTime = searchTime;
+			this.searchDistance = searchDistance;
 			this.egressTime = egressTime;
+			this.egressDistance = egressDistance;
 			this.parkingCost = cost;
 		}
 
@@ -309,9 +337,17 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 			return travelTime;
 		}
 
+		public double getTravelDistance() { return travelDistance; }
+
+		public double getSearchTime() { return searchTime; }
+
+		public double getSearchDistance() { return searchDistance; }
+
 		public double getEgressTime() {
 			return egressTime;
 		}
+
+		public double getEgressDistance() { return egressDistance; }
 
 		public double getParkingCost() {
 			return parkingCost;
@@ -324,8 +360,8 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 		@Override
 		public double getUtility() {
 			double utility = parameters.alpha;
-			utility += parameters.beta_travelTime * this.travelTime;
-			utility += parameters.beta_egressTime * this.egressTime;
+			utility += parameters.beta_travelDistance * this.travelDistance / 1e3;
+			utility += parameters.beta_egressDistance * this.egressDistance / 1e3;
 			utility += parameters.beta_parkingCost * this.parkingCost;
 			return utility;
 		}
@@ -333,8 +369,10 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 
 	private class ParkingChoiceModelParameters {
 		public double alpha = -1.778;
-		public double beta_travelTime = -0.228 * 15 / 3600.0;
-		public double beta_egressTime = -3.390 * 5 / 3600.0;
+		public double beta_travelDistance = -0.228;
+//		public double beta_travelTime = beta_travelDistance * 15 / 3600.0;
+		public double beta_egressDistance = -3.390;
+//		public double beta_egressTime = beta_egressDistance * 5 / 3600.0;
 		public double beta_parkingCost = -0.101;
 	}
 
