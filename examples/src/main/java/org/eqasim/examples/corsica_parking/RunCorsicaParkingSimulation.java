@@ -8,17 +8,10 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.examples.corsica_parking.components.parking.ParkingListener;
 import org.eqasim.examples.corsica_parking.mode_choice.CorsicaParkingModule;
-import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Activity;
-import org.matsim.api.core.v01.population.Leg;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.dvrp.router.DvrpGlobalRoutingNetworkProvider;
 import org.matsim.contrib.dvrp.router.DvrpModeRoutingModule;
 import org.matsim.contrib.dvrp.router.TimeAsTravelDisutility;
@@ -26,10 +19,8 @@ import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contrib.dvrp.run.DvrpModes;
 import org.matsim.contrib.dvrp.trafficmonitoring.DvrpTravelTimeModule;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
-import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.contrib.parking.parkingsearch.manager.MultipleParkingTypeParkingManager;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
-import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacilityType;
 import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.VehicleTeleportationLogic;
 import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.VehicleTeleportationToNearbyParking;
 import org.matsim.contrib.parking.parkingsearch.routing.ParkingRouter;
@@ -51,14 +42,6 @@ import org.matsim.core.mobsim.qsim.components.StandardQSimComponentConfigurator;
 import org.matsim.core.router.AStarEuclideanFactory;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.facilities.ActivityFacilities;
-import org.matsim.facilities.ActivityFacilitiesFactory;
-import org.matsim.facilities.ActivityFacility;
-import org.matsim.facilities.ActivityOption;
-import org.matsim.households.Household;
-import org.matsim.vehicles.Vehicle;
-
-import java.util.*;
 
 public class RunCorsicaParkingSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -68,7 +51,7 @@ public class RunCorsicaParkingSimulation {
 				.allowOptions("output-path")
 				.build();
 
-		IDFConfigurator configurator = new IDFConfigurator();
+		CorsicaParkingConfigurator configurator = new CorsicaParkingConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 
 		config.controler().setWritePlansInterval(5);
@@ -107,194 +90,6 @@ public class RunCorsicaParkingSimulation {
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		configurator.adjustScenario(scenario);
-
-		ActivityFacilities activityFacilities = scenario.getActivityFacilities();
-		ActivityFacilitiesFactory activityFacilitiesFactory = activityFacilities.getFactory();
-
-		Random random = new Random(1);
-		{ // clean up scenario
-			// add parking at home for 90% of households and parking at work for 50% of people
-			for (Household household : scenario.getHouseholds().getHouseholds().values()) {
-				boolean hasParkingAtHome = random.nextDouble() < 0.9;
-
-				for (Id<Person> personId : household.getMemberIds()) {
-					boolean hasParkingAtWork = random.nextDouble() < 0.5;
-
-					Leg previousLeg = null;
-
-					for (PlanElement element : scenario.getPopulation().getPersons().get(personId).getSelectedPlan().getPlanElements()) {
-						if (element instanceof Activity) {
-
-							// default parking search strategy for all car legs
-							if (previousLeg != null) {
-								if (previousLeg.getMode().equals("car")) {
-									previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.Random.toString());
-								}
-							}
-
-							if (((Activity) element).getType().equals("home")) {
-
-								element.getAttributes().putAttribute("parkingAvailable", hasParkingAtHome);
-
-								if (hasParkingAtHome) {
-
-									String parkingId = "dedicated_parking_facility_" + ((Activity) element).getFacilityId().toString();
-									Id<ActivityFacility> activityFacilityId = Id.create(parkingId, ActivityFacility.class);
-									element.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
-
-									if (!activityFacilities.getFacilities().containsKey(activityFacilityId)) {
-
-										// create parking facility
-										ActivityFacility activityFacility = activityFacilitiesFactory.createActivityFacility(activityFacilityId,
-												((Activity) element).getCoord(), ((Activity) element).getLinkId());
-
-										// add parking activity type as an option with capacity
-										ActivityOption activityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
-										activityOption.setCapacity(Integer.MAX_VALUE);
-										activityFacility.addActivityOption(activityOption);
-
-										// add parking facility type as an option to allow future filtering
-										ActivityOption parkingFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.DedicatedParking.toString());
-										activityFacility.addActivityOption(parkingFacilityTypeOption);
-
-										// add facility attributes (type, allowed vehicles)
-										activityFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.DedicatedParking.toString());
-										Set<Id<Vehicle>> allowedVehicles = new HashSet<>();
-										allowedVehicles.add(Id.createVehicleId(personId));
-										activityFacility.getAttributes().putAttribute("allowedVehicles", allowedVehicles);
-
-										// add facility to facilities
-										activityFacilities.addActivityFacility(activityFacility);
-
-									} else {
-										// add vehicle id to set of vehicle ids
-										((Set<Id<Vehicle>>) activityFacilities.getFacilities().get(activityFacilityId).getAttributes().getAttribute("allowedVehicles")).add(Id.createVehicleId(personId));
-									}
-
-									if (previousLeg != null) {
-										if (previousLeg.getMode().equals("car")) {
-											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
-											previousLeg.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
-										}
-									}
-								}
-
-							}
-							else if (((Activity) element).getType().equals("work")) {
-								element.getAttributes().putAttribute("parkingAvailable", hasParkingAtWork);
-
-								if (hasParkingAtWork) {
-
-									String parkingId = "dedicated_parking_facility_" + ((Activity) element).getFacilityId().toString();
-									Id<ActivityFacility> activityFacilityId = Id.create(parkingId, ActivityFacility.class);
-									element.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
-
-									if (!activityFacilities.getFacilities().containsKey(activityFacilityId)) {
-
-										// create parking facility
-										ActivityFacility activityFacility = activityFacilitiesFactory.createActivityFacility(activityFacilityId,
-												((Activity) element).getCoord(), ((Activity) element).getLinkId());
-
-										// add parking activity type as an option with capacity
-										ActivityOption activityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
-										activityOption.setCapacity(Integer.MAX_VALUE);
-										activityFacility.addActivityOption(activityOption);
-
-										// add parking facility type as an option to allow future filtering
-										ActivityOption parkingFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.DedicatedParking.toString());
-										activityFacility.addActivityOption(parkingFacilityTypeOption);
-
-										// add facility attributes (type, allowed vehicles)
-										activityFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.DedicatedParking.toString());
-										Set<Id<Vehicle>> allowedVehicles = new HashSet<>();
-										allowedVehicles.add(Id.createVehicleId(personId));
-										activityFacility.getAttributes().putAttribute("allowedVehicles", allowedVehicles);
-
-										// add facility to facilities
-										activityFacilities.addActivityFacility(activityFacility);
-									} else {
-										// add vehicle id to set of vehicle ids
-										((Set<Id<Vehicle>>) activityFacilities.getFacilities().get(activityFacilityId).getAttributes().getAttribute("allowedVehicles")).add(Id.createVehicleId(personId));
-									}
-
-									if (previousLeg != null) {
-										if (previousLeg.getMode().equals("car")) {
-											previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
-											previousLeg.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
-										}
-									}
-								}
-							}
-						}
-						else if (element instanceof Leg) {
-							previousLeg = (Leg) element;
-						}
-					}
-				}
-			}
-
-			// remove persons with only one activity
-			List<Id<Person>> personIds = new LinkedList<>();
-			for (Person person : scenario.getPopulation().getPersons().values()){
-				if (person.getSelectedPlan().getPlanElements().size() == 1) {
-					personIds.add(person.getId());
-				}
-			}
-			for (Id<Person> personId : personIds){
-				scenario.getPopulation().removePerson(personId);
-			}
-
-			// create 10 blue-zone parking spaces per link
-			// also create parking garages on 1% of links
-			for (Link link : scenario.getNetwork().getLinks().values()) {
-				if (link.getAllowedModes().contains("car")) {
-					String parkingId = "blue_parking_link_" + link.getId().toString();
-
-					// create parking facility
-					ActivityFacility activityFacility = activityFacilitiesFactory.createActivityFacility(Id.create(parkingId, ActivityFacility.class),
-							link.getCoord(), link.getId());
-
-					// add parking activity type as an option with capacity
-					ActivityOption activityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
-					activityOption.setCapacity(10);
-					activityFacility.addActivityOption(activityOption);
-
-					// add parking facility type as an option to allow future filtering
-					ActivityOption parkingFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.BlueZone.toString());
-					activityFacility.addActivityOption(parkingFacilityTypeOption);
-
-					// add facility attributes (type, allowed vehicles)
-					activityFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.BlueZone.toString());
-
-					// add facility to facilities
-					activityFacilities.addActivityFacility(activityFacility);
-
-					if (random.nextDouble() < 0.01) {
-						String garageId = "garage_link_" + link.getId().toString();
-
-						// create parking facility
-						ActivityFacility garageFacility = activityFacilitiesFactory.createActivityFacility(Id.create(garageId, ActivityFacility.class),
-								link.getCoord(), link.getId());
-
-						// add parking activity type as an option with capacity
-						ActivityOption garageActivityOption = activityFacilitiesFactory.createActivityOption(ParkingUtils.PARKACTIVITYTYPE);
-						garageActivityOption.setCapacity(100);
-						garageFacility.addActivityOption(garageActivityOption);
-
-						// add parking facility type as an option to allow future filtering
-						ActivityOption garageFacilityTypeOption = activityFacilitiesFactory.createActivityOption(ParkingFacilityType.Garage.toString());
-						garageFacility.addActivityOption(garageFacilityTypeOption);
-
-						// add facility attributes (type, allowed vehicles)
-						garageFacility.getAttributes().putAttribute("parkingFacilityType", ParkingFacilityType.Garage.toString());
-
-						// add facility to facilities
-						activityFacilities.addActivityFacility(garageFacility);
-					}
-				}
-			}
-
-		}
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
