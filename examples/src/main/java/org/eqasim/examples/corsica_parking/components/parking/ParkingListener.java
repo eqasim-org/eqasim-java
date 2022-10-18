@@ -6,10 +6,8 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
-import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
@@ -56,7 +54,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
         this.startTime = startTime;
         this.endTime = endTime;
         this.interval = interval;
-        this.numberOfBins = getTimeBin(startTime, endTime, interval);
+        this.numberOfBins = (int) Math.floor((endTime - startTime) / interval);
         this.network = network;
         this.queryRadius = queryRadius;
 
@@ -128,6 +126,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                     // compute time bin
                     int timeBin = getTimeBin(startTime, arrivalTime, interval);
 
+                    // population maps
                     parkingSearchTimes.get(nodeId)[timeBin] += parkingSearchTime;
                     parkingSearchDistances.get(nodeId)[timeBin] += parkingSearchDistance;
                     egressTimes.get(nodeId)[timeBin] += egressTime;
@@ -141,14 +140,6 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
 
 
     }
-
-//    @Override
-//    // not interaction activity
-//    public void handleEvent(PersonArrivalEvent event) {
-//        Id<Person> personId = event.getPersonId();
-//
-//
-//    }
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
@@ -234,6 +225,10 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
     }
 
     private int getTimeBin(double startTime, double endTime, double interval) {
+        // in case the end time is at the upper limit
+        if (endTime >= this.endTime) {
+            endTime = this.endTime - 1.0;
+        }
         return (int) Math.floor((endTime - startTime) / interval);
     }
 
