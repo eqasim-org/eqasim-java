@@ -49,7 +49,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
     protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new HashMap<>();
     protected Map<Id<Link>, Set<Id<ActivityFacility>>> facilitiesPerLink = new HashMap<>();
 
-    private Map<Id<Vehicle>, Map<Id<ActivityFacility>, Double>> parkingReservationLog = new HashMap<>();
+//    private List<ParkingReservationLog> parkingReservationLog = new LinkedList<>();
 
     protected Network network;
 
@@ -129,8 +129,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
             double capacity = parkingFacility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
             if (this.occupation.get(facilityId).doubleValue() < capacity) {
                 reserveSpaceAtFacilityId(vehicleId, facilityId);
-                this.parkingReservationLog.putIfAbsent(vehicleId, new HashMap<>());
-                this.parkingReservationLog.get(vehicleId).put(facilityId, fromTime);
+//                this.parkingReservationLog.add(new ParkingReservationLog(fromTime, vehicleId, facilityId, "reservation"));
                 return true;
             }
         }
@@ -142,8 +141,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
         boolean canPark = parkingFacilityIdHasAvailableParkingForVehicle(parkingFacilityId, vehicleId, fromTime, toTime);
         if (canPark) {
             reserveSpaceAtFacilityId(vehicleId, parkingFacilityId);
-            this.parkingReservationLog.putIfAbsent(vehicleId, new HashMap<>());
-            this.parkingReservationLog.get(vehicleId).put(parkingFacilityId, fromTime);
+//            this.parkingReservationLog.add(new ParkingReservationLog(fromTime, vehicleId, parkingFacilityId, "reservation"));
         }
         return canPark;
     }
@@ -190,6 +188,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
             return true;
         } else {
             Id<ActivityFacility> facilityId = this.parkingReservation.remove(vehicleId);
+//            this.parkingReservationLog.add(new ParkingReservationLog(time, vehicleId, facilityId, "remove_reservation"));
             if (facilityId != null) {
                 this.parkingLocations.put(vehicleId, facilityId);
                 return true;
@@ -203,6 +202,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
     @Override
     public boolean parkVehicleAtParkingFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double time) {
         Id<ActivityFacility> reservedParkingFacilityId = this.parkingReservation.remove(vehicleId);
+//        this.parkingReservationLog.add(new ParkingReservationLog(time, vehicleId, parkingFacilityId, "remove_reservation"));
         if (reservedParkingFacilityId != null) {
             if (parkingFacilityId.equals(reservedParkingFacilityId)) {
                 this.parkingLocations.put(vehicleId, parkingFacilityId);
@@ -270,6 +270,22 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
 
     @Override
     public void reset(int iteration) {
+    }
+
+
+    private class ParkingReservationLog {
+        private double time;
+        private Id<Vehicle> vehicleId;
+        private Id<ActivityFacility> activityFacilityId;
+        private String action;
+
+        public ParkingReservationLog(double time, Id<Vehicle> vehicleId, Id<ActivityFacility> activityFacilityId, String action) {
+            this.time = time;
+            this.vehicleId = vehicleId;
+            this.activityFacilityId = activityFacilityId;
+            this.action = action;
+        }
+
     }
 
 
