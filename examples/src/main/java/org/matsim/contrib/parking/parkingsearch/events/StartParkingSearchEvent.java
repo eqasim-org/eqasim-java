@@ -57,6 +57,7 @@ public class StartParkingSearchEvent extends Event {
 	public Id<Vehicle> getVehicleId() {
 		return vehicleId;
 	}
+
 	@Override
 	public Map<String, String> getAttributes() {
 		Map<String, String> attr = super.getAttributes();

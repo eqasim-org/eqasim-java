@@ -11,10 +11,7 @@ import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacilityType;
-import org.matsim.facilities.ActivityFacilities;
-import org.matsim.facilities.ActivityFacilitiesFactory;
-import org.matsim.facilities.ActivityFacility;
-import org.matsim.facilities.ActivityOption;
+import org.matsim.facilities.*;
 import org.matsim.households.Household;
 import org.matsim.vehicles.Vehicle;
 
