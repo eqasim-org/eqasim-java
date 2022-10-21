@@ -46,13 +46,21 @@ import java.util.Map.Entry;
  */
 public class ZurichParkingManager implements ParkingSearchManager {
 
-    protected Map<Id<Link>, Integer> capacity = new HashMap<>();
-    protected Map<Id<ActivityFacility>, MutableLong> occupation = new HashMap<>();
-    protected Map<Id<ActivityFacility>, ParkingFacility> parkingFacilities;
+    // parking facility information
+    protected Map<Id<ActivityFacility>, ParkingFacility> parkingFacilities = new HashMap<>();
+    protected Map<ParkingFacilityType, Map<Id<ActivityFacility>, ParkingFacility>> parkingFacilitiesByType = new HashMap<>();
+    protected Map<Id<Link>, Set<Id<ActivityFacility>>> facilitiesPerLink = new HashMap<>();
+    protected Map<Id<Link>, Map<ParkingFacilityType, Id<ActivityFacility>>> facilitiesPerLinkByType = new HashMap<>();
+
+    // parked vehicles information
+    protected Set<ParkingFacilityType> parkingFacilityTypePriorityList = new HashSet<>();
     protected Map<Id<Vehicle>, Id<ActivityFacility>> parkingLocations = new HashMap<>();
     protected Map<Id<Vehicle>, Id<ActivityFacility>> parkingReservation = new HashMap<>();
     protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new HashMap<>();
-    protected Map<Id<Link>, Set<Id<ActivityFacility>>> facilitiesPerLink = new HashMap<>();
+
+    // occupancy-related information
+    protected Map<Id<Link>, Integer> capacity = new HashMap<>();
+    protected Map<Id<ActivityFacility>, MutableLong> occupation = new HashMap<>();
 
 //    private List<ParkingReservationLog> parkingReservationLog = new LinkedList<>();
 
@@ -61,7 +69,13 @@ public class ZurichParkingManager implements ParkingSearchManager {
     @Inject
     public ZurichParkingManager(Scenario scenario) {
         this.network = scenario.getNetwork();
-        this.parkingFacilities = new HashMap<>();
+
+        // fill priority list
+        parkingFacilityTypePriorityList.add(ParkingFacilityType.BlueZone);
+        parkingFacilityTypePriorityList.add(ParkingFacilityType.LowTariffWhiteZone);
+        parkingFacilityTypePriorityList.add(ParkingFacilityType.HighTariffWhiteZone);
+        parkingFacilityTypePriorityList.add(ParkingFacilityType.Garage);
+
         for (ActivityFacility facility : scenario.getActivityFacilities().getFacilitiesForActivityType(ParkingUtils.PARKACTIVITYTYPE).values()) {
             Id<ActivityFacility> parkingId = facility.getId();
             Coord parkingCoord = facility.getCoord();
@@ -93,47 +107,50 @@ public class ZurichParkingManager implements ParkingSearchManager {
                     throw new IllegalStateException("Unexpected value: " + parkingFacilityType);
             }
 
+            // add to parkingFacilities container
             this.parkingFacilities.putIfAbsent(facility.getId(), parkingFacility);
-        }
-        Logger.getLogger(getClass()).info(parkingFacilities.toString());
+            this.parkingFacilitiesByType.putIfAbsent(parkingFacilityType, new HashMap<>());
+            this.parkingFacilitiesByType.get(parkingFacilityType).putIfAbsent(facility.getId(), parkingFacility);
 
-        for (ParkingFacility fac : this.parkingFacilities.values()) {
-            Id<Link> linkId = fac.getLinkId();
-            Set<Id<ActivityFacility>> parkingOnLink = new HashSet<>();
-            if (this.facilitiesPerLink.containsKey(linkId)) {
-                parkingOnLink = this.facilitiesPerLink.get(linkId);
-            }
-            parkingOnLink.add(fac.getId());
-            this.facilitiesPerLink.put(linkId, parkingOnLink);
-            this.occupation.put(fac.getId(), new MutableLong(0));
+            // add to facilitiesPerLink container
+            this.facilitiesPerLink.putIfAbsent(parkingLinkId, new HashSet<>());
+            this.facilitiesPerLink.get(parkingLinkId).add(parkingId);
+            this.facilitiesPerLinkByType.putIfAbsent(parkingLinkId, new HashMap<>());
+            this.facilitiesPerLinkByType.get(parkingLinkId).putIfAbsent(parkingFacilityType, parkingId);
+
+            // fill occupancy container
+            this.occupation.putIfAbsent(parkingId, new MutableLong(0));
 
         }
+        Logger.getLogger(getClass()).info(parkingFacilitiesByType.toString());
     }
 
     @Override
     public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
         // check if there is any parking on this link
-        if (!this.facilitiesPerLink.containsKey(linkId)) {
+        if (!this.facilitiesPerLinkByType.containsKey(linkId)) {
             return false;
         }
 
-        // if there are, loop through them
-        Set<Id<ActivityFacility>> parkingFacilitiesAtLink = this.facilitiesPerLink.get(linkId);
-        for (Id<ActivityFacility> facilityId : parkingFacilitiesAtLink) {
+        // if there are, loop through them by order of priority
+        for (ParkingFacilityType parkingFacilityType : this.parkingFacilityTypePriorityList) {
+            if (this.facilitiesPerLinkByType.get(linkId).containsKey(parkingFacilityType)) {
 
-            ParkingFacility parkingFacility = this.parkingFacilities.get(facilityId);
+                Id<ActivityFacility> facilityId = this.facilitiesPerLinkByType.get(linkId).get(parkingFacilityType);
+                ParkingFacility parkingFacility = this.parkingFacilities.get(facilityId);
 
-            // check if the vehicle is allowed to park in this facility
-            if (!parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId))) {
-                continue;
-            }
+                // check if the vehicle is allowed to park in this facility
+                if (!parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId))) {
+                    continue;
+                }
 
-            // check if there is remaining capacity and reserve the first available spot encountered
-            double capacity = parkingFacility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
-            if (this.occupation.get(facilityId).doubleValue() < capacity) {
-                reserveSpaceAtFacilityId(vehicleId, facilityId);
+                // check if there is remaining capacity and reserve the first available spot encountered
+                double capacity = parkingFacility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
+                if (this.occupation.get(facilityId).doubleValue() < capacity) {
+                    reserveSpaceAtFacilityId(vehicleId, facilityId);
 //                this.parkingReservationLog.add(new ParkingReservationLog(fromTime, vehicleId, facilityId, "reservation"));
-                return true;
+                    return true;
+                }
             }
         }
         return false;
