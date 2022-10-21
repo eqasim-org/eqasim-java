@@ -160,7 +160,9 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
     @Override
     public void reset(int iteration) {
         parkingSearchTimes.clear();
+        parkingSearchDistances.clear();
         egressTimes.clear();
+        egressDistances.clear();
         arrivalCount.clear();
 
         for (Id<Node> nodeId : network.getNodes().keySet()) {
