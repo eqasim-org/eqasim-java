@@ -82,7 +82,7 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
                 }
             }
         } else {
-            hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(vehicleId, parkingFacilityId, currentTime, departFromParkingFacilityTime);
+            hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, currentLinkId, currentTime, departFromParkingFacilityTime);
         }
     }
 

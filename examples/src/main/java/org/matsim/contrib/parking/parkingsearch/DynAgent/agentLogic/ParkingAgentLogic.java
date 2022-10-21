@@ -164,14 +164,14 @@ public class ParkingAgentLogic implements DynAgentLogic {
 
 	protected DynAction nextStateAfterUnParkActivity(DynAction oldAction, double now) {
 		// we have unparked, now we need to get going by car again.
-
-		Leg currentPlannedLeg = (Leg) currentPlanElement;
-		Route plannedRoute = currentPlannedLeg.getRoute();
-		NetworkRoute actualRoute = this.parkingRouter.getRouteFromParkingToDestination(plannedRoute.getEndLinkId(), now, agent.getCurrentLinkId());
 		if ((this.parkingManager.unParkVehicle(currentlyAssignedVehicleId, now))||(isinitialLocation)){
 			this.lastParkActionState = LastParkActionState.CARTRIP;
 			isinitialLocation = false;
+
+			// we need the current leg, planned route and mode
 			Leg currentLeg = (Leg) this.currentPlanElement;
+			Route plannedRoute = currentLeg.getRoute();
+			String mode = currentLeg.getMode();
 
 			// we need to know the end time of the next activity to estimate the parking duration and
 			// determine where people are allowed to parking legally
@@ -181,26 +181,46 @@ public class ParkingAgentLogic implements DynAgentLogic {
 
 			// get parking search strategy from current leg
 			ParkingSearchStrategy parkingSearchStrategy = ParkingSearchStrategy.valueOf(currentLeg.getAttributes().getAttribute("parkingSearchStrategy").toString());
+			this.parkingLogic = new RandomParkingSearchLogic(this.network);
 
-			switch (parkingSearchStrategy) {
-				case Random:
-					this.parkingLogic = new RandomParkingSearchLogic(this.network);
-					return new ParkingDynLeg(currentLeg.getMode(), actualRoute, this.parkingLogic,
-							parkingManager, currentlyAssignedVehicleId, timer, events, departFromParkingFacilityTime);
-				case DriveToParkingFacility:
-					this.parkingLogic = new RandomParkingSearchLogic(this.network);
-					if (!currentLeg.getAttributes().getAsMap().containsKey("parkingFacilityId")) {
-						throw new RuntimeException("parkingFacilityId not specified" +
-								" for " + currentLeg.getMode() + " leg" +
-								" starting at " + currentLeg.getDepartureTime().orElse(0.0) + " sec " +
-								" for person " + this.plan.getPerson().getId());
-					}
-					Id<ActivityFacility> parkingFacilityId = Id.create(currentLeg.getAttributes().getAttribute("parkingFacilityId").toString(), ActivityFacility.class);
-					return new DriveToParkingFacilityDynLeg(currentLeg.getMode(), actualRoute, this.parkingLogic,
-							parkingManager, currentlyAssignedVehicleId, timer, events, parkingFacilityId, departFromParkingFacilityTime);
+			if (parkingSearchStrategy.equals(ParkingSearchStrategy.Random)) {
 
-				default:
-					throw new IllegalStateException("Cannot handle parking strategy: " + parkingSearchStrategy.toString());
+				// get route to destination
+				NetworkRoute actualRoute = this.parkingRouter.getRouteFromParkingToDestination(plannedRoute.getEndLinkId(), now, agent.getCurrentLinkId());
+
+				// return dynamic agent
+				return new ParkingDynLeg(mode, actualRoute, this.parkingLogic,
+						parkingManager, currentlyAssignedVehicleId, timer, events, departFromParkingFacilityTime);
+
+			} else if (parkingSearchStrategy.equals(ParkingSearchStrategy.DriveToGarage)) {
+
+				// get parking garage link id
+				Id<Link> linkId = Id.createLinkId(currentLeg.getAttributes().getAttribute("parkingFacilityLinkId").toString());
+
+				// get route to parking garage
+				NetworkRoute actualRoute = this.parkingRouter.getRouteFromParkingToDestination(linkId, now, agent.getCurrentLinkId());
+
+				// get parking facility id
+				Id<ActivityFacility> parkingFacilityId = Id.create(currentLeg.getAttributes().getAttribute("parkingFacilityId").toString(), ActivityFacility.class);
+
+				// return dynamic agent
+				return new DriveToParkingFacilityDynLeg(mode, actualRoute, this.parkingLogic,
+						parkingManager, currentlyAssignedVehicleId, timer, events, parkingFacilityId, departFromParkingFacilityTime);
+
+			} else if (parkingSearchStrategy.equals(ParkingSearchStrategy.DriveToDestination)) {
+
+				// get route to destination
+				NetworkRoute actualRoute = this.parkingRouter.getRouteFromParkingToDestination(plannedRoute.getEndLinkId(), now, agent.getCurrentLinkId());
+
+				// get parking facility id
+				Id<ActivityFacility> parkingFacilityId = Id.create("outside", ActivityFacility.class);
+
+				// return dynamic agent
+				return new DriveToParkingFacilityDynLeg(mode, actualRoute, this.parkingLogic,
+						parkingManager, currentlyAssignedVehicleId, timer, events, parkingFacilityId, departFromParkingFacilityTime);
+
+			} else {
+				throw new IllegalStateException("Cannot handle parking strategy: " + parkingSearchStrategy.toString());
 			}
 		}
 		else throw new RuntimeException("parking location mismatch");
