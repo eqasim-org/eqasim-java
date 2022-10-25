@@ -35,6 +35,8 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
+import org.matsim.core.controler.events.IterationEndsEvent;
+import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
@@ -46,7 +48,7 @@ import java.util.Map.Entry;
  * @author  ctchervenkov
  *
  */
-public class ZurichParkingManager implements ParkingSearchManager {
+public class ZurichParkingManager implements ParkingSearchManager, IterationEndsListener {
 
     // parking facility information
     protected Map<Id<ActivityFacility>, ParkingFacility> parkingFacilities = new HashMap<>();
@@ -454,9 +456,37 @@ public class ZurichParkingManager implements ParkingSearchManager {
         }
         return allFreeSpaces;
     }
-    
+
     @Override
     public void reset(int iteration) {
+
+        this.parkingReservation.clear();
+        this.parkingLocations.clear();
+        this.parkingLocationsOutsideFacilities.clear();
+
+        for (Id<ActivityFacility> parkingId : this.parkingFacilities.keySet()) {
+            // reset occupancy values
+            this.occupation.put(parkingId, new MutableLong(0));
+
+            // reset quadtrees
+            ParkingFacility parkingFacility = this.parkingFacilities.get(parkingId);
+            double x = parkingFacility.getCoord().getX();
+            double y = parkingFacility.getCoord().getY();
+            String parkingType = parkingFacility.getParkingType();
+
+            if (!this.availableParkingFacilityQuadTree.values().contains(parkingId)) {
+                this.availableParkingFacilityQuadTree.put(x, y, parkingId);
+            }
+
+            if (!this.availableParkingFacilityQuadTreeByType.get(parkingType).values().contains(parkingId)) {
+                this.availableParkingFacilityQuadTreeByType.get(parkingType).put(x, y, parkingId);
+            }
+        }
+    }
+
+    @Override
+    public void notifyIterationEnds(IterationEndsEvent event) {
+        this.reset(event.getIteration());
     }
 
 

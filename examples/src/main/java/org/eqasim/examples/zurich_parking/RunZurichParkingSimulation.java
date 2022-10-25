@@ -123,6 +123,7 @@ public class RunZurichParkingSimulation {
 					bind(ParkingSearchManager.class).to(ZurichParkingManager.class).asEagerSingleton();
 					this.install(new ParkingSearchQSimModule());
 					addControlerListenerBinding().to(org.matsim.contrib.parking.parkingsearch.evaluation.ParkingListener.class);
+					addControlerListenerBinding().to(ZurichParkingManager.class);
 					bind(ParkingRouter.class).to(WithinDayParkingRouter.class);
 					bind(VehicleTeleportationLogic.class).to(VehicleTeleportationToNearbyParking.class);
 				}
