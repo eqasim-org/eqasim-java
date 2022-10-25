@@ -123,7 +123,7 @@ public class ZurichParkingManager implements ParkingSearchManager {
             // add to parkingFacilities container
             this.parkingFacilities.putIfAbsent(facility.getId(), parkingFacility);
             this.parkingFacilitiesByType.putIfAbsent(parkingFacilityType.toString(), new HashMap<>());
-            this.parkingFacilitiesByType.get(parkingFacilityType).putIfAbsent(facility.getId(), parkingFacility);
+            this.parkingFacilitiesByType.get(parkingFacilityType.toString()).putIfAbsent(facility.getId(), parkingFacility);
 
             // add to facilitiesPerLink container
             this.facilitiesPerLink.putIfAbsent(parkingLinkId, new HashSet<>());
@@ -133,18 +133,16 @@ public class ZurichParkingManager implements ParkingSearchManager {
 
             // fill occupancy container
             this.occupation.putIfAbsent(parkingId, new MutableLong(0));
-
+            this.capacity.putIfAbsent(parkingId, parkingCapacity);
         }
 
-        Logger.getLogger(getClass()).info(parkingFacilities.toString());
-        Logger.getLogger(getClass()).info(facilitiesPerLink.toString());
-        Logger.getLogger(getClass()).info(occupation.toString());
-        Logger.getLogger(getClass()).info(capacity.toString());
+        log.info(parkingFacilities.toString());
+        log.info(facilitiesPerLink.toString());
+        log.info(occupation.toString());
+        log.info(capacity.toString());
 
         // build quad tree
-        if (this.availableParkingFacilityQuadTree == null) {
-            this.buildQuadTree();
-        }
+        this.buildQuadTree();
     }
 
     synchronized private void buildQuadTree() {
@@ -157,8 +155,6 @@ public class ZurichParkingManager implements ParkingSearchManager {
 
         // build general quadtree
         {
-            Logger.getLogger(getClass()).info(availableParkingFacilityQuadTree.toString());
-
             double startTime = System.currentTimeMillis();
             double minx = Double.POSITIVE_INFINITY;
             double miny = Double.POSITIVE_INFINITY;
@@ -186,44 +182,45 @@ public class ZurichParkingManager implements ParkingSearchManager {
              */
             this.availableParkingFacilityQuadTree = quadTree;
             log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
+            log.info(availableParkingFacilityQuadTree.toString());
         }
 
         // build general quadtree by parking type
-        {}
-        this.availableParkingFacilityQuadTreeByType = new HashMap<>();
-        Logger.getLogger(getClass()).info(availableParkingFacilityQuadTreeByType.toString());
+        {
+            this.availableParkingFacilityQuadTreeByType = new HashMap<>();
 
-        for (String parkingFacilityType : this.parkingFacilitiesByType.keySet()) {
+            for (String parkingFacilityType : this.parkingFacilitiesByType.keySet()) {
 
-            double startTime = System.currentTimeMillis();
-            double minx = Double.POSITIVE_INFINITY;
-            double miny = Double.POSITIVE_INFINITY;
-            double maxx = Double.NEGATIVE_INFINITY;
-            double maxy = Double.NEGATIVE_INFINITY;
-            for (ParkingFacility n : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
-                if (n.getCoord().getX() < minx) { minx = n.getCoord().getX(); }
-                if (n.getCoord().getY() < miny) { miny = n.getCoord().getY(); }
-                if (n.getCoord().getX() > maxx) { maxx = n.getCoord().getX(); }
-                if (n.getCoord().getY() > maxy) { maxy = n.getCoord().getY(); }
+                double startTime = System.currentTimeMillis();
+                double minx = Double.POSITIVE_INFINITY;
+                double miny = Double.POSITIVE_INFINITY;
+                double maxx = Double.NEGATIVE_INFINITY;
+                double maxy = Double.NEGATIVE_INFINITY;
+                for (ParkingFacility n : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
+                    if (n.getCoord().getX() < minx) { minx = n.getCoord().getX(); }
+                    if (n.getCoord().getY() < miny) { miny = n.getCoord().getY(); }
+                    if (n.getCoord().getX() > maxx) { maxx = n.getCoord().getX(); }
+                    if (n.getCoord().getY() > maxy) { maxy = n.getCoord().getY(); }
+                }
+                minx -= 1.0;
+                miny -= 1.0;
+                maxx += 1.0;
+                maxy += 1.0;
+                // yy the above four lines are problematic if the coordinate values are much smaller than one. kai, oct'15
+
+                log.info("building parking garage QuadTree for nodes: xrange(" + minx + "," + maxx + "); yrange(" + miny + "," + maxy + ")");
+                QuadTree<Id<ActivityFacility>> quadTree = new QuadTree<>(minx, miny, maxx, maxy);
+                for (ParkingFacility n : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
+                    quadTree.put(n.getCoord().getX(), n.getCoord().getY(), n.getId());
+                }
+                /* assign the quadTree at the very end, when it is complete.
+                 * otherwise, other threads may already start working on an incomplete quadtree
+                 */
+                this.availableParkingFacilityQuadTreeByType.putIfAbsent(parkingFacilityType, quadTree);
+                log.info(availableParkingFacilityQuadTreeByType.toString());
+                log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
             }
-            minx -= 1.0;
-            miny -= 1.0;
-            maxx += 1.0;
-            maxy += 1.0;
-            // yy the above four lines are problematic if the coordinate values are much smaller than one. kai, oct'15
-
-            log.info("building parking garage QuadTree for nodes: xrange(" + minx + "," + maxx + "); yrange(" + miny + "," + maxy + ")");
-            QuadTree<Id<ActivityFacility>> quadTree = new QuadTree<>(minx, miny, maxx, maxy);
-            for (ParkingFacility n : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
-                quadTree.put(n.getCoord().getX(), n.getCoord().getY(), n.getId());
-            }
-            /* assign the quadTree at the very end, when it is complete.
-             * otherwise, other threads may already start working on an incomplete quadtree
-             */
-            this.availableParkingFacilityQuadTreeByType.putIfAbsent(parkingFacilityType, quadTree);
-            log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
         }
-
     }
 
     @Override
