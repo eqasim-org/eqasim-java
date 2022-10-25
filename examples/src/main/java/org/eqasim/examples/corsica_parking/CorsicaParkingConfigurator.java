@@ -101,7 +101,7 @@ public class CorsicaParkingConfigurator extends IDFConfigurator {
 
                                 if (previousLeg != null) {
                                     if (previousLeg.getMode().equals("car")) {
-                                        previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
+                                        previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToDestination.toString());
                                         previousLeg.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
                                     }
                                 }
@@ -147,7 +147,7 @@ public class CorsicaParkingConfigurator extends IDFConfigurator {
 
                                 if (previousLeg != null) {
                                     if (previousLeg.getMode().equals("car")) {
-                                        previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
+                                        previousLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToDestination.toString());
                                         previousLeg.getAttributes().putAttribute("parkingFacilityId", activityFacilityId);
                                     }
                                 }
