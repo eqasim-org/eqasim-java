@@ -227,31 +227,32 @@ public class ZurichParkingManager implements ParkingSearchManager {
     }
 
     @Override
-    public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime, String parkingType) {
+    public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
         // check if there is any parking on this link
         if (!this.facilitiesPerLinkByType.containsKey(linkId)) {
             return false;
         }
 
-        // check if there is any parking of desired type on this link
-        if (!this.facilitiesPerLinkByType.get(linkId).containsKey(parkingType)) {
-            return false;
-        }
+        for (String parkingType : parkingFacilityTypePriorityList) {
 
-        // if there are, get the facility
-        Id<ActivityFacility> parkingFacilityId = this.facilitiesPerLinkByType.get(linkId).get(parkingType);
-        ParkingFacility parkingFacility = this.parkingFacilities.get(parkingFacilityId);
+            // check if type of parking is on this link
+            if (this.facilitiesPerLinkByType.get(linkId).containsKey(parkingType)) {
 
-        // check if the vehicle is allowed to park in this facility
-        if (!parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId))) {
-            return false;
-        }
+                // if yes, get the corresponding facility
+                Id<ActivityFacility> parkingFacilityId = this.facilitiesPerLinkByType.get(linkId).get(parkingType);
+                ParkingFacility parkingFacility = this.parkingFacilities.get(parkingFacilityId);
 
-        // check if there is remaining capacity and reserve the first available spot encountered
-        double capacity = this.capacity.get(parkingFacilityId);
-        if (this.occupation.get(parkingFacilityId).doubleValue() < capacity) {
-            reserveNSpacesNearFacilityId(vehicleId, parkingFacilityId, new MutableLong(this.vehiclesPerVehicle));
-            return true;
+                // check if the vehicle is allowed to park in this facility
+                if (parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId))) {
+
+                    // check if there is remaining capacity and reserve if available
+                    double capacity = this.capacity.get(parkingFacilityId);
+                    if (this.occupation.get(parkingFacilityId).doubleValue() < capacity) {
+                        reserveNSpacesNearFacilityId(vehicleId, parkingFacilityId, new MutableLong(this.vehiclesPerVehicle));
+                        return true;
+                    }
+                }
+            }
         }
 
         return false;
@@ -289,13 +290,18 @@ public class ZurichParkingManager implements ParkingSearchManager {
                 reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
                 nSpacesToReserve.decrement();
             }
-            // try parking in any available facility
+            // try parking in any available facility based on priority list
             else if (availableParkingFacilityQuadTree.size() > 0) {
-                Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTree.getClosest(facilityX, facilityY);
-                reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
-                nSpacesToReserve.decrement();
+                for (String type : parkingFacilityTypePriorityList) {
+                    if (availableParkingFacilityQuadTreeByType.get(type).size() > 0) {
+                        Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(type).getClosest(facilityX, facilityY);
+                        reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
+                        nSpacesToReserve.decrement();
+                        break;
+                    }
+                }
             }
-            // parking remaining vehicles outside facility, i.e. illegally
+            // otherwise park outside facilities, i.e. illegally
             else {
                 reserveSpaceAtFacilityId(vehicleId, Id.create("outside", ActivityFacility.class));
                 nSpacesToReserve.setValue(0);
