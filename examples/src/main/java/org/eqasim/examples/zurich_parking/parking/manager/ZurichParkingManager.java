@@ -285,11 +285,13 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             // try parking in any available facility based on priority list
             else if (availableParkingFacilityQuadTree.size() > 0) {
                 for (String type : parkingFacilityTypePriorityList) {
-                    if (availableParkingFacilityQuadTreeByType.get(type).size() > 0) {
-                        Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(type).getClosest(facilityX, facilityY);
-                        reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
-                        nSpacesToReserve.decrement();
-                        break;
+                    if (availableParkingFacilityQuadTreeByType.containsKey(type)) {
+                        if (availableParkingFacilityQuadTreeByType.get(type).size() > 0) {
+                            Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(type).getClosest(facilityX, facilityY);
+                            reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
+                            nSpacesToReserve.decrement();
+                            break;
+                        }
                     }
                 }
             }
