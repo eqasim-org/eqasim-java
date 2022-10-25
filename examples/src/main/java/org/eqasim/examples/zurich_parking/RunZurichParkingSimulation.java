@@ -47,19 +47,11 @@ public class RunZurichParkingSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter") //
-				.allowOptions("output-path")
+				.allowPrefixes("mode-parameter", "cost-parameter")
 				.build();
 
 		ZurichParkingConfigurator configurator = new ZurichParkingConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
-
-		config.controler().setWritePlansInterval(5);
-		config.controler().setWriteEventsInterval(5);
-		config.controler().setLastIteration(5);
-		if (cmd.getOption("output-path").isPresent()) {
-			config.controler().setOutputDirectory(cmd.getOptionStrict("output-path"));
-		}
 
 		{ // Configure parking
 			ParkingSearchConfigGroup parkingSearchConfigGroup = new ParkingSearchConfigGroup();

@@ -105,7 +105,6 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
             }
         } else {
             if (personIdParkingSearchTime.containsKey(personId)) {
-
                 // extract relevant search variables
                 double parkingSearchTime = personIdParkingSearchTime.remove(personId);
                 double parkingSearchDistance = personIdParkingSearchDistance.remove(personId);
@@ -159,8 +158,18 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
 
     @Override
     public void reset(int iteration) {
+        // clear all person maps
+        personIdParkingSearchStart.clear();
+        personIdParkingSearchTime.clear();
+        personIdParkingSearchDistance.clear();
+        personIdParkingTime.clear();
+        personIdParkingCoord.clear();
+
+        // clear all node maps
         parkingSearchTimes.clear();
+        parkingSearchDistances.clear();
         egressTimes.clear();
+        egressDistances.clear();
         arrivalCount.clear();
 
         for (Id<Node> nodeId : network.getNodes().keySet()) {

@@ -153,7 +153,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 
 			// if they have parking, set search strategy to drive directly to destination
 			if (hasParking) {
-				carLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToParkingFacility.toString());
+				carLeg.getAttributes().putAttribute("parkingSearchStrategy", ParkingSearchStrategy.DriveToDestination.toString());
 				carLeg.getAttributes().putAttribute("parkingFacilityId",
 						Id.create(destinationActivity.getAttributes().getAttribute("parkingFacilityId").toString(), ActivityFacility.class));
 			}
@@ -274,7 +274,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 
 				// modify car variables based on selected option
 				if (selectedCandidate.getName().equals("garage")) {
-					selectedSearchStrategy = ParkingSearchStrategy.DriveToParkingFacility;
+					selectedSearchStrategy = ParkingSearchStrategy.DriveToDestination;
 					travelTime_min = (networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds() + selectedCandidate.getTravelTime()) / 60.0;
 					travelCost_MU = costParameters.carCost_EUR_km * (networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance()) / 1e3;
 					accessEgressTime_min = 2 * selectedCandidate.getEgressTime() / 60.0;

@@ -46,34 +46,27 @@ public class ZurichParkingConfigurator extends SwitzerlandConfigurator {
         {
             for (Person person : scenario.getPopulation().getPersons().values()) {
 
-                Leg previousLeg = null;
+                Leg lastCarLeg = null;
 
                 for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
                     if (element instanceof Activity) {
 
-                        // Set a default value
-                        String parkingSearchStrategy = null;
-
                         // get the actual parking search strategy for this activity,
                         // ignoring interaction activities
                         if (element.getAttributes().getAsMap().containsKey("parkingSearchStrategy")) {
-                            parkingSearchStrategy = element.getAttributes().getAttribute("parkingSearchStrategy").toString();
-                        }
+                            String parkingSearchStrategy = element.getAttributes().getAttribute("parkingSearchStrategy").toString();
 
-                        // assign the value to the previous leg, if a car leg
-                        if (previousLeg != null) {
-                            if (previousLeg.getMode().equals("car")) {
-                                if (parkingSearchStrategy == null) {
-                                    throw new RuntimeException("missing parking search stategy for person id: " + person.getId().toString()
-                                            + ", activity: " + ((Activity) element).getType());
-                                } else {
-                                    previousLeg.getAttributes().putAttribute("parkingSearchStrategy", parkingSearchStrategy);
-                                }
+                            // assign the value to the previous car leg, if there is one
+                            if (lastCarLeg != null) {
+                                lastCarLeg.getAttributes().putAttribute("parkingSearchStrategy", parkingSearchStrategy);
+                                lastCarLeg = null;
                             }
                         }
                     }
                     else if (element instanceof Leg) {
-                        previousLeg = (Leg) element;
+                        if (((Leg) element).getMode().equals("car")) {
+                            lastCarLeg = (Leg) element;
+                        }
                     }
                 }
             }
