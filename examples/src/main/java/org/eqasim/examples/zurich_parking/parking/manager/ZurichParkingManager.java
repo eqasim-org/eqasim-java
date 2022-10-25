@@ -138,11 +138,6 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             this.capacity.putIfAbsent(parkingId, parkingCapacity);
         }
 
-        log.info(parkingFacilities.toString());
-        log.info(facilitiesPerLink.toString());
-        log.info(occupation.toString());
-        log.info(capacity.toString());
-
         // build quad tree
         this.buildQuadTree();
     }
@@ -184,7 +179,6 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
              */
             this.availableParkingFacilityQuadTree = quadTree;
             log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
-            log.info(availableParkingFacilityQuadTree.toString());
         }
 
         // build general quadtree by parking type
@@ -219,7 +213,6 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                  * otherwise, other threads may already start working on an incomplete quadtree
                  */
                 this.availableParkingFacilityQuadTreeByType.putIfAbsent(parkingFacilityType, quadTree);
-                log.info(availableParkingFacilityQuadTreeByType.toString());
                 log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
             }
         }
