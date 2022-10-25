@@ -218,9 +218,15 @@ public class ZurichParkingManager implements ParkingSearchManager {
         double facilityY = this.parkingFacilities.get(facilityId).getCoord().getY();
 
         while (nSpacesToReserve.doubleValue() > 0) {
-            Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTree.getClosest(facilityX, facilityY);
-            reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
-            nSpacesToReserve.decrement();
+            if (availableParkingFacilityQuadTree.size() > 0) {
+                Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTree.getClosest(facilityX, facilityY);
+                reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
+                nSpacesToReserve.decrement();
+            } else {
+                // parking remaining vehicles outside facility, i.e. illegally
+                reserveSpaceAtFacilityId(vehicleId, Id.create("outside", ActivityFacility.class));
+                nSpacesToReserve.setValue(0);
+            }
         }
     }
 
@@ -363,8 +369,7 @@ public class ZurichParkingManager implements ParkingSearchManager {
         }
         return allFreeSpaces;
     }
-
-
+    
     @Override
     public void reset(int iteration) {
     }
