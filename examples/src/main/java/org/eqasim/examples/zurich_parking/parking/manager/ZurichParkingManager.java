@@ -278,6 +278,11 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         while (nSpacesToReserve.doubleValue() > 0) {
             // try parking in nearest facility of same type
             if (availableParkingFacilityQuadTreeByType.get(parkingType).size() > 0) {
+//                System.out.println("Vehicle id: " + vehicleId.toString()  + ", "  +
+//                        "desired parking type: " + parkingType + ", " +
+//                        "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size() + ", " +
+//                        "used parking type: " + parkingType + ", " +
+//                        "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size());
                 Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(parkingType).getClosest(facilityX, facilityY);
                 reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
                 nSpacesToReserve.decrement();
@@ -287,6 +292,11 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 for (String type : parkingFacilityTypePriorityList) {
                     if (availableParkingFacilityQuadTreeByType.containsKey(type)) {
                         if (availableParkingFacilityQuadTreeByType.get(type).size() > 0) {
+//                            System.out.println("Vehicle id: " + vehicleId.toString()  + ", "  +
+//                                    "desired parking type: " + parkingType + ", " +
+//                                    "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size() + ", " +
+//                                    "used parking type: " + type + ", " +
+//                                    "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(type).size());
                             Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(type).getClosest(facilityX, facilityY);
                             reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
                             nSpacesToReserve.decrement();
@@ -297,6 +307,11 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             }
             // otherwise park outside facilities, i.e. illegally
             else {
+//                System.out.println("Vehicle id: " + vehicleId.toString()  + ", "  +
+//                        "desired parking type: " + parkingType + ", " +
+//                        "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size() + ", " +
+//                        "used parking type: " + "outside" + ", " +
+//                        "remaining facilities: " + "INF");
                 reserveSpaceAtFacilityId(vehicleId, Id.create("outside", ActivityFacility.class));
                 nSpacesToReserve.setValue(0);
             }
@@ -380,6 +395,9 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 this.parkingLocations.get(vehicleId).add(reservedParkingFacilityId);
             }
         }
+
+        System.out.println(produceOverallStats());
+
         return true;
     }
 
@@ -411,6 +429,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 }
             }
         }
+        System.out.println(produceOverallStats());
         return true;
     }
 
@@ -425,6 +444,19 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             stats.add(s);
         }
         return stats;
+    }
+
+    private String produceOverallStats() {
+        double overallOccupancy = 0.0;
+        double overallCapacity = 0.0;
+
+        for (Id<ActivityFacility> facilityId : this.parkingFacilities.keySet()) {
+            overallOccupancy += this.occupation.getOrDefault(facilityId, new MutableLong(0)).doubleValue();
+            overallCapacity += this.capacity.getOrDefault(facilityId, 0.0);
+        }
+        return "Parked vehicles : " + (int) overallOccupancy +
+                "; Capacity: " + (int) overallCapacity +
+                "; Occupancy level: " + Math.round(overallOccupancy / overallCapacity * 1000) / 10 ;
     }
 
     public double getNrOfAllParkingSpacesOnLink (Id<Link> linkId){
@@ -454,12 +486,16 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
     @Override
     public void reset(int iteration) {
-
+        // clear containers
+        this.occupation.clear();
         this.parkingReservation.clear();
         this.parkingLocations.clear();
         this.parkingLocationsOutsideFacilities.clear();
+        this.availableParkingFacilityQuadTree.clear();
+        this.availableParkingFacilityQuadTreeByType.values().forEach(QuadTree::clear);
 
         for (Id<ActivityFacility> parkingId : this.parkingFacilities.keySet()) {
+
             // reset occupancy values
             this.occupation.put(parkingId, new MutableLong(0));
 
@@ -468,15 +504,11 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             double x = parkingFacility.getCoord().getX();
             double y = parkingFacility.getCoord().getY();
             String parkingType = parkingFacility.getParkingType();
-
-            if (!this.availableParkingFacilityQuadTree.values().contains(parkingId)) {
-                this.availableParkingFacilityQuadTree.put(x, y, parkingId);
-            }
-
-            if (!this.availableParkingFacilityQuadTreeByType.get(parkingType).values().contains(parkingId)) {
-                this.availableParkingFacilityQuadTreeByType.get(parkingType).put(x, y, parkingId);
-            }
+            this.availableParkingFacilityQuadTree.put(x, y, parkingId);
+            this.availableParkingFacilityQuadTreeByType.get(parkingType).put(x, y, parkingId);
         }
+
+        System.out.println(produceOverallStats());
     }
 
     @Override
