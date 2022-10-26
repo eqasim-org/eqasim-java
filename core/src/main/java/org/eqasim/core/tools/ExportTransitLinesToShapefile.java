@@ -45,6 +45,7 @@ public class ExportTransitLinesToShapefile {
 		PolylineFeatureFactory linkFactory = new PolylineFeatureFactory.Builder() //
 				.setCrs(crs).setName("line") //
 				.addAttribute("line_id", String.class) //
+				.addAttribute("line_name", String.class) //
 				.addAttribute("route_id", String.class) //
 				.addAttribute("mode", String.class) //
 				.create();
@@ -76,7 +77,8 @@ public class ExportTransitLinesToShapefile {
 				SimpleFeature feature = linkFactory.createPolyline( //
 						coordinates, //
 						new Object[] { //
-								transitLine.getId().toString(), //
+								transitLine.getId().toString(),
+								transitLine.getName(), //
 								transitRoute.getId().toString(), //
 								transitRoute.getTransportMode() //
 						}, null);
