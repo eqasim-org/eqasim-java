@@ -32,6 +32,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
@@ -150,29 +151,31 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             return;
         }
 
+        // get the range of the quadtrees to build based on network
+        double startTime = System.currentTimeMillis();
+        double minx = Double.POSITIVE_INFINITY;
+        double miny = Double.POSITIVE_INFINITY;
+        double maxx = Double.NEGATIVE_INFINITY;
+        double maxy = Double.NEGATIVE_INFINITY;
+        for (Node n : this.network.getNodes().values()) {
+            if (n.getCoord().getX() < minx) { minx = n.getCoord().getX(); }
+            if (n.getCoord().getY() < miny) { miny = n.getCoord().getY(); }
+            if (n.getCoord().getX() > maxx) { maxx = n.getCoord().getX(); }
+            if (n.getCoord().getY() > maxy) { maxy = n.getCoord().getY(); }
+        }
+        minx -= 1.0;
+        miny -= 1.0;
+        maxx += 1.0;
+        maxy += 1.0;
+        // yy the above four lines are problematic if the coordinate values are much smaller than one. kai, oct'15
+
+
         // build general quadtree
         {
-            double startTime = System.currentTimeMillis();
-            double minx = Double.POSITIVE_INFINITY;
-            double miny = Double.POSITIVE_INFINITY;
-            double maxx = Double.NEGATIVE_INFINITY;
-            double maxy = Double.NEGATIVE_INFINITY;
-            for (ParkingFacility n : this.parkingFacilities.values()) {
-                if (n.getCoord().getX() < minx) { minx = n.getCoord().getX(); }
-                if (n.getCoord().getY() < miny) { miny = n.getCoord().getY(); }
-                if (n.getCoord().getX() > maxx) { maxx = n.getCoord().getX(); }
-                if (n.getCoord().getY() > maxy) { maxy = n.getCoord().getY(); }
-            }
-            minx -= 1.0;
-            miny -= 1.0;
-            maxx += 1.0;
-            maxy += 1.0;
-            // yy the above four lines are problematic if the coordinate values are much smaller than one. kai, oct'15
-
             log.info("building parking garage QuadTree for nodes: xrange(" + minx + "," + maxx + "); yrange(" + miny + "," + maxy + ")");
             QuadTree<Id<ActivityFacility>> quadTree = new QuadTree<>(minx, miny, maxx, maxy);
-            for (ParkingFacility n : this.parkingFacilities.values()) {
-                quadTree.put(n.getCoord().getX(), n.getCoord().getY(), n.getId());
+            for (ParkingFacility f : this.parkingFacilities.values()) {
+                quadTree.put(f.getCoord().getX(), f.getCoord().getY(), f.getId());
             }
             /* assign the quadTree at the very end, when it is complete.
              * otherwise, other threads may already start working on an incomplete quadtree
@@ -187,27 +190,10 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
             for (String parkingFacilityType : this.parkingFacilitiesByType.keySet()) {
 
-                double startTime = System.currentTimeMillis();
-                double minx = Double.POSITIVE_INFINITY;
-                double miny = Double.POSITIVE_INFINITY;
-                double maxx = Double.NEGATIVE_INFINITY;
-                double maxy = Double.NEGATIVE_INFINITY;
-                for (ParkingFacility n : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
-                    if (n.getCoord().getX() < minx) { minx = n.getCoord().getX(); }
-                    if (n.getCoord().getY() < miny) { miny = n.getCoord().getY(); }
-                    if (n.getCoord().getX() > maxx) { maxx = n.getCoord().getX(); }
-                    if (n.getCoord().getY() > maxy) { maxy = n.getCoord().getY(); }
-                }
-                minx -= 1.0;
-                miny -= 1.0;
-                maxx += 1.0;
-                maxy += 1.0;
-                // yy the above four lines are problematic if the coordinate values are much smaller than one. kai, oct'15
-
                 log.info("building parking garage QuadTree for nodes: xrange(" + minx + "," + maxx + "); yrange(" + miny + "," + maxy + ")");
                 QuadTree<Id<ActivityFacility>> quadTree = new QuadTree<>(minx, miny, maxx, maxy);
-                for (ParkingFacility n : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
-                    quadTree.put(n.getCoord().getX(), n.getCoord().getY(), n.getId());
+                for (ParkingFacility f : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
+                    quadTree.put(f.getCoord().getX(), f.getCoord().getY(), f.getId());
                 }
                 /* assign the quadTree at the very end, when it is complete.
                  * otherwise, other threads may already start working on an incomplete quadtree
@@ -277,12 +263,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         String parkingType = this.parkingFacilities.get(facilityId).getParkingType();
         while (nSpacesToReserve.doubleValue() > 0) {
             // try parking in nearest facility of same type
-            if (availableParkingFacilityQuadTreeByType.get(parkingType).size() > 0) {
-//                System.out.println("Vehicle id: " + vehicleId.toString()  + ", "  +
-//                        "desired parking type: " + parkingType + ", " +
-//                        "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size() + ", " +
-//                        "used parking type: " + parkingType + ", " +
-//                        "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size());
+            if (!availableParkingFacilityQuadTreeByType.get(parkingType).values().isEmpty()) {
                 Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(parkingType).getClosest(facilityX, facilityY);
                 reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
                 nSpacesToReserve.decrement();
@@ -291,12 +272,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             else if (availableParkingFacilityQuadTree.size() > 0) {
                 for (String type : parkingFacilityTypePriorityList) {
                     if (availableParkingFacilityQuadTreeByType.containsKey(type)) {
-                        if (availableParkingFacilityQuadTreeByType.get(type).size() > 0) {
-//                            System.out.println("Vehicle id: " + vehicleId.toString()  + ", "  +
-//                                    "desired parking type: " + parkingType + ", " +
-//                                    "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size() + ", " +
-//                                    "used parking type: " + type + ", " +
-//                                    "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(type).size());
+                        if (!availableParkingFacilityQuadTreeByType.get(type).values().isEmpty()) {
                             Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(type).getClosest(facilityX, facilityY);
                             reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
                             nSpacesToReserve.decrement();
@@ -307,11 +283,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             }
             // otherwise park outside facilities, i.e. illegally
             else {
-//                System.out.println("Vehicle id: " + vehicleId.toString()  + ", "  +
-//                        "desired parking type: " + parkingType + ", " +
-//                        "remaining facilities: " + availableParkingFacilityQuadTreeByType.get(parkingType).size() + ", " +
-//                        "used parking type: " + "outside" + ", " +
-//                        "remaining facilities: " + "INF");
+                log.warn("No more vacant parking facilities. Vehicle " + vehicleId.toString() + " is parking outside legal facilities.");
                 reserveSpaceAtFacilityId(vehicleId, Id.create("outside", ActivityFacility.class));
                 nSpacesToReserve.setValue(0);
             }
@@ -326,19 +298,34 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             // deal with quadtree
             double occupation = this.occupation.get(parkingFacilityId).doubleValue();
             double capacity = this.capacity.get(parkingFacilityId);
-            String parkingFacilityType = this.parkingFacilities.get(parkingFacilityId).getParkingType();
-
             if (occupation == capacity) {
-                double x = this.parkingFacilities.get(parkingFacilityId).getCoord().getX();
-                double y = this.parkingFacilities.get(parkingFacilityId).getCoord().getY();
-                this.availableParkingFacilityQuadTree.remove(x, y, parkingFacilityId);
-                this.availableParkingFacilityQuadTreeByType.get(parkingFacilityType).remove(x, y, parkingFacilityId);
+                removeParkingFacilityFromQuadTrees(this.parkingFacilities.get(parkingFacilityId));
             }
         }
 
         // make reservation
         this.parkingReservation.putIfAbsent(vehicleId, new LinkedList<>());
         this.parkingReservation.get(vehicleId).add(parkingFacilityId);
+    }
+
+    synchronized private void removeParkingFacilityFromQuadTrees(ParkingFacility parkingFacility) {
+        Id<ActivityFacility> parkingFacilityId = parkingFacility.getId();
+        String parkingFacilityType = parkingFacility.getParkingType();
+        double x = parkingFacility.getCoord().getX();
+        double y = parkingFacility.getCoord().getY();
+
+        this.availableParkingFacilityQuadTree.remove(x, y, parkingFacilityId);
+        this.availableParkingFacilityQuadTreeByType.get(parkingFacilityType).remove(x, y, parkingFacilityId);
+    }
+
+    synchronized private void addParkingFacilityFromQuadTrees(ParkingFacility parkingFacility) {
+        Id<ActivityFacility> parkingFacilityId = parkingFacility.getId();
+        String parkingFacilityType = parkingFacility.getParkingType();
+        double x = parkingFacility.getCoord().getX();
+        double y = parkingFacility.getCoord().getY();
+
+        this.availableParkingFacilityQuadTree.put(x, y, parkingFacilityId);
+        this.availableParkingFacilityQuadTreeByType.get(parkingFacilityType).put(x, y, parkingFacilityId);
     }
 
 
@@ -395,9 +382,6 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 this.parkingLocations.get(vehicleId).add(reservedParkingFacilityId);
             }
         }
-
-        System.out.println(produceOverallStats());
-
         return true;
     }
 
@@ -417,19 +401,10 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
                 // add facility to quadtree if missing
                 if (!this.availableParkingFacilityQuadTree.values().contains(parkingFacilityId)) {
-                    ParkingFacility parkingFacility = this.parkingFacilities.get(parkingFacilityId);
-                    double x = parkingFacility.getCoord().getX();
-                    double y = parkingFacility.getCoord().getY();
-                    this.availableParkingFacilityQuadTree.put(x, y, parkingFacilityId);
-
-                    String parkingFacilityType = parkingFacility.getParkingType();
-                    if (!this.availableParkingFacilityQuadTreeByType.get(parkingFacilityType).values().contains(parkingFacilityId)) {
-                        this.availableParkingFacilityQuadTreeByType.get(parkingFacilityType).put(x, y, parkingFacilityId);
-                    }
+                    addParkingFacilityFromQuadTrees(this.parkingFacilities.get(parkingFacilityId));
                 }
             }
         }
-        System.out.println(produceOverallStats());
         return true;
     }
 
@@ -456,8 +431,47 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         }
         return "Parked vehicles : " + (int) overallOccupancy +
                 "; Capacity: " + (int) overallCapacity +
-                "; Occupancy level: " + Math.round(overallOccupancy / overallCapacity * 1000) / 10 ;
+                "; Occupancy level: " + Math.round(overallOccupancy / overallCapacity * 1000.0) / 10.0 ;
     }
+
+    private String produceDetailedStats() {
+        List<String> stats = new ArrayList<>();
+
+        for (String parkingType : this.parkingFacilitiesByType.keySet()) {
+
+            StringBuilder s = new StringBuilder();
+            s.append(parkingType).append(" - ");
+
+            double occupancy = 0.0;
+            double capacity = 0.0;
+
+            for (Id<ActivityFacility> facilityId : this.parkingFacilitiesByType.get(parkingType).keySet()) {
+                occupancy += this.occupation.get(facilityId).doubleValue();
+                capacity += this.capacity.get(facilityId);
+            }
+
+            s.append("parked: ").append((int) occupancy).append(", ");
+            s.append("capacity: ").append((int) capacity).append(", ");
+            s.append("occupancy level: ").append(Math.round(occupancy / capacity * 1000.0) / 10.0);
+
+            stats.add(s.toString());
+        }
+
+        return String.join("; ", stats);
+    }
+
+    private String produceNumberOfFacilitiesInQuadtree() {
+        List<String> stats = new ArrayList<>();
+
+        for (String parkingType : this.availableParkingFacilityQuadTreeByType.keySet()) {
+            int numFacilities = this.availableParkingFacilityQuadTreeByType.get(parkingType).size();
+            String s = parkingType + " -  number facilities: " + numFacilities;
+            stats.add(s);
+        }
+
+        return String.join("; ", stats);
+    }
+
 
     public double getNrOfAllParkingSpacesOnLink (Id<Link> linkId){
         double allSpaces = 0;
@@ -507,8 +521,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             this.availableParkingFacilityQuadTree.put(x, y, parkingId);
             this.availableParkingFacilityQuadTreeByType.get(parkingType).put(x, y, parkingId);
         }
-
-        System.out.println(produceOverallStats());
+        log.info(produceDetailedStats());
     }
 
     @Override
