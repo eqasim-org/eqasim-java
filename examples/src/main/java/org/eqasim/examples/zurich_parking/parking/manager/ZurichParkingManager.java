@@ -44,6 +44,7 @@ import org.matsim.vehicles.Vehicle;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author  ctchervenkov
@@ -59,13 +60,13 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
     // parked vehicles information
     protected Set<String> parkingFacilityTypePriorityList = new HashSet<>();
-    protected Map<Id<Vehicle>, List<Id<ActivityFacility>>> parkingLocations = new HashMap<>();
-    protected Map<Id<Vehicle>, List<Id<ActivityFacility>>> parkingReservation = new HashMap<>();
-    protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new HashMap<>();
+    protected Map<Id<Vehicle>, List<Id<ActivityFacility>>> parkingLocations = new ConcurrentHashMap<>();
+    protected Map<Id<Vehicle>, List<Id<ActivityFacility>>> parkingReservation = new ConcurrentHashMap<>();
+    protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new ConcurrentHashMap<>();
 
     // occupancy information
     protected Map<Id<ActivityFacility>, Double> capacity = new HashMap<>();
-    protected Map<Id<ActivityFacility>, MutableLong> occupation = new HashMap<>();
+    protected Map<Id<ActivityFacility>, MutableLong> occupation = new ConcurrentHashMap<>();
     private QuadTree<Id<ActivityFacility>> availableParkingFacilityQuadTree = null;
     private Map<String, QuadTree<Id<ActivityFacility>>> availableParkingFacilityQuadTreeByType = null;
 
@@ -252,7 +253,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         return canPark;
     }
 
-    private void reserveNSpacesNearFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> facilityId, MutableLong nSpacesToReserve) {
+    synchronized private void reserveNSpacesNearFacilityId(Id<Vehicle> vehicleId, Id<ActivityFacility> facilityId, MutableLong nSpacesToReserve) {
         reserveSpaceAtFacilityId(vehicleId, facilityId);
         nSpacesToReserve.decrement();
 
@@ -261,9 +262,11 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         double facilityY = this.parkingFacilities.get(facilityId).getCoord().getY();
 
         String parkingType = this.parkingFacilities.get(facilityId).getParkingType();
+
         while (nSpacesToReserve.doubleValue() > 0) {
             // try parking in nearest facility of same type
             if (!availableParkingFacilityQuadTreeByType.get(parkingType).values().isEmpty()) {
+
                 Id<ActivityFacility> closestFacilityId = availableParkingFacilityQuadTreeByType.get(parkingType).getClosest(facilityX, facilityY);
                 reserveSpaceAtFacilityId(vehicleId, closestFacilityId);
                 nSpacesToReserve.decrement();
@@ -314,8 +317,13 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         double x = parkingFacility.getCoord().getX();
         double y = parkingFacility.getCoord().getY();
 
-        this.availableParkingFacilityQuadTree.remove(x, y, parkingFacilityId);
-        this.availableParkingFacilityQuadTreeByType.get(parkingFacilityType).remove(x, y, parkingFacilityId);
+        synchronized (availableParkingFacilityQuadTree) {
+            availableParkingFacilityQuadTree.remove(x, y, parkingFacilityId);
+        }
+
+        synchronized (availableParkingFacilityQuadTreeByType) {
+            availableParkingFacilityQuadTreeByType.get(parkingFacilityType).remove(x, y, parkingFacilityId);
+        }
     }
 
     synchronized private void addParkingFacilityFromQuadTrees(ParkingFacility parkingFacility) {
@@ -324,8 +332,13 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         double x = parkingFacility.getCoord().getX();
         double y = parkingFacility.getCoord().getY();
 
-        this.availableParkingFacilityQuadTree.put(x, y, parkingFacilityId);
-        this.availableParkingFacilityQuadTreeByType.get(parkingFacilityType).put(x, y, parkingFacilityId);
+        synchronized (availableParkingFacilityQuadTree) {
+            availableParkingFacilityQuadTree.put(x, y, parkingFacilityId);
+        }
+
+        synchronized (availableParkingFacilityQuadTreeByType) {
+            availableParkingFacilityQuadTreeByType.get(parkingFacilityType).put(x, y, parkingFacilityId);
+        }
     }
 
 
@@ -440,7 +453,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         for (String parkingType : this.parkingFacilitiesByType.keySet()) {
 
             StringBuilder s = new StringBuilder();
-            s.append(parkingType).append(" - ");
+            s.append(parkingType).append(" ");
 
             double occupancy = 0.0;
             double capacity = 0.0;
