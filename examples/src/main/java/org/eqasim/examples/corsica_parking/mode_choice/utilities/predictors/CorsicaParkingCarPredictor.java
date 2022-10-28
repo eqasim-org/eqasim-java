@@ -119,6 +119,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 			throw new IllegalStateException("Car trips should at most contain 5 stages: 3 legs (walk, car, walk) and 2 interaction activities.");
 		}
 
+		String tripPurpose = trip.getDestinationActivity().getType();
 		double travelTime_min = 0.0;
 		double travelCost_MU = 0.0;
 		double accessEgressTime_min = 0.0;
@@ -224,7 +225,7 @@ public class CorsicaParkingCarPredictor extends CachedVariablePredictor<CorsicaP
 							networkRouteToGarage.getTravelTime().seconds();
 
 					// if we can park there, generate the candidate
-					if (parkingGarage.isAllowedToPark(garageParkingStartTime, parkingEndTime, person.getId())) {
+					if (parkingGarage.isAllowedToPark(garageParkingStartTime, parkingEndTime, person.getId(), tripPurpose)) {
 						double garageCandidateTravelDistance_m = networkRouteToGarage.getDistance();
 						double garageCandidateTravelTime_sec = networkRouteToGarage.getTravelTime().seconds();
 						double garageCandidateEgressDistance_m = distanceNearestGarage_m * 1.4;

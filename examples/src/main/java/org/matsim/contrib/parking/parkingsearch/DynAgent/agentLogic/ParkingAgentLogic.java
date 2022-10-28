@@ -190,7 +190,7 @@ public class ParkingAgentLogic implements DynAgentLogic {
 
 				// return dynamic agent
 				return new ParkingDynLeg(mode, actualRoute, this.parkingLogic,
-						parkingManager, currentlyAssignedVehicleId, timer, events, departFromParkingFacilityTime);
+						parkingManager, currentlyAssignedVehicleId, timer, events, departFromParkingFacilityTime, nextActivity.getType());
 
 			} else if (parkingSearchStrategy.equals(ParkingSearchStrategy.DriveToGarage)) {
 
@@ -205,7 +205,7 @@ public class ParkingAgentLogic implements DynAgentLogic {
 
 				// return dynamic agent
 				return new DriveToParkingFacilityDynLeg(mode, actualRoute, this.parkingLogic,
-						parkingManager, currentlyAssignedVehicleId, timer, events, parkingFacilityId, departFromParkingFacilityTime);
+						parkingManager, currentlyAssignedVehicleId, timer, events, parkingFacilityId, departFromParkingFacilityTime, nextActivity.getType());
 
 			} else if (parkingSearchStrategy.equals(ParkingSearchStrategy.DriveToDestination)) {
 
@@ -217,7 +217,7 @@ public class ParkingAgentLogic implements DynAgentLogic {
 
 				// return dynamic agent
 				return new DriveToParkingFacilityDynLeg(mode, actualRoute, this.parkingLogic,
-						parkingManager, currentlyAssignedVehicleId, timer, events, parkingFacilityId, departFromParkingFacilityTime);
+						parkingManager, currentlyAssignedVehicleId, timer, events, parkingFacilityId, departFromParkingFacilityTime, nextActivity.getType());
 
 			} else {
 				throw new IllegalStateException("Cannot handle parking strategy: " + parkingSearchStrategy.toString());

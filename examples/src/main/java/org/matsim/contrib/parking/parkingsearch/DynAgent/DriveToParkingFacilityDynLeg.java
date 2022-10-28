@@ -50,10 +50,11 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
     protected boolean hasFoundParking = false;
     private final Id<ActivityFacility> parkingFacilityId;
     private final double departFromParkingFacilityTime;
+    private final String tripPurpose;
 
     public DriveToParkingFacilityDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
                                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, Id<ActivityFacility> parkingFacilityId,
-                                        double departFromParkingFacilityTime) {
+                                        double departFromParkingFacilityTime, String tripPurpose) {
         this.mode = mode;
         this.route = route;
         this.currentLinkIdx = -1;
@@ -65,6 +66,7 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
         this.events = events;
         this.parkingFacilityId = parkingFacilityId;
         this.departFromParkingFacilityTime = departFromParkingFacilityTime;
+        this.tripPurpose = tripPurpose;
     }
 
     @Override
@@ -75,15 +77,15 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
         if (!parkingMode) {
             if (currentLinkId.equals(this.getDestinationLinkId())) {
                 this.parkingMode = true;
-                hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(vehicleId, parkingFacilityId, currentTime, departFromParkingFacilityTime);
+                hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(parkingFacilityId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
                 // trigger a parking search start event only if parking is not found at intended destination
                 if (!hasFoundParking) {
                     this.events.processEvent(new StartParkingSearchEvent(currentTime, vehicleId, currentLinkId));
-                    hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, currentLinkId, currentTime, departFromParkingFacilityTime);
+                    hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
                 }
             }
         } else {
-            hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, currentLinkId, currentTime, departFromParkingFacilityTime);
+            hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
         }
     }
 

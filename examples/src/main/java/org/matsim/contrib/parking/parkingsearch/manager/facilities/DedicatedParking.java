@@ -51,7 +51,7 @@ public class DedicatedParking extends ActivityFacilityImpl implements ParkingFac
 
     // dedicated parking is only permitted for allowed persons
     @Override
-    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId) {
+    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId, String purpose) {
         return allowedVehicles.contains(personId);
     }
 

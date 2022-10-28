@@ -52,7 +52,7 @@ public class ZurichParkingGarage extends ActivityFacilityImpl implements Parking
     }
 
     @Override
-    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId) {
+    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId, String purpose) {
         return true;
     }
 

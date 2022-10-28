@@ -14,6 +14,6 @@ public interface ParkingFacility extends ActivityFacility{
 
     double getParkingCost(double startTime, double endTime);
 
-    boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId);
+    boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId, String purpose);
 
 }

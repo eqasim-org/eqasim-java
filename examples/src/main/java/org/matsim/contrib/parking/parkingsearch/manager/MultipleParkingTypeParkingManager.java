@@ -108,7 +108,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
     }
 
     @Override
-    public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
+    public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Link> linkId, double fromTime, double toTime, Id<Vehicle> vehicleId, String purpose) {
         // check if there is any parking on this link
         if (!this.facilitiesPerLink.containsKey(linkId)) {
             return false;
@@ -121,7 +121,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
             ParkingFacility parkingFacility = this.parkingFacilities.get(facilityId);
 
             // check if the vehicle is allowed to park in this facility
-            if (!parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId))) {
+            if (!parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId), purpose)) {
                 continue;
             }
 
@@ -137,8 +137,8 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
     }
 
     @Override
-    public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime) {
-        boolean canPark = parkingFacilityIdHasAvailableParkingForVehicle(parkingFacilityId, vehicleId, fromTime, toTime);
+    public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime, Id<Vehicle> vehicleId, String purpose) {
+        boolean canPark = parkingFacilityIdHasAvailableParkingForVehicle(parkingFacilityId, vehicleId, fromTime, toTime, purpose);
         if (canPark) {
             reserveSpaceAtFacilityId(vehicleId, parkingFacilityId);
 //            this.parkingReservationLog.add(new ParkingReservationLog(fromTime, vehicleId, parkingFacilityId, "reservation"));
@@ -151,7 +151,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
         this.parkingReservation.put(vehicleId, facilityId);
     }
 
-    private boolean parkingFacilityIdHasAvailableParkingForVehicle(Id<ActivityFacility> facilityId, Id<Vehicle> vehicleId, double startTime, double endTime){
+    private boolean parkingFacilityIdHasAvailableParkingForVehicle(Id<ActivityFacility> facilityId, Id<Vehicle> vehicleId, double startTime, double endTime, String purpose){
         // first check if the facility is actually in the list of parking facilities
         if (!this.parkingFacilities.containsKey(facilityId)){
             return false;
@@ -159,7 +159,7 @@ public class MultipleParkingTypeParkingManager implements ParkingSearchManager {
         ParkingFacility parkingFacility = this.parkingFacilities.get(facilityId);
 
         // check if the vehicle is allowed to park in this facility
-        if (!parkingFacility.isAllowedToPark(startTime, endTime, Id.createPersonId(vehicleId))) {
+        if (!parkingFacility.isAllowedToPark(startTime, endTime, Id.createPersonId(vehicleId), purpose)) {
             return false;
         }
 

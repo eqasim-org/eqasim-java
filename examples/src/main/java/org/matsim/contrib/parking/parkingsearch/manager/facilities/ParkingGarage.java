@@ -5,7 +5,6 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
-import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.facilities.*;
 
 public class ParkingGarage extends ActivityFacilityImpl implements ParkingFacility {
@@ -57,7 +56,7 @@ public class ParkingGarage extends ActivityFacilityImpl implements ParkingFacili
     }
 
     @Override
-    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId) {
+    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId, String purpose) {
         return isAllowedToPark;
     }
 

@@ -206,7 +206,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
     }
 
     @Override
-    public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
+    public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Link> linkId, double fromTime, double toTime, Id<Vehicle> vehicleId, String purpose) {
         // check if there is any parking on this link
         if (!this.facilitiesPerLinkByType.containsKey(linkId)) {
             return false;
@@ -222,7 +222,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 ParkingFacility parkingFacility = this.parkingFacilities.get(parkingFacilityId);
 
                 // check if the vehicle is allowed to park in this facility
-                if (parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId))) {
+                if (parkingFacility.isAllowedToPark(fromTime, toTime, Id.createPersonId(vehicleId), purpose)) {
 
                     // check if there is remaining capacity and reserve if available
                     double capacity = this.capacity.get(parkingFacilityId);
@@ -238,8 +238,8 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
     }
 
     @Override
-    public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime) {
-        boolean canPark = parkingFacilityIdHasAvailableParkingForVehicle(parkingFacilityId, vehicleId, fromTime, toTime);
+    public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime, Id<Vehicle> vehicleId, String purpose) {
+        boolean canPark = parkingFacilityIdHasAvailableParkingForVehicle(parkingFacilityId, vehicleId, fromTime, toTime, purpose);
         if (canPark) {
             // if we are parking outside the facilities, only need to park a single vehicle
             if (parkingFacilityId.toString().equals("outside")) {
@@ -343,7 +343,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
 
 
-    private boolean parkingFacilityIdHasAvailableParkingForVehicle(Id<ActivityFacility> parkingFacilityId, Id<Vehicle> vehicleId, double startTime, double endTime){
+    private boolean parkingFacilityIdHasAvailableParkingForVehicle(Id<ActivityFacility> parkingFacilityId, Id<Vehicle> vehicleId, double startTime, double endTime, String purpose){
         // first check if the facility is actually in the list of parking facilities
         if (parkingFacilityId.toString().equals("outside")) {
             return true;
@@ -353,7 +353,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         ParkingFacility parkingFacility = this.parkingFacilities.get(parkingFacilityId);
 
         // check if the vehicle is allowed to park in this facility
-        if (!parkingFacility.isAllowedToPark(startTime, endTime, Id.createPersonId(vehicleId))) {
+        if (!parkingFacility.isAllowedToPark(startTime, endTime, Id.createPersonId(vehicleId), purpose)) {
             return false;
         }
 

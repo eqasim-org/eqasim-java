@@ -70,7 +70,7 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 	}
 
 	@Override
-	public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<Link> linkId, double fromTime, double toTime) {
+	public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Link> linkId, double fromTime, double toTime, Id<Vehicle> vehicleId, String purpose) {
 		boolean canPark = false;
 
 		if (linkIdHasAvailableParkingForVehicle(linkId, vehicleId)) {
@@ -111,7 +111,7 @@ public class FacilityBasedParkingManager implements ParkingSearchManager {
 	}
 
 	@Override
-	public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<Vehicle> vehicleId, Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime) {
+	public boolean reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id<ActivityFacility> parkingFacilityId, double fromTime, double toTime, Id<Vehicle> vehicleId, String purpose) {
 		double cap = this.parkingFacilities.get(parkingFacilityId).getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
 		if (this.occupation.get(parkingFacilityId).doubleValue() < cap) {
 			// Logger.getLogger(getClass()).info("occ:

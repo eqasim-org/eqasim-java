@@ -23,7 +23,6 @@ import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacilityType;
-import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingGarage;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.WhiteZoneParking;
 import org.matsim.contrib.parking.parkingsearch.routing.ParkingRouter;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -130,6 +129,7 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 		double euclideanDistance_km = 0.0;
 		double parkingSearchTime_min = 0.0;
 		double parkingCost_MU = 0.0;
+		String tripPurpose = trip.getDestinationActivity().getType();
 
 		// case of single walk leg
 		if (elements.size() == 1) {
@@ -225,7 +225,7 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 							networkRouteToGarage.getTravelTime().seconds();
 
 					// if we can park there, generate the candidate
-					if (parkingGarage.isAllowedToPark(garageParkingStartTime, parkingEndTime, person.getId())) {
+					if (parkingGarage.isAllowedToPark(garageParkingStartTime, parkingEndTime, person.getId(), tripPurpose)) {
 						double garageCandidateTravelDistance_m = networkRouteToGarage.getDistance();
 						double garageCandidateTravelTime_sec = networkRouteToGarage.getTravelTime().seconds();
 						double garageCandidateEgressDistance_m = distanceNearestGarage_m * 1.4;

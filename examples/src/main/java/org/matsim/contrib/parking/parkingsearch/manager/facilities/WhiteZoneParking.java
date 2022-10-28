@@ -115,7 +115,7 @@ public class WhiteZoneParking extends ActivityFacilityImpl implements ParkingFac
 
 
     @Override
-    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId) {
+    public boolean isAllowedToPark(double startTime, double endTime, Id<Person> personId, String purpose) {
         // the default max parking time is defined by the posted time limit
         double mustLeaveByTime = startTime + this.maxParkingDuration;
 

@@ -48,9 +48,11 @@ public class ParkingDynLeg implements DriverDynLeg {
     protected EventsManager events;
     protected boolean hasFoundParking = false;
     protected double departFromParkingFacilityTime;
+    protected String tripPurpose;
 
     public ParkingDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
-                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, double departFromParkingFacilityTime) {
+                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, double departFromParkingFacilityTime,
+                         String tripPurpose) {
         this.mode = mode;
         this.route = route;
         this.currentLinkIdx = -1;
@@ -61,6 +63,7 @@ public class ParkingDynLeg implements DriverDynLeg {
         this.timer = timer;
         this.events = events;
         this.departFromParkingFacilityTime = departFromParkingFacilityTime;
+        this.tripPurpose = tripPurpose;
     }
 
     @Override
@@ -72,10 +75,10 @@ public class ParkingDynLeg implements DriverDynLeg {
             if (currentLinkId.equals(this.getDestinationLinkId())) {
                 this.parkingMode = true;
                 this.events.processEvent(new StartParkingSearchEvent(currentTime, vehicleId, currentLinkId));
-                hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, currentLinkId, currentTime, departFromParkingFacilityTime);
+                hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
             }
         } else {
-            hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(vehicleId, currentLinkId, currentTime, departFromParkingFacilityTime);
+            hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
         }
 
     }
