@@ -56,6 +56,8 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
     private final String tripPurpose;
     private double parkingSearchStartTime;
 
+    private double parkingSearchStartTimeLimit = 0.5 * 3600.0;
+
     private static final Logger log = Logger.getLogger(DriveToParkingFacilityDynLeg.class);
 
     public DriveToParkingFacilityDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
@@ -93,8 +95,8 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
             }
         } else {
             // if we have been searching more than 30 minutes, park illegally
-            if (currentTime - parkingSearchStartTime > 1800.) {
-                log.warn("Vehicle " + vehicleId.toString() + " has been searching for over 30 minutes and is now parking illegally.");
+            if (currentTime - parkingSearchStartTime > parkingSearchStartTimeLimit) {
+                log.warn("Vehicle " + vehicleId.toString() + " has been searching for over " + parkingSearchStartTimeLimit + " seconds and is now parking illegally.");
                 hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id.create("outside", ActivityFacility.class), currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
             } else {
                 hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);

@@ -262,7 +262,6 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         // facility id coordinates
         double facilityX = this.parkingFacilities.get(facilityId).getCoord().getX();
         double facilityY = this.parkingFacilities.get(facilityId).getCoord().getY();
-
         String parkingType = this.parkingFacilities.get(facilityId).getParkingType();
 
         while (nSpacesToReserve.doubleValue() > 0) {
@@ -397,6 +396,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 this.parkingLocations.get(vehicleId).add(reservedParkingFacilityId);
             }
         }
+//        log.info(produceOverallStats());
         return true;
     }
 
@@ -429,6 +429,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             foundVehicle = true;
         }
 
+//        log.info(produceOverallStats());
         return foundVehicle;
     }
 
@@ -545,7 +546,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             this.availableParkingFacilityQuadTree.put(x, y, parkingId);
             this.availableParkingFacilityQuadTreeByType.get(parkingType).put(x, y, parkingId);
         }
-        log.info(produceDetailedStats());
+//        log.info(produceDetailedStats());
     }
 
     @Override
