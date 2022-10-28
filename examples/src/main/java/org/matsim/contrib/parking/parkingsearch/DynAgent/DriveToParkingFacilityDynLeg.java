@@ -19,6 +19,8 @@
 
 package org.matsim.contrib.parking.parkingsearch.DynAgent;
 
+import org.apache.log4j.Logger;
+import org.eqasim.examples.zurich_parking.parking.manager.ZurichParkingManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.dynagent.DriverDynLeg;
@@ -34,6 +36,7 @@ import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.List;
+import java.util.Optional;
 
 public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
     protected final NetworkRoute route;
@@ -51,6 +54,9 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
     private final Id<ActivityFacility> parkingFacilityId;
     private final double departFromParkingFacilityTime;
     private final String tripPurpose;
+    private double parkingSearchStartTime;
+
+    private static final Logger log = Logger.getLogger(DriveToParkingFacilityDynLeg.class);
 
     public DriveToParkingFacilityDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
                                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, Id<ActivityFacility> parkingFacilityId,
@@ -80,12 +86,19 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
                 hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(parkingFacilityId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
                 // trigger a parking search start event only if parking is not found at intended destination
                 if (!hasFoundParking) {
+                    parkingSearchStartTime = currentTime;
                     this.events.processEvent(new StartParkingSearchEvent(currentTime, vehicleId, currentLinkId));
                     hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
                 }
             }
         } else {
-            hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
+            // if we have been searching more than 30 minutes, park illegally
+            if (currentTime - parkingSearchStartTime > 1800.) {
+                log.warn("Vehicle " + vehicleId.toString() + " has been searching for over 30 minutes and is now parking illegally.");
+                hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id.create("outside", ActivityFacility.class), currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
+            } else {
+                hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
+            }
         }
     }
 

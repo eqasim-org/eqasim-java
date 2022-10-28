@@ -34,6 +34,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.contrib.parking.parkingsearch.events.ParkingEvent;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
 import org.matsim.core.controler.events.IterationEndsEvent;
@@ -60,8 +61,8 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
     // parked vehicles information
     protected Set<String> parkingFacilityTypePriorityList = new HashSet<>();
-    protected Map<Id<Vehicle>, List<Id<ActivityFacility>>> parkingLocations = new ConcurrentHashMap<>();
     protected Map<Id<Vehicle>, List<Id<ActivityFacility>>> parkingReservation = new ConcurrentHashMap<>();
+    protected Map<Id<Vehicle>, List<Id<ActivityFacility>>> parkingLocations = new ConcurrentHashMap<>();
     protected Map<Id<Vehicle>, Id<Link>> parkingLocationsOutsideFacilities = new ConcurrentHashMap<>();
 
     // occupancy information
@@ -207,6 +208,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
     @Override
     public boolean reserveSpaceAtLinkIdIfVehicleCanParkHere(Id<Link> linkId, double fromTime, double toTime, Id<Vehicle> vehicleId, String purpose) {
+
         // check if there is any parking on this link
         if (!this.facilitiesPerLinkByType.containsKey(linkId)) {
             return false;
@@ -286,7 +288,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             }
             // otherwise park outside facilities, i.e. illegally
             else {
-                log.warn("No more vacant parking facilities. Vehicle " + vehicleId.toString() + " is parking outside legal facilities.");
+                log.warn("No more vacant parking facilities. Vehicle " + vehicleId.toString() + " is parking illegally.");
                 reserveSpaceAtFacilityId(vehicleId, Id.create("outside", ActivityFacility.class));
                 nSpacesToReserve.setValue(0);
             }
@@ -405,10 +407,12 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
     @Override
     public boolean unParkVehicle(Id<Vehicle> vehicleId, double time) {
-        if (this.parkingLocationsOutsideFacilities.containsKey(vehicleId)) {
-            this.parkingLocationsOutsideFacilities.remove(vehicleId);
-        } else if (this.parkingLocations.containsKey(vehicleId)) {
+        boolean foundVehicle = false;
+
+        // check within legal facilities
+        if (this.parkingLocations.containsKey(vehicleId)) {
             List<Id<ActivityFacility>> parkingFacilityIds = this.parkingLocations.remove(vehicleId);
+            foundVehicle = true;
             for (Id<ActivityFacility> parkingFacilityId : parkingFacilityIds) {
                 this.occupation.get(parkingFacilityId).decrement();
 
@@ -418,7 +422,14 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 }
             }
         }
-        return true;
+
+        // check outside facilities
+        if (this.parkingLocationsOutsideFacilities.containsKey(vehicleId)) {
+            this.parkingLocationsOutsideFacilities.remove(vehicleId);
+            foundVehicle = true;
+        }
+
+        return foundVehicle;
     }
 
     @Override
