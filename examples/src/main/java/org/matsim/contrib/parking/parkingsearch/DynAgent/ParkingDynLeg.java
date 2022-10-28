@@ -88,7 +88,7 @@ public class ParkingDynLeg implements DriverDynLeg {
         } else {
             if (currentTime - parkingSearchStartTime > parkingSearchStartTimeLimit) {
                 log.warn("Vehicle " + vehicleId.toString() + " has been searching for over " + parkingSearchStartTimeLimit + " seconds and is now parking illegally.");
-                hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id.create("outside", ActivityFacility.class), currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
+                hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id.create("illegal", ActivityFacility.class), currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
             } else {
                 hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
             }
