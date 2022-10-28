@@ -103,30 +103,30 @@ public class ZurichParkingConfigurator extends SwitzerlandConfigurator {
 //            }
 //        }
 
-        // Let's only keep the people who go to Zurich for now for testing
-        // (i.e. with at least one Random parking search strategy)
-        {
-            List<Id<Person>> personIdsToRemove = new LinkedList<>();
-            for (Person person : scenario.getPopulation().getPersons().values()){
-                boolean toRemove = true;
-                for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
-                    if (element instanceof Activity) {
-                        if (element.getAttributes().getAsMap().containsKey("parkingSearchStrategy")) {
-                            if (element.getAttributes().getAttribute("parkingSearchStrategy").toString().equals("Random")) {
-                                toRemove = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (toRemove) {
-                    personIdsToRemove.add(person.getId());
-                }
-            }
-            for (Id<Person> personId : personIdsToRemove){
-                scenario.getPopulation().removePerson(personId);
-            }
-         }
+//        // Let's only keep the people who go to Zurich for now for testing
+//        // (i.e. with at least one Random parking search strategy)
+//        {
+//            List<Id<Person>> personIdsToRemove = new LinkedList<>();
+//            for (Person person : scenario.getPopulation().getPersons().values()){
+//                boolean toRemove = true;
+//                for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
+//                    if (element instanceof Activity) {
+//                        if (element.getAttributes().getAsMap().containsKey("parkingSearchStrategy")) {
+//                            if (element.getAttributes().getAttribute("parkingSearchStrategy").toString().equals("Random")) {
+//                                toRemove = false;
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
+//                if (toRemove) {
+//                    personIdsToRemove.add(person.getId());
+//                }
+//            }
+//            for (Id<Person> personId : personIdsToRemove){
+//                scenario.getPopulation().removePerson(personId);
+//            }
+//         }
 
         // Compress parking facilities (i.e., not have multiple parking facilities of the same type per link)
         {
