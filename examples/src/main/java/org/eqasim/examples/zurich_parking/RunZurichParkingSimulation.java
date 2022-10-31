@@ -21,6 +21,7 @@ import org.matsim.contrib.dvrp.run.DvrpModes;
 import org.matsim.contrib.dvrp.trafficmonitoring.DvrpTravelTimeModule;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
+import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.NoVehicleTeleportationLogic;
 import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.VehicleTeleportationLogic;
 import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.VehicleTeleportationToNearbyParking;
 import org.matsim.contrib.parking.parkingsearch.routing.ParkingRouter;
@@ -125,7 +126,8 @@ public class RunZurichParkingSimulation {
 					addControlerListenerBinding().to(org.matsim.contrib.parking.parkingsearch.evaluation.ParkingListener.class);
 					addControlerListenerBinding().to(ZurichParkingManager.class);
 					bind(ParkingRouter.class).to(WithinDayParkingRouter.class);
-					bind(VehicleTeleportationLogic.class).to(VehicleTeleportationToNearbyParking.class);
+//					bind(VehicleTeleportationLogic.class).to(VehicleTeleportationToNearbyParking.class);
+					bind(VehicleTeleportationLogic.class).to(NoVehicleTeleportationLogic.class);
 				}
 			});
 
