@@ -80,10 +80,10 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
             double linkLength_km = link.getLength()/1000.0;
 
             if (numberLanes == 1){
-                if (freespeed <= 8.33333){ // <=30km/h
+                if (freespeed <= 8.33334){ // <=30km/h
                     S1L1 += linkLength_km; //g/ is it possible that the agent does not use the whole length of the link?
                 }
-                if ((freespeed > 8.33333)&&(freespeed <= 13.8889)){ // <=50km/h
+                if ((freespeed > 8.33334)&&(freespeed <= 13.8889)){ // <=50km/h
                     S2L1 += linkLength_km;
                 }
                 if ((freespeed > 13.8889)&&(freespeed <= 16.6667)){ // <=60km/h
@@ -94,10 +94,10 @@ public class SwissBikePredictor extends CachedVariablePredictor<SwissBikeVariabl
                 }
             }
             if (numberLanes > 1){
-                if (freespeed <= 8.33333){
+                if (freespeed <= 8.33334){
                     S1L2 += linkLength_km;
                 }
-                if ((freespeed > 8.33333)&&(freespeed <= 13.8889)){
+                if ((freespeed > 8.33334)&&(freespeed <= 13.8889)){
                     S2L2 += linkLength_km;
                 }
                 if ((freespeed > 13.8889)&&(freespeed <= 16.6667)){
