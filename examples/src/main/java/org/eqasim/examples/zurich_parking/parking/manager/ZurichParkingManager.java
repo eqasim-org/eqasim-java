@@ -34,8 +34,10 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.contrib.parking.parkingsearch.events.ParkingEvent;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
+import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.collections.QuadTree;
@@ -77,16 +79,18 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
     protected double sampleSize;
     protected int vehiclesPerVehicle;
     protected Network network;
+    protected EventsManager events;
 
 //    private List<ParkingReservationLog> parkingReservationLog = new LinkedList<>();
 
 
     @Inject
-    public ZurichParkingManager(Scenario scenario) {
+    public ZurichParkingManager(Scenario scenario, EventsManager events) {
         this.scenario = scenario;
         this.sampleSize = ((EqasimConfigGroup) this.scenario.getConfig().getModules().get(EqasimConfigGroup.GROUP_NAME)).getSampleSize();
         this.vehiclesPerVehicle = ((int) Math.floor(1.0 / this.sampleSize));
         this.network = scenario.getNetwork();
+        this.events = events;
 
         // fill priority list
         parkingFacilityTypePriorityList.add(ParkingFacilityType.BlueZone.toString());
@@ -398,7 +402,18 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             throw new RuntimeException("no parking reservation found for vehicle " + vehicleId.toString());
         }
 
+        boolean isFirst = true;
         for (Id<ActivityFacility> reservedParkingFacilityId : reservedParkingFacilityIds) {
+            if (isFirst) {
+                String parkingFacilityType = reservedParkingFacilityId.toString();
+                Coord parkingFacilityCoord = this.network.getLinks().get(linkId).getCoord();
+                if (this.parkingFacilities.containsKey(reservedParkingFacilityId)) {
+                    parkingFacilityType = this.parkingFacilities.get(reservedParkingFacilityId).getParkingType();
+                }
+                events.processEvent(new ParkingEvent(time, linkId, vehicleId,
+                        reservedParkingFacilityId, parkingFacilityType, parkingFacilityCoord));
+                isFirst = false;
+            }
             if (reservedParkingFacilityId.toString().equals("outside")) {
                 this.parkingLocationsOutsideFacilities.put(vehicleId, linkId);
             } else if (reservedParkingFacilityId.toString().equals("illegal")) {
