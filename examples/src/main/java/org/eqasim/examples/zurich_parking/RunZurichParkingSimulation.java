@@ -6,6 +6,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.examples.zurich_parking.analysis.parking.ParkingSearchMetricsListener;
 import org.eqasim.examples.zurich_parking.mode_choice.ZurichParkingModule;
 import org.eqasim.examples.zurich_parking.parking.ParkingListener;
 import org.eqasim.examples.zurich_parking.parking.manager.ZurichParkingManager;
@@ -155,6 +156,7 @@ public class RunZurichParkingSimulation {
 					bind(ParkingListener.class).toInstance(parkingListener);
 					addEventHandlerBinding().toInstance(vehicle2DriverEventHandler);
 					addEventHandlerBinding().toInstance(parkingListener);
+					addEventHandlerBinding().toInstance(new ParkingSearchMetricsListener(vehicle2DriverEventHandler, scenario.getNetwork()));
 					addControlerListenerBinding().toInstance(parkingListener);
 				}
 			});
