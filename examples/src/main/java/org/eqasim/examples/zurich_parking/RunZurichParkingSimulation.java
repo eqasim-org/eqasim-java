@@ -152,8 +152,8 @@ public class RunZurichParkingSimulation {
 					Vehicle2DriverEventHandler vehicle2DriverEventHandler = new Vehicle2DriverEventHandler();
 					ParkingListener parkingListener = new ParkingListener(vehicle2DriverEventHandler, new RoadNetwork(scenario.getNetwork()),
 							0.0, 30*3600.0, 3600.0, 500.0);
-					ParkingSearchMetricsListener parkingSearchMetricsListener = new ParkingSearchMetricsListener(vehicle2DriverEventHandler,
-							scenario.getNetwork());
+//					ParkingSearchMetricsListener parkingSearchMetricsListener = new ParkingSearchMetricsListener(vehicle2DriverEventHandler,
+//							scenario.getNetwork());
 
 					bind(ParkingListener.class).toInstance(parkingListener);
 					addEventHandlerBinding().toInstance(vehicle2DriverEventHandler);
