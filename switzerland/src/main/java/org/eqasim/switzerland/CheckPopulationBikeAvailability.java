@@ -30,7 +30,7 @@ public class CheckPopulationBikeAvailability {
         PopulationReader populationReader = new PopulationReader(scenario);
         // path to MATSim scenario
         String path = args[0];
-        populationReader.readFile(path + "zurich_population_10pct.xml.gz");
+        populationReader.readFile(path + "zurich_population_10pct_newavailbike.xml.gz");
 
         int bikeNotAvail = 0;
         int totalPop = 0;
