@@ -6,7 +6,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-//import org.eqasim.examples.zurich_parking.analysis.parking.ParkingSearchMetricsListener;
+import org.eqasim.examples.zurich_parking.analysis.parking.ParkingSearchMetricsListener;
 import org.eqasim.examples.zurich_parking.mode_choice.ZurichParkingModule;
 import org.eqasim.examples.zurich_parking.parking.ParkingListener;
 import org.eqasim.examples.zurich_parking.parking.manager.ZurichParkingManager;
@@ -24,7 +24,6 @@ import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.NoVehicleTeleportationLogic;
 import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.VehicleTeleportationLogic;
-import org.matsim.contrib.parking.parkingsearch.manager.vehicleteleportationlogic.VehicleTeleportationToNearbyParking;
 import org.matsim.contrib.parking.parkingsearch.routing.ParkingRouter;
 import org.matsim.contrib.parking.parkingsearch.routing.WithinDayParkingRouter;
 import org.matsim.contrib.parking.parkingsearch.sim.ParkingSearchConfigGroup;
@@ -149,11 +148,10 @@ public class RunZurichParkingSimulation {
 			controller.addOverridingModule(new AbstractModule() {
 				@Override
 				public void install() {
+					// parking listener for mode choice
 					Vehicle2DriverEventHandler vehicle2DriverEventHandler = new Vehicle2DriverEventHandler();
 					ParkingListener parkingListener = new ParkingListener(vehicle2DriverEventHandler, new RoadNetwork(scenario.getNetwork()),
 							0.0, 30*3600.0, 3600.0, 500.0);
-//					ParkingSearchMetricsListener parkingSearchMetricsListener = new ParkingSearchMetricsListener(vehicle2DriverEventHandler,
-//							scenario.getNetwork());
 
 					bind(ParkingListener.class).toInstance(parkingListener);
 					addEventHandlerBinding().toInstance(vehicle2DriverEventHandler);
@@ -161,8 +159,10 @@ public class RunZurichParkingSimulation {
 					addEventHandlerBinding().toInstance(parkingListener);
 					addControlerListenerBinding().toInstance(parkingListener);
 
-//					addEventHandlerBinding().toInstance(parkingSearchMetricsListener);
-//					addControlerListenerBinding().toInstance(parkingSearchMetricsListener);
+					// parking metrics
+					ParkingSearchMetricsListener parkingSearchMetricsListener = new ParkingSearchMetricsListener(scenario.getNetwork());
+					addEventHandlerBinding().toInstance(parkingSearchMetricsListener);
+					addControlerListenerBinding().toInstance(parkingSearchMetricsListener);
 				}
 			});
 		}

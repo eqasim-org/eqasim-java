@@ -406,12 +406,12 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         for (Id<ActivityFacility> reservedParkingFacilityId : reservedParkingFacilityIds) {
             if (isFirst) {
                 String parkingFacilityType = reservedParkingFacilityId.toString();
-                Coord parkingFacilityCoord = this.network.getLinks().get(linkId).getCoord();
+                Coord parkingFacilityLinkId = this.network.getLinks().get(linkId).getCoord();
                 if (this.parkingFacilities.containsKey(reservedParkingFacilityId)) {
                     parkingFacilityType = this.parkingFacilities.get(reservedParkingFacilityId).getParkingType();
                 }
                 events.processEvent(new ParkingEvent(time, linkId, vehicleId,
-                        reservedParkingFacilityId, parkingFacilityType, parkingFacilityCoord));
+                        reservedParkingFacilityId, parkingFacilityType, parkingFacilityLinkId));
                 isFirst = false;
             }
             if (reservedParkingFacilityId.toString().equals("outside")) {

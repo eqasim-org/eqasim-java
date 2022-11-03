@@ -34,12 +34,13 @@ import java.util.Map;
  */
 
 public class ParkingEvent extends Event {
-	public static final String EVENT_TYPE = "parked vehicle";
+	public static final String EVENT_TYPE = "park vehicle";
 	public static final String ATTRIBUTE_VEHICLE = "vehicle";
 	public static final String ATTRIBUTE_LINK = "link";
-	public static final String ATTRIBUTE_PARKING_FACILITY_ID = "parking facility id";
-	public static final String ATTRIBUTE_PARKING_FACILITY_TYPE = "parking type";
-	public static final String ATTRIBUTE_PARKING_COORD = "parking coord";
+	public static final String ATTRIBUTE_PARKING_FACILITY_ID = "parkingFacilityId";
+	public static final String ATTRIBUTE_PARKING_FACILITY_TYPE = "parkingType";
+	public static final String ATTRIBUTE_PARKING_COORD_X = "parkingCoord_x";
+	public static final String ATTRIBUTE_PARKING_COORD_Y = "parkingCoord_y";
 	private final Id<Link> linkId;
 	private final Id<Vehicle> vehicleId;
 	private final Id<ActivityFacility> parkingFacilityId;
@@ -89,7 +90,8 @@ public class ParkingEvent extends Event {
 		attr.put(ATTRIBUTE_LINK, this.linkId.toString());
 		attr.put(ATTRIBUTE_PARKING_FACILITY_ID, this.parkingFacilityId.toString());
 		attr.put(ATTRIBUTE_PARKING_FACILITY_TYPE, this.parkingFacilityType);
-		attr.put(ATTRIBUTE_PARKING_COORD, this.parkingFacilityCoord.toString());
+		attr.put(ATTRIBUTE_PARKING_COORD_X, String.valueOf(this.parkingFacilityCoord.getX()));
+		attr.put(ATTRIBUTE_PARKING_COORD_Y, String.valueOf(this.parkingFacilityCoord.getY()));
 		return attr;
 	}
 
