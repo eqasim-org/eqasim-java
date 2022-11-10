@@ -23,6 +23,8 @@ import com.google.inject.Inject;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.examples.zurich_parking.analysis.parking.ParkingOccupancyStats;
+import org.eqasim.examples.zurich_parking.analysis.parking.ParkingOccupancyStatsWriter;
 import org.eqasim.examples.zurich_parking.parking.manager.facilities.ParkingFacilityType;
 import org.eqasim.examples.zurich_parking.parking.manager.facilities.ZurichBlueZoneParking;
 import org.eqasim.examples.zurich_parking.parking.manager.facilities.ZurichParkingGarage;
@@ -44,8 +46,8 @@ import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
 
+import java.io.IOException;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -82,6 +84,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
     protected EventsManager events;
 
 //    private List<ParkingReservationLog> parkingReservationLog = new LinkedList<>();
+    private Collection<ParkingOccupancyStats> parkingOccupancyStats = new LinkedList<>();
 
 
     @Inject
@@ -416,11 +419,53 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             }
             if (reservedParkingFacilityId.toString().equals("outside")) {
                 this.parkingLocationsOutsideFacilities.put(vehicleId, linkId);
+
+                Link link = this.network.getLinks().get(linkId);
+
+                // write parking occupancy stats
+                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
+                        link.getId(),
+                        link.getFromNode().getCoord(),
+                        link.getToNode().getCoord(),
+                        reservedParkingFacilityId,
+                        "outside",
+                        this.network.getLinks().get(linkId).getCoord(),
+                        this.parkingLocationsOutsideFacilities.size(),
+                        Double.NaN));
+
             } else if (reservedParkingFacilityId.toString().equals("illegal")) {
                 this.parkingLocationsIllegal.put(vehicleId, linkId);
+
+                Link link = this.network.getLinks().get(linkId);
+
+                // write parking occupancy stats
+                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
+                        link.getId(),
+                        link.getFromNode().getCoord(),
+                        link.getToNode().getCoord(),
+                        reservedParkingFacilityId,
+                        "illegal",
+                        this.network.getLinks().get(linkId).getCoord(),
+                        this.parkingLocationsOutsideFacilities.size(),
+                        Double.NaN));
+
             } else {
                 this.parkingLocations.putIfAbsent(vehicleId, new LinkedList<>());
                 this.parkingLocations.get(vehicleId).add(reservedParkingFacilityId);
+
+                ParkingFacility parkingFacility = this.parkingFacilities.get(reservedParkingFacilityId);
+                Link link = this.network.getLinks().get(parkingFacility.getLinkId());
+
+                // write parking occupancy stats
+                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
+                        link.getId(),
+                        link.getFromNode().getCoord(),
+                        link.getToNode().getCoord(),
+                        parkingFacility.getId(),
+                        parkingFacility.getParkingType(),
+                        parkingFacility.getCoord(),
+                        this.occupation.get(reservedParkingFacilityId).doubleValue(),
+                        this.capacity.get(reservedParkingFacilityId)));
             }
         }
 //        log.info(produceOverallStats());
@@ -443,6 +488,20 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             for (Id<ActivityFacility> parkingFacilityId : parkingFacilityIds) {
                 this.occupation.get(parkingFacilityId).decrement();
 
+                ParkingFacility parkingFacility = this.parkingFacilities.get(parkingFacilityId);
+                Link link = this.network.getLinks().get(parkingFacility.getLinkId());
+
+                // write parking occupancy stats
+                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
+                        link.getId(),
+                        link.getFromNode().getCoord(),
+                        link.getToNode().getCoord(),
+                        parkingFacility.getId(),
+                        parkingFacility.getParkingType(),
+                        parkingFacility.getCoord(),
+                        this.occupation.get(parkingFacilityId).doubleValue(),
+                        this.capacity.get(parkingFacilityId)));
+
                 // add facility to quadtree if missing
                 if (!this.availableParkingFacilityQuadTree.values().contains(parkingFacilityId)) {
                     addParkingFacilityFromQuadTrees(this.parkingFacilities.get(parkingFacilityId));
@@ -452,13 +511,39 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
         // check illegal facilities
         if (this.parkingLocationsIllegal.containsKey(vehicleId)) {
-            this.parkingLocationsIllegal.remove(vehicleId);
+            Id<Link> linkId = this.parkingLocationsIllegal.remove(vehicleId);
+            Link link = this.network.getLinks().get(linkId);
+
+            // write parking occupancy stats
+            this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
+                    link.getId(),
+                    link.getFromNode().getCoord(),
+                    link.getToNode().getCoord(),
+                    Id.create("illegal", ActivityFacility.class),
+                    "illegal",
+                    this.network.getLinks().get(linkId).getCoord(),
+                    this.parkingLocationsIllegal.size(),
+                    Double.NaN));
+
             foundVehicle = true;
         }
 
         // check outside facilities
         if (this.parkingLocationsOutsideFacilities.containsKey(vehicleId)) {
-            this.parkingLocationsOutsideFacilities.remove(vehicleId);
+            Id<Link> linkId = this.parkingLocationsOutsideFacilities.remove(vehicleId);
+            Link link = this.network.getLinks().get(linkId);
+
+            // write parking occupancy stats
+            this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
+                    link.getId(),
+                    link.getFromNode().getCoord(),
+                    link.getToNode().getCoord(),
+                    Id.create("outside", ActivityFacility.class),
+                    "outside",
+                    this.network.getLinks().get(linkId).getCoord(),
+                    this.parkingLocationsOutsideFacilities.size(),
+                    Double.NaN));
+
             foundVehicle = true;
         }
 
@@ -469,13 +554,15 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
     @Override
     public List<String> produceStatistics() {
         List<String> stats = new ArrayList<>();
-        for (Entry<Id<ActivityFacility>, MutableLong> e : this.occupation.entrySet()) {
-            Id<Link> linkId = this.parkingFacilities.get(e.getKey()).getLinkId();
-            double capacity = this.parkingFacilities.get(e.getKey()).getActivityOptions()
-                    .get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
-            String s = linkId.toString() + ";" + e.getKey().toString() + ";" + capacity + ";" + e.getValue().toString();
-            stats.add(s);
-        }
+//        ParkingStatsWriter writer = new ParkingStatsWriter();
+//        stats.add()
+//        for (Entry<Id<ActivityFacility>, MutableLong> e : this.occupation.entrySet()) {
+//            Id<Link> linkId = this.parkingFacilities.get(e.getKey()).getLinkId();
+//            double capacity = this.parkingFacilities.get(e.getKey()).getActivityOptions()
+//                    .get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
+//            String s = linkId.toString() + ";" + e.getKey().toString() + ";" + capacity + ";" + e.getValue().toString();
+//            stats.add(s);
+//        }
         return stats;
     }
 
@@ -566,6 +653,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         this.parkingLocationsOutsideFacilities.clear();
         this.availableParkingFacilityQuadTree.clear();
         this.availableParkingFacilityQuadTreeByType.values().forEach(QuadTree::clear);
+        this.parkingOccupancyStats.clear();
 
         for (Id<ActivityFacility> parkingId : this.parkingFacilities.keySet()) {
 
@@ -585,7 +673,18 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        this.reset(event.getIteration());
+        int iteration = event.getIteration();
+        // write out stats
+        ParkingOccupancyStatsWriter writer = new ParkingOccupancyStatsWriter(this.parkingOccupancyStats);
+        String outputPath = event.getServices().getControlerIO().getIterationPath(iteration) +
+                "/" + iteration + ".parking_occupancy_stats.csv";
+        try {
+            writer.write(outputPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        this.reset(iteration);
     }
 
 
