@@ -9,18 +9,22 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariabl
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.examples.zurich_parking.mode_choice.utilities.variables.ZurichParkingCarVariables;
 import org.eqasim.examples.zurich_parking.parking.ParkingListener;
+import org.eqasim.examples.zurich_parking.parking.manager.facilities.ZurichBlueZoneParking;
 import org.eqasim.examples.zurich_parking.parking.manager.facilities.ZurichParkingGarage;
+import org.eqasim.examples.zurich_parking.parking.manager.facilities.ZurichWhiteZoneParking;
 import org.eqasim.switzerland.mode_choice.parameters.SwissCostParameters;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
+import org.matsim.contrib.parking.parkingsearch.manager.facilities.BlueZoneParking;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacilityType;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.WhiteZoneParking;
@@ -44,8 +48,8 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 	private final ParkingRouter router;
 	private final Scenario scenario;
 
-	private final Map<Id<ActivityFacility>, ParkingFacility> garageFacilities = new HashMap<>();
-	private QuadTree<ParkingFacility> garageFacilitiesQuadTree;
+	private final Map<String, Map<Id<ActivityFacility>, ParkingFacility>> parkingFacilitiesByType = new HashMap<>();
+	private Map<String, QuadTree<Id<ActivityFacility>>> parkingFacilityQuadTreeByType = null;
 
 	private static final Logger log = Logger.getLogger(ActivityFacilitiesImpl.class);
 	private final Random random = new Random(1);
@@ -65,19 +69,44 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 
 		// populate garage facilities map
 		for (ActivityFacility facility : scenario.getActivityFacilities().getFacilitiesForActivityType(ParkingUtils.PARKACTIVITYTYPE).values()) {
-			if (facility.getAttributes().getAttribute("parkingFacilityType").toString().equals(ParkingFacilityType.Garage.toString())) {
 
-				// create a garage parking object
-				Id<ActivityFacility> parkingId = facility.getId();
-				Coord parkingCoord = facility.getCoord();
-				Id<Link> parkingLinkId = facility.getLinkId();
-				double parkingCapacity = facility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
-				double maxParkingDuration = Double.parseDouble(facility.getAttributes().getAttribute("maxParkingDuration").toString());
+			Id<ActivityFacility> parkingId = facility.getId();
+			Coord parkingCoord = facility.getCoord();
+			Id<Link> parkingLinkId = facility.getLinkId();
+			org.eqasim.examples.zurich_parking.parking.manager.facilities.ParkingFacilityType parkingFacilityType = org.eqasim.examples.zurich_parking.parking.manager.facilities.ParkingFacilityType.valueOf(facility.getAttributes().getAttribute("parkingFacilityType").toString());
+			double maxParkingDuration = Double.parseDouble(facility.getAttributes().getAttribute("maxParkingDuration").toString());
+			double parkingCapacity = facility.getActivityOptions().get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
 
-				// add to map
-				ParkingFacility parkingFacility = new ZurichParkingGarage(parkingId, parkingCoord, parkingLinkId, parkingCapacity, maxParkingDuration);
-				this.garageFacilities.putIfAbsent(facility.getId(), parkingFacility);
+			ParkingFacility parkingFacility;
+
+			switch (parkingFacilityType) {
+				case BlueZone:
+					parkingFacility = new ZurichBlueZoneParking(parkingId, parkingCoord, parkingLinkId,
+							parkingCapacity, maxParkingDuration);
+					break;
+				case LowTariffWhiteZone:
+					parkingFacility = new ZurichWhiteZoneParking(parkingId, parkingCoord, parkingLinkId,
+							maxParkingDuration, org.eqasim.examples.zurich_parking.parking.manager.facilities.ParkingFacilityType.LowTariffWhiteZone.toString(), parkingCapacity);
+					break;
+				case HighTariffWhiteZone:
+					parkingFacility = new ZurichWhiteZoneParking(parkingId, parkingCoord, parkingLinkId,
+							maxParkingDuration, org.eqasim.examples.zurich_parking.parking.manager.facilities.ParkingFacilityType.HighTariffWhiteZone.toString(), parkingCapacity);
+					break;
+				case Garage:
+					parkingFacility = new ZurichParkingGarage(parkingId, parkingCoord, parkingLinkId,
+							parkingCapacity, maxParkingDuration);
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + parkingFacilityType.toString());
 			}
+
+			this.parkingFacilitiesByType.putIfAbsent(parkingFacilityType.toString(), new HashMap<>());
+			this.parkingFacilitiesByType.get(parkingFacilityType.toString()).putIfAbsent(facility.getId(), parkingFacility);
+		}
+
+		// build quadtree
+		if (this.parkingFacilityQuadTreeByType == null) {
+			this.buildQuadTree();
 		}
 	}
 
@@ -85,15 +114,17 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 		/* the method must be synchronized to ensure we only build one quadTree
 		 * in case that multiple threads call a method that requires the quadTree.
 		 */
-		if (this.garageFacilitiesQuadTree != null) {
+		if (this.parkingFacilityQuadTreeByType != null) {
 			return;
 		}
+
+		// get the range of the quadtrees to build based on network
 		double startTime = System.currentTimeMillis();
 		double minx = Double.POSITIVE_INFINITY;
 		double miny = Double.POSITIVE_INFINITY;
 		double maxx = Double.NEGATIVE_INFINITY;
 		double maxy = Double.NEGATIVE_INFINITY;
-		for (ParkingFacility n : this.garageFacilities.values()) {
+		for (Node n : this.scenario.getNetwork().getNodes().values()) {
 			if (n.getCoord().getX() < minx) { minx = n.getCoord().getX(); }
 			if (n.getCoord().getY() < miny) { miny = n.getCoord().getY(); }
 			if (n.getCoord().getX() > maxx) { maxx = n.getCoord().getX(); }
@@ -105,16 +136,24 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 		maxy += 1.0;
 		// yy the above four lines are problematic if the coordinate values are much smaller than one. kai, oct'15
 
-		log.info("building parking garage QuadTree for nodes: xrange(" + minx + "," + maxx + "); yrange(" + miny + "," + maxy + ")");
-		QuadTree<ParkingFacility> quadTree = new QuadTree<>(minx, miny, maxx, maxy);
-		for (ParkingFacility n : this.garageFacilities.values()) {
-			quadTree.put(n.getCoord().getX(), n.getCoord().getY(), n);
+		// build general quadtree by parking type
+		{
+			this.parkingFacilityQuadTreeByType = new HashMap<>();
+
+			for (String parkingFacilityType : this.parkingFacilitiesByType.keySet()) {
+
+				log.info("building parking garage QuadTree for nodes: xrange(" + minx + "," + maxx + "); yrange(" + miny + "," + maxy + ")");
+				QuadTree<Id<ActivityFacility>> quadTree = new QuadTree<>(minx, miny, maxx, maxy);
+				for (ParkingFacility f : this.parkingFacilitiesByType.get(parkingFacilityType).values()) {
+					quadTree.put(f.getCoord().getX(), f.getCoord().getY(), f.getId());
+				}
+				/* assign the quadTree at the very end, when it is complete.
+				 * otherwise, other threads may already start working on an incomplete quadtree
+				 */
+				this.parkingFacilityQuadTreeByType.putIfAbsent(parkingFacilityType, quadTree);
+				log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
+			}
 		}
-		/* assign the quadTree at the very end, when it is complete.
-		 * otherwise, other threads may already start working on an incomplete quadtree
-		 */
-		this.garageFacilitiesQuadTree = quadTree;
-		log.info("Building parking garage QuadTree took " + ((System.currentTimeMillis() - startTime) / 1000.0) + " seconds.");
 	}
 
 	@Override
@@ -199,11 +238,8 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 						parkingSearchStartLinkId);
 
 				// 3 - Find the nearest parking garage to destination
-				if (this.garageFacilitiesQuadTree == null) {
-					this.buildQuadTree();
-				}
-				ParkingFacility parkingGarage = this.garageFacilitiesQuadTree.getClosest(destinationActivity.getCoord().getX(),
-						destinationActivity.getCoord().getY());
+				Id<ActivityFacility> parkingGarageId = this.parkingFacilityQuadTreeByType.get(ParkingFacilityType.Garage.toString()).getClosest(destinationActivity.getCoord().getX(), destinationActivity.getCoord().getY());
+				ParkingFacility parkingGarage = this.parkingFacilitiesByType.get(ParkingFacilityType.Garage.toString()).get(parkingGarageId);
 				double distanceNearestGarage_m = CoordUtils.calcEuclideanDistance(parkingGarage.getCoord(), destinationActivity.getCoord());
 
 				// 4 - Generate candidate parking options
@@ -246,7 +282,56 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 
 				// get search start time and coord
 				double onStreetSearchStartTime = trip.getDepartureTime() + networkRouteToDestination.getTravelTime().seconds();
-				Coord destinationCoord = trip.getDestinationActivity().getCoord();
+				Coord destinationCoord = destinationActivity.getCoord();
+
+				// Worst case (price-wise) is that we park in a high tariff white zone
+				Id<ActivityFacility> onStreetParkingId = this.parkingFacilityQuadTreeByType.get(ParkingFacilityType.HighTariffWhiteZone.toString()).getClosest(destinationActivity.getCoord().getX(), destinationActivity.getCoord().getY());
+				ParkingFacility onStreetParkingFacility = this.parkingFacilitiesByType.get(ParkingFacilityType.HighTariffWhiteZone.toString()).get(onStreetParkingId);
+				double distanceNearestOnStreetParkingFacility_m = CoordUtils.calcEuclideanDistance(onStreetParkingFacility.getCoord(), destinationActivity.getCoord());
+
+				// Check if we have a closer low-tariff white zone space
+				{
+					String candidateParkingType = ParkingFacilityType.LowTariffWhiteZone.toString();
+					Id<ActivityFacility> candidateParkingId = this.parkingFacilityQuadTreeByType.get(candidateParkingType).getClosest(destinationActivity.getCoord().getX(), destinationActivity.getCoord().getY());
+					ParkingFacility candidateParkingFacility = this.parkingFacilitiesByType.get(candidateParkingType).get(candidateParkingId);
+					double distanceNearestCandidateParkingFacility_m = CoordUtils.calcEuclideanDistance(candidateParkingFacility.getCoord(), destinationActivity.getCoord());
+
+					if (distanceNearestCandidateParkingFacility_m < distanceNearestOnStreetParkingFacility_m) {
+						onStreetParkingId = candidateParkingId;
+						onStreetParkingFacility = candidateParkingFacility;
+						distanceNearestOnStreetParkingFacility_m = distanceNearestCandidateParkingFacility_m;
+					}
+				}
+
+				// Estimate if we can park in a blue zone
+				{
+					boolean canParkInBlueZone = new ZurichBlueZoneParking(null, null, null, 1, 3600)
+							.isAllowedToPark(onStreetSearchStartTime, parkingEndTime, person.getId(), tripPurpose);
+
+					// if we can, check if we have closer blue zone parking
+					if (canParkInBlueZone) {
+						String candidateParkingType = ParkingFacilityType.BlueZone.toString();
+						Id<ActivityFacility> candidateParkingId = this.parkingFacilityQuadTreeByType.get(candidateParkingType).getClosest(destinationActivity.getCoord().getX(), destinationActivity.getCoord().getY());
+						ParkingFacility candidateParkingFacility = this.parkingFacilitiesByType.get(candidateParkingType).get(candidateParkingId);
+						double distanceNearestCandidateParkingFacility_m = CoordUtils.calcEuclideanDistance(candidateParkingFacility.getCoord(), destinationActivity.getCoord());
+
+						if (distanceNearestCandidateParkingFacility_m < distanceNearestOnStreetParkingFacility_m) {
+							onStreetParkingId = candidateParkingId;
+							onStreetParkingFacility = candidateParkingFacility;
+							distanceNearestOnStreetParkingFacility_m = distanceNearestCandidateParkingFacility_m;
+						}
+					}
+				}
+
+				// update route to destination to on-street parking candidate
+				networkRouteFromParkingSearchStartToDestination = this.router.getRouteFromParkingToDestination(
+						onStreetParkingFacility.getLinkId(),
+						carLeg.getDepartureTime().seconds() + networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds(),
+						networkRouteFromOriginToParkingSearchStart.getStartLinkId());
+				onStreetSearchStartTime = trip.getDepartureTime() +
+						networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds() +
+						networkRouteFromParkingSearchStartToDestination.getTravelTime().seconds();
+				destinationCoord = onStreetParkingFacility.getCoord();
 
 				// get estimate from listener
 				double onStreetCandidateSearchTime_sec = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
@@ -256,15 +341,13 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 
 				// compute parking costs
 				double onStreetArrivalTime = onStreetSearchStartTime + onStreetCandidateSearchTime_sec;
-				double onStreetCandidateParkingCost = new WhiteZoneParking(null, null, null,
-						30*3600, ParkingFacilityType.LowTariffWhiteZone.toString(), 1e3)
-						.getParkingCost(onStreetArrivalTime, parkingEndTime);
+				double onStreetCandidateParkingCost = onStreetParkingFacility.getParkingCost(onStreetArrivalTime, parkingEndTime);
 
 				double onStreetCandidateTravelTime_sec = networkRouteFromParkingSearchStartToDestination.getTravelTime().seconds() + onStreetCandidateSearchTime_sec;
 				double onStreetCandidateTravelDistance_m = networkRouteFromParkingSearchStartToDestination.getDistance() + onStreetCandidateSearchDistance_m;
 				selector.addCandidate(new ParkingCandidate("onStreet",
 						onStreetCandidateTravelTime_sec, onStreetCandidateTravelDistance_m,
-						0.0, 0.0,
+						onStreetCandidateSearchTime_sec, onStreetCandidateSearchDistance_m,
 						onStreetCandidateEgressTime_sec, onStreetCandidateEgressDistance_m,
 						onStreetCandidateParkingCost));
 
@@ -277,7 +360,8 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 				if (selectedCandidate.getName().equals("garage")) {
 					selectedSearchStrategy = ParkingSearchStrategy.DriveToGarage;
 					travelTime_min = (networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds() + selectedCandidate.getTravelTime()) / 60.0;
-					travelCost_MU = costParameters.carCost_CHF_km * (networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance()) / 1e3;
+					double travelDistance_m = networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance();
+					travelCost_MU = costParameters.carCost_CHF_km * travelDistance_m / 1e3;
 					accessEgressTime_min = 2 * selectedCandidate.getEgressTime() / 60.0;
 					parkingSearchTime_min = selectedCandidate.getSearchTime() / 60.0;
 					parkingCost_MU = selectedCandidate.getParkingCost();
@@ -286,14 +370,15 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 					carLeg.getAttributes().putAttribute("parkingFacilityLinkId", parkingGarage.getLinkId());
 				} else {
 					selectedSearchStrategy = ParkingSearchStrategy.Random;
-					travelTime_min = networkRouteToDestination.getTravelTime().seconds() / 60.0;
-					travelCost_MU = costParameters.carCost_CHF_km * (networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance()) / 1e3;
+					travelTime_min = (networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds() + selectedCandidate.getTravelTime() - selectedCandidate.getSearchTime()) / 60.0;
+					double travelDistance_m = networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance();
+					travelCost_MU = costParameters.carCost_CHF_km * travelDistance_m / 1e3;
 					accessEgressTime_min = 2 * selectedCandidate.getEgressTime() / 60.0;
 					parkingSearchTime_min = selectedCandidate.getSearchTime() / 60.0;
 					parkingCost_MU = selectedCandidate.getParkingCost();
 					carLeg.getAttributes().putAttribute("parkingSearchStrategy", selectedSearchStrategy.toString());
-					carLeg.getAttributes().removeAttribute("parkingFacilityId");
-					carLeg.getAttributes().removeAttribute("parkingFacilityLinkId");
+					carLeg.getAttributes().putAttribute("parkingFacilityId", onStreetParkingFacility.getId());
+					carLeg.getAttributes().putAttribute("parkingFacilityLinkId", onStreetParkingFacility.getLinkId());
 				}
 			}
 			// else, throw error
