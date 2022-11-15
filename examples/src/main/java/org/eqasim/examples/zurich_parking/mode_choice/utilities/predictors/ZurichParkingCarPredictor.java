@@ -264,7 +264,7 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 				double onStreetCandidateTravelDistance_m = networkRouteFromParkingSearchStartToDestination.getDistance() + onStreetCandidateSearchDistance_m;
 				selector.addCandidate(new ParkingCandidate("onStreet",
 						onStreetCandidateTravelTime_sec, onStreetCandidateTravelDistance_m,
-						0.0, 0.0,
+						onStreetCandidateSearchTime_sec, onStreetCandidateSearchDistance_m,
 						onStreetCandidateEgressTime_sec, onStreetCandidateEgressDistance_m,
 						onStreetCandidateParkingCost));
 
