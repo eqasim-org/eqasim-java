@@ -22,12 +22,12 @@ public class ZurichParkingModeParameters extends SwissModeParameters {
 		parameters.car.alpha_u = 0.827;
 		parameters.car.betaTravelTime_u_min = -0.067;
 
-		parameters.car.constantAccessEgressWalkTime_min = 4.0;
-		parameters.car.constantParkingSearchPenalty_min = 4.0;
+//		parameters.car.constantAccessEgressWalkTime_min = 4.0;
+//		parameters.car.constantParkingSearchPenalty_min = 4.0;
 
-//		Sebastian thesis version
-//		parameters.car.constantAccessEgressWalkTime_min = 5.0;
-//		parameters.car.constantParkingSearchPenalty_min = 6.0;
+		// Sebastian thesis version
+		parameters.car.constantAccessEgressWalkTime_min = 5.0;
+		parameters.car.constantParkingSearchPenalty_min = 6.0;
 
 		// Car parking parameters
 		parameters.carParking.betaParkingSearchTime_u_min = -0.067;
@@ -43,25 +43,25 @@ public class ZurichParkingModeParameters extends SwissModeParameters {
 		parameters.pt.betaWaitingTime_u_min = -0.038;
 		parameters.pt.betaAccessEgressTime_u_min = -0.08;
 
-		// Bike
-		parameters.bike.alpha_u = 0.344;
-		parameters.bike.betaTravelTime_u_min = -0.09;
-		parameters.bike.betaAgeOver18_u_a = -0.049;
-
-//		// Bike: Sebastian thesis version
-//		parameters.bike.alpha_u = -0.1;
-//		parameters.bike.betaTravelTime_u_min = -0.081;
+//		// Bike
+//		parameters.bike.alpha_u = 0.344;
+//		parameters.bike.betaTravelTime_u_min = -0.09;
 //		parameters.bike.betaAgeOver18_u_a = -0.049;
+
+		// Bike: Sebastian thesis version
+		parameters.bike.alpha_u = -0.1;
+		parameters.bike.betaTravelTime_u_min = -0.081;
+		parameters.bike.betaAgeOver18_u_a = -0.049;
 
 		parameters.swissBike.betaStatedPreferenceRegion3_u = -0.366;
 
-		// Walk
-		parameters.walk.alpha_u = 1.3;
-		parameters.walk.betaTravelTime_u_min = -0.141;
-
-//		// Walk: Sebastian thesis version
-//		parameters.walk.alpha_u = 0.63;
+//		// Walk
+//		parameters.walk.alpha_u = 1.3;
 //		parameters.walk.betaTravelTime_u_min = -0.141;
+
+		// Walk: Sebastian thesis version
+		parameters.walk.alpha_u = 0.63;
+		parameters.walk.betaTravelTime_u_min = -0.141;
 
 		return parameters;
 	}
