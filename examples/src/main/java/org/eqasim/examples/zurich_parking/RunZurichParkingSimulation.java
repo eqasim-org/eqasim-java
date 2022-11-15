@@ -6,6 +6,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.examples.zurich_parking.analysis.parking.ParkingOccupancyListener;
 import org.eqasim.examples.zurich_parking.analysis.parking.ParkingSearchMetricsListener;
 import org.eqasim.examples.zurich_parking.mode_choice.ZurichParkingModule;
 import org.eqasim.examples.zurich_parking.parking.ParkingListener;
@@ -123,8 +124,8 @@ public class RunZurichParkingSimulation {
 							.asEagerSingleton();
 					bind(ParkingSearchManager.class).to(ZurichParkingManager.class).asEagerSingleton();
 					this.install(new ParkingSearchQSimModule());
-					addControlerListenerBinding().to(org.matsim.contrib.parking.parkingsearch.evaluation.ParkingListener.class);
-					addControlerListenerBinding().to(ZurichParkingManager.class);
+//					addControlerListenerBinding().to(org.matsim.contrib.parking.parkingsearch.evaluation.ParkingListener.class);
+					addControlerListenerBinding().to(ParkingOccupancyListener.class);
 					bind(ParkingRouter.class).to(WithinDayParkingRouter.class);
 //					bind(VehicleTeleportationLogic.class).to(VehicleTeleportationToNearbyParking.class);
 					bind(VehicleTeleportationLogic.class).to(NoVehicleTeleportationLogic.class);

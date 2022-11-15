@@ -40,13 +40,10 @@ import org.matsim.contrib.parking.parkingsearch.events.ParkingEvent;
 import org.matsim.contrib.parking.parkingsearch.manager.ParkingSearchManager;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.controler.events.IterationEndsEvent;
-import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -54,7 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author  ctchervenkov
  *
  */
-public class ZurichParkingManager implements ParkingSearchManager, IterationEndsListener {
+public class ZurichParkingManager implements ParkingSearchManager {
 
     // parking facility information
     protected Map<Id<ActivityFacility>, ParkingFacility> parkingFacilities = new HashMap<>();
@@ -83,8 +80,10 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
     protected Network network;
     protected EventsManager events;
 
-//    private List<ParkingReservationLog> parkingReservationLog = new LinkedList<>();
-    private Collection<ParkingOccupancyStats> parkingOccupancyStats = new LinkedList<>();
+    //    private List<ParkingReservationLog> parkingReservationLog = new LinkedList<>();
+    private double binSize = 900;
+    private Map<Double, Map<Id<ActivityFacility>, ParkingOccupancyStats>> parkingOccupancyStats = new ConcurrentHashMap<>();
+//    private Collection<ParkingOccupancyStats> parkingOccupancyStats = Collections.synchronizedList(new LinkedList<>());
 
 
     @Inject
@@ -94,6 +93,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         this.vehiclesPerVehicle = ((int) Math.floor(1.0 / this.sampleSize));
         this.network = scenario.getNetwork();
         this.events = events;
+
 
         // fill priority list
         parkingFacilityTypePriorityList.add(ParkingFacilityType.BlueZone.toString());
@@ -146,6 +146,15 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             // fill occupancy container
             this.occupation.putIfAbsent(parkingId, new MutableLong(0));
             this.capacity.putIfAbsent(parkingId, parkingCapacity);
+
+            // store occupancy stats
+            this.parkingOccupancyStats.putIfAbsent(0.0, new ConcurrentHashMap<>());
+            this.parkingOccupancyStats.get(0.0).putIfAbsent(parkingId,
+                    new ParkingOccupancyStats(0.0,
+                            parkingId,
+                            parkingFacilityType.toString(),
+                            this.occupation.get(parkingId).doubleValue(),
+                            this.capacity.get(parkingId)));
         }
 
         // build quad tree
@@ -418,57 +427,37 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
                 isFirst = false;
             }
             if (reservedParkingFacilityId.toString().equals("outside")) {
+
                 this.parkingLocationsOutsideFacilities.put(vehicleId, linkId);
 
-                Link link = this.network.getLinks().get(linkId);
-
-                // write parking occupancy stats
-                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
-                        link.getId(),
-                        link.getFromNode().getCoord(),
-                        link.getToNode().getCoord(),
-                        reservedParkingFacilityId,
-                        "outside",
-                        this.network.getLinks().get(linkId).getCoord(),
-                        this.parkingLocationsOutsideFacilities.size(),
-                        Double.NaN));
-
             } else if (reservedParkingFacilityId.toString().equals("illegal")) {
+
                 this.parkingLocationsIllegal.put(vehicleId, linkId);
-
-                Link link = this.network.getLinks().get(linkId);
-
-                // write parking occupancy stats
-                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
-                        link.getId(),
-                        link.getFromNode().getCoord(),
-                        link.getToNode().getCoord(),
-                        reservedParkingFacilityId,
-                        "illegal",
-                        this.network.getLinks().get(linkId).getCoord(),
-                        this.parkingLocationsOutsideFacilities.size(),
-                        Double.NaN));
 
             } else {
                 this.parkingLocations.putIfAbsent(vehicleId, new LinkedList<>());
                 this.parkingLocations.get(vehicleId).add(reservedParkingFacilityId);
 
-                ParkingFacility parkingFacility = this.parkingFacilities.get(reservedParkingFacilityId);
-                Link link = this.network.getLinks().get(parkingFacility.getLinkId());
-
                 // write parking occupancy stats
-                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
-                        link.getId(),
-                        link.getFromNode().getCoord(),
-                        link.getToNode().getCoord(),
-                        parkingFacility.getId(),
-                        parkingFacility.getParkingType(),
-                        parkingFacility.getCoord(),
-                        this.occupation.get(reservedParkingFacilityId).doubleValue(),
-                        this.capacity.get(reservedParkingFacilityId)));
+                double binnedTime = Math.ceil(time / this.binSize) * this.binSize;
+
+                // add if missing
+                this.parkingOccupancyStats.putIfAbsent(binnedTime, new ConcurrentHashMap<>());
+                if (this.parkingOccupancyStats.get(binnedTime).size() < this.parkingFacilities.size()) {
+                    for (ParkingFacility parkingFacility : this.parkingFacilities.values()) {
+                        this.parkingOccupancyStats.get(binnedTime).putIfAbsent(parkingFacility.getId(),
+                                new ParkingOccupancyStats(binnedTime,
+                                        parkingFacility.getId(),
+                                        parkingFacility.getParkingType(),
+                                        this.occupation.get(parkingFacility.getId()).doubleValue(),
+                                        this.capacity.get(parkingFacility.getId())));
+                    }
+                }
+
+                // update occupancy values
+                this.parkingOccupancyStats.get(binnedTime).get(reservedParkingFacilityId).setOccupancy(this.occupation.get(reservedParkingFacilityId).doubleValue());
             }
         }
-//        log.info(produceOverallStats());
         return true;
     }
 
@@ -488,19 +477,24 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             for (Id<ActivityFacility> parkingFacilityId : parkingFacilityIds) {
                 this.occupation.get(parkingFacilityId).decrement();
 
-                ParkingFacility parkingFacility = this.parkingFacilities.get(parkingFacilityId);
-                Link link = this.network.getLinks().get(parkingFacility.getLinkId());
-
                 // write parking occupancy stats
-                this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
-                        link.getId(),
-                        link.getFromNode().getCoord(),
-                        link.getToNode().getCoord(),
-                        parkingFacility.getId(),
-                        parkingFacility.getParkingType(),
-                        parkingFacility.getCoord(),
-                        this.occupation.get(parkingFacilityId).doubleValue(),
-                        this.capacity.get(parkingFacilityId)));
+                double binnedTime = Math.ceil(time / this.binSize) * this.binSize;
+
+                // add if missing
+                this.parkingOccupancyStats.putIfAbsent(binnedTime, new ConcurrentHashMap<>());
+                if (this.parkingOccupancyStats.get(binnedTime).size() < this.parkingFacilities.size()) {
+                    for (ParkingFacility parkingFacility : this.parkingFacilities.values()) {
+                        this.parkingOccupancyStats.get(binnedTime).putIfAbsent(parkingFacility.getId(),
+                                new ParkingOccupancyStats(binnedTime,
+                                        parkingFacility.getId(),
+                                        parkingFacility.getParkingType(),
+                                        this.occupation.get(parkingFacility.getId()).doubleValue(),
+                                        this.capacity.get(parkingFacility.getId())));
+                    }
+                }
+
+                // update occupancy values
+                this.parkingOccupancyStats.get(binnedTime).get(parkingFacilityId).setOccupancy(this.occupation.get(parkingFacilityId).doubleValue());
 
                 // add facility to quadtree if missing
                 if (!this.availableParkingFacilityQuadTree.values().contains(parkingFacilityId)) {
@@ -512,111 +506,30 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
         // check illegal facilities
         if (this.parkingLocationsIllegal.containsKey(vehicleId)) {
             Id<Link> linkId = this.parkingLocationsIllegal.remove(vehicleId);
-            Link link = this.network.getLinks().get(linkId);
-
-            // write parking occupancy stats
-            this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
-                    link.getId(),
-                    link.getFromNode().getCoord(),
-                    link.getToNode().getCoord(),
-                    Id.create("illegal", ActivityFacility.class),
-                    "illegal",
-                    this.network.getLinks().get(linkId).getCoord(),
-                    this.parkingLocationsIllegal.size(),
-                    Double.NaN));
-
             foundVehicle = true;
         }
 
         // check outside facilities
         if (this.parkingLocationsOutsideFacilities.containsKey(vehicleId)) {
             Id<Link> linkId = this.parkingLocationsOutsideFacilities.remove(vehicleId);
-            Link link = this.network.getLinks().get(linkId);
-
-            // write parking occupancy stats
-            this.parkingOccupancyStats.add(new ParkingOccupancyStats(time,
-                    link.getId(),
-                    link.getFromNode().getCoord(),
-                    link.getToNode().getCoord(),
-                    Id.create("outside", ActivityFacility.class),
-                    "outside",
-                    this.network.getLinks().get(linkId).getCoord(),
-                    this.parkingLocationsOutsideFacilities.size(),
-                    Double.NaN));
-
             foundVehicle = true;
         }
 
-//        log.info(produceOverallStats());
         return foundVehicle;
     }
 
     @Override
     public List<String> produceStatistics() {
         List<String> stats = new ArrayList<>();
-//        ParkingStatsWriter writer = new ParkingStatsWriter();
-//        stats.add()
-//        for (Entry<Id<ActivityFacility>, MutableLong> e : this.occupation.entrySet()) {
-//            Id<Link> linkId = this.parkingFacilities.get(e.getKey()).getLinkId();
-//            double capacity = this.parkingFacilities.get(e.getKey()).getActivityOptions()
-//                    .get(ParkingUtils.PARKACTIVITYTYPE).getCapacity();
-//            String s = linkId.toString() + ";" + e.getKey().toString() + ";" + capacity + ";" + e.getValue().toString();
-//            stats.add(s);
-//        }
+        stats.add(ParkingOccupancyStatsWriter.formatHeader(";"));
+        log.info("Generating parking occupancy stats...");
+        for (double time : this.parkingOccupancyStats.keySet()) {
+            for (ParkingOccupancyStats item : this.parkingOccupancyStats.get(time).values()) {
+                stats.add(ParkingOccupancyStatsWriter.formatItem(item, ";"));
+            }
+        }
         return stats;
     }
-
-    private String produceOverallStats() {
-        double overallOccupancy = 0.0;
-        double overallCapacity = 0.0;
-
-        for (Id<ActivityFacility> facilityId : this.parkingFacilities.keySet()) {
-            overallOccupancy += this.occupation.getOrDefault(facilityId, new MutableLong(0)).doubleValue();
-            overallCapacity += this.capacity.getOrDefault(facilityId, 0.0);
-        }
-        return "Parked vehicles : " + (int) overallOccupancy +
-                "; Capacity: " + (int) overallCapacity +
-                "; Occupancy level: " + Math.round(overallOccupancy / overallCapacity * 1000.0) / 10.0 ;
-    }
-
-    private String produceDetailedStats() {
-        List<String> stats = new ArrayList<>();
-
-        for (String parkingType : this.parkingFacilitiesByType.keySet()) {
-
-            StringBuilder s = new StringBuilder();
-            s.append(parkingType).append(" ");
-
-            double occupancy = 0.0;
-            double capacity = 0.0;
-
-            for (Id<ActivityFacility> facilityId : this.parkingFacilitiesByType.get(parkingType).keySet()) {
-                occupancy += this.occupation.get(facilityId).doubleValue();
-                capacity += this.capacity.get(facilityId);
-            }
-
-            s.append("parked: ").append((int) occupancy).append(", ");
-            s.append("capacity: ").append((int) capacity).append(", ");
-            s.append("occupancy level: ").append(Math.round(occupancy / capacity * 1000.0) / 10.0);
-
-            stats.add(s.toString());
-        }
-
-        return String.join("; ", stats);
-    }
-
-    private String produceNumberOfFacilitiesInQuadtree() {
-        List<String> stats = new ArrayList<>();
-
-        for (String parkingType : this.availableParkingFacilityQuadTreeByType.keySet()) {
-            int numFacilities = this.availableParkingFacilityQuadTreeByType.get(parkingType).size();
-            String s = parkingType + " -  number facilities: " + numFacilities;
-            stats.add(s);
-        }
-
-        return String.join("; ", stats);
-    }
-
 
     public double getNrOfAllParkingSpacesOnLink (Id<Link> linkId){
         double allSpaces = 0;
@@ -645,6 +558,10 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
 
     @Override
     public void reset(int iteration) {
+
+        log.info("Parking occupancy stats size:" + this.parkingOccupancyStats.size());
+        log.warn("Resetting data!");
+
         // clear containers
         this.occupation.clear();
         this.parkingReservation.clear();
@@ -668,25 +585,7 @@ public class ZurichParkingManager implements ParkingSearchManager, IterationEnds
             this.availableParkingFacilityQuadTree.put(x, y, parkingId);
             this.availableParkingFacilityQuadTreeByType.get(parkingType).put(x, y, parkingId);
         }
-//        log.info(produceDetailedStats());
     }
-
-    @Override
-    public void notifyIterationEnds(IterationEndsEvent event) {
-        int iteration = event.getIteration();
-        // write out stats
-        ParkingOccupancyStatsWriter writer = new ParkingOccupancyStatsWriter(this.parkingOccupancyStats);
-        String outputPath = event.getServices().getControlerIO().getIterationPath(iteration) +
-                "/" + iteration + ".parking_occupancy_stats.csv";
-        try {
-            writer.write(outputPath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        this.reset(iteration);
-    }
-
 
     private class ParkingReservationLog {
         private double time;
