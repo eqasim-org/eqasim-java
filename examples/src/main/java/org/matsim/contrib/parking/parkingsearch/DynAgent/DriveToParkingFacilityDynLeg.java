@@ -20,7 +20,6 @@
 package org.matsim.contrib.parking.parkingsearch.DynAgent;
 
 import org.apache.log4j.Logger;
-import org.eqasim.examples.zurich_parking.parking.manager.ZurichParkingManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.dynagent.DriverDynLeg;
@@ -36,7 +35,6 @@ import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.List;
-import java.util.Optional;
 
 public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
     protected final NetworkRoute route;
@@ -54,15 +52,14 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
     private final Id<ActivityFacility> parkingFacilityId;
     private final double departFromParkingFacilityTime;
     private final String tripPurpose;
-    private double parkingSearchStartTime;
-
-    private double parkingSearchStartTimeLimit = 0.5 * 3600.0;
+    private double parkingSearchStartTime = 0.0;
+    private final double parkingSearchTimeLimit;
 
     private static final Logger log = Logger.getLogger(DriveToParkingFacilityDynLeg.class);
 
     public DriveToParkingFacilityDynLeg(String mode, NetworkRoute route, ParkingSearchLogic logic, ParkingSearchManager parkingManager,
                                         Id<Vehicle> vehicleId, MobsimTimer timer, EventsManager events, Id<ActivityFacility> parkingFacilityId,
-                                        double departFromParkingFacilityTime, String tripPurpose) {
+                                        double departFromParkingFacilityTime, String tripPurpose, double parkingSearchTimeLimit) {
         this.mode = mode;
         this.route = route;
         this.currentLinkIdx = -1;
@@ -75,6 +72,7 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
         this.parkingFacilityId = parkingFacilityId;
         this.departFromParkingFacilityTime = departFromParkingFacilityTime;
         this.tripPurpose = tripPurpose;
+        this.parkingSearchTimeLimit = parkingSearchTimeLimit;
     }
 
     @Override
@@ -95,8 +93,8 @@ public class DriveToParkingFacilityDynLeg implements DriverDynLeg {
             }
         } else {
             // if we have been searching more than 30 minutes, park illegally
-            if (currentTime - parkingSearchStartTime > parkingSearchStartTimeLimit) {
-                log.warn("Vehicle " + vehicleId.toString() + " has been searching for over " + parkingSearchStartTimeLimit + " seconds and is now parking illegally.");
+            if (currentTime - parkingSearchStartTime > parkingSearchTimeLimit) {
+                log.warn("Vehicle " + vehicleId.toString() + " has been searching for over " + parkingSearchTimeLimit + " seconds and is now parking illegally.");
                 hasFoundParking = parkingManager.reserveSpaceAtParkingFacilityIdIfVehicleCanParkHere(Id.create("illegal", ActivityFacility.class), currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
             } else {
                 hasFoundParking = parkingManager.reserveSpaceAtLinkIdIfVehicleCanParkHere(currentLinkId, currentTime, departFromParkingFacilityTime, vehicleId, tripPurpose);
