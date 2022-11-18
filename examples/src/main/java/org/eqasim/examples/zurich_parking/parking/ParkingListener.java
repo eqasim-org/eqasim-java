@@ -121,6 +121,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
             // check if person was previously searching for parking
             if (personIdParkingSearchTime.containsKey(personId)) {
                 // extract relevant search variables
+                double parkingSearchStartTime = personIdParkingSearchStartTime.remove(personId);
                 double parkingSearchTime = personIdParkingSearchTime.remove(personId);
                 double parkingSearchDistance = personIdParkingSearchDistance.remove(personId);
                 Coord parkingSearchStartCoord = personIdParkingSearchStartCoord.remove(personId);
@@ -129,6 +130,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                 double arrivalTime = event.getTime();
                 Coord arrivalCoord = network.getLinks().get(event.getLinkId()).getFromNode().getCoord();
 
+                // egress time and distance
                 double egressTime = arrivalTime - personIdParkingTime.remove(personId);
                 double egressDistance = CoordUtils.calcEuclideanDistance(arrivalCoord, personIdParkingCoord.remove(personId));
 
@@ -142,7 +144,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                     Id<Node> nodeId = node.getId();
 
                     // compute time bin
-                    int timeBin = getTimeBin(startTime, arrivalTime, interval);
+                    int timeBin = getTimeBin(startTime, parkingSearchStartTime, interval);
 
                     // population maps
                     parkingSearchTimes.get(nodeId)[timeBin] += parkingSearchTime;
