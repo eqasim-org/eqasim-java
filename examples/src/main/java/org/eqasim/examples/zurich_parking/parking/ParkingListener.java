@@ -105,7 +105,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
 
             // check if person is in parking search phase
             if (personIdParkingSearchStartTime.containsKey(personId)) {
-                double searchTime = event.getTime() - personIdParkingSearchStartTime.remove(personId);
+                double searchTime = event.getTime() - personIdParkingSearchStartTime.get(personId);
                 personIdParkingSearchTime.put(personId, searchTime);
 
                 // record the parking time
@@ -118,8 +118,9 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
         }
         // any other activity
         else {
-            // check if person was previously searching for parking
-            if (personIdParkingSearchTime.containsKey(personId)) {
+            // check if person was previously searching for parking and parked
+            if (personIdParkingSearchStartTime.containsKey(personId) &&
+                    personIdParkingSearchTime.containsKey(personId)) {
                 // extract relevant search variables
                 double parkingSearchStartTime = personIdParkingSearchStartTime.remove(personId);
                 double parkingSearchTime = personIdParkingSearchTime.remove(personId);
