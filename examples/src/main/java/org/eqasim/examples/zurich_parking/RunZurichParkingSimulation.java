@@ -60,6 +60,7 @@ public class RunZurichParkingSimulation {
 
 			// set parameters
 			parkingSearchConfigGroup.setParkingSearchStrategy(ParkingSearchStrategy.Random);
+			parkingSearchConfigGroup.setParkingSearchTimeLimit(30 * 60.0); // 30 min search limit
 
 			// add to config
 			config.addModule(parkingSearchConfigGroup);
@@ -152,7 +153,7 @@ public class RunZurichParkingSimulation {
 					// parking listener for mode choice
 					Vehicle2DriverEventHandler vehicle2DriverEventHandler = new Vehicle2DriverEventHandler();
 					ParkingListener parkingListener = new ParkingListener(vehicle2DriverEventHandler, new RoadNetwork(scenario.getNetwork()),
-							0.0, 30*3600.0, 3600.0, 500.0);
+							0.0, 30*3600.0, 1800.0, 500.0);
 
 					bind(ParkingListener.class).toInstance(parkingListener);
 					addEventHandlerBinding().toInstance(vehicle2DriverEventHandler);
