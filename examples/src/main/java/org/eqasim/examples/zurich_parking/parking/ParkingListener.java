@@ -25,9 +25,11 @@ import java.util.Map;
 public class ParkingListener implements StartParkingSearchEventHandler, LinkLeaveEventHandler,
         ActivityStartEventHandler, IterationEndsListener {
 
-    private final Map<Id<Person>, Double> personIdParkingSearchStart = new HashMap<>();
+    private final Map<Id<Person>, Double> personIdParkingSearchStartTime = new HashMap<>();
+    private final Map<Id<Person>, Coord> personIdParkingSearchStartCoord = new HashMap<>();
     private final Map<Id<Person>, Double> personIdParkingSearchTime = new HashMap<>();
     private final Map<Id<Person>, Double> personIdParkingSearchDistance = new HashMap<>();
+    private final Map<Id<Person>, Double> personIdMaxSearchRadius = new HashMap<>();
     private final Map<Id<Person>, Double> personIdParkingTime = new HashMap<>();
     private final Map<Id<Person>, Coord> personIdParkingCoord = new HashMap<>();
 
@@ -44,11 +46,11 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
     private final double endTime;
     private final double interval;
     private final int numberOfBins;
-    private double queryRadius;
+    private double minQueryRadius;
 
     @ Inject
     public ParkingListener(Vehicle2DriverEventHandler vehicle2DriverEventHandler, RoadNetwork network,
-                           double startTime, double endTime, double interval, double queryRadius) {
+                           double startTime, double endTime, double interval, double minQueryRadius) {
         this.vehicle2DriverEventHandler = vehicle2DriverEventHandler;
 
         this.startTime = startTime;
@@ -56,7 +58,7 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
         this.interval = interval;
         this.numberOfBins = (int) Math.floor((endTime - startTime) / interval);
         this.network = network;
-        this.queryRadius = queryRadius;
+        this.minQueryRadius = minQueryRadius;
 
         for (Id<Node> nodeId : network.getNodes().keySet()) {
             parkingSearchTimes.putIfAbsent(nodeId, new double[numberOfBins]);
@@ -70,18 +72,27 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
     @Override
     public void handleEvent(StartParkingSearchEvent event) {
         double time = event.getTime();
+        Coord coord = this.network.getLinks().get(event.getLinkId()).getCoord();
         Id<Person> personId = vehicle2DriverEventHandler.getDriverOfVehicle(event.getVehicleId());
-        personIdParkingSearchStart.putIfAbsent(personId, time);
+        personIdParkingSearchStartTime.putIfAbsent(personId, time);
         personIdParkingSearchDistance.putIfAbsent(personId, 0.0);
+        personIdParkingSearchStartCoord.putIfAbsent(personId, coord);
+        personIdMaxSearchRadius.putIfAbsent(personId, 0.0);
     }
 
     @Override
     public void handleEvent(LinkLeaveEvent event) {
         Id<Person> personId = vehicle2DriverEventHandler.getDriverOfVehicle(event.getVehicleId());
-        if (personIdParkingSearchStart.containsKey(personId)) {
+        if (personIdParkingSearchStartTime.containsKey(personId)) {
             double linkLength = this.network.getLinks().get(event.getLinkId()).getLength();
-            double distance = personIdParkingSearchDistance.get(personId);
-            personIdParkingSearchDistance.put(personId, distance + linkLength);
+            double previousDistance = personIdParkingSearchDistance.get(personId);
+            personIdParkingSearchDistance.put(personId, previousDistance + linkLength);
+
+            // update max search radius
+            Coord currentCoord = this.network.getLinks().get(event.getLinkId()).getToNode().getCoord();
+            double maxSearchRadius = this.personIdMaxSearchRadius.get(personId);
+            double currentSearchRadius = CoordUtils.calcEuclideanDistance(currentCoord, personIdParkingSearchStartCoord.get(personId));
+            this.personIdMaxSearchRadius.put(personId, Math.max(maxSearchRadius, currentSearchRadius));
         }
     }
 
@@ -89,11 +100,12 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
     public void handleEvent(ActivityStartEvent event) {
         Id<Person> personId = event.getPersonId();
 
+        // if person is interacting with parked vehicle
         if (event.getActType().equals(ParkingUtils.PARKACTIVITYTYPE)) {
 
             // check if person is in parking search phase
-            if (personIdParkingSearchStart.containsKey(personId)) {
-                double searchTime = event.getTime() - personIdParkingSearchStart.remove(personId);
+            if (personIdParkingSearchStartTime.containsKey(personId)) {
+                double searchTime = event.getTime() - personIdParkingSearchStartTime.remove(personId);
                 personIdParkingSearchTime.put(personId, searchTime);
 
                 // record the parking time
@@ -103,11 +115,15 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                 Coord parkingCoord = network.getLinks().get(event.getLinkId()).getToNode().getCoord();
                 personIdParkingCoord.put(personId, parkingCoord);
             }
-        } else {
+        }
+        // any other activity
+        else {
+            // check if person was previously searching for parking
             if (personIdParkingSearchTime.containsKey(personId)) {
                 // extract relevant search variables
                 double parkingSearchTime = personIdParkingSearchTime.remove(personId);
                 double parkingSearchDistance = personIdParkingSearchDistance.remove(personId);
+                Coord parkingSearchStartCoord = personIdParkingSearchStartCoord.remove(personId);
 
                 // arrival time and coord
                 double arrivalTime = event.getTime();
@@ -116,9 +132,12 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                 double egressTime = arrivalTime - personIdParkingTime.remove(personId);
                 double egressDistance = CoordUtils.calcEuclideanDistance(arrivalCoord, personIdParkingCoord.remove(personId));
 
+                // get query radius
+                double maxSearchRadius = personIdMaxSearchRadius.remove(personId) + 1.0; // +1 to be sure to include node
+                double queryRadius = Math.max(minQueryRadius, maxSearchRadius);
 
-                // get affected nodes within query radius
-                Collection<Node> nodes = network.getNearestNodes(arrivalCoord, queryRadius);
+                // get affected nodes around parking search start coordinate within query radius
+                Collection<Node> nodes = network.getNearestNodes(parkingSearchStartCoord, queryRadius);
                 for (Node node : nodes) {
                     Id<Node> nodeId = node.getId();
 
@@ -131,13 +150,9 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                     egressTimes.get(nodeId)[timeBin] += egressTime;
                     egressDistances.get(nodeId)[timeBin] += egressDistance;
                     arrivalCount.get(nodeId)[timeBin] += 1;
-
                 }
-
             }
         }
-
-
     }
 
     @Override
@@ -159,9 +174,11 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
     @Override
     public void reset(int iteration) {
         // clear all person maps
-        personIdParkingSearchStart.clear();
+        personIdParkingSearchStartTime.clear();
+        personIdParkingSearchStartCoord.clear();
         personIdParkingSearchTime.clear();
         personIdParkingSearchDistance.clear();
+        personIdMaxSearchRadius.clear();
         personIdParkingTime.clear();
         personIdParkingCoord.clear();
 
