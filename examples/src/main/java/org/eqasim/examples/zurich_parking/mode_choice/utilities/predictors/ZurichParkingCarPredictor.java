@@ -196,8 +196,9 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 				carLeg.getAttributes().putAttribute("parkingSearchStrategy", parkingSearchStrategy);
 				carLeg.getAttributes().putAttribute("parkingFacilityId", Id.create("outside", ActivityFacility.class));
 			}
-			// if Random, they need to search and pay for it
-			else if (parkingSearchStrategy.equals(ParkingSearchStrategy.Random.toString())) {
+			// if Random or DriveToGarage, they need to make a choice of strategy, search and pay for it
+			else if (parkingSearchStrategy.equals(ParkingSearchStrategy.Random.toString()) ||
+					parkingSearchStrategy.equals(ParkingSearchStrategy.DriveToGarage.toString())) {
 
 				// we need to choose whether to parking on street or in a parking garage
 				ParkingSearchStrategy selectedSearchStrategy = null;
