@@ -25,10 +25,8 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contrib.parking.parkingsearch.ParkingSearchStrategy;
 import org.matsim.contrib.parking.parkingsearch.ParkingUtils;
-import org.matsim.contrib.parking.parkingsearch.manager.facilities.BlueZoneParking;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacility;
 import org.matsim.contrib.parking.parkingsearch.manager.facilities.ParkingFacilityType;
-import org.matsim.contrib.parking.parkingsearch.manager.facilities.WhiteZoneParking;
 import org.matsim.contrib.parking.parkingsearch.routing.ParkingRouter;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.MultinomialLogitSelector;
@@ -249,8 +247,8 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 				// get parking end time (i.e. activity end time)
 				double parkingEndTime = trip.getDestinationActivity().getEndTime().orElse(30 * 3600.0);
 
-				// check if there is a garage option
-				if (distanceNearestGarage_m <= 1e3)  {
+				// always have a garage option
+				{
 					// get route to parking garage
 					NetworkRoute networkRouteToGarage = this.router.getRouteFromParkingToDestination(parkingGarage.getLinkId(),
 							carLeg.getDepartureTime().seconds() + networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds(),
