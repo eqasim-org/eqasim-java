@@ -373,7 +373,7 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 					carLeg.getAttributes().putAttribute("parkingFacilityId", parkingGarage.getId());
 					carLeg.getAttributes().putAttribute("parkingFacilityLinkId", parkingGarage.getLinkId());
 				} else {
-					selectedSearchStrategy = ParkingSearchStrategy.Random;
+					selectedSearchStrategy = ParkingSearchStrategy.DriveToGarage; // drive to facility actually
 					travelTime_min = (networkRouteFromOriginToParkingSearchStart.getTravelTime().seconds() + selectedCandidate.getTravelTime() - selectedCandidate.getSearchTime()) / 60.0;
 					double travelDistance_m = networkRouteFromOriginToParkingSearchStart.getDistance() + selectedCandidate.getTravelDistance();
 					travelCost_MU = costParameters.carCost_CHF_km * travelDistance_m / 1e3;
