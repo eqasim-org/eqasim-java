@@ -35,7 +35,6 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
 
     private final Map<Id<Node>, double[]> parkingSearchTimes = new HashMap<>();
     private final Map<Id<Node>, double[]> parkingSearchDistances = new HashMap<>();
-    private final Map<Id<Node>, double[]> egressTimes = new HashMap<>();
     private final Map<Id<Node>, double[]> egressDistances = new HashMap<>();
 
     private final Map<Id<Node>, double[]> arrivalCount = new HashMap<>();
@@ -63,7 +62,6 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
         for (Id<Node> nodeId : network.getNodes().keySet()) {
             parkingSearchTimes.putIfAbsent(nodeId, new double[numberOfBins]);
             parkingSearchDistances.putIfAbsent(nodeId, new double[numberOfBins]);
-            egressTimes.putIfAbsent(nodeId, new double[numberOfBins]);
             egressDistances.putIfAbsent(nodeId, new double[numberOfBins]);
             arrivalCount.putIfAbsent(nodeId, new double[numberOfBins]);
         }
@@ -127,13 +125,8 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                 double parkingSearchDistance = personIdParkingSearchDistance.remove(personId);
                 Coord parkingSearchStartCoord = personIdParkingSearchStartCoord.remove(personId);
 
-                // arrival time and coord
-                double arrivalTime = event.getTime();
-                Coord arrivalCoord = network.getLinks().get(event.getLinkId()).getFromNode().getCoord();
-
-                // egress time and distance
-                double egressTime = arrivalTime - personIdParkingTime.remove(personId);
-                double egressDistance = CoordUtils.calcEuclideanDistance(arrivalCoord, personIdParkingCoord.remove(personId));
+                // egress distance
+                double egressDistance = CoordUtils.calcEuclideanDistance(parkingSearchStartCoord, personIdParkingCoord.remove(personId));
 
                 // get query radius
                 double maxSearchRadius = personIdMaxSearchRadius.remove(personId) + 1.0; // +1 to be sure to include node
@@ -150,7 +143,6 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                     // population maps
                     parkingSearchTimes.get(nodeId)[timeBin] += parkingSearchTime;
                     parkingSearchDistances.get(nodeId)[timeBin] += parkingSearchDistance;
-                    egressTimes.get(nodeId)[timeBin] += egressTime;
                     egressDistances.get(nodeId)[timeBin] += egressDistance;
                     arrivalCount.get(nodeId)[timeBin] += 1;
                 }
@@ -167,7 +159,6 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
                 if (arrivalCount.get(nodeId)[i] > 0) {
                     parkingSearchTimes.get(nodeId)[i] /= arrivalCount.get(nodeId)[i];
                     parkingSearchDistances.get(nodeId)[i] /= arrivalCount.get(nodeId)[i];
-                    egressTimes.get(nodeId)[i] /= arrivalCount.get(nodeId)[i];
                     egressDistances.get(nodeId)[i] /= arrivalCount.get(nodeId)[i];
                 }
             }
@@ -188,14 +179,12 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
         // clear all node maps
         parkingSearchTimes.clear();
         parkingSearchDistances.clear();
-        egressTimes.clear();
         egressDistances.clear();
         arrivalCount.clear();
 
         for (Id<Node> nodeId : network.getNodes().keySet()) {
             parkingSearchTimes.putIfAbsent(nodeId, new double[numberOfBins]);
             parkingSearchDistances.putIfAbsent(nodeId, new double[numberOfBins]);
-            egressTimes.putIfAbsent(nodeId, new double[numberOfBins]);
             egressDistances.putIfAbsent(nodeId, new double[numberOfBins]);
             arrivalCount.putIfAbsent(nodeId, new double[numberOfBins]);
         }
@@ -223,16 +212,6 @@ public class ParkingListener implements StartParkingSearchEventHandler, LinkLeav
     public double getParkingSearchDistanceAtCoordAtTime(Coord coord, double time) {
         int timeBin = getTimeBin(startTime, time, interval);
         return getParkingSearchDistancesAtCoord(coord)[timeBin];
-    }
-
-    public double[] getEgressTimesAtCoord(Coord coord) {
-        Id<Node> nodeId = network.getNearestNode(coord).getId();
-        return egressTimes.get(nodeId);
-    }
-
-    public double getEgressTimeAtCoordAtTime(Coord coord, double time) {
-        int timeBin = getTimeBin(startTime, time, interval);
-        return getEgressTimesAtCoord(coord)[timeBin];
     }
 
     public double[] getEgressDistancesAtCoord(Coord coord) {

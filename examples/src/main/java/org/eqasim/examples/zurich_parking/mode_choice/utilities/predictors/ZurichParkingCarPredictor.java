@@ -16,6 +16,7 @@ import org.eqasim.switzerland.mode_choice.parameters.SwissCostParameters;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Activity;
@@ -336,8 +337,13 @@ public class ZurichParkingCarPredictor extends CachedVariablePredictor<ZurichPar
 				// get estimate from listener
 				double onStreetCandidateSearchTime_sec = parkingListener.getParkingSearchTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
 				double onStreetCandidateSearchDistance_m = parkingListener.getParkingSearchDistanceAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
-				double onStreetCandidateEgressTime_sec = parkingListener.getEgressTimeAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
-				double onStreetCandidateEgressDistance_m = parkingListener.getEgressDistanceAtCoordAtTime(destinationCoord, onStreetSearchStartTime);
+				double onStreetCandidateEgressDistance_m = Math.max(distanceNearestOnStreetParkingFacility_m,
+						parkingListener.getEgressDistanceAtCoordAtTime(destinationCoord, onStreetSearchStartTime));
+
+				// compute walk time
+				double beelineDistanceFactor = scenario.getConfig().plansCalcRoute().getModeRoutingParams().get(TransportMode.walk).getBeelineDistanceFactor();
+				double walkSpeed = scenario.getConfig().plansCalcRoute().getModeRoutingParams().get(TransportMode.walk).getTeleportedModeSpeed();
+				double onStreetCandidateEgressTime_sec = onStreetCandidateEgressDistance_m * beelineDistanceFactor / walkSpeed;
 
 				// compute parking costs
 				double onStreetArrivalTime = onStreetSearchStartTime + onStreetCandidateSearchTime_sec;
