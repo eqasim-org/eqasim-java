@@ -48,7 +48,7 @@ public class ZurichParkingGarage extends ActivityFacilityImpl implements Parking
     public double getParkingCost(double startTime, double endTime) {
         double parkingDuration_hour = (endTime - startTime) / 3600.0;
         double distanceToReferenceCoordKm = CoordUtils.calcEuclideanDistance(this.getCoord(), coordReference) / 1e3;
-        return (hourlyRateBase + hourlyRateDistanceCoefficient * distanceToReferenceCoordKm) * parkingDuration_hour;
+        return Math.max(hourlyRateBase + hourlyRateDistanceCoefficient * distanceToReferenceCoordKm, 0.0) * parkingDuration_hour;
     }
 
     @Override
