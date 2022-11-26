@@ -13,6 +13,7 @@ import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.pt.routes.TransitPassengerRoute;
 
+import com.google.common.base.Verify;
 import com.google.inject.Inject;
 
 public class NantesPtCostModel implements CostModel {
@@ -23,6 +24,8 @@ public class NantesPtCostModel implements CostModel {
 	public NantesPtCostModel(IDFPersonPredictor personPredictor, IDFCostParameters parameters) {
 		this.personPredictor = personPredictor;
 		this.parameters = parameters;
+
+		Verify.verify(Double.isFinite(parameters.ptCost_EUR_h), "Hourly cost must be given");
 	}
 
 	@Override
