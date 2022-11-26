@@ -4,10 +4,12 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonAdapter;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.epsilon.GumbelEpsilonProvider;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
-import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPassengerUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
 import org.matsim.core.config.groups.GlobalConfigGroup;
 
 import com.google.inject.Key;
@@ -26,7 +28,8 @@ public class EpsilonModule extends AbstractEqasimExtension {
 		bind(EpsilonProvider.class).to(GumbelEpsilonProvider.class);
 
 		bind(IDFCarUtilityEstimator.class);
-		bind(IDFBikeUtilityEstimator.class);
+		bind(IDFPtUtilityEstimator.class);
+		bind(IDFPassengerUtilityEstimator.class);
 		bind(PtUtilityEstimator.class);
 		bind(WalkUtilityEstimator.class);
 
@@ -34,6 +37,7 @@ public class EpsilonModule extends AbstractEqasimExtension {
 		bindUtilityEstimator("epsilon_pt").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_pt")));
 		bindUtilityEstimator("epsilon_bike").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_bike")));
 		bindUtilityEstimator("epsilon_walk").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_walk")));
+		bindUtilityEstimator("epsilon_passenger").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_passenger")));
 	}
 
 	@Provides
@@ -50,7 +54,7 @@ public class EpsilonModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Named("epsilon_bike")
-	EpsilonAdapter provideEpsilonBikeEstimator(IDFBikeUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
+	EpsilonAdapter provideEpsilonBikeEstimator(BikeUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
 		return new EpsilonAdapter("bike", delegate, epsilonProvider);
 	}
 
@@ -58,5 +62,12 @@ public class EpsilonModule extends AbstractEqasimExtension {
 	@Named("epsilon_walk")
 	EpsilonAdapter provideEpsilonWalkEstimator(WalkUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
 		return new EpsilonAdapter("walk", delegate, epsilonProvider);
+	}
+
+	@Provides
+	@Named("epsilon_passenger")
+	EpsilonAdapter provideEpsilonPassengerEstimator(IDFPassengerUtilityEstimator delegate,
+			EpsilonProvider epsilonProvider) {
+		return new EpsilonAdapter("passenger", delegate, epsilonProvider);
 	}
 }

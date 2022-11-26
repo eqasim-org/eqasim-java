@@ -2,8 +2,8 @@ package org.eqasim.ile_de_france.mode_choice.utilities.estimators;
 
 import java.util.List;
 
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
@@ -13,14 +13,14 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
 
-public class IDFCarUtilityEstimator extends CarUtilityEstimator {
+public class IDFPtUtilityEstimator extends PtUtilityEstimator {
 	private final IDFModeParameters parameters;
 	private final IDFSpatialPredictor spatialPredictor;
 
 	@Inject
-	public IDFCarUtilityEstimator(IDFModeParameters parameters, IDFSpatialPredictor spatialPredictor,
-			CarPredictor carPredictor) {
-		super(parameters, carPredictor);
+	public IDFPtUtilityEstimator(IDFModeParameters parameters, IDFSpatialPredictor spatialPredictor,
+			PtPredictor ptPredictor) {
+		super(parameters, ptPredictor);
 
 		this.parameters = parameters;
 		this.spatialPredictor = spatialPredictor;
