@@ -3,6 +3,7 @@ package org.eqasim.ile_de_france.parking;
 import java.io.File;
 import java.io.IOException;
 
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFParkingPredictor;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.AbstractModule;
 
@@ -20,7 +21,7 @@ public class ParkingModule extends AbstractModule {
 
 	@Override
 	public void install() {
-
+		bind(IDFParkingPredictor.class).asEagerSingleton();
 	}
 
 	@Provides
