@@ -30,8 +30,6 @@ public class IDFParkingPredictor extends CachedVariablePredictor<IDFParkingVaria
 		double parkingPressure = parkingInformation.getParkingPressure(trip.getDestinationActivity().getLinkId());
 		double parkingCost_EUR_h = parkingInformation.getParkingCost_EUR_h(trip.getDestinationActivity(), person);
 
-		// TODO: Not exactly as in choice model!
-
 		TimeInterpreter timeInterpreter = timeInterpreterFactory.createTimeInterpreter();
 		timeInterpreter.setTime(trip.getDepartureTime());
 		timeInterpreter.addPlanElements(elements);
