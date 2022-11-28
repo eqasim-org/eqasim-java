@@ -1,10 +1,7 @@
-package org.eqasim.ile_de_france.parking;
+package org.eqasim.ile_de_france;
 
-public class TODO {
+public class ExploTODO {
 	/*-
-	 * 
-	 * First version
-	 * - Update routing parameters
 	 * 
 	 * Consistency
 	 * - ParkingPredictor does not take into account 8h for last activity
