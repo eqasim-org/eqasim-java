@@ -1,7 +1,11 @@
 package org.eqasim.ile_de_france.scenario;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
@@ -24,12 +28,23 @@ public class RunAdaptConfig {
 
 		eqasimConfig.setEstimator(TransportMode.car, IDFModeChoiceModule.CAR_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.pt, IDFModeChoiceModule.PT_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator("passenger", IDFModeChoiceModule.PASSENGER_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator("car_passenger", IDFModeChoiceModule.PASSENGER_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, IDFModeChoiceModule.BIKE_ESTIMATOR_NAME);
+	}
+
+	static public void adaptConstraints(Config config) {
+		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
+				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
+
+		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
+		tripConstraints.remove(EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME);
+		tripConstraints.add(IDFModeChoiceModule.INITIAL_WAITING_TIME_CONSTRAINT);
+		dmcConfig.setTripConstraints(tripConstraints);
 	}
 
 	static public void adaptConfiguration(Config config) {
 		adaptEstimators(config);
+		adaptConstraints(config);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);

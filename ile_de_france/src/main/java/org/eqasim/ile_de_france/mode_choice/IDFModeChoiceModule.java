@@ -7,6 +7,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.ile_de_france.mode_choice.constraints.InitialWaitingTimeConstraint;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.NantesPtCostModel;
@@ -37,6 +38,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	public static final String BIKE_ESTIMATOR_NAME = "IDFBikeUtilityEstimator";
 	public static final String PASSENGER_ESTIMATOR_NAME = "IDFPassengerUtilityEstimator";
 
+	public static final String INITIAL_WAITING_TIME_CONSTRAINT = "InitialWaitingTimeConstraint";
+
 	public IDFModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
 	}
@@ -54,6 +57,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator(PASSENGER_ESTIMATOR_NAME).to(IDFPassengerUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(IDFBikeUtilityEstimator.class);
 		bind(IDFSpatialPredictor.class);
+
+		bindTripConstraintFactory(INITIAL_WAITING_TIME_CONSTRAINT).to(InitialWaitingTimeConstraint.Factory.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 
@@ -96,5 +101,12 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
+	}
+
+	@Provides
+	@Singleton
+	public InitialWaitingTimeConstraint.Factory provideInitialWaitingTimeConstraintFactory() {
+		double maximumInitialWaitingTime_min = 15.0;
+		return new InitialWaitingTimeConstraint.Factory(maximumInitialWaitingTime_min);
 	}
 }

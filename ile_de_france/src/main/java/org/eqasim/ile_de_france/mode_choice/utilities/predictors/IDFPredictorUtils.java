@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france.mode_choice.utilities.predictors;
 
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.population.PersonUtils;
 
 public class IDFPredictorUtils {
 	static public boolean hasSubscription(Person person) {
@@ -15,7 +16,7 @@ public class IDFPredictorUtils {
 	}*/
 
 	static public boolean hasDrivingPermit(Person person) {
-		String hasLicense = (String) person.getAttributes().getAttribute("hasLicense");
+		String hasLicense = PersonUtils.getLicense(person);
 		return hasLicense != null && hasLicense.equals("yes");
 	}
 

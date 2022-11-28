@@ -65,8 +65,9 @@ public class RunSimulation {
 		}
 
 		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
-		
+
 		RunAdaptConfig.adaptEstimators(config);
+		RunAdaptConfig.adaptConstraints(config);
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
