@@ -40,11 +40,11 @@ public class ParkingPressureData {
 	static public ParkingPressureData load(Network network, File path) throws IOException {
 		logger.info(String.format("Loading parking pressure data from %s", path.toString()));
 
-		DataStore connectorsStore = DataStoreFinder.getDataStore(ImmutableMap.builder() //
+		DataStore geometryStore = DataStoreFinder.getDataStore(ImmutableMap.builder() //
 				.put("dbtype", "geopkg").put("database", path.toString()) //
 				.build());
 
-		SimpleFeatureSource geometrySource = connectorsStore.getFeatureSource(connectorsStore.getTypeNames()[0]);
+		SimpleFeatureSource geometrySource = geometryStore.getFeatureSource(geometryStore.getTypeNames()[0]);
 		SimpleFeatureCollection geometryCollection = geometrySource.getFeatures();
 		SimpleFeatureIterator geometryIterator = geometryCollection.features();
 
