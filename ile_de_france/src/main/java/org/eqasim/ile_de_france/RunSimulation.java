@@ -14,6 +14,7 @@ import org.eqasim.ile_de_france.analysis.stuck.StuckAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
+import org.eqasim.ile_de_france.parking.ParkingModule;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFQSimModule;
@@ -36,7 +37,7 @@ import com.google.inject.Singleton;
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path") //
+				.requireOptions("config-path", "parking-pressure-path") //
 				.allowOptions("count-links", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
 						"line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
@@ -120,6 +121,9 @@ public class RunSimulation {
 				return new ModeShareListener(outputHierarchy, terminationCriterion, signalInputPath);
 			}
 		});
+
+		File parkingPressureFile = new File(cmd.getOptionStrict("parking-pressure-path"));
+		controller.addOverridingModule(new ParkingModule(parkingPressureFile, 3.0));
 
 		controller.run();
 	}
