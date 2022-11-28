@@ -9,7 +9,6 @@ public class TODO {
 	 * - Walk and bike should just depend on Euclidean distance
 	 * 
 	 * - Update mode availability
-	 * - Update PT estimator
 	 * 
 	 * 
 	 * - Rename travelTime for car to inVehicleTravelTime
