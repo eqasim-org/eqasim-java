@@ -33,6 +33,6 @@ public class ParkingModule extends AbstractModule {
 	@Provides
 	@Singleton
 	ParkingPressureData provideParkingPressureData(Network network) throws IOException {
-		return ParkingPressureData.load(network, parkingPressureFile);
+		return ParkingPressureData.loadFromAttributes(network);
 	}
 }

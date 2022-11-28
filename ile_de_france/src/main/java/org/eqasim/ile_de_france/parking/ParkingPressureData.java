@@ -24,6 +24,8 @@ import org.opengis.feature.simple.SimpleFeature;
 import com.google.common.collect.ImmutableMap;
 
 public class ParkingPressureData {
+	public static final String ATTRIBUTE = "parkingPressure";
+
 	private static final Logger logger = Logger.getLogger(ParkingPressureData.class);
 	private static final GeometryFactory geometryFactory = new GeometryFactory();
 
@@ -37,7 +39,21 @@ public class ParkingPressureData {
 		return parkingPressure.computeIfAbsent(linkId, id -> 0.0).doubleValue();
 	}
 
-	static public ParkingPressureData load(Network network, File path) throws IOException {
+	static public ParkingPressureData loadFromAttributes(Network network) {
+		IdMap<Link, Double> parkingPressure = new IdMap<>(Link.class);
+
+		for (Link link : network.getLinks().values()) {
+			Double value = (Double) link.getAttributes().getAttribute(ATTRIBUTE);
+
+			if (value != null) {
+				parkingPressure.put(link.getId(), value);
+			}
+		}
+
+		return new ParkingPressureData(parkingPressure);
+	}
+
+	static public ParkingPressureData createFromNetwork(Network network, File path) throws IOException {
 		logger.info(String.format("Loading parking pressure data from %s", path.toString()));
 
 		DataStore geometryStore = DataStoreFinder.getDataStore(ImmutableMap.builder() //
