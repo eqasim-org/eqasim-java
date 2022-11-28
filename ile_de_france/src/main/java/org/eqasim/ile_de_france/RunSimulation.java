@@ -15,6 +15,7 @@ import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
+import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFQSimModule;
@@ -64,6 +65,8 @@ public class RunSimulation {
 		}
 
 		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
+		
+		RunAdaptConfig.adaptEstimators(config);
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);

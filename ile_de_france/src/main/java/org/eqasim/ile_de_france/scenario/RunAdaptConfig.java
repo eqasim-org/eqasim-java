@@ -16,8 +16,7 @@ public class RunAdaptConfig {
 		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
 
-	static public void adaptConfiguration(Config config) {
-		// Adjust eqasim config
+	static public void adaptEstimators(Config config) {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
 		eqasimConfig.setCostModel(TransportMode.car, IDFModeChoiceModule.CAR_COST_MODEL_NAME);
@@ -27,6 +26,10 @@ public class RunAdaptConfig {
 		eqasimConfig.setEstimator(TransportMode.pt, IDFModeChoiceModule.PT_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator("passenger", IDFModeChoiceModule.PASSENGER_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, IDFModeChoiceModule.BIKE_ESTIMATOR_NAME);
+	}
+
+	static public void adaptConfiguration(Config config) {
+		adaptEstimators(config);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
@@ -39,7 +42,7 @@ public class RunAdaptConfig {
 		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(-1.0);
 
 		// Calibration results for 5%
-
+		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		if (eqasimConfig.getSampleSize() == 0.05) {
 			// Adjust flow and storage capacity
 			config.qsim().setFlowCapFactor(0.045);
