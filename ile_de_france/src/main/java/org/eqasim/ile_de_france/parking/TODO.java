@@ -11,6 +11,9 @@ public class TODO {
 	 * 
 	 * - Update mode availability
 	 * - Update PT estimator
+	 * 
+	 * 
+	 * - Rename travelTime for car to inVehicleTravelTime
 	 *
 	 */
 }

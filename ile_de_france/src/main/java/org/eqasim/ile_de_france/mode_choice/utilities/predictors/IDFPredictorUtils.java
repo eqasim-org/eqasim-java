@@ -9,6 +9,16 @@ public class IDFPredictorUtils {
 		return hasSubscription != null && hasSubscription;
 	}
 
+	/*-static public boolean hasDrivingPermit(Person person) {
+		Boolean hasDrivingPermit = (Boolean) person.getAttributes().getAttribute("hasDrivingPermit");
+		return hasDrivingPermit != null && hasDrivingPermit;
+	}*/
+
+	static public boolean hasDrivingPermit(Person person) {
+		String hasLicense = (String) person.getAttributes().getAttribute("hasLicense");
+		return hasLicense != null && hasLicense.equals("yes");
+	}
+
 	static public boolean isUrbanArea(Activity activity) {
 		Boolean isUrban = (Boolean) activity.getAttributes().getAttribute("isUrban");
 		return isUrban != null && isUrban;
