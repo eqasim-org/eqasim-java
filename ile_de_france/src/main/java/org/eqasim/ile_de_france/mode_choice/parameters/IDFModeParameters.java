@@ -32,42 +32,42 @@ public class IDFModeParameters extends ModeParameters {
 
 		// General
 		parameters.referenceEuclideanDistance_km = 8.0;
-		parameters.lambdaTravelTimeEuclideanDistance = 0.327997;
+		parameters.lambdaTravelTimeEuclideanDistance = 0.327182;
 
 		// Cost
-		parameters.lambdaCostEuclideanDistance = -0.590910;
-		parameters.betaCost_u_MU = -0.189767;
+		parameters.lambdaCostEuclideanDistance = -0.564067;
+		parameters.betaCost_u_MU = -0.206368;
 
 		// Car
-		parameters.car.alpha_u = -0.793284;
-		parameters.car.betaTravelTime_u_min = -0.793284;
+		parameters.car.alpha_u = -0.183793;
+		parameters.car.betaTravelTime_u_min = -0.035702;
 
-		parameters.idfCar.parkingPressure_u = -1.966132;
+		parameters.idfCar.parkingPressure_u = -2.129954;
 
 		// Passenger
-		parameters.idfPassenger.alpha_u = -1.688465;
-		parameters.idfPassenger.betaDrivingPermit_u = -1.853586;
-		parameters.idfPassenger.betaInVehicleTime_u_min = -0.045423;
-		parameters.idfPassenger.betaParkingPressure_u = -2.532017;
+		parameters.idfPassenger.alpha_u = -1.642390;
+		parameters.idfPassenger.betaDrivingPermit_u = -1.190392;
+		parameters.idfPassenger.betaInVehicleTime_u_min = -0.047935;
+		parameters.idfPassenger.betaParkingPressure_u = -2.417705;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
-		parameters.pt.betaInVehicleTime_u_min = -0.012814;
-		parameters.pt.betaAccessEgressTime_u_min = -0.030250;
-		parameters.pt.betaLineSwitch_u = -0.338746;
+		parameters.pt.betaInVehicleTime_u_min = -0.012811;
+		parameters.pt.betaAccessEgressTime_u_min = -0.029910;
+		parameters.pt.betaLineSwitch_u = -0.351704;
 
-		parameters.idfPt.betaDrivingPermit_u = -1.697751;
-		parameters.idfPt.betaHeadway_u_min = -0.038510;
-		parameters.idfPt.betaOnlyBus_u = -1.119205;
-		parameters.idfPt.betaTransferTime_u_min = -0.030250;
+		parameters.idfPt.betaDrivingPermit_u = -0.902849;
+		parameters.idfPt.betaHeadway_u_min = -0.040625;
+		parameters.idfPt.betaOnlyBus_u = -1.125458;
+		parameters.idfPt.betaTransferTime_u_min = -0.029910;
 
 		// Bike
-		parameters.bike.alpha_u = -3.916648;
-		parameters.bike.betaTravelTime_u_min = -0.022654;
+		parameters.bike.alpha_u = -3.587379;
+		parameters.bike.betaTravelTime_u_min = -0.021655;
 
 		// Walk
-		parameters.walk.alpha_u = 0.469545;
-		parameters.walk.betaTravelTime_u_min = -0.155547;
+		parameters.walk.alpha_u = 0.814819;
+		parameters.walk.betaTravelTime_u_min = -0.150038;
 
 		return parameters;
 	}
