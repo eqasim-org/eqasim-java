@@ -15,6 +15,7 @@ import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
+import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
@@ -98,6 +99,7 @@ public class RunSimulation {
 			eqasimConfig.setEstimator("pt", "epsilon_pt");
 			eqasimConfig.setEstimator("bike", "epsilon_bike");
 			eqasimConfig.setEstimator("walk", "epsilon_walk");
+			eqasimConfig.setEstimator("car_passenger", "epsilon_car_passenger");
 		}
 
 		if (useVdf) {
@@ -128,6 +130,8 @@ public class RunSimulation {
 
 		File parkingPressureFile = new File(cmd.getOptionStrict("parking-pressure-path"));
 		controller.addOverridingModule(new ParkingModule(parkingPressureFile, 3.0));
+
+		controller.addOverridingModule(new IDFRaptorModule());
 
 		controller.run();
 	}
