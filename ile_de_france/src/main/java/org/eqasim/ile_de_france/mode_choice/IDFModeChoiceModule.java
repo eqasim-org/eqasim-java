@@ -18,6 +18,7 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEs
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPassengerUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -49,6 +50,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(IDFModeAvailability.class);
 
 		bind(IDFPersonPredictor.class);
+		bind(IDFPtPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(IDFCarCostModel.class);
 
