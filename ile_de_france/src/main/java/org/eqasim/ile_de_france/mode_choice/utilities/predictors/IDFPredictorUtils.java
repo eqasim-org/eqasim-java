@@ -23,4 +23,8 @@ public class IDFPredictorUtils {
 		Boolean isUrban = (Boolean) activity.getAttributes().getAttribute("isUrban");
 		return isUrban != null && isUrban;
 	}
+
+	static public double getHeadway_min(Activity activity) {
+		return (Double) activity.getAttributes().getAttribute("headway_min");
+	}
 }
