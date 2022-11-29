@@ -52,7 +52,8 @@ public class IDFRaptorUtils {
 		modeUtilities.put("subway", -0.7715570079250351);
 		modeUtilities.put("tram", -1.7608452482684784);
 		modeUtilities.put("bus", -1.7447089000006268);
-		modeUtilities.put("other", -1.6352586824349615);
+		modeUtilities.put("walk", -1.6352586824349615);
+		modeUtilities.put("other", -1.0);
 
 		RaptorParameters raptorParams = new RaptorParameters(advancedConfig);
 
