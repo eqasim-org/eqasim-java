@@ -72,6 +72,7 @@ public class IDFRaptorUtils {
 
 		// Modal configuration
 		Set<String> modes = new HashSet<>();
+		modes.add("walk");
 
 		for (TransitLine transitLine : schedule.getTransitLines().values()) {
 			for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
@@ -81,7 +82,7 @@ public class IDFRaptorUtils {
 
 		for (String mode : modes) {
 			double utility = modeUtilities.getOrDefault(mode, modeUtilities.get("other"));
-			raptorParams.setMarginalUtilityOfTravelTime_utl_s(mode, utility);
+			raptorParams.setMarginalUtilityOfTravelTime_utl_s(mode, utility / 3600.0);
 		}
 
 		// Defaults
