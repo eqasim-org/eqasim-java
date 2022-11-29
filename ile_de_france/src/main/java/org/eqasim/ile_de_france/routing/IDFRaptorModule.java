@@ -17,8 +17,8 @@ public class IDFRaptorModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	public RaptorStaticConfig provideRaptorStaticConfig() {
-		return IDFRaptorUtils.createRaptorStaticConfig(getConfig());
+	public RaptorStaticConfig provideRaptorStaticConfig(TransitSchedule schedule) {
+		return IDFRaptorUtils.createRaptorStaticConfig(getConfig(), schedule);
 	}
 
 	@Provides

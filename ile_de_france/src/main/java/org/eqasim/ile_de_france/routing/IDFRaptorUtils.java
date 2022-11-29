@@ -1,5 +1,6 @@
 package org.eqasim.ile_de_france.routing;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,13 +18,10 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
 import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
 
 public class IDFRaptorUtils {
-	static public RaptorStaticConfig createRaptorStaticConfig(Config config) {
+	static public RaptorStaticConfig createRaptorStaticConfig(Config config, TransitSchedule schedule) {
 		double maximumTransferDistance = 400.0;
 		double walkSpeed = 1.33;
 		double walkFactor = 1.3;
-
-		SwissRailRaptorConfigGroup srrConfig = ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
-		srrConfig.setUseModeMappingForPassengers(true);
 
 		// TODO: Consider minimal transfer time
 		// TODO: Consider transfer walk margin
@@ -33,6 +31,25 @@ public class IDFRaptorUtils {
 
 		staticConfig.setBeelineWalkSpeed(walkSpeed / walkFactor);
 		staticConfig.setBeelineWalkDistanceFactor(walkFactor);
+
+		// Add mode mappings
+		staticConfig.setUseModeMappingForPassengers(true);
+
+		Set<String> configuredModes = new HashSet<>(Arrays.asList( //
+				"rail", "subway", "tram", "bus" //
+		));
+
+		Set<String> scheduleModes = new HashSet<>();
+		for (TransitLine transitLine : schedule.getTransitLines().values()) {
+			for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
+				scheduleModes.add(transitRoute.getTransportMode());
+			}
+		}
+
+		for (String mode : scheduleModes) {
+			String mappedMode = configuredModes.contains(mode) ? mode : "other";
+			staticConfig.addModeMappingForPassengers(mode, mappedMode);
+		}
 
 		return staticConfig;
 	}
