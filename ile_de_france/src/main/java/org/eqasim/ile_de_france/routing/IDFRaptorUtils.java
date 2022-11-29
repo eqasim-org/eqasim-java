@@ -90,6 +90,7 @@ public class IDFRaptorUtils {
 		// Modal configuration
 		Set<String> modes = new HashSet<>();
 		modes.add("walk");
+		modes.add("other");
 
 		for (TransitLine transitLine : schedule.getTransitLines().values()) {
 			for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
