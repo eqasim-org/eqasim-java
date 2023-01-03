@@ -60,6 +60,7 @@ public class RunSimulation {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
+		configurator.adjustScenario(scenario);
 
 		{
 			config.planCalcScore().setMarginalUtlOfWaiting_utils_hr(-1.0);

@@ -6,6 +6,14 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Improve functionality of routing tools to set utilities in detail
+- Fix bug in EqasimTransitQSimModule: first check if EqasimConfigGroup has TransitEngineModule before removing it
+- Updated config option from `eqasim.tripAnalysisInterval` to `eqasim.analysisInterval`
+- Automatically produce analysis output for legs and public transport information
+- Move analysis classes to `org.eqasim.core.analysis.run`
+- Add option for configuring custom activities in the Switzerland config file
+- Add air pollution emissions computation and analysis
+- Add fixed epsilon functionality
 - Transform scenario configurators to proper classes (formerly static methods)
 - Set routing parameter for waiting time in Île-de-France to -1.0
 - Allow cutter to process events to (1) perform routing based on recorded travel time, and (2) find crossing points based on the actual link enter/leave times of a previous simulation

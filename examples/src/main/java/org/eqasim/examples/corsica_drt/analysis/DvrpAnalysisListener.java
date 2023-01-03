@@ -45,7 +45,7 @@ public class DvrpAnalysisListener implements IterationStartsListener, IterationE
 	public DvrpAnalysisListener(EqasimConfigGroup config, MultiModeDrtConfigGroup drtConfig,
 			OutputDirectoryHierarchy outputDirectory, Network network) {
 		this.outputDirectory = outputDirectory;
-		this.analysisInterval = config.getTripAnalysisInterval();
+		this.analysisInterval = config.getAnalysisInterval();
 
 		LinkFinder linkFinder = new LinkFinder(network);
 		this.vehicleRegistry = new VehicleRegistry();

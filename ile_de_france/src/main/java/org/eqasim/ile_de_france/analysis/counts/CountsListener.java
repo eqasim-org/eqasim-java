@@ -47,8 +47,8 @@ public class CountsListener implements IterationStartsListener, IterationEndsLis
 
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
-		isActive = eqasimConfig.getTripAnalysisInterval() > 0
-				&& (event.getIteration() % eqasimConfig.getTripAnalysisInterval() == 0 || event.isLastIteration());
+		isActive = eqasimConfig.getAnalysisInterval() > 0
+				&& (event.getIteration() % eqasimConfig.getAnalysisInterval() == 0 || event.isLastIteration());
 
 		if (isActive) {
 			eventsManager.addHandler(handler);

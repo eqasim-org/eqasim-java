@@ -120,7 +120,7 @@ public class RunCorsicaDrtSimulation {
 			}
 
 			// Set analysis interval
-			eqasimConfig.setTripAnalysisInterval(1);
+			eqasimConfig.setAnalysisInterval(1);
 		}
 
 		{ // Set up some defaults for MATSim scoring

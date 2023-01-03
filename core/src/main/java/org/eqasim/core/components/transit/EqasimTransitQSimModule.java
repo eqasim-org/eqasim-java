@@ -32,7 +32,9 @@ public class EqasimTransitQSimModule extends AbstractQSimModule {
 
 	static public void configure(QSimComponentsConfig components, Config config) {
 		if (EqasimConfigGroup.get(config).getUseScheduleBasedTransport()) {
-			components.removeNamedComponent(TransitEngineModule.TRANSIT_ENGINE_NAME);
+			if (components.hasNamedComponent(TransitEngineModule.TRANSIT_ENGINE_NAME)) {
+				components.removeNamedComponent(TransitEngineModule.TRANSIT_ENGINE_NAME);
+			}
 			components.addNamedComponent(COMPONENT_NAME);
 		}
 	}

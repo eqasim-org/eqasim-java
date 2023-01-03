@@ -64,6 +64,8 @@ public interface ParameterDefinition {
 						} else if (field.getType().isEnum()) {
 							Class<Enum> enumType = (Class<Enum>) field.getType();
 							field.set(activeObject, Enum.valueOf(enumType, value));
+						} else if (field.getType() == Boolean.class || field.getType() == boolean.class) {
+							field.setBoolean(activeObject, Boolean.parseBoolean(value));
 						} else {
 							throw new IllegalStateException(
 									String.format("Cannot convert parameter %s because type %s is not supported",

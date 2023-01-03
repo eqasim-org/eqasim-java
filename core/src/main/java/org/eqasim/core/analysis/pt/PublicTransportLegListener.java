@@ -16,13 +16,21 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.AgentWaitingForPtEvent;
 import org.matsim.core.api.experimental.events.handler.AgentWaitingForPtEventHandler;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitStopArea;
 
-public class PublicTransportTripListener implements PersonDepartureEventHandler, ActivityStartEventHandler,
+public class PublicTransportLegListener implements PersonDepartureEventHandler, ActivityStartEventHandler,
 		GenericEventHandler, AgentWaitingForPtEventHandler {
-	final private Collection<PublicTransportTripItem> trips = new LinkedList<>();
-	final private Map<Id<Person>, Integer> tripIndices = new HashMap<>();
+	private final Collection<PublicTransportLegItem> trips = new LinkedList<>();
+	private final Map<Id<Person>, Integer> tripIndices = new HashMap<>();
+	private final Map<Id<Person>, Integer> legIndices = new HashMap<>();
+	private final TransitSchedule schedule;
 
-	public Collection<PublicTransportTripItem> getTripItems() {
+	public PublicTransportLegListener(TransitSchedule schedule) {
+		this.schedule = schedule;
+	}
+
+	public Collection<PublicTransportLegItem> getTripItems() {
 		return trips;
 	}
 
@@ -33,12 +41,24 @@ public class PublicTransportTripListener implements PersonDepartureEventHandler,
 	}
 
 	public void handleEvent(PublicTransitEvent event) {
-		trips.add(new PublicTransportTripItem(event.getPersonId(), //
+		Id<TransitStopArea> accessAreaId = schedule.getFacilities().get(event.getAccessStopId()).getStopAreaId();
+		Id<TransitStopArea> egressAreaId = schedule.getFacilities().get(event.getEgressStopId()).getStopAreaId();
+
+		String routeMode = schedule.getTransitLines().get(event.getTransitLineId()) //
+				.getRoutes().get(event.getTransitRouteId())//
+				.getTransportMode();
+		
+		trips.add(new PublicTransportLegItem(event.getPersonId(), //
 				tripIndices.get(event.getPersonId()), //
+				legIndices.get(event.getPersonId()), //
 				event.getAccessStopId(), //
 				event.getEgressStopId(), //
 				event.getTransitLineId(), //
-				event.getTransitRouteId()));
+				event.getTransitRouteId(), //
+				accessAreaId, //
+				egressAreaId, //
+				routeMode //
+		));
 	}
 
 	@Override
@@ -59,8 +79,10 @@ public class PublicTransportTripListener implements PersonDepartureEventHandler,
 	public void handleEvent(PersonDepartureEvent event) {
 		if (!tripIndices.containsKey(event.getPersonId())) {
 			tripIndices.put(event.getPersonId(), 0);
+			legIndices.put(event.getPersonId(), 0);
 		} else {
 			tripIndices.compute(event.getPersonId(), (k, v) -> v + 1);
+			legIndices.compute(event.getPersonId(), (k, v) -> v + 1);
 		}
 	}
 

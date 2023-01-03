@@ -10,7 +10,7 @@ import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 
 import org.apache.log4j.Logger;
-import org.eqasim.core.analysis.TripListener;
+import org.eqasim.core.analysis.trips.TripListener;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -47,12 +47,12 @@ public class CalibrationOutputListener implements IterationEndsListener, Shutdow
 		this.outputDirectory = outputDirectory;
 		this.lastIteration = controllerConfig.getLastIteration();
 
-		this.tripAnalysisInterval = eqasimConfig.getTripAnalysisInterval();
+		this.tripAnalysisInterval = eqasimConfig.getAnalysisInterval();
 		this.tripAnalysisListener = tripListener;
 
 		this.config = config;
 
-		if (eqasimConfig.getTripAnalysisInterval() < 1) {
+		if (eqasimConfig.getAnalysisInterval() < 1) {
 			logger.warn("To use calibration output, the tripAnalysisInterval must be > 0");
 		}
 	}

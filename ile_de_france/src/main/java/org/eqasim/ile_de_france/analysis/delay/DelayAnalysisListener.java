@@ -41,7 +41,7 @@ class DelayAnalysisListener implements IterationStartsListener, IterationEndsLis
 			EqasimConfigGroup eqasimConfig, Population population, PersonAnalysisFilter personFilter) {
 		this.outputHierarchy = outputHierarchy;
 		this.eventsManager = eventsManager;
-		this.analysisInterval = eqasimConfig.getTripAnalysisInterval();
+		this.analysisInterval = eqasimConfig.getAnalysisInterval();
 		this.population = population;
 		this.personFilter = personFilter;
 	}
