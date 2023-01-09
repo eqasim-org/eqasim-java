@@ -1,6 +1,5 @@
 package org.eqasim.ile_de_france.parking;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFParkingPredictor;
@@ -12,11 +11,9 @@ import com.google.inject.Singleton;
 
 public class ParkingModule extends AbstractModule {
 	private final double urbanParkingCost_EUR_h;
-	private final File parkingPressureFile;
 
-	public ParkingModule(File parkingPressureFile, double urbanParkingCost_EUR_h) {
+	public ParkingModule(double urbanParkingCost_EUR_h) {
 		this.urbanParkingCost_EUR_h = urbanParkingCost_EUR_h;
-		this.parkingPressureFile = parkingPressureFile;
 	}
 
 	@Override

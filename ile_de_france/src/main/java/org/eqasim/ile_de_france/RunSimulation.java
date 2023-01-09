@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "parking-pressure-path") //
+				.requireOptions("config-path") //
 				.allowOptions("count-links", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
 						"line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
@@ -129,8 +129,7 @@ public class RunSimulation {
 			}
 		});
 
-		File parkingPressureFile = new File(cmd.getOptionStrict("parking-pressure-path"));
-		controller.addOverridingModule(new ParkingModule(parkingPressureFile, 3.0));
+		controller.addOverridingModule(new ParkingModule(3.0));
 
 		controller.addOverridingModule(new IDFRaptorModule());
 
