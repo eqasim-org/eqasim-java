@@ -22,15 +22,18 @@ public class IDFRaptorUtils {
 		double maximumTransferDistance = 400.0;
 		double walkSpeed = 1.33;
 		double walkFactor = 1.3;
-
-		// TODO: Consider minimal transfer time
-		// TODO: Consider transfer walk margin
+		
+		double minimalTransferTime = 60; // Default value
+		double transferWalkMargin = 5; // Default value
 
 		RaptorStaticConfig staticConfig = RaptorUtils.createStaticConfig(config);
 		staticConfig.setBeelineWalkConnectionDistance(maximumTransferDistance);
 
 		staticConfig.setBeelineWalkSpeed(walkSpeed / walkFactor);
 		staticConfig.setBeelineWalkDistanceFactor(walkFactor);
+		
+		staticConfig.setMinimalTransferTime(minimalTransferTime);
+		staticConfig.setTransferWalkMargin(transferWalkMargin);
 
 		// Add mode mappings
 		staticConfig.setUseModeMappingForPassengers(true);
