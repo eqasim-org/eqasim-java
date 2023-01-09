@@ -1,12 +1,14 @@
 package org.eqasim.ile_de_france.mode_choice.utilities.predictors;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPtVariables;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -20,6 +22,7 @@ import com.google.inject.name.Named;
 public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 	private final CostModel costModel;
 	private final TransitSchedule schedule;
+	private final Set<String> transitModes = new HashSet<>(Arrays.asList("rail", "subway", "tram", "bus", "other"));
 
 	@Inject
 	public IDFPtPredictor(@Named("pt") CostModel costModel, TransitSchedule schedule) {
@@ -50,15 +53,9 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 			if (element instanceof Leg) {
 				Leg leg = (Leg) element;
 
-				switch (leg.getMode()) {
-				case TransportMode.walk:
-				case TransportMode.non_network_walk:
+				if (leg.getMode().contains("walk")) {
 					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
-					break;
-				case TransportMode.transit_walk:
-					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
-					break;
-				case TransportMode.pt:
+				} else if (transitModes.contains(leg.getMode())) {
 					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
 					double departureTime = leg.getDepartureTime().seconds();
@@ -78,8 +75,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 					}
 
 					numberOfVehicularTrips++;
-					break;
-				default:
+				} else {
 					throw new IllegalStateException("Unknown mode in PT trip: " + leg.getMode());
 				}
 			}
