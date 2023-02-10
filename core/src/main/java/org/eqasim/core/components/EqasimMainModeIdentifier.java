@@ -5,12 +5,19 @@ import java.util.List;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripStructureUtils;
 
-public class EqasimMainModeIdentifier implements MainModeIdentifier {
+public class EqasimMainModeIdentifier implements MainModeIdentifier, AnalysisMainModeIdentifier {
 	@Override
 	public String identifyMainMode(List<? extends PlanElement> tripElements) {
+		String mainMode = TripStructureUtils.identifyMainMode(tripElements);
+		
+		if (mainMode != null) {
+			return mainMode;
+		}
+		
 		for (Leg leg : TripStructureUtils.getLegs(tripElements)) {
 			if (!leg.getMode().contains("walk")) {
 				return leg.getMode();

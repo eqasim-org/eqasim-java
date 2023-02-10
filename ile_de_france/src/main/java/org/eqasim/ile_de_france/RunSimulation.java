@@ -16,6 +16,7 @@ import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorModule;
+import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
@@ -40,7 +41,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("count-links", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
+				.allowOptions("counts-path", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
 						"line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX) //
@@ -64,6 +65,7 @@ public class RunSimulation {
 
 		{
 			config.planCalcScore().setMarginalUtlOfWaiting_utils_hr(-1.0);
+			IDFRaptorUtils.updateScoring(config);
 		}
 
 		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
@@ -79,6 +81,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new StuckAnalysisModule());
 		controller.addOverridingModule(new DelayAnalysisModule());
+		controller.addOverridingModule(new CountsModule(cmd));
 
 		if (cmd.hasOption("line-switch-utility")) {
 			double lineSwitchUtility = Double.parseDouble(cmd.getOptionStrict("line-switch-utility"));
@@ -107,7 +110,6 @@ public class RunSimulation {
 			controller.addOverridingModule(new VDFModule());
 			controller.addOverridingQSimModule(new VDFQSimModule());
 			config.qsim().setStorageCapFactor(1e9);
-			// config.qsim().setFlowCapFactor(1e9);
 		}
 
 		controller.addOverridingModule(new AbstractModule() {
@@ -130,7 +132,6 @@ public class RunSimulation {
 		});
 
 		controller.addOverridingModule(new ParkingModule(3.0));
-
 		controller.addOverridingModule(new IDFRaptorModule());
 
 		controller.run();

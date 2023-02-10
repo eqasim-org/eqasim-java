@@ -24,6 +24,7 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PopulationFactory;
 import org.matsim.core.api.experimental.events.TeleportationArrivalEvent;
@@ -92,7 +93,13 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
-			ongoing.get(event.getPersonId()).elements.add(factory.createLeg(event.getLegMode()));
+			Leg leg = factory.createLeg(event.getLegMode());
+
+			if (event.getLegMode().startsWith("pt:")) {
+				leg.getAttributes().putAttribute("routingMode", "pt");
+			}
+			
+			ongoing.get(event.getPersonId()).elements.add(leg);
 		}
 	}
 

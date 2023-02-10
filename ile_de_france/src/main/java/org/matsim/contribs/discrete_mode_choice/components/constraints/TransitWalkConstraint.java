@@ -1,4 +1,4 @@
-package org.eqasim.ile_de_france.mode_choice.constraints;
+package org.matsim.contribs.discrete_mode_choice.components.constraints;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,41 +14,31 @@ import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraint;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraintFactory;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.RoutedTripCandidate;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
-import org.matsim.pt.routes.TransitPassengerRoute;
 
-public class InitialWaitingTimeConstraint extends AbstractTripConstraint {
-	private final double maximumInitialWaitingTime_min;
-
-	InitialWaitingTimeConstraint(double maximumInitialWaitingTime_min) {
-		this.maximumInitialWaitingTime_min = maximumInitialWaitingTime_min;
-	}
-
+/**
+ * This contraint forbids "pt" trips that only consist of walk legs, i.e. there
+ * is no "pt" leg included.
+ * 
+ * @author sebhoerl
+ */
+public class TransitWalkConstraint extends AbstractTripConstraint {
 	@Override
 	public boolean validateAfterEstimation(DiscreteModeChoiceTrip trip, TripCandidate candidate,
 			List<TripCandidate> previousCandidates) {
 		if (candidate.getMode().equals(TransportMode.pt)) {
 			if (candidate instanceof RoutedTripCandidate) {
-				// Go through all legs
-
+				// Go through all plan elments
 				for (PlanElement element : ((RoutedTripCandidate) candidate).getRoutedPlanElements()) {
 					if (element instanceof Leg) {
-						Leg leg = (Leg) element;
-
-						if (leg.getMode().startsWith(IDFRaptorUtils.PT_MODE_PREFIX)) {
-							// We check the first PT leg and make a decision
-							TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
-
-							double departureTime = leg.getDepartureTime().seconds();
-							double waitingTime_min = (route.getBoardingTime().seconds() - departureTime) / 60.0;
-
-							if (waitingTime_min > maximumInitialWaitingTime_min) {
-								return false;
-							}
-
+						if (((Leg) element).getMode().startsWith(IDFRaptorUtils.PT_MODE_PREFIX)) {
+							// If we find at least one pt leg, we're good
 							return true;
 						}
 					}
 				}
+
+				// If there was no pt leg, we do not accept this candidate
+				return false;
 			} else {
 				throw new IllegalStateException("Need a route to evaluate constraint");
 			}
@@ -58,16 +48,10 @@ public class InitialWaitingTimeConstraint extends AbstractTripConstraint {
 	}
 
 	static public class Factory implements TripConstraintFactory {
-		private final double maximumInitialWaitingTime_min;
-
-		public Factory(double maximumInitialWaitingTime_min) {
-			this.maximumInitialWaitingTime_min = maximumInitialWaitingTime_min;
-		}
-
 		@Override
 		public TripConstraint createConstraint(Person person, List<DiscreteModeChoiceTrip> trips,
 				Collection<String> availableModes) {
-			return new InitialWaitingTimeConstraint(maximumInitialWaitingTime_min);
+			return new TransitWalkConstraint();
 		}
 	}
 }

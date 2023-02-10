@@ -3,9 +3,6 @@ package org.eqasim.ile_de_france;
 public class ExploTODO {
 	/*-
 	 * 
-	 * Consistency
-	 * - ParkingPredictor does not take into account 8h for last activity
-	 * 
 	 * Cleanup model
 	 * - Walk and bike should just depend on Euclidean distance
 	 * 

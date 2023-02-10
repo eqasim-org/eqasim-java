@@ -1,5 +1,7 @@
 package org.eqasim.ile_de_france.mode_choice.utilities.predictors;
 
+import java.util.Objects;
+
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.population.PersonUtils;
@@ -25,7 +27,11 @@ public class IDFPredictorUtils {
 		return isUrban != null && isUrban;
 	}
 
+	static public final double MAXIMUM_HEADWAY_MIN = 240.0;
+	static public final String HEADWAY_MIN_ATTRIBUTE = "headway_min";
+
 	static public double getHeadway_min(Activity activity) {
-		return (Double) activity.getAttributes().getAttribute("headway_min");
+		return Math.min(MAXIMUM_HEADWAY_MIN,
+				Objects.requireNonNull((Double) activity.getAttributes().getAttribute(HEADWAY_MIN_ATTRIBUTE)));
 	}
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFParkingVariables;
 import org.eqasim.ile_de_france.parking.ParkingInformation;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -15,6 +16,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class IDFParkingPredictor extends CachedVariablePredictor<IDFParkingVariables> {
+	private final static double LAST_DURATION = 8.0 * 3600.0;
+
 	private final ParkingInformation parkingInformation;
 	private final TimeInterpreter.Factory timeInterpreterFactory;
 
@@ -35,7 +38,15 @@ public class IDFParkingPredictor extends CachedVariablePredictor<IDFParkingVaria
 		timeInterpreter.addPlanElements(elements);
 
 		double startTime = timeInterpreter.getCurrentTime();
-		timeInterpreter.addActivity(trip.getDestinationActivity());
+
+		Activity lastActivity = (Activity) person.getSelectedPlan().getPlanElements()
+				.get(person.getSelectedPlan().getPlanElements().size() - 1);
+
+		if (trip.getDestinationActivity() == lastActivity) {
+			timeInterpreter.addTime(LAST_DURATION);
+		} else {
+			timeInterpreter.addActivity(trip.getDestinationActivity());
+		}
 
 		double endTime = timeInterpreter.getCurrentTime();
 		double duration_h = (endTime - startTime) / 3600.0;

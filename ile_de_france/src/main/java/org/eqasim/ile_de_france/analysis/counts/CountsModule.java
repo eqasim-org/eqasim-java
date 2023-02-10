@@ -20,7 +20,7 @@ public class CountsModule extends AbstractModule {
 
 	public CountsModule(CommandLine cmd) {
 		try {
-			this.linkIds = new CountsReader().readLinks(new File(cmd.getOptionStrict("count-links")));
+			this.linkIds = new CountsReader().readLinks(new File(cmd.getOptionStrict("counts-path")));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

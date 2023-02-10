@@ -14,6 +14,8 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 
 public class IDFPtUtilityEstimator implements UtilityEstimator {
@@ -89,6 +91,37 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		utility += estimateOnlyBusUtility(ptVariables);
 		utility += estimateDrivingPermitUtility(personVariables);
 
+		UtilityValues values = new UtilityValues();
+		values.constant = estimateConstantUtility();
+		values.accessEgressTime = estimateAccessEgressTimeUtility(ptVariables);
+		values.headway = estimateHeadwayUtility(ptVariables);
+		values.lineSwitch = estimateLineSwitchUtility(ptVariables);
+		values.monetaryCost = estimateMonetaryCostUtility(ptVariables);
+		values.inVehicleTime = estimateInVehicleTimeUtility(ptVariables);
+		values.onlyBus = estimateOnlyBusUtility(ptVariables);
+		values.drivingPermit = estimateDrivingPermitUtility(personVariables);
+		values.total = utility;
+		
+		try {
+			String valuesString = new ObjectMapper().writeValueAsString(values);
+			trip.getOriginActivity().getAttributes().putAttribute("pt", valuesString);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+		
 		return utility;
+	}
+	
+	static public class UtilityValues {
+		public double constant;
+		public double accessEgressTime;
+		public double headway;
+		public double lineSwitch;
+		public double monetaryCost;
+		public double inVehicleTime;
+		public double onlyBus;
+		public double drivingPermit;
+		public double total;
 	}
 }
