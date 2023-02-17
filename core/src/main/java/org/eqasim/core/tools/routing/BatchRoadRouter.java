@@ -19,6 +19,7 @@ import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.geometry.CoordUtils;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Provider;
 
 public class BatchRoadRouter {
@@ -126,24 +127,39 @@ public class BatchRoadRouter {
 	}
 
 	static public class Task {
+		@JsonProperty("identifier")
 		public String identifier;
 
+		@JsonProperty("origin_x")
 		public double originX;
+
+		@JsonProperty("origin_y")
 		public double originY;
 
+		@JsonProperty("destination_x")
 		public double destinationX;
+
+		@JsonProperty("destination_y")
 		public double destinationY;
 
+		@JsonProperty("departure_time")
 		public double departureTime;
 	}
 
 	static public class Result {
+		@JsonProperty("identifier")
 		public String identifier;
 
+		@JsonProperty("access_euclidean_distance_km")
 		public double accessEuclideanDistance_km;
+
+		@JsonProperty("egress_euclidean_distance_km")
 		public double egressEuclideanDistance_km;
 
+		@JsonProperty("in_vehicle_time_min")
 		public double inVehicleTime_min;
+
+		@JsonProperty("in_vehicle_distance_km")
 		public double inVehicleDistance_km;
 
 		Result(Task task) {
