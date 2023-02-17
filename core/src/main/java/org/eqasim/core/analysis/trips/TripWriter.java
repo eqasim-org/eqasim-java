@@ -1,5 +1,7 @@
 package org.eqasim.core.analysis.trips;
 
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -60,7 +62,10 @@ public class TripWriter {
 				"preceding_purpose", //
 				"following_purpose", //
 				"returning", //
-				"euclidean_distance" //
+				"euclidean_distance",
+				"origin_scope",
+				"destination_scope",
+				"trip_scope"//
 		});
 	}
 
@@ -109,7 +114,10 @@ public class TripWriter {
 				normalizeActivityType(String.valueOf(trip.precedingPurpose)), //
 				normalizeActivityType(String.valueOf(trip.followingPurpose)), //
 				String.valueOf(trip.returning), //
-				String.valueOf(trip.euclideanDistance * inputFactor * outputFactor) //
+				String.valueOf(trip.euclideanDistance * inputFactor * outputFactor),
+				trip.originScope,
+				trip.destinationScope,
+				trip.tripScope
 		});
 	}
 }
