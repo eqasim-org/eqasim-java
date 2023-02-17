@@ -3,8 +3,9 @@ package org.eqasim.core.tools.routing;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -41,7 +42,7 @@ public class RunBatchRoadRouter {
 			IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size") //
+				.allowOptions("threads", "batch-size", "modes") //
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
@@ -56,6 +57,11 @@ public class RunBatchRoadRouter {
 				.orElse(Runtime.getRuntime().availableProcessors());
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 
+		Set<String> modes = new HashSet<>();
+		for (String mode : cmd.getOption("modes").orElse("car").split(",")) {
+			modes.add(mode);
+		}
+
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new AbstractModule() {
@@ -68,7 +74,7 @@ public class RunBatchRoadRouter {
 					@Named("car")
 					public Network provideCarNetwork(Network network) {
 						Network carNetwork = NetworkUtils.createNetwork();
-						new TransportModeNetworkFilter(network).filter(carNetwork, Collections.singleton("car"));
+						new TransportModeNetworkFilter(network).filter(carNetwork, modes);
 						new NetworkCleaner().run(carNetwork);
 						return carNetwork;
 					}
