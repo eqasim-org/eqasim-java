@@ -52,8 +52,18 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 		Leg initialLeg = (Leg) trip.getInitialElements().get(0);
 		double initialDepartureTime = initialLeg.getDepartureTime().seconds();
 
+		// Special case: We don't have the routing mode yet
 		if (TripStructureUtils.getRoutingMode(initialLeg) == null) {
 			return false;
+		}
+
+		// Special case: We have a generic PT
+		if (trip.getInitialMode().equals("pt")) {
+			for (Leg leg : TripStructureUtils.getLegs(trip.getInitialElements())) {
+				if (leg.getMode().equals("pt")) {
+					return false; // We are expecting pt:rail, pt:bus, ...
+				}
+			}
 		}
 
 		if (Math.abs(initialDepartureTime - trip.getDepartureTime()) < departureTimeMargin) {
