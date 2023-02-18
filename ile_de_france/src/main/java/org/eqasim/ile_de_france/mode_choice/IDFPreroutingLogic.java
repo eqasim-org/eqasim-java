@@ -74,15 +74,15 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 						.getAttribute("lastRoutingUpdate");
 
 				if (lastRoutingUpdate == null) {
-					lastRoutingUpdate = Integer.MIN_VALUE;
+					lastRoutingUpdate = 0;
 				}
 
 				if (currentIteration - lastRoutingUpdate > networkRoutingDelay) {
 					trip.getOriginActivity().getAttributes().putAttribute("lastRoutingUpdate", currentIteration);
 					return true;
 				} else {
-					logger.warn("Still " + (currentIteration - lastRoutingUpdate) + " iterations before updating "
-							+ trip.getInitialMode() + " for " + person.getId());
+					logger.warn("Still " + (networkRoutingDelay - currentIteration + lastRoutingUpdate)
+							+ " iterations before updating " + trip.getInitialMode() + " for " + person.getId());
 				}
 			}
 		}
@@ -130,10 +130,14 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 			double delta = updatedTravelTime - initialTravelTime;
 
 			if (delta > 0.0) {
+				logger.warn("Delta of " + delta + " seconds for " + person.getId() + " (" + trip.getInitialMode()
+						+ ") -> Keeping old route");
 				return true;
 			} else {
 				// Adding a number of the trip index to decorrelate from mode choice
 				double u = epsilon.getEpsilon(person.getId(), trip.getIndex() + 9482, trip.getInitialMode());
+				logger.warn("Delta of " + delta + " seconds for " + person.getId() + " (" + trip.getInitialMode()
+						+ ") and threshold of (" + switchBeta * Math.log(1 - u) + ") seconds");
 				return delta < switchBeta * Math.log(1 - u);
 			}
 		}
