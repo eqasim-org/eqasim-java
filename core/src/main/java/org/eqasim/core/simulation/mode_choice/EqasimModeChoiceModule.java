@@ -24,6 +24,8 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
+import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator.DefaultPreroutingLogic;
+import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator.PreroutingLogic;
 import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
@@ -82,12 +84,15 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTourConstraintFactory(VEHICLE_TOUR_CONSTRAINT).to(EqasimVehicleTourConstraint.Factory.class);
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
+
+		bind(PreroutingLogic.class).to(DefaultPreroutingLogic.class);
 	}
 
 	@Provides
 	public ModalUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config,
-			TimeInterpreter.Factory timeInterpreterFactory, DiscreteModeChoiceConfigGroup dmcConfig) {
+			TimeInterpreter.Factory timeInterpreterFactory, DiscreteModeChoiceConfigGroup dmcConfig,
+			PreroutingLogic preroutingLogic) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
 
 		for (Map.Entry<String, String> entry : config.getEstimators().entrySet()) {
@@ -101,8 +106,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			}
 		}
 
-		return new ModalUtilityEstimator(tripRouter, facilities, estimators, timeInterpreterFactory,
-				Collections.emptySet()); // Here we may add "pt" etc. as pre-routed modes.
+		return new ModalUtilityEstimator(tripRouter, facilities, estimators, timeInterpreterFactory, preroutingLogic);
 	}
 
 	@Provides
@@ -123,5 +127,11 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
 		return new EqasimVehicleTourConstraint.Factory(config.getRestrictedModes(), homeFinder);
+	}
+
+	@Provides
+	@Singleton
+	public DefaultPreroutingLogic provideDefaultPreroutingVoter() {
+		return new DefaultPreroutingLogic(Collections.emptySet());
 	}
 }

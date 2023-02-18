@@ -1,6 +1,5 @@
 package org.eqasim.core.simulation.mode_choice.utilities;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +17,8 @@ public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
 
 	public ModalUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, UtilityEstimator> estimators, TimeInterpreter.Factory timeInterpreterFactory,
-			Collection<String> preroutedModes) {
-		super(tripRouter, facilities, timeInterpreterFactory, preroutedModes);
+			PreroutingLogic preroutigLogic) {
+		super(tripRouter, facilities, timeInterpreterFactory, preroutigLogic);
 		this.estimators = estimators;
 	}
 

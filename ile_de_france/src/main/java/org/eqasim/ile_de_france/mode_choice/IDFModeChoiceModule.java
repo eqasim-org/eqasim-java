@@ -2,10 +2,12 @@ package org.eqasim.ile_de_france.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.eqasim.core.simulation.mode_choice.epsilon.UniformEpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.ile_de_france.mode_choice.constraints.InitialWaitingTimeConstraint;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
@@ -20,6 +22,9 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEst
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
+import org.eqasim.vdf.VDFTravelTime;
+import org.matsim.api.core.v01.network.Network;
+import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator.PreroutingLogic;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
@@ -76,6 +81,9 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		default:
 			throw new IllegalStateException();
 		}
+
+		bind(PreroutingLogic.class).to(IDFPreroutingLogic.class);
+		addControlerListenerBinding().to(IDFPreroutingLogic.class);
 	}
 
 	@Provides
@@ -110,5 +118,13 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	public InitialWaitingTimeConstraint.Factory provideInitialWaitingTimeConstraintFactory() {
 		double maximumInitialWaitingTime_min = 15.0;
 		return new InitialWaitingTimeConstraint.Factory(maximumInitialWaitingTime_min);
+	}
+
+	@Provides
+	@Singleton
+	public IDFPreroutingLogic provideIDFPreroutingVoter(Network network, VDFTravelTime travelTime) {
+		UniformEpsilonProvider epsilon = new UniformEpsilonProvider(getConfig().global().getRandomSeed());
+		Set<String> routingModes = Set.of("car", "car_passenger");
+		return new IDFPreroutingLogic(epsilon, routingModes, travelTime, network);
 	}
 }
