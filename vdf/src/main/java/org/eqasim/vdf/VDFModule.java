@@ -30,7 +30,7 @@ public class VDFModule extends AbstractModule {
 		int numberOfIntervals = (int) Math.floor((config.getEndTime() - config.getStartTime()) / config.getInterval())
 				+ 1;
 		return new VDFTravelTime(config.getEndTime(), config.getInterval(), numberOfIntervals, config.getMinimumSpeed(),
-				qsimConfig.getFlowCapFactor(), network, vdf, eqasimConfig.getCrossingPenalty());
+				qsimConfig.getFlowCapFactor(), eqasimConfig.getSampleSize(), network, vdf, eqasimConfig.getCrossingPenalty());
 	}
 
 	@Provides
