@@ -57,6 +57,11 @@ public class RunSimulation {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		config.addModule(new VDFConfigGroup());
 		cmd.applyConfiguration(config);
+		
+		{
+			// Avoid logging errors when using TripsAndLegsCSV 
+			config.controler().setWriteTripsInterval(0);
+		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
