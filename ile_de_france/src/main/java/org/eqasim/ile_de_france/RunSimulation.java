@@ -81,14 +81,13 @@ public class RunSimulation {
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new StuckAnalysisModule());
 		controller.addOverridingModule(new DelayAnalysisModule());
-		controller.addOverridingModule(new CountsModule(cmd));
 
 		if (cmd.hasOption("line-switch-utility")) {
 			double lineSwitchUtility = Double.parseDouble(cmd.getOptionStrict("line-switch-utility"));
 			config.planCalcScore().setUtilityOfLineSwitch(lineSwitchUtility);
 		}
 
-		if (cmd.hasOption("count-links")) {
+		if (cmd.hasOption("counts-path")) {
 			controller.addOverridingModule(new CountsModule(cmd));
 		}
 
