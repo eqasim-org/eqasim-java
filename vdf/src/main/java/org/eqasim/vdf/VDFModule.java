@@ -3,7 +3,6 @@ package org.eqasim.vdf;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.vdf.function.BPRFunction;
 import org.eqasim.vdf.function.VolumeDelayFunction;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -14,9 +13,13 @@ import com.google.inject.Singleton;
 public class VDFModule extends AbstractModule {
 	@Override
 	public void install() {
-		addTravelTimeBinding(TransportMode.car).to(VDFTravelTime.class);
-		addEventHandlerBinding().to(VDFTrafficHandler.class);
+		VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(getConfig());
 
+		for (String mode : vdfConfig.getModes()) {
+			addTravelTimeBinding(mode).to(VDFTravelTime.class);
+		}
+
+		addEventHandlerBinding().to(VDFTrafficHandler.class);
 		bind(VolumeDelayFunction.class).to(BPRFunction.class);
 	}
 
