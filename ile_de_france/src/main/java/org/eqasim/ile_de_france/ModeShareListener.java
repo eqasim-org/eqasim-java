@@ -20,7 +20,7 @@ import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 
 public class ModeShareListener implements PersonDepartureEventHandler, IterationStartsListener, IterationEndsListener {
-	private final List<String> modes = Arrays.asList("car", "pt", "bike", "walk");
+	private final List<String> modes = Arrays.asList("car", "pt", "bike", "walk", "car_passenger");
 
 	private final Map<String, ConvergenceSignal> signals = new HashMap<>();
 	private final Map<String, Integer> tripCount = new HashMap<>();
@@ -71,8 +71,14 @@ public class ModeShareListener implements PersonDepartureEventHandler, Iteration
 
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
-		if (modes.contains(event.getLegMode())) {
-			tripCount.compute(event.getLegMode(), (k, v) -> v == null ? 1 : v + 1);
+		String convergenceMode = event.getLegMode();
+
+		if (convergenceMode.startsWith("pt")) {
+			convergenceMode = "pt";
+		}
+
+		if (modes.contains(convergenceMode)) {
+			tripCount.compute(convergenceMode, (k, v) -> v == null ? 1 : v + 1);
 		}
 	}
 }
