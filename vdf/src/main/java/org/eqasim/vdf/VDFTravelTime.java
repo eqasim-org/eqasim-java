@@ -43,7 +43,7 @@ public class VDFTravelTime implements TravelTime {
 
 		for (Link link : network.getLinks().values()) {
 			double travelTime = Math.max(1.0,
-					Math.max(link.getLength() / minimumSpeed, link.getLength() / link.getFreespeed()));
+					Math.min(link.getLength() / minimumSpeed, link.getLength() / link.getFreespeed()));
 			travelTimes.put(link.getId(),
 					new ArrayList<>(Collections.nCopies(numberOfIntervals, considerCrossingPenalty(link, travelTime))));
 		}
@@ -70,7 +70,7 @@ public class VDFTravelTime implements TravelTime {
 				double capacity = flowCapacityFactor * interval * link.getCapacity(time) / network.getCapacityPeriod();
 
 				double travelTime = Math.max(1.0,
-						Math.max(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));
+						Math.min(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));
 				linkTravelTimes.set(i, considerCrossingPenalty(link, travelTime));
 			}
 		}
