@@ -25,7 +25,7 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 	private final Logger logger = Logger.getLogger(IDFPreroutingLogic.class);
 
 	private final double departureTimeMargin = 300.0; // seconds
-	private final int networkRoutingDelay = 10; // iterations
+	private final int networkRoutingDelay = 0; // iterations
 	private final double switchBeta = 300; // seconds
 
 	private final Set<String> delayedModes;
@@ -75,25 +75,37 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 			}
 		}
 
+		boolean keepExistingRoute = true;
+
 		if (Math.abs(initialDepartureTime - trip.getDepartureTime()) < departureTimeMargin) {
-			if (!delayedModes.contains(trip.getInitialMode())) {
-				return true;
-			} else {
-				Integer lastRoutingUpdate = (Integer) trip.getOriginActivity().getAttributes()
-						.getAttribute("lastRoutingUpdate");
+			// If the departure time is substantially different, reroute!
+			keepExistingRoute = false;
+		}
 
-				if (lastRoutingUpdate == null) {
-					lastRoutingUpdate = 0;
-				}
+		if (delayedModes.contains(trip.getInitialMode())) {
+			// Special case for road-based modes
 
-				if (currentIteration - lastRoutingUpdate > networkRoutingDelay) {
-					trip.getOriginActivity().getAttributes().putAttribute("lastRoutingUpdate", currentIteration);
-					return true;
-				}
+			int iterationsSinceLastUpdate = Integer.MAX_VALUE;
+
+			Integer lastRoutingUpdate = (Integer) trip.getOriginActivity().getAttributes()
+					.getAttribute("lastRoutingUpdate:" + trip.getInitialMode());
+
+			if (lastRoutingUpdate != null) {
+				iterationsSinceLastUpdate = currentIteration - lastRoutingUpdate;
+			}
+
+			if (iterationsSinceLastUpdate > networkRoutingDelay) {
+				// Only if we have sufficiently long, find a new route
+				keepExistingRoute = false;
+			}
+
+			if (!keepExistingRoute) {
+				trip.getOriginActivity().getAttributes().putAttribute("lastRoutingUpdate:" + trip.getInitialMode(),
+						currentIteration);
 			}
 		}
 
-		return false;
+		return keepExistingRoute;
 	}
 
 	@Override
@@ -101,59 +113,64 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 			List<? extends PlanElement> updatedRoute) {
 		Leg initialLeg = (Leg) trip.getInitialElements().get(0);
 
+		// We need to route because we don't have a routing mode
 		if (TripStructureUtils.getRoutingMode(initialLeg) == null) {
 			return false;
 		}
 
+		// We need to route because this is pt, bike, ... so we have decided we want to
+		// reroute already
 		if (!delayedModes.contains(trip.getInitialMode())) {
 			return false;
+		}
+
+		// Here we start assessing the road-based routes
+		double departureTime = trip.getDepartureTime();
+
+		double initialTravelTime = 0.0;
+		double updatedTravelTime = 0.0;
+
+		for (Leg leg : TripStructureUtils.getLegs(trip.getInitialElements())) {
+			NetworkRoute networkRoute = (NetworkRoute) leg.getRoute();
+
+			for (Id<Link> linkId : networkRoute.getLinkIds()) {
+				Link link = network.getLinks().get(linkId);
+				initialTravelTime += travelTime.getLinkTravelTime(link, departureTime + initialTravelTime, person,
+						null);
+			}
+		}
+
+		for (Leg leg : TripStructureUtils.getLegs(updatedRoute)) {
+			NetworkRoute networkRoute = (NetworkRoute) leg.getRoute();
+
+			for (Id<Link> linkId : networkRoute.getLinkIds()) {
+				Link link = network.getLinks().get(linkId);
+				updatedTravelTime += travelTime.getLinkTravelTime(link, departureTime + updatedTravelTime, person,
+						null);
+			}
+		}
+
+		// How much travel time do we save?
+		double gain = initialTravelTime - updatedTravelTime;
+
+		if (gain <= 0.0) {
+			// If we would generate additional delay, stick with the old route!
+			writer.add(gain, false);
+			return true;
 		} else {
-			double departureTime = trip.getDepartureTime();
+			// Adding a number of the trip index to decorrelate from mode choice
+			double u = epsilon.getEpsilon(person.getId(), trip.getIndex() + 9482, trip.getInitialMode());
+			double threshold = -switchBeta * Math.log(1 - u);
 
-			double initialTravelTime = 0.0;
-			double updatedTravelTime = 0.0;
+			// Assuming that threshold follows a Exponential distribution with expectation
+			// switchBeta
 
-			for (Leg leg : TripStructureUtils.getLegs(trip.getInitialElements())) {
-				NetworkRoute networkRoute = (NetworkRoute) leg.getRoute();
-
-				for (Id<Link> linkId : networkRoute.getLinkIds()) {
-					Link link = network.getLinks().get(linkId);
-					initialTravelTime += travelTime.getLinkTravelTime(link, departureTime + initialTravelTime, person,
-							null);
-				}
-			}
-
-			for (Leg leg : TripStructureUtils.getLegs(updatedRoute)) {
-				NetworkRoute networkRoute = (NetworkRoute) leg.getRoute();
-
-				for (Id<Link> linkId : networkRoute.getLinkIds()) {
-					Link link = network.getLinks().get(linkId);
-					updatedTravelTime += travelTime.getLinkTravelTime(link, departureTime + updatedTravelTime, person,
-							null);
-				}
-			}
-
-			double gain = initialTravelTime - updatedTravelTime;
-
-			if (gain <= 0.0) {
-				// If we would generate additional delay, stick with the old route!
+			if (gain < threshold) {
 				writer.add(gain, false);
 				return true;
 			} else {
-				// Adding a number of the trip index to decorrelate from mode choice
-				double u = epsilon.getEpsilon(person.getId(), trip.getIndex() + 9482, trip.getInitialMode());
-				double threshold = -switchBeta * Math.log(1 - u);
-
-				// Assuming that threshold follows a Exponential distribution with expectation
-				// switchBeta
-
-				if (gain < threshold) {
-					writer.add(gain, false);
-					return true;
-				} else {
-					writer.add(gain, true);
-					return false;
-				}
+				writer.add(gain, true);
+				return false;
 			}
 		}
 	}
