@@ -3,7 +3,6 @@ package org.eqasim.ile_de_france.mode_choice;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.eqasim.core.simulation.mode_choice.epsilon.UniformEpsilonProvider;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -13,17 +12,13 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator.PreroutingLogic;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
-import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.util.TravelTime;
 
-public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListener, IterationEndsListener {
-	private final Logger logger = Logger.getLogger(IDFPreroutingLogic.class);
-
+public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListener {
 	private final double departureTimeMargin = 300.0; // seconds
 	private final int networkRoutingDelay = 0; // iterations
 	private final double switchBeta = 300; // seconds
@@ -49,11 +44,6 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 	@Override
 	public void notifyIterationStarts(IterationStartsEvent event) {
 		currentIteration = event.getIteration();
-	}
-
-	@Override
-	public void notifyIterationEnds(IterationEndsEvent event) {
-		writer.update(event.getIteration());
 	}
 
 	@Override

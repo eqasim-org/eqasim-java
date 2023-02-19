@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.matsim.core.controler.events.IterationEndsEvent;
+import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.io.IOUtils;
 
-public class IDFPreroutingWriter {
+public class IDFPreroutingWriter implements IterationEndsListener {
 	private final File outputPath;
 
 	private int cases = 0;
@@ -20,7 +22,7 @@ public class IDFPreroutingWriter {
 		this.outputPath = outputPath;
 	}
 
-	public void add(double gain, boolean switched) {
+	public synchronized void add(double gain, boolean switched) {
 		if (switched) {
 			this.switched++;
 			this.switchedGain += gain;
@@ -31,7 +33,7 @@ public class IDFPreroutingWriter {
 		this.cases++;
 	}
 
-	public void update(int iteration) {
+	private void update(int iteration) {
 		boolean writeHeader = !outputPath.exists();
 
 		try {
@@ -63,5 +65,10 @@ public class IDFPreroutingWriter {
 		switchedGain = 0.0;
 		nonSwitchedGain = 0.0;
 		switched = 0;
+	}
+
+	@Override
+	public void notifyIterationEnds(IterationEndsEvent event) {
+		update(event.getIteration());
 	}
 }

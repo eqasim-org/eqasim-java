@@ -85,6 +85,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 		bind(PreroutingLogic.class).to(IDFPreroutingLogic.class);
 		addControlerListenerBinding().to(IDFPreroutingLogic.class);
+		addControlerListenerBinding().to(IDFPreroutingWriter.class);
 	}
 
 	@Provides
@@ -122,7 +123,6 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	@Singleton
 	public IDFPreroutingLogic provideIDFPreroutingVoter(Network network, VDFTravelTime travelTime,
 			IDFPreroutingWriter writer) {
 		UniformEpsilonProvider epsilon = new UniformEpsilonProvider(getConfig().global().getRandomSeed());
