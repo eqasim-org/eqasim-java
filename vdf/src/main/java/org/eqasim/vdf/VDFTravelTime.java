@@ -20,6 +20,7 @@ public class VDFTravelTime implements TravelTime {
 	private final int numberOfIntervals;
 	private final double minimumSpeed;
 	private final double flowCapacityFactor;
+	private final double samplingRate;
 	private final double crossingPenalty;
 
 	private final Network network;
@@ -28,7 +29,8 @@ public class VDFTravelTime implements TravelTime {
 	private final IdMap<Link, List<Double>> travelTimes = new IdMap<>(Link.class);
 
 	public VDFTravelTime(double startTime, double interval, int numberOfIntervals, double minimumSpeed,
-			double flowCapacityFacotor, Network network, VolumeDelayFunction vdf, double crossingPenalty) {
+			double flowCapacityFacotor, double samplingRate, Network network, VolumeDelayFunction vdf,
+			double crossingPenalty) {
 		this.startTime = startTime;
 		this.interval = interval;
 		this.numberOfIntervals = numberOfIntervals;
@@ -36,12 +38,14 @@ public class VDFTravelTime implements TravelTime {
 		this.vdf = vdf;
 		this.minimumSpeed = minimumSpeed;
 		this.flowCapacityFactor = flowCapacityFacotor;
+		this.samplingRate = samplingRate;
 		this.crossingPenalty = crossingPenalty;
 
 		for (Link link : network.getLinks().values()) {
 			double travelTime = Math.max(1.0,
 					Math.max(link.getLength() / minimumSpeed, link.getLength() / link.getFreespeed()));
-			travelTimes.put(link.getId(), new ArrayList<>(Collections.nCopies(numberOfIntervals, travelTime)));
+			travelTimes.put(link.getId(),
+					new ArrayList<>(Collections.nCopies(numberOfIntervals, considerCrossingPenalty(link, travelTime))));
 		}
 	}
 
@@ -62,8 +66,8 @@ public class VDFTravelTime implements TravelTime {
 				double time = startTime + i * interval;
 
 				// Pass per interval
-				double flow = linkCounts.get(i) / flowCapacityFactor;
-				double capacity = interval * link.getCapacity(time) / network.getCapacityPeriod();
+				double flow = linkCounts.get(i) / samplingRate;
+				double capacity = flowCapacityFactor * interval * link.getCapacity(time) / network.getCapacityPeriod();
 
 				double travelTime = Math.max(1.0,
 						Math.max(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));
