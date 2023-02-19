@@ -27,6 +27,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator.PreroutingLogic;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -122,9 +123,17 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public IDFPreroutingLogic provideIDFPreroutingVoter(Network network, VDFTravelTime travelTime) {
+	public IDFPreroutingLogic provideIDFPreroutingVoter(Network network, VDFTravelTime travelTime,
+			IDFPreroutingWriter writer) {
 		UniformEpsilonProvider epsilon = new UniformEpsilonProvider(getConfig().global().getRandomSeed());
 		Set<String> routingModes = Set.of("car", "car_passenger");
-		return new IDFPreroutingLogic(epsilon, routingModes, travelTime, network);
+		return new IDFPreroutingLogic(epsilon, routingModes, travelTime, network, writer);
+	}
+
+	@Provides
+	@Singleton
+	public IDFPreroutingWriter provideIDFPreproutingWriter(OutputDirectoryHierarchy outputHierarchy) {
+		File outputPath = new File(outputHierarchy.getOutputFilename("prerouting_logic.csv"));
+		return new IDFPreroutingWriter(outputPath);
 	}
 }

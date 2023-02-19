@@ -13,33 +13,37 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator.PreroutingLogic;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
+import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.util.TravelTime;
 
-public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListener {
+public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListener, IterationEndsListener {
 	private final Logger logger = Logger.getLogger(IDFPreroutingLogic.class);
 
 	private final double departureTimeMargin = 300.0; // seconds
 	private final int networkRoutingDelay = 10; // iterations
-	private final double switchBeta = 1000; // seconds
+	private final double switchBeta = 300; // seconds
 
 	private final Set<String> delayedModes;
 	private final TravelTime travelTime; // TODO: This is not mode dependent right now!
 	private final Network network;
 
 	private final UniformEpsilonProvider epsilon;
+	private final IDFPreroutingWriter writer;
 
 	private int currentIteration = 0;
 
 	public IDFPreroutingLogic(UniformEpsilonProvider epsilon, Set<String> delayedModes, TravelTime travelTime,
-			Network network) {
+			Network network, IDFPreroutingWriter writer) {
 		this.epsilon = epsilon;
 		this.delayedModes = delayedModes;
 		this.travelTime = travelTime;
 		this.network = network;
+		this.writer = writer;
 	}
 
 	@Override
@@ -48,7 +52,12 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 	}
 
 	@Override
-	public boolean keepInitialRoute(Person person, DiscreteModeChoiceTrip trip) {
+	public void notifyIterationEnds(IterationEndsEvent event) {
+		writer.update(event.getIteration());
+	}
+
+	@Override
+	public boolean keepInitialRouteBeforeRouting(Person person, DiscreteModeChoiceTrip trip) {
 		Leg initialLeg = (Leg) trip.getInitialElements().get(0);
 		double initialDepartureTime = initialLeg.getDepartureTime().seconds();
 
@@ -80,9 +89,6 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 				if (currentIteration - lastRoutingUpdate > networkRoutingDelay) {
 					trip.getOriginActivity().getAttributes().putAttribute("lastRoutingUpdate", currentIteration);
 					return true;
-				} else {
-					logger.warn("Still " + (networkRoutingDelay - currentIteration + lastRoutingUpdate)
-							+ " iterations before updating " + trip.getInitialMode() + " for " + person.getId());
 				}
 			}
 		}
@@ -91,7 +97,7 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 	}
 
 	@Override
-	public boolean keepInitialRoute(Person person, DiscreteModeChoiceTrip trip,
+	public boolean keepInitialRouteAfterRouting(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> updatedRoute) {
 		Leg initialLeg = (Leg) trip.getInitialElements().get(0);
 
@@ -127,18 +133,27 @@ public class IDFPreroutingLogic implements PreroutingLogic, IterationStartsListe
 				}
 			}
 
-			double delta = updatedTravelTime - initialTravelTime;
+			double gain = initialTravelTime - updatedTravelTime;
 
-			if (delta > 0.0) {
-				logger.warn("Delta of " + delta + " seconds for " + person.getId() + " (" + trip.getInitialMode()
-						+ ") -> Keeping old route");
+			if (gain <= 0.0) {
+				// If we would generate additional delay, stick with the old route!
+				writer.add(gain, false);
 				return true;
 			} else {
 				// Adding a number of the trip index to decorrelate from mode choice
 				double u = epsilon.getEpsilon(person.getId(), trip.getIndex() + 9482, trip.getInitialMode());
-				logger.warn("Delta of " + delta + " seconds for " + person.getId() + " (" + trip.getInitialMode()
-						+ ") and threshold of (" + switchBeta * Math.log(1 - u) + ") seconds");
-				return delta < switchBeta * Math.log(1 - u);
+				double threshold = -switchBeta * Math.log(1 - u);
+
+				// Assuming that threshold follows a Exponential distribution with expectation
+				// switchBeta
+
+				if (gain < threshold) {
+					writer.add(gain, false);
+					return true;
+				} else {
+					writer.add(gain, true);
+					return false;
+				}
 			}
 		}
 	}

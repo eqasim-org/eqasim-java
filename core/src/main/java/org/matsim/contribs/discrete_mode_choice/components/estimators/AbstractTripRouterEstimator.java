@@ -40,7 +40,7 @@ public abstract class AbstractTripRouterEstimator implements TripEstimator {
 
 	private boolean allowPrerouting(String mode, Person person, DiscreteModeChoiceTrip trip) {
 		if (mode.equals(trip.getInitialMode())) {
-			return preroutingLogic.keepInitialRoute(person, trip);
+			return preroutingLogic.keepInitialRouteBeforeRouting(person, trip);
 		}
 
 		return false;
@@ -56,7 +56,7 @@ public abstract class AbstractTripRouterEstimator implements TripEstimator {
 
 		boolean sameMode = trip.getInitialMode().equals(mode);
 
-		if (sameMode && preroutingLogic.keepInitialRoute(person, trip)) {
+		if (sameMode && preroutingLogic.keepInitialRouteBeforeRouting(person, trip)) {
 			// If we already have the route of interest, just pass it on
 			return estimateTripCandidate(person, mode, trip, previousTrips, trip.getInitialElements());
 		} else {
@@ -64,7 +64,7 @@ public abstract class AbstractTripRouterEstimator implements TripEstimator {
 			List<? extends PlanElement> elements = tripRouter.calcRoute(mode, originFacility, destinationFacility,
 					trip.getDepartureTime(), person);
 
-			if (sameMode && preroutingLogic.keepInitialRoute(person, trip, elements)) {
+			if (sameMode && preroutingLogic.keepInitialRouteAfterRouting(person, trip, elements)) {
 				// We explicitly don't want to update to the new route (maybe because it is
 				// worse)
 				return estimateTripCandidate(person, mode, trip, previousTrips, trip.getInitialElements());
@@ -102,9 +102,9 @@ public abstract class AbstractTripRouterEstimator implements TripEstimator {
 	}
 
 	static public interface PreroutingLogic {
-		boolean keepInitialRoute(Person person, DiscreteModeChoiceTrip trip);
+		boolean keepInitialRouteBeforeRouting(Person person, DiscreteModeChoiceTrip trip);
 
-		boolean keepInitialRoute(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> updatedRoute);
+		boolean keepInitialRouteAfterRouting(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> updatedRoute);
 	}
 
 	static public class DefaultPreroutingLogic implements PreroutingLogic {
@@ -115,7 +115,7 @@ public abstract class AbstractTripRouterEstimator implements TripEstimator {
 		}
 
 		@Override
-		public boolean keepInitialRoute(Person person, DiscreteModeChoiceTrip trip) {
+		public boolean keepInitialRouteBeforeRouting(Person person, DiscreteModeChoiceTrip trip) {
 			if (preroutingModes.contains(trip.getInitialMode())) {
 				Leg initialLeg = (Leg) trip.getInitialElements().get(0);
 				double initialDepartureTime = initialLeg.getDepartureTime().seconds();
@@ -129,7 +129,7 @@ public abstract class AbstractTripRouterEstimator implements TripEstimator {
 		}
 
 		@Override
-		public boolean keepInitialRoute(Person person, DiscreteModeChoiceTrip trip,
+		public boolean keepInitialRouteAfterRouting(Person person, DiscreteModeChoiceTrip trip,
 				List<? extends PlanElement> updatedRoute) {
 			return false;
 		}
