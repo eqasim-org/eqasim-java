@@ -8,6 +8,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.ile_de_france.mode_choice.constraints.InitialWaitingTimeConstraint;
+import org.eqasim.ile_de_france.mode_choice.constraints.SameLocationWalkConstraint;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.NantesPtCostModel;
@@ -40,6 +41,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	public static final String PASSENGER_ESTIMATOR_NAME = "IDFPassengerUtilityEstimator";
 
 	public static final String INITIAL_WAITING_TIME_CONSTRAINT = "InitialWaitingTimeConstraint";
+	public static final String SAME_LOCATION_WALK_CONSTRAINT = "SameLocationWalkConstraint";
 
 	public IDFModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -61,6 +63,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bind(IDFSpatialPredictor.class);
 
 		bindTripConstraintFactory(INITIAL_WAITING_TIME_CONSTRAINT).to(InitialWaitingTimeConstraint.Factory.class);
+		bindTripConstraintFactory(SAME_LOCATION_WALK_CONSTRAINT).to(SameLocationWalkConstraint.Factory.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 

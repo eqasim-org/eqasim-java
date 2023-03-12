@@ -39,6 +39,7 @@ public class RunAdaptConfig {
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 		tripConstraints.remove(EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME);
 		tripConstraints.add(IDFModeChoiceModule.INITIAL_WAITING_TIME_CONSTRAINT);
+		tripConstraints.add(IDFModeChoiceModule.SAME_LOCATION_WALK_CONSTRAINT);
 		dmcConfig.setTripConstraints(tripConstraints);
 	}
 
