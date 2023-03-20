@@ -19,7 +19,7 @@ public class VDFTravelTime implements TravelTime {
 	private final double interval;
 	private final int numberOfIntervals;
 	private final double minimumSpeed;
-	private final double flowCapacityFactor;
+	private final double capacityFactor;
 	private final double samplingRate;
 	private final double crossingPenalty;
 
@@ -29,7 +29,7 @@ public class VDFTravelTime implements TravelTime {
 	private final IdMap<Link, List<Double>> travelTimes = new IdMap<>(Link.class);
 
 	public VDFTravelTime(double startTime, double interval, int numberOfIntervals, double minimumSpeed,
-			double flowCapacityFacotor, double samplingRate, Network network, VolumeDelayFunction vdf,
+			double capacityFacotor, double samplingRate, Network network, VolumeDelayFunction vdf,
 			double crossingPenalty) {
 		this.startTime = startTime;
 		this.interval = interval;
@@ -37,7 +37,7 @@ public class VDFTravelTime implements TravelTime {
 		this.network = network;
 		this.vdf = vdf;
 		this.minimumSpeed = minimumSpeed;
-		this.flowCapacityFactor = flowCapacityFacotor;
+		this.capacityFactor = capacityFacotor;
 		this.samplingRate = samplingRate;
 		this.crossingPenalty = crossingPenalty;
 
@@ -67,7 +67,7 @@ public class VDFTravelTime implements TravelTime {
 
 				// Pass per interval
 				double flow = linkCounts.get(i) / samplingRate;
-				double capacity = flowCapacityFactor * interval * link.getCapacity(time) / network.getCapacityPeriod();
+				double capacity = capacityFactor * interval * link.getCapacity(time) / network.getCapacityPeriod();
 
 				double travelTime = Math.max(1.0,
 						Math.min(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));

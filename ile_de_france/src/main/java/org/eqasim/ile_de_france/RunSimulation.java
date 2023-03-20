@@ -57,9 +57,9 @@ public class RunSimulation {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		config.addModule(new VDFConfigGroup());
 		cmd.applyConfiguration(config);
-		
+
 		{
-			// Avoid logging errors when using TripsAndLegsCSV 
+			// Avoid logging errors when using TripsAndLegsCSV
 			config.controler().setWriteTripsInterval(0);
 		}
 
@@ -113,6 +113,8 @@ public class RunSimulation {
 		if (useVdf) {
 			controller.addOverridingModule(new VDFModule());
 			controller.addOverridingQSimModule(new VDFQSimModule());
+
+			config.qsim().setFlowCapFactor(1e9);
 			config.qsim().setStorageCapFactor(1e9);
 		}
 

@@ -16,6 +16,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	static private final String INTERVAL = "interval";
 	static private final String MINIMUM_SPEED = "minimumSpeed";
 	static private final String HORIZON = "horizon";
+	static private final String CAPACITY_FACTOR = "capacityFactor";
 
 	static private final String BPR_FACTOR = "bpr:factor";
 	static private final String BPR_EXPONENT = "bpr:exponent";
@@ -32,6 +33,8 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private double bprExponent = 4.0;
 
 	private Set<String> modes = Set.of(TransportMode.car, "car_passenger");
+
+	private double capacityFactor = 1.0;
 
 	public VDFConfigGroup() {
 		super(GROUP_NAME);
@@ -129,6 +132,16 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(BPR_EXPONENT)
 	public void setBprExponent(double bprExponent) {
 		this.bprExponent = bprExponent;
+	}
+
+	@StringGetter(CAPACITY_FACTOR)
+	public double getCapacityFactor() {
+		return capacityFactor;
+	}
+
+	@StringSetter(CAPACITY_FACTOR)
+	public void setCapacityFactor(double capacityFactor) {
+		this.capacityFactor = capacityFactor;
 	}
 
 	public Set<String> getModes() {
