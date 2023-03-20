@@ -1,5 +1,10 @@
 package org.eqasim.vdf;
 
+import java.util.Arrays;
+import java.util.Set;
+
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.utils.misc.Time;
 
@@ -15,6 +20,8 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	static private final String BPR_FACTOR = "bpr:factor";
 	static private final String BPR_EXPONENT = "bpr:exponent";
 
+	static private final String MODES = "modes";
+
 	private double startTime = 0.0 * 3600.0;
 	private double endTime = 24.0 * 3600.0;
 	private double interval = 3600.0;
@@ -23,6 +30,8 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 
 	private double bprFactor = 0.15;
 	private double bprExponent = 4.0;
+
+	private Set<String> modes = Set.of(TransportMode.car, "car_passenger");
 
 	public VDFConfigGroup() {
 		super(GROUP_NAME);
@@ -120,5 +129,36 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(BPR_EXPONENT)
 	public void setBprExponent(double bprExponent) {
 		this.bprExponent = bprExponent;
+	}
+
+	public Set<String> getModes() {
+		return modes;
+	}
+
+	public void setModes(Set<String> modes) {
+		this.modes.clear();
+		this.modes.addAll(modes);
+	}
+
+	@StringGetter(MODES)
+	public String getModesAsString() {
+		return String.join(",", modes);
+	}
+
+	@StringSetter(MODES)
+	public void setModesAsString(String modes) {
+		this.modes.clear();
+		Arrays.asList(modes.split(",")).stream().map(String::trim).forEach(this.modes::add);
+	}
+
+	public static VDFConfigGroup getOrCreate(Config config) {
+		VDFConfigGroup group = (VDFConfigGroup) config.getModules().get(GROUP_NAME);
+
+		if (group == null) {
+			group = new VDFConfigGroup();
+			config.addModule(group);
+		}
+
+		return group;
 	}
 }
