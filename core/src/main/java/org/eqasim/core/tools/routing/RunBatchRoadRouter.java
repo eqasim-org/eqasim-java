@@ -42,7 +42,7 @@ public class RunBatchRoadRouter {
 			IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size", "modes") //
+				.allowOptions("threads", "batch-size", "modes", "write-paths") //
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
@@ -56,6 +56,8 @@ public class RunBatchRoadRouter {
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
+
+		boolean writePaths = cmd.getOption("write-paths").map(Boolean::parseBoolean).orElse(false);
 
 		Set<String> modes = new HashSet<>();
 		for (String mode : cmd.getOption("modes").orElse("car").split(",")) {
@@ -83,7 +85,7 @@ public class RunBatchRoadRouter {
 		Network network = injector.getInstance(Key.get(Network.class, Names.named("car")));
 
 		BatchRoadRouter batchRouter = new BatchRoadRouter(injector.getProvider(LeastCostPathCalculatorFactory.class),
-				network, batchSize, numberOfThreads);
+				network, batchSize, numberOfThreads, writePaths);
 
 		CsvMapper mapper = new CsvMapper();
 
@@ -97,11 +99,24 @@ public class RunBatchRoadRouter {
 
 		Collection<Result> results = batchRouter.run(tasks);
 
-		File outputFile = new File(cmd.getOptionStrict("output-path"));
-		CsvSchema resultSchema = mapper.typedSchemaFor(Result.class).withHeader().withColumnSeparator(',');
+		CsvSchema.Builder builder = new CsvSchema.Builder() //
+				.setColumnSeparator(',') //
+				.setArrayElementSeparator(" ") //
+				.setUseHeader(true) //
+				.addColumn("identifier") //
+				.addColumn("access_euclidean_distance_km") //
+				.addColumn("egress_euclidean_distance_km") //
+				.addColumn("in_vehicle_time_min");
 
-		SequenceWriter writer = mapper.writerWithTypedSchemaFor(Result.class).with(resultSchema)
-				.writeValues(outputFile);
+		if (writePaths) {
+			builder.addArrayColumn("path");
+		}
+
+		CsvSchema schema = builder.build();
+
+		File outputFile = new File(cmd.getOptionStrict("output-path"));
+		SequenceWriter writer = mapper.writerWithTypedSchemaFor(Result.class).with(schema).writeValues(outputFile);
+
 		writer.writeAll(results);
 	}
 }
