@@ -25,6 +25,7 @@ import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.scenario.ScenarioUtils;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.SequenceWriter;
@@ -87,13 +88,13 @@ public class RunBatchRoadRouter {
 		BatchRoadRouter batchRouter = new BatchRoadRouter(injector.getProvider(LeastCostPathCalculatorFactory.class),
 				network, batchSize, numberOfThreads, writePaths);
 
-		CsvMapper mapper = new CsvMapper();
+		CsvMapper taskMapper = new CsvMapper();
 
 		File inputFile = new File(cmd.getOptionStrict("input-path"));
-		CsvSchema taskSchema = mapper.typedSchemaFor(Task.class).withHeader().withColumnSeparator(',').withComments()
-				.withColumnReordering(true);
+		CsvSchema taskSchema = taskMapper.typedSchemaFor(Task.class).withHeader().withColumnSeparator(',')
+				.withComments().withColumnReordering(true);
 
-		MappingIterator<Task> taskIterator = mapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
+		MappingIterator<Task> taskIterator = taskMapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
 				.readValues(inputFile);
 		List<Task> tasks = taskIterator.readAll();
 
@@ -106,7 +107,8 @@ public class RunBatchRoadRouter {
 				.addColumn("identifier") //
 				.addColumn("access_euclidean_distance_km") //
 				.addColumn("egress_euclidean_distance_km") //
-				.addColumn("in_vehicle_time_min");
+				.addColumn("in_vehicle_time_min") //
+				.addColumn("in_vehicle_distance_km");
 
 		if (writePaths) {
 			builder.addArrayColumn("path");
@@ -115,7 +117,11 @@ public class RunBatchRoadRouter {
 		CsvSchema schema = builder.build();
 
 		File outputFile = new File(cmd.getOptionStrict("output-path"));
-		SequenceWriter writer = mapper.writerWithTypedSchemaFor(Result.class).with(schema).writeValues(outputFile);
+
+		CsvMapper resultMapper = new CsvMapper();
+		resultMapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+		SequenceWriter writer = resultMapper.writerWithTypedSchemaFor(Result.class).with(schema)
+				.writeValues(outputFile);
 
 		writer.writeAll(results);
 	}
