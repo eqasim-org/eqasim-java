@@ -37,6 +37,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	private final int analysisInterval;
 	private boolean isAnalysisActive = false;
+	private boolean doPtAnalysis = true;
 
 	private final DistanceUnit scenarioDistanceUnit;
 	private final DistanceUnit analysisDistanceUnit;
@@ -50,6 +51,9 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		this.analysisDistanceUnit = config.getAnalysisDistanceUnit();
 
 		this.analysisInterval = config.getAnalysisInterval();
+
+		// pt analysis throws an error when simulating pt in Qsim
+		this.doPtAnalysis = config.getUseScheduleBasedTransport();
 
 		this.tripAnalysisListener = tripListener;
 		this.legAnalysisListener = legListener;
@@ -65,7 +69,9 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				isAnalysisActive = true;
 				event.getServices().getEvents().addHandler(tripAnalysisListener);
 				event.getServices().getEvents().addHandler(legAnalysisListener);
-				event.getServices().getEvents().addHandler(ptAnalysisListener);
+				if (this.doPtAnalysis) {
+					event.getServices().getEvents().addHandler(ptAnalysisListener);
+				}
 			}
 		}
 	}
@@ -84,8 +90,10 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				new LegWriter(legAnalysisListener.getLegItems(), scenarioDistanceUnit, analysisDistanceUnit)
 						.write(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME));
 
-				new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
-						.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
+				if (this.doPtAnalysis) {
+					new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
+							.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
+				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -99,8 +107,10 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 					new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME)).toPath());
 			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME)).toPath(),
 					new File(outputDirectory.getOutputFilename(LEGS_FILE_NAME)).toPath());
-			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
-					new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
+			if (this.doPtAnalysis) {
+				Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
+						new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
+			}
 		} catch (IOException e) {
 		}
 	}
