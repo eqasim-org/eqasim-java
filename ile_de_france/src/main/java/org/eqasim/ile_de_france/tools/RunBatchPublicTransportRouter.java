@@ -1,4 +1,4 @@
-package org.eqasim.core.tools.routing;
+package org.eqasim.ile_de_france.tools;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +17,11 @@ import org.eqasim.core.components.headway.HeadwayImputerModule;
 import org.eqasim.core.components.headway.HeadwayType;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.tools.routing.BatchPublicTransportRouter;
 import org.eqasim.core.tools.routing.BatchPublicTransportRouter.LegInformation;
 import org.eqasim.core.tools.routing.BatchPublicTransportRouter.Task;
 import org.eqasim.core.tools.routing.BatchPublicTransportRouter.TripInformation;
+import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -264,6 +266,7 @@ public class RunBatchPublicTransportRouter {
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
+				.addOverridingModule(new IDFRaptorModule()) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, false, interval, headwayType))
 				.build();
 

@@ -28,7 +28,7 @@ public class CountsReader {
 			if (header == null) {
 				header = row;
 			} else {
-				linkIds.add(Id.createLinkId(row.get(header.indexOf("link_id")).trim()));
+				linkIds.add(Id.createLinkId(row.get(header.indexOf("simulation_id")).trim()));
 			}
 		}
 

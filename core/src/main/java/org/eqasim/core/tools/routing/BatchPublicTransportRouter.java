@@ -149,7 +149,7 @@ public class BatchPublicTransportRouter {
 							} else if (leg.getMode().contains("walk") && !isFirstLeg && !isLastLeg) {
 								tripInformation.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (transitModes.contains(leg.getMode())) {
+							} else if (leg.getRoute() instanceof TransitPassengerRoute) {
 								TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
 								double waitingTime = route.getBoardingTime().seconds()
@@ -210,7 +210,7 @@ public class BatchPublicTransportRouter {
 									localLegResults.add(legInformation);
 								}
 							} else {
-								throw new IllegalStateException();
+								throw new IllegalStateException("Unknown mode: " + leg.getMode());
 							}
 
 							currentIndex++;

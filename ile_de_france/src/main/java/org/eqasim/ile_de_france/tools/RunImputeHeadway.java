@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france.tools;
 
 import org.eqasim.core.components.headway.HeadwayImputer;
 import org.eqasim.core.components.headway.HeadwayImputerModule;
+import org.eqasim.core.components.headway.HeadwayType;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.ile_de_france.routing.IDFRaptorModule;
@@ -31,6 +32,7 @@ public class RunImputeHeadway {
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
 		double interval = cmd.getOption("interval").map(Double::parseDouble).orElse(3600.0);
+		HeadwayType headwayType = cmd.getOption("type").map(HeadwayType::valueOf).orElse(HeadwayType.Interval);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		ScenarioUtils.loadScenario(scenario);
@@ -38,7 +40,7 @@ public class RunImputeHeadway {
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new IDFRaptorModule()) //
-				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, interval)) //
+				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, interval, headwayType)) //
 				.build();
 
 		HeadwayImputer headwayImputer = injector.getInstance(HeadwayImputer.class);
