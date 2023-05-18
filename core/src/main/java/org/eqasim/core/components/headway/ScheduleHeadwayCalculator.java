@@ -94,7 +94,8 @@ public class ScheduleHeadwayCalculator implements HeadwayCalculator {
 				TransitRouteStop egressStop = transitRoute.getStop(egressFacility);
 
 				if (accessStop != null && egressStop != null
-						&& accessStop.getDepartureOffset().seconds() <= egressStop.getDepartureOffset().seconds()) {
+						&& accessStop.getDepartureOffset().seconds() <= egressStop.getDepartureOffset().seconds()
+						&& accessStop.getArrivalOffset().seconds() <= egressStop.getArrivalOffset().seconds()) {
 					for (Departure departure : getSortedDepartures(transitRoute)) {
 						double currentDepartureTime = departure.getDepartureTime()
 								+ accessStop.getDepartureOffset().seconds();
