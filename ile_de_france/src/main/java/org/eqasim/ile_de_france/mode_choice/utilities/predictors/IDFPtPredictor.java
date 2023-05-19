@@ -1,9 +1,6 @@
 package org.eqasim.ile_de_france.mode_choice.utilities.predictors;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
@@ -63,11 +60,12 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 					double inVehicleTime = leg.getTravelTime().seconds() - waitingTime;
 
 					inVehicleTime_min += inVehicleTime / 60.0;
-					waitingTime_min += waitingTime / 60.0;
 
 					if (isFirstWaitingTime) {
 						initialWaitingTime_min = waitingTime;
 						isFirstWaitingTime = false;
+					} else {
+						waitingTime_min += waitingTime / 60.0;
 					}
 
 					if (getTransportMode(route).equals("bus")) {

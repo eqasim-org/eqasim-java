@@ -31,7 +31,8 @@ public class IDFPredictorUtils {
 	static public final String HEADWAY_MIN_ATTRIBUTE = "headway_min";
 
 	static public double getHeadway_min(Activity activity) {
-		return Math.min(MAXIMUM_HEADWAY_MIN,
-				Objects.requireNonNull((Double) activity.getAttributes().getAttribute(HEADWAY_MIN_ATTRIBUTE)));
+		return 0.0; // Not used anymore because of calculation effort
+		//return Math.min(MAXIMUM_HEADWAY_MIN,
+		//		Objects.requireNonNull((Double) activity.getAttributes().getAttribute(HEADWAY_MIN_ATTRIBUTE)));
 	}
 }

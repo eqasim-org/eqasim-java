@@ -18,7 +18,6 @@ public class IDFModeParameters extends ModeParameters {
 		public double betaDrivingPermit_u;
 		public double betaHeadway_u_min;
 		public double betaOnlyBus_u;
-		public double betaTransferTime_u_min;
 	}
 
 	public final IDFCarParameters idfCar = new IDFCarParameters();
@@ -31,43 +30,43 @@ public class IDFModeParameters extends ModeParameters {
 		IDFModeParameters parameters = new IDFModeParameters();
 
 		// General
-		parameters.referenceEuclideanDistance_km = 8.0;
-		parameters.lambdaTravelTimeEuclideanDistance = 0.327182;
+		parameters.referenceEuclideanDistance_km = 4.357986817139488;
+		parameters.lambdaTravelTimeEuclideanDistance = 0.271024;
 
 		// Cost
-		parameters.lambdaCostEuclideanDistance = -0.564067;
-		parameters.betaCost_u_MU = -0.206368;
+		parameters.lambdaCostEuclideanDistance = 0.0;
+		parameters.betaCost_u_MU = -0.233866;
 
 		// Car
-		parameters.car.alpha_u = -0.183793;
-		parameters.car.betaTravelTime_u_min = -0.035702;
+		parameters.car.alpha_u = 0.225276;
+		parameters.car.betaTravelTime_u_min = -0.030288;
 
-		parameters.idfCar.parkingPressure_u = -2.129954;
+		parameters.idfCar.parkingPressure_u = -2.240005;
 
 		// Passenger
-		parameters.idfPassenger.alpha_u = -1.642390;
-		parameters.idfPassenger.betaDrivingPermit_u = -1.190392;
-		parameters.idfPassenger.betaInVehicleTime_u_min = -0.047935;
-		parameters.idfPassenger.betaParkingPressure_u = -2.417705;
+		parameters.idfPassenger.alpha_u = -1.015447;
+		parameters.idfPassenger.betaDrivingPermit_u = -1.155232;
+		parameters.idfPassenger.betaInVehicleTime_u_min = -0.043256;
+		parameters.idfPassenger.betaParkingPressure_u = -2.601795;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
-		parameters.pt.betaInVehicleTime_u_min = -0.012811;
-		parameters.pt.betaAccessEgressTime_u_min = -0.029910;
-		parameters.pt.betaLineSwitch_u = -0.351704;
+		parameters.pt.betaInVehicleTime_u_min = -0.010603;
+		parameters.pt.betaAccessEgressTime_u_min = -0.027987;
+		parameters.pt.betaLineSwitch_u = -0.330642;
+		parameters.pt.betaWaitingTime_u_min = -0.010603; // = IVT
 
-		parameters.idfPt.betaDrivingPermit_u = -0.902849;
-		parameters.idfPt.betaHeadway_u_min = -0.040625;
-		parameters.idfPt.betaOnlyBus_u = -1.125458;
-		parameters.idfPt.betaTransferTime_u_min = -0.029910;
+		parameters.idfPt.betaDrivingPermit_u = -0.788438;
+		parameters.idfPt.betaHeadway_u_min = 0.0;
+		parameters.idfPt.betaOnlyBus_u = -1.338417;
 
 		// Bike
-		parameters.bike.alpha_u = -3.587379;
-		parameters.bike.betaTravelTime_u_min = -0.021655;
+		parameters.bike.alpha_u = -3.023839;
+		parameters.bike.betaTravelTime_u_min = -0.021709;
 
 		// Walk
-		parameters.walk.alpha_u = 0.814819;
-		parameters.walk.betaTravelTime_u_min = -0.150038;
+		parameters.walk.alpha_u = 1.379326;
+		parameters.walk.betaTravelTime_u_min = -0.150140;
 
 		return parameters;
 	}
