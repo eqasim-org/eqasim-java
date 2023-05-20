@@ -2,19 +2,19 @@ package org.eqasim.ile_de_france.analysis.counts;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
 import org.matsim.api.core.v01.network.Link;
 
 public class CountsHandler implements LinkLeaveEventHandler {
 	private final Set<Id<Link>> linkIds;
-	private final Map<Id<Link>, List<Integer>> counts = new HashMap<>();
+	private final IdMap<Link, List<Integer>> counts = new IdMap<>(Link.class);
 
 	public CountsHandler(Set<Id<Link>> linkIds) {
 		this.linkIds = linkIds;

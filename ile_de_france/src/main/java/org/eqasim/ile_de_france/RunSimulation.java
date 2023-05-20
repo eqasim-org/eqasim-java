@@ -1,10 +1,14 @@
 package org.eqasim.ile_de_france;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
+import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -19,6 +23,7 @@ import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
 import org.eqasim.vdf.VDFConfigGroup;
+import org.eqasim.vdf.VDFEngineModule;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFQSimModule;
 import org.matsim.api.core.v01.Scenario;
@@ -42,7 +47,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("counts-path", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
-						"line-switch-utility", "cost-model") //
+						"use-counts-calibration", "use-vdf-engine", "line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX) //
 				.build();
@@ -93,7 +98,9 @@ public class RunSimulation {
 		}
 
 		if (cmd.hasOption("counts-path")) {
-			controller.addOverridingModule(new CountsModule(cmd));
+			boolean useCountsCalibration = cmd.getOption("use-counts-calibration").map(Boolean::parseBoolean)
+					.orElse(false);
+			controller.addOverridingModule(new CountsModule(cmd, useCountsCalibration));
 		}
 
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(true)) {
@@ -116,6 +123,20 @@ public class RunSimulation {
 
 			config.qsim().setFlowCapFactor(1e9);
 			config.qsim().setStorageCapFactor(1e9);
+		}
+
+		boolean useVdfEngine = cmd.getOption("use-vdf-engine").map(Boolean::parseBoolean).orElse(false);
+		if (useVdfEngine) {
+			Set<String> mainModes = new HashSet<>(config.qsim().getMainModes());
+			mainModes.remove("car");
+			config.qsim().setMainModes(mainModes);
+
+			controller.addOverridingModule(new VDFEngineModule(Arrays.asList("car")));
+
+			controller.configureQSimComponents(cfg -> {
+				EqasimTransitQSimModule.configure(cfg, controller.getConfig());
+				cfg.addNamedComponent(VDFEngineModule.COMPONENT_NAME);
+			});
 		}
 
 		controller.addOverridingModule(new AbstractModule() {

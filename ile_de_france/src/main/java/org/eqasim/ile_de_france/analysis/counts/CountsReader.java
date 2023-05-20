@@ -6,18 +6,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 
-public class CountsReader {
-	Set<Id<Link>> readLinks(File path) throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+import com.google.common.base.Verify;
 
-		Set<Id<Link>> linkIds = new HashSet<>();
+public class CountsReader {
+	public DailyCounts read(File path) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+		IdMap<Link, Double> counts = new IdMap<>(Link.class);
 
 		String line = null;
 		List<String> header = null;
@@ -27,13 +27,21 @@ public class CountsReader {
 
 			if (header == null) {
 				header = row;
+
+				Verify.verify(header.contains("link_id"), "Missing link_id in counts file");
+				Verify.verify(header.contains("count"), "Missing count in in counts file");
 			} else {
-				linkIds.add(Id.createLinkId(row.get(header.indexOf("link_id")).trim()));
+				Id<Link> linkId = Id.createLinkId(row.get(header.indexOf("link_id")));
+				double count = Double.parseDouble(row.get(header.indexOf("count")));
+
+				counts.compute(linkId, (id, v) -> {
+					return v == null ? count : v + count;
+				});
 			}
 		}
 
 		reader.close();
 
-		return linkIds;
+		return new DailyCounts(counts);
 	}
 }

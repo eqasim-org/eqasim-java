@@ -1,11 +1,9 @@
 package org.eqasim.ile_de_france.analysis.counts;
 
 import java.io.File;
-import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.network.Link;
+import org.eqasim.ile_de_france.analysis.counts.calibration.CalibrationManager;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
@@ -16,11 +14,14 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class CountsModule extends AbstractModule {
-	private final Set<Id<Link>> linkIds;
+	private final DailyCounts counts;
+	private final boolean useCalibration;
 
-	public CountsModule(CommandLine cmd) {
+	public CountsModule(CommandLine cmd, boolean useCalibration) {
+		this.useCalibration = useCalibration;
+
 		try {
-			this.linkIds = new CountsReader().readLinks(new File(cmd.getOptionStrict("counts-path")));
+			counts = new CountsReader().read(new File(cmd.getOptionStrict("counts-path")));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -34,7 +35,14 @@ public class CountsModule extends AbstractModule {
 	@Provides
 	@Singleton
 	public CountsListener provideCountsListener(EqasimConfigGroup eqasimConfigGroup, EventsManager eventsManager,
-			OutputDirectoryHierarchy outputDirectoryHierarchy, Network network) {
-		return new CountsListener(eqasimConfigGroup, eventsManager, outputDirectoryHierarchy, network, linkIds);
+			OutputDirectoryHierarchy outputDirectoryHierarchy, Network network, DailyCounts counts) {
+		CalibrationManager calibrationManager = null;
+
+		if (useCalibration) {
+			calibrationManager = new CalibrationManager(counts, network, eqasimConfigGroup.getSampleSize());
+		}
+
+		return new CountsListener(eqasimConfigGroup, eventsManager, outputDirectoryHierarchy, network, counts,
+				calibrationManager);
 	}
 }
