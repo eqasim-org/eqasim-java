@@ -26,7 +26,10 @@ import org.matsim.core.mobsim.framework.PlanAgent;
 import org.matsim.core.mobsim.qsim.InternalInterface;
 import org.matsim.core.mobsim.qsim.interfaces.DepartureHandler;
 import org.matsim.core.mobsim.qsim.interfaces.MobsimEngine;
+import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
 import org.matsim.vehicles.Vehicle;
+
+import com.google.common.base.Verify;
 
 public class VDFEngine implements DepartureHandler, MobsimEngine {
 	private final List<String> modes;
@@ -56,8 +59,11 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 		MobsimDriverAgent driverAgent = (MobsimDriverAgent) agent;
 
 		var vehicles = internalInterface.getMobsim().getVehicles();
-		var vehicle = vehicles.get(driverAgent.getPlannedVehicleId());
+		QVehicle vehicle = (QVehicle) vehicles.get(driverAgent.getPlannedVehicleId());
+		Verify.verifyNotNull(vehicle, "Missing vehicle: " + driverAgent.getPlannedVehicleId());
+
 		driverAgent.setVehicle(vehicle);
+		vehicle.setDriver(driverAgent);
 
 		eventsManager.processEvent(
 				new PersonEntersVehicleEvent(now, driverAgent.getId(), driverAgent.getPlannedVehicleId()));
@@ -89,6 +95,7 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 
 				eventsManager.processEvent(new PersonLeavesVehicleEvent(now, traversal.agent.getId(),
 						traversal.agent.getVehicle().getId()));
+				((QVehicle) traversal.agent.getVehicle()).setDriver(null);
 				traversal.agent.setVehicle(null);
 			} else {
 				eventsManager
