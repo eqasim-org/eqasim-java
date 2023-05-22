@@ -126,6 +126,9 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 							Id.createVehicleId(traversal.agent.getId())));
 					// ((QVehicle) traversal.agent.getVehicle()).setDriver(null);
 					// traversal.agent.setVehicle(null);
+
+					traversal.agent.endLegAndComputeNextState(now);
+					internalInterface.arrangeNextAgentState(traversal.agent);
 				} else {
 					eventsManager.processEvent(
 							new LinkLeaveEvent(now, Id.createVehicleId(traversal.agent.getId()), traversal.linkId));
@@ -143,10 +146,10 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 				eventsManager.processEvent(new TeleportationArrivalEvent(now, traversal.agent.getId(),
 						traversal.distance, modes.get(traversal.modeIndex)));
 				traversal.agent.notifyArrivalOnLinkByNonNetworkMode(traversal.linkId);
-			}
 
-			traversal.agent.endLegAndComputeNextState(now);
-			internalInterface.arrangeNextAgentState(traversal.agent);
+				traversal.agent.endLegAndComputeNextState(now);
+				internalInterface.arrangeNextAgentState(traversal.agent);
+			}
 		}
 	}
 
