@@ -15,9 +15,11 @@ public class VDFEngineModule extends AbstractModule {
 	public static final String COMPONENT_NAME = "VDFEngine";
 
 	private final Collection<String> engineModes;
+	private final boolean generateNetworkEvents;
 
-	public VDFEngineModule(Collection<String> engineModes) {
+	public VDFEngineModule(Collection<String> engineModes, boolean generateNetworkEvents) {
 		this.engineModes = new ArrayList<>(engineModes);
+		this.generateNetworkEvents = generateNetworkEvents;
 	}
 
 	@Override
@@ -35,8 +37,8 @@ public class VDFEngineModule extends AbstractModule {
 
 			@Provides
 			@Singleton
-			public VDFEngine provideVDFEngine(VDFTravelTime travelTime, Network network) {
-				return new VDFEngine(engineModes, travelTime, network);
+			public VDFEngine provideVDFEngine(VDFTravelTime travelTime, Network network, VDFTrafficHandler handler) {
+				return new VDFEngine(engineModes, travelTime, network, handler, generateNetworkEvents);
 			}
 		});
 	}

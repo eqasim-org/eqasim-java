@@ -47,7 +47,8 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("counts-path", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
-						"use-counts-calibration", "use-vdf-engine", "line-switch-utility", "cost-model") //
+						"use-counts-calibration", "use-vdf-engine", "vdf-generate-network-events",
+						"line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX) //
 				.build();
@@ -131,7 +132,9 @@ public class RunSimulation {
 			mainModes.remove("car");
 			config.qsim().setMainModes(mainModes);
 
-			controller.addOverridingModule(new VDFEngineModule(Arrays.asList("car")));
+			boolean generateNetworkEvents = cmd.getOption("vdf-generate-network-events").map(Boolean::parseBoolean)
+					.orElse(true);
+			controller.addOverridingModule(new VDFEngineModule(Arrays.asList("car"), generateNetworkEvents));
 
 			controller.configureQSimComponents(cfg -> {
 				EqasimTransitQSimModule.configure(cfg, controller.getConfig());

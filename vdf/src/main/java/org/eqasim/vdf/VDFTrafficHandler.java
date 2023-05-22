@@ -31,9 +31,13 @@ public class VDFTrafficHandler implements LinkEnterEventHandler {
 
 	@Override
 	public synchronized void handleEvent(LinkEnterEvent event) {
-		int i = travelTime.getInterval(event.getTime());
-		int currentValue = counts.get(event.getLinkId()).get(i);
-		counts.get(event.getLinkId()).set(i, currentValue + 1);
+		processEnterLink(event.getTime(), event.getLinkId());
+	}
+
+	public void processEnterLink(double time, Id<Link> linkId) {
+		int i = travelTime.getInterval(time);
+		int currentValue = counts.get(linkId).get(i);
+		counts.get(linkId).set(i, currentValue + 1);
 	}
 
 	@Override
@@ -41,39 +45,40 @@ public class VDFTrafficHandler implements LinkEnterEventHandler {
 		if (history.size() == horizon) {
 			history.remove(0);
 		}
-		
+
 		// Make a copy to add to the history
-		
+
 		IdMap<Link, List<Integer>> copy = new IdMap<>(Link.class);
-		
+
 		for (Map.Entry<Id<Link>, List<Integer>> entry : counts.entrySet()) {
 			copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
 		}
-		
+
 		history.add(copy);
-		
+
 		IdMap<Link, List<Double>> aggregated = new IdMap<>(Link.class);
-		
+
 		for (Id<Link> linkId : network.getLinks().keySet()) {
 			// Reset current counts
 			counts.put(linkId, new ArrayList<>(Collections.nCopies(travelTime.getNumberOfIntervals(), 0)));
-		
+
 			// Initialize aggregated counts
 			aggregated.put(linkId, new ArrayList<>(Collections.nCopies(travelTime.getNumberOfIntervals(), 0.0)));
 		}
-		
+
 		// Aggregate
-		
+
 		for (IdMap<Link, List<Integer>> item : history) {
 			for (Map.Entry<Id<Link>, List<Integer>> entry : item.entrySet()) {
 				List<Double> aggregatedList = aggregated.get(entry.getKey());
-				
+
 				for (int i = 0; i < aggregatedList.size(); i++) {
-					aggregatedList.set(i, aggregatedList.get(i) + (double) entry.getValue().get(i) / (double) history.size());
+					aggregatedList.set(i,
+							aggregatedList.get(i) + (double) entry.getValue().get(i) / (double) history.size());
 				}
 			}
 		}
-		
+
 		travelTime.update(aggregated);
 	}
 }

@@ -19,6 +19,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
+import org.matsim.core.api.experimental.events.TeleportationArrivalEvent;
 import org.matsim.core.mobsim.framework.HasPerson;
 import org.matsim.core.mobsim.framework.MobsimAgent;
 import org.matsim.core.mobsim.framework.MobsimDriverAgent;
@@ -26,10 +27,8 @@ import org.matsim.core.mobsim.framework.PlanAgent;
 import org.matsim.core.mobsim.qsim.InternalInterface;
 import org.matsim.core.mobsim.qsim.interfaces.DepartureHandler;
 import org.matsim.core.mobsim.qsim.interfaces.MobsimEngine;
-import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
+import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.vehicles.Vehicle;
-
-import com.google.common.base.Verify;
 
 public class VDFEngine implements DepartureHandler, MobsimEngine {
 	private final List<String> modes;
@@ -41,10 +40,16 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 
 	private InternalInterface internalInterface;
 
-	public VDFEngine(Collection<String> modes, VDFTravelTime travelTime, Network network) {
+	private final VDFTrafficHandler handler;
+	private final boolean generateNetworkEvents;
+
+	public VDFEngine(Collection<String> modes, VDFTravelTime travelTime, Network network, VDFTrafficHandler handler,
+			boolean generateNetworkEvents) {
 		this.modes = new ArrayList<>(modes);
 		this.travelTime = travelTime;
 		this.network = network;
+		this.handler = handler;
+		this.generateNetworkEvents = generateNetworkEvents;
 	}
 
 	@Override
@@ -55,60 +60,91 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 			return false;
 		}
 
-		EventsManager eventsManager = internalInterface.getMobsim().getEventsManager();
 		MobsimDriverAgent driverAgent = (MobsimDriverAgent) agent;
 
-		// var vehicles = internalInterface.getMobsim().getVehicles();
-		// QVehicle vehicle = (QVehicle) vehicles.get(driverAgent.getPlannedVehicleId());
-		// Verify.verifyNotNull(vehicle, "Missing vehicle: " + driverAgent.getPlannedVehicleId());
+		if (generateNetworkEvents) {
+			EventsManager eventsManager = internalInterface.getMobsim().getEventsManager();
 
-		// driverAgent.setVehicle(vehicle);
-		// vehicle.setDriver(driverAgent);
+			// var vehicles = internalInterface.getMobsim().getVehicles();
+			// QVehicle vehicle = (QVehicle)
+			// vehicles.get(driverAgent.getPlannedVehicleId());
+			// Verify.verifyNotNull(vehicle, "Missing vehicle: " +
+			// driverAgent.getPlannedVehicleId());
 
-		eventsManager.processEvent(
-				new PersonEntersVehicleEvent(now, driverAgent.getId(), driverAgent.getPlannedVehicleId()));
+			// driverAgent.setVehicle(vehicle);
+			// vehicle.setDriver(driverAgent);
 
-		Traversal traversal = new Traversal();
-		traversal.agent = (MobsimDriverAgent) agent;
-		traversal.linkId = agent.getCurrentLinkId();
-		traversal.arrivalTime = now + getTraversalTime(now, linkId, driverAgent);
-		traversal.modeIndex = modes.indexOf(leg.getMode());
-		traversals.add(traversal);
+			eventsManager.processEvent(
+					new PersonEntersVehicleEvent(now, driverAgent.getId(), driverAgent.getPlannedVehicleId()));
 
-		eventsManager.processEvent(new VehicleEntersTrafficEvent(now, traversal.agent.getId(), traversal.linkId,
-				Id.createVehicleId(agent.getId()), modes.get(traversal.modeIndex), 1.0));
+			Traversal traversal = new Traversal();
+			traversal.agent = (MobsimDriverAgent) agent;
+			traversal.linkId = agent.getCurrentLinkId();
+			traversal.arrivalTime = now + getTraversalTime(now, linkId, driverAgent);
+			traversal.modeIndex = modes.indexOf(leg.getMode());
+			traversals.add(traversal);
+
+			eventsManager.processEvent(new VehicleEntersTrafficEvent(now, traversal.agent.getId(), traversal.linkId,
+					Id.createVehicleId(agent.getId()), modes.get(traversal.modeIndex), 1.0));
+		} else { // We have a handler and register traversals directly
+			NetworkRoute route = (NetworkRoute) leg.getRoute();
+			now += getTraversalTime(now, route.getStartLinkId(), driverAgent);
+
+			for (Id<Link> nextLinkId : route.getLinkIds()) {
+				handler.processEnterLink(now, nextLinkId);
+				now += getTraversalTime(now, nextLinkId, driverAgent);
+			}
+
+			internalInterface.unregisterAdditionalAgentOnLink(agent.getId(), linkId);
+
+			Traversal traversal = new Traversal();
+			traversal.agent = (MobsimDriverAgent) agent;
+			traversal.linkId = route.getEndLinkId();
+			traversal.arrivalTime = now;
+			traversal.modeIndex = modes.indexOf(leg.getMode());
+			traversal.distance = route.getDistance();
+			traversals.add(traversal);
+		}
 
 		return true;
 	}
 
 	@Override
 	public void doSimStep(double now) {
+
 		EventsManager eventsManager = internalInterface.getMobsim().getEventsManager();
 		Traversal traversal = null;
 
 		while (!traversals.isEmpty() && traversals.peek().arrivalTime <= now) {
 			traversal = traversals.poll();
 
-			if (traversal.agent.isWantingToArriveOnCurrentLink()) {
-				eventsManager.processEvent(new VehicleLeavesTrafficEvent(now, traversal.agent.getId(), traversal.linkId,
-						Id.createVehicleId(traversal.agent.getId()), modes.get(traversal.modeIndex), 1.0));
+			if (generateNetworkEvents) {
+				if (traversal.agent.isWantingToArriveOnCurrentLink()) {
+					eventsManager
+							.processEvent(new VehicleLeavesTrafficEvent(now, traversal.agent.getId(), traversal.linkId,
+									Id.createVehicleId(traversal.agent.getId()), modes.get(traversal.modeIndex), 1.0));
 
-				eventsManager.processEvent(new PersonLeavesVehicleEvent(now, traversal.agent.getId(),
-						Id.createVehicleId(traversal.agent.getId())));
-				// ((QVehicle) traversal.agent.getVehicle()).setDriver(null);
-				// traversal.agent.setVehicle(null);
+					eventsManager.processEvent(new PersonLeavesVehicleEvent(now, traversal.agent.getId(),
+							Id.createVehicleId(traversal.agent.getId())));
+					// ((QVehicle) traversal.agent.getVehicle()).setDriver(null);
+					// traversal.agent.setVehicle(null);
+				} else {
+					eventsManager.processEvent(
+							new LinkLeaveEvent(now, Id.createVehicleId(traversal.agent.getId()), traversal.linkId));
+
+					traversal.linkId = traversal.agent.chooseNextLinkId();
+					traversal.arrivalTime = now + getTraversalTime(now, traversal.linkId, traversal.agent);
+					traversals.add(traversal);
+
+					traversal.agent.notifyMoveOverNode(traversal.linkId);
+
+					eventsManager.processEvent(
+							new LinkEnterEvent(now, Id.createVehicleId(traversal.agent.getId()), traversal.linkId));
+				}
 			} else {
-				eventsManager
-						.processEvent(new LinkLeaveEvent(now, Id.createVehicleId(traversal.agent.getId()), traversal.linkId));
-
-				traversal.linkId = traversal.agent.chooseNextLinkId();
-				traversal.arrivalTime = now + getTraversalTime(now, traversal.linkId, traversal.agent);
-				traversals.add(traversal);
-
-				traversal.agent.notifyMoveOverNode(traversal.linkId);
-
-				eventsManager
-						.processEvent(new LinkEnterEvent(now, Id.createVehicleId(traversal.agent.getId()), traversal.linkId));
+				eventsManager.processEvent(new TeleportationArrivalEvent(now, traversal.agent.getId(),
+						traversal.distance, modes.get(traversal.modeIndex)));
+				internalInterface.registerAdditionalAgentOnLink(traversal.agent);
 			}
 		}
 	}
@@ -147,6 +183,7 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 		Id<Link> linkId;
 		double arrivalTime;
 		int modeIndex;
+		double distance;
 	}
 
 	private class TraversalComparator implements Comparator<Traversal> {
