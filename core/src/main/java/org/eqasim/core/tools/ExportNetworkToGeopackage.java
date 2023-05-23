@@ -44,8 +44,11 @@ public class ExportNetworkToGeopackage {
 		});
 
 		SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
+
 		featureTypeBuilder.setName("network");
 		featureTypeBuilder.setCRS(crs);
+		featureTypeBuilder.setDefaultGeometry("geometry");
+
 		featureTypeBuilder.add("link", String.class);
 		featureTypeBuilder.add("from", String.class);
 		featureTypeBuilder.add("to", String.class);
@@ -54,7 +57,7 @@ public class ExportNetworkToGeopackage {
 		featureTypeBuilder.add("capacity", Double.class);
 		featureTypeBuilder.add("freespeed", Double.class);
 		featureTypeBuilder.add("geometry", LineString.class);
-		featureTypeBuilder.setDefaultGeometry("geometry");
+
 		SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
 
 		SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(featureType);
@@ -95,7 +98,13 @@ public class ExportNetworkToGeopackage {
 		featureCollection.addAll(features);
 
 		// Write
-		GeoPackage outputPackage = new GeoPackage(new File(cmd.getOptionStrict("output-path")));
+		File outputPath = new File(cmd.getOptionStrict("output-path"));
+
+		if (outputPath.exists()) {
+			outputPath.delete();
+		}
+
+		GeoPackage outputPackage = new GeoPackage(outputPath);
 		outputPackage.init();
 
 		FeatureEntry featureEntry = new FeatureEntry();
