@@ -7,17 +7,21 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 import org.geotools.feature.DefaultFeatureCollection;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geopkg.FeatureEntry;
 import org.geotools.geopkg.GeoPackage;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.matsim.core.utils.gis.PolylineFeatureFactory;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class ExportNetworkToGeopackage {
@@ -39,18 +43,24 @@ public class ExportNetworkToGeopackage {
 			modes.add(mode.trim());
 		});
 
+		SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
+		featureTypeBuilder.setName("network");
+		featureTypeBuilder.setCRS(crs);
+		featureTypeBuilder.add("link", String.class);
+		featureTypeBuilder.add("from", String.class);
+		featureTypeBuilder.add("to", String.class);
+		featureTypeBuilder.add("osm", String.class);
+		featureTypeBuilder.add("lanes", Integer.class);
+		featureTypeBuilder.add("capacity", Double.class);
+		featureTypeBuilder.add("freespeed", Double.class);
+		featureTypeBuilder.add("geometry", LineString.class);
+		featureTypeBuilder.setDefaultGeometry("geometry");
+		SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
+
+		SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(featureType);
 		Collection<SimpleFeature> features = new LinkedList<>();
 
-		PolylineFeatureFactory linkFactory = new PolylineFeatureFactory.Builder() //
-				.setCrs(crs).setName("link") //
-				.addAttribute("link", String.class) //
-				.addAttribute("from", String.class) //
-				.addAttribute("to", String.class) //
-				.addAttribute("osm", String.class) //
-				.addAttribute("lanes", Integer.class) //
-				.addAttribute("capacity", Double.class) //
-				.addAttribute("freespeed", Double.class) //
-				.create();
+		GeometryFactory geometryFactory = new GeometryFactory();
 
 		for (Link link : network.getLinks().values()) {
 			boolean isSelected = false;
@@ -67,19 +77,16 @@ public class ExportNetworkToGeopackage {
 				Coordinate toCoordinate = new Coordinate(link.getToNode().getCoord().getX(),
 						link.getToNode().getCoord().getY());
 
-				SimpleFeature feature = linkFactory.createPolyline( //
-						new Coordinate[] { fromCoordinate, toCoordinate }, //
-						new Object[] { //
-								link.getId().toString(), //
-								link.getFromNode().getId().toString(), //
-								link.getToNode().getId().toString(), //
-								link.getAttributes().getAttribute("osm:way:highway"), //
-								link.getNumberOfLanes(), //
-								link.getCapacity(), //
-								link.getFreespeed(), //
-						}, null);
+				featureBuilder.add(link.getId().toString());
+				featureBuilder.add(link.getFromNode().getId().toString());
+				featureBuilder.add(link.getToNode().getId().toString());
+				featureBuilder.add(link.getAttributes().getAttribute("osm:way:highway"));
+				featureBuilder.add(link.getNumberOfLanes());
+				featureBuilder.add(link.getCapacity());
+				featureBuilder.add(link.getFreespeed());
 
-				features.add(feature);
+				featureBuilder.add(geometryFactory.createLineString(new Coordinate[] { fromCoordinate, toCoordinate }));
+				features.add(featureBuilder.buildFeature(null));
 			}
 		}
 
