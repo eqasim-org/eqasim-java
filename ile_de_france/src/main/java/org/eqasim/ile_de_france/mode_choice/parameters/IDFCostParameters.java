@@ -9,7 +9,8 @@ public class IDFCostParameters implements ParameterDefinition {
 	public static IDFCostParameters buildDefault() {
 		IDFCostParameters parameters = new IDFCostParameters();
 
-		parameters.carCost_EUR_km = 0.2;
+		// Consumption in liters per 100km times price in 2010
+		parameters.carCost_EUR_km = 1e-2 * 7.0 * 1.14;
 		parameters.ptCost_EUR_h = Double.NaN;
 
 		return parameters;

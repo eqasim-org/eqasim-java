@@ -45,6 +45,12 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 				* EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
 						parameters.lambdaTravelTimeEuclideanDistance);
 	}
+	
+	protected double estimateWaitingTimeUtility(PtVariables variables) {
+		return parameters.pt.betaWaitingTime_u_min * variables.waitingTime_min
+				* EstimatorUtils.interaction(variables.euclideanDistance_km, parameters.referenceEuclideanDistance_km,
+						parameters.lambdaTravelTimeEuclideanDistance);
+	}
 
 	protected double estimateHeadwayUtility(IDFPtVariables variables) {
 		return parameters.idfPt.betaHeadway_u_min * variables.headway_min;
@@ -90,6 +96,7 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		utility += estimateInVehicleTimeUtility(ptVariables);
 		utility += estimateOnlyBusUtility(ptVariables);
 		utility += estimateDrivingPermitUtility(personVariables);
+		utility += estimateWaitingTimeUtility(ptVariables);
 
 		UtilityValues values = new UtilityValues();
 		values.constant = estimateConstantUtility();
@@ -100,6 +107,7 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		values.inVehicleTime = estimateInVehicleTimeUtility(ptVariables);
 		values.onlyBus = estimateOnlyBusUtility(ptVariables);
 		values.drivingPermit = estimateDrivingPermitUtility(personVariables);
+		values.waitingTime = estimateWaitingTimeUtility(ptVariables);
 		values.total = utility;
 		
 		try {
@@ -122,6 +130,7 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		public double inVehicleTime;
 		public double onlyBus;
 		public double drivingPermit;
+		public double waitingTime;
 		public double total;
 	}
 }
