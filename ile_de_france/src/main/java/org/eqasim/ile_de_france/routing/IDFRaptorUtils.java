@@ -23,22 +23,16 @@ public class IDFRaptorUtils {
 	static public final String OTHER_MODE = "other";
 	static public final Set<String> CONFIGURED_MODES = new HashSet<>(Arrays.asList("rail", "subway", "tram", "bus"));
 
-	static public RaptorStaticConfig createRaptorStaticConfig(Config config, TransitSchedule schedule) {
-		double maximumTransferDistance = 400.0;
-		double walkSpeed = 1.33;
-		double walkFactor = 1.3;
-
-		double minimalTransferTime = 60; // Default value
-		double transferWalkMargin = 5; // Default value
-
+	static public RaptorStaticConfig createRaptorStaticConfig(Config config, TransitSchedule schedule,
+			IDFRaptorParameters parameters) {
 		RaptorStaticConfig staticConfig = RaptorUtils.createStaticConfig(config);
-		staticConfig.setBeelineWalkConnectionDistance(maximumTransferDistance);
+		staticConfig.setBeelineWalkConnectionDistance(parameters.maximumTransferDistance_m);
 
-		staticConfig.setBeelineWalkSpeed(walkSpeed / walkFactor);
-		staticConfig.setBeelineWalkDistanceFactor(walkFactor);
+		staticConfig.setBeelineWalkSpeed(parameters.walkSpeed_m_s / parameters.walkFactor);
+		staticConfig.setBeelineWalkDistanceFactor(parameters.walkFactor);
 
-		staticConfig.setMinimalTransferTime(minimalTransferTime);
-		staticConfig.setTransferWalkMargin(transferWalkMargin);
+		staticConfig.setMinimalTransferTime(parameters.minimalTransferTime_s);
+		staticConfig.setTransferWalkMargin(parameters.transferWalkMargin_s);
 
 		// Add mode mappings
 		staticConfig.setUseModeMappingForPassengers(true);
@@ -58,38 +52,33 @@ public class IDFRaptorUtils {
 		return staticConfig;
 	}
 
-	static public RaptorParameters createRaptorParameters(Config config, TransitSchedule schedule) {
+	static public RaptorParameters createRaptorParameters(Config config, TransitSchedule schedule,
+			IDFRaptorParameters parameters) {
 		SwissRailRaptorConfigGroup advancedConfig = ConfigUtils.addOrGetModule(config,
 				SwissRailRaptorConfigGroup.class);
 
-		double utilityOfLineSwitch = -0.26980996526677087;
-		double utilityOfWaiting = -1.298754292554342; // per h
-		double directWalkFactor = 100.0;
-		double walkSpeed = 1.33;
-		double walkFactor = 1.3;
-
 		Map<String, Double> modeUtilities = new HashMap<>();
-		modeUtilities.put(PT_MODE_PREFIX + "rail", -0.4543829479956706);
-		modeUtilities.put(PT_MODE_PREFIX + "subway", -0.7715570079250351);
-		modeUtilities.put(PT_MODE_PREFIX + "tram", -1.7608452482684784);
-		modeUtilities.put(PT_MODE_PREFIX + "bus", -1.7447089000006268);
-		modeUtilities.put("walk", -1.6352586824349615);
-		modeUtilities.put(PT_MODE_PREFIX + "other", -1.0);
+		modeUtilities.put(PT_MODE_PREFIX + "rail", parameters.railUtility_h);
+		modeUtilities.put(PT_MODE_PREFIX + "subway", parameters.subwayUtility_h);
+		modeUtilities.put(PT_MODE_PREFIX + "tram", parameters.tramUtility_h);
+		modeUtilities.put(PT_MODE_PREFIX + "bus", parameters.busUtility_h);
+		modeUtilities.put("walk", parameters.walkUtility_h);
+		modeUtilities.put(PT_MODE_PREFIX + "other", parameters.otherUtility_h);
 
 		RaptorParameters raptorParams = new RaptorParameters(advancedConfig);
 
 		// Waiting
-		raptorParams.setMarginalUtilityOfWaitingPt_utl_s(utilityOfWaiting / 3600.0);
+		raptorParams.setMarginalUtilityOfWaitingPt_utl_s(parameters.waitingUtility_h / 3600.0);
 
 		// Transfer
-		raptorParams.setTransferPenaltyFixCostPerTransfer(-utilityOfLineSwitch);
+		raptorParams.setTransferPenaltyFixCostPerTransfer(-parameters.transferUtility);
 		raptorParams.setTransferPenaltyPerTravelTimeHour(0.0);
-		raptorParams.setTransferPenaltyMinimum(-utilityOfLineSwitch);
-		raptorParams.setTransferPenaltyMaximum(-utilityOfLineSwitch);
+		raptorParams.setTransferPenaltyMinimum(-parameters.transferUtility);
+		raptorParams.setTransferPenaltyMaximum(-parameters.transferUtility);
 
 		// Direct walk factor
-		raptorParams.setDirectWalkFactor(directWalkFactor);
-		raptorParams.setBeelineWalkSpeed(walkSpeed / walkFactor);
+		raptorParams.setDirectWalkFactor(parameters.directWalkFactor);
+		raptorParams.setBeelineWalkSpeed(parameters.walkSpeed_m_s / parameters.walkFactor);
 
 		// Modal configuration
 		Set<String> modes = new HashSet<>();

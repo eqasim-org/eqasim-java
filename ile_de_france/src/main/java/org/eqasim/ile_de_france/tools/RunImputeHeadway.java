@@ -37,7 +37,7 @@ public class RunImputeHeadway {
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
-				.addOverridingModule(new IDFRaptorModule()) //
+				.addOverridingModule(new IDFRaptorModule(cmd)) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, interval)) //
 				.build();
 
