@@ -50,7 +50,7 @@ public class RunSimulation {
 						"use-counts-calibration", "use-vdf-engine", "vdf-generate-network-events",
 						"line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
-						OsmNetworkAdjustment.SPEED_PREFIX) //
+						OsmNetworkAdjustment.SPEED_PREFIX, "raptor") //
 				.build();
 
 		boolean useVdf = cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false);
@@ -162,7 +162,7 @@ public class RunSimulation {
 		});
 
 		controller.addOverridingModule(new ParkingModule(3.0));
-		controller.addOverridingModule(new IDFRaptorModule());
+		controller.addOverridingModule(new IDFRaptorModule(cmd));
 
 		controller.run();
 	}
