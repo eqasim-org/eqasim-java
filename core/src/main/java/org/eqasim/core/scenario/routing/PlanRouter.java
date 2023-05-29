@@ -3,7 +3,9 @@ package org.eqasim.core.scenario.routing;
 import java.util.List;
 import java.util.Set;
 
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.router.TripRouter;
@@ -55,9 +57,31 @@ public class PlanRouter {
 					List<? extends PlanElement> newElements = tripRouter.calcRoute(mainMode, fromFacility, toFacility,
 							departureTime.seconds(), plan.getPerson());
 
+					// Fix in case we have a transit trip that is only walk
+					newElements = fixOnlyWalk(mainMode, fromFacility, toFacility, departureTime.seconds(),
+							plan.getPerson(), newElements);
+
 					TripRouter.insertTrip(plan, trip.getOriginActivity(), newElements, trip.getDestinationActivity());
 				}
 			}
 		}
+	}
+
+	private List<? extends PlanElement> fixOnlyWalk(String mainMode, Facility fromFacility, Facility toFacility,
+			double departureTime, Person person, List<? extends PlanElement> elements) {
+		// No need to fix if already walk
+		if (mainMode.equals(TransportMode.walk)) {
+			return elements;
+		}
+
+		// No need to fix if we have a non-walk leg
+		for (Leg leg : TripStructureUtils.getLegs(elements)) {
+			if (!leg.getMode().equals(TransportMode.walk)) {
+				return elements;
+			}
+		}
+
+		// We have only walk legs
+		return tripRouter.calcRoute(TransportMode.walk, fromFacility, toFacility, departureTime, person);
 	}
 }
