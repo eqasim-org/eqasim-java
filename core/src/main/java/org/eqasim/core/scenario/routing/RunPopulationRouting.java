@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.routing.EqasimRaptorModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -52,6 +53,7 @@ public class RunPopulationRouting {
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
+				.addOverridingModule(new EqasimRaptorModule(cmd)) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
 				.build();
 
