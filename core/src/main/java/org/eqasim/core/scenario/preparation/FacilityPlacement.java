@@ -87,11 +87,13 @@ public class FacilityPlacement {
 	}
 
 	static public class OSMFacilityPlacementVoter implements FacilityPlacementVoter {
+		private final static String HIGHWAY_TAG = "osm:way:highway";
+		
 		public OSMFacilityPlacementVoter(RoadNetwork network) {
 			boolean foundAttribute = false;
 
 			for (Link link : network.getLinks().values()) {
-				if (link.getAttributes().getAttribute("osm:highway") != null) {
+				if (link.getAttributes().getAttribute(HIGHWAY_TAG) != null) {
 					foundAttribute = true;
 					break;
 				}
@@ -104,7 +106,7 @@ public class FacilityPlacement {
 
 		@Override
 		public boolean canPlaceFacility(Link link) {
-			String highway = (String) link.getAttributes().getAttribute("osm:highway");
+			String highway = (String) link.getAttributes().getAttribute(HIGHWAY_TAG);
 
 			if (highway != null) {
 				if (highway.contains("motorway")) {
@@ -112,6 +114,10 @@ public class FacilityPlacement {
 				}
 
 				if (highway.contains("trunk")) {
+					return false;
+				}
+				
+				if (highway.contains("_link")) {
 					return false;
 				}
 			}
