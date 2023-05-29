@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Improve functionality of routing tools to set utilities in detail
 - Fix bug in EqasimTransitQSimModule: first check if EqasimConfigGroup has TransitEngineModule before removing it
 - Updated config option from `eqasim.tripAnalysisInterval` to `eqasim.analysisInterval`
 - Automatically produce analysis output for legs and public transport information
