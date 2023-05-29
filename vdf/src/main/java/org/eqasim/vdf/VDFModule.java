@@ -38,7 +38,8 @@ public class VDFModule extends AbstractModule {
 	@Singleton
 	public VDFTrafficHandler provideVDFTrafficHandler(VDFConfigGroup config, Network network,
 			VDFTravelTime travelTime) {
-		return new VDFTrafficHandler(network, travelTime, config.getHorizon());
+		return new VDFTrafficHandler(network, travelTime, config.getHorizon(),
+				getConfig().global().getNumberOfThreads());
 	}
 
 	@Provides

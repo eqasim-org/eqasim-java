@@ -2,6 +2,7 @@ package org.eqasim.vdf;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -17,14 +18,16 @@ public class VDFTrafficHandler implements LinkEnterEventHandler {
 	private final VDFTravelTime travelTime;
 	private final Network network;
 	private final int horizon;
+	private final int numberOfThreads;
 
 	private final IdMap<Link, List<Integer>> counts = new IdMap<>(Link.class);
 	private final List<IdMap<Link, List<Integer>>> history = new LinkedList<>();
 
-	public VDFTrafficHandler(Network network, VDFTravelTime travelTime, int horizon) {
+	public VDFTrafficHandler(Network network, VDFTravelTime travelTime, int horizon, int numberOfThreads) {
 		this.travelTime = travelTime;
 		this.network = network;
 		this.horizon = horizon;
+		this.numberOfThreads = numberOfThreads;
 
 		reset(0);
 	}
@@ -67,15 +70,54 @@ public class VDFTrafficHandler implements LinkEnterEventHandler {
 		}
 
 		// Aggregate
+		Iterator<Id<Link>> linkIterator = network.getLinks().keySet().iterator();
 
-		for (IdMap<Link, List<Integer>> item : history) {
-			for (Map.Entry<Id<Link>, List<Integer>> entry : item.entrySet()) {
-				List<Double> aggregatedList = aggregated.get(entry.getKey());
+		Runnable worker = () -> {
+			Id<Link> currentLinkId = null;
 
-				for (int i = 0; i < aggregatedList.size(); i++) {
-					aggregatedList.set(i,
-							aggregatedList.get(i) + (double) entry.getValue().get(i) / (double) history.size());
+			while (true) {
+				// Fetch new link in queue
+				synchronized (linkIterator) {
+					if (linkIterator.hasNext()) {
+						currentLinkId = linkIterator.next();
+					} else {
+						break; // Done
+					}
 				}
+
+				// Go through history for this link and aggregate by time slot
+				for (int k = 0; k < history.size(); k++) {
+					IdMap<Link, List<Integer>> historyItem = history.get(k);
+					List<Integer> linkValues = historyItem.get(currentLinkId);
+					List<Double> linkAggregator = aggregated.get(currentLinkId);
+
+					for (int i = 0; i < linkValues.size(); i++) {
+						linkAggregator.set(i,
+								linkAggregator.get(i) + (double) linkValues.get(i) / (double) history.size());
+					}
+				}
+			}
+		};
+
+		if (numberOfThreads < 2) {
+			worker.run();
+		} else {
+			List<Thread> threads = new ArrayList<>(numberOfThreads);
+
+			for (int k = 0; k < numberOfThreads; k++) {
+				threads.add(new Thread(worker));
+			}
+
+			for (int k = 0; k < numberOfThreads; k++) {
+				threads.get(k).start();
+			}
+
+			try {
+				for (int k = 0; k < numberOfThreads; k++) {
+					threads.get(k).join();
+				}
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
 			}
 		}
 
