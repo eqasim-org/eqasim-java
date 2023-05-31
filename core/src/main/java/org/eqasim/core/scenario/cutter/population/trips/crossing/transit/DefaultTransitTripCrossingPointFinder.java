@@ -45,7 +45,7 @@ public class DefaultTransitTripCrossingPointFinder implements TransitTripCrossin
 							.findCrossingPoints(legStartCoord, legEndCoord, leg.getTravelTime().seconds(),
 									leg.getDepartureTime().seconds())
 							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
-				} else if (leg.getMode().startsWith("pt:")) {
+				} else if (leg.getMode().startsWith("pt:") || leg.getMode().equals("pt")) {
 					result.addAll(transitFinder
 							.findCrossingPoints((TransitPassengerRoute) leg.getRoute(),
 									leg.getDepartureTime().seconds())

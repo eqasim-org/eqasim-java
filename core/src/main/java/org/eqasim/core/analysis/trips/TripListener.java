@@ -116,6 +116,8 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 			return "car_passenger";
 		} else if (modes.contains("bike")) {
 			return "bike";
+		} else if (modes.contains("outside")) {
+			return "outside";
 		}
 
 		for (String mode : modes) {
