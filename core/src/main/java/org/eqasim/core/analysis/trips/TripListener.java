@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.components.transit.events.PublicTransitEvent;
@@ -126,7 +127,8 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 			}
 		}
 
-		Verify.verify(modes.contains("walk") && modes.size() == 1);
+		Verify.verify(modes.contains("walk") && modes.size() == 1,
+				"Don't understand the modes: " + modes.stream().collect(Collectors.joining(", ")));
 		return "walk";
 	}
 

@@ -23,6 +23,10 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 
 	static private final String MODES = "modes";
 
+	static private final String HANDLER = "handler";
+	static private final String INPUT_FILE = "inputFile";
+	static private final String WRITE_INTERVAL = "writeInterval";
+
 	private double startTime = 0.0 * 3600.0;
 	private double endTime = 24.0 * 3600.0;
 	private double interval = 3600.0;
@@ -35,6 +39,15 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private Set<String> modes = Set.of(TransportMode.car, "car_passenger");
 
 	private double capacityFactor = 1.0;
+
+	private String inputFile = null;
+	private int writeInterval = 0;
+
+	public enum HandlerType {
+		Horizon, Interpolation
+	}
+
+	private HandlerType handler = HandlerType.Horizon;
 
 	public VDFConfigGroup() {
 		super(GROUP_NAME);
@@ -162,6 +175,36 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	public void setModesAsString(String modes) {
 		this.modes.clear();
 		Arrays.asList(modes.split(",")).stream().map(String::trim).forEach(this.modes::add);
+	}
+
+	@StringGetter(HANDLER)
+	public HandlerType getHandler() {
+		return handler;
+	}
+
+	@StringSetter(HANDLER)
+	public void setHandler(HandlerType handler) {
+		this.handler = handler;
+	}
+
+	@StringGetter(INPUT_FILE)
+	public String getInputFile() {
+		return inputFile;
+	}
+
+	@StringSetter(INPUT_FILE)
+	public void setInputFile(String inputFile) {
+		this.inputFile = inputFile;
+	}
+
+	@StringGetter(WRITE_INTERVAL)
+	public int getWriteInterval() {
+		return writeInterval;
+	}
+
+	@StringSetter(WRITE_INTERVAL)
+	public void setWriteInterval(int writeInterval) {
+		this.writeInterval = writeInterval;
 	}
 
 	public static VDFConfigGroup getOrCreate(Config config) {
