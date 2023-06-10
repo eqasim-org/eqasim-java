@@ -270,7 +270,7 @@ public class RunBatchPublicTransportRouter {
 		Network network = injector.getInstance(Network.class);
 
 		BatchPublicTransportRouter batchRouter = new BatchPublicTransportRouter(routerProvider,
-				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval, transitModes);
+				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval);
 
 		CsvMapper mapper = new CsvMapper();
 
