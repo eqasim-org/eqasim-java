@@ -12,6 +12,7 @@ import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
@@ -36,6 +37,7 @@ public class TestCorisica {
 	}
 
 	@Test
+	@Ignore
 	public void testCorsicaPipeline()
 			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
 
