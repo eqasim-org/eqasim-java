@@ -31,7 +31,8 @@ public class RunSimulation {
 		configurator.configureController(controller);
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
+		controller.addOverridingModule(new IDFModeChoiceModule(cmd));		
+		
 		controller.run();
 	}
 }
