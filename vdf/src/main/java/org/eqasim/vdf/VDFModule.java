@@ -45,10 +45,12 @@ public class VDFModule extends AbstractModule {
 	@Provides
 	@Singleton
 	public VDFUpdateListener provideVDFUpdateListener(VDFScope scope, VDFTrafficHandler handler,
-			VDFTravelTime travelTime, VDFConfigGroup config, OutputDirectoryHierarchy outputHierarchy) {
+			VDFTravelTime travelTime, VDFConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
+			Network network) {
 		URL inputFile = config.getInputFile() == null ? null
 				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFile());
-		return new VDFUpdateListener(scope, handler, travelTime, outputHierarchy, config.getWriteInterval(), inputFile);
+		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
+				inputFile);
 	}
 
 	@Provides

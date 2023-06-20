@@ -6,8 +6,10 @@ import java.net.URL;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.eqasim.vdf.analysis.FlowWriter;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.ShutdownEvent;
@@ -22,6 +24,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 	private final static Logger logger = Logger.getLogger(VDFUpdateListener.class);
 
 	private final String VDF_FILE = "vdf.bin";
+	private final String FLOW_FILE = "vdf_flow.csv";
 
 	private final VDFScope scope;
 	private final VDFTrafficHandler handler;
@@ -31,9 +34,11 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 	private final URL inputFile;
 
 	private final OutputDirectoryHierarchy outputHierarchy;
+	private final Network network;
 
-	public VDFUpdateListener(VDFScope scope, VDFTrafficHandler handler, VDFTravelTime travelTime,
+	public VDFUpdateListener(Network network, VDFScope scope, VDFTrafficHandler handler, VDFTravelTime travelTime,
 			OutputDirectoryHierarchy outputHierarchy, int writeInterval, URL inputFile) {
+		this.network = network;
 		this.scope = scope;
 		this.handler = handler;
 		this.travelTime = travelTime;
@@ -48,11 +53,17 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		scope.verify(data, "Wrong flow format");
 		travelTime.update(data);
 
-		if (writeInterval > 0 && event.getIteration() % writeInterval == 0) {
+		if (writeInterval > 0 && (event.getIteration() % writeInterval == 0 || event.isLastIteration())) {
 			File outputFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), VDF_FILE));
 
 			logger.info("Writing VDF data to " + outputFile.toString() + "...");
 			handler.getWriter().writeFile(outputFile);
+			logger.info("  Done");
+
+			File flowFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), FLOW_FILE));
+
+			logger.info("Writing flow information to " + flowFile.toString() + "...");
+			new FlowWriter(data, network).write(flowFile);
 			logger.info("  Done");
 		}
 	}
@@ -74,6 +85,13 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 
 			if (fromFile.exists()) {
 				Files.copy(fromFile, toFile);
+			}
+
+			File fromFlowFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), FLOW_FILE));
+			File toFlowFile = new File(outputHierarchy.getOutputFilename(FLOW_FILE));
+
+			if (fromFlowFile.exists()) {
+				Files.copy(fromFlowFile, toFlowFile);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
