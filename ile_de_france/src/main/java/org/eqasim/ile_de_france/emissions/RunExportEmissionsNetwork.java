@@ -71,9 +71,6 @@ public class RunExportEmissionsNetwork {
                 .addAttribute("HC", Double.class) //
                 .addAttribute("NOx", Double.class) //
                 .addAttribute("CO2_rep", Double.class) //
-                .addAttribute("NO2", Double.class) //
-                .addAttribute("PM2_5", Double.class) //
-                .addAttribute("SO2", Double.class) //
                 .create();
 
         for (TimeBinMap.TimeBin<Map<Id<Link>, EmissionsByPollutant>> timeBin : res.getTimeBins()) {
