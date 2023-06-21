@@ -12,6 +12,7 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.api.core.v01.population.PopulationWriter;
@@ -29,12 +30,12 @@ import org.matsim.core.controler.corelisteners.ControlerDefaultCoreListenersModu
 import org.matsim.core.replanning.PlanStrategy;
 import org.matsim.core.replanning.ReplanningContext;
 import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.vehicles.Vehicle;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.*;
 
 
@@ -51,10 +52,67 @@ import java.util.*;
  */
 public class RunModeChoice {
 
+    public static class TravelTimeFactors implements TravelTime {
+
+        private final String filePath;
+        private final FreeSpeedTravelTime freeSpeedTravelTime;
+        private List<Double> congestionSlotUpperBounds;
+        private List<Double> congestionSlotSpeedFactor;
+        private static final String CSV_SEPARATOR = ";";
+        private static final String TIME_UPPER_BOUND_COLUMN = "timeUpperBound";
+        private static final String CONGESTION_FACTOR_COLUMN = "travelTimeFactor";
+
+        public TravelTimeFactors(String filePath) {
+            this.filePath = filePath;
+            this.freeSpeedTravelTime = new FreeSpeedTravelTime();
+            try {
+                this.readFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void readFile() throws IOException {
+            this.congestionSlotSpeedFactor = new ArrayList<>();
+            this.congestionSlotUpperBounds = new ArrayList<>();
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(new FileInputStream(this.filePath)));
+            String line;
+            List<String> header = null;
+            while ((line = reader.readLine()) != null) {
+                List<String> row = Arrays.asList(line.split(CSV_SEPARATOR));
+
+                if (header == null) {
+                    header = row;
+                } else {
+                    double timeUpperBound = Double.parseDouble(row.get(header.indexOf(TIME_UPPER_BOUND_COLUMN)));
+                    double speedFactor = Double.parseDouble(row.get(header.indexOf(CONGESTION_FACTOR_COLUMN)));
+                    if(this.congestionSlotUpperBounds.size() > 0 && this.congestionSlotUpperBounds.get(this.congestionSlotUpperBounds.size()-1) >= timeUpperBound) {
+                        throw new IllegalStateException();
+                    }
+                    this.congestionSlotUpperBounds.add(timeUpperBound);
+                    this.congestionSlotSpeedFactor.add(speedFactor);
+                }
+            }
+            reader.close();
+        }
+
+        @Override
+        public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
+            int slotIndex;
+            for(slotIndex=this.congestionSlotSpeedFactor.size()-1; slotIndex>0 && congestionSlotUpperBounds.get(slotIndex)>time; slotIndex--);
+            if(slotIndex < 0) {
+                slotIndex=0;
+            }
+            return this.freeSpeedTravelTime.getLinkTravelTime(link, time, person, vehicle) * congestionSlotSpeedFactor.get(slotIndex);
+        }
+    }
+
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path")
                 .allowOptions("output-plans-path", "output-csv-path", "base-csv-path")
+                .allowOptions("travel-times-factors-path")
                 .build();
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
@@ -98,6 +156,15 @@ public class RunModeChoice {
                 .addOverridingModule(new EqasimAnalysisModule())
                 .addOverridingModule(new ModelModule())
                 .addOverridingModule(new DiscreteModeChoiceModule());
+        if(cmd.hasOption("travel-times-factors-path")) {
+            String travelTimesFactorsPath = cmd.getOptionStrict("travel-times-factors-path");
+            injectorBuilder.addOverridingModule(new AbstractModule() {
+                @Override
+                public void install() {
+                    addTravelTimeBinding("car").toInstance(new TravelTimeFactors(travelTimesFactorsPath));
+                }
+            });
+        }
 
         for(AbstractModule module: configurator.getModules()) {
             injectorBuilder.addOverridingModule(module);
@@ -107,6 +174,12 @@ public class RunModeChoice {
 
         Population population = injector.getInstance(Population.class);
         // We init the TripReaderFromPopulation here as we might need it just below
+        // We retrieve the DiscreteModeChoice Strategy here
+        /*
+         * Depending on the configuration, the strategy can be set to use multiple threads or not.
+         * In the former case, the threads need to be created before running the strategy.
+         */
+
         TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(MainModeIdentifier.class), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         cmd.getOption("base-csv-path").ifPresent(s -> {
             //We write the initial trip modes
@@ -114,12 +187,9 @@ public class RunModeChoice {
             writeTripModesToCsv(trips, s);
         });
 
-        // We retrieve the DiscreteModeChoice Strategy here
+
         PlanStrategy strategy = injector.getInstance(Key.get(PlanStrategy.class, Names.named("DiscreteModeChoice")));
-        /*
-         * Depending on the configuration, the strategy can be set to use multiple threads or not.
-         * In the former case, the threads need to be created before running the strategy.
-         */
+
         strategy.init(injector.getInstance(ReplanningContext.class));
         for(Person person: population.getPersons().values()) {
             strategy.run(person);
