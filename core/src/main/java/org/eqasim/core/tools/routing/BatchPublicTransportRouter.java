@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,11 +35,9 @@ public class BatchPublicTransportRouter {
 	private final int numberOfThreads;
 	private final double interval;
 
-	private final Set<String> transitModes;
-
 	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider,
 			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
-			int batchSize, int numberOfThreads, double interval, Set<String> transitModes) {
+			int batchSize, int numberOfThreads, double interval) {
 		this.routerProvider = routerProvider;
 		this.headwayCalculatorProvider = headwayCalculatorProvider;
 		this.batchSize = batchSize;
@@ -48,7 +45,6 @@ public class BatchPublicTransportRouter {
 		this.schedule = schedule;
 		this.network = network;
 		this.interval = interval;
-		this.transitModes = transitModes;
 	}
 
 	public Pair<Collection<TripInformation>, Collection<LegInformation>> run(Collection<TransitRoutingTask> tasks)
@@ -146,11 +142,15 @@ public class BatchPublicTransportRouter {
 							} else if (leg.getMode().contains("walk") && isLastLeg) {
 								tripInformation.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getMode().contains("walk") && !isFirstLeg && !isLastLeg) {
+							} else if (leg.getMode().contains("walk")) {
 								tripInformation.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (transitModes.contains(leg.getMode())) {
+							} else if (leg.getRoute() instanceof TransitPassengerRoute) {
 								TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+
+								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
+								TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
+								String transitMode = transitRoute.getTransportMode();
 
 								double waitingTime = route.getBoardingTime().seconds()
 										- leg.getDepartureTime().seconds();
@@ -162,10 +162,6 @@ public class BatchPublicTransportRouter {
 									tripInformation.numberOfTransfers += 1;
 									tripInformation.transferWaitingTime_min += waitingTime / 60.0;
 								}
-
-								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
-								TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
-								String transitMode = transitRoute.getTransportMode();
 
 								double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
 
@@ -210,7 +206,7 @@ public class BatchPublicTransportRouter {
 									localLegResults.add(legInformation);
 								}
 							} else {
-								throw new IllegalStateException();
+								throw new IllegalStateException("Don't know what to do with mode: " + leg.getMode());
 							}
 
 							currentIndex++;
