@@ -3,7 +3,6 @@ package org.eqasim.core.tools.routing;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,14 +10,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
-import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.LinkWrapperFacility;
-import org.matsim.core.router.TripStructureUtils;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.router.TransitRouter;
 import org.matsim.pt.routes.TransitPassengerRoute;
@@ -27,6 +22,7 @@ import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Provider;
 
 public class BatchPublicTransportRouter {
@@ -121,10 +117,9 @@ public class BatchPublicTransportRouter {
 					Facility fromFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, fromCoord));
 					Facility toFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, toCoord));
 
-					List<? extends PlanElement> elements = router.calcRoute(DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, task.departureTime, null));
-					List<LegInformation> routeInformation = new LinkedList<>();
+					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
 
-					if (elements != null) {
+					if (legs != null) {
 						boolean isFirstVehicularLeg = true;
 						tripInformation.isOnlyWalk = 1;
 
@@ -137,26 +132,25 @@ public class BatchPublicTransportRouter {
 
 						int currentIndex = 0;
 
-						List<Leg> legs = TripStructureUtils.getLegs(elements);
 						for (Leg leg : legs) {
 							boolean isFirstLeg = currentIndex == 0;
 							boolean isLastLeg = currentIndex == legs.size() - 1;
-							currentIndex++;
 
-							if (leg.getMode().equals(TransportMode.access_walk)
-									|| (leg.getMode().equals(TransportMode.walk) && isFirstLeg)) {
+							if (leg.getMode().contains("walk") && isFirstLeg) {
 								tripInformation.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getMode().equals(TransportMode.egress_walk)
-									|| (leg.getMode().equals(TransportMode.walk) && isLastLeg)) {
+							} else if (leg.getMode().contains("walk") && isLastLeg) {
 								tripInformation.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getMode().equals(TransportMode.transit_walk)
-									|| (leg.getMode().equals(TransportMode.walk) && !isFirstLeg && !isLastLeg)) {
+							} else if (leg.getMode().contains("walk")) {
 								tripInformation.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getMode().equals(TransportMode.pt)) {
+							} else if (leg.getRoute() instanceof TransitPassengerRoute) {
 								TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+
+								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
+								TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
+								String transitMode = transitRoute.getTransportMode();
 
 								double waitingTime = route.getBoardingTime().seconds()
 										- leg.getDepartureTime().seconds();
@@ -168,10 +162,6 @@ public class BatchPublicTransportRouter {
 									tripInformation.numberOfTransfers += 1;
 									tripInformation.transferWaitingTime_min += waitingTime / 60.0;
 								}
-
-								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
-								TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
-								String transitMode = transitRoute.getTransportMode();
 
 								double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
 
@@ -205,7 +195,7 @@ public class BatchPublicTransportRouter {
 									LegInformation legInformation = new LegInformation();
 									legInformation.identifier = task.identifier;
 									legInformation.legIndex = currentIndex;
-									legInformation.mode = transitMode;
+									legInformation.transitMode = transitMode;
 									legInformation.lineId = transitLine.getId().toString();
 									legInformation.routeId = transitRoute.getId().toString();
 									legInformation.vehicleId = departure.getVehicleId().toString();
@@ -216,8 +206,10 @@ public class BatchPublicTransportRouter {
 									localLegResults.add(legInformation);
 								}
 							} else {
-								throw new IllegalStateException();
+								throw new IllegalStateException("Don't know what to do with mode: " + leg.getMode());
 							}
+
+							currentIndex++;
 						}
 
 						tripInformation.inVehicleTimeTotal_min = tripInformation.inVehicleTimeRail_min
@@ -266,56 +258,103 @@ public class BatchPublicTransportRouter {
 	}
 
 	static public class Task {
+		@JsonProperty("identifier")
 		public String identifier;
 
+		@JsonProperty("origin_x")
 		public double originX;
+
+		@JsonProperty("origin_y")
 		public double originY;
 
+		@JsonProperty("destination_x")
 		public double destinationX;
+
+		@JsonProperty("destination_y")
 		public double destinationY;
 
+		@JsonProperty("departure_time")
 		public double departureTime;
 	}
 
 	static public class TripInformation {
+		@JsonProperty("identifier")
 		public String identifier;
 
+		@JsonProperty("access_travel_time_min")
 		public double accessTravelTime_min;
+
+		@JsonProperty("access_distance_km")
 		public double accessDistance_km;
 
+		@JsonProperty("egress_travel_time_min")
 		public double egressTravelTime_min;
+
+		@JsonProperty("egress_distance_km")
 		public double egressDistance_km;
 
+		@JsonProperty("transfer_travel_time_min")
 		public double transferTravelTime_min;
+
+		@JsonProperty("transfer_distance_km")
 		public double transferDistance_km;
 
+		@JsonProperty("total_walk_travel_time_min")
 		public double totalWalkTravelTime_min;
+
+		@JsonProperty("total_walk_distance_km")
 		public double totalWalkDistance_km;
 
+		@JsonProperty("in_vehicle_time_rail_min")
 		public double inVehicleTimeRail_min;
+
+		@JsonProperty("in_vehicle_time_subway_min")
 		public double inVehicleTimeSubway_min;
+
+		@JsonProperty("in_vehicle_time_bus_min")
 		public double inVehicleTimeBus_min;
+
+		@JsonProperty("in_vehicle_time_tram_min")
 		public double inVehicleTimeTram_min;
+
+		@JsonProperty("in_vehicle_time_other_min")
 		public double inVehicleTimeOther_min;
+
+		@JsonProperty("in_vehicle_time_total_min")
 		public double inVehicleTimeTotal_min;
 
+		@JsonProperty("in_vehicle_distance_rail_km")
 		public double inVehicleDistanceRail_km;
+
+		@JsonProperty("in_vehicle_distance_subway_km")
 		public double inVehicleDistanceSubway_km;
+
+		@JsonProperty("in_vehicle_distance_bus_km")
 		public double inVehicleDistanceBus_km;
+
+		@JsonProperty("in_vehicle_distance_tram_km")
 		public double inVehicleDistanceTram_km;
+
+		@JsonProperty("in_vehicle_distance_other_km")
 		public double inVehicleDistanceOther_km;
+
+		@JsonProperty("in_vehicle_distance_total_km")
 		public double inVehicleDistanceTotal_km;
 
+		@JsonProperty("transfers")
 		public int numberOfTransfers;
 
+		@JsonProperty("initial_waiting_time_min")
 		public double initialWaitingTime_min;
+
+		@JsonProperty("transfer_waiting_time_min")
 		public double transferWaitingTime_min;
 
+		@JsonProperty("headway_min")
 		public double headway_min;
 
+		@JsonProperty("is_only_walk")
 		public int isOnlyWalk;
-
-		public String route;
 
 		TripInformation(Task task) {
 			this.identifier = task.identifier;
@@ -323,15 +362,28 @@ public class BatchPublicTransportRouter {
 	}
 
 	static public class LegInformation {
+		@JsonProperty("identifier")
 		public String identifier;
+
+		@JsonProperty("leg_index")
 		public int legIndex;
 
+		@JsonProperty("line_id")
 		public String lineId;
-		public String routeId;
-		public String vehicleId;
-		public String mode;
 
+		@JsonProperty("route_id")
+		public String routeId;
+
+		@JsonProperty("vehicle_id")
+		public String vehicleId;
+
+		@JsonProperty("transit_mode")
+		public String transitMode;
+
+		@JsonProperty("access_time")
 		public double accessTime;
+
+		@JsonProperty("egress_time")
 		public double egressTime;
 	}
 }
