@@ -19,6 +19,7 @@ public class RunAdaptConfig {
 
 		for (String activityType : Arrays.asList("work", "personal", "primary", "secondary", "uni", "shopping")) {
 			ActivityParams activityParams = new ActivityParams(activityType);
+			activityParams.setScoringThisActivityAtAll(false);
 			config.planCalcScore().addActivityParams(activityParams);
 		}
 	}
