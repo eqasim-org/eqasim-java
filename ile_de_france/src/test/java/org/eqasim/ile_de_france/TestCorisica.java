@@ -27,7 +27,8 @@ public class TestCorisica {
 	@Before
 	public void setUp() throws IOException {
 		URL fixtureUrl = getClass().getClassLoader().getResource("corsica");
-		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("corsica_test"));
+		Assert.assertNotNull(fixtureUrl);
+		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("corsica_test/base_inputs"));
 	}
 
 	@After
@@ -39,12 +40,12 @@ public class TestCorisica {
 	public void testCorsicaPipeline()
 			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
 
-		Assert.assertEquals(3162, countPersons("corsica_test/corsica_population.xml.gz"));
+		Assert.assertEquals(3162, countPersons("corsica_test/base_inputs/corsica_population.xml.gz"));
 
 		// Run the simulation
 		{
 			RunSimulation.main(new String[] { //
-					"--config-path", "corsica_test/corsica_config.xml", //
+					"--config-path", "corsica_test/base_inputs/corsica_config.xml", //
 					"--config:controler.lastIteration", "2", // ,
 					"--config:controler.outputDirectory", "corsica_test/simulation_output", //
 			});
@@ -62,21 +63,21 @@ public class TestCorisica {
 		// Cut the scenario based on output plans
 		{
 			RunScenarioCutter.main(new String[] { //
-					"--config-path", "corsica_test/corsica_config.xml", //
-					"--config:plans.inputPlansFile", "simulation_output/output_plans.xml.gz", //
-					"--extent-path", "corsica_test/extent.shp", //
+					"--config-path", "corsica_test/base_inputs/corsica_config.xml", //
+					"--config:plans.inputPlansFile", "../simulation_output/output_plans.xml.gz", //
+					"--extent-path", "corsica_test/base_inputs/extent.shp", //
 					"--threads", "4", //
 					"--prefix", "cut_", //
-					"--output-path", "corsica_test", //
+					"--output-path", "corsica_test/cut_inputs", //
 			});
 
-			Assert.assertEquals(1286, countPersons("corsica_test/cut_population.xml.gz"));
+			Assert.assertEquals(1286, countPersons("corsica_test/cut_inputs/cut_population.xml.gz"));
 		}
 
 		// Run the cut simulation
 		{
 			RunSimulation.main(new String[] { //
-					"--config-path", "corsica_test/cut_config.xml", //
+					"--config-path", "corsica_test/cut_inputs/cut_config.xml", //
 					"--config:controler.lastIteration", "2", // ,
 					"--config:controler.outputDirectory", "corsica_test/cut_output", //
 			});
