@@ -1,0 +1,4 @@
+Iteration	bike	car	car_passenger	pt	walk
+0	0	63425	9057	1180	3245
+1	0	64355	9091	1180	3409
+2	22	65312	9108	1293	3468

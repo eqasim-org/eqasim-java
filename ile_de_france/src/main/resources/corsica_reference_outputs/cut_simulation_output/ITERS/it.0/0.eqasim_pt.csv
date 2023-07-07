@@ -1,0 +1,6 @@
+person_id;person_trip_id;leg_index;access_stop_id;egress_stop_id;transit_line_id;transit_route_id;access_area_id;egress_area_id;transit_mode
+33875;0;1;20098.link:pt_20098;20164.link:pt_20164;6;67279;10075.0;10010.0;rail
+68895;0;1;STP-RIN00806.link:23252;STP-RTN00118.link:9499;M008;L008-A-L008S5;STA-STP-RIN00806;STA-STP-RTN00118;bus
+19162;1;2;STP-RTN00118.link:5234;STP-RIN00208.link:36363;M002;L002-R-L002S6;STA-STP-RTN00118;STA-STP-RIN00208;bus
+33875;1;4;20020.link:pt_20020;20098.link:pt_20098;6;67224;10010.0;10075.0;rail
+67554;1;2;20098.link:pt_20098;20097.link:53098;6;67224;10075.0;10074.0;rail

@@ -7,6 +7,11 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+import com.google.common.io.ByteSource;
+import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.junit.After;
@@ -22,6 +27,7 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.misc.CRCChecksum;
 
 public class TestCorisica {
 	@Before
@@ -42,6 +48,9 @@ public class TestCorisica {
 
 		Assert.assertEquals(3162, countPersons("corsica_test/base_inputs/corsica_population.xml.gz"));
 
+		URL referenceUrl = getClass().getClassLoader().getResource("corsica_reference_outputs");
+		Assert.assertNotNull(referenceUrl);
+
 		// Run the simulation
 		{
 			RunSimulation.main(new String[] { //
@@ -49,6 +58,8 @@ public class TestCorisica {
 					"--config:controler.lastIteration", "2", // ,
 					"--config:controler.outputDirectory", "corsica_test/simulation_output", //
 			});
+
+			compareDirs(new File("corsica_test", "simulation_output"), new File(referenceUrl.getPath(), "base_simulation_output"));
 
 			Assert.assertEquals(3162, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
 
@@ -70,7 +81,7 @@ public class TestCorisica {
 					"--prefix", "cut_", //
 					"--output-path", "corsica_test/cut_inputs", //
 			});
-
+			compareDirs(new File("corsica_test", "cut_inputs"), new File(referenceUrl.getPath(), "cut_inputs"));
 			Assert.assertEquals(1286, countPersons("corsica_test/cut_inputs/cut_population.xml.gz"));
 		}
 
@@ -82,6 +93,7 @@ public class TestCorisica {
 					"--config:controler.outputDirectory", "corsica_test/cut_output", //
 			});
 
+			compareDirs(new File("corsica_test", "cut_output"), new File(referenceUrl.getPath(), "cut_simulation_output"));
 			Assert.assertEquals(1286, countPersons("corsica_test/cut_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
@@ -110,6 +122,27 @@ public class TestCorisica {
 		}
 
 		return counts;
+	}
+
+	private void compareFiles(File file1, File file2) {
+		Assert.assertEquals(String.format("Files not corresponding %s - %s", file1.getAbsolutePath(), file2.getAbsolutePath()), CRCChecksum.getCRCFromFile(file1.getPath()), CRCChecksum.getCRCFromFile(file2.getPath()));
+	}
+
+	private void compareDirs(File dir1, File dir2)
+	{
+		File[] list1 = dir1.listFiles(), list2 = dir2.listFiles();
+		Assert.assertNotNull(list1);
+		Assert.assertNotNull(list2);
+		Assert.assertEquals(list1.length, list2.length);
+		for (int i = 0; i < list2.length; i++) {
+			Assert.assertEquals(list1[i].isFile(), list2[i].isFile());
+			Assert.assertEquals(list2[i].isDirectory(), list2[i].isDirectory());
+			if (list1[i].isFile()) {
+				compareFiles(list1[i], list2[i]);
+			} else if (list1[i].isDirectory()) {
+				compareDirs(list1[i], list2[i]);
+			}
+		}
 	}
 
 	static long countPersons(String populationPath) {

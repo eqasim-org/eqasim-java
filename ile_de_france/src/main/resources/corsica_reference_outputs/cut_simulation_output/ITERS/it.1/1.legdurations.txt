@@ -1,0 +1,42 @@
+pattern	0+	5+	10+	15+	20+	25+	30+	35+	40+	45+	50+	55+	60+
+education---other	19	26	14	5	2	4	1	0	0	2	2	0	0
+education---outside	0	0	0	0	1	0	0	0	0	0	0	0	0
+home---education	33	14	7	6	6	1	1	0	0	1	1	1	2
+home---leisure	216	54	37	19	4	8	7	5	7	28	37	5	22
+home---other	63	53	48	30	25	11	15	12	12	3	6	3	52
+home---outside	5	9	8	1	1	1	1	0	0	2	4	0	12
+home---pt interaction	0	0	0	0	0	0	0	0	0	0	0	0	1
+home---shop	66	33	23	12	13	6	5	1	3	3	4	3	34
+home---work	23	34	35	18	18	23	20	17	20	11	7	8	301
+leisure---home	216	66	40	24	8	6	6	3	9	30	38	6	18
+leisure---outside	2	3	1	0	0	0	0	0	0	1	2	0	0
+leisure---work	27	13	11	9	5	5	2	2	4	1	2	2	44
+other---home	50	83	52	29	23	18	11	5	7	5	2	3	28
+other---leisure	8	7	12	6	4	5	0	1	2	1	2	1	34
+other---other	13	17	12	4	4	7	4	2	7	1	3	1	24
+other---outside	2	1	4	2	1	0	1	0	0	0	0	0	0
+other---shop	14	5	5	2	6	3	1	3	1	2	0	1	22
+other---work	1	1	1	0	2	0	0	0	0	1	0	0	4
+outside---education	0	0	0	0	0	1	0	0	0	2	0	0	0
+outside---home	7	6	7	2	2	1	0	2	0	3	2	2	6
+outside---leisure	2	3	1	0	0	0	0	0	0	1	0	1	0
+outside---other	5	2	1	1	0	0	0	0	0	0	0	1	3
+outside---outside	107	0	5	3	2	0	0	0	2	6	4	0	6
+outside---pt interaction	2	0	0	0	0	0	0	0	0	0	0	0	0
+outside---shop	1	1	0	0	0	0	0	0	0	0	0	0	0
+outside---work	0	0	2	4	2	0	1	0	0	0	0	1	14
+pt interaction---home	0	0	1	0	0	1	0	0	0	0	0	0	1
+pt interaction---pt interaction	0	0	0	0	0	0	1	1	0	0	0	0	3
+pt interaction---work	0	0	1	1	0	0	0	0	0	0	0	0	0
+shop---home	62	25	15	8	7	7	4	3	5	4	6	0	23
+shop---leisure	3	6	7	4	4	3	0	0	1	1	0	0	1
+shop---outside	2	1	0	0	0	0	0	0	0	0	0	0	0
+shop---pt interaction	0	1	0	0	0	0	0	0	0	0	0	0	0
+shop---work	12	8	0	2	4	0	0	0	1	0	0	0	34
+work---home	19	40	26	23	27	30	29	16	15	11	8	6	245
+work---leisure	14	8	5	6	0	2	3	1	0	0	1	0	15
+work---other	10	14	6	6	9	6	9	10	2	4	2	3	41
+work---outside	0	0	2	6	0	0	1	0	0	0	1	2	11
+work---pt interaction	0	0	2	0	0	0	0	0	0	0	0	0	0
+
+average trip duration: 5121.440682095006 seconds = 01:25:21

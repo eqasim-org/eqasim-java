@@ -1,0 +1,30 @@
+pattern	0+	5+	10+	15+	20+	25+	30+	35+	40+	45+	50+	55+	60+
+education---other	35	64	35	17	12	11	8	5	0	2	3	2	6
+home---education	65	42	29	14	8	7	6	4	3	3	4	4	11
+home---leisure	537	176	90	59	21	22	19	16	21	48	80	20	48
+home---other	184	140	120	81	53	29	38	24	22	15	18	6	119
+home---pt interaction	2	6	2	4	1	3	1	0	0	0	0	0	3
+home---shop	163	89	68	37	27	21	15	9	3	9	8	4	81
+home---work	103	152	128	85	76	71	60	63	59	28	30	32	675
+leisure---home	546	200	97	70	29	23	22	17	22	45	78	22	50
+leisure---leisure	1	3	1	0	1	0	0	0	0	1	0	1	0
+leisure---work	61	46	50	28	19	20	12	12	13	5	6	9	90
+other---home	132	190	157	77	57	54	38	33	22	12	8	11	94
+other---leisure	28	35	31	17	15	8	7	5	6	6	3	2	53
+other---other	41	48	52	21	16	22	18	11	10	9	3	2	61
+other---shop	28	31	17	14	13	8	4	3	5	1	3	4	44
+other---work	3	7	5	4	4	1	1	2	0	2	0	0	10
+pt interaction---home	0	6	4	3	1	1	1	0	0	0	0	0	3
+pt interaction---pt interaction	6	3	1	3	3	2	2	4	1	0	1	2	24
+pt interaction---shop	1	0	0	0	0	1	0	0	0	0	0	0	0
+pt interaction---work	4	7	4	2	1	0	0	0	0	1	0	0	1
+shop---home	143	83	56	26	20	16	12	7	7	12	8	5	56
+shop---leisure	12	16	10	11	6	3	4	3	1	1	1	0	4
+shop---pt interaction	2	1	1	0	2	0	0	0	0	0	0	0	0
+shop---work	19	23	14	22	6	5	6	1	1	5	3	1	69
+work---home	82	151	113	100	78	53	65	56	57	42	42	23	658
+work---leisure	28	24	14	12	9	8	9	2	2	4	2	2	52
+work---other	21	33	46	27	29	15	19	24	16	8	12	6	104
+work---pt interaction	3	4	4	1	1	0	0	0	0	0	0	0	0
+
+average trip duration: 3830.746866459335 seconds = 01:03:50

@@ -1,0 +1,23 @@
+2023-07-07T15:12:26,209  WARN PrepareForSimImpl:222 'usePersonIdForMissingVehicleId' is deprecated. It will be removed soon.
+2023-07-07T15:12:28,411  WARN QueueWithBuffer:494 Link 56253 too small: enlarge storage capacity from: 0.19450600835086637 Vehicles to: 4.862650208771659 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,412  WARN QueueWithBuffer:494 Link 50222 too small: enlarge storage capacity from: 0.3865066214276475 Vehicles to: 3.478559592848827 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,412  WARN QueueWithBuffer:494 Link 53450 too small: enlarge storage capacity from: 0.055755587479999 Vehicles to: 0.8363338121999849 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 51550 too small: enlarge storage capacity from: 0.04864918169832343 Vehicles to: 1.4594754509497028 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 53451 too small: enlarge storage capacity from: 0.10121542412699747 Vehicles to: 1.5182313619049617 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 41833 too small: enlarge storage capacity from: 0.22603921755063994 Vehicles to: 6.7811765265191974 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 53452 too small: enlarge storage capacity from: 0.03534010773942532 Vehicles to: 0.5301016160913797 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 32760 too small: enlarge storage capacity from: 0.11660135844791121 Vehicles to: 2.9150339611977807 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 50274 too small: enlarge storage capacity from: 0.1918132402502903 Vehicles to: 2.697373691019708 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 50276 too small: enlarge storage capacity from: 0.10069657493423717 Vehicles to: 1.4160455850127105 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:494 Link 43434 too small: enlarge storage capacity from: 0.139982150686105 Vehicles to: 3.499553767152625 Vehicles.  This is not fatal, but modifies the traffic flow dynamics.
+2023-07-07T15:12:28,418  WARN QueueWithBuffer:497 Additional warnings of this type are suppressed.
+2023-07-07T15:12:37,892  WARN CharyparNagelActivityScoring:246 The first and the last activity do not have the same type. 
+2023-07-07T15:12:37,892  WARN CharyparNagelActivityScoring:247 Will score the first activity from midnight to its end, and the last activity from its start to midnight.
+2023-07-07T15:12:37,892  WARN CharyparNagelActivityScoring:248 Because of the nonlinear function, this is not the same as scoring from start to end.
+2023-07-07T15:12:37,898  WARN CharyparNagelActivityScoring:249 first activity: act [type=home][coord=null][linkId=3857][startTime=undefined][endTime=14:51:25][duration=undefined][facilityId=home_45218]
+2023-07-07T15:12:37,899  WARN CharyparNagelActivityScoring:250 last activity: act [type=other][coord=[x=1176480.02 | y=6109107.29]][linkId=24116][startTime=14:53:03][endTime=undefined][duration=undefined][facilityId=sec_1162]
+2023-07-07T15:12:37,899  WARN CharyparNagelActivityScoring:251 This may also happen when plans are not completed when the simulation ends.
+2023-07-07T15:12:37,899  WARN CharyparNagelActivityScoring:253 Additional warnings of this type are suppressed.
+2023-07-07T15:12:59,160  WARN PlansCalcRouteConfigGroup:342 The first mode routing params that are explicitly defined clear the default mode routing params.  This functionality was removed for 
+2023-07-07T15:12:59,160  WARN PlansCalcRouteConfigGroup:343     some weeks in the development head, after release 11.x, and before release 12.x; it is now back.  If you want to avoid this 
+2023-07-07T15:12:59,160  WARN PlansCalcRouteConfigGroup:344     warning, use clearModeRoutingParams(true) in code, and "clearDefaultTeleportedModeParams"=true in xml config.
