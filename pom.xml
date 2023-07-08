@@ -38,10 +38,6 @@
 			<name>Geotools repository</name>
 			<url>https://repo.osgeo.org/repository/release/</url>
 		</repository>
-		<repository>
-			<id>matsim</id>
-			<url>https://repo.matsim.org/repository/matsim</url>
-		</repository>
 	</repositories>
 
 	<dependencies>
@@ -86,6 +82,7 @@
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
 			<version>${matsim.version}</version>
+			<type>pom</type>
 		</dependency>
 
 		<dependency>
