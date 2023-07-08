@@ -1,0 +1,3 @@
+[submodule "matsim-libs"]
+	path = matsim-libs
+	url = git@github.com:matsim-org/matsim-libs.git
