@@ -53,7 +53,7 @@ public class PlanRouter {
 					Facility toFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
 
 					List<? extends PlanElement> newElements = tripRouter.calcRoute(mainMode, fromFacility, toFacility,
-							departureTime.seconds(), plan.getPerson());
+							departureTime.seconds(), plan.getPerson(), trip.getTripAttributes());
 
 					TripRouter.insertTrip(plan, trip.getOriginActivity(), newElements, trip.getDestinationActivity());
 				}
