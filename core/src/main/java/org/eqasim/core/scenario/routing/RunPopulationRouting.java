@@ -12,6 +12,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.facilities.ActivityFacility;
 
 import com.google.inject.Injector;
@@ -53,6 +54,7 @@ public class RunPopulationRouting {
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
+				.addOverridingModule(new TimeInterpretationModule())
 				.build();
 
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
