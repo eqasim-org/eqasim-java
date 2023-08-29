@@ -9,6 +9,9 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
+import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModule;
+import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
+import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessQSimModule;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -34,7 +37,8 @@ public class EqasimConfigurator {
 				new SwissRailRaptorConfigGroup(), //
 				new EqasimConfigGroup(), //
 				new DiscreteModeChoiceConfigGroup(), //
-				new CalibrationConfigGroup() //
+				new CalibrationConfigGroup(),
+				new AbstractAccessModuleConfigGroup()//
 		));
 
 		modules.addAll(Arrays.asList( //
@@ -46,7 +50,8 @@ public class EqasimConfigurator {
 
 		qsimModules.addAll(Arrays.asList( //
 				new EqasimTransitQSimModule(), //
-				new EqasimTrafficQSimModule() //
+				new EqasimTrafficQSimModule(),
+				new AbstractAccessQSimModule()//
 		));
 	}
 
@@ -73,7 +78,13 @@ public class EqasimConfigurator {
 
 		controller.configureQSimComponents(configurator -> {
 			EqasimTransitQSimModule.configure(configurator, controller.getConfig());
+			AbstractAccessQSimModule.configure(configurator, controller.getConfig());
 		});
+
+		if(controller.getConfig().getModules().containsKey(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)) {
+			AbstractAccessModuleConfigGroup abstractAccessModuleConfigGroup = (AbstractAccessModuleConfigGroup) controller.getConfig().getModules().get(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME);
+			controller.addOverridingModule(new AbstractAccessModule(abstractAccessModuleConfigGroup));
+		}
 	}
 
 	public void configureScenario(Scenario scenario) {

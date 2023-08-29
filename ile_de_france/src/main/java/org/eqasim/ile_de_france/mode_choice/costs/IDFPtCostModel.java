@@ -42,6 +42,10 @@ public class IDFPtCostModel implements CostModel {
 				if (leg.getMode().equals(TransportMode.pt)) {
 					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
+					if(route == null) {
+						return false;
+					}
+
 					String transportMode = transitSchedule.getTransitLines().get(route.getLineId()).getRoutes()
 							.get(route.getRouteId()).getTransportMode();
 

@@ -2,8 +2,11 @@ package org.eqasim.ile_de_france.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
@@ -15,6 +18,9 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityE
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
@@ -38,7 +44,20 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Override
 	protected void installEqasimExtension() {
-		bindModeAvailability(MODE_AVAILABILITY_NAME).to(IDFModeAvailability.class);
+		if(getConfig().getModules().containsKey(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)) {
+			bindModeAvailability(MODE_AVAILABILITY_NAME).toInstance(new ModeAvailability() {
+				private IDFModeAvailability delegate = new IDFModeAvailability();
+				private String mode = ((AbstractAccessModuleConfigGroup) getConfig().getModules().get(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)).getModeName();
+				@Override
+				public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> discreteModeChoiceTrips) {
+					Collection<String> modes = delegate.getAvailableModes(person, discreteModeChoiceTrips);
+					modes.add(mode);
+					return modes;
+				}
+			});
+		} else {
+			bindModeAvailability(MODE_AVAILABILITY_NAME).to(IDFModeAvailability.class);
+		}
 
 		bind(IDFPersonPredictor.class);
 

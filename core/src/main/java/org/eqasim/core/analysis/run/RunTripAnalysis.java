@@ -65,7 +65,7 @@ public class RunTripAnalysis {
 
 		String outputPath = cmd.getOptionStrict("output-path");
 
-		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
+		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier((String) null);
 
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());

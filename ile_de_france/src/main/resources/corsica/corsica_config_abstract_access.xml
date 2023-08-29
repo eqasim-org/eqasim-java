@@ -849,5 +849,8 @@
 		<!-- if true then writes output_events in output directory.  default is `false'. Will only work when lastIteration is multiple of events writing interval -->
 		<param name="writingOutputEvents" value="true" />
 	</module>
-
+	<module name="abstractAccess">
+		<param name="accessItemsFilePath" value="accessItems.xml"/>
+		<param name="modeName" value="ptWithAbstractAccess"/>
+	</module>
 </config>
