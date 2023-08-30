@@ -3,6 +3,7 @@ package org.eqasim.core.simulation.mode_choice.utilities.predictors;
 import java.util.List;
 
 import org.eqasim.core.components.transit_with_abstract_access.routing.DefaultAbstractAccessRoute;
+import org.eqasim.core.components.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.matsim.api.core.v01.TransportMode;
@@ -68,7 +69,7 @@ public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 
 					numberOfVehicularTrips++;
 					break;
-				case "abstractAccess":
+				case TransitWithAbstractAccessRoutingModule.ABSTRACT_ACCESS_LEG_MODE_NAME:
 					DefaultAbstractAccessRoute accessRoute = (DefaultAbstractAccessRoute) leg.getRoute();
 					inVehicleTime_min += accessRoute.getTravelTime().seconds() / 60;
 					numberOfVehicularTrips++;
