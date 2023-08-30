@@ -18,6 +18,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -29,6 +30,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
 public class EqasimConfigurator {
 	protected final List<ConfigGroup> configGroups = new LinkedList<>();
+	protected final List<ConfigGroup> optionalConfigGroups = new LinkedList<>();
 	protected final List<AbstractModule> modules = new LinkedList<>();
 	protected final List<AbstractQSimModule> qsimModules = new LinkedList<>();
 
@@ -37,9 +39,10 @@ public class EqasimConfigurator {
 				new SwissRailRaptorConfigGroup(), //
 				new EqasimConfigGroup(), //
 				new DiscreteModeChoiceConfigGroup(), //
-				new CalibrationConfigGroup(),
-				new AbstractAccessModuleConfigGroup()//
+				new CalibrationConfigGroup()//
 		));
+
+		optionalConfigGroups.add(new AbstractAccessModuleConfigGroup());
 
 		modules.addAll(Arrays.asList( //
 				new SwissRailRaptorModule(), //
@@ -57,6 +60,14 @@ public class EqasimConfigurator {
 
 	public ConfigGroup[] getConfigGroups() {
 		return configGroups.toArray(new ConfigGroup[configGroups.size()]);
+	}
+
+	public void addOptionalConfigGroups(Config config) {
+		for(ConfigGroup configGroup: optionalConfigGroups) {
+			if(config.getModules().get(configGroup.getName()) != null) {
+				config.addModule(configGroup);
+			}
+		}
 	}
 
 	public List<AbstractModule> getModules() {

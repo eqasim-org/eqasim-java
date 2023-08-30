@@ -26,7 +26,7 @@ public class AbstractAccessDepartureEventCreator implements DepartureHandler {
         if(agent.getMode().equals(TransitWithAbstractAccessRoutingModule.ABSTRACT_ACCESS_LEG_MODE_NAME)) {
             Leg leg = (Leg) ((PlanAgent) agent).getCurrentPlanElement();
             AbstractAccessRoute abstractAccessRoute = (AbstractAccessRoute) leg.getRoute();
-            this.eventsManager.processEvent(new AbstractAccessDepartureEvent(now, abstractAccessRoute.getAbstractAccessItem().getId(), abstractAccessRoute.getStartLinkId(), abstractAccessRoute.getEndLinkId()));
+            this.eventsManager.processEvent(new AbstractAccessDepartureEvent(now, agent.getId(), abstractAccessRoute.getAbstractAccessItem().getId(), abstractAccessRoute.getStartLinkId(), abstractAccessRoute.getEndLinkId(), abstractAccessRoute.isLeavingAccessCenter()));
         }
         return false;
     }

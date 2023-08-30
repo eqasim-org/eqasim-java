@@ -44,4 +44,8 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
     public AbstractAccessItem getAbstractAccessItem() {
         return this.accessItem;
     }
+
+    public boolean isLeavingAccessCenter() {
+        return this.leavingAccessCenter;
+    }
 }

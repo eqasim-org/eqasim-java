@@ -5,4 +5,6 @@ import org.matsim.api.core.v01.population.Route;
 
 public interface AbstractAccessRoute extends Route {
     AbstractAccessItem getAbstractAccessItem();
+
+    boolean isLeavingAccessCenter();
 }

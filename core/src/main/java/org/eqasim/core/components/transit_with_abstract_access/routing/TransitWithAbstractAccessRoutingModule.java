@@ -82,11 +82,11 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         // Let's first find the transit stops that provide a feasible access from the origin and to the destination of the trip
         Coord fromFacilityCoord = routingRequest.getFromFacility().getCoord();
         IdMap<TransitStopFacility, AbstractAccessItem> bestAccessItemForOrigin = new IdMap<>(TransitStopFacility.class);
-        TransitStopFacility accessTransitStopFacility = this.getClosestTransitScheduleWithValidAccessItem(fromFacilityCoord, bestAccessItemForOrigin);
+        TransitStopFacility accessTransitStopFacility = this.getClosestTransitStopWithValidAccessItem(fromFacilityCoord, bestAccessItemForOrigin);
 
         Coord toFacilityCoord = routingRequest.getToFacility().getCoord();
         IdMap<TransitStopFacility, AbstractAccessItem> bestAccessItemForDestination = new IdMap<>(TransitStopFacility.class);
-        TransitStopFacility egresssTransitStopFacility = this.getClosestTransitScheduleWithValidAccessItem(routingRequest.getToFacility().getCoord(), bestAccessItemForDestination);
+        TransitStopFacility egresssTransitStopFacility = this.getClosestTransitStopWithValidAccessItem(routingRequest.getToFacility().getCoord(), bestAccessItemForDestination);
 
         if(accessTransitStopFacility == null && egresssTransitStopFacility == null) {
             return this.transitRoutingModule.calcRoute(routingRequest);
@@ -151,7 +151,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         return plan;
     }
 
-    private TransitStopFacility getClosestTransitScheduleWithValidAccessItem(Coord coord, IdMap<TransitStopFacility, AbstractAccessItem> bestAccessesMap) {
+    private TransitStopFacility getClosestTransitStopWithValidAccessItem(Coord coord, IdMap<TransitStopFacility, AbstractAccessItem> bestAccessesMap) {
         return this.quadTree.getDisk(coord.getX(), coord.getY(), this.maxRadius).
                 stream().
                 filter(transitStopFacility -> {

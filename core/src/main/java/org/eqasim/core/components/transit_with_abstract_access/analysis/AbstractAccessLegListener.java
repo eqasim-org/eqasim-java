@@ -1,27 +1,37 @@
 package org.eqasim.core.components.transit_with_abstract_access.analysis;
 
 import com.google.inject.Inject;
+import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccessItem;
 import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccesses;
 import org.eqasim.core.components.transit_with_abstract_access.events.AbstractAccessDepartureEvent;
 import org.eqasim.core.components.transit_with_abstract_access.events.AbstractAccessDepartureEventHandler;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
+import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.events.MobsimScopeEventHandler;
 import org.matsim.core.router.TripStructureUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
 
-public class AbstractAccessLegListener implements MobsimScopeEventHandler, PersonDepartureEventHandler, ActivityStartEventHandler, AbstractAccessDepartureEventHandler {
+
+public class AbstractAccessLegListener implements MobsimScopeEventHandler, PersonDepartureEventHandler, ActivityStartEventHandler, AbstractAccessDepartureEventHandler, PersonArrivalEventHandler {
 
     private final IdMap<Person, Integer> tripIndices = new IdMap<>(Person.class);
     private final IdMap<Person, Integer> legIndices = new IdMap<>(Person.class);
+    private final IdMap<Person, PersonDepartureEvent> personDepartureEvents = new IdMap<>(Person.class);
+    private final AbstractAccesses abstractAccesses;
+    private final Collection<AbstractAccessLegItem> abstractAccessLegItems = new ArrayList<>();
 
     @Inject
     public AbstractAccessLegListener(AbstractAccesses abstractAccesses) {
-
+        this.abstractAccesses = abstractAccesses;
     }
 
     @Override
@@ -33,6 +43,7 @@ public class AbstractAccessLegListener implements MobsimScopeEventHandler, Perso
             tripIndices.compute(event.getPersonId(), (k, v) -> v + 1);
             legIndices.compute(event.getPersonId(), (k, v) -> v + 1);
         }
+        this.personDepartureEvents.put(event.getPersonId(), event);
     }
 
     @Override
@@ -46,10 +57,25 @@ public class AbstractAccessLegListener implements MobsimScopeEventHandler, Perso
     public void reset(int iteration) {
         this.tripIndices.clear();
         this.legIndices.clear();
+        this.personDepartureEvents.clear();
+        this.abstractAccessLegItems.clear();
     }
 
     @Override
     public void handleEvent(AbstractAccessDepartureEvent event) {
-        event.getEventType();
+        Id<Person> personId = event.getPersonId();
+        Id<AbstractAccessItem> abstractAccessItemId = event.getAccessItemId();
+        AbstractAccessItem abstractAccessItem = this.abstractAccesses.getAbstractAccessItems().get(abstractAccessItemId);
+        AbstractAccessLegItem abstractAccessLegItem = new AbstractAccessLegItem(personId, this.tripIndices.get(personId), this.legIndices.get(personId), event.getAccessItemId(), abstractAccessItem.getCenterStop().getId(), event.isLeavingAccessCenter());
+        this.abstractAccessLegItems.add(abstractAccessLegItem);
+    }
+
+    @Override
+    public void handleEvent(PersonArrivalEvent personArrivalEvent) {
+        this.personDepartureEvents.remove(personArrivalEvent.getPersonId());
+    }
+
+    public Collection<AbstractAccessLegItem> getAbstractAccessLegItems() {
+        return this.abstractAccessLegItems;
     }
 }

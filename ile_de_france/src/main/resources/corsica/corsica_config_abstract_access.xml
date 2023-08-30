@@ -653,14 +653,6 @@
 			<param name="teleportedModeFreespeedFactor" value="null" />
 			<param name="teleportedModeSpeed" value="1.2" />
 		</parameterset>
-		<parameterset type="teleportedModeParameters" >
-			<param name="beelineDistanceFactor" value="1.0" />
-			<param name="mode" value="abstractAccess" />
-			<!-- Free-speed factor for a teleported mode. Travel time = teleportedModeFreespeedFactor * <freespeed car travel time>. Insert a line like this for every such mode. Please do not set teleportedModeFreespeedFactor as well as teleportedModeSpeed for the same mode, but if you do, +teleportedModeFreespeedFactor wins over teleportedModeSpeed. -->
-			<param name="teleportedModeFreespeedFactor" value="null" />
-			<!-- Speed for a teleported mode. Travel time = (<beeline distance> * beelineDistanceFactor) / teleportedModeSpeed. Insert a line like this for every such mode. -->
-			<param name="teleportedModeSpeed" value="1000.0" />
-		</parameterset>
 	</module>
 	<module name="ptCounts" >
 		<!-- factor by which to re-scale the simulated values.  necessary when simulation runs with something different from 100%.  needs to be adapted manually -->
@@ -852,5 +844,6 @@
 	<module name="abstractAccess">
 		<param name="accessItemsFilePath" value="accessItems.xml"/>
 		<param name="modeName" value="ptWithAbstractAccess"/>
+		<!--<param name="maxAccessEgressRadius" value=""/>-->
 	</module>
 </config>

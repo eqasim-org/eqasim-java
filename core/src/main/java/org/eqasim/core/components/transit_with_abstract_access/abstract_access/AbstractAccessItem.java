@@ -19,6 +19,8 @@ public class AbstractAccessItem {
     private final double radius;
     private final double avgSpeedToCenterStop;
 
+    //private final String modeName;
+
     public AbstractAccessItem(Id<AbstractAccessItem> id, TransitStopFacility centerStop, double radius, double avgSpeedToCenterStop) {
         this.id = id;
         this.centerStop = centerStop;
