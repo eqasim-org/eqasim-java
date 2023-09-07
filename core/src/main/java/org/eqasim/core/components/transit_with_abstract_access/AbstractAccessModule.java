@@ -40,7 +40,6 @@ public class AbstractAccessModule extends AbstractEqasimExtension {
             }
         });
         addControlerListenerBinding().to(AbstractAccessAnalysisOutputListener.class);
-        bind(AbstractAccessLegListener.class);
     }
 
     @Provides

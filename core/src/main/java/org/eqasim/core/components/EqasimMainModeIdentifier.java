@@ -3,6 +3,7 @@ package org.eqasim.core.components;
 import java.util.List;
 
 import com.google.inject.Inject;
+import org.apache.commons.math3.analysis.function.Abs;
 import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
 import org.eqasim.core.components.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
 import org.matsim.api.core.v01.TransportMode;
@@ -18,7 +19,7 @@ public class EqasimMainModeIdentifier implements MainModeIdentifier {
 
 	@Inject
 	public EqasimMainModeIdentifier(Config config) {
-		if(config != null) {
+		if(config != null && config.getModules().get(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME) != null) {
 			this.ptWithAbstractAccessModeName = ((AbstractAccessModuleConfigGroup) config.getModules().get(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)).getModeName();
 		} else {
 			this.ptWithAbstractAccessModeName = null;

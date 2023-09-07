@@ -11,8 +11,10 @@ public class AbstractAccessQSimModule extends AbstractQSimModule {
 
     @Override
     protected void configureQSim() {
-        addQSimComponentBinding(COMPONENT_NAME).to(AbstractAccessDepartureEventCreator.class);
-        addMobsimScopeEventHandlerBinding().to(AbstractAccessLegListener.class);
+        if(getConfig().getModules().get(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME) != null) {
+            addQSimComponentBinding(COMPONENT_NAME).to(AbstractAccessDepartureEventCreator.class);
+            addMobsimScopeEventHandlerBinding().to(AbstractAccessLegListener.class);
+        }
     }
 
     static public void configure(QSimComponentsConfig components, Config config) {
