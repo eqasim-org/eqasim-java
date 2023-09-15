@@ -28,7 +28,7 @@
 		<!-- Defines which TourFinder component to use. Built-in choices: PlanBased, ActivityBased, HomeBased -->
 		<param name="tourFinder" value="ActivityBased" />
 		<!-- Defines a number of TripConstraint components that should be activated. Built-in choices: VehicleContinuity, ShapeFile, LinkAttribute, TransitWalk -->
-		<param name="tripConstraints" value="PassengerConstraint, OutsideConstraint, TransitWalk, AbstractAccessConstraint" />
+		<param name="tripConstraints" value="PassengerConstraint, OutsideConstraint, TransitWalk" />
 		<!-- Defines which TripEstimator component to use. Built-in choices: MATSimTripScoring, Uniform -->
 		<param name="tripEstimator" value="EqasimUtilityEstimator" />
 		<!-- Defines a number of TripFilter components that should be activated. Built-in choices:  -->
@@ -207,10 +207,6 @@
 		<parameterset type="estimator" >
 			<param name="estimator" value="PtUtilityEstimator" />
 			<param name="mode" value="pt" />
-		</parameterset>
-		<parameterset type="estimator" >
-			<param name="estimator" value="PtUtilityEstimator" />
-			<param name="mode" value="ptWithAbstractAccess" />
 		</parameterset>
 		<parameterset type="estimator" >
 			<param name="estimator" value="IDFBikeUtilityEstimator" />
@@ -600,15 +596,6 @@
 				<param name="mode" value="outside" />
 				<param name="monetaryDistanceRate" value="0.0" />
 			</parameterset>
-			<parameterset type="modeParams">
-				<param name="constant" value="0.0" />
-				<param name="dailyMonetaryConstant" value="0.0" />
-				<param name="dailyUtilityConstant" value="0.0" />
-				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
-				<param name="marginalUtilityOfTraveling_util_hr" value="-1.0" />
-				<param name="mode" value="abstractAccess" />
-				<param name="monetaryDistanceRate" value="0.0" />
-			</parameterset>
 		</parameterset>
 	</module>
 	<module name="plans" >
@@ -652,14 +639,6 @@
 			<param name="mode" value="walk" />
 			<param name="teleportedModeFreespeedFactor" value="null" />
 			<param name="teleportedModeSpeed" value="1.2" />
-		</parameterset>
-		<parameterset type="teleportedModeParameters" >
-			<param name="beelineDistanceFactor" value="1.0" />
-			<param name="mode" value="abstractAccess" />
-			<!-- Free-speed factor for a teleported mode. Travel time = teleportedModeFreespeedFactor * <freespeed car travel time>. Insert a line like this for every such mode. Please do not set teleportedModeFreespeedFactor as well as teleportedModeSpeed for the same mode, but if you do, +teleportedModeFreespeedFactor wins over teleportedModeSpeed. -->
-			<param name="teleportedModeFreespeedFactor" value="null" />
-			<!-- Speed for a teleported mode. Travel time = (<beeline distance> * beelineDistanceFactor) / teleportedModeSpeed. Insert a line like this for every such mode. -->
-			<param name="teleportedModeSpeed" value="1000.0" />
 		</parameterset>
 	</module>
 	<module name="ptCounts" >
