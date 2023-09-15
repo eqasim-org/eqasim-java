@@ -44,20 +44,20 @@ public class EpsilonModule extends AbstractEqasimExtension {
 					continue;
 				}
 				processed.add(utilityEstimator);
-				String baseEstimator = utilityEstimator.substring(EPSILON_UTILITY_PREFIX.length(), utilityEstimator.length());
-				bindUtilityEstimator(utilityEstimator).toProvider(new Provider<UtilityEstimator>() {
-					@Inject
-					private Map<String, Provider<UtilityEstimator>> factory;
+				String baseEstimator = utilityEstimator.substring(EPSILON_UTILITY_PREFIX.length());
+				bindUtilityEstimator(utilityEstimator).toProvider(new Provider<>() {
+                    @Inject
+                    private Map<String, Provider<UtilityEstimator>> factory;
 
-					@Inject
-					private EpsilonProvider epsilonProvider;
+                    @Inject
+                    private EpsilonProvider epsilonProvider;
 
-					@Override
-					public UtilityEstimator get() {
-						UtilityEstimator delegate = factory.get(baseEstimator).get();
-						return new EpsilonAdapter(mode, delegate, epsilonProvider);
-					}
-				}).asEagerSingleton();
+                    @Override
+                    public UtilityEstimator get() {
+                        UtilityEstimator delegate = factory.get(baseEstimator).get();
+                        return new EpsilonAdapter(mode, delegate, epsilonProvider);
+                    }
+                }).asEagerSingleton();
 			}
 		}
 	}
