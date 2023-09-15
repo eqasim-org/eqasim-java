@@ -39,6 +39,15 @@ public class AbstractAccessModule extends AbstractEqasimExtension {
                 return utilityEstimators.get(TransportMode.pt).get();
             }
         });
+        bind(AbstractAccessLegListener.class).toProvider(new Provider<AbstractAccessLegListener>() {
+
+            @Inject
+            private AbstractAccesses abstractAccesses;
+            @Override
+            public AbstractAccessLegListener get() {
+                return new AbstractAccessLegListener(abstractAccesses);
+            }
+        }).asEagerSingleton();
         addControlerListenerBinding().to(AbstractAccessAnalysisOutputListener.class);
     }
 
