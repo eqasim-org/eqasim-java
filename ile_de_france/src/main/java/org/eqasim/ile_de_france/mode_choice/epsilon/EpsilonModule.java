@@ -1,21 +1,28 @@
 package org.eqasim.ile_de_france.mode_choice.epsilon;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import org.apache.log4j.Logger;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonAdapter;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.epsilon.GumbelEpsilonProvider;
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
-import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityEstimator;
-import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.matsim.core.config.groups.GlobalConfigGroup;
 
-import com.google.inject.Key;
+
 import com.google.inject.Provides;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class EpsilonModule extends AbstractEqasimExtension {
+
+	public static final Logger logger = Logger.getLogger(EpsilonModule.class);
+
+	public static final String EPSILON_UTILITY_PREFIX = "epsilon_";
 	@Provides
 	public GumbelEpsilonProvider provideGumbelEpsilonProvider(GlobalConfigGroup config) {
 		return new GumbelEpsilonProvider(config.getRandomSeed(), 1.0);
@@ -25,38 +32,33 @@ public class EpsilonModule extends AbstractEqasimExtension {
 	protected void installEqasimExtension() {
 		bind(EpsilonProvider.class).to(GumbelEpsilonProvider.class);
 
-		bind(IDFCarUtilityEstimator.class);
-		bind(IDFBikeUtilityEstimator.class);
-		bind(PtUtilityEstimator.class);
-		bind(WalkUtilityEstimator.class);
 
-		bindUtilityEstimator("epsilon_car").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_car")));
-		bindUtilityEstimator("epsilon_pt").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_pt")));
-		bindUtilityEstimator("epsilon_bike").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_bike")));
-		bindUtilityEstimator("epsilon_walk").to(Key.get(EpsilonAdapter.class, Names.named("epsilon_walk")));
-	}
+		EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) getConfig().getModules().get(EqasimConfigGroup.GROUP_NAME);
+		Set<String> processed = new HashSet<>();
+		for(Map.Entry<String, String > entry: eqasimConfigGroup.getEstimators().entrySet()) {
+			String mode = entry.getKey();
+			String utilityEstimator = entry.getValue();
+			if(utilityEstimator.startsWith(EPSILON_UTILITY_PREFIX)) {
+				if(processed.contains(utilityEstimator)) {
+					logger.warn(String.format("The epsilon utility estimator '%s' is used for more than one mode. The seed of the epsilon generator will rely on the first mode", utilityEstimator));
+					continue;
+				}
+				processed.add(utilityEstimator);
+				String baseEstimator = utilityEstimator.substring(EPSILON_UTILITY_PREFIX.length(), utilityEstimator.length());
+				bindUtilityEstimator(utilityEstimator).toProvider(new Provider<UtilityEstimator>() {
+					@Inject
+					private Map<String, Provider<UtilityEstimator>> factory;
 
-	@Provides
-	@Named("epsilon_car")
-	EpsilonAdapter provideEpsilonCarEstimator(IDFCarUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
-		return new EpsilonAdapter("car", delegate, epsilonProvider);
-	}
+					@Inject
+					private EpsilonProvider epsilonProvider;
 
-	@Provides
-	@Named("epsilon_pt")
-	EpsilonAdapter provideEpsilonPtEstimator(PtUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
-		return new EpsilonAdapter("pt", delegate, epsilonProvider);
-	}
-
-	@Provides
-	@Named("epsilon_bike")
-	EpsilonAdapter provideEpsilonBikeEstimator(IDFBikeUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
-		return new EpsilonAdapter("bike", delegate, epsilonProvider);
-	}
-
-	@Provides
-	@Named("epsilon_walk")
-	EpsilonAdapter provideEpsilonWalkEstimator(WalkUtilityEstimator delegate, EpsilonProvider epsilonProvider) {
-		return new EpsilonAdapter("walk", delegate, epsilonProvider);
+					@Override
+					public UtilityEstimator get() {
+						UtilityEstimator delegate = factory.get(baseEstimator).get();
+						return new EpsilonAdapter(mode, delegate, epsilonProvider);
+					}
+				}).asEagerSingleton();
+			}
+		}
 	}
 }
