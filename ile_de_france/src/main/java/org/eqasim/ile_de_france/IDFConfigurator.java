@@ -1,6 +1,7 @@
 package org.eqasim.ile_de_france;
 
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -13,6 +14,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IDFConfigurator extends EqasimConfigurator {
+
+    public IDFConfigurator(){
+        super();
+        this.modules.add(new EpsilonModule());
+    }
+
     public void adjustScenario(Scenario scenario) {
         // if there is a vehicles file defined in config, manually assign them to their agents
         Config config = scenario.getConfig();
