@@ -18,7 +18,7 @@ public class CreateAbstractAccessItemsForTransitLines {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args)
-                .requireOptions("transit-schedule-path", "output-path", "radius", "average-speed")
+                .requireOptions("transit-schedule-path", "output-path", "radius", "average-speed", "access-type", "use-routed-distance")
                 .allowOptions("transit-lines-ids", "route-modes", "append-to-output", "remove-redundant-items")
                 .build();
 
@@ -66,6 +66,9 @@ public class CreateAbstractAccessItemsForTransitLines {
 
         double radius = Double.parseDouble(commandLine.getOptionStrict("radius"));
         double avgSpeed = Double.parseDouble(commandLine.getOptionStrict("average-speed"));
+        boolean usingRoutedDistance = Boolean.parseBoolean(commandLine.getOptionStrict("use-routed-distance"));
+        String accessType = commandLine.getOptionStrict("access-type");
+
 
         HashSet<Id<AbstractAccessItem>> itemIds = new HashSet<>();
         for(AbstractAccessItem item: items) {
@@ -79,7 +82,7 @@ public class CreateAbstractAccessItemsForTransitLines {
                 id+=1;
                 itemId = Id.create(transitStopFacility.getId().toString()+"-"+id, AbstractAccessItem.class);
             }while(itemIds.contains(itemId));
-            AbstractAccessItem item = new AbstractAccessItem(itemId, transitStopFacility, radius, avgSpeed);
+            AbstractAccessItem item = new AbstractAccessItem(itemId, transitStopFacility, radius, avgSpeed, accessType, usingRoutedDistance);
             items.add(item);
         }
         new AbstractAccessesFileWriter(items).write(outputFile.getAbsolutePath());

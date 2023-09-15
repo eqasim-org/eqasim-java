@@ -67,7 +67,9 @@ public class TestCorisica {
 					"--output-path", "corsica_test/access_items.xml",
 					"--radius", "1000",
 					"--average-speed", "18",
-					"--route-modes", "rail"
+					"--route-modes", "rail",
+					"--use-routed-distance", "true",
+					"--access-type", "bus"
 			});
 
 			AdaptConfigForPtWithAbstractAccess.main(new String[] {

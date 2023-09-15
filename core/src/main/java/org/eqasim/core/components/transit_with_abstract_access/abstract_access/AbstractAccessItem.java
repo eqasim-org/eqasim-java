@@ -14,18 +14,20 @@ import java.util.List;
 public class AbstractAccessItem {
 
     private final Id<AbstractAccessItem> id;
-
     private final TransitStopFacility centerStop;
     private final double radius;
     private final double avgSpeedToCenterStop;
+    private final boolean useRoutedDistance;
+    private final String accessType;
 
-    //private final String modeName;
 
-    public AbstractAccessItem(Id<AbstractAccessItem> id, TransitStopFacility centerStop, double radius, double avgSpeedToCenterStop) {
+    public AbstractAccessItem(Id<AbstractAccessItem> id, TransitStopFacility centerStop, double radius, double avgSpeedToCenterStop, String accessType, boolean useRoutedDistance) {
         this.id = id;
         this.centerStop = centerStop;
         this.radius = radius;
         this.avgSpeedToCenterStop = avgSpeedToCenterStop;
+        this.accessType = accessType;
+        this.useRoutedDistance = useRoutedDistance;
     }
 
     public Id<AbstractAccessItem> getId() {
@@ -49,6 +51,14 @@ public class AbstractAccessItem {
 
     public double getRadius() {
         return this.radius;
+    }
+
+    public boolean isUsingRoutedDistance() {
+        return this.useRoutedDistance;
+    }
+
+    public String getAccessType() {
+        return this.accessType;
     }
 
     public static AbstractAccessItem getFastestAccessItemForCoord (Coord coord, Collection<AbstractAccessItem> accessItems) {

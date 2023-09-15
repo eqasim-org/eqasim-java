@@ -24,6 +24,10 @@ public class AbstractAccessesFileReader extends MatsimXmlParser {
 
     public final static String AVG_SPEED_ATTR_NAME = "averageSpeed";
 
+    public final static String ACCESS_TYPE_ATTR_NAME = "accessType";
+
+    public final static String USING_ROUTED_DISTANCE_ATTR_NAME = "usingRoutedDistance";
+
     private final TransitSchedule transitSchedule;
 
     private final IdMap<AbstractAccessItem, AbstractAccessItem> accessItems;
@@ -41,6 +45,8 @@ public class AbstractAccessesFileReader extends MatsimXmlParser {
             Id<AbstractAccessItem> abstractAccessItemId;
             double radius;
             double averageSpeed;
+            boolean usingRoutedDistance;
+            String accessType;
 
             if(atts.getValue(ACCESS_ID_ATTR_NAME) != null) {
                 abstractAccessItemId = Id.create(atts.getValue(ACCESS_ID_ATTR_NAME), AbstractAccessItem.class);
@@ -71,7 +77,20 @@ public class AbstractAccessesFileReader extends MatsimXmlParser {
             } else {
                 throw new IllegalStateException(AVG_SPEED_ATTR_NAME + " is required in " + ABSTRACT_ACCESS_TAG_NAME + " element");
             }
-            this.accessItems.put(abstractAccessItemId, new AbstractAccessItem(abstractAccessItemId, this.transitSchedule.getFacilities().get(transitStopFacilityId), radius, averageSpeed));
+
+            if(atts.getValue(USING_ROUTED_DISTANCE_ATTR_NAME) != null) {
+                usingRoutedDistance = Boolean.parseBoolean(atts.getValue(USING_ROUTED_DISTANCE_ATTR_NAME));
+            } else {
+                throw new IllegalStateException(USING_ROUTED_DISTANCE_ATTR_NAME + " is required in " + ABSTRACT_ACCESS_TAG_NAME + " element");
+            }
+
+            if(atts.getValue(ACCESS_TYPE_ATTR_NAME) != null) {
+                accessType = atts.getType(ACCESS_TYPE_ATTR_NAME);
+            } else {
+                throw new IllegalStateException(ACCESS_TYPE_ATTR_NAME + " is required in " + ABSTRACT_ACCESS_TAG_NAME + " element");
+            }
+
+            this.accessItems.put(abstractAccessItemId, new AbstractAccessItem(abstractAccessItemId, this.transitSchedule.getFacilities().get(transitStopFacilityId), radius, averageSpeed, accessType, usingRoutedDistance));
         }
     }
 
