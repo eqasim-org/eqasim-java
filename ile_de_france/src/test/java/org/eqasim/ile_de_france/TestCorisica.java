@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.components.transit_with_abstract_access.utils.AdaptConfigForPtWithAbstractAccess;
+import org.eqasim.core.components.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.junit.After;
 import org.junit.Assert;
@@ -47,6 +49,39 @@ public class TestCorisica {
 					"--config-path", "corsica_test/corsica_config.xml", //
 					"--config:controler.lastIteration", "2", // ,
 					"--config:controler.outputDirectory", "corsica_test/simulation_output", //
+			});
+
+			Assert.assertEquals(3162, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
+
+			Map<String, Long> counts = countLegs("corsica_test/simulation_output/output_events.xml.gz");
+			Assert.assertEquals(7781, (long) counts.get("car"));
+			Assert.assertEquals(894, (long) counts.get("car_passenger"));
+			Assert.assertEquals(2091, (long) counts.get("walk"));
+			Assert.assertEquals(2, (long) counts.get("bike"));
+			Assert.assertEquals(47, (long) counts.get("pt"));
+		}
+
+		{
+			CreateAbstractAccessItemsForTransitLines.main(new String[] {
+					"--transit-schedule-path", "corsica_test/corsica_transit_schedule.xml.gz",
+					"--output-path", "corsica_test/access_items.xml",
+					"--radius", "1000",
+					"--average-speed", "18",
+					"--route-modes", "rail"
+			});
+
+			AdaptConfigForPtWithAbstractAccess.main(new String[] {
+					"--input-config-path", "corsica_test/corsica_config.xml",
+					"--output-config-path", "corsica_test/corsica_config_abstract_access.xml",
+					"--mode-name", "ptWithAbstractAccess",
+					"--accesses-file-path", "corsica_test/access_items.xml"
+			});
+
+
+			RunSimulation.main(new String[] { //
+					"--config-path", "corsica_test/corsica_config_abstract_access.xml", //
+					"--config:controler.lastIteration", "2", // ,
+					"--config:controler.outputDirectory", "corsica_test/simulation_output_abstract_access", //
 			});
 
 			Assert.assertEquals(3162, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
