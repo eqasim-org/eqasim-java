@@ -66,7 +66,7 @@ public class AbstractAccessLegListener implements MobsimScopeEventHandler, Perso
         Id<Person> personId = event.getPersonId();
         Id<AbstractAccessItem> abstractAccessItemId = event.getAccessItemId();
         AbstractAccessItem abstractAccessItem = this.abstractAccesses.getAbstractAccessItems().get(abstractAccessItemId);
-        AbstractAccessLegItem abstractAccessLegItem = new AbstractAccessLegItem(personId, this.tripIndices.get(personId), this.legIndices.get(personId), event.getAccessItemId(), abstractAccessItem.getCenterStop().getId(), event.isLeavingAccessCenter());
+        AbstractAccessLegItem abstractAccessLegItem = new AbstractAccessLegItem(personId, this.tripIndices.get(personId), this.legIndices.get(personId), event.getAccessItemId(), abstractAccessItem.getCenterStop().getId(), event.isLeavingAccessCenter(), event.isRouted(), event.getDistance());
         this.abstractAccessLegItems.add(abstractAccessLegItem);
     }
 

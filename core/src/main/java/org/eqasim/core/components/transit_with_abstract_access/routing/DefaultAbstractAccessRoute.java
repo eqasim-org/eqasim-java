@@ -48,4 +48,9 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
     public boolean isLeavingAccessCenter() {
         return this.leavingAccessCenter;
     }
+
+    @Override
+    public boolean isRouted() {
+        return getAbstractAccessItem().isUsingRoutedDistance();
+    }
 }

@@ -35,7 +35,9 @@ public class AbstractAccessLegWriter {
                 "person_trip_id",
                 "leg_index",
                 "transit_stop_id",
-                "leaving_transit_stop"
+                "leaving_transit_stop",
+                "is_distance_routed",
+                "distance"
         });
     }
 
@@ -45,7 +47,9 @@ public class AbstractAccessLegWriter {
                 String.valueOf(abstractAccessLeg.personTripId),
                 String.valueOf(abstractAccessLeg.legIndex),
                 abstractAccessLeg.transitStopFacilityId.toString(),
-                String.valueOf(abstractAccessLeg.leavingCenterStop)
+                String.valueOf(abstractAccessLeg.leavingCenterStop),
+                String.valueOf(abstractAccessLeg.isRouted),
+                String.valueOf(abstractAccessLeg.distance)
         });
     }
 }

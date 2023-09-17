@@ -7,4 +7,6 @@ public interface AbstractAccessRoute extends Route {
     AbstractAccessItem getAbstractAccessItem();
 
     boolean isLeavingAccessCenter();
+
+    boolean isRouted();
 }
