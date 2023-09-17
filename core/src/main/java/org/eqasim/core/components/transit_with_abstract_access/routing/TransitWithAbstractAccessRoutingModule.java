@@ -5,7 +5,9 @@ import org.eqasim.core.components.transit_with_abstract_access.abstract_access.A
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.population.PopulationUtils;
@@ -14,7 +16,8 @@ import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.RoutingRequest;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
 import org.matsim.core.router.speedy.SpeedyALTFactory;
-import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.core.router.util.LeastCostPathCalculator;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.transitSchedule.api.*;
@@ -24,18 +27,37 @@ import java.util.*;
 public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
 
     public static final String ABSTRACT_ACCESS_LEG_MODE_NAME = "abstractAccess";
-
     private final IdMap<TransitStopFacility, List<AbstractAccessItem>> accessItems;
+    private final IdMap<AbstractAccessItem, LeastCostPathCalculator> pathCalculators;
     private final QuadTree<TransitStopFacility> quadTree;
     private final RoutingModule transitRoutingModule;
     private final double maxRadius;
-
     private final PopulationFactory populationFactory;
+    private final Network network;
+    private final IdMap<TransitStopFacility, Id<Link>> transitStopFacilityLinks;
 
     public TransitWithAbstractAccessRoutingModule(TransitSchedule transitSchedule, AbstractAccesses abstractAccesses, Network network, RoutingModule transitRoutingModule, PopulationFactory populationFactory) {
+
+        // The provided network is cleaned to keep only the biggest cluster
+        // This is done to be able to compute paths to PT links from non-PT links.
+        // The formers are very often not connected to the car network
+
+        this.network = NetworkUtils.createNetwork();
+        for(Node node: network.getNodes().values()) {
+            this.network.addNode(node);
+        }
+        for(Link link: network.getLinks().values()) {
+            this.network.addLink(link);
+        }
+        NetworkUtils.runNetworkCleaner(this.network);
         this.accessItems = new IdMap<>(TransitStopFacility.class);
+        this.pathCalculators = new IdMap<>(AbstractAccessItem.class);
+        this.transitStopFacilityLinks = new IdMap<>(TransitStopFacility.class);
         double maxRadius = Double.MIN_VALUE;
         boolean atLeastOneAccess = false;
+
+        SpeedyALTFactory factory = new SpeedyALTFactory();
+
         for (Map.Entry<Id<TransitStopFacility>, List<AbstractAccessItem>> entry : abstractAccesses.getAbstractAccessItemsByTransitStop().entrySet()) {
             // In case there are facilities mentioned in the input map but with an empty list of access items
             if (entry.getValue().size() > 0) {
@@ -44,6 +66,15 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                 for (AbstractAccessItem abstractAccessItem : entry.getValue()) {
                     if (abstractAccessItem.getRadius() > maxRadius) {
                         maxRadius = abstractAccessItem.getRadius();
+                    }
+                    if(!this.transitStopFacilityLinks.containsKey(entry.getKey())) {
+                        Link link = NetworkUtils.getNearestLink(this.network, abstractAccessItem.getCenterStop().getCoord());
+                        this.transitStopFacilityLinks.put(entry.getKey(), link.getId());
+                    }
+                    if(abstractAccessItem.isUsingRoutedDistance()) {
+                        TravelTime travelTime = (link, time, person, vehicle) -> link.getLength() / abstractAccessItem.getAvgSpeedToCenterStop();
+                        LeastCostPathCalculator pathCalculator = factory.createPathCalculator(this.network, new OnlyTimeDependentTravelDisutility(travelTime), travelTime);
+                        this.pathCalculators.put(abstractAccessItem.getId(), pathCalculator);
                     }
                 }
             }
@@ -72,9 +103,6 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                 }
             }
         }
-
-        SpeedyALTFactory factory = new SpeedyALTFactory();
-        factory.createPathCalculator(network, new OnlyTimeDependentTravelDisutility(new FreeSpeedTravelTime()), new FreeSpeedTravelTime());
     }
 
     @Override
@@ -97,12 +125,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
 
         if(accessTransitStopFacility != null) {
             AbstractAccessItem abstractAccessItem = bestAccessItemForOrigin.get(accessTransitStopFacility.getId());
-            Leg leg = PopulationUtils.createLeg(ABSTRACT_ACCESS_LEG_MODE_NAME);
-            leg.setRoute(new DefaultAbstractAccessRoute(routingRequest.getFromFacility().getLinkId(), abstractAccessItem.getCenterStop().getLinkId(), abstractAccessItem));
-            leg.setDepartureTime(departureTime);
-            leg.getAttributes().putAttribute("accessId", abstractAccessItem.getId().toString());
-            leg.setTravelTime(abstractAccessItem.getTimeToCenter(fromFacilityCoord));
-            leg.getRoute().setTravelTime(leg.getTravelTime().seconds());
+            Leg leg = this.createAbstractAccessLeg(abstractAccessItem, true, routingRequest.getFromFacility().getLinkId(), departureTime, routingRequest.getPerson());
             plan.add(leg);
             departureTime+=leg.getTravelTime().seconds();
             Activity activity = this.populationFactory.createActivityFromLinkId("pt interaction", accessTransitStopFacility.getLinkId());
@@ -140,15 +163,33 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             activity.setEndTime(departureTime);
             plan.add(activity);
             AbstractAccessItem abstractAccessItem = bestAccessItemForDestination.get(egresssTransitStopFacility.getId());
-            Leg leg = PopulationUtils.createLeg(ABSTRACT_ACCESS_LEG_MODE_NAME);
-            leg.setDepartureTime(departureTime);
-            leg.setRoute(new DefaultAbstractAccessRoute(abstractAccessItem.getCenterStop().getLinkId(), routingRequest.getToFacility().getLinkId(), abstractAccessItem));
-            leg.getAttributes().putAttribute("accessId", abstractAccessItem.getId().toString());
-            leg.setTravelTime(abstractAccessItem.getTimeToCenter(toFacilityCoord));
-            leg.getRoute().setTravelTime(leg.getTravelTime().seconds());
+            Leg leg = this.createAbstractAccessLeg(abstractAccessItem, false, routingRequest.getToFacility().getLinkId(), departureTime, routingRequest.getPerson());
             plan.add(leg);
         }
         return plan;
+    }
+
+    private Leg createAbstractAccessLeg(AbstractAccessItem accessItem, boolean access, Id<Link> otherLinkId, double departureTime, Person person) {
+        Leg leg = PopulationUtils.createLeg(ABSTRACT_ACCESS_LEG_MODE_NAME);
+        leg.setDepartureTime(departureTime);
+        Id<Link> accessTransitStopFacilityLink = this.transitStopFacilityLinks.get(accessItem.getCenterStop().getId());
+        leg.setRoute(new DefaultAbstractAccessRoute(access ? otherLinkId : accessItem.getCenterStop().getLinkId(), access ? accessItem.getCenterStop().getLinkId() : otherLinkId, accessItem));
+
+        Id<Link> fromLinkId = access ? otherLinkId : accessTransitStopFacilityLink;
+        Id<Link> toLinkId = access ? accessTransitStopFacilityLink : otherLinkId;
+        leg.getAttributes().putAttribute("accessId", accessItem.getId().toString());
+
+        if(accessItem.isUsingRoutedDistance()) {
+            Node fromNode = this.network.getLinks().get(fromLinkId).getFromNode();
+            Node toNode = this.network.getLinks().get(toLinkId).getToNode();
+            LeastCostPathCalculator.Path path = this.pathCalculators.get(accessItem.getId()).calcLeastCostPath(fromNode, toNode, departureTime, person, null);
+            double travelTime = path.travelTime;
+            leg.setTravelTime(travelTime);
+        } else {
+            leg.setTravelTime(accessItem.getTimeToCenter(this.network.getLinks().get(otherLinkId).getCoord()));
+        }
+        leg.getRoute().setTravelTime(leg.getTravelTime().seconds());
+        return leg;
     }
 
     private TransitStopFacility getClosestTransitStopWithValidAccessItem(Coord coord, IdMap<TransitStopFacility, AbstractAccessItem> bestAccessesMap) {
