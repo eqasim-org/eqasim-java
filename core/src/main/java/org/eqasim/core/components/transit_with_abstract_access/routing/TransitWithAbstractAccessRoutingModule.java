@@ -10,6 +10,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.RoutingModule;
@@ -43,13 +44,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         // The formers are very often not connected to the car network
 
         this.network = NetworkUtils.createNetwork();
-        for(Node node: network.getNodes().values()) {
-            this.network.addNode(node);
-        }
-        for(Link link: network.getLinks().values()) {
-            this.network.addLink(link);
-        }
-        NetworkUtils.runNetworkCleaner(this.network);
+        new TransportModeNetworkFilter(network).filter(this.network, Collections.singleton("car"));
         this.accessItems = new IdMap<>(TransitStopFacility.class);
         this.pathCalculators = new IdMap<>(AbstractAccessItem.class);
         this.transitStopFacilityLinks = new IdMap<>(TransitStopFacility.class);
@@ -72,7 +67,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                         this.transitStopFacilityLinks.put(entry.getKey(), link.getId());
                     }
                     if(abstractAccessItem.isUsingRoutedDistance()) {
-                        TravelTime travelTime = (link, time, person, vehicle) -> link.getLength() / abstractAccessItem.getAvgSpeedToCenterStop();
+                        TravelTime travelTime = (link, time, person, vehicle) -> Math.min(link.getLength() / abstractAccessItem.getAvgSpeedToCenterStop(), link.getLength() / link.getFreespeed());
                         LeastCostPathCalculator pathCalculator = factory.createPathCalculator(this.network, new OnlyTimeDependentTravelDisutility(travelTime), travelTime);
                         this.pathCalculators.put(abstractAccessItem.getId(), pathCalculator);
                     }
@@ -108,13 +103,13 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
     @Override
     public List<? extends PlanElement> calcRoute(RoutingRequest routingRequest) {
         // Let's first find the transit stops that provide a feasible access from the origin and to the destination of the trip
-        Coord fromFacilityCoord = routingRequest.getFromFacility().getCoord();
+        Coord fromFacilityCoord = this.network.getLinks().get(routingRequest.getFromFacility().getLinkId()).getCoord();
         IdMap<TransitStopFacility, AbstractAccessItem> bestAccessItemForOrigin = new IdMap<>(TransitStopFacility.class);
         TransitStopFacility accessTransitStopFacility = this.getClosestTransitStopWithValidAccessItem(fromFacilityCoord, bestAccessItemForOrigin);
 
-        Coord toFacilityCoord = routingRequest.getToFacility().getCoord();
+        Coord toFacilityCoord = this.network.getLinks().get(routingRequest.getToFacility().getLinkId()).getCoord();
         IdMap<TransitStopFacility, AbstractAccessItem> bestAccessItemForDestination = new IdMap<>(TransitStopFacility.class);
-        TransitStopFacility egresssTransitStopFacility = this.getClosestTransitStopWithValidAccessItem(routingRequest.getToFacility().getCoord(), bestAccessItemForDestination);
+        TransitStopFacility egresssTransitStopFacility = this.getClosestTransitStopWithValidAccessItem(toFacilityCoord, bestAccessItemForDestination);
 
         if(accessTransitStopFacility == null && egresssTransitStopFacility == null) {
             return this.transitRoutingModule.calcRoute(routingRequest);
