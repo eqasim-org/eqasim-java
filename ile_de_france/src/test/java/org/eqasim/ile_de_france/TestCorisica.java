@@ -62,6 +62,14 @@ public class TestCorisica {
 		}
 
 		{
+			RunModeChoice.main(new String[]{
+				"--config-path", "corsica_test/corsica_config.xml",
+				"--output-plans-path", 	"corsica_test/mode_choice_output_plans.xml.gz",
+				"--output-csv-path", 	"corsica_test/mode_choice_output_trips.csv"
+			});
+		}
+
+		{
 			CreateAbstractAccessItemsForTransitLines.main(new String[] {
 					"--transit-schedule-path", "corsica_test/corsica_transit_schedule.xml.gz",
 					"--output-path", "corsica_test/access_items.xml",
