@@ -5,10 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.simulation.mode_choice.constraints.AbstractAccessConstraint;
-import org.eqasim.core.simulation.mode_choice.constraints.EqasimVehicleTourConstraint;
-import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
-import org.eqasim.core.simulation.mode_choice.constraints.PassengerConstraint;
+import org.eqasim.core.simulation.mode_choice.constraints.*;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
@@ -40,9 +37,8 @@ import com.google.inject.name.Named;
 public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String PASSENGER_CONSTRAINT_NAME = "PassengerConstraint";
 	public static final String OUTSIDE_CONSTRAINT_NAME = "OutsideConstraint";
-
 	public static final String ABSTRACT_ACCESS_CONSTRAINT_NAME = "AbstractAccessConstraint";
-
+	public static final String ACTIVITY_END_TIME_CONSTRAINT_NAME = "ActivityEndTimeConstraint";
 	public static final String TOUR_LENGTH_FILTER_NAME = "TourLengthFilter";
 	public static final String OUTSIDE_FILTER_NAME = "OutsideFilter";
 
@@ -64,6 +60,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(PASSENGER_CONSTRAINT_NAME).to(PassengerConstraint.Factory.class);
 		bindTripConstraintFactory(OUTSIDE_CONSTRAINT_NAME).to(OutsideConstraint.Factory.class);
 		bindTripConstraintFactory(ABSTRACT_ACCESS_CONSTRAINT_NAME).to(AbstractAccessConstraint.Factory.class);
+		bindTripConstraintFactory(ACTIVITY_END_TIME_CONSTRAINT_NAME).to(ActivityEndTimeConstraint.Factory.class);
 
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
