@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class AbstractAccessAnalysisOutputListener implements IterationStartsListener, IterationEndsListener, ShutdownListener {
-    private final static String ABSTRACT_ACCESS_LEGS_FILE_NAME = "abstractAccessLegsFileName.csv";
+    private final static String ABSTRACT_ACCESS_LEGS_FILE_NAME = "eqasim_abstract_access_legs.csv";
 
     private final OutputDirectoryHierarchy outputDirectoryHierarchy;
 
