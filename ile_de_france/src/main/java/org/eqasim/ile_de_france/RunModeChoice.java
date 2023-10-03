@@ -1,13 +1,9 @@
 package org.eqasim.ile_de_france;
 
-import com.google.inject.Binding;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import com.google.inject.spi.DefaultElementVisitor;
-import com.google.inject.spi.Element;
-import com.google.inject.spi.Elements;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -16,7 +12,6 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.trips.TripItem;
 import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
-import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModule;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
