@@ -1,6 +1,5 @@
 package org.eqasim.core.components.transit_with_abstract_access.abstract_access;
 
-import org.apache.commons.math3.analysis.function.Abs;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
@@ -42,13 +41,20 @@ public class AbstractAccessItem {
         return distanceToCenter <= this.radius;
     }
     public double getTimeToCenter(Coord coord) {
-        double distanceToCenter = CoordUtils.calcEuclideanDistance(coord, this.centerStop.getCoord());
+        double distanceToCenter = this.getDistanceToCenter(coord);
+        return this.getTimeToCenter(distanceToCenter);
+    }
+
+    public double getTimeToCenter(double distanceToCenter) {
         if(this.applies(distanceToCenter)) {
             return distanceToCenter / this.avgSpeedToCenterStop;
         }
         return Double.MAX_VALUE;
     }
 
+    public double getDistanceToCenter(Coord coord) {
+        return CoordUtils.calcEuclideanDistance(coord, this.centerStop.getCoord());
+    }
     public double getRadius() {
         return this.radius;
     }

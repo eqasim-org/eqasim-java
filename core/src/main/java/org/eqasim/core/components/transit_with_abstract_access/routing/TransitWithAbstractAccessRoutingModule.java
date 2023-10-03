@@ -179,9 +179,12 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             Node toNode = this.network.getLinks().get(toLinkId).getToNode();
             LeastCostPathCalculator.Path path = this.pathCalculators.get(accessItem.getId()).calcLeastCostPath(fromNode, toNode, departureTime, person, null);
             double travelTime = path.travelTime;
+            leg.getRoute().setDistance(path.travelCost);
             leg.setTravelTime(travelTime);
         } else {
-            leg.setTravelTime(accessItem.getTimeToCenter(this.network.getLinks().get(otherLinkId).getCoord()));
+            double distance = accessItem.getDistanceToCenter(this.network.getLinks().get(otherLinkId).getCoord());
+            leg.getRoute().setDistance(distance);
+            leg.setTravelTime(accessItem.getTimeToCenter(distance));
         }
         leg.getRoute().setTravelTime(leg.getTravelTime().seconds());
         return leg;
