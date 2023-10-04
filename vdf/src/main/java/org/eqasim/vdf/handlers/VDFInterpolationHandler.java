@@ -100,7 +100,7 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 
 				inputStream.close();
 			} catch (IOException e) {
-				throw new RuntimeException();
+				throw new RuntimeException(e);
 			}
 		}
 	}
@@ -127,7 +127,7 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 
 				outputStream.close();
 			} catch (IOException e) {
-				throw new RuntimeException();
+				throw new RuntimeException(e);
 			}
 		}
 	}

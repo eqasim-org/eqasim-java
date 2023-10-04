@@ -191,7 +191,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 				Verify.verify(inputStream.available() == 0);
 				inputStream.close();
 			} catch (IOException e) {
-				throw new RuntimeException();
+				throw new RuntimeException(e);
 			}
 		}
 	}
@@ -229,7 +229,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 				outputStream.close();
 			} catch (IOException e) {
-				throw new RuntimeException();
+				throw new RuntimeException(e);
 			}
 		}
 	}
