@@ -212,7 +212,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 				List<Id<Link>> linkIds = new ArrayList<>(counts.keySet());
 				for (int linkIndex = 0; linkIndex < linkIds.size(); linkIndex++) {
-					outputStream.writeUTF(linkIds.toString());
+					outputStream.writeUTF(linkIds.get(linkIndex).toString());
 				}
 
 				for (int sliceIndex = 0; sliceIndex < state.size(); sliceIndex++) {
