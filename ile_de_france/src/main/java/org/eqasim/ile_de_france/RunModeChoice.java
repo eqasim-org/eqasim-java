@@ -36,10 +36,12 @@ import org.matsim.core.controler.*;
 import org.matsim.core.controler.corelisteners.ControlerDefaultCoreListenersModule;
 import org.matsim.core.replanning.PlanStrategy;
 import org.matsim.core.replanning.ReplanningContext;
+import org.matsim.core.replanning.StrategyManagerModule;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.vehicles.Vehicle;
 
 import java.io.*;
@@ -121,6 +123,7 @@ public class RunModeChoice {
                 .allowOptions("output-plans-path", "output-csv-path", "base-csv-path")
                 .allowOptions("travel-times-factors-path")
                 .allowOptions("logfile")
+                .allowOptions("simulate-after")
                 .build();
 
         if(cmd.hasOption("logfile")) {
@@ -140,6 +143,7 @@ public class RunModeChoice {
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         Optional<String> outputPlansPath = cmd.getOption("output-plans-path");
         Optional<String> outputCsvPath = cmd.getOption("output-csv-path");
+        Optional<String> simulateAfter = cmd.getOption("simulate-after");
 
         if(outputPlansPath.isEmpty() && outputCsvPath.isEmpty()) {
             throw new IllegalStateException("At least one of output-plans-path and output-csv-path should be provided");
@@ -170,26 +174,30 @@ public class RunModeChoice {
         scenarioValidator.checkScenario(scenario);
 
         InjectorBuilder injectorBuilder = new InjectorBuilder(scenario)
-                .addOverridingModule(new NewControlerModule())
-                .addOverridingModule(new ControlerDefaultCoreListenersModule())
-                .addOverridingModule(new ControlerDefaultsModule())
-                .addOverridingModule(new IDFModeChoiceModule(cmd))
-                .addOverridingModule(new EqasimModeChoiceModule())
-                .addOverridingModule(new EqasimAnalysisModule())
-                .addOverridingModule(new ModelModule())
-                .addOverridingModule(new DiscreteModeChoiceModule())
+                //.addOverridingModule(new NewControlerModule())
+                //.addOverridingModule(new ControlerDefaultCoreListenersModule())
+                //.addOverridingModule(new ControlerDefaultsModule())
                 .addOverridingModule(new AbstractModule() {
                     @Inject
                     ControlerConfigGroup configGroup;
+
                     @Override
                     public void install() {
+                        bind(ControlerListenerManager.class).to(ControlerListenerManagerImpl.class);
                         String outputPath = configGroup.getOutputDirectory();
                         String runId = configGroup.getRunId();
                         OutputDirectoryHierarchy.OverwriteFileSetting overwriteFileSetting = configGroup.getOverwriteFileSetting();
                         ControlerConfigGroup.CompressionType compressionType = configGroup.getCompressionType();
                         bind(OutputDirectoryHierarchy.class).toInstance(new OutputDirectoryHierarchy(outputPath, runId, overwriteFileSetting, false, compressionType));
                     }
-                });
+                })
+                .addOverridingModule(new StrategyManagerModule())
+                .addOverridingModule(new TimeInterpretationModule())
+                .addOverridingModule(new IDFModeChoiceModule(cmd))
+                .addOverridingModule(new EqasimModeChoiceModule())
+                .addOverridingModule(new EqasimAnalysisModule())
+                .addOverridingModule(new ModelModule())
+                .addOverridingModule(new DiscreteModeChoiceModule());
         if(cmd.hasOption("travel-times-factors-path")) {
             String travelTimesFactorsPath = cmd.getOptionStrict("travel-times-factors-path");
             injectorBuilder.addOverridingModule(new AbstractModule() {
@@ -246,5 +254,17 @@ public class RunModeChoice {
                 throw new RuntimeException(e);
             }
         });
+
+
+        if(simulateAfter.isPresent()) {
+            scenario.getConfig().controler().setFirstIteration(0);
+            scenario.getConfig().controler().setLastIteration(0);
+            Controler controller = new Controler(scenario);
+            configurator.configureController(controller);
+            controller.addOverridingModule(new EqasimAnalysisModule());
+            controller.addOverridingModule(new EqasimModeChoiceModule());
+            controller.addOverridingModule(new IDFModeChoiceModule(cmd));
+            controller.run();
+        }
     }
 }
