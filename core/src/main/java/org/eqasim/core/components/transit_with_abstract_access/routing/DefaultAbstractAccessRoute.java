@@ -1,26 +1,38 @@
 package org.eqasim.core.components.transit_with_abstract_access.routing;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccessItem;
+import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccesses;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.population.routes.AbstractRoute;
+import org.matsim.pt.routes.DefaultTransitPassengerRoute;
+
+import java.io.IOException;
 
 
 public class DefaultAbstractAccessRoute extends AbstractRoute implements AbstractAccessRoute{
 
     public static final String ROUTE_TYPE = "abstractAccess";
 
-    private final AbstractAccessItem accessItem;
-    private final boolean leavingAccessCenter;
+    private RouteDescription routeDescription;
+
+    public DefaultAbstractAccessRoute(Id<Link> startLinkId, Id<Link> endLinkId) {
+        super(startLinkId, endLinkId);
+    }
 
     public DefaultAbstractAccessRoute(Id<Link> startLinkId, Id<Link> endLinkId, AbstractAccessItem accessItem) {
         super(startLinkId, endLinkId);
-        this.accessItem = accessItem;
-        Id<Link> accessLink = this.accessItem.getCenterStop().getLinkId();
+        this.routeDescription = new RouteDescription();
+        routeDescription.accessItemId = accessItem.getId();
+        routeDescription.isRouted = accessItem.isUsingRoutedDistance();
+        Id<Link> accessLink = accessItem.getCenterStop().getLinkId();
         if(accessLink.equals(startLinkId)) {
-            this.leavingAccessCenter = true;
+            this.routeDescription.leavingAccessCenter = true;
         } else if(accessLink.equals(endLinkId)) {
-            this.leavingAccessCenter = false;
+            this.routeDescription.leavingAccessCenter = false;
         } else {
             throw new IllegalStateException("Supplied accessItem should have a center located on one of startLinkId or endLinkId");
         }
@@ -28,29 +40,53 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
 
     @Override
     public String getRouteDescription() {
-        return null;
+        try {
+            return new ObjectMapper().writeValueAsString(routeDescription);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void setRouteDescription(String routeDescription) {
-
+        try {
+            this.routeDescription = new ObjectMapper().readValue(routeDescription, RouteDescription.class);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     @Override
     public String getRouteType() {
         return ROUTE_TYPE;
     }
 
-    @Override
-    public AbstractAccessItem getAbstractAccessItem() {
-        return this.accessItem;
-    }
-
     public boolean isLeavingAccessCenter() {
-        return this.leavingAccessCenter;
+        return this.routeDescription.leavingAccessCenter;
     }
 
     @Override
     public boolean isRouted() {
-        return getAbstractAccessItem().isUsingRoutedDistance();
+        return this.routeDescription.isRouted;
+    }
+
+    @Override
+    public Id<AbstractAccessItem> getAbstractAccessItemId() {
+        return this.routeDescription.accessItemId;
+    }
+
+    public static class RouteDescription {
+        public Id<AbstractAccessItem> accessItemId;
+        public boolean leavingAccessCenter;
+        public boolean isRouted;
+
+        @JsonProperty("accessItemId")
+        public String getAccessItemId() {
+            return accessItemId == null ? null : accessItemId.toString();
+        }
+
+        @JsonProperty("accessItemId")
+        public void setAccessItemId(String accessItemId) {
+            this.accessItemId = accessItemId == null ? null : Id.create(accessItemId, AbstractAccessItem.class);
+        }
     }
 }

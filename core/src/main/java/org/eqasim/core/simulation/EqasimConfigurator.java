@@ -12,6 +12,8 @@ import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModule;
 import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
 import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessQSimModule;
+import org.eqasim.core.components.transit_with_abstract_access.routing.AbstractAccessRouteFactory;
+import org.eqasim.core.components.transit_with_abstract_access.routing.DefaultAbstractAccessRoute;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -99,6 +101,7 @@ public class EqasimConfigurator {
 	}
 
 	public void configureScenario(Scenario scenario) {
+		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DefaultAbstractAccessRoute.class, new AbstractAccessRouteFactory());
 	}
 
 	public void adjustScenario(Scenario scenario) {
