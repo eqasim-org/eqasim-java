@@ -14,6 +14,8 @@ import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.trips.TripItem;
 import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
 import org.eqasim.core.analysis.trips.TripWriter;
+import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModule;
+import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -140,18 +142,15 @@ public class RunModeChoice {
             ctx.updateLoggers();
         }
 
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+        IDFConfigurator configurator = new IDFConfigurator();
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+        configurator.addOptionalConfigGroups(config);
         Optional<String> outputPlansPath = cmd.getOption("output-plans-path");
         Optional<String> outputCsvPath = cmd.getOption("output-csv-path");
         Optional<String> simulateAfter = cmd.getOption("simulate-after");
 
         if(outputPlansPath.isEmpty() && outputCsvPath.isEmpty()) {
             throw new IllegalStateException("At least one of output-plans-path and output-csv-path should be provided");
-        }
-
-        IDFConfigurator configurator = new IDFConfigurator();
-        for(ConfigGroup configGroup : configurator.getConfigGroups()) {
-            config.addModule(configGroup);
         }
         cmd.applyConfiguration(config);
 
@@ -198,6 +197,11 @@ public class RunModeChoice {
                 .addOverridingModule(new EqasimAnalysisModule())
                 .addOverridingModule(new ModelModule())
                 .addOverridingModule(new DiscreteModeChoiceModule());
+
+        if(config.getModules().containsKey(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)) {
+            injectorBuilder.addOverridingModule(new AbstractAccessModule((AbstractAccessModuleConfigGroup) config.getModules().get(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)));
+        }
+
         if(cmd.hasOption("travel-times-factors-path")) {
             String travelTimesFactorsPath = cmd.getOptionStrict("travel-times-factors-path");
             injectorBuilder.addOverridingModule(new AbstractModule() {
