@@ -47,6 +47,8 @@ import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.vehicles.Vehicle;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 
@@ -228,6 +230,7 @@ public class RunModeChoice {
 
         TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(MainModeIdentifier.class), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         cmd.getOption("base-csv-path").ifPresent(s -> {
+            createParentDirectory(s);
             //We write the initial trip modes
             Collection<TripItem> trips = tripReader.readTrips(population);
             try {
@@ -249,8 +252,12 @@ public class RunModeChoice {
          * We need to call the finish method to actually perform the mode choice.
          */
         strategy.finish();
-        outputPlansPath.ifPresent(s -> new PopulationWriter(population).write(s));
+        outputPlansPath.ifPresent(s -> {
+            createParentDirectory(s);
+            new PopulationWriter(population).write(s);
+        });
         outputCsvPath.ifPresent(s -> {
+            createParentDirectory(s);
             Collection<TripItem> trips = tripReader.readTrips(population);
             try {
                 new TripWriter(trips, DistanceUnit.meter, DistanceUnit.meter).write(s);
@@ -269,6 +276,13 @@ public class RunModeChoice {
             controller.addOverridingModule(new EqasimModeChoiceModule());
             controller.addOverridingModule(new IDFModeChoiceModule(cmd));
             controller.run();
+        }
+    }
+    private static void createParentDirectory(String filePath) {
+        Path path = Paths.get(filePath);
+        File parent = new File(path.getParent().toAbsolutePath().toString());
+        if(!parent.exists() && !parent.mkdirs()) {
+            throw new IllegalStateException("Could not create directory " + parent.getAbsolutePath());
         }
     }
 }
