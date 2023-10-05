@@ -5,7 +5,10 @@ import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.legs.LegListener;
 import org.eqasim.core.analysis.pt.PublicTransportLegListener;
 import org.eqasim.core.analysis.trips.TripListener;
+import org.eqasim.core.components.travel_time.TravelTimeRecorder;
+import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.config.Config;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -39,5 +42,17 @@ public class EqasimAnalysisModule extends AbstractModule {
 	public PublicTransportLegListener providePublicTransportListener(Network network, TransitSchedule schedule,
 			PersonAnalysisFilter personFilter) {
 		return new PublicTransportLegListener(schedule);
+	}
+
+	@Provides
+	@Singleton
+	public TravelTimeRecorder travelTimeRecorder(Network network, Config config) {
+		// THis code was copy pasted from QSim::initSimTimer
+		double startTime = config.qsim().getStartTime().orElse(0);
+		double stopTime = config.qsim().getEndTime().orElse(Double.MAX_VALUE);
+		if (stopTime == 0) {
+			stopTime = Double.MAX_VALUE;
+		}
+		return new TravelTimeRecorder(new RoadNetwork(network), startTime, stopTime, 600);
 	}
 }
