@@ -39,6 +39,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String OUTSIDE_CONSTRAINT_NAME = "OutsideConstraint";
 	public static final String ABSTRACT_ACCESS_CONSTRAINT_NAME = "AbstractAccessConstraint";
 	public static final String ACTIVITY_END_TIME_CONSTRAINT_NAME = "ActivityEndTimeConstraint";
+	public static final String OUTSIDE_RELATED_TRIP_CONSTRAINT_NAME = "OutsideRelatedTripConstraint";
 	public static final String TOUR_LENGTH_FILTER_NAME = "TourLengthFilter";
 	public static final String OUTSIDE_FILTER_NAME = "OutsideFilter";
 
@@ -61,6 +62,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(OUTSIDE_CONSTRAINT_NAME).to(OutsideConstraint.Factory.class);
 		bindTripConstraintFactory(ABSTRACT_ACCESS_CONSTRAINT_NAME).to(AbstractAccessConstraint.Factory.class);
 		bindTripConstraintFactory(ACTIVITY_END_TIME_CONSTRAINT_NAME).to(ActivityEndTimeConstraint.Factory.class);
+		bindTripConstraintFactory(OUTSIDE_RELATED_TRIP_CONSTRAINT_NAME).to(OutsideRelatedTripsConstraint.Factory.class);
 
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
