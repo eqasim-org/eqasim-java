@@ -16,6 +16,7 @@ import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
 import org.eqasim.core.analysis.trips.TripWriter;
 import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModule;
 import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
+import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -30,12 +31,10 @@ import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule
 import org.matsim.contribs.discrete_mode_choice.modules.ModelModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.config.groups.StrategyConfigGroup;
 import org.matsim.core.controler.*;
-import org.matsim.core.controler.corelisteners.ControlerDefaultCoreListenersModule;
 import org.matsim.core.replanning.PlanStrategy;
 import org.matsim.core.replanning.ReplanningContext;
 import org.matsim.core.replanning.StrategyManagerModule;
@@ -46,6 +45,7 @@ import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.vehicles.Vehicle;
 
+import javax.swing.text.html.Option;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -125,7 +125,7 @@ public class RunModeChoice {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path")
                 .allowOptions("output-plans-path", "output-csv-path", "base-csv-path")
-                .allowOptions("travel-times-factors-path")
+                .allowOptions("travel-times-factors-path", "recorded-travel-times-path")
                 .allowOptions("logfile")
                 .allowOptions("simulate-after")
                 .build();
@@ -150,9 +150,14 @@ public class RunModeChoice {
         Optional<String> outputPlansPath = cmd.getOption("output-plans-path");
         Optional<String> outputCsvPath = cmd.getOption("output-csv-path");
         Optional<String> simulateAfter = cmd.getOption("simulate-after");
+        Optional<String> travelTimesFactorsPath = cmd.getOption("travel-times-factors-path");
+        Optional<String> recordedTravelTimesPath = cmd.getOption("recorded-travel-times-path");
 
         if(outputPlansPath.isEmpty() && outputCsvPath.isEmpty()) {
             throw new IllegalStateException("At least one of output-plans-path and output-csv-path should be provided");
+        }
+        if(travelTimesFactorsPath.isPresent() && recordedTravelTimesPath.isPresent()) {
+            throw new IllegalStateException("Can't use the two options 'travel-times-factors-path' and 'recorded-travel-times-path' simultaneously");
         }
         cmd.applyConfiguration(config);
 
@@ -175,9 +180,6 @@ public class RunModeChoice {
         scenarioValidator.checkScenario(scenario);
 
         InjectorBuilder injectorBuilder = new InjectorBuilder(scenario)
-                //.addOverridingModule(new NewControlerModule())
-                //.addOverridingModule(new ControlerDefaultCoreListenersModule())
-                //.addOverridingModule(new ControlerDefaultsModule())
                 .addOverridingModule(new AbstractModule() {
                     @Inject
                     ControlerConfigGroup configGroup;
@@ -204,15 +206,29 @@ public class RunModeChoice {
             injectorBuilder.addOverridingModule(new AbstractAccessModule((AbstractAccessModuleConfigGroup) config.getModules().get(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)));
         }
 
-        if(cmd.hasOption("travel-times-factors-path")) {
-            String travelTimesFactorsPath = cmd.getOptionStrict("travel-times-factors-path");
+        travelTimesFactorsPath.ifPresent(path -> {
             injectorBuilder.addOverridingModule(new AbstractModule() {
                 @Override
                 public void install() {
-                    addTravelTimeBinding("car").toInstance(new TravelTimeFactors(travelTimesFactorsPath));
+                    addTravelTimeBinding("car").toInstance(new TravelTimeFactors(path));
                 }
             });
-        }
+        });
+
+        recordedTravelTimesPath.ifPresent(path -> {
+            injectorBuilder.addOverridingModule(new AbstractModule() {
+                @Override
+                public void install() {
+                    InputStream inputStream;
+                    try {
+                        inputStream = new FileInputStream(path);
+                        addTravelTimeBinding("car").toInstance(RecordedTravelTime.readBinary(inputStream));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+        });
 
         for(AbstractModule module: configurator.getModules()) {
             injectorBuilder.addOverridingModule(module);
