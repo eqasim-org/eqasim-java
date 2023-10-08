@@ -57,7 +57,7 @@ public class EpsilonModule extends AbstractEqasimExtension {
                         UtilityEstimator delegate = factory.get(baseEstimator).get();
                         return new EpsilonAdapter(mode, delegate, epsilonProvider);
                     }
-                }).asEagerSingleton();
+                });
 			}
 		}
 	}
