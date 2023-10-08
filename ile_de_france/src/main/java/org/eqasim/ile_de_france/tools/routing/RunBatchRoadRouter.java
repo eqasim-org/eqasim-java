@@ -22,6 +22,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
@@ -88,6 +89,12 @@ public class RunBatchRoadRouter {
 
 		if (cmd.hasOption("vdf-path")) {
 			builder.addOverridingModule(new VDFModule(false));
+			builder.addOverridingModule(new AbstractModule() {
+				@Override
+				public void install() {
+					bind(OutputDirectoryHierarchy.class).toInstance(new OutputDirectoryHierarchy(config));
+				}
+			});
 		}
 
 		Injector injector = builder.build();
