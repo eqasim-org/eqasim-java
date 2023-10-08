@@ -9,8 +9,10 @@ import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.tools.routing.BatchRoadRouter.Result;
 import org.eqasim.ile_de_france.tools.routing.BatchRoadRouter.Task;
+import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFTrafficHandler;
 import org.matsim.api.core.v01.Scenario;
@@ -49,6 +51,7 @@ public class RunBatchRoadRouter {
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		config.addModule(new VDFConfigGroup());
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -66,6 +69,7 @@ public class RunBatchRoadRouter {
 
 		InjectorBuilder builder = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
+				.addOverridingModule(new IDFRaptorModule(cmd)) //
 				.addOverridingModule(new AbstractModule() {
 					@Override
 					public void install() {
