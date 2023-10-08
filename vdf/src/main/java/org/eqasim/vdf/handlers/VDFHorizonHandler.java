@@ -161,11 +161,12 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 				Verify.verify(inputStream.readDouble() == scope.getStartTime());
 				Verify.verify(inputStream.readDouble() == scope.getEndTime());
 				Verify.verify(inputStream.readDouble() == scope.getIntervalTime());
-				Verify.verify(inputStream.readInt() == scope.getIntervals());
-				Verify.verify(inputStream.readInt() == horizon);
+				// TODO: From here, we should have readInt, but also need to change to writeInt further below
+				Verify.verify(inputStream.readDouble() == scope.getIntervals());
+				Verify.verify(inputStream.readDouble() == horizon);
 
-				int slices = inputStream.readInt();
-				int links = inputStream.readInt();
+				int slices = (int) inputStream.readDouble();
+				int links = (int) inputStream.readDouble();
 
 				List<Id<Link>> linkIds = new ArrayList<>(links);
 				for (int linkIndex = 0; linkIndex < links; linkIndex++) {
