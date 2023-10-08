@@ -87,7 +87,7 @@ public class RunBatchRoadRouter {
 				});
 
 		if (cmd.hasOption("vdf-path")) {
-			builder.addOverridingModule(new VDFModule());
+			builder.addOverridingModule(new VDFModule(false));
 		}
 
 		Injector injector = builder.build();

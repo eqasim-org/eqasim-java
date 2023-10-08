@@ -17,6 +17,16 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class VDFModule extends AbstractModule {
+	private final boolean bindListener;
+
+	public VDFModule() {
+		this(true);
+	}
+
+	public VDFModule(boolean bindListener) {
+		this.bindListener = bindListener;
+	}
+
 	@Override
 	public void install() {
 		VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(getConfig());
@@ -25,7 +35,10 @@ public class VDFModule extends AbstractModule {
 			addTravelTimeBinding(mode).to(VDFTravelTime.class);
 		}
 
-		addControlerListenerBinding().to(VDFUpdateListener.class);
+		if (bindListener) {
+			addControlerListenerBinding().to(VDFUpdateListener.class);
+		}
+
 		bind(VolumeDelayFunction.class).to(BPRFunction.class);
 
 		switch (vdfConfig.getHandler()) {
