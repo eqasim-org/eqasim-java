@@ -13,6 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eqasim.vdf.VDFScope;
 import org.eqasim.vdf.VDFTrafficHandler;
 import org.eqasim.vdf.io.VDFReaderInterface;
@@ -36,6 +37,8 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 	private final IdMap<Link, List<Double>> counts = new IdMap<>(Link.class);
 	private final List<IdMap<Link, List<Double>>> state = new LinkedList<>();
+
+	private final static Logger logger = Logger.getLogger(VDFHorizonHandler.class);
 
 	public VDFHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads) {
 		this.scope = scope;
@@ -64,6 +67,8 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 		if (state.size() == horizon) {
 			state.remove(0);
 		}
+
+		logger.info(String.format("Starting aggregation of %d slices", state.size()));
 
 		// Make a copy to add to the history
 
@@ -137,6 +142,8 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 			}
 		}
 
+		logger.info(String.format("  Finished aggregation"));
+
 		return aggregated;
 	}
 
@@ -161,7 +168,8 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 				Verify.verify(inputStream.readDouble() == scope.getStartTime());
 				Verify.verify(inputStream.readDouble() == scope.getEndTime());
 				Verify.verify(inputStream.readDouble() == scope.getIntervalTime());
-				// TODO: From here, we should have readInt, but also need to change to writeInt further below
+				// TODO: From here, we should have readInt, but also need to change to writeInt
+				// further below
 				Verify.verify(inputStream.readDouble() == scope.getIntervals());
 				Verify.verify(inputStream.readDouble() == horizon);
 
@@ -173,9 +181,14 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 					linkIds.add(Id.createLinkId(inputStream.readUTF()));
 				}
 
+				logger.info(String.format("Loading %d slices with %d links", slices, links));
+
 				for (int sliceIndex = 0; sliceIndex < slices; sliceIndex++) {
 					IdMap<Link, List<Double>> slice = new IdMap<>(Link.class);
 					state.add(slice);
+
+					double totalLinkValue = 0.0;
+					double maximumLinkValue = 0.0;
 
 					for (int linkIndex = 0; linkIndex < links; linkIndex++) {
 						List<Double> linkValues = new LinkedList<>();
@@ -184,9 +197,16 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 						slice.put(linkId, linkValues);
 
 						for (int valueIndex = 0; valueIndex < scope.getIntervals(); valueIndex++) {
-							linkValues.add(inputStream.readDouble());
+							double linkValue = inputStream.readDouble();
+
+							linkValues.add(linkValue);
+							totalLinkValue += linkValue;
+							maximumLinkValue += Math.max(maximumLinkValue, linkValue);
 						}
 					}
+
+					logger.info(String.format("  Slice %d: avg. value %f; max. value %f", sliceIndex,
+							totalLinkValue / links, maximumLinkValue));
 				}
 
 				Verify.verify(inputStream.available() == 0);

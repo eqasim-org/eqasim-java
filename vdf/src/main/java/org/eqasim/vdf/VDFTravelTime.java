@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.eqasim.vdf.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
@@ -26,6 +27,8 @@ public class VDFTravelTime implements TravelTime {
 	private final VolumeDelayFunction vdf;
 
 	private final IdMap<Link, List<Double>> travelTimes = new IdMap<>(Link.class);
+
+	private final Logger logger = Logger.getLogger(VDFTravelTime.class);
 
 	public VDFTravelTime(VDFScope scope, double minimumSpeed, double capacityFacotor, double samplingRate,
 			Network network, VolumeDelayFunction vdf, double crossingPenalty) {
@@ -52,6 +55,11 @@ public class VDFTravelTime implements TravelTime {
 	}
 
 	public void update(IdMap<Link, List<Double>> counts) {
+		logger.info(String.format("Updating VDFTravelTime ..."));
+
+		long totalCount = counts.size() * scope.getIntervals();
+		long nonFreespeedCount = 0;
+
 		for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
 			Link link = network.getLinks().get(entry.getKey());
 
@@ -69,8 +77,14 @@ public class VDFTravelTime implements TravelTime {
 				double travelTime = Math.max(1.0,
 						Math.min(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));
 				linkTravelTimes.set(i, considerCrossingPenalty(link, travelTime));
+
+				if (travelTime > link.getLength() / link.getFreespeed()) {
+					nonFreespeedCount += 1;
+				}
 			}
 		}
+
+		logger.info(String.format("  Done: %d/%d are slower than freespeed", nonFreespeedCount, totalCount));
 	}
 
 	private double considerCrossingPenalty(Link link, double baseTravelTime) {
