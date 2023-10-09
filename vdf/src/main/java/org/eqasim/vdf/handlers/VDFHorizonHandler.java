@@ -64,7 +64,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 	@Override
 	public IdMap<Link, List<Double>> aggregate() {
-		if (state.size() == horizon) {
+		while (state.size() > horizon) {
 			state.remove(0);
 		}
 
@@ -168,13 +168,11 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 				Verify.verify(inputStream.readDouble() == scope.getStartTime());
 				Verify.verify(inputStream.readDouble() == scope.getEndTime());
 				Verify.verify(inputStream.readDouble() == scope.getIntervalTime());
-				// TODO: From here, we should have readInt, but also need to change to writeInt
-				// further below
-				Verify.verify(inputStream.readDouble() == scope.getIntervals());
-				Verify.verify(inputStream.readDouble() == horizon);
+				Verify.verify(inputStream.readInt() == scope.getIntervals());
+				Verify.verify(inputStream.readInt() == horizon);
 
-				int slices = (int) inputStream.readDouble();
-				int links = (int) inputStream.readDouble();
+				int slices = (int) inputStream.readInt();
+				int links = (int) inputStream.readInt();
 
 				List<Id<Link>> linkIds = new ArrayList<>(links);
 				for (int linkIndex = 0; linkIndex < links; linkIndex++) {
@@ -201,7 +199,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 							linkValues.add(linkValue);
 							totalLinkValue += linkValue;
-							maximumLinkValue += Math.max(maximumLinkValue, linkValue);
+							maximumLinkValue = Math.max(maximumLinkValue, linkValue);
 						}
 					}
 
@@ -226,10 +224,10 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 				outputStream.writeDouble(scope.getStartTime());
 				outputStream.writeDouble(scope.getEndTime());
 				outputStream.writeDouble(scope.getIntervalTime());
-				outputStream.writeDouble(scope.getIntervals());
-				outputStream.writeDouble(horizon);
-				outputStream.writeDouble(state.size());
-				outputStream.writeDouble(counts.size());
+				outputStream.writeInt(scope.getIntervals());
+				outputStream.writeInt(horizon);
+				outputStream.writeInt(state.size());
+				outputStream.writeInt(counts.size());
 
 				List<Id<Link>> linkIds = new ArrayList<>(counts.keySet());
 				for (int linkIndex = 0; linkIndex < linkIds.size(); linkIndex++) {
