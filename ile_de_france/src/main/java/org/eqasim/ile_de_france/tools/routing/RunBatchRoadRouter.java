@@ -58,6 +58,8 @@ public class RunBatchRoadRouter {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		config.addModule(new VDFConfigGroup());
 		cmd.applyConfiguration(config);
+		
+		config.plans().setInputFile(null);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
