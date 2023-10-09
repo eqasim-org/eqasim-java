@@ -14,8 +14,12 @@ import org.eqasim.ile_de_france.tools.routing.BatchRoadRouter.Result;
 import org.eqasim.ile_de_france.tools.routing.BatchRoadRouter.Task;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
+import org.eqasim.vdf.VDFScope;
 import org.eqasim.vdf.VDFTrafficHandler;
+import org.eqasim.vdf.VDFTravelTime;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -100,8 +104,12 @@ public class RunBatchRoadRouter {
 		Injector injector = builder.build();
 
 		if (cmd.hasOption("vdf-path")) {
-			injector.getInstance(VDFTrafficHandler.class).getReader()
-					.readFile(new File(cmd.getOptionStrict("vdf-path")).toURI().toURL());
+			VDFTrafficHandler handler = injector.getInstance(VDFTrafficHandler.class);
+			handler.getReader().readFile(new File(cmd.getOptionStrict("vdf-path")).toURI().toURL());
+
+			IdMap<Link, List<Double>> data = handler.aggregate();
+			injector.getInstance(VDFScope.class).verify(data, "Wrong float format");
+			injector.getInstance(VDFTravelTime.class).update(data);
 		}
 
 		Network network = injector.getInstance(Key.get(Network.class, Names.named("car")));

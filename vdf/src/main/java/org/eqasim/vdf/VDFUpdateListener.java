@@ -72,7 +72,13 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 	public void notifyStartup(StartupEvent event) {
 		if (inputFile != null) {
 			logger.info("Reading VDF data from " + inputFile.toString() + "...");
+			
 			handler.getReader().readFile(inputFile);
+			
+			IdMap<Link, List<Double>> data = handler.aggregate();
+			scope.verify(data, "Wrong flow format");
+			travelTime.update(data);
+			
 			logger.info("  Done");
 		}
 	}
