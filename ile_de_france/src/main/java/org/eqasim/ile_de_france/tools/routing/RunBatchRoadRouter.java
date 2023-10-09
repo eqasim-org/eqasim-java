@@ -31,7 +31,9 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -58,7 +60,7 @@ public class RunBatchRoadRouter {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		config.addModule(new VDFConfigGroup());
 		cmd.applyConfiguration(config);
-		
+
 		config.plans().setInputFile(null);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -105,6 +107,8 @@ public class RunBatchRoadRouter {
 
 		Injector injector = builder.build();
 
+		TravelTime travelTime = new FreeSpeedTravelTime();
+
 		if (cmd.hasOption("vdf-path")) {
 			VDFTrafficHandler handler = injector.getInstance(VDFTrafficHandler.class);
 			handler.getReader().readFile(new File(cmd.getOptionStrict("vdf-path")).toURI().toURL());
@@ -112,12 +116,14 @@ public class RunBatchRoadRouter {
 			IdMap<Link, List<Double>> data = handler.aggregate();
 			injector.getInstance(VDFScope.class).verify(data, "Wrong float format");
 			injector.getInstance(VDFTravelTime.class).update(data);
+
+			travelTime = injector.getInstance(VDFTravelTime.class);
 		}
 
 		Network network = injector.getInstance(Key.get(Network.class, Names.named("car")));
 
 		BatchRoadRouter batchRouter = new BatchRoadRouter(injector.getProvider(LeastCostPathCalculatorFactory.class),
-				network, batchSize, numberOfThreads);
+				network, travelTime, batchSize, numberOfThreads);
 
 		CsvMapper mapper = new CsvMapper();
 
