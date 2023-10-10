@@ -1,5 +1,6 @@
 package org.matsim.contribs.discrete_mode_choice.model.mode_chain;
 
+import org.apache.commons.math3.exception.MathArithmeticException;
 import org.apache.commons.math3.util.ArithmeticUtils;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -11,20 +12,27 @@ import java.util.List;
 public class LongToursAdaptedModeChainGenerator implements ModeChainGenerator {
 
     private final int numberOfTrips;
-    private final int[] modeIndexPerTrip;
+    private int[] modeIndexPerTrip;
     private final List<String> availableModes;
-    private final long numberOfAlternatives;
+    private long numberOfAlternatives;
     private boolean haveNext;
+    private ModeChainGenerator delegate;
 
     public LongToursAdaptedModeChainGenerator(Collection<String> availableModes, int numberOfTrips) {
         this.numberOfTrips = numberOfTrips;
-        this.modeIndexPerTrip = new int[numberOfTrips];
-        for(int i=0; i<numberOfTrips; i++) {
-            this.modeIndexPerTrip[i] = 0;
-        }
         this.availableModes = new ArrayList<>(availableModes);
-        this.numberOfAlternatives = ArithmeticUtils.pow((long) availableModes.size(), numberOfTrips);
-        this.haveNext = numberOfTrips > 0 && availableModes.size() > 0;
+
+        try {
+            this.numberOfAlternatives = ArithmeticUtils.pow((long) availableModes.size(), numberOfTrips);
+            this.haveNext = numberOfTrips > 0 && availableModes.size() > 0;
+            this.delegate = new DefaultModeChainGenerator(availableModes, numberOfTrips);
+        } catch (MathArithmeticException e) {
+            this.numberOfAlternatives = -1;
+            this.modeIndexPerTrip = new int[numberOfTrips];
+            for(int i=0; i<numberOfTrips; i++) {
+                this.modeIndexPerTrip[i] = 0;
+            }
+        }
     }
 
     @Override
@@ -34,11 +42,18 @@ public class LongToursAdaptedModeChainGenerator implements ModeChainGenerator {
 
     @Override
     public boolean hasNext() {
-        return this.haveNext;
+        if(this.delegate == null) {
+            return this.haveNext;
+        } else {
+            return delegate.hasNext();
+        }
     }
 
     @Override
     public List<String> next() {
+        if(delegate != null) {
+            return delegate.next();
+        }
         List<String> chain = new ArrayList<>();
         int carry = 1;
         for(int i=0; i<numberOfTrips; i++) {
@@ -60,7 +75,7 @@ public class LongToursAdaptedModeChainGenerator implements ModeChainGenerator {
         @Override
         public ModeChainGenerator createModeChainGenerator(Collection<String> modes, Person person,
                                                            List<DiscreteModeChoiceTrip> trips) {
-            return new DefaultModeChainGenerator(modes, trips.size());
+            return new LongToursAdaptedModeChainGenerator(modes, trips.size());
         }
     }
 }
