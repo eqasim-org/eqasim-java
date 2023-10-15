@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.constraints.*;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
+import org.eqasim.core.simulation.mode_choice.filters.OutsideOnlyTourFilter;
 import org.eqasim.core.simulation.mode_choice.utilities.ModalUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
@@ -42,6 +43,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String OUTSIDE_RELATED_TRIP_CONSTRAINT_NAME = "OutsideRelatedTripConstraint";
 	public static final String TOUR_LENGTH_FILTER_NAME = "TourLengthFilter";
 	public static final String OUTSIDE_FILTER_NAME = "OutsideFilter";
+	public static final String OUTSIDE_ONLY_FILTER_NAME = "OutsideOnlyFilter";
 
 	public static final String UTILITY_ESTIMATOR_NAME = "EqasimUtilityEstimator";
 
@@ -66,6 +68,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
+		bindTourFilter(OUTSIDE_ONLY_FILTER_NAME).to(OutsideOnlyTourFilter.class);
 
 		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModalUtilityEstimator.class);
 
