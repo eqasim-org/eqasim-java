@@ -36,7 +36,8 @@ public class ExportTransitStopsToShapefile {
 		PointFeatureFactory pointFactory = new PointFeatureFactory.Builder() //
 				.setCrs(crs).setName("id") //
 				.addAttribute("id", String.class) //
-				.addAttribute("link", String.class) //
+				.addAttribute("link", String.class)
+				.addAttribute("name", String.class)//
 				.create();
 
 		for (TransitStopFacility stopFacility : scenario.getTransitSchedule().getFacilities().values()) {
@@ -46,7 +47,8 @@ public class ExportTransitStopsToShapefile {
 					coordinate, //
 					new Object[] { //
 							stopFacility.getId().toString(), //
-							stopFacility.getLinkId().toString() //
+							stopFacility.getLinkId().toString(),
+							stopFacility.getName()//
 					}, null);
 
 			features.add(feature);
