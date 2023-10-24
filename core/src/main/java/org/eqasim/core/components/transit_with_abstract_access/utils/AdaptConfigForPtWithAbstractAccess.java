@@ -29,7 +29,6 @@ public class AdaptConfigForPtWithAbstractAccess {
         dmcConfigGroup.getTripConstraints().add(EqasimModeChoiceModule.ABSTRACT_ACCESS_CONSTRAINT_NAME);
 
         EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-        ;
         String ptEstimator = eqasimConfigGroup.getEstimators().get("pt");
         if (ptEstimator == null) {
             throw new IllegalStateException("No utility estimator defined for mode pt");
