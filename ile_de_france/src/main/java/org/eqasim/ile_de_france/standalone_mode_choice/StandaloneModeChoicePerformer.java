@@ -11,6 +11,8 @@ import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel;
 import org.matsim.contribs.discrete_mode_choice.replanning.DiscreteModeChoiceAlgorithm;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.utils.misc.Counter;
 
@@ -31,14 +33,16 @@ public class StandaloneModeChoicePerformer {
     private final int numberOfThreads;
     private final long seed;
     private final OutputDirectoryHierarchy outputDirectoryHierarchy;
+    private final Config config;
 
-    public StandaloneModeChoicePerformer(Provider<DiscreteModeChoiceModel> discreteModeChoiceModelProvider, StandaloneModeChoiceConfigGroup configGroup, Population population, int numberOfThreads, long seed, OutputDirectoryHierarchy outputDirectoryHierarchy) {
+    public StandaloneModeChoicePerformer(Provider<DiscreteModeChoiceModel> discreteModeChoiceModelProvider, StandaloneModeChoiceConfigGroup configGroup, Population population, int numberOfThreads, long seed, OutputDirectoryHierarchy outputDirectoryHierarchy, Config config) {
         this.discreteModeChoiceModelProvider = discreteModeChoiceModelProvider;
         this.removePersonsWithBadPlans = configGroup.isRemovePersonsWithNoValidAlternative();
         this.numberOfThreads = numberOfThreads;
         this.population = population;
         this.seed = seed;
         this.outputDirectoryHierarchy = outputDirectoryHierarchy;
+        this.config = config;
     }
 
     public void run() throws InterruptedException {
@@ -124,6 +128,7 @@ public class StandaloneModeChoicePerformer {
 
         String outputPlansName = outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz");
         new PopulationWriter(population).write(outputPlansName);
+        ConfigUtils.writeConfig(this.config, this.outputDirectoryHierarchy.getOutputFilename("output_config.xml"));
     }
 
 

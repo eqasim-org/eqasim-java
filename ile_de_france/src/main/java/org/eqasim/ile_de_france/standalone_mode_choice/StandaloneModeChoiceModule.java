@@ -59,7 +59,7 @@ public class StandaloneModeChoiceModule extends AbstractModule {
 
     @Provides
     public StandaloneModeChoicePerformer provideBadPlansFilter(Provider<DiscreteModeChoiceModel> discreteModeChoiceModelProvider, Population population, @Named("StandaloneModeChoice") OutputDirectoryHierarchy outputDirectoryHierarchy) {
-        return new StandaloneModeChoicePerformer(discreteModeChoiceModelProvider, configGroup, population, this.numberOfThreads, this.randomSeed, outputDirectoryHierarchy);
+        return new StandaloneModeChoicePerformer(discreteModeChoiceModelProvider, configGroup, population, this.numberOfThreads, this.randomSeed, outputDirectoryHierarchy, getConfig());
     }
 
     @Provides
