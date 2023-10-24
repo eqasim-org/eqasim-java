@@ -238,11 +238,12 @@ public class RunStandaloneModeChoice {
         cmd.getOption(CMD_WRITE_OUTPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv"), tripReader);
         });
-
-
         if(cmd.getOption(CMD_SIMULATE_AFTER).isPresent()) {
             scenario.getConfig().controler().setFirstIteration(0);
             scenario.getConfig().controler().setLastIteration(0);
+            config.controler().setOutputDirectory(
+                    Paths.get(((StandaloneModeChoiceConfigGroup) config.getModules().get(StandaloneModeChoiceConfigGroup.GROUP_NAME)).getOutputDirectory(),
+                            "sim").toString());
             Controler controller = new Controler(scenario);
             configurator.configureController(controller);
             controller.addOverridingModule(new EqasimAnalysisModule());
