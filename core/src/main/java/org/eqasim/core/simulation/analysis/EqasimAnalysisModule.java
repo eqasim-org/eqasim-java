@@ -1,10 +1,13 @@
 package org.eqasim.core.simulation.analysis;
 
+import com.google.inject.Inject;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.legs.LegListener;
 import org.eqasim.core.analysis.pt.PublicTransportLegListener;
 import org.eqasim.core.analysis.trips.TripListener;
+import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
+import org.eqasim.core.components.transit_with_abstract_access.analysis.AbstractAccessAnalysisOutputListener;
 import org.eqasim.core.components.travel_time.TravelTimeRecorder;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.matsim.api.core.v01.network.Network;
@@ -17,11 +20,18 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class EqasimAnalysisModule extends AbstractModule {
+
+	@Inject
+	Config config;
+
 	@Override
 	public void install() {
 		addControlerListenerBinding().to(AnalysisOutputListener.class);
 		bind(DefaultPersonAnalysisFilter.class);
 		bind(PersonAnalysisFilter.class).to(DefaultPersonAnalysisFilter.class);
+		if(config.getModules().containsKey(AbstractAccessModuleConfigGroup.ABSTRACT_ACCESS_GROUP_NAME)) {
+			addControlerListenerBinding().to(AbstractAccessAnalysisOutputListener.class);
+		}
 	}
 
 	@Provides

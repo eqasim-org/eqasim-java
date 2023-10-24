@@ -48,7 +48,6 @@ public class AbstractAccessModule extends AbstractEqasimExtension {
                 return new AbstractAccessLegListener(abstractAccesses);
             }
         }).asEagerSingleton();
-        addControlerListenerBinding().to(AbstractAccessAnalysisOutputListener.class);
     }
 
     @Provides
