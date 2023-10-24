@@ -10,6 +10,7 @@ import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideOnlyTourFilter;
+import org.eqasim.core.simulation.mode_choice.tour_finder.IsolatedOutsideRelatedTripsTourFinder;
 import org.eqasim.core.simulation.mode_choice.utilities.ModalUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
@@ -58,6 +59,8 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String VEHICLE_TOUR_CONSTRAINT = "EqasimVehicleTourConstraint";
 	public static final String HOME_FINDER = "EqasimHomeFinder";
 
+	public static final String ISOLATED_OUTSIDE_RELATED_TRIPS_TOUR_FINDER = "IsolatedOutsideRelatedTrips";
+
 	@Override
 	protected void installEqasimExtension() {
 		bindTripConstraintFactory(PASSENGER_CONSTRAINT_NAME).to(PassengerConstraint.Factory.class);
@@ -88,6 +91,8 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTourConstraintFactory(VEHICLE_TOUR_CONSTRAINT).to(EqasimVehicleTourConstraint.Factory.class);
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
+
+		bindTourFinder(ISOLATED_OUTSIDE_RELATED_TRIPS_TOUR_FINDER).to(IsolatedOutsideRelatedTripsTourFinder.class);
 	}
 
 	@Provides
