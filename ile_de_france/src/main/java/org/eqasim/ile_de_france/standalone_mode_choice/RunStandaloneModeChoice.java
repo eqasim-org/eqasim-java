@@ -2,6 +2,8 @@ package org.eqasim.ile_de_france.standalone_mode_choice;
 
 
 import com.google.inject.Key;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
@@ -35,6 +37,7 @@ import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.vehicles.Vehicle;
 
 import java.io.*;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -194,10 +197,17 @@ public class RunStandaloneModeChoice {
             injectorBuilder.addOverridingModule(new AbstractModule() {
                 @Override
                 public void install() {
-                    InputStream inputStream;
+                    addTravelTimeBinding("car").to(RecordedTravelTime.class);
+                }
+
+                @Provides
+                @Singleton
+                RecordedTravelTime provideRecordedTravelTime() {
                     try {
-                        inputStream = new FileInputStream(path);
-                        addTravelTimeBinding("car").toInstance(RecordedTravelTime.readBinary(inputStream));
+                        InputStream inputStream = new FileInputStream(path);
+                        RecordedTravelTime recordedTravelTime = RecordedTravelTime.readBinary(inputStream);
+                        inputStream.close();
+                        return recordedTravelTime;
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
