@@ -46,7 +46,8 @@ public class RunIsochrone {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("input-path", "output-path", "network-path", "schedule-path", "crs",
 						"maximum-travel-time") //
-				.allowOptions("departure-time", "transfer-distance", "transfer-speed", "maximum-transfers") //
+				.allowOptions("departure-time", "transfer-distance", "transfer-speed", "maximum-transfers",
+						"segment-length") //
 				.build();
 
 		// Read input
@@ -91,11 +92,11 @@ public class RunIsochrone {
 
 		// Prepare output
 		File outputPath = new File(cmd.getOptionStrict("output-path"));
-		
+
 		if (outputPath.exists()) {
 			outputPath.delete();
 		}
-		
+
 		GeoPackage outputPackage = new GeoPackage(outputPath);
 		outputPackage.init();
 
@@ -107,16 +108,20 @@ public class RunIsochrone {
 
 		double maximumTravelTime = Double.parseDouble(cmd.getOptionStrict("maximum-travel-time"));
 		double transferDistance = cmd.getOption("transfer-distance").map(Double::parseDouble).orElse(600.0);
+		double segmentLength = cmd.getOption("segment-length").map(Double::parseDouble).orElse(Double.NaN);
 
-		{
+		{ // Nodes
 			SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
 			featureTypeBuilder.setName("road");
 			featureTypeBuilder.setCRS(crs);
 			featureTypeBuilder.setDefaultGeometry("geometry");
-			
+
 			featureTypeBuilder.add("request_id", String.class);
 			featureTypeBuilder.add("travel_time", Double.class);
 			featureTypeBuilder.add("distance", Double.class);
+			featureTypeBuilder.add("is_origin", Boolean.class);
+			featureTypeBuilder.add("is_restricted", Boolean.class);
+			featureTypeBuilder.add("is_generated", Boolean.class);
 			featureTypeBuilder.add("geometry", Point.class);
 
 			SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
@@ -127,17 +132,20 @@ public class RunIsochrone {
 				logger.info("  Request " + request.requestId);
 
 				RoadIsochroneBackend.Request roadRequest = new RoadIsochroneBackend.Request(request.originX,
-						request.originY, departureTime, maximumTravelTime, transferDistance);
+						request.originY, departureTime, maximumTravelTime, transferDistance, segmentLength);
 
 				for (var destination : roadBackend.process(roadRequest).destinations) {
 					featureBuilder.add(request.requestId);
 					featureBuilder.add(destination.travelTime);
 					featureBuilder.add(destination.distance);
+					featureBuilder.add(destination.isOrigin);
+					featureBuilder.add(destination.isRestricted);
+					featureBuilder.add(destination.isGenerated);
 					featureBuilder.add(geometryFactory.createPoint(new Coordinate(destination.x, destination.y)));
 					featureCollection.add(featureBuilder.buildFeature(null));
 				}
 			}
-			
+
 			FeatureEntry featureEntry = new FeatureEntry();
 			outputPackage.add(featureEntry, featureCollection);
 		}
@@ -159,10 +167,11 @@ public class RunIsochrone {
 			featureTypeBuilder.setName(transitStep.layer);
 			featureTypeBuilder.setCRS(crs);
 			featureTypeBuilder.setDefaultGeometry("geometry");
-			
+
 			featureTypeBuilder.add("request_id", String.class);
 			featureTypeBuilder.add("travel_time", Double.class);
 			featureTypeBuilder.add("transfers", Integer.class);
+			featureTypeBuilder.add("is_origin", Boolean.class);
 			featureTypeBuilder.add("geometry", Point.class);
 
 			SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
@@ -180,11 +189,12 @@ public class RunIsochrone {
 					featureBuilder.add(request.requestId);
 					featureBuilder.add(destination.travelTime);
 					featureBuilder.add(destination.transfers);
+					featureBuilder.add(destination.isOrigin);
 					featureBuilder.add(geometryFactory.createPoint(new Coordinate(destination.x, destination.y)));
 					featureCollection.add(featureBuilder.buildFeature(null));
 				}
 			}
-			
+
 			FeatureEntry featureEntry = new FeatureEntry();
 			outputPackage.add(featureEntry, featureCollection);
 		}

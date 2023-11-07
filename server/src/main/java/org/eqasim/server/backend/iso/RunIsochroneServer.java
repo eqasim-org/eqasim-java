@@ -69,13 +69,13 @@ public class RunIsochroneServer {
 			RoadRequest request = objectMapper.readValue(ctx.bodyAsBytes(), RoadRequest.class);
 
 			RoadIsochroneBackend.Request roadRequest = new RoadIsochroneBackend.Request(request.x, request.y,
-					request.departureTime, request.maximumTravelTime, request.transferDistance);
+					request.departureTime, request.maximumTravelTime, request.transferDistance, request.segmentLength);
 
 			List<RoadResponse> response = new LinkedList<>();
 
 			for (var destination : roadBackend.process(roadRequest).destinations) {
 				response.add(new RoadResponse(destination.x, destination.y, destination.travelTime,
-						destination.distance, destination.isOrigin));
+						destination.distance, destination.isOrigin, destination.isRestricted));
 			}
 
 			ctx.result(objectMapper.writeValueAsBytes(response));
@@ -119,6 +119,9 @@ public class RunIsochroneServer {
 
 		@JsonProperty("maximum_travel_time")
 		public double maximumTravelTime = 600.0;
+
+		@JsonProperty("segment_length")
+		public double segmentLength = Double.NaN;
 	}
 
 	static public class TransitRequest {
@@ -163,12 +166,17 @@ public class RunIsochroneServer {
 		@JsonProperty("is_origin")
 		public final boolean isOrigin;
 
-		public RoadResponse(double x, double y, double travelTime, double distance, boolean isOrigin) {
+		@JsonProperty("is_restricted")
+		public final boolean isRestricted;
+
+		public RoadResponse(double x, double y, double travelTime, double distance, boolean isOrigin,
+				boolean isRestricted) {
 			this.x = x;
 			this.y = y;
 			this.travelTime = travelTime;
 			this.distance = distance;
 			this.isOrigin = isOrigin;
+			this.isRestricted = isRestricted;
 		}
 	}
 
