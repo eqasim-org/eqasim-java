@@ -3,6 +3,7 @@ package org.eqasim.core.components.headway;
 import java.util.List;
 
 import org.matsim.facilities.Facility;
+import org.matsim.utils.objectattributes.attributable.Attributes;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute.RoutePart;
@@ -25,7 +26,7 @@ public class HeadwayCalculator {
 		double latestDepartureTime = departureTime + afterDepartureOffset;
 
 		List<RaptorRoute> routes = raptor.calcRoutes(originFacility, destinationFacilty, earliestDepartureTime,
-				departureTime, latestDepartureTime, null);
+				departureTime, latestDepartureTime, null, new Attributes());
 
 		int numberOfPtRoutes = 0;
 

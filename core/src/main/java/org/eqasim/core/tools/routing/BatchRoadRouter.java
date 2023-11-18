@@ -3,6 +3,7 @@ package org.eqasim.core.tools.routing;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.eqasim.core.misc.ParallelProgress;
@@ -19,6 +20,7 @@ import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.geometry.CoordUtils;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Provider;
 
 public class BatchRoadRouter {
@@ -27,13 +29,15 @@ public class BatchRoadRouter {
 
 	private final int batchSize;
 	private final int numberOfThreads;
+	private final boolean writePaths;
 
 	public BatchRoadRouter(Provider<LeastCostPathCalculatorFactory> routerFactoryProvider, Network network,
-			int batchSize, int numberOfThreads) {
+			int batchSize, int numberOfThreads, boolean writePaths) {
 		this.routerFactoryProvider = routerFactoryProvider;
 		this.batchSize = batchSize;
 		this.numberOfThreads = numberOfThreads;
 		this.network = network;
+		this.writePaths = writePaths;
 	}
 
 	public Collection<Result> run(Collection<Task> tasks) throws InterruptedException {
@@ -114,6 +118,10 @@ public class BatchRoadRouter {
 					result.egressEuclideanDistance_km = CoordUtils.calcEuclideanDistance(toCoord,
 							toLink.getFromNode().getCoord()) * 1e-3;
 
+					if (writePaths) {
+						path.links.forEach(link -> result.path.add(link.getId().toString()));
+					}
+
 					localResults.add(result);
 					progress.update();
 				}
@@ -126,25 +134,43 @@ public class BatchRoadRouter {
 	}
 
 	static public class Task {
+		@JsonProperty("identifier")
 		public String identifier;
 
+		@JsonProperty("origin_x")
 		public double originX;
+
+		@JsonProperty("origin_y")
 		public double originY;
 
+		@JsonProperty("destination_x")
 		public double destinationX;
+
+		@JsonProperty("destination_y")
 		public double destinationY;
 
+		@JsonProperty("departure_time")
 		public double departureTime;
 	}
 
 	static public class Result {
+		@JsonProperty("identifier")
 		public String identifier;
 
+		@JsonProperty("access_euclidean_distance_km")
 		public double accessEuclideanDistance_km;
+
+		@JsonProperty("egress_euclidean_distance_km")
 		public double egressEuclideanDistance_km;
 
+		@JsonProperty("in_vehicle_time_min")
 		public double inVehicleTime_min;
+
+		@JsonProperty("in_vehicle_distance_km")
 		public double inVehicleDistance_km;
+
+		@JsonProperty("path")
+		public List<String> path = new LinkedList<>();
 
 		Result(Task task) {
 			this.identifier = task.identifier;

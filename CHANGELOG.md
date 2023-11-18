@@ -5,7 +5,15 @@ This change log is written in descending order. Changes that happen after versio
 included in the (note yet determined) next version number.
 
 **Development version**
-
+ 
+- Updated to MATSim 14
+- Isolated the mode choice model in a standalone runnable script
+- Fixed LegIndex count between iterations in legs analysis
+- Improved batch routing tools
+- Allow boolean values in parameter definition
+- Added stop area to transit leg analysis output
+- Improve functionality of routing tools to set utilities in detail
+- Fix bug in EqasimTransitQSimModule: first check if EqasimConfigGroup has TransitEngineModule before removing it
 - Updated config option from `eqasim.tripAnalysisInterval` to `eqasim.analysisInterval`
 - Automatically produce analysis output for legs and public transport information
 - Move analysis classes to `org.eqasim.core.analysis.run`
