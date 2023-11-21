@@ -41,8 +41,10 @@ public class IDFModeAvailability implements ModeAvailability {
 			motorcycleAvailability = false;
 		}
 
-		if ("none".equals((String) person.getAttributes().getAttribute("motorcycleAvailability"))) {
-			motorcycleAvailability = false;
+		if (person.getAttributes().getAsMap().containsKey("motorcycleAvailability")) {
+			if (((String) person.getAttributes().getAttribute("motorcycleAvailability")).equals("none")) {
+				motorcycleAvailability = false;
+			}
 		}
 
 		if (motorcycleAvailability) {
