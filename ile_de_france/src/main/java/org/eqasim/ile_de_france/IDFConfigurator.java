@@ -67,8 +67,6 @@ public class IDFConfigurator extends EqasimConfigurator {
             EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
             eqasimConfig.setEstimator(TransportMode.motorcycle, IDFModeChoiceModule.MOTORCYCLE_ESTIMATOR_NAME);
             eqasimConfig.setCostModel(TransportMode.motorcycle, IDFModeChoiceModule.MOTORCYCLE_COST_MODEL_NAME);
-
-            eqasimConfig.setUseScheduleBasedTransport(false);
         }
         { // planCalcScore
             PlanCalcScoreConfigGroup.ModeParams modeParameters = new PlanCalcScoreConfigGroup.ModeParams("motorcycle");
