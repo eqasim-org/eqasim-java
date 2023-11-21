@@ -46,6 +46,9 @@ public class IDFModeAvailability implements ModeAvailability {
 				motorcycleAvailability = false;
 			}
 		}
+		else {
+			motorcycleAvailability = false;
+		}
 
 		if (motorcycleAvailability) {
 			modes.add(TransportMode.motorcycle);
