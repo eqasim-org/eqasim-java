@@ -10,7 +10,7 @@ For now, we start with illustrations on the **ile_de_france** package, however t
 
 
 ## Running a simulation
-The **org.eqasim.ile_de_france** class is the entry point for running ile_de_france simulations.
+The **org.eqasim.ile_de_france.RunSimulation** class is the entry point for running ile_de_france simulations.
 The only required parameter is **config-path** pointing to a matsim configuration file that has been properly set with the **DiscreteModeChoice** and **Eqasim** modules.
 However, parameters present in the config file can be overridden through the command line through the syntax **config.module[.paremeterSetName]\*param=value**. For example, to change the output directory and the number of iterations:
 
@@ -121,7 +121,24 @@ A typical configuration for the DMC module is pasted below. This should be prese
 </module>
 ```
 
-The xml above specifies the internal configuration of the DMC model, however it doesn't specify how the DMC model itself is used by MATSim.
+As of the parameters of the DMC model itself, these are specified in a **ModeParameters** class. 
+For IDF, it is the **org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters** class. 
+The used parameter values were obtained from a calibration on real data. 
+
+To change these values, one can either edit the code directly or submit a file with the new values. This is done via a .yml file. For instance:
+
+```yml
+car.alpha_u: 1.35
+pt.alpha_u: 0.0
+pt.betaInVehicleTime_u_min: -0.017
+```
+Then eqasim can be configured to use the file via the **modeParametersPath** parameter of the **eqasim** module. Via the command line it would look like:
+
+```commandline
+JAVA COMMAND --config:eqasim.modeParametersPath=file.yml
+```
+
+The configurations described above are related to the internal setting of the DMC model, however they do not specify how the DMC model itself is used by MATSim.
 This is done in the **strategy** module configuration.
 
 ```xml
