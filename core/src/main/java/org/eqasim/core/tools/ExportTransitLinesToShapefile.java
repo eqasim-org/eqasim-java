@@ -25,20 +25,9 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class ExportTransitLinesToShapefile {
-	public static void main(String[] args) throws Exception {
-		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("schedule-path", "network-path", "output-path", "crs") //
-				.build();
 
-		String schedulePath = cmd.getOptionStrict("schedule-path");
-		String networkPath = cmd.getOptionStrict("network-path");
-
-		Config config = ConfigUtils.createConfig();
-		Scenario scenario = ScenarioUtils.createScenario(config);
-		new TransitScheduleReader(scenario).readFile(schedulePath);
-		new MatsimNetworkReader(scenario.getNetwork()).readFile(networkPath);
-
-		CoordinateReferenceSystem crs = MGC.getCRS(cmd.getOptionStrict("crs"));
+	public static void exportTransitLinesToShapefile(Scenario scenario, Collection<TransitLine> transitLines, String crsSrting, String outputPath) {
+		CoordinateReferenceSystem crs = MGC.getCRS(crsSrting);
 
 		Collection<SimpleFeature> features = new LinkedList<>();
 
@@ -46,12 +35,14 @@ public class ExportTransitLinesToShapefile {
 				.setCrs(crs).setName("line") //
 				.addAttribute("line_id", String.class) //
 				.addAttribute("route_id", String.class) //
-				.addAttribute("mode", String.class) //
+				.addAttribute("mode", String.class)
+				.addAttribute("stops", Integer.class)
+				.addAttribute("departures", Integer.class)//
 				.create();
 
 		Network network = scenario.getNetwork();
 
-		for (TransitLine transitLine : scenario.getTransitSchedule().getTransitLines().values()) {
+		for (TransitLine transitLine : transitLines) {
 			for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
 				NetworkRoute networkRoute = transitRoute.getRoute();
 				List<Link> links = new ArrayList<>(networkRoute.getLinkIds().size() + 2);
@@ -78,13 +69,31 @@ public class ExportTransitLinesToShapefile {
 						new Object[] { //
 								transitLine.getId().toString(), //
 								transitRoute.getId().toString(), //
-								transitRoute.getTransportMode() //
+								transitRoute.getTransportMode(),
+								transitRoute.getStops().size(),
+								transitRoute.getDepartures().size()//
 						}, null);
 
 				features.add(feature);
 			}
 		}
 
-		ShapeFileWriter.writeGeometries(features, cmd.getOptionStrict("output-path"));
+		ShapeFileWriter.writeGeometries(features, outputPath);
+	}
+
+	public static void main(String[] args) throws Exception {
+		CommandLine cmd = new CommandLine.Builder(args) //
+				.requireOptions("schedule-path", "network-path", "output-path", "crs") //
+				.build();
+
+		String schedulePath = cmd.getOptionStrict("schedule-path");
+		String networkPath = cmd.getOptionStrict("network-path");
+
+		Config config = ConfigUtils.createConfig();
+		Scenario scenario = ScenarioUtils.createScenario(config);
+		new TransitScheduleReader(scenario).readFile(schedulePath);
+		new MatsimNetworkReader(scenario.getNetwork()).readFile(networkPath);
+
+		exportTransitLinesToShapefile(scenario, scenario.getTransitSchedule().getTransitLines().values(), cmd.getOptionStrict("crs"), cmd.getOptionStrict("output-path"));
 	}
 }
