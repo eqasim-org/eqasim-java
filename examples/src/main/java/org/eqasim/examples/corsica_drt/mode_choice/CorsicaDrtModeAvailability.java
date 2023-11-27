@@ -3,16 +3,23 @@ package org.eqasim.examples.corsica_drt.mode_choice;
 import java.util.Collection;
 import java.util.List;
 
+import com.google.inject.Inject;
 import org.eqasim.ile_de_france.mode_choice.IDFModeAvailability;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
+import org.matsim.core.config.Config;
 
 public class CorsicaDrtModeAvailability implements ModeAvailability {
 	static public final String NAME = "ParisDrtModeAvailability";
 
-	private final ModeAvailability delegate = new IDFModeAvailability();
+	private final ModeAvailability delegate;
+
+	@Inject
+	public CorsicaDrtModeAvailability(Config config) {
+		this.delegate = new IDFModeAvailability(config);
+	}
 
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {

@@ -1,16 +1,33 @@
 package org.eqasim.ile_de_france.mode_choice;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.google.inject.Inject;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
+import org.matsim.core.config.Config;
 import org.matsim.core.population.PersonUtils;
 
 public class IDFModeAvailability implements ModeAvailability {
+
+	private final Collection<String> drtModes;
+
+	@Inject
+	public IDFModeAvailability(Config config) {
+		this.drtModes = new ArrayList<>();
+		if(config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
+			MultiModeDrtConfigGroup multiModeDrtConfigGroup = (MultiModeDrtConfigGroup) config.getModules().get(MultiModeDrtConfigGroup.GROUP_NAME);
+			multiModeDrtConfigGroup.modes().forEach(drtModes::add);
+		}
+	}
+
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = new HashSet<>();
@@ -58,6 +75,8 @@ public class IDFModeAvailability implements ModeAvailability {
 		if (isCarPassenger != null && isCarPassenger) {
 			modes.add("car_passenger");
 		}
+
+		modes.addAll(this.drtModes);
 
 		return modes;
 	}

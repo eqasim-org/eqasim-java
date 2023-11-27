@@ -51,6 +51,12 @@ public class IDFModeParameters extends ModeParameters {
 		parameters.walk.alpha_u = 1.43;
 		parameters.walk.betaTravelTime_u_min = -0.15;
 
+		// DRT
+		parameters.drt.alpha_u = 0.0;
+		parameters.drt.betaWaitingTime_u_min = -0.0484;
+		parameters.drt.betaTravelTime_u_min = -0.017;
+		parameters.drt.betaAccessEgressTime_u_min = -0.0804;
+
 		return parameters;
 	}
 }

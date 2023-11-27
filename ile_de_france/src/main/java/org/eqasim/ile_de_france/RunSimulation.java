@@ -21,6 +21,7 @@ public class RunSimulation {
 		IDFConfigurator configurator = new IDFConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
+		configurator.addOptionalConfigGroups(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);

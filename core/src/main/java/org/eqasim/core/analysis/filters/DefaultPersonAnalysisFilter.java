@@ -1,5 +1,6 @@
-package org.eqasim.core.analysis;
+package org.eqasim.core.analysis.filters;
 
+import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 

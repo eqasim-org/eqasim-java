@@ -35,14 +35,12 @@ public class DrtPredictor extends CachedVariablePredictor<DrtVariables> {
 			switch (leg.getMode()) {
 			case TransportMode.walk:
 				accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
-				break;
 			case "drt":
 				DrtRoute route = (DrtRoute) leg.getRoute();
 
 				// We use worst case here
 				travelTime_min = route.getMaxTravelTime() / 60.0;
 				waitingTime_min = route.getMaxWaitTime() / 60.0;
-
 				cost_MU = costModel.calculateCost_MU(person, trip, elements);
 
 				break;

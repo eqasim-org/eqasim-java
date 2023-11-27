@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
-import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
+import org.eqasim.core.analysis.filters.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.trips.TripItem;

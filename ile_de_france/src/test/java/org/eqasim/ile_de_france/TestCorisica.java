@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
+import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
+import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,7 +34,41 @@ public class TestCorisica {
 
 	@After
 	public void tearDown() throws IOException {
-		FileUtils.deleteDirectory(new File("corsica_test"));
+		//FileUtils.deleteDirectory(new File("corsica_test"));
+	}
+
+	@Test
+	public void testCorsicaDrt() throws MalformedURLException, ConfigurationException {
+		// Run a DRT simulation
+		{
+			CreateDrtVehicles.main(new String[] {
+					"--network-path", "corsica_test/corsica_network.xml.gz",
+					"--output-vehicles-path", "corsica_test/corsica_drt_vehicles_a.xml.gz",
+					"--vehicles-number", "100",
+					"--vehicle-id-prefix", "vehicle_drt_a_"
+			});
+
+			CreateDrtVehicles.main(new String[] {
+					"--network-path", "corsica_test/corsica_network.xml.gz",
+					"--output-vehicles-path", "corsica_test/corsica_drt_vehicles_b.xml.gz",
+					"--vehicles-number", "100",
+					"--vehicle-id-prefix", "vehicle_drt_b_"
+			});
+
+			AdaptConfigForDrt.main(new String[] {
+					"--input-config-path", "corsica_test/corsica_config.xml",
+					"--output-config-path", "corsica_test/corsica_config_drt.xml",
+					"--mode-names", "drt_a,drt_b",
+					"--vehicles-paths", "corsica_test/corsica_drt_vehicles_a.xml.gz,corsica_test/corsica_drt_vehicles_b.xml.gz",
+					"--configurator-class", IDFConfigurator.class.getCanonicalName()
+			});
+
+			RunSimulation.main(new String[] { //
+					"--config-path", "corsica_test/corsica_config_drt.xml", //
+					"--config:controler.lastIteration", "1", // ,
+					"--config:controler.outputDirectory", "corsica_test/simulation_output_drt", //
+			});
+		}
 	}
 
 	@Test
