@@ -110,8 +110,6 @@ public class EqasimConfigurator {
 			optionalQSimComponentConfigurationSteps.values().stream().flatMap(Collection::stream).forEach(step -> step.accept(controller, components));
 			EqasimTransitQSimModule.configure(components, controller.getConfig());
 		});
-
-		controller.getScenario().getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 	}
 
 	public void addOptionalConfigGroups(Config config) {
@@ -146,6 +144,7 @@ public class EqasimConfigurator {
 	}
 
 	public void configureScenario(Scenario scenario) {
+		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 	}
 
 	public void adjustScenario(Scenario scenario) {
