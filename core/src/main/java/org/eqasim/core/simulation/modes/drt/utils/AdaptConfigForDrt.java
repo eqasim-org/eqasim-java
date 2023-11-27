@@ -149,6 +149,8 @@ public class AdaptConfigForDrt {
 
         adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), qsimEndtime, cmd.getOption("mode-availability").orElse(null));
 
+        cmd.applyConfiguration(config);
+
         ConfigUtils.writeConfig(config, outputConfigPath);
     }
 }
