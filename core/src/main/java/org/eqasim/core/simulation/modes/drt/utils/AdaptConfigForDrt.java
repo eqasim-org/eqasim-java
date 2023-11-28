@@ -4,8 +4,12 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.matsim.contrib.drt.analysis.zonal.DrtZonalSystemParams;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
+import org.matsim.contrib.drt.optimizer.insertion.extensive.ExtensiveInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.selective.SelectiveInsertionSearchParams;
+import org.matsim.contrib.drt.optimizer.rebalancing.RebalancingParams;
+import org.matsim.contrib.drt.optimizer.rebalancing.plusOne.PlusOneRebalancingStrategyParams;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.DrtConfigs;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
@@ -60,8 +64,19 @@ public class AdaptConfigForDrt {
             drtConfigGroup.setMaxTravelTimeBeta(300.0);
             drtConfigGroup.setVehiclesFile(vehiclesPathByDrtMode.get(drtMode));
 
-            DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
+            DrtInsertionSearchParams searchParams = new ExtensiveInsertionSearchParams();
             drtConfigGroup.addDrtInsertionSearchParams(searchParams);
+
+            RebalancingParams rebalancingParams = new RebalancingParams();
+            rebalancingParams.setInterval(1800);
+            rebalancingParams.addParameterSet(new PlusOneRebalancingStrategyParams());
+            drtConfigGroup.addParameterSet(rebalancingParams);
+
+            DrtZonalSystemParams drtZonalSystemParams = new DrtZonalSystemParams();
+            drtZonalSystemParams.setZonesGeneration(DrtZonalSystemParams.ZoneGeneration.GridFromNetwork);
+            drtZonalSystemParams.setCellSize(500.0);
+            drtZonalSystemParams.setTargetLinkSelection(DrtZonalSystemParams.TargetLinkSelection.mostCentral);
+            drtConfigGroup.addParameterSet(drtZonalSystemParams);
 
             multiModeDrtConfigGroup.addDrtConfig(drtConfigGroup);
 
