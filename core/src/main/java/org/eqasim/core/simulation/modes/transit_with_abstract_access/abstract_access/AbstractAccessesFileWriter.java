@@ -1,4 +1,4 @@
-package org.eqasim.core.components.transit_with_abstract_access.abstract_access;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access;
 
 import org.matsim.core.utils.collections.Tuple;
 import org.matsim.core.utils.io.MatsimXmlWriter;

@@ -1,6 +1,5 @@
-package org.eqasim.core.components.transit_with_abstract_access;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access;
 
-import org.eqasim.core.components.transit_with_abstract_access.analysis.AbstractAccessLegListener;
 import org.matsim.core.config.Config;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.components.QSimComponentsConfig;

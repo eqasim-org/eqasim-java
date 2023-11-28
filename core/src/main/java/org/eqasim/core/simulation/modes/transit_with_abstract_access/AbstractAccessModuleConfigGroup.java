@@ -1,4 +1,4 @@
-package org.eqasim.core.components.transit_with_abstract_access;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access;
 
 import jakarta.validation.constraints.NotNull;
 import org.matsim.core.config.ReflectiveConfigGroup;

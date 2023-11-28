@@ -1,8 +1,8 @@
 package org.eqasim.core.simulation.mode_choice.constraints;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
-import org.eqasim.core.components.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;

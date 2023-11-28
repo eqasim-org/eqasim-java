@@ -1,8 +1,8 @@
-package org.eqasim.core.components.transit_with_abstract_access.utils;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access.utils;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
-import org.eqasim.core.components.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;

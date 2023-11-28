@@ -1,10 +1,10 @@
-package org.eqasim.core.components.transit_with_abstract_access.analysis;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access.analysis;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccessItem;
-import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccesses;
-import org.eqasim.core.components.transit_with_abstract_access.events.AbstractAccessDepartureEvent;
-import org.eqasim.core.components.transit_with_abstract_access.events.AbstractAccessDepartureEventHandler;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccesses;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.events.AbstractAccessDepartureEvent;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.events.AbstractAccessDepartureEventHandler;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.events.ActivityStartEvent;

@@ -1,4 +1,4 @@
-package org.eqasim.core.components.transit_with_abstract_access.routing;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access.routing;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;

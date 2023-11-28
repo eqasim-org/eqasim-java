@@ -1,14 +1,12 @@
-package org.eqasim.core.components.transit_with_abstract_access.routing;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access.routing;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccessItem;
-import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccesses;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.population.routes.AbstractRoute;
-import org.matsim.pt.routes.DefaultTransitPassengerRoute;
 
 import java.io.IOException;
 

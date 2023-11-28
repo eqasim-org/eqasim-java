@@ -1,8 +1,8 @@
-package org.eqasim.core.components.transit_with_abstract_access.utils;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access.utils;
 
-import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccessItem;
-import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccessesFileReader;
-import org.eqasim.core.components.transit_with_abstract_access.abstract_access.AbstractAccessesFileWriter;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessesFileReader;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessesFileWriter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;

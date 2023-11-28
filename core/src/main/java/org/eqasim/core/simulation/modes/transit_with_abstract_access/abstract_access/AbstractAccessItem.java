@@ -1,4 +1,4 @@
-package org.eqasim.core.components.transit_with_abstract_access.abstract_access;
+package org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;

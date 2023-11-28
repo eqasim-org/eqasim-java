@@ -10,11 +10,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eqasim.core.misc.ParallelProgress;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
@@ -82,6 +84,13 @@ public class RecordedTravelTime implements TravelTime {
 		return fallback.getLinkTravelTime(link, time, person, vehicle);
 	}
 
+	public RecordedTravelTime getSubnetworkTravelTime(Network subNetwork) {
+		Map<Id<Link>, List<Double>> subData = this.data.keySet().stream()
+				.filter(id -> subNetwork.getLinks().containsKey(id))
+				.collect(Collectors.toMap(id -> id, this.data::get));
+		return new RecordedTravelTime(this.startTime, this.endTime, this.interval, subData, this.fallback);
+	}
+
 	static public void writeBinary(OutputStream outputStream, RecordedTravelTime travelTime)
 			throws IOException, InterruptedException {
 		DataOutputStream writer = new DataOutputStream(outputStream);
@@ -128,7 +137,7 @@ public class RecordedTravelTime implements TravelTime {
 
 		Map<Id<Link>, List<Double>> data = new HashMap<>();
 
-		ParallelProgress progress = new ParallelProgress("Writing travel time ...", numberOfLinks);
+		ParallelProgress progress = new ParallelProgress("Reading travel time ...", numberOfLinks);
 		progress.start();
 
 		for (int i = 0; i < numberOfLinks; i++) {

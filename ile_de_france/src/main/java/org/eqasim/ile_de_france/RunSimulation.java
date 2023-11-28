@@ -1,7 +1,5 @@
 package org.eqasim.ile_de_france;
 
-import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModule;
-import org.eqasim.core.components.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
