@@ -3,9 +3,11 @@ package org.eqasim.ile_de_france;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.trips.TripItem;
 import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
+import org.eqasim.core.analysis.trips.TripWriter;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -184,7 +186,11 @@ public class RunModeChoice {
         cmd.getOption("base-csv-path").ifPresent(s -> {
             //We write the initial trip modes
             Collection<TripItem> trips = tripReader.readTrips(population);
-            writeTripModesToCsv(trips, s);
+            try {
+                new TripWriter(trips, DistanceUnit.meter, DistanceUnit.meter).write(s);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         });
 
 
@@ -202,25 +208,11 @@ public class RunModeChoice {
         outputPlansPath.ifPresent(s -> new PopulationWriter(population).write(s));
         outputCsvPath.ifPresent(s -> {
             Collection<TripItem> trips = tripReader.readTrips(population);
-            writeTripModesToCsv(trips, s);
-        });
-    }
-
-    public static void writeTripModesToCsv(Collection<TripItem> trips, String outputPath) {
-        try {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
-
-            writer.write( "personId;tripId;mode\n");
-            writer.flush();
-
-            for (TripItem trip : trips) {
-                writer.write( String.join(";", trip.personId.toString(), trip.personTripId+"", trip.mode) + "\n");
-                writer.flush();
+            try {
+                new TripWriter(trips, DistanceUnit.meter, DistanceUnit.meter).write(s);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        });
     }
 }
