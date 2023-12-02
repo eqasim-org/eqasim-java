@@ -31,13 +31,15 @@ public class DrtWalkConstraint extends AbstractTripConstraint {
     }
 
     public boolean validateAfterEstimation(DiscreteModeChoiceTrip trip, TripCandidate candidate, List<TripCandidate> previousCandidates) {
-        if (candidate instanceof RoutedTripCandidate) {
-            RoutedTripCandidate routedTripCandidate = (RoutedTripCandidate) candidate;
-            return routedTripCandidate.getRoutedPlanElements().stream()
-                    .filter(planElement -> planElement instanceof Leg)
-                    .map(planElement -> (Leg) planElement)
-                    .map(Leg::getMode)
-                    .anyMatch(drtModes::contains);
+        if(this.drtModes.contains(candidate.getMode())) {
+            if (candidate instanceof RoutedTripCandidate) {
+                RoutedTripCandidate routedTripCandidate = (RoutedTripCandidate) candidate;
+                return routedTripCandidate.getRoutedPlanElements().stream()
+                        .filter(planElement -> planElement instanceof Leg)
+                        .map(planElement -> (Leg) planElement)
+                        .map(Leg::getMode)
+                        .anyMatch(candidate.getMode()::equals);
+            }
         }
         return true;
     }
