@@ -48,11 +48,13 @@ public class AdaptConfigForDrt {
 
 
         // Add DRT to cached modes
-        Set<String> cachedModes = new HashSet<>();
-        cachedModes.addAll(dmcConfig.getCachedModes());
+        Set<String> cachedModes = new HashSet<>(dmcConfig.getCachedModes());
         cachedModes.addAll(vehiclesPathByDrtMode.keySet());
         dmcConfig.setCachedModes(cachedModes);
 
+        Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
+        tripConstraints.add(EqasimModeChoiceModule.DRT_WALK_CONSTRAINT);
+        dmcConfig.setTripConstraints(tripConstraints);
 
         for(String drtMode: vehiclesPathByDrtMode.keySet()) {
             DrtConfigGroup drtConfigGroup = new DrtConfigGroup();
