@@ -15,6 +15,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
+				.allowOptions("with-motorcycles")
 				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
 				.build();
 
@@ -26,6 +27,11 @@ public class RunSimulation {
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		configurator.adjustScenario(scenario);
+
+		boolean withMotorcycles = cmd.hasOption("with-motorcycles");
+		if (withMotorcycles) {
+			configurator.adjustScenarioMotorcycle(scenario);
+		}
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);

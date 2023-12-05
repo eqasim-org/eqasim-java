@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
  
+- Add the motorcycle mode
 - Updated to MATSim 14
 - Isolated the mode choice model in a standalone runnable script
 - Fixed LegIndex count between iterations in legs analysis

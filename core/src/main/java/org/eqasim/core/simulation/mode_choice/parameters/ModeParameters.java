@@ -11,6 +11,14 @@ public class ModeParameters implements ParameterDefinition {
 		public double constantParkingSearchPenalty_min = 0.0;
 	}
 
+	public class MotorcycleParameters {
+		public double alpha_u = 0.0;
+		public double betaTravelTime_u_min = 0.0;
+
+		public double constantAccessEgressWalkTime_min = 0.0;
+		public double constantParkingSearchPenalty_min = 0.0;
+	}
+
 	public class PtParameters {
 		public double alpha_u = 0.0;
 		public double betaLineSwitch_u = 0.0;
@@ -36,6 +44,7 @@ public class ModeParameters implements ParameterDefinition {
 	public double betaCost_u_MU = 0.0;
 
 	public final CarParameters car = new CarParameters();
+	public final MotorcycleParameters motorcycle = new MotorcycleParameters();
 	public final PtParameters pt = new PtParameters();
 	public final BikeParameters bike = new BikeParameters();
 	public final WalkParameters walk = new WalkParameters();
