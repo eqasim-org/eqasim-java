@@ -3,6 +3,7 @@ package org.eqasim.core.tools.routing;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.eqasim.core.misc.ParallelProgress;
@@ -28,13 +29,15 @@ public class BatchRoadRouter {
 
 	private final int batchSize;
 	private final int numberOfThreads;
+	private final boolean writePaths;
 
 	public BatchRoadRouter(Provider<LeastCostPathCalculatorFactory> routerFactoryProvider, Network network,
-			int batchSize, int numberOfThreads) {
+			int batchSize, int numberOfThreads, boolean writePaths) {
 		this.routerFactoryProvider = routerFactoryProvider;
 		this.batchSize = batchSize;
 		this.numberOfThreads = numberOfThreads;
 		this.network = network;
+		this.writePaths = writePaths;
 	}
 
 	public Collection<Result> run(Collection<Task> tasks) throws InterruptedException {
@@ -115,6 +118,10 @@ public class BatchRoadRouter {
 					result.egressEuclideanDistance_km = CoordUtils.calcEuclideanDistance(toCoord,
 							toLink.getFromNode().getCoord()) * 1e-3;
 
+					if (writePaths) {
+						path.links.forEach(link -> result.path.add(link.getId().toString()));
+					}
+
 					localResults.add(result);
 					progress.update();
 				}
@@ -161,6 +168,9 @@ public class BatchRoadRouter {
 
 		@JsonProperty("in_vehicle_distance_km")
 		public double inVehicleDistance_km;
+
+		@JsonProperty("path")
+		public List<String> path = new LinkedList<>();
 
 		Result(Task task) {
 			this.identifier = task.identifier;

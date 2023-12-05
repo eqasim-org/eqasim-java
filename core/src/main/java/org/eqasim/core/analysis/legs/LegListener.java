@@ -64,6 +64,7 @@ public class LegListener implements ActivityStartEventHandler, ActivityEndEventH
 		ongoing.clear();
 		passengers.clear();
 		tripIndex.clear();
+		legIndex.clear();
 	}
 
 	@Override
