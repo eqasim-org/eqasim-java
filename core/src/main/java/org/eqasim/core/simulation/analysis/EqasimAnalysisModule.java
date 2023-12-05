@@ -8,6 +8,7 @@ import org.eqasim.core.analysis.trips.TripListener;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -35,8 +36,8 @@ public class EqasimAnalysisModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	public PublicTransportLegListener providePublicTransportListener(Network network,
+	public PublicTransportLegListener providePublicTransportListener(Network network, TransitSchedule schedule,
 			PersonAnalysisFilter personFilter) {
-		return new PublicTransportLegListener();
+		return new PublicTransportLegListener(schedule);
 	}
 }

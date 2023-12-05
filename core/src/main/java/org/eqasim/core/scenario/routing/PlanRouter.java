@@ -55,7 +55,7 @@ public class PlanRouter {
 					Facility toFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
 
 					List<? extends PlanElement> newElements = tripRouter.calcRoute(mainMode, fromFacility, toFacility,
-							departureTime.seconds(), plan.getPerson());
+							departureTime.seconds(), plan.getPerson(), trip.getTripAttributes());
 
 					// Fix in case we have a transit trip that is only walk
 					newElements = fixOnlyWalk(mainMode, fromFacility, toFacility, departureTime.seconds(),

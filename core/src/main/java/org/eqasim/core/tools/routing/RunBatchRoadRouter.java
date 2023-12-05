@@ -3,8 +3,9 @@ package org.eqasim.core.tools.routing;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -24,6 +25,7 @@ import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.scenario.ScenarioUtils;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.SequenceWriter;
@@ -41,7 +43,7 @@ public class RunBatchRoadRouter {
 			IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size") //
+				.allowOptions("threads", "batch-size", "modes", "write-paths") //
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
@@ -56,6 +58,13 @@ public class RunBatchRoadRouter {
 				.orElse(Runtime.getRuntime().availableProcessors());
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 
+		boolean writePaths = cmd.getOption("write-paths").map(Boolean::parseBoolean).orElse(false);
+
+		Set<String> modes = new HashSet<>();
+		for (String mode : cmd.getOption("modes").orElse("car").split(",")) {
+			modes.add(mode);
+		}
+
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new AbstractModule() {
@@ -68,7 +77,7 @@ public class RunBatchRoadRouter {
 					@Named("car")
 					public Network provideCarNetwork(Network network) {
 						Network carNetwork = NetworkUtils.createNetwork();
-						new TransportModeNetworkFilter(network).filter(carNetwork, Collections.singleton("car"));
+						new TransportModeNetworkFilter(network).filter(carNetwork, modes);
 						new NetworkCleaner().run(carNetwork);
 						return carNetwork;
 					}
@@ -77,25 +86,43 @@ public class RunBatchRoadRouter {
 		Network network = injector.getInstance(Key.get(Network.class, Names.named("car")));
 
 		BatchRoadRouter batchRouter = new BatchRoadRouter(injector.getProvider(LeastCostPathCalculatorFactory.class),
-				network, batchSize, numberOfThreads);
+				network, batchSize, numberOfThreads, writePaths);
 
-		CsvMapper mapper = new CsvMapper();
+		CsvMapper taskMapper = new CsvMapper();
 
 		File inputFile = new File(cmd.getOptionStrict("input-path"));
-		CsvSchema taskSchema = mapper.typedSchemaFor(Task.class).withHeader().withColumnSeparator(',').withComments()
-				.withColumnReordering(true);
+		CsvSchema taskSchema = taskMapper.typedSchemaFor(Task.class).withHeader().withColumnSeparator(',')
+				.withComments().withColumnReordering(true);
 
-		MappingIterator<Task> taskIterator = mapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
+		MappingIterator<Task> taskIterator = taskMapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
 				.readValues(inputFile);
 		List<Task> tasks = taskIterator.readAll();
 
 		Collection<Result> results = batchRouter.run(tasks);
 
-		File outputFile = new File(cmd.getOptionStrict("output-path"));
-		CsvSchema resultSchema = mapper.typedSchemaFor(Result.class).withHeader().withColumnSeparator(',');
+		CsvSchema.Builder builder = new CsvSchema.Builder() //
+				.setColumnSeparator(',') //
+				.setArrayElementSeparator(" ") //
+				.setUseHeader(true) //
+				.addColumn("identifier") //
+				.addColumn("access_euclidean_distance_km") //
+				.addColumn("egress_euclidean_distance_km") //
+				.addColumn("in_vehicle_time_min") //
+				.addColumn("in_vehicle_distance_km");
 
-		SequenceWriter writer = mapper.writerWithTypedSchemaFor(Result.class).with(resultSchema)
+		if (writePaths) {
+			builder.addArrayColumn("path");
+		}
+
+		CsvSchema schema = builder.build();
+
+		File outputFile = new File(cmd.getOptionStrict("output-path"));
+
+		CsvMapper resultMapper = new CsvMapper();
+		resultMapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
+		SequenceWriter writer = resultMapper.writerWithTypedSchemaFor(Result.class).with(schema)
 				.writeValues(outputFile);
+
 		writer.writeAll(results);
 	}
 }

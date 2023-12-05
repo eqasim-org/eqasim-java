@@ -22,7 +22,7 @@
 	<properties>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
-		<matsim.version>13.0</matsim.version>
+		<matsim.version>14.0</matsim.version>
 	</properties>
 
 	<distributionManagement>
@@ -67,7 +67,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.12.6.1</version>
+			<version>2.12.7.1</version>
 		</dependency>
 
 		<dependency>
