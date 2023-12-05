@@ -15,6 +15,7 @@ import org.matsim.core.utils.misc.OptionalTime;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
+import org.matsim.utils.objectattributes.attributable.Attributes;
 
 import com.google.inject.Inject;
 
@@ -59,7 +60,7 @@ public class PlanRouter {
 
 					// Fix in case we have a transit trip that is only walk
 					newElements = fixOnlyWalk(mainMode, fromFacility, toFacility, departureTime.seconds(),
-							plan.getPerson(), newElements);
+							plan.getPerson(), newElements, trip.getTripAttributes());
 
 					TripRouter.insertTrip(plan, trip.getOriginActivity(), newElements, trip.getDestinationActivity());
 				}
@@ -68,7 +69,7 @@ public class PlanRouter {
 	}
 
 	private List<? extends PlanElement> fixOnlyWalk(String mainMode, Facility fromFacility, Facility toFacility,
-			double departureTime, Person person, List<? extends PlanElement> elements) {
+			double departureTime, Person person, List<? extends PlanElement> elements, Attributes attributes) {
 		// No need to fix if already walk
 		if (mainMode.equals(TransportMode.walk)) {
 			return elements;
@@ -82,6 +83,6 @@ public class PlanRouter {
 		}
 
 		// We have only walk legs
-		return tripRouter.calcRoute(TransportMode.walk, fromFacility, toFacility, departureTime, person);
+		return tripRouter.calcRoute(TransportMode.walk, fromFacility, toFacility, departureTime, person, attributes);
 	}
 }
