@@ -5,7 +5,9 @@ This change log is written in descending order. Changes that happen after versio
 included in the (note yet determined) next version number.
 
 **Development version**
- 
+
+- Convert initial-routing only-walk legs to actual walk (instead of transit)
+- Don't put activities on motorway/trunk/link in the network
 - Updated to MATSim 14
 - Isolated the mode choice model in a standalone runnable script
 - Fixed LegIndex count between iterations in legs analysis
