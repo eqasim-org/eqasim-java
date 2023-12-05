@@ -74,18 +74,18 @@ public class RunCorsicaDrtSimulation {
 			config.addModule(multiModeDrtConfig);
 
 			DrtConfigGroup drtConfig = new DrtConfigGroup();
-			drtConfig.setMode("drt");
-			drtConfig.setOperationalScheme(OperationalScheme.door2door);
-			drtConfig.setStopDuration(15.0);
-			drtConfig.setMaxWaitTime(600.0);
-			drtConfig.setMaxTravelTimeAlpha(1.5);
-			drtConfig.setMaxTravelTimeBeta(300.0);
-			drtConfig.setVehiclesFile(Resources.getResource("corsica_drt/drt_vehicles.xml").toString());
+			drtConfig.mode = "drt";
+			drtConfig.operationalScheme = OperationalScheme.door2door;
+			drtConfig.stopDuration = 15.0;
+			drtConfig.maxWaitTime = 600.0;
+			drtConfig.maxTravelTimeAlpha = 1.5;
+			drtConfig.maxTravelTimeBeta = 300.0;
+			drtConfig.vehiclesFile = Resources.getResource("corsica_drt/drt_vehicles.xml").toString();
 
 			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
 			drtConfig.addDrtInsertionSearchParams(searchParams);
 
-			multiModeDrtConfig.addDrtConfig(drtConfig);
+			multiModeDrtConfig.addParameterSet(drtConfig);
 			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.planCalcScore(), config.plansCalcRoute());
 
 			// Additional requirements
