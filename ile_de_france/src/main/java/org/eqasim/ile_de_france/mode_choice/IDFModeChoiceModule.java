@@ -8,6 +8,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
+import org.eqasim.ile_de_france.mode_choice.costs.IDFDrtCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
@@ -28,6 +29,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	public static final String CAR_COST_MODEL_NAME = "IDFCarCostModel";
 	public static final String PT_COST_MODEL_NAME = "IDFPtCostModel";
+	public static final String DRT_COST_MODEL_NAME = "IDFDrtCostModel";
 
 	public static final String CAR_ESTIMATOR_NAME = "IDFCarUtilityEstimator";
 	public static final String BIKE_ESTIMATOR_NAME = "IDFBikeUtilityEstimator";
@@ -44,6 +46,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(IDFCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(IDFPtCostModel.class);
+		bindCostModel(DRT_COST_MODEL_NAME).to(IDFDrtCostModel.class);
 
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(IDFCarUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(IDFBikeUtilityEstimator.class);
