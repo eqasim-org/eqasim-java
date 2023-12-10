@@ -13,6 +13,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.listener.ControlerListener;
 import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
@@ -25,7 +26,26 @@ public class EqasimAnalysisModule extends AbstractModule {
 			// Needed by the DrtPersonAnalysisFilter to know which vehicles belong to a DRT fleet
 			bind(VehicleRegistry.class).asEagerSingleton();
 			addEventHandlerBinding().to(VehicleRegistry.class);
-			addControlerListenerBinding().to(DrtAnalysisListener.class);
+			//Using a static method as a provider causes it to be called even when the bind is not performed
+			//So to avoid the potential problems, we use the provider below
+			addControlerListenerBinding().toProvider(new Provider<>() {
+
+				@Inject
+				EqasimConfigGroup config;
+				@Inject
+				MultiModeDrtConfigGroup drtConfig;
+				@Inject
+				OutputDirectoryHierarchy outputDirectory;
+				@Inject
+				Network network;
+				@Inject
+				VehicleRegistry vehicleRegistry;
+
+				@Override
+				public ControlerListener get() {
+					return new DrtAnalysisListener(config, drtConfig, outputDirectory, network, vehicleRegistry);
+				}
+			});
 			// Define filter for trip analysis
 			bind(PersonAnalysisFilter.class).to(DrtPersonAnalysisFilter.class);
 		} else {
@@ -51,11 +71,5 @@ public class EqasimAnalysisModule extends AbstractModule {
 	public PublicTransportLegListener providePublicTransportListener(Network network, TransitSchedule schedule,
 			PersonAnalysisFilter personFilter) {
 		return new PublicTransportLegListener(schedule);
-	}
-
-	@Provides
-	@Singleton
-	public DrtAnalysisListener provideDrtAnalysisListener(EqasimConfigGroup config, MultiModeDrtConfigGroup drtConfig, OutputDirectoryHierarchy outputDirectory, Network network, VehicleRegistry vehicleRegistry) {
-		return new DrtAnalysisListener(config, drtConfig, outputDirectory, network, vehicleRegistry);
 	}
 }
