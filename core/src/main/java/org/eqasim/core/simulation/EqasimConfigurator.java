@@ -107,7 +107,11 @@ public class EqasimConfigurator {
 				.forEach(controller::addOverridingQSimModule);
 
 		controller.configureQSimComponents(components -> {
-			optionalQSimComponentConfigurationSteps.values().stream().flatMap(Collection::stream).forEach(step -> step.accept(controller, components));
+			optionalQSimComponentConfigurationSteps.entrySet().stream()
+					.filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
+					.map(Map.Entry::getValue)
+					.flatMap(Collection::stream)
+					.forEach(step -> step.accept(controller, components));
 			EqasimTransitQSimModule.configure(components, controller.getConfig());
 		});
 	}
