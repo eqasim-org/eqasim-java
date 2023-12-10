@@ -86,15 +86,16 @@ public class EqasimConfigurator {
 	}
 
 	public void configureController(Controler controller) {
-		for (AbstractModule module : getModules()) {
-			controller.addOverridingModule(module);
-		}
 
 		this.optionalModules.entrySet().stream()
 				.filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
 				.map(Map.Entry::getValue)
 				.flatMap(Collection::stream)
 				.forEach(controller::addOverridingModule);
+
+		for (AbstractModule module : getModules()) {
+			controller.addOverridingModule(module);
+		}
 
 		for (AbstractQSimModule module : getQSimModules()) {
 			controller.addOverridingQSimModule(module);
