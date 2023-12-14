@@ -4,8 +4,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.contrib.emissions.EmissionModule;
+import org.matsim.contrib.emissions.OsmHbefaMapping;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
@@ -18,8 +18,6 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.algorithms.EventWriterXML;
 import org.matsim.core.scenario.ScenarioUtils;
-
-// TODO: will need to be updated after the matsim 14 release to profit from https://github.com/matsim-org/matsim-libs/pull/1859
 
 public class RunComputeEmissionsEvents {
 
@@ -35,9 +33,8 @@ public class RunComputeEmissionsEvents {
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
 
-        EmissionsConfigGroup emissionsConfig = (EmissionsConfigGroup) config.getModule("emissions");
+        EmissionsConfigGroup emissionsConfig = (EmissionsConfigGroup) config.getModules().get("emissions");
         emissionsConfig.setHbefaVehicleDescriptionSource(EmissionsConfigGroup.HbefaVehicleDescriptionSource.asEngineInformationAttributes);
-        emissionsConfig.setHbefaRoadTypeSource(EmissionsConfigGroup.HbefaRoadTypeSource.fromLinkAttributes);
         emissionsConfig.setDetailedVsAverageLookupBehavior(
                 EmissionsConfigGroup.DetailedVsAverageLookupBehavior.tryDetailedThenTechnologyAverageThenAverageTable);
         emissionsConfig.setNonScenarioVehicles(EmissionsConfigGroup.NonScenarioVehicles.abort);
