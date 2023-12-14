@@ -34,7 +34,7 @@ public class TestCorisica {
 
 	@After
 	public void tearDown() throws IOException {
-		//FileUtils.deleteDirectory(new File("corsica_test"));
+		FileUtils.deleteDirectory(new File("corsica_test"));
 	}
 
 	@Test
