@@ -7,7 +7,7 @@ public class ModeParameters implements ParameterDefinition {
 		public double alpha_u = 0.0;
 		public double betaTravelTime_u_min = 0.0;
 
-		public double constantAccessEgressWalkTime_min = 0.0;
+		public double additionalAccessEgressWalkTime_min = 0.0;
 		public double constantParkingSearchPenalty_min = 0.0;
 	}
 

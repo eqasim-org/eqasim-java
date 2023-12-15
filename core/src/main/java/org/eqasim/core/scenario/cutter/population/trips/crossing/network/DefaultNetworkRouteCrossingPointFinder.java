@@ -17,7 +17,7 @@ import org.matsim.core.router.util.TravelTime;
 
 import com.google.inject.Inject;
 
-public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFinder {
+public class DefaultNetworkRouteCrossingPointFinder implements NetworkRouteCrossingPointFinder {
 	final private ScenarioExtent extent;
 	final private Network network;
 
@@ -25,7 +25,7 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 	final private LinkTimingRegistry timingRegistry;
 
 	@Inject
-	public DefaultNetworkCrossingPointFinder(ScenarioExtent extent, Network network,
+	public DefaultNetworkRouteCrossingPointFinder(ScenarioExtent extent, Network network,
 			Map<String, TravelTime> travelTimes, LinkTimingRegistry timingRegistry) {
 		this.extent = extent;
 		this.network = network;
@@ -34,9 +34,9 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 	}
 
 	@Override
-	public List<NetworkCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode,
+	public List<NetworkRouteCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode,
 			NetworkRoute route, double departureTime) {
-		List<NetworkCrossingPoint> crossingPoints = new LinkedList<>();
+		List<NetworkRouteCrossingPoint> crossingPoints = new LinkedList<>();
 
 		List<Id<Link>> fullRoute = new LinkedList<>();
 		fullRoute.add(route.getStartLinkId());
@@ -67,7 +67,7 @@ public class DefaultNetworkCrossingPointFinder implements NetworkCrossingPointFi
 					leaveTime = timingData.get().leaveTime;
 				}
 
-				crossingPoints.add(new NetworkCrossingPoint(index, link, enterTime, leaveTime, fromIsInside));
+				crossingPoints.add(new NetworkRouteCrossingPoint(index, link, enterTime, leaveTime, fromIsInside));
 			}
 
 			index++;

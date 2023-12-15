@@ -11,8 +11,10 @@ import org.eqasim.core.scenario.cutter.population.trips.NetworkTripProcessor;
 import org.eqasim.core.scenario.cutter.population.trips.TeleportationTripProcessor;
 import org.eqasim.core.scenario.cutter.population.trips.TransitTripProcessor;
 import org.eqasim.core.scenario.cutter.population.trips.TripProcessor;
-import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkCrossingPointFinder;
-import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkCrossingPointFinder;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkRouteCrossingPointFinder;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkTripCrossingPointFinder;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkRouteCrossingPointFinder;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkTripCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingRegistry;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingRegistryHandler;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.teleportation.DefaultTeleportationCrossingPointFinder;
@@ -30,7 +32,6 @@ import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
-import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.config.TransitRouterConfigGroup;
 
@@ -57,14 +58,14 @@ public class PopulationCutterModule extends AbstractModule {
 		bind(TripProcessor.class).to(ModeAwareTripProcessor.class);
 
 		bind(TeleportationCrossingPointFinder.class).to(DefaultTeleportationCrossingPointFinder.class);
-		bind(NetworkCrossingPointFinder.class).to(DefaultNetworkCrossingPointFinder.class);
+		bind(NetworkRouteCrossingPointFinder.class).to(DefaultNetworkRouteCrossingPointFinder.class);
 		bind(TransitRouteCrossingPointFinder.class).to(DefaultTransitRouteCrossingPointFinder.class);
 		bind(TransitTripCrossingPointFinder.class).to(DefaultTransitTripCrossingPointFinder.class);
+		bind(NetworkTripCrossingPointFinder.class).to(DefaultNetworkTripCrossingPointFinder.class);
 
 		bind(MergeOutsideActivities.class).to(DefaultMergeOutsideActivities.class);
 
 		bind(TeleportationTripProcessor.class);
-		bind(NetworkTripProcessor.class);
 
 		bind(PlanCutter.class);
 
@@ -113,10 +114,10 @@ public class PopulationCutterModule extends AbstractModule {
 
 	@Provides
 	public ModeAwareTripProcessor provideModeAwareTripProcessor(PlansCalcRouteConfigGroup routingConfig,
-			TransitConfigGroup transitConfig, ScenarioExtent extent, MainModeIdentifier mainModeIdentifier,
+			TransitConfigGroup transitConfig, ScenarioExtent extent,
 			TeleportationTripProcessor teleportationTripProcessor, NetworkTripProcessor networkTripProcessor,
 			TransitTripProcessor transitTripProcessor) {
-		ModeAwareTripProcessor tripProcessor = new ModeAwareTripProcessor(mainModeIdentifier);
+		ModeAwareTripProcessor tripProcessor = new ModeAwareTripProcessor();
 
 		Collection<String> networkModes = new HashSet<>(routingConfig.getNetworkModes());
 		Collection<String> teleportedModes = getTeleportedModes(routingConfig);
@@ -145,6 +146,12 @@ public class PopulationCutterModule extends AbstractModule {
 	public TransitTripProcessor provideTransitTripProcessor(TransitTripCrossingPointFinder transitPointFinder,
 			ScenarioExtent extent, TransitRouterConfigGroup routerConfig) {
 		return new TransitTripProcessor(transitPointFinder, extent, routerConfig.getAdditionalTransferTime());
+	}
+
+	@Provides
+	public NetworkTripProcessor provideNetworkTripProcessor(NetworkTripCrossingPointFinder networkPointFinder,
+			ScenarioExtent extent, TransitRouterConfigGroup routerConfig) {
+		return new NetworkTripProcessor(networkPointFinder, extent);
 	}
 
 	@Provides

@@ -51,7 +51,7 @@ public class SanFranciscoModeParameters extends ModeParameters {
 		parameters.car.alpha_u = 0.0;
 		parameters.sfCar.vot_min = 0.2714;
         
-		parameters.car.constantAccessEgressWalkTime_min = 0.0;
+		parameters.car.additionalAccessEgressWalkTime_min = 0.0;
 		parameters.car.constantParkingSearchPenalty_min = 0.0;
 
 		// PT
