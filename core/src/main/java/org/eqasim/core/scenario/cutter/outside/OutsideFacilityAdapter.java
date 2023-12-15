@@ -20,8 +20,13 @@ public class OutsideFacilityAdapter {
 	}
 
 	private Id<ActivityFacility> createNextId() {
-		counter++;
-		return Id.create("outside_" + counter, ActivityFacility.class);
+		while (true) {
+			counter++;
+			var id = Id.create("outside_" + counter, ActivityFacility.class);
+			if (!facilities.getFacilities().containsKey(id)) {
+				return id;
+			}
+		}
 	}
 
 	public ActivityFacility getFacility(Link link) {
