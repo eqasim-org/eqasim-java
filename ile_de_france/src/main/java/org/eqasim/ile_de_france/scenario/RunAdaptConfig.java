@@ -8,7 +8,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
@@ -33,7 +33,7 @@ public class RunAdaptConfig {
 
 		// Potentially should be moved to the general GenerateConfig class. Wait time
 		// should matter for routing!
-		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
+		ScoringConfigGroup scoringConfig = config.scoring();
 		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(-1.0);
 
 		// Calibration results for 5%

@@ -13,7 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.trips.TripListener;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.ShutdownEvent;
@@ -43,7 +43,7 @@ public class CalibrationOutputListener implements IterationEndsListener, Shutdow
 
 	@Inject
 	public CalibrationOutputListener(EqasimConfigGroup eqasimConfig, CalibrationConfigGroup config,
-			ControlerConfigGroup controllerConfig, OutputDirectoryHierarchy outputDirectory,
+			ControllerConfigGroup controllerConfig, OutputDirectoryHierarchy outputDirectory,
 			TripListener tripListener) {
 		this.outputDirectory = outputDirectory;
 		this.lastIteration = controllerConfig.getLastIteration();

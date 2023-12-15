@@ -36,7 +36,7 @@ public class RunCorsicaVDFSimulation {
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
 		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
 
-		config.controler().setLastIteration(2);
+		config.controller().setLastIteration(2);
 		config.addModule(new VDFConfigGroup());
 
 		Scenario scenario = ScenarioUtils.createScenario(config);

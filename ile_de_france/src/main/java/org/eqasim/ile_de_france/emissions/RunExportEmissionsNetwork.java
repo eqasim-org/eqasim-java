@@ -40,7 +40,7 @@ public class RunExportEmissionsNetwork {
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
-        final String outputDirectory = config.controler().getOutputDirectory() + "/";
+        final String outputDirectory = config.controller().getOutputDirectory() + "/";
 
         int timeBinSize = Integer.parseInt(cmd.getOption("time-bin-size").orElse("3600"));
 
