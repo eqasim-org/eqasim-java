@@ -5,9 +5,9 @@ import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
-import org.matsim.core.config.*;
 import org.matsim.core.config.CommandLine.ConfigurationException;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 
 
 
@@ -34,14 +34,14 @@ public class RunAdaptConfig {
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {
-			PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
+			ScoringConfigGroup scoringConfig = config.scoring();
 
 			for (String activityType : SwissConfigAdapter.activityTypes) {
-				PlanCalcScoreConfigGroup.ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
+				ScoringConfigGroup.ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
 
 				if (activityParams == null) {
-					activityParams = new PlanCalcScoreConfigGroup.ActivityParams(activityType);
-					config.planCalcScore().addActivityParams(activityParams);
+					activityParams = new ScoringConfigGroup.ActivityParams(activityType);
+					config.scoring().addActivityParams(activityParams);
 				}
 
 				activityParams.setScoringThisActivityAtAll(false);

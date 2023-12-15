@@ -1,6 +1,7 @@
 package org.eqasim.core.scenario.validation;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -15,7 +16,7 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.facilities.ActivityFacility;
 
 public class ScenarioValidator {
-	private final static Logger logger = Logger.getLogger(ScenarioValidator.class);
+	private final static Logger logger = LogManager.getLogger(ScenarioValidator.class);
 
 	public boolean checkSpatialConsistency(Scenario scenario) {
 		boolean errorsFound = false;

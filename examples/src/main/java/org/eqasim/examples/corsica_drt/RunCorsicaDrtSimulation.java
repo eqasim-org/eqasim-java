@@ -33,8 +33,8 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.QSimConfigGroup.StarttimeInterpretation;
+import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
@@ -59,7 +59,7 @@ public class RunCorsicaDrtSimulation {
 		IDFConfigurator configurator = new IDFConfigurator();
 		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
 
-		config.controler().setLastIteration(2);
+		config.controller().setLastIteration(2);
 		config.qsim().setFlowCapFactor(1e9);
 		config.qsim().setStorageCapFactor(1e9);
 
@@ -74,19 +74,19 @@ public class RunCorsicaDrtSimulation {
 			config.addModule(multiModeDrtConfig);
 
 			DrtConfigGroup drtConfig = new DrtConfigGroup();
-			drtConfig.setMode("drt");
-			drtConfig.setOperationalScheme(OperationalScheme.door2door);
-			drtConfig.setStopDuration(15.0);
-			drtConfig.setMaxWaitTime(600.0);
-			drtConfig.setMaxTravelTimeAlpha(1.5);
-			drtConfig.setMaxTravelTimeBeta(300.0);
-			drtConfig.setVehiclesFile(Resources.getResource("corsica_drt/drt_vehicles.xml").toString());
+			drtConfig.mode = "drt";
+			drtConfig.operationalScheme = OperationalScheme.door2door;
+			drtConfig.stopDuration = 15.0;
+			drtConfig.maxWaitTime = 600.0;
+			drtConfig.maxTravelTimeAlpha = 1.5;
+			drtConfig.maxTravelTimeBeta = 300.0;
+			drtConfig.vehiclesFile = Resources.getResource("corsica_drt/drt_vehicles.xml").toString();
 
 			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
 			drtConfig.addDrtInsertionSearchParams(searchParams);
 
-			multiModeDrtConfig.addDrtConfig(drtConfig);
-			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.planCalcScore(), config.plansCalcRoute());
+			multiModeDrtConfig.addParameterSet(drtConfig);
+			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.scoring(), config.routing());
 
 			// Additional requirements
 			config.qsim().setStartTime(0.0);
@@ -125,7 +125,7 @@ public class RunCorsicaDrtSimulation {
 
 		{ // Set up some defaults for MATSim scoring
 			ModeParams modeParams = new ModeParams("drt");
-			config.planCalcScore().addModeParams(modeParams);
+			config.scoring().addModeParams(modeParams);
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);

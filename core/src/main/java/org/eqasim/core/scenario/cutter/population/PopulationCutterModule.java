@@ -25,8 +25,8 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
+import org.matsim.core.config.groups.RoutingConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
@@ -76,12 +76,12 @@ public class PopulationCutterModule extends AbstractModule {
 		return new PopulationCutter(planCutterProvider, population.getFactory(), numberOfThreads, batchSize);
 	}
 
-	private Collection<String> getTeleportedModes(PlansCalcRouteConfigGroup routingConfig) {
+	private Collection<String> getTeleportedModes(RoutingConfigGroup routingConfig) {
 		Collection<String> teleportedModes = new HashSet<>();
 
-		for (Map.Entry<String, ModeRoutingParams> entry : routingConfig.getModeRoutingParams().entrySet()) {
+		for (Map.Entry<String, TeleportedModeParams> entry : routingConfig.getTeleportedModeParams().entrySet()) {
 			String mode = entry.getKey();
-			ModeRoutingParams params = entry.getValue();
+			TeleportedModeParams params = entry.getValue();
 
 			if (params.getTeleportedModeFreespeedFactor() != null) {
 				throw new IllegalStateException("Cutter does not support teleportedModeFreespeedFactor yet!");
@@ -112,7 +112,7 @@ public class PopulationCutterModule extends AbstractModule {
 	}
 
 	@Provides
-	public ModeAwareTripProcessor provideModeAwareTripProcessor(PlansCalcRouteConfigGroup routingConfig,
+	public ModeAwareTripProcessor provideModeAwareTripProcessor(RoutingConfigGroup routingConfig,
 			TransitConfigGroup transitConfig, ScenarioExtent extent, MainModeIdentifier mainModeIdentifier,
 			TeleportationTripProcessor teleportationTripProcessor, NetworkTripProcessor networkTripProcessor,
 			TransitTripProcessor transitTripProcessor) {

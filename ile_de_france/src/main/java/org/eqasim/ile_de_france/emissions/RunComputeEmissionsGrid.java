@@ -15,8 +15,6 @@ import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
 
-// TODO: will need to be updated after the matsim 14 release to profit from https://github.com/matsim-org/matsim-libs/pull/1859
-
 public class RunComputeEmissionsGrid {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
@@ -30,7 +28,7 @@ public class RunComputeEmissionsGrid {
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
-        final String outputDirectory = config.controler().getOutputDirectory() + "/";
+        final String outputDirectory = config.controller().getOutputDirectory() + "/";
 
         Network network = NetworkUtils.createNetwork();
         new MatsimNetworkReader(network).readFile(outputDirectory + "output_network.xml.gz");

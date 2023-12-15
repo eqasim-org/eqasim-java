@@ -17,12 +17,16 @@ public class RejectionTracker implements PassengerRequestSubmittedEventHandler, 
 
 	@Override
 	public void handleEvent(PassengerRequestRejectedEvent event) {
-		numberOfRejections.compute(event.getPersonId(), (k, v) -> v == null ? defaultRejections + 1 : v + 1);
+		for (Id<Person> personId : event.getPersonIds()) {
+			numberOfRejections.compute(personId, (k, v) -> v == null ? defaultRejections + 1 : v + 1);
+		}
 	}
 
 	@Override
 	public void handleEvent(PassengerRequestSubmittedEvent event) {
-		numberOfRequests.compute(event.getPersonId(), (k, v) -> v == null ? defaultRequests + 1 : v + 1);
+		for (Id<Person> personId : event.getPersonIds()) {
+			numberOfRequests.compute(personId, (k, v) -> v == null ? defaultRequests + 1 : v + 1);
+		}
 	}
 
 	public double getRejectionProbability(Id<Person> personId) {

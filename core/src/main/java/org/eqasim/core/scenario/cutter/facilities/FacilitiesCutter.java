@@ -4,7 +4,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Activity;
@@ -16,7 +17,7 @@ import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.ActivityFacility;
 
 public class FacilitiesCutter {
-	private final static Logger log = Logger.getLogger(FacilitiesCutter.class);
+	private final static Logger log = LogManager.getLogger(FacilitiesCutter.class);
 
 	private final ScenarioExtent extent;
 	private final Collection<Id<ActivityFacility>> usedFacilityIds = new HashSet<>();

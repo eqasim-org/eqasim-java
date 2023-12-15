@@ -42,7 +42,7 @@ import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.RoutingRequest;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
-import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.matsim.utils.objectattributes.attributable.AttributesImpl;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -188,7 +188,7 @@ public class TestSpecialModeChoiceCases {
 		destinationActivity.setMaximumDuration(3600.0);
 
 		DiscreteModeChoiceTrip trip = new DiscreteModeChoiceTrip(originActivity, destinationActivity, "walk",
-				Collections.emptyList(), 0, trips.size(), trips.size(), new Attributes());
+				Collections.emptyList(), 0, trips.size(), trips.size(), new AttributesImpl());
 		trips.add(trip);
 	}
 

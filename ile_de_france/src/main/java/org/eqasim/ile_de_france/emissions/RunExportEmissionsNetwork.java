@@ -8,6 +8,8 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.analysis.time.TimeBinMap;
 import org.matsim.contrib.emissions.Pollutant;
+import org.matsim.contrib.emissions.analysis.EmissionsByPollutant;
+import org.matsim.contrib.emissions.analysis.EmissionsOnLinkEventHandler;
 import org.matsim.contrib.emissions.events.EmissionEventsReader;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -25,8 +27,6 @@ import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.*;
 
-// TODO: will need to be updated after the matsim 14 release to profit from https://github.com/matsim-org/matsim-libs/pull/1859
-
 public class RunExportEmissionsNetwork {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
@@ -40,7 +40,7 @@ public class RunExportEmissionsNetwork {
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
-        final String outputDirectory = config.controler().getOutputDirectory() + "/";
+        final String outputDirectory = config.controller().getOutputDirectory() + "/";
 
         int timeBinSize = Integer.parseInt(cmd.getOption("time-bin-size").orElse("3600"));
 

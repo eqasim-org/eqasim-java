@@ -6,7 +6,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
@@ -30,7 +31,7 @@ import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.MatsimFacilitiesReader;
 
 public class RunTripAnalysis {
-	private final static Logger logger = Logger.getLogger(RunTripAnalysis.class);
+	private final static Logger logger = LogManager.getLogger(RunTripAnalysis.class);
 
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //

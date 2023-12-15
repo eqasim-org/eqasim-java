@@ -9,10 +9,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.trips.TripListener;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.ShutdownEvent;
@@ -25,7 +26,7 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class CalibrationOutputListener implements IterationEndsListener, ShutdownListener {
-	private final Logger logger = Logger.getLogger(CalibrationOutputListener.class);
+	private final Logger logger = LogManager.getLogger(CalibrationOutputListener.class);
 
 	private static final String OUTPUT_FILE_NAME_JSON = "calibration.json";
 	private static final String OUTPUT_FILE_NAME_HTML = "calibration.html";
@@ -42,7 +43,7 @@ public class CalibrationOutputListener implements IterationEndsListener, Shutdow
 
 	@Inject
 	public CalibrationOutputListener(EqasimConfigGroup eqasimConfig, CalibrationConfigGroup config,
-			ControlerConfigGroup controllerConfig, OutputDirectoryHierarchy outputDirectory,
+			ControllerConfigGroup controllerConfig, OutputDirectoryHierarchy outputDirectory,
 			TripListener tripListener) {
 		this.outputDirectory = outputDirectory;
 		this.lastIteration = controllerConfig.getLastIteration();

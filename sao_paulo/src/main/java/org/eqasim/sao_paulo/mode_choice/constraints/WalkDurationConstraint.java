@@ -25,8 +25,8 @@ public class WalkDurationConstraint extends AbstractTripConstraint {
 
 			double distance = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(),
 					trip.getDestinationActivity().getCoord());
-			double walkSpeed = this.config.plansCalcRoute().getTeleportedModeSpeeds().get(WALK_MODE);
-			double walkFactor = this.config.plansCalcRoute().getBeelineDistanceFactors().get(WALK_MODE);
+			double walkSpeed = this.config.routing().getTeleportedModeSpeeds().get(WALK_MODE);
+			double walkFactor = this.config.routing().getBeelineDistanceFactors().get(WALK_MODE);
 			if (distance * walkFactor / walkSpeed > 60 * 60)// 40min is the limit for walking
 				return false;
 		}

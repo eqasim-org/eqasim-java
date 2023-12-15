@@ -1,8 +1,15 @@
 package org.eqasim.ile_de_france;
 
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.trips.TripItem;
@@ -24,7 +31,7 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.StrategyConfigGroup;
+import org.matsim.core.config.groups.ReplanningConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.ControlerDefaultsModule;
 import org.matsim.core.controler.NewControlerModule;
@@ -37,8 +44,9 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.vehicles.Vehicle;
 
-import java.io.*;
-import java.util.*;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 
 
 /**
@@ -133,7 +141,7 @@ public class RunModeChoice {
 
         // We make sure the config is set to use DiscreteModeChoice, i.e. contains a DiscreteModeChoice module and a DiscreteModeChoice strategy settings
         boolean containsDiscreteModeChoiceStrategy = false;
-        for(StrategyConfigGroup.StrategySettings strategySettings: config.strategy().getStrategySettings()) {
+        for(ReplanningConfigGroup.StrategySettings strategySettings: config.replanning().getStrategySettings()) {
             if(strategySettings.getStrategyName().equals("DiscreteModeChoice")) {
                 containsDiscreteModeChoiceStrategy = true;
                 break;
