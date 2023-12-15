@@ -55,8 +55,10 @@ public class PlanCutter {
 			int legIndex = 0;
 
 			for (TripStructureUtils.Trip trip : TripStructureUtils.getTrips(elements)) {
+				String routingMode = TripStructureUtils.getRoutingMode(trip.getLegsOnly().get(0));
+				
 				result.addAll(tripProcessor.process(personId, legIndex, trip.getOriginActivity(),
-						trip.getTripElements(), trip.getDestinationActivity()));
+						trip.getTripElements(), trip.getDestinationActivity(), routingMode));
 
 				addActivity(result, trip.getDestinationActivity());
 				legIndex += trip.getLegsOnly().size();

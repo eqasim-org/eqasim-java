@@ -6,6 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Ensure outside activity id doesn't already exist
+- Network-based (car) routing now generates access and egress walk legs
 - Convert initial-routing only-walk legs to actual walk (instead of transit)
 - Don't put activities on motorway/trunk/link in the network
 - Updated to MATSim 14

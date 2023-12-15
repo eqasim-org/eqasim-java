@@ -114,8 +114,7 @@ public class GenerateConfig {
 
 		config.plansCalcRoute().setNetworkModes(NETWORK_MODES);
 
-		// TODO: Potentially defaults we should change after MATSim 12
-		config.plansCalcRoute().setAccessEgressType(AccessEgressType.none);
+		config.plansCalcRoute().setAccessEgressType(AccessEgressType.accessEgressModeToLink);
 		config.plansCalcRoute().setRoutingRandomness(0.0);
 
 		ModeRoutingParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
