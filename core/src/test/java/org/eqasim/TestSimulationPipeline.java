@@ -45,7 +45,7 @@ public class TestSimulationPipeline {
         FileUtils.deleteDirectory(new File("melun_test"));
     }
 
-    private void runCorsicaSimulation() {
+    private void runMelunSimulation() {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml", eqasimConfigurator.getConfigGroups());
         ((ControlerConfigGroup) config.getModules().get(ControlerConfigGroup.GROUP_NAME)).setOutputDirectory("melun_test/output");
@@ -132,7 +132,7 @@ public class TestSimulationPipeline {
 
     @Test
     public void testPipeline() throws Exception {
-        runCorsicaSimulation();
+        runMelunSimulation();
         runAnalyses();
         runShapefileExports();
     }
