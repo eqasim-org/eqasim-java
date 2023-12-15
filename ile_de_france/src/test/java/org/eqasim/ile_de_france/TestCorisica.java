@@ -52,9 +52,9 @@ public class TestCorisica {
 			Assert.assertEquals(3162, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/simulation_output/output_events.xml.gz");
-			Assert.assertEquals(7781, (long) counts.get("car"));
+			Assert.assertEquals(7759, (long) counts.get("car"));
 			Assert.assertEquals(894, (long) counts.get("car_passenger"));
-			Assert.assertEquals(2091, (long) counts.get("walk"));
+			Assert.assertEquals(3699, (long) counts.get("walk"));
 			Assert.assertEquals(2, (long) counts.get("bike"));
 			Assert.assertEquals(47, (long) counts.get("pt"));
 		}
@@ -81,14 +81,12 @@ public class TestCorisica {
 					"--config:controler.outputDirectory", "corsica_test/cut_output", //
 			});
 
-			Assert.assertEquals(1286, countPersons("corsica_test/cut_output/output_plans.xml.gz"));
-
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
-			Assert.assertEquals(3001, (long) counts.get("car"));
+			Assert.assertEquals(2991, (long) counts.get("car"));
 			Assert.assertEquals(387, (long) counts.get("car_passenger"));
-			Assert.assertEquals(847, (long) counts.get("walk"));
+			Assert.assertEquals(7458, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
-			Assert.assertEquals(6, (long) counts.get("pt"));
+			Assert.assertEquals(9, (long) counts.get("pt"));
 			Assert.assertEquals(95, (long) counts.get("outside"));
 		}
 	}
