@@ -84,6 +84,12 @@ public class TestCorisica {
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
 			Assert.assertEquals(2991, (long) counts.get("car"));
 			Assert.assertEquals(387, (long) counts.get("car_passenger"));
+			// Note that walk has increased from 847 to 7458 when integrating access/egress
+			// for network-based modes. This is because MATSim really generates an access
+			// and egress for *every* network-based trip, even if the distance is zero. This
+			// value is higher than in the baseline (before cutting) case, because in the
+			// current Corsica scenario, there are no access egress legs in the base version
+			// (and don't get generated a lot after only two iterations).
 			Assert.assertEquals(7458, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
 			Assert.assertEquals(9, (long) counts.get("pt"));
