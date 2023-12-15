@@ -90,7 +90,7 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 
 	public static PublicTransitEvent convert(GenericEvent genericEvent) {
 		if(!TYPE.equals(genericEvent.getEventType())) {
-			return null;
+			throw new IllegalStateException(String.format("Can't convert genericEvent of type '%s' to a PublicTransitEvent, a '%s' event type is needed", genericEvent.getAttributes(), TYPE));
 		}
 		Map<String, String> attributes = genericEvent.getAttributes();
 		Id<Person> personId = Id.createPersonId(attributes.get("person"));
