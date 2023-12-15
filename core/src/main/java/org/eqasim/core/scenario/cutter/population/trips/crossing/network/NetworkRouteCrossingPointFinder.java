@@ -6,8 +6,8 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.population.routes.NetworkRoute;
 
-public interface NetworkCrossingPointFinder {
-	List<NetworkCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode, NetworkRoute route,
+public interface NetworkRouteCrossingPointFinder {
+	List<NetworkRouteCrossingPoint> findCrossingPoints(Id<Person> personId, int legIndex, String mode, NetworkRoute route,
 			double departureTime);
 
 	boolean isInside(NetworkRoute route);
