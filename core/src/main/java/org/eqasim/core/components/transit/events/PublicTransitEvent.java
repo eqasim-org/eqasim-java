@@ -87,4 +87,20 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 		attributes.put("travelDistance", String.valueOf(travelDistance));
 		return attributes;
 	}
+
+	public static PublicTransitEvent convert(GenericEvent genericEvent) {
+		if(!TYPE.equals(genericEvent.getEventType())) {
+			return null;
+		}
+		Map<String, String> attributes = genericEvent.getAttributes();
+		Id<Person> personId = Id.createPersonId(attributes.get("person"));
+		Id<TransitLine> transitLineId = Id.create(attributes.get("line"), TransitLine.class);
+		Id<TransitRoute> transitRouteId = Id.create(attributes.get("route"), TransitRoute.class);
+		Id<TransitStopFacility> accessStopId = Id.create(attributes.get("accessStop"), TransitStopFacility.class);
+		Id<TransitStopFacility> egressStopId = Id.create(attributes.get("egressStop"), TransitStopFacility.class);
+		double vehicleDepartureTime = Double.parseDouble(attributes.get("vehicleDepartureTime"));
+		double travelDistance = Double.parseDouble(attributes.get("travelDistance"));
+
+		return new PublicTransitEvent(genericEvent.getTime(), personId, transitLineId, transitRouteId, accessStopId, egressStopId, vehicleDepartureTime, travelDistance);
+	}
 }
