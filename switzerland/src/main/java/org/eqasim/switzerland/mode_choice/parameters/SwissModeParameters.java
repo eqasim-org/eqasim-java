@@ -27,7 +27,7 @@ public class SwissModeParameters extends ModeParameters {
 		parameters.car.alpha_u = 0.827;
 		parameters.car.betaTravelTime_u_min = -0.067;
 
-		parameters.car.constantAccessEgressWalkTime_min = 4.0;
+		parameters.car.additionalAccessEgressWalkTime_min = 4.0;
 		parameters.car.constantParkingSearchPenalty_min = 4.0;
 
 		parameters.swissCar.betaStatedPreferenceRegion1_u = -0.4;

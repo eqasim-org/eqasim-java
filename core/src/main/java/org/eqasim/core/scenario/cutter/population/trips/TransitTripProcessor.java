@@ -28,21 +28,22 @@ public class TransitTripProcessor implements TripProcessor {
 
 	@Override
 	public List<PlanElement> process(Id<Person> personId, int firstLegIndex, Activity firstActivity,
-			List<PlanElement> trip, Activity secondActivity) {
+			List<PlanElement> trip, Activity secondActivity, String routingMode) {
 		return process(firstActivity.getCoord(), trip, secondActivity.getCoord(),
-				!extent.isInside(firstActivity.getCoord()) && !extent.isInside(secondActivity.getCoord()));
+				!extent.isInside(firstActivity.getCoord()) && !extent.isInside(secondActivity.getCoord()), routingMode);
 	}
 
-	public List<PlanElement> process(Coord firstCoord, List<PlanElement> trip, Coord secondCoord, boolean allOutside) {
+	public List<PlanElement> process(Coord firstCoord, List<PlanElement> trip, Coord secondCoord, boolean allOutside,
+			String routingMode) {
 		List<TransitTripCrossingPoint> crossingPoints = transitPointFinder.findCrossingPoints(firstCoord, trip,
 				secondCoord);
 
 		if (crossingPoints.size() == 0) {
-			return Arrays.asList(PopulationUtils.createLeg(allOutside ? "outside" : "pt"));
+			return Arrays.asList(PopulationUtils.createLeg(allOutside ? "outside" : routingMode));
 		} else {
 			List<PlanElement> result = new LinkedList<>();
 
-			result.add(PopulationUtils.createLeg(crossingPoints.get(0).isOutgoing ? "pt" : "outside"));
+			result.add(PopulationUtils.createLeg(crossingPoints.get(0).isOutgoing ? routingMode : "outside"));
 
 			for (TransitTripCrossingPoint point : crossingPoints) {
 				if (point.isInVehicle) {
@@ -57,7 +58,7 @@ public class TransitTripProcessor implements TripProcessor {
 					result.add(activity);
 				}
 
-				result.add(PopulationUtils.createLeg(point.isOutgoing ? "outside" : "pt"));
+				result.add(PopulationUtils.createLeg(point.isOutgoing ? "outside" : routingMode));
 			}
 
 			return result;

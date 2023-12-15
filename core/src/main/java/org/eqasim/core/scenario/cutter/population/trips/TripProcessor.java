@@ -9,5 +9,5 @@ import org.matsim.api.core.v01.population.PlanElement;
 
 public interface TripProcessor {
 	List<PlanElement> process(Id<Person> personId, int firstLegIndex, Activity firstActivity, List<PlanElement> trip,
-			Activity secondActivity);
+			Activity secondActivity, String routingMode);
 }
