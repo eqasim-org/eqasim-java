@@ -3,8 +3,8 @@ package org.eqasim.core.components;
 import java.util.List;
 
 import com.google.inject.Inject;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.AbstractAccessModuleConfigGroup;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.AbstractAccessModuleConfigGroup;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.routing.TransitWithAbstractAccessRoutingModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;

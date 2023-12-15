@@ -23,6 +23,9 @@ public class AdaptConfigForEpsilon {
 
 
         for(Map.Entry<String, String> entry: eqasimConfigGroup.getEstimators().entrySet()) {
+            if(entry.getValue().startsWith(EpsilonModule.EPSILON_UTILITY_PREFIX)) {
+                continue;
+            }
             eqasimConfigGroup.setEstimator(entry.getKey(), EpsilonModule.EPSILON_UTILITY_PREFIX + entry.getValue());
         }
 

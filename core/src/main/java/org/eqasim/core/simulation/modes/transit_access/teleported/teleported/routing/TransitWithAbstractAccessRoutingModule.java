@@ -1,7 +1,7 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.routing;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.routing;
 
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccesses;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccessItem;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccesses;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
@@ -168,7 +168,8 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         Leg leg = PopulationUtils.createLeg(ABSTRACT_ACCESS_LEG_MODE_NAME);
         leg.setDepartureTime(departureTime);
         Id<Link> accessTransitStopFacilityLink = this.transitStopFacilityLinks.get(accessItem.getCenterStop().getId());
-        leg.setRoute(new DefaultAbstractAccessRoute(access ? otherLinkId : accessItem.getCenterStop().getLinkId(), access ? accessItem.getCenterStop().getLinkId() : otherLinkId, accessItem));
+        DefaultAbstractAccessRoute abstractAccessRoute = new DefaultAbstractAccessRoute(access ? otherLinkId : accessItem.getCenterStop().getLinkId(), access ? accessItem.getCenterStop().getLinkId() : otherLinkId, accessItem);
+        leg.setRoute(abstractAccessRoute);
 
         Id<Link> fromLinkId = access ? otherLinkId : accessTransitStopFacilityLink;
         Id<Link> toLinkId = access ? accessTransitStopFacilityLink : otherLinkId;
@@ -186,7 +187,8 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             leg.getRoute().setDistance(distance);
             leg.setTravelTime(accessItem.getTimeToCenter(distance));
         }
-        leg.getRoute().setTravelTime(leg.getTravelTime().seconds());
+        abstractAccessRoute.setTravelTime(leg.getTravelTime().seconds());
+        abstractAccessRoute.setWaitTime(accessItem.getWaitTime(departureTime));
         return leg;
     }
 

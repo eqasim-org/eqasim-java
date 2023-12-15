@@ -1,9 +1,9 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported;
 
 import com.google.inject.Inject;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.AbstractAccessRoute;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.events.AbstractAccessDepartureEvent;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.routing.TransitWithAbstractAccessRoutingModule;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.routing.AbstractAccessRoute;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.events.AbstractAccessDepartureEvent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Leg;

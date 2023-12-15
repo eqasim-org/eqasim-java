@@ -1,4 +1,4 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.analysis;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.analysis;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;

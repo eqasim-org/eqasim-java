@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForPtWithAbstractAccess;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.utils.AdaptConfigForPtWithAbstractAccess;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.utils.CreateAbstractAccessItemsForTransitLines;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.ile_de_france.standalone_mode_choice.RunStandaloneModeChoice;
 import org.junit.After;

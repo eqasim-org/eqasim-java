@@ -1,4 +1,4 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
@@ -27,6 +27,7 @@ public class AbstractAccessesFileReader extends MatsimXmlParser {
     public final static String ACCESS_TYPE_ATTR_NAME = "accessType";
 
     public final static String USING_ROUTED_DISTANCE_ATTR_NAME = "usingRoutedDistance";
+    public final static String FREQUENCY_ATTR_NAME = "frequency";
 
     private final TransitSchedule transitSchedule;
 
@@ -47,6 +48,7 @@ public class AbstractAccessesFileReader extends MatsimXmlParser {
             double averageSpeed;
             boolean usingRoutedDistance;
             String accessType;
+            int frequency;
 
             if(atts.getValue(ACCESS_ID_ATTR_NAME) != null) {
                 abstractAccessItemId = Id.create(atts.getValue(ACCESS_ID_ATTR_NAME), AbstractAccessItem.class);
@@ -85,12 +87,18 @@ public class AbstractAccessesFileReader extends MatsimXmlParser {
             }
 
             if(atts.getValue(ACCESS_TYPE_ATTR_NAME) != null) {
-                accessType = atts.getType(ACCESS_TYPE_ATTR_NAME);
+                accessType = atts.getValue(ACCESS_TYPE_ATTR_NAME);
             } else {
                 throw new IllegalStateException(ACCESS_TYPE_ATTR_NAME + " is required in " + ABSTRACT_ACCESS_TAG_NAME + " element");
             }
 
-            this.accessItems.put(abstractAccessItemId, new AbstractAccessItem(abstractAccessItemId, this.transitSchedule.getFacilities().get(transitStopFacilityId), radius, averageSpeed, accessType, usingRoutedDistance));
+            if(atts.getValue(FREQUENCY_ATTR_NAME) != null) {
+                frequency = Integer.parseInt(atts.getValue(FREQUENCY_ATTR_NAME));
+            } else {
+                throw new IllegalStateException(FREQUENCY_ATTR_NAME + " is required in " + ABSTRACT_ACCESS_TAG_NAME + " element");
+            }
+
+            this.accessItems.put(abstractAccessItemId, new AbstractAccessItem(abstractAccessItemId, this.transitSchedule.getFacilities().get(transitStopFacilityId), radius, averageSpeed, accessType, usingRoutedDistance, frequency));
         }
     }
 

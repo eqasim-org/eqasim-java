@@ -1,8 +1,8 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.utils;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.utils;
 
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessesFileReader;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessesFileWriter;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccessItem;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccessesFileReader;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccessesFileWriter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -67,6 +67,8 @@ public class CreateAbstractAccessItemsForTransitLines {
         double radius = Double.parseDouble(commandLine.getOptionStrict("radius"));
         double avgSpeed = Double.parseDouble(commandLine.getOptionStrict("average-speed"));
         boolean usingRoutedDistance = Boolean.parseBoolean(commandLine.getOptionStrict("use-routed-distance"));
+        int frequency = Integer.parseInt(commandLine.getOption("frequency").orElse("600"));
+
         String accessType = commandLine.getOptionStrict("access-type");
 
 
@@ -82,7 +84,7 @@ public class CreateAbstractAccessItemsForTransitLines {
                 id+=1;
                 itemId = Id.create(transitStopFacility.getId().toString()+"-"+id, AbstractAccessItem.class);
             }while(itemIds.contains(itemId));
-            AbstractAccessItem item = new AbstractAccessItem(itemId, transitStopFacility, radius, avgSpeed, accessType, usingRoutedDistance);
+            AbstractAccessItem item = new AbstractAccessItem(itemId, transitStopFacility, radius, avgSpeed, accessType, usingRoutedDistance, frequency);
             items.add(item);
         }
         new AbstractAccessesFileWriter(items).write(outputFile.getAbsolutePath());

@@ -1,9 +1,9 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.routing;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.routing;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccessItem;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.population.routes.AbstractRoute;
@@ -68,6 +68,15 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
     }
 
     @Override
+    public double getWaitTime() {
+        return routeDescription.waitTime;
+    }
+
+    public void setWaitTime(double waitTime) {
+        this.routeDescription.waitTime = waitTime;
+    }
+
+    @Override
     public Id<AbstractAccessItem> getAbstractAccessItemId() {
         return this.routeDescription.accessItemId;
     }
@@ -76,6 +85,7 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
         public Id<AbstractAccessItem> accessItemId;
         public boolean leavingAccessCenter;
         public boolean isRouted;
+        public double waitTime = 0;
 
         @JsonProperty("accessItemId")
         public String getAccessItemId() {

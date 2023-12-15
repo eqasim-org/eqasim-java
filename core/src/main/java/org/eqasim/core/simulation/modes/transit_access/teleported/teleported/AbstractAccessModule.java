@@ -1,11 +1,11 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported;
 
 import com.google.inject.*;
 import com.google.inject.name.Named;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccesses;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessesFileReader;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.analysis.AbstractAccessLegListener;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccesses;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccessesFileReader;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.analysis.AbstractAccessLegListener;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.routing.TransitWithAbstractAccessRoutingModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.matsim.api.core.v01.TransportMode;

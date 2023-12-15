@@ -1,4 +1,4 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported;
 
 import org.matsim.core.config.Config;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;

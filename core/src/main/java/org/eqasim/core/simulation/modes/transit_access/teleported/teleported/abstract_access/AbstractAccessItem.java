@@ -1,4 +1,4 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -18,15 +18,17 @@ public class AbstractAccessItem {
     private final double avgSpeedToCenterStop;
     private final boolean useRoutedDistance;
     private final String accessType;
+    private final int frequency;
 
 
-    public AbstractAccessItem(Id<AbstractAccessItem> id, TransitStopFacility centerStop, double radius, double avgSpeedToCenterStop, String accessType, boolean useRoutedDistance) {
+    public AbstractAccessItem(Id<AbstractAccessItem> id, TransitStopFacility centerStop, double radius, double avgSpeedToCenterStop, String accessType, boolean useRoutedDistance, int frequency) {
         this.id = id;
         this.centerStop = centerStop;
         this.radius = radius;
         this.avgSpeedToCenterStop = avgSpeedToCenterStop;
         this.accessType = accessType;
         this.useRoutedDistance = useRoutedDistance;
+        this.frequency = frequency;
     }
 
     public Id<AbstractAccessItem> getId() {
@@ -106,6 +108,10 @@ public class AbstractAccessItem {
             itemsByTransitStop.get(item.getCenterStop().getId()).add(item);
         }
         return itemsByTransitStop;
+    }
+
+    public double getWaitTime(double time) {
+        return (double) this.frequency / 2;
     }
 
     public static Collection<AbstractAccessItem> removeRedundantAbstractAccessItems(Collection<AbstractAccessItem> accessItems) {

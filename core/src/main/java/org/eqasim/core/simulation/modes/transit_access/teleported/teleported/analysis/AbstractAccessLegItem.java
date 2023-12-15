@@ -1,6 +1,6 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.analysis;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.analysis;
 
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
+import org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access.AbstractAccessItem;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;

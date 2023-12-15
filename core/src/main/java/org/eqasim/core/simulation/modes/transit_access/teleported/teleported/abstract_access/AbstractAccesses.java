@@ -1,4 +1,4 @@
-package org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access;
+package org.eqasim.core.simulation.modes.transit_access.teleported.teleported.abstract_access;
 
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
