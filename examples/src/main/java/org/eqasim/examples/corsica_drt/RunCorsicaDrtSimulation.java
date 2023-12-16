@@ -145,9 +145,6 @@ public class RunCorsicaDrtSimulation {
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 
 		{ // Configure controller for DRT
-			controller.addOverridingModule(new DvrpModule());
-			controller.addOverridingModule(new MultiModeDrtModule());
-
 			controller.configureQSimComponents(components -> {
 				DvrpQSimComponents.activateAllModes(multiModeDrtConfig).configure(components);
 

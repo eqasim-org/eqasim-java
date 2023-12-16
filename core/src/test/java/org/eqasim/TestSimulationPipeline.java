@@ -9,6 +9,8 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
+import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.eqasim.core.tools.ExportNetworkToShapefile;
 import org.eqasim.core.tools.ExportTransitLinesToShapefile;
 import org.eqasim.core.tools.ExportTransitStopsToShapefile;
@@ -27,9 +29,9 @@ import org.matsim.core.utils.misc.CRCChecksum;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class TestSimulationPipeline {
     
@@ -45,10 +47,11 @@ public class TestSimulationPipeline {
         FileUtils.deleteDirectory(new File("melun_test"));
     }
 
-    private void runMelunSimulation() {
+    private void runMelunSimulation(String configPath, String outputPath, Collection<String> extraModes) {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml", eqasimConfigurator.getConfigGroups());
-        ((ControlerConfigGroup) config.getModules().get(ControlerConfigGroup.GROUP_NAME)).setOutputDirectory("melun_test/output");
+        Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
+        ((ControlerConfigGroup) config.getModules().get(ControlerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
+        eqasimConfigurator.addOptionalConfigGroups(config);
 
         Scenario scenario = ScenarioUtils.createScenario(config);
         eqasimConfigurator.configureScenario(scenario);
@@ -75,6 +78,7 @@ public class TestSimulationPipeline {
                     if(isCarPassenger) {
                         modes.add("car_passenger");
                     }
+                    modes.addAll(extraModes);
                     return modes;
                 }).asEagerSingleton();
             }
@@ -131,8 +135,34 @@ public class TestSimulationPipeline {
     }
 
     @Test
+    public void testDrt() throws MalformedURLException, CommandLine.ConfigurationException {
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/drt_vehicles_a.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_a_"
+        });
+
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/drt_vehicles_b.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_b_"
+        });
+
+        AdaptConfigForDrt.main(new String[] {
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_drt.xml",
+                "--mode-names", "drt_a,drt_b",
+                "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz"
+        });
+
+        runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt", List.of("drt_a", "drt_b"));
+    }
+
+    @Test
     public void testPipeline() throws Exception {
-        runMelunSimulation();
+        runMelunSimulation("melun_test/input/config.xml", "melun_test/output", Collections.emptyList());
         runAnalyses();
         runShapefileExports();
     }
