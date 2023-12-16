@@ -2,6 +2,7 @@ package org.eqasim.core.simulation.modes.drt.analysis;
 
 import com.google.inject.Inject;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 

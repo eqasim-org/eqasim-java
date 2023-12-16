@@ -1,4 +1,4 @@
-package org.eqasim.core.simulation.modes.drt.analysis;
+package org.eqasim.core.simulation.modes.drt.analysis.utils;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
