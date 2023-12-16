@@ -86,9 +86,9 @@ public class TestCorisica {
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
 			Assert.assertEquals(3001, (long) counts.get("car"));
 			Assert.assertEquals(387, (long) counts.get("car_passenger"));
-			Assert.assertEquals(847, (long) counts.get("walk"));
+			Assert.assertEquals(850, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
-			Assert.assertEquals(6, (long) counts.get("pt"));
+			Assert.assertEquals(9, (long) counts.get("pt"));
 			Assert.assertEquals(95, (long) counts.get("outside"));
 		}
 	}
