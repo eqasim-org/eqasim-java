@@ -1,8 +1,10 @@
 package org.eqasim.ile_de_france.emissions;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.EmissionModule;
 import org.matsim.contrib.emissions.OsmHbefaMapping;
@@ -17,6 +19,7 @@ import org.matsim.core.controler.Injector;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.algorithms.EventWriterXML;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 
 public class RunComputeEmissionsEvents {
@@ -53,6 +56,26 @@ public class RunComputeEmissionsEvents {
 
         OsmHbefaMapping osmHbefaMapping = OsmHbefaMapping.build();
         Network network = scenario.getNetwork();
+        // if the network is from pt2matsim it might not have "type" but "osm:way:highway" attribute instead
+        for (Link link: network.getLinks().values()) {
+            String roadTypeAttribute = NetworkUtils.getType(link);
+            String osmRoadTypeAttribute = (String) link.getAttributes().getAttribute("osm:way:highway");
+            if (StringUtils.isBlank(roadTypeAttribute)) {
+                if (!StringUtils.isBlank(osmRoadTypeAttribute)) {
+                    NetworkUtils.setType(link, osmRoadTypeAttribute);
+                }
+                else { // not a road (railway for example)
+                    NetworkUtils.setType(link, "unclassified");
+                }
+            }
+            // '_link' types are not defined in the OSM mapping, set t undefined
+            if (NetworkUtils.getType(link).contains("_link")) {
+                NetworkUtils.setType(link, "unclassified");
+            }
+            if (NetworkUtils.getType(link).equals("living_street")) {
+                NetworkUtils.setType(link, "living");
+            }
+        }
         osmHbefaMapping.addHbefaMappings(network);
 
         EventsManager eventsManager = EventsUtils.createEventsManager();
