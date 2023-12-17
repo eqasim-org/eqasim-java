@@ -19,7 +19,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ExportActivitiesToShapeFile {
+public class ExportActivitiesToShapefile {
 
     public static void exportActivitiesToShapeFile(Population population, String crsString, Set<String> ignoredActivityTypesSet, String outputPath) {
 

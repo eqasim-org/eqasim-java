@@ -151,7 +151,7 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/network.shp"
         });
 
-        ExportActivitiesToShapeFile.main(new String[]{
+        ExportActivitiesToShapefile.main(new String[]{
                 "--plans-path", "melun_test/input/population.xml.gz",
                 "--output-path", "melun_test/exports/activities.shp",
                 "--crs", "EPSG:2154"
