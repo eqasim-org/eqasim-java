@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.tools.ExportActivitiesToShapeFile;
 import org.eqasim.core.tools.ExportNetworkToShapefile;
 import org.eqasim.core.tools.ExportTransitLinesToShapefile;
 import org.eqasim.core.tools.ExportTransitStopsToShapefile;
@@ -127,6 +128,12 @@ public class TestSimulationPipeline {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
                 "--output-path", "melun_test/shp/network.shp"
+        });
+
+        ExportActivitiesToShapeFile.main(new String[]{
+                "--plans-path", "melun_test/input/population.xml.gz",
+                "--output-path", "melun_test/shp/activities.shp",
+                "--crs", "EPSG:2154"
         });
     }
 
