@@ -45,7 +45,7 @@ public class LosAngelesModeParameters extends ModeParameters {
 
         // Car
 		parameters.car.alpha_u = 0.0;       
-		parameters.car.constantAccessEgressWalkTime_min = 0.0;
+		parameters.car.additionalAccessEgressWalkTime_min = 0.0;
 		parameters.car.constantParkingSearchPenalty_min = 0.0;
 		parameters.laCar.vot_min = 0.1618;
 		
