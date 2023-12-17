@@ -115,6 +115,30 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/lines.shp"
         });
 
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--modes", "rail",
+                "--output-path", "melun_test/exports/lines_rail.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--transit-lines", "IDFM:C02364,IDFM:C00879",
+                "--output-path", "melun_test/exports/lines_line_ids.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--transit-routes", "IDFM:TRANSDEV_AMV:27719-C00637-14017001,IDFM:SNCF:42048-C01728-9e8c577f-7ff9-4fe7-93e7-3c3854aa5ecf",
+                "--output-path", "melun_test/exports/lines_route_ids.shp"
+        });
+
         ExportTransitStopsToShapefile.main(new String[] {
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--crs", "EPSG:2154",
