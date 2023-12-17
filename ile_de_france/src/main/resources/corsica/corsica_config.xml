@@ -640,6 +640,7 @@
 			<param name="teleportedModeFreespeedFactor" value="null" />
 			<param name="teleportedModeSpeed" value="1.2" />
 		</parameterset>
+		<param name="accessEgressType" value="accessEgressModeToLink" />
 	</module>
 	<module name="ptCounts" >
 		<!-- factor by which to re-scale the simulated values.  necessary when simulation runs with something different from 100%.  needs to be adapted manually -->

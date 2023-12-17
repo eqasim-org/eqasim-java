@@ -20,8 +20,11 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.junit.Test;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -149,7 +152,16 @@ public class TestSpecialModeChoiceCases {
 
 		// Now create the model
 		EqasimConfigurator configurator = new EqasimConfigurator();
+		
 		Scenario scenario = ScenarioUtils.createScenario(config);
+		
+		// need to generate one link to avoid assertion in NetworkRoutingInclAccessEgressModule
+		Node node = scenario.getNetwork().getFactory().createNode(Id.createNodeId("node"), new Coord(0.0, 0.0));
+		Link link = scenario.getNetwork().getFactory().createLink(Id.createLinkId("link"), node, node);
+		link.setAllowedModes(Collections.singleton("car"));
+		scenario.getNetwork().addNode(node);
+		scenario.getNetwork().addLink(link);
+		
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new EqasimModeChoiceModule()) //
