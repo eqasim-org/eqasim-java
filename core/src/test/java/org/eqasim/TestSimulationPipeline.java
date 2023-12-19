@@ -9,9 +9,7 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +35,7 @@ public class TestSimulationPipeline {
     public void setUp() throws IOException {
         URL fixtureUrl = getClass().getClassLoader().getResource("melun");
         FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
-        FileUtils.forceMkdir(new File("melun_test/shp"));
+        FileUtils.forceMkdir(new File("melun_test/exports"));
     }
 
     @After
@@ -109,24 +107,59 @@ public class TestSimulationPipeline {
         assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt.csv") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt_post_sim.csv");
     }
 
-    private void runShapefileExports() throws Exception {
+    private void runExports() throws Exception {
         ExportTransitLinesToShapefile.main(new String[] {
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
-                "--output-path", "melun_test/shp/lines.shp"
+                "--output-path", "melun_test/exports/lines.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--modes", "rail",
+                "--output-path", "melun_test/exports/lines_rail.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--transit-lines", "IDFM:C02364,IDFM:C00879",
+                "--output-path", "melun_test/exports/lines_line_ids.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--transit-routes", "IDFM:TRANSDEV_AMV:27719-C00637-14017001,IDFM:SNCF:42048-C01728-9e8c577f-7ff9-4fe7-93e7-3c3854aa5ecf",
+                "--output-path", "melun_test/exports/lines_route_ids.shp"
         });
 
         ExportTransitStopsToShapefile.main(new String[] {
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--crs", "EPSG:2154",
-                "--output-path", "melun_test/shp/stops.shp"
+                "--output-path", "melun_test/exports/stops.shp"
         });
 
         ExportNetworkToShapefile.main(new String[] {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
-                "--output-path", "melun_test/shp/network.shp"
+                "--output-path", "melun_test/exports/network.shp"
+        });
+
+        ExportActivitiesToShapefile.main(new String[]{
+                "--plans-path", "melun_test/input/population.xml.gz",
+                "--output-path", "melun_test/exports/activities.shp",
+                "--crs", "EPSG:2154"
+        });
+
+        ExportPopulationToCSV.main(new String[]{
+                "--plans-path", "melun_test/input/population.xml.gz",
+                "--output-path", "melun_test/exports/persons.csv"
         });
     }
 
@@ -134,6 +167,6 @@ public class TestSimulationPipeline {
     public void testPipeline() throws Exception {
         runMelunSimulation();
         runAnalyses();
-        runShapefileExports();
+        runExports();
     }
 }
