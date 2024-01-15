@@ -9,7 +9,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.examples.corsica_drt.analysis.DvrpAnalsisModule;
+import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
 import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
 import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
@@ -24,9 +24,7 @@ import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.DrtConfigGroup.OperationalScheme;
 import org.matsim.contrib.drt.run.DrtConfigs;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
-import org.matsim.contrib.drt.run.MultiModeDrtModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
-import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -156,7 +154,7 @@ public class RunCorsicaDrtSimulation {
 		{ // Add overrides for Corsica + DRT
 			controller.addOverridingModule(new CorsicaDrtModule(cmd));
 			controller.addOverridingModule(new RejectionModule(Arrays.asList("drt")));
-			controller.addOverridingModule(new DvrpAnalsisModule());
+			controller.addOverridingModule(new DrtAnalysisModule());
 		}
 
 		controller.run();
