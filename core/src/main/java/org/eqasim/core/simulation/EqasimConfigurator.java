@@ -12,6 +12,14 @@ import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.drt.routing.DrtRoute;
+import org.matsim.contrib.drt.routing.DrtRouteFactory;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
+import org.matsim.contrib.drt.run.MultiModeDrtModule;
+import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
+import org.matsim.contrib.dvrp.run.DvrpModule;
+import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
+import org.matsim.contrib.dvrp.run.MultiModal;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.Config;
@@ -53,6 +61,14 @@ public class EqasimConfigurator {
 				new EqasimTransitQSimModule(), //
 				new EqasimTrafficQSimModule() //
 		));
+
+		this.registerOptionalConfigGroup(new MultiModeDrtConfigGroup(),
+				Collections.singleton(new MultiModeDrtModule()),
+				Collections.emptyList(),
+				Collections.singletonList((controller, components) ->
+						DvrpQSimComponents.activateAllModes((MultiModal<?>) controller.getConfig().getModules().get(MultiModeDrtConfigGroup.GROUP_NAME)).configure(components)));
+
+		this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
 	}
 
 	public ConfigGroup[] getConfigGroups() {
@@ -132,6 +148,7 @@ public class EqasimConfigurator {
 	}
 
 	public void configureScenario(Scenario scenario) {
+		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
 	}
 
 	public void adjustScenario(Scenario scenario) {

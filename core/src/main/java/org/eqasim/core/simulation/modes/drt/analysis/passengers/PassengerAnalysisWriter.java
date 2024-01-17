@@ -1,10 +1,6 @@
-package org.eqasim.examples.corsica_drt.analysis.passengers;
+package org.eqasim.core.simulation.modes.drt.analysis.passengers;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 
 public class PassengerAnalysisWriter {
     private final PassengerAnalysisListener listener;

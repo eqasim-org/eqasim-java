@@ -1,15 +1,9 @@
-package org.eqasim.examples.corsica_drt.analysis.run;
+package org.eqasim.core.simulation.modes.drt.analysis.run;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.eqasim.examples.corsica_drt.analysis.passengers.PassengerAnalysisListener;
-import org.eqasim.examples.corsica_drt.analysis.passengers.PassengerAnalysisWriter;
-import org.eqasim.examples.corsica_drt.analysis.utils.LinkFinder;
-import org.eqasim.examples.corsica_drt.analysis.utils.VehicleRegistry;
+import org.eqasim.core.simulation.modes.drt.analysis.dvrp_vehicles.VehicleAnalysisListener;
+import org.eqasim.core.simulation.modes.drt.analysis.dvrp_vehicles.VehicleAnalysisWriter;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.LinkFinder;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
@@ -19,25 +13,26 @@ import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 
-public class RunPassengerAnalysis {
+import java.io.File;
+import java.io.IOException;
+
+public class RunDvrpVehicleAnalysis {
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("events-path", "network-path", "output-path", "modes") //
+				.requireOptions("events-path", "network-path", "movements-output-path", "activities-output-path") //
 				.build();
 
 		String eventsPath = cmd.getOptionStrict("events-path");
 		String networkPath = cmd.getOptionStrict("network-path");
-		String outputPath = cmd.getOptionStrict("output-path");
-
-		String rawModes = cmd.getOptionStrict("modes");
-		Set<String> modes = Arrays.asList(rawModes.split(",")).stream().map(String::trim).collect(Collectors.toSet());
+		String movementsOutputPath = cmd.getOptionStrict("movements-output-path");
+		String activitiesOutputPath = cmd.getOptionStrict("activities-output-path");
 
 		Network network = NetworkUtils.createNetwork();
 		new MatsimNetworkReader(network).readFile(networkPath);
 
 		LinkFinder linkFinder = new LinkFinder(network);
 		VehicleRegistry vehicleRegistry = new VehicleRegistry();
-		PassengerAnalysisListener listener = new PassengerAnalysisListener(modes, linkFinder, vehicleRegistry);
+		VehicleAnalysisListener listener = new VehicleAnalysisListener(linkFinder, vehicleRegistry);
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		eventsManager.addHandler(vehicleRegistry);
@@ -47,6 +42,7 @@ public class RunPassengerAnalysis {
 		new MatsimEventsReader(eventsManager).readFile(eventsPath);
 		eventsManager.finishProcessing();
 
-		new PassengerAnalysisWriter(listener).writeRides(new File(outputPath));
+		new VehicleAnalysisWriter(listener).writeMovements(new File(movementsOutputPath));
+		new VehicleAnalysisWriter(listener).writeActivities(new File(activitiesOutputPath));
 	}
 }

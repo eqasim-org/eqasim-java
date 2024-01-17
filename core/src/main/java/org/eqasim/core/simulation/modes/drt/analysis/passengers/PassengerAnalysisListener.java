@@ -1,26 +1,14 @@
-package org.eqasim.examples.corsica_drt.analysis.passengers;
+package org.eqasim.core.simulation.modes.drt.analysis.passengers;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import org.eqasim.examples.corsica_drt.analysis.utils.LinkFinder;
-import org.eqasim.examples.corsica_drt.analysis.utils.PassengerTracker;
-import org.eqasim.examples.corsica_drt.analysis.utils.VehicleRegistry;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.LinkFinder;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.PassengerTracker;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
-import org.matsim.api.core.v01.events.PersonArrivalEvent;
-import org.matsim.api.core.v01.events.PersonDepartureEvent;
-import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
-import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
+import org.matsim.api.core.v01.events.*;
+import org.matsim.api.core.v01.events.handler.*;
 import org.matsim.api.core.v01.population.Person;
+
+import java.util.*;
 
 public class PassengerAnalysisListener implements PersonDepartureEventHandler, PersonArrivalEventHandler,
 		LinkEnterEventHandler, PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler {

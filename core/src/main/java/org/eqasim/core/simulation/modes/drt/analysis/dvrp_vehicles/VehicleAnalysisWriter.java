@@ -1,10 +1,6 @@
-package org.eqasim.examples.corsica_drt.analysis.vehicles;
+package org.eqasim.core.simulation.modes.drt.analysis.dvrp_vehicles;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 
 public class VehicleAnalysisWriter {
     private final VehicleAnalysisListener listener;

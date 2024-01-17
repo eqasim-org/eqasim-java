@@ -1,29 +1,17 @@
-package org.eqasim.examples.corsica_drt.analysis.vehicles;
+package org.eqasim.core.simulation.modes.drt.analysis.dvrp_vehicles;
+
+import org.eqasim.core.simulation.modes.drt.analysis.utils.LinkFinder;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.PassengerTracker;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.events.*;
+import org.matsim.api.core.v01.events.handler.*;
+import org.matsim.vehicles.Vehicle;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import org.eqasim.examples.corsica_drt.analysis.utils.LinkFinder;
-import org.eqasim.examples.corsica_drt.analysis.utils.PassengerTracker;
-import org.eqasim.examples.corsica_drt.analysis.utils.VehicleRegistry;
-import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.events.ActivityEndEvent;
-import org.matsim.api.core.v01.events.ActivityStartEvent;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
-import org.matsim.api.core.v01.events.PersonArrivalEvent;
-import org.matsim.api.core.v01.events.PersonDepartureEvent;
-import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
-import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
-import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
-import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
-import org.matsim.vehicles.Vehicle;
 
 public class VehicleAnalysisListener implements PersonDepartureEventHandler, PersonArrivalEventHandler, ActivityStartEventHandler, ActivityEndEventHandler, LinkEnterEventHandler,
         PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler {
@@ -133,7 +121,10 @@ public class VehicleAnalysisListener implements PersonDepartureEventHandler, Per
 
     @Override
     public void handleEvent(ActivityEndEvent event) {
-        if (vehicleRegistry.isFleet(event.getPersonId())) {
+        // Here we want to skip activity type 'BeforeVrpSchedule'
+        // Since the current version of the VehicleRegistry considers the vehicle to be part of the fleet only after the TaskStartedEvent
+        // It is safe to just check the vehicle against the fleet here.
+         if (vehicleRegistry.isFleet(event.getPersonId())) {
             String mode = vehicleRegistry.getMode(event.getPersonId());
             Id<Vehicle> vehicleId = Id.createVehicleId(event.getPersonId());
 

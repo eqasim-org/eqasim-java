@@ -1,4 +1,4 @@
-package org.eqasim.examples.corsica_drt.analysis.utils;
+package org.eqasim.core.simulation.modes.drt.analysis.utils;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;

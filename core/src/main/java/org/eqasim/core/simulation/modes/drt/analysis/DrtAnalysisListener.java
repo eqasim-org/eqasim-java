@@ -1,18 +1,15 @@
-package org.eqasim.examples.corsica_drt.analysis;
+package org.eqasim.core.simulation.modes.drt.analysis;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.stream.Collectors;
-
+import com.google.inject.Singleton;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.examples.corsica_drt.analysis.passengers.PassengerAnalysisListener;
-import org.eqasim.examples.corsica_drt.analysis.passengers.PassengerAnalysisWriter;
-import org.eqasim.examples.corsica_drt.analysis.utils.LinkFinder;
-import org.eqasim.examples.corsica_drt.analysis.utils.VehicleRegistry;
-import org.eqasim.examples.corsica_drt.analysis.vehicles.VehicleAnalysisListener;
-import org.eqasim.examples.corsica_drt.analysis.vehicles.VehicleAnalysisWriter;
+import org.eqasim.core.simulation.modes.drt.analysis.dvrp_vehicles.VehicleAnalysisListener;
+import org.eqasim.core.simulation.modes.drt.analysis.dvrp_vehicles.VehicleAnalysisWriter;
+import org.eqasim.core.simulation.modes.drt.analysis.passengers.PassengerAnalysisListener;
+import org.eqasim.core.simulation.modes.drt.analysis.passengers.PassengerAnalysisWriter;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.LinkFinder;
+import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
@@ -22,11 +19,13 @@ import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.stream.Collectors;
 
 @Singleton
-public class DvrpAnalysisListener implements IterationStartsListener, IterationEndsListener, ShutdownListener {
+public class DrtAnalysisListener implements IterationStartsListener, IterationEndsListener, ShutdownListener {
 	private static final String PASSENGER_RIDES_FILE_NAME = "eqasim_drt_passenger_rides.csv";
 	private static final String VEHICLE_MOVEMENTS_FILE_NAME = "eqasim_drt_vehicle_movements.csv";
 	private static final String VEHICLE_ACTIVITIES_FILE_NAME = "eqasim_drt_vehicle_activities.csv";
@@ -39,19 +38,16 @@ public class DvrpAnalysisListener implements IterationStartsListener, IterationE
 	private final PassengerAnalysisListener passengerAnalysisListener;
 	private final VehicleAnalysisListener vehicleAnalysisListener;
 
-	private final VehicleRegistry vehicleRegistry;
-
-	@Inject
-	public DvrpAnalysisListener(EqasimConfigGroup config, MultiModeDrtConfigGroup drtConfig,
-			OutputDirectoryHierarchy outputDirectory, Network network) {
+	public DrtAnalysisListener(EqasimConfigGroup config, MultiModeDrtConfigGroup drtConfig,
+                               OutputDirectoryHierarchy outputDirectory, Network network,
+                               VehicleRegistry vehicleRegistry) {
 		this.outputDirectory = outputDirectory;
 		this.analysisInterval = config.getAnalysisInterval();
 
 		LinkFinder linkFinder = new LinkFinder(network);
-		this.vehicleRegistry = new VehicleRegistry();
 
 		this.passengerAnalysisListener = new PassengerAnalysisListener(
-				drtConfig.getModalElements().stream().map(e -> e.getMode()).collect(Collectors.toSet()), linkFinder,
+				drtConfig.getModalElements().stream().map(DrtConfigGroup::getMode).collect(Collectors.toSet()), linkFinder,
 				vehicleRegistry);
 		this.vehicleAnalysisListener = new VehicleAnalysisListener(linkFinder, vehicleRegistry);
 	}
@@ -65,7 +61,6 @@ public class DvrpAnalysisListener implements IterationStartsListener, IterationE
 		if (isActive) {
 			event.getServices().getEvents().addHandler(passengerAnalysisListener);
 			event.getServices().getEvents().addHandler(vehicleAnalysisListener);
-			event.getServices().getEvents().addHandler(vehicleRegistry);
 		}
 	}
 
@@ -73,8 +68,6 @@ public class DvrpAnalysisListener implements IterationStartsListener, IterationE
 	public void notifyIterationEnds(IterationEndsEvent event) {
 		try {
 			if (isActive) {
-				event.getServices().getEvents().removeHandler(vehicleRegistry);
-
 				event.getServices().getEvents().removeHandler(passengerAnalysisListener);
 
 				String path = outputDirectory.getIterationFilename(event.getIteration(), PASSENGER_RIDES_FILE_NAME);
@@ -102,7 +95,8 @@ public class DvrpAnalysisListener implements IterationStartsListener, IterationE
 					outputDirectory.getIterationFilename(event.getIteration(), PASSENGER_RIDES_FILE_NAME));
 			File outputPath = new File(outputDirectory.getOutputFilename(PASSENGER_RIDES_FILE_NAME));
 			Files.copy(iterationPath.toPath(), outputPath.toPath());
-		} catch (IOException e) {
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
 		}
 
 		try {
@@ -110,7 +104,8 @@ public class DvrpAnalysisListener implements IterationStartsListener, IterationE
 					outputDirectory.getIterationFilename(event.getIteration(), VEHICLE_MOVEMENTS_FILE_NAME));
 			File outputPath = new File(outputDirectory.getOutputFilename(VEHICLE_MOVEMENTS_FILE_NAME));
 			Files.copy(iterationPath.toPath(), outputPath.toPath());
-		} catch (IOException e) {
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
 		}
 
 		try {
@@ -118,7 +113,8 @@ public class DvrpAnalysisListener implements IterationStartsListener, IterationE
 					outputDirectory.getIterationFilename(event.getIteration(), VEHICLE_ACTIVITIES_FILE_NAME));
 			File outputPath = new File(outputDirectory.getOutputFilename(VEHICLE_ACTIVITIES_FILE_NAME));
 			Files.copy(iterationPath.toPath(), outputPath.toPath());
-		} catch (IOException e) {
+		} catch (IOException exception) {
+			throw new RuntimeException(exception);
 		}
 	}
 }

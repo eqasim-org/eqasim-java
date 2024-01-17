@@ -1,14 +1,10 @@
-package org.eqasim.examples.corsica_drt.analysis.utils;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+package org.eqasim.core.simulation.modes.drt.analysis.utils;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.vehicles.Vehicle;
+
+import java.util.*;
 
 public class PassengerTracker {
     private final Map<Id<Vehicle>, Set<Id<Person>>> passengers = new HashMap<>();
