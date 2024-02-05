@@ -9,6 +9,7 @@ import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
+import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -54,7 +55,8 @@ public class EqasimConfigurator {
 				new SwissRailRaptorModule(), //
 				new EqasimTransitModule(), //
 				new DiscreteModeChoiceModule(), //
-				new EqasimComponentsModule() //
+				new EqasimComponentsModule(),
+				new EpsilonModule()//
 		));
 
 		qsimModules.addAll(Arrays.asList( //
