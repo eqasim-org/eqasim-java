@@ -8,6 +8,7 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.tools.*;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
@@ -191,6 +192,16 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt", List.of("drt_a", "drt_b"));
+    }
+
+    @Test
+    public void testEpsilon() throws CommandLine.ConfigurationException {
+        AdaptConfigForEpsilon.main(new String[] {
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_epsilon.xml"
+        });
+
+        runMelunSimulation("melun_test/input/config_epsilon.xml", "melun_test/output_epsilon", Collections.emptyList());
     }
 
     @Test
