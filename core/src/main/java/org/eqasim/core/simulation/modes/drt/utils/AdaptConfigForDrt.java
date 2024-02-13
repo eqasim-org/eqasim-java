@@ -57,29 +57,29 @@ public class AdaptConfigForDrt {
 
         for(String drtMode: vehiclesPathByDrtMode.keySet()) {
             DrtConfigGroup drtConfigGroup = new DrtConfigGroup();
-            drtConfigGroup.setMode(drtMode);
-            drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode)));
-            drtConfigGroup.setStopDuration(15.0);
-            drtConfigGroup.setMaxWaitTime(600);
-            drtConfigGroup.setMaxTravelTimeAlpha(1.5);
-            drtConfigGroup.setMaxTravelTimeBeta(300.0);
-            drtConfigGroup.setVehiclesFile(vehiclesPathByDrtMode.get(drtMode));
+            drtConfigGroup.mode = drtMode;
+            drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode));
+            drtConfigGroup.stopDuration = 15.0;
+            drtConfigGroup.maxWaitTime = 600;
+            drtConfigGroup.maxTravelTimeAlpha = 1.5;
+            drtConfigGroup.maxTravelTimeBeta = 300.0;
+            drtConfigGroup.vehiclesFile  = vehiclesPathByDrtMode.get(drtMode);
 
             DrtInsertionSearchParams searchParams = new ExtensiveInsertionSearchParams();
             drtConfigGroup.addDrtInsertionSearchParams(searchParams);
 
             RebalancingParams rebalancingParams = new RebalancingParams();
-            rebalancingParams.setInterval(1800);
+            rebalancingParams.interval  =1800;
             rebalancingParams.addParameterSet(new PlusOneRebalancingStrategyParams());
             drtConfigGroup.addParameterSet(rebalancingParams);
 
             DrtZonalSystemParams drtZonalSystemParams = new DrtZonalSystemParams();
-            drtZonalSystemParams.setZonesGeneration(DrtZonalSystemParams.ZoneGeneration.GridFromNetwork);
-            drtZonalSystemParams.setCellSize(500.0);
-            drtZonalSystemParams.setTargetLinkSelection(DrtZonalSystemParams.TargetLinkSelection.mostCentral);
+            drtZonalSystemParams.zonesGeneration  = DrtZonalSystemParams.ZoneGeneration.GridFromNetwork;
+            drtZonalSystemParams.cellSize = 500.0;
+            drtZonalSystemParams.targetLinkSelection = DrtZonalSystemParams.TargetLinkSelection.mostCentral;
             drtConfigGroup.addParameterSet(drtZonalSystemParams);
 
-            multiModeDrtConfigGroup.addDrtConfig(drtConfigGroup);
+            multiModeDrtConfigGroup.addParameterSet(drtConfigGroup);
 
             // Set up choice model
             EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
