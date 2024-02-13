@@ -16,7 +16,6 @@ import org.eqasim.core.analysis.trips.TripListener;
 import org.eqasim.core.analysis.trips.TripReaderFromEvents;
 import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
 import org.eqasim.core.analysis.trips.TripWriter;
-import org.eqasim.core.components.EqasimMainModeIdentifier;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -26,6 +25,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.core.router.RoutingModeMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.MatsimFacilitiesReader;
@@ -66,7 +66,7 @@ public class RunTripAnalysis {
 
 		String outputPath = cmd.getOptionStrict("output-path");
 
-		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
+		MainModeIdentifier mainModeIdentifier = new RoutingModeMainModeIdentifier();
 
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());

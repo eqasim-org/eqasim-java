@@ -8,15 +8,13 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DefaultDrtPredictor;
+import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DrtPredictor;
+import org.eqasim.core.simulation.modes.drt.mode_choice.utilities.estimators.DrtUtilityEstimator;
 import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.DrtCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.parameters.CorsicaDrtCostParameters;
-import org.eqasim.examples.corsica_drt.mode_choice.parameters.CorsicaDrtModeParameters;
-import org.eqasim.examples.corsica_drt.mode_choice.utilities.DrtPredictor;
-import org.eqasim.examples.corsica_drt.mode_choice.utilities.DrtUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
-import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
 import org.matsim.core.config.CommandLine;
 
 import com.google.inject.Provider;
@@ -39,14 +37,12 @@ public class CorsicaDrtModule extends AbstractEqasimExtension {
 		// Configure choice alternative for DRT
 		bindUtilityEstimator("drt").to(DrtUtilityEstimator.class);
 		bindCostModel("drt").to(DrtCostModel.class);
-		bind(DrtPredictor.class);
+		bind(DrtPredictor.class).to(DefaultDrtPredictor.class);
 
 		// Define filter for trip analysis
 		bind(PersonAnalysisFilter.class).to(DrtPersonAnalysisFilter.class);
 
 		// Override parameter bindings
-		bind(ModeParameters.class).to(CorsicaDrtModeParameters.class);
-		bind(IDFModeParameters.class).to(CorsicaDrtModeParameters.class);
 		bind(IDFCostParameters.class).to(CorsicaDrtCostParameters.class);
 	}
 
@@ -66,19 +62,6 @@ public class CorsicaDrtModule extends AbstractEqasimExtension {
 		}
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
-		return parameters;
-	}
-
-	@Provides
-	@Singleton
-	public CorsicaDrtModeParameters provideModeParameters(EqasimConfigGroup config) {
-		CorsicaDrtModeParameters parameters = CorsicaDrtModeParameters.buildDefault();
-
-		if (config.getModeParametersPath() != null) {
-			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
-		}
-
-		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
 		return parameters;
 	}
 

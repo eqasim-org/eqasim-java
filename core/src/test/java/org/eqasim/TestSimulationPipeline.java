@@ -8,10 +8,11 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.*;
+import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
+import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,9 +28,9 @@ import org.matsim.core.utils.misc.CRCChecksum;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class TestSimulationPipeline {
     
@@ -37,7 +38,7 @@ public class TestSimulationPipeline {
     public void setUp() throws IOException {
         URL fixtureUrl = getClass().getClassLoader().getResource("melun");
         FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
-        FileUtils.forceMkdir(new File("melun_test/shp"));
+        FileUtils.forceMkdir(new File("melun_test/exports"));
     }
 
     @After
@@ -45,10 +46,11 @@ public class TestSimulationPipeline {
         FileUtils.deleteDirectory(new File("melun_test"));
     }
 
-    private void runMelunSimulation() {
+    private void runMelunSimulation(String configPath, String outputPath, Collection<String> extraModes) {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml", eqasimConfigurator.getConfigGroups());
-        ((ControlerConfigGroup) config.getModules().get(ControlerConfigGroup.GROUP_NAME)).setOutputDirectory("melun_test/output");
+        Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
+        ((ControlerConfigGroup) config.getModules().get(ControlerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
+        eqasimConfigurator.addOptionalConfigGroups(config);
 
         Scenario scenario = ScenarioUtils.createScenario(config);
         eqasimConfigurator.configureScenario(scenario);
@@ -75,6 +77,7 @@ public class TestSimulationPipeline {
                     if(isCarPassenger) {
                         modes.add("car_passenger");
                     }
+                    modes.addAll(extraModes);
                     return modes;
                 }).asEagerSingleton();
             }
@@ -109,31 +112,102 @@ public class TestSimulationPipeline {
         assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt.csv") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt_post_sim.csv");
     }
 
-    private void runShapefileExports() throws Exception {
+    private void runExports() throws Exception {
         ExportTransitLinesToShapefile.main(new String[] {
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
-                "--output-path", "melun_test/shp/lines.shp"
+                "--output-path", "melun_test/exports/lines.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--modes", "rail",
+                "--output-path", "melun_test/exports/lines_rail.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--transit-lines", "IDFM:C02364,IDFM:C00879",
+                "--output-path", "melun_test/exports/lines_line_ids.shp"
+        });
+
+        ExportTransitLinesToShapefile.main(new String[] {
+                "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--crs", "EPSG:2154",
+                "--transit-routes", "IDFM:TRANSDEV_AMV:27719-C00637-14017001,IDFM:SNCF:42048-C01728-9e8c577f-7ff9-4fe7-93e7-3c3854aa5ecf",
+                "--output-path", "melun_test/exports/lines_route_ids.shp"
         });
 
         ExportTransitStopsToShapefile.main(new String[] {
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--crs", "EPSG:2154",
-                "--output-path", "melun_test/shp/stops.shp"
+                "--output-path", "melun_test/exports/stops.shp"
         });
 
         ExportNetworkToShapefile.main(new String[] {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
-                "--output-path", "melun_test/shp/network.shp"
+                "--output-path", "melun_test/exports/network.shp"
+        });
+
+        ExportActivitiesToShapefile.main(new String[]{
+                "--plans-path", "melun_test/input/population.xml.gz",
+                "--output-path", "melun_test/exports/activities.shp",
+                "--crs", "EPSG:2154"
+        });
+
+        ExportPopulationToCSV.main(new String[]{
+                "--plans-path", "melun_test/input/population.xml.gz",
+                "--output-path", "melun_test/exports/persons.csv"
         });
     }
 
     @Test
+    public void testDrt() throws MalformedURLException, CommandLine.ConfigurationException {
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/drt_vehicles_a.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_a_"
+        });
+
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/drt_vehicles_b.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_b_"
+        });
+
+        AdaptConfigForDrt.main(new String[] {
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_drt.xml",
+                "--mode-names", "drt_a,drt_b",
+                "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz"
+        });
+
+        runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt", List.of("drt_a", "drt_b"));
+    }
+
+    @Test
+    public void testEpsilon() throws CommandLine.ConfigurationException {
+        AdaptConfigForEpsilon.main(new String[] {
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_epsilon.xml"
+        });
+
+        runMelunSimulation("melun_test/input/config_epsilon.xml", "melun_test/output_epsilon", Collections.emptyList());
+    }
+
+    @Test
     public void testPipeline() throws Exception {
-        runMelunSimulation();
+        runMelunSimulation("melun_test/input/config.xml", "melun_test/output", Collections.emptyList());
         runAnalyses();
-        runShapefileExports();
+        runExports();
     }
 }
