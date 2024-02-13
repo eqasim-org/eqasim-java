@@ -6,6 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Updated to MATSim 15
+- Improve emissions tools and add tests
 - Ensure outside activity id doesn't already exist
 - Network-based (car) routing now generates access and egress walk legs
 - Convert initial-routing only-walk legs to actual walk (instead of transit)
