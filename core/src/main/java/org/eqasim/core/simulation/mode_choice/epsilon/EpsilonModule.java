@@ -3,7 +3,8 @@ package org.eqasim.core.simulation.mode_choice.epsilon;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
@@ -15,7 +16,7 @@ import java.util.Set;
 
 public class EpsilonModule extends AbstractEqasimExtension {
 
-	public static final Logger logger = Logger.getLogger(EpsilonModule.class);
+	public static final Logger logger = LogManager.getLogger(EpsilonModule.class);
 
 	public static final String EPSILON_UTILITY_PREFIX = "epsilon_";
 	@Provides
