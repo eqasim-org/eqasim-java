@@ -77,6 +77,8 @@ public class RunPopulationRouting {
 			Vehicles vehicles = scenario.getVehicles();
 			VehiclesFactory factory = vehicles.getFactory();
 
+			vehicles.addVehicleType(VehicleUtils.getDefaultVehicleType());
+
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Map<String, Id<Vehicle>> personVehicles = new HashMap<>();
 
