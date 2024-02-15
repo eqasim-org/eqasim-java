@@ -69,6 +69,7 @@ public class RunPopulationRouting {
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
 		populationRouter.run(scenario.getPopulation());
 
+		clearVehicles(config, scenario);
 		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-path"));
 	}
 
@@ -91,6 +92,14 @@ public class RunPopulationRouting {
 				}
 
 				VehicleUtils.insertVehicleIdsIntoAttributes(person, personVehicles);
+			}
+		}
+	}
+
+	static private void clearVehicles(Config config, Scenario scenario) {
+		if (config.qsim().getVehiclesSource().equals(VehiclesSource.defaultVehicle)) {
+			for (Person person : scenario.getPopulation().getPersons().values()) {
+				person.getAttributes().removeAttribute("vehicles");
 			}
 		}
 	}
