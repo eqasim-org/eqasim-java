@@ -9,13 +9,17 @@ import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
 import org.matsim.core.population.io.PopulationWriter;
+import org.matsim.core.population.routes.NetworkRoute;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.facilities.ActivityFacility;
@@ -100,6 +104,15 @@ public class RunPopulationRouting {
 		if (config.qsim().getVehiclesSource().equals(VehiclesSource.defaultVehicle)) {
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				person.getAttributes().removeAttribute("vehicles");
+
+				for (Plan plan : person.getPlans()) {
+					for (Leg leg : TripStructureUtils.getLegs(plan)) {
+						if (leg.getRoute() instanceof NetworkRoute) {
+							NetworkRoute route = (NetworkRoute) leg.getRoute();
+							route.setVehicleId(null);
+						}
+					}
+				}
 			}
 		}
 	}
