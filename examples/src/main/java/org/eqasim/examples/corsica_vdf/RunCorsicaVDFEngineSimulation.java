@@ -61,7 +61,7 @@ public class RunCorsicaVDFEngineSimulation {
 		config.addModule(new VDFEngineConfigGroup());
 
 		// VDF Engine: Decide whether to genertae link events or not
-		VDFEngineConfigGroup.getOrCreate(config).setGenerateNetworkEvents(true);
+		VDFEngineConfigGroup.getOrCreate(config).setGenerateNetworkEvents(false);
 
 		// VDF Engine: Remove car from main modes
 		Set<String> mainModes = new HashSet<>(config.qsim().getMainModes());
