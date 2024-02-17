@@ -1,4 +1,4 @@
-package org.eqasim.vdf.function;
+package org.eqasim.vdf.travel_time.function;
 
 import org.matsim.api.core.v01.network.Link;
 

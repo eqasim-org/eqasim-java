@@ -1,8 +1,11 @@
 package org.eqasim.examples.corsica_vdf;
 
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
+import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
@@ -10,6 +13,8 @@ import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFQSimModule;
+import org.eqasim.vdf.engine.VDFEngineConfigGroup;
+import org.eqasim.vdf.engine.VDFEngineModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -24,7 +29,7 @@ import com.google.common.io.Resources;
  * This is an example run script that runs the Corsica test scenario with a
  * volume-delay function to simulate travel times.
  */
-public class RunCorsicaVDFSimulation {
+public class RunCorsicaVDFEngineSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.allowPrefixes("mode-parameter", "cost-parameter") //
@@ -44,10 +49,24 @@ public class RunCorsicaVDFSimulation {
 		// VDF: Disable queue logic
 		config.qsim().setFlowCapFactor(1e9);
 		config.qsim().setStorageCapFactor(1e9);
-		
+
+		// VDF: Set capacity factor instead (~0.1 for a 10% simulation in theory... any better advice?)
+		VDFConfigGroup.getOrCreate(config).setCapacityFactor(0.1);
+
 		// VDF: Optional
 		VDFConfigGroup.getOrCreate(config).setWriteInterval(1);
 		VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(1);
+
+		// VDF Engine: Add config group
+		config.addModule(new VDFEngineConfigGroup());
+
+		// VDF Engine: Decide whether to genertae link events or not
+		VDFEngineConfigGroup.getOrCreate(config).setGenerateNetworkEvents(true);
+
+		// VDF Engine: Remove car from main modes
+		Set<String> mainModes = new HashSet<>(config.qsim().getMainModes());
+		mainModes.remove("car");
+		config.qsim().setMainModes(mainModes);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
@@ -62,6 +81,15 @@ public class RunCorsicaVDFSimulation {
 		// VDF: Add modules
 		controller.addOverridingModule(new VDFModule());
 		controller.addOverridingQSimModule(new VDFQSimModule());
+
+		// VDF Engine: Add modules
+		controller.addOverridingModule(new VDFEngineModule());
+
+		// VDF Engine: Active engine
+		controller.configureQSimComponents(cfg -> {
+			EqasimTransitQSimModule.configure(cfg, controller.getConfig());
+			cfg.addNamedComponent(VDFEngineModule.COMPONENT_NAME); // here
+		});
 
 		controller.run();
 	}
