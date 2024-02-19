@@ -9,8 +9,8 @@ Therefore, we propose to simply treat each link in the network as a line that ne
 The main components of this extension are the `VDF(QSim)Module` and the `VDFConfigGroup`. The interval on which flows are evaluated can be configured, but is set to one hour by default. The volume-delay-function used is the classic BPR function that calculates a traversal time based on the free-flow traversal time and the ratio between detected flow and link capacity.
 
 For the VDF functionality to work:
-- Set the storage capacity of all links to infinity (`1e9`), we effectively disable this logic
-- Set the flow capacity of all links to infinity (`1e9`), we effectively disable this logic
+- Set the storage capacity of all links to infinity (`1e9`), we effectively disable the queue logic using the `storageCapacityFactor` in the QSim configuration
+- Set the flow capacity of all links to infinity (`1e9`), we effectively disable the queue logic using the `flowCapacityFactor` in the QSim configuration
 - Remove `car` from the `mainModes` in the QSim configuration
 - Add `VDFModule` and `VDFQSimModule`
 
