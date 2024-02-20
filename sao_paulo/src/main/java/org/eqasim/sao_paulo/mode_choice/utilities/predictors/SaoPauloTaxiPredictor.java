@@ -3,7 +3,6 @@ package org.eqasim.sao_paulo.mode_choice.utilities.predictors;
 import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.sao_paulo.mode_choice.utilities.variables.TaxiVariables;
@@ -20,19 +19,19 @@ import com.google.inject.name.Named;
 
 public class SaoPauloTaxiPredictor extends CachedVariablePredictor<TaxiVariables> {
 	private final CostModel costModel;
-	private final ModeParameters parameters;
+	
 
 	@Inject
-	public SaoPauloTaxiPredictor(ModeParameters parameters, @Named("taxi") CostModel costModel) {
+	public SaoPauloTaxiPredictor(@Named("taxi") CostModel costModel) {
 		this.costModel = costModel;
-		this.parameters = parameters;
+		
 	}
 
 	@Override
 	public TaxiVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		
-		double taxiTravelTime_min = parameters.car.constantParkingSearchPenalty_min;
-		double accessEgressTime_min = parameters.car.additionalAccessEgressWalkTime_min;
+		double taxiTravelTime_min = 0;
+		double accessEgressTime_min = 0;
 		
 		boolean foundTaxi = false;
 		
