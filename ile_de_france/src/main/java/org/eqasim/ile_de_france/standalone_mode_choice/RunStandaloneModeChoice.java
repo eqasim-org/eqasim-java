@@ -54,8 +54,8 @@ import java.util.*;
  * - outputDirectory: The directory in which the resulting plans will as well as the logfiles be written
  * - removePersonsWithNoValidAlternatives: if set to true, persons with no valid alternative for at least one tour or trip will be removed in the resulting population
  * More parameters can be supplied via the command line
- * - write-input-csv-trips: if specified, writes out the base trips into a csv file called input_trips.csv before performing the mode choice
- * - write-output-csv-trips: writes out the trips resulting from the mode choice as a csv file called output_trips.csv in addition to the plans file
+ * - write-input-csv-trips: if specified, writes out the base trips and pt legs into a csv file called input_trips.csv and input_pt_legs.csv before performing the mode choice
+ * - write-output-csv-trips: writes out the trips resulting from the mode choice, as well as pt legs, into csv files called output_trips.csv and output_pt_legs.csv in addition to the plans file
  * - travel-times-factors-path: if provided, should point out to a csv file specifying the congestion levels on the network during the day as factors by which the free speed is divided. The file in question is a csv With a header timeUpperBound;travelTimeFactor in which the timeUpperBound should be ordered incrementally.
  * - recorded-travel-times-path: mutually exclusive with the travel-times-factors-path. Points to a RecordedTravelTime file.
  * - simulate-after: if set, a single-iteration simulation using the resulting population will be performed, allowing to generate the regular MATSim output files.
@@ -232,8 +232,8 @@ public class RunStandaloneModeChoice {
 
         cmd.getOption(CMD_WRITE_INPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
-                writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv"), tripReader);
-                writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_pt_legs.csv"), ptLegReader);
+                writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_trips.csv"), tripReader);
+                writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_pt_legs.csv"), ptLegReader);
             }
         });
 
