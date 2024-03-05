@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
+import org.eqasim.ile_de_france.standalone_mode_choice.RunStandaloneModeChoice;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,6 +58,17 @@ public class TestCorisica {
 			Assert.assertEquals(3699, (long) counts.get("walk"));
 			Assert.assertEquals(2, (long) counts.get("bike"));
 			Assert.assertEquals(47, (long) counts.get("pt"));
+		}
+
+		// Run the mode choice + following simulation
+		{
+			RunStandaloneModeChoice.main(new String[]{
+					"--config-path", "corsica_test/corsica_config.xml",
+					"--write-input-csv-trips", "true",
+					"--write-output-csv-trips", "true",
+					"--simulate-after", "true",
+					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output"
+			});
 		}
 
 		// Cut the scenario based on output plans
