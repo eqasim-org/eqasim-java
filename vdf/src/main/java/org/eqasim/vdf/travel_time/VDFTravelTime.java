@@ -5,7 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.vdf.VDFScope;
 import org.eqasim.vdf.travel_time.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.Id;
@@ -29,7 +30,7 @@ public class VDFTravelTime implements TravelTime {
 
 	private final IdMap<Link, List<Double>> travelTimes = new IdMap<>(Link.class);
 
-	private final Logger logger = Logger.getLogger(VDFTravelTime.class);
+	private final Logger logger = LogManager.getLogger(VDFTravelTime.class);
 
 	public VDFTravelTime(VDFScope scope, double minimumSpeed, double capacityFacotor, double samplingRate,
 			Network network, VolumeDelayFunction vdf, double crossingPenalty) {

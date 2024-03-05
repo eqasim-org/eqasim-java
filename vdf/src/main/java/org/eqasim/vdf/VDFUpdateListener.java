@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.vdf.analysis.FlowWriter;
 import org.eqasim.vdf.handlers.VDFTrafficHandler;
 import org.eqasim.vdf.travel_time.VDFTravelTime;
@@ -23,7 +24,7 @@ import org.matsim.core.controler.listener.StartupListener;
 import com.google.common.io.Files;
 
 public class VDFUpdateListener implements IterationEndsListener, StartupListener, ShutdownListener {
-	private final static Logger logger = Logger.getLogger(VDFUpdateListener.class);
+	private final static Logger logger = LogManager.getLogger(VDFUpdateListener.class);
 
 	private final String VDF_FILE = "vdf.bin";
 	private final String FLOW_FILE = "vdf_flow.csv";
