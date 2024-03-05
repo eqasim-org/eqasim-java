@@ -1,43 +1,28 @@
 package org.eqasim.ile_de_france.standalone_mode_choice;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import org.apache.log4j.Logger;
-import org.matsim.api.core.v01.Id;
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
+
+import javax.inject.Named;
+
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Leg;
-import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControlerConfigGroup;
-import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
-import org.matsim.core.population.routes.NetworkRoute;
-import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.io.IOUtils;
-import org.matsim.vehicles.Vehicle;
-import org.matsim.vehicles.VehicleUtils;
-import org.matsim.vehicles.Vehicles;
-import org.matsim.vehicles.VehiclesFactory;
 
-import javax.inject.Named;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 
 public class StandaloneModeChoiceModule extends AbstractModule {
-    private static final Logger log = Logger.getLogger(StandaloneModeChoiceModule.class);
-
     private final StandaloneModeChoiceConfigGroup configGroup;
     private final int numberOfThreads;
     private final long randomSeed;

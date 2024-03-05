@@ -1,34 +1,34 @@
 package org.eqasim.ile_de_france.standalone_mode_choice;
 
 
-import com.google.inject.Provider;
-import org.apache.log4j.Logger;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.*;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
+import org.matsim.api.core.v01.population.Population;
+import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel;
 import org.matsim.contribs.discrete_mode_choice.replanning.DiscreteModeChoiceAlgorithm;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
-import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.population.routes.NetworkRoute;
-import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.utils.misc.Counter;
-import org.matsim.vehicles.Vehicle;
-import org.matsim.vehicles.VehicleUtils;
-import org.matsim.vehicles.Vehicles;
-import org.matsim.vehicles.VehiclesFactory;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.google.inject.Provider;
 
 public class StandaloneModeChoicePerformer {
 
-    private static final Logger logger = Logger.getLogger(StandaloneModeChoicePerformer.class);
+    private static final Logger logger = LogManager.getLogger(StandaloneModeChoicePerformer.class);
 
     private final Provider<DiscreteModeChoiceModel> discreteModeChoiceModelProvider;
     private final boolean removePersonsWithBadPlans;
