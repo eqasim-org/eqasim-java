@@ -77,7 +77,7 @@ public class RunPopulationRouting {
 		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-path"));
 	}
 
-	static private void insertVehicles(Config config, Scenario scenario) {
+	static public void insertVehicles(Config config, Scenario scenario) {
 		if (config.qsim().getVehiclesSource().equals(VehiclesSource.defaultVehicle)) {
 			Vehicles vehicles = scenario.getVehicles();
 			VehiclesFactory factory = vehicles.getFactory();
@@ -100,7 +100,7 @@ public class RunPopulationRouting {
 		}
 	}
 
-	static private void clearVehicles(Config config, Scenario scenario) {
+	static public void clearVehicles(Config config, Scenario scenario) {
 		if (config.qsim().getVehiclesSource().equals(VehiclesSource.defaultVehicle)) {
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				person.getAttributes().removeAttribute("vehicles");

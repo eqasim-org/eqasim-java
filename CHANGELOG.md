@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Add support for multi-stage taxi trips in Sao Paulo
 - fix: make compatible with downstream population pipelines
 - Ensure outside activity id doesn't already exist
 - Network-based (car) routing now generates access and egress walk legs
