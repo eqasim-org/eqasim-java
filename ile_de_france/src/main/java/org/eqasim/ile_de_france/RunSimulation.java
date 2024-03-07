@@ -17,7 +17,6 @@ import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.stuck.StuckAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
-import org.eqasim.ile_de_france.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
@@ -106,8 +105,6 @@ public class RunSimulation {
 		}
 
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(true)) {
-			controller.addOverridingModule(new EpsilonModule());
-
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 			dmcConfig.setSelector(SelectorModule.MAXIMUM);
 
