@@ -1,6 +1,7 @@
 package org.eqasim.core.tools;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Identifiable;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class RemovePersonsWithActivityTypes {
 
-    private static final Logger logger = Logger.getLogger(RemovePersonsWithActivityTypes.class);
+    private static final Logger logger = LogManager.getLogger(RemovePersonsWithActivityTypes.class);
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args).requireOptions("input-path", "output-path", "activity-types").build();

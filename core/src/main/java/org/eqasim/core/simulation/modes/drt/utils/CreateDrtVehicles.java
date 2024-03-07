@@ -1,6 +1,7 @@
 package org.eqasim.core.simulation.modes.drt.utils;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Random;
 
 public class CreateDrtVehicles {
-    private final static Logger logger = Logger.getLogger(CreateDrtVehicles.class);
+    private final static Logger logger = LogManager.getLogger(CreateDrtVehicles.class);
 
     public final static long DEFAULT_RANDOM_SEED = 1234;
 

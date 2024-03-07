@@ -6,6 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Updated to MATSim 15
+- Improve emissions tools and add tests
 - Add support for multi-stage taxi trips in Sao Paulo
 - fix: make compatible with downstream population pipelines
 - Ensure outside activity id doesn't already exist

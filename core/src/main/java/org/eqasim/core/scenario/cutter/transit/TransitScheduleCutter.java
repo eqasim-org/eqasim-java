@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -25,7 +26,7 @@ import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 public class TransitScheduleCutter {
-	private final static Logger log = Logger.getLogger(TransitScheduleCutter.class);
+	private final static Logger log = LogManager.getLogger(TransitScheduleCutter.class);
 
 	private final ScenarioExtent extent;
 	private final StopSequenceCrossingPointFinder crossingPointFinder;
