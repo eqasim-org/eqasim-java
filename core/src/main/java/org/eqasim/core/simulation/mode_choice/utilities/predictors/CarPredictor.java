@@ -34,7 +34,7 @@ public class CarPredictor extends CachedVariablePredictor<CarVariables> {
 		boolean foundCar = false;
 
 		for (Leg leg : TripStructureUtils.getLegs(elements)) {
-			if (leg.getMode().equals(TransportMode.car)) {
+			if (leg.getMode().equals(TransportMode.car) || leg.getMode().equals("car_passenger")) {
 				Verify.verify(!foundCar);
 				carTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 			} else if (leg.getMode().equals(TransportMode.walk)) {

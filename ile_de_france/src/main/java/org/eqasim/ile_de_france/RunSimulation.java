@@ -109,11 +109,12 @@ public class RunSimulation {
 			dmcConfig.setSelector(SelectorModule.MAXIMUM);
 
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-			eqasimConfig.setEstimator("car", "epsilon_car");
-			eqasimConfig.setEstimator("pt", "epsilon_pt");
-			eqasimConfig.setEstimator("bike", "epsilon_bike");
-			eqasimConfig.setEstimator("walk", "epsilon_walk");
-			eqasimConfig.setEstimator("car_passenger", "epsilon_car_passenger");
+			
+			eqasimConfig.setEstimator("car", "epsilon_" + IDFModeChoiceModule.CAR_ESTIMATOR_NAME);
+			eqasimConfig.setEstimator("pt", "epsilon_" + IDFModeChoiceModule.PT_ESTIMATOR_NAME);
+			eqasimConfig.setEstimator("bike", "epsilon_" + IDFModeChoiceModule.BIKE_ESTIMATOR_NAME);
+			eqasimConfig.setEstimator("walk", "epsilon_" + EqasimModeChoiceModule.WALK_ESTIMATOR_NAME);
+			eqasimConfig.setEstimator("car_passenger", "epsilon_" + IDFModeChoiceModule.PASSENGER_ESTIMATOR_NAME);
 		}
 
 		if (useVdf) {
