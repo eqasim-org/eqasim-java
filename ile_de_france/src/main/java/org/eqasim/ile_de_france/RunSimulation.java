@@ -14,7 +14,6 @@ import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.analysis.counts.CountsModule;
 import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
-import org.eqasim.ile_de_france.analysis.stuck.StuckAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
@@ -90,7 +89,6 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new UrbanAnalysisModule());
-		controller.addOverridingModule(new StuckAnalysisModule());
 		controller.addOverridingModule(new DelayAnalysisModule());
 
 		if (cmd.hasOption("line-switch-utility")) {
