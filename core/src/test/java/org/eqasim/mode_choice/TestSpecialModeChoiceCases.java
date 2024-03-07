@@ -20,8 +20,11 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.junit.Test;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -39,8 +42,10 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.RoutingModule;
+import org.matsim.core.router.RoutingRequest;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.facilities.Facility;
+import org.matsim.core.utils.timing.TimeInterpretationModule;
+import org.matsim.utils.objectattributes.attributable.AttributesImpl;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -148,10 +153,19 @@ public class TestSpecialModeChoiceCases {
 
 		// Now create the model
 		Scenario scenario = ScenarioUtils.createScenario(config);
+		
+		// need to generate one link to avoid assertion in NetworkRoutingInclAccessEgressModule
+		Node node = scenario.getNetwork().getFactory().createNode(Id.createNodeId("node"), new Coord(0.0, 0.0));
+		Link link = scenario.getNetwork().getFactory().createLink(Id.createLinkId("link"), node, node);
+		link.setAllowedModes(Collections.singleton("car"));
+		scenario.getNetwork().addNode(node);
+		scenario.getNetwork().addLink(link);
+		
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new EqasimModeChoiceModule()) //
 				.addOverridingModule(new StaticModeAvailabilityModule()) //
+				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
 
 		DiscreteModeChoiceModel model = injector.getInstance(DiscreteModeChoiceModel.class);
@@ -185,7 +199,7 @@ public class TestSpecialModeChoiceCases {
 		destinationActivity.setMaximumDuration(3600.0);
 
 		DiscreteModeChoiceTrip trip = new DiscreteModeChoiceTrip(originActivity, destinationActivity, "walk",
-				Collections.emptyList(), 0, trips.size(), trips.size());
+				Collections.emptyList(), 0, trips.size(), trips.size(), new AttributesImpl());
 		trips.add(trip);
 	}
 
@@ -210,8 +224,7 @@ public class TestSpecialModeChoiceCases {
 		}
 
 		@Override
-		public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
-				Person person) {
+		public List<? extends PlanElement> calcRoute(RoutingRequest request) {
 			Leg leg = populationFactory.createLeg("doesn't matter");
 			leg.setTravelTime(3600.0);
 

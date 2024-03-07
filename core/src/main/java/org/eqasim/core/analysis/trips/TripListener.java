@@ -100,6 +100,7 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 	public void handleEvent(PersonDepartureEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
 			Leg leg = factory.createLeg(event.getLegMode());
+			leg.setRoutingMode(event.getRoutingMode());
 			ongoing.get(event.getPersonId()).elements.add(leg);
 		}
 	}

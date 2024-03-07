@@ -4,8 +4,8 @@ import java.util.Map;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.GenericEvent;
+import org.matsim.api.core.v01.events.HasPersonId;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.core.api.internal.HasPersonId;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
@@ -86,5 +86,21 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 		attributes.put("vehicleDepartureTime", String.valueOf(vehicleDepartureTime));
 		attributes.put("travelDistance", String.valueOf(travelDistance));
 		return attributes;
+	}
+
+	public static PublicTransitEvent convert(GenericEvent genericEvent) {
+		if(!TYPE.equals(genericEvent.getEventType())) {
+			throw new IllegalStateException(String.format("Can't convert genericEvent of type '%s' to a PublicTransitEvent, a '%s' event type is needed", genericEvent.getAttributes(), TYPE));
+		}
+		Map<String, String> attributes = genericEvent.getAttributes();
+		Id<Person> personId = Id.createPersonId(attributes.get("person"));
+		Id<TransitLine> transitLineId = Id.create(attributes.get("line"), TransitLine.class);
+		Id<TransitRoute> transitRouteId = Id.create(attributes.get("route"), TransitRoute.class);
+		Id<TransitStopFacility> accessStopId = Id.create(attributes.get("accessStop"), TransitStopFacility.class);
+		Id<TransitStopFacility> egressStopId = Id.create(attributes.get("egressStop"), TransitStopFacility.class);
+		double vehicleDepartureTime = Double.parseDouble(attributes.get("vehicleDepartureTime"));
+		double travelDistance = Double.parseDouble(attributes.get("travelDistance"));
+
+		return new PublicTransitEvent(genericEvent.getTime(), personId, transitLineId, transitRouteId, accessStopId, egressStopId, vehicleDepartureTime, travelDistance);
 	}
 }

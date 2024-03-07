@@ -13,9 +13,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.vdf.VDFScope;
-import org.eqasim.vdf.VDFTrafficHandler;
 import org.eqasim.vdf.io.VDFReaderInterface;
 import org.eqasim.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
@@ -38,7 +38,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 	private final IdMap<Link, List<Double>> counts = new IdMap<>(Link.class);
 	private final List<IdMap<Link, List<Double>>> state = new LinkedList<>();
 
-	private final static Logger logger = Logger.getLogger(VDFHorizonHandler.class);
+	private final static Logger logger = LogManager.getLogger(VDFHorizonHandler.class);
 
 	public VDFHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads) {
 		this.scope = scope;

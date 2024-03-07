@@ -9,6 +9,7 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.api.core.v01.population.Route;
 import org.matsim.pt.routes.TransitPassengerRoute;
 
 import com.google.inject.Inject;
@@ -36,8 +37,14 @@ public class DefaultTransitTripCrossingPointFinder implements TransitTripCrossin
 
 			if (element instanceof Leg) {
 				Leg leg = (Leg) element;
-
-				if (leg.getMode().equals("walk")) {
+				Route route = leg.getRoute();
+				
+				if (route instanceof TransitPassengerRoute) {
+					result.addAll(transitFinder
+							.findCrossingPoints((TransitPassengerRoute) leg.getRoute(),
+									leg.getDepartureTime().seconds())
+							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
+				} else {
 					Coord legStartCoord = (i == 0) ? startCoord : ((Activity) trip.get(i - 1)).getCoord();
 					Coord legEndCoord = (i == trip.size() - 1) ? endCoord : ((Activity) trip.get(i + 1)).getCoord();
 
@@ -45,13 +52,6 @@ public class DefaultTransitTripCrossingPointFinder implements TransitTripCrossin
 							.findCrossingPoints(legStartCoord, legEndCoord, leg.getTravelTime().seconds(),
 									leg.getDepartureTime().seconds())
 							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
-				} else if (leg.getMode().startsWith("pt:") || leg.getMode().equals("pt")) {
-					result.addAll(transitFinder
-							.findCrossingPoints((TransitPassengerRoute) leg.getRoute(),
-									leg.getDepartureTime().seconds())
-							.stream().map(p -> new TransitTripCrossingPoint(p)).collect(Collectors.toList()));
-				} else {
-					throw new IllegalStateException(String.format("Unknown mode: %s", leg.getMode()));
 				}
 			}
 		}

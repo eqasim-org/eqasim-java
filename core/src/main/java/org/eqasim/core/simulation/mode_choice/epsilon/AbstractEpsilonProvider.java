@@ -9,21 +9,23 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 
 public abstract class AbstractEpsilonProvider implements EpsilonProvider {
-	private final MessageDigest digest;
-	private final double maximumValue;
 	private final long randomSeed;
 
 	public AbstractEpsilonProvider(long randomSeed) {
-		try {
-			this.digest = MessageDigest.getInstance("SHA-512");
-			this.maximumValue = BigInteger.valueOf(2).pow(digest.getDigestLength() * 8).doubleValue();
-			this.randomSeed = randomSeed;
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException("Cannot find SHA-512 algorithm. Providing epsilons is not possible.");
-		}
+		this.randomSeed = randomSeed;
 	}
 
 	protected double getUniformEpsilon(Id<Person> personId, int tripIndex, String mode) {
+
+		MessageDigest digest;
+		double maximumValue;
+		try {
+			digest = MessageDigest.getInstance("SHA-512");
+			maximumValue = BigInteger.valueOf(2).pow(digest.getDigestLength() * 8).doubleValue();
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("Cannot find SHA-512 algorithm. Providing epsilons is not possible.");
+		}
+
 		digest.reset();
 
 		digest.update(ByteBuffer //

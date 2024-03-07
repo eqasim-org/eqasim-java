@@ -11,7 +11,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.components.headway.HeadwayImputerModule;
 import org.eqasim.core.misc.InjectorBuilder;
@@ -50,7 +51,7 @@ import com.google.inject.Provider;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 
 public class RunBatchPublicTransportRouter {
-	private final static Logger logger = Logger.getLogger(RunBatchPublicTransportRouter.class);
+	private final static Logger logger = LogManager.getLogger(RunBatchPublicTransportRouter.class);
 
 	static public void main(String[] args) throws ConfigurationException, JsonGenerationException, JsonMappingException,
 			IOException, InterruptedException {
@@ -270,7 +271,7 @@ public class RunBatchPublicTransportRouter {
 		Network network = injector.getInstance(Network.class);
 
 		BatchPublicTransportRouter batchRouter = new BatchPublicTransportRouter(routerProvider,
-				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval, transitModes);
+				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval);
 
 		CsvMapper mapper = new CsvMapper();
 

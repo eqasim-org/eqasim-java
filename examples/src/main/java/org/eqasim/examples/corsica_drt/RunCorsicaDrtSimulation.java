@@ -9,7 +9,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.examples.corsica_drt.analysis.DvrpAnalsisModule;
+import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
 import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
 import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
@@ -17,16 +17,14 @@ import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
-import org.matsim.contrib.drt.optimizer.insertion.SelectiveInsertionSearchParams;
+import org.matsim.contrib.drt.optimizer.insertion.selective.SelectiveInsertionSearchParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
 import org.matsim.contrib.drt.routing.DrtRouteFactory;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.DrtConfigGroup.OperationalScheme;
 import org.matsim.contrib.drt.run.DrtConfigs;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
-import org.matsim.contrib.drt.run.MultiModeDrtModule;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
-import org.matsim.contrib.dvrp.run.DvrpModule;
 import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -74,18 +72,18 @@ public class RunCorsicaDrtSimulation {
 			config.addModule(multiModeDrtConfig);
 
 			DrtConfigGroup drtConfig = new DrtConfigGroup();
-			drtConfig.setMode("drt");
-			drtConfig.setOperationalScheme(OperationalScheme.door2door);
-			drtConfig.setStopDuration(15.0);
-			drtConfig.setMaxWaitTime(600.0);
-			drtConfig.setMaxTravelTimeAlpha(1.5);
-			drtConfig.setMaxTravelTimeBeta(300.0);
-			drtConfig.setVehiclesFile(Resources.getResource("corsica_drt/drt_vehicles.xml").toString());
+			drtConfig.mode = "drt";
+			drtConfig.operationalScheme = OperationalScheme.door2door;
+			drtConfig.stopDuration = 15.0;
+			drtConfig.maxWaitTime = 3600.0;
+			drtConfig.maxTravelTimeAlpha = 3.0;
+			drtConfig.maxTravelTimeBeta = 3600.0;
+			drtConfig.vehiclesFile = Resources.getResource("corsica_drt/drt_vehicles.xml").toString();
 
 			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
 			drtConfig.addDrtInsertionSearchParams(searchParams);
 
-			multiModeDrtConfig.addDrtConfig(drtConfig);
+			multiModeDrtConfig.addParameterSet(drtConfig);
 			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.planCalcScore(), config.plansCalcRoute());
 
 			// Additional requirements
@@ -145,9 +143,6 @@ public class RunCorsicaDrtSimulation {
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 
 		{ // Configure controller for DRT
-			controller.addOverridingModule(new DvrpModule());
-			controller.addOverridingModule(new MultiModeDrtModule());
-
 			controller.configureQSimComponents(components -> {
 				DvrpQSimComponents.activateAllModes(multiModeDrtConfig).configure(components);
 
@@ -159,7 +154,7 @@ public class RunCorsicaDrtSimulation {
 		{ // Add overrides for Corsica + DRT
 			controller.addOverridingModule(new CorsicaDrtModule(cmd));
 			controller.addOverridingModule(new RejectionModule(Arrays.asList("drt")));
-			controller.addOverridingModule(new DvrpAnalsisModule());
+			controller.addOverridingModule(new DrtAnalysisModule());
 		}
 
 		controller.run();

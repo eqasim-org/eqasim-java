@@ -3,10 +3,12 @@ package org.eqasim.vdf;
 import java.net.URL;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.vdf.function.BPRFunction;
-import org.eqasim.vdf.function.VolumeDelayFunction;
 import org.eqasim.vdf.handlers.VDFHorizonHandler;
 import org.eqasim.vdf.handlers.VDFInterpolationHandler;
+import org.eqasim.vdf.handlers.VDFTrafficHandler;
+import org.eqasim.vdf.travel_time.VDFTravelTime;
+import org.eqasim.vdf.travel_time.function.BPRFunction;
+import org.eqasim.vdf.travel_time.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
@@ -17,16 +19,6 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class VDFModule extends AbstractModule {
-	private final boolean bindListener;
-
-	public VDFModule() {
-		this(true);
-	}
-
-	public VDFModule(boolean bindListener) {
-		this.bindListener = bindListener;
-	}
-
 	@Override
 	public void install() {
 		VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(getConfig());
@@ -35,10 +27,7 @@ public class VDFModule extends AbstractModule {
 			addTravelTimeBinding(mode).to(VDFTravelTime.class);
 		}
 
-		if (bindListener) {
-			addControlerListenerBinding().to(VDFUpdateListener.class);
-		}
-
+		addControlerListenerBinding().to(VDFUpdateListener.class);
 		bind(VolumeDelayFunction.class).to(BPRFunction.class);
 
 		switch (vdfConfig.getHandler()) {
@@ -63,7 +52,7 @@ public class VDFModule extends AbstractModule {
 		URL inputFile = config.getInputFile() == null ? null
 				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFile());
 		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
-				inputFile);
+				config.getWriteFlowInterval(), inputFile);
 	}
 
 	@Provides

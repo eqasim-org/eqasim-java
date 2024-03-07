@@ -16,7 +16,7 @@ import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFScope;
 import org.eqasim.vdf.VDFTrafficHandler;
-import org.eqasim.vdf.VDFTravelTime;
+import org.eqasim.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -96,7 +96,7 @@ public class RunBatchRoadRouter {
 				});
 
 		if (cmd.hasOption("vdf-path")) {
-			builder.addOverridingModule(new VDFModule(false));
+			builder.addOverridingModule(new VDFModule());
 			builder.addOverridingModule(new AbstractModule() {
 				@Override
 				public void install() {

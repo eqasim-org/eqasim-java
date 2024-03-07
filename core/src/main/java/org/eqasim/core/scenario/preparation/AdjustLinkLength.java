@@ -1,12 +1,13 @@
 package org.eqasim.core.scenario.preparation;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.utils.geometry.CoordUtils;
 
 public class AdjustLinkLength {
-	private final Logger logger = Logger.getLogger(AdjustLinkLength.class);
+	private final Logger logger = LogManager.getLogger(AdjustLinkLength.class);
 
 	public void run(Network network) {
 		int infiniteSpeedCount = 0;

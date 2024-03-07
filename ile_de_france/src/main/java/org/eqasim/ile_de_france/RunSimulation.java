@@ -1,7 +1,7 @@
 package org.eqasim.ile_de_france;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -23,9 +23,10 @@ import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
 import org.eqasim.vdf.VDFConfigGroup;
-import org.eqasim.vdf.VDFEngineModule;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFQSimModule;
+import org.eqasim.vdf.engine.VDFEngineConfigGroup;
+import org.eqasim.vdf.engine.VDFEngineModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -131,10 +132,15 @@ public class RunSimulation {
 			Set<String> mainModes = new HashSet<>(config.qsim().getMainModes());
 			mainModes.remove("car");
 			config.qsim().setMainModes(mainModes);
+			
+			VDFEngineConfigGroup vdfEngineConfig = new VDFEngineConfigGroup();
+			config.addModule(vdfEngineConfig);
 
-			boolean generateNetworkEvents = cmd.getOption("vdf-generate-network-events").map(Boolean::parseBoolean)
-					.orElse(true);
-			controller.addOverridingModule(new VDFEngineModule(Arrays.asList("car"), generateNetworkEvents));
+			vdfEngineConfig.setGenerateNetworkEvents(
+					cmd.getOption("vdf-generate-network-events").map(Boolean::parseBoolean).orElse(true));
+			vdfEngineConfig.setModes(Collections.singleton("car"));
+
+			controller.addOverridingModule(new VDFEngineModule());
 
 			controller.configureQSimComponents(cfg -> {
 				EqasimTransitQSimModule.configure(cfg, controller.getConfig());

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eqasim.vdf.VDFScope;
-import org.eqasim.vdf.VDFTrafficHandler;
 import org.eqasim.vdf.io.VDFReaderInterface;
 import org.eqasim.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;

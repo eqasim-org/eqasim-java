@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -13,7 +12,9 @@ import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.router.TransitRouter;
@@ -36,11 +37,9 @@ public class BatchPublicTransportRouter {
 	private final int numberOfThreads;
 	private final double interval;
 
-	private final Set<String> transitModes;
-
 	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider,
 			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
-			int batchSize, int numberOfThreads, double interval, Set<String> transitModes) {
+			int batchSize, int numberOfThreads, double interval) {
 		this.routerProvider = routerProvider;
 		this.headwayCalculatorProvider = headwayCalculatorProvider;
 		this.batchSize = batchSize;
@@ -48,7 +47,6 @@ public class BatchPublicTransportRouter {
 		this.schedule = schedule;
 		this.network = network;
 		this.interval = interval;
-		this.transitModes = transitModes;
 	}
 
 	public Pair<Collection<TripInformation>, Collection<LegInformation>> run(Collection<Task> tasks)
@@ -121,9 +119,9 @@ public class BatchPublicTransportRouter {
 					Facility fromFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, fromCoord));
 					Facility toFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, toCoord));
 
-					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
+					List<? extends PlanElement> planElements = router.calcRoute(DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, task.departureTime, null));
 
-					if (legs != null) {
+					if (planElements != null) {
 						boolean isFirstVehicularLeg = true;
 						tripInformation.isOnlyWalk = 1;
 
@@ -136,9 +134,13 @@ public class BatchPublicTransportRouter {
 
 						int currentIndex = 0;
 
-						for (Leg leg : legs) {
+						for (PlanElement planElement : planElements) {
+							if(!(planElement instanceof Leg)) {
+								continue;
+							}
+							Leg leg = (Leg) planElement;
 							boolean isFirstLeg = currentIndex == 0;
-							boolean isLastLeg = currentIndex == legs.size() - 1;
+							boolean isLastLeg = currentIndex == planElements.size() - 1;
 
 							if (leg.getMode().contains("walk") && isFirstLeg) {
 								tripInformation.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
@@ -146,11 +148,15 @@ public class BatchPublicTransportRouter {
 							} else if (leg.getMode().contains("walk") && isLastLeg) {
 								tripInformation.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getMode().contains("walk") && !isFirstLeg && !isLastLeg) {
+							} else if (leg.getMode().contains("walk")) {
 								tripInformation.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
 								tripInformation.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (transitModes.contains(leg.getMode())) {
+							} else if (leg.getRoute() instanceof TransitPassengerRoute) {
 								TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+
+								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
+								TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
+								String transitMode = transitRoute.getTransportMode();
 
 								double waitingTime = route.getBoardingTime().seconds()
 										- leg.getDepartureTime().seconds();
@@ -162,10 +168,6 @@ public class BatchPublicTransportRouter {
 									tripInformation.numberOfTransfers += 1;
 									tripInformation.transferWaitingTime_min += waitingTime / 60.0;
 								}
-
-								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
-								TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
-								String transitMode = transitRoute.getTransportMode();
 
 								double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
 
@@ -210,7 +212,7 @@ public class BatchPublicTransportRouter {
 									localLegResults.add(legInformation);
 								}
 							} else {
-								throw new IllegalStateException();
+								throw new IllegalStateException("Don't know what to do with mode: " + leg.getMode());
 							}
 
 							currentIndex++;

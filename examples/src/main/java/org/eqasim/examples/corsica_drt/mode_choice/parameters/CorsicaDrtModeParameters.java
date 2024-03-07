@@ -26,9 +26,6 @@ public class CorsicaDrtModeParameters extends IDFModeParameters {
 		parameters.car.alpha_u = 1.35;
 		parameters.car.betaTravelTime_u_min = -0.06;
 
-		parameters.car.constantAccessEgressWalkTime_min = 4.0;
-		parameters.car.constantParkingSearchPenalty_min = 4.0;
-
 		// PT
 		parameters.pt.alpha_u = 0.0;
 		parameters.pt.betaLineSwitch_u = -0.17;

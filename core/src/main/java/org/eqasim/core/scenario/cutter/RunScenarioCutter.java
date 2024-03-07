@@ -33,6 +33,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.timing.TimeInterpretationModule;
 
 import com.google.inject.Injector;
 
@@ -100,6 +101,7 @@ public class RunScenarioCutter {
 				.addOverridingModule(
 						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
+				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
 
 		PopulationCutter populationCutter = populationCutterInjector.getInstance(PopulationCutter.class);
@@ -151,6 +153,7 @@ public class RunScenarioCutter {
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
+				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
 
 		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);

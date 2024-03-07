@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -26,7 +27,7 @@ import com.google.common.collect.ImmutableMap;
 public class ParkingPressureData {
 	public static final String ATTRIBUTE = "parkingPressure";
 
-	private static final Logger logger = Logger.getLogger(ParkingPressureData.class);
+	private static final Logger logger = LogManager.getLogger(ParkingPressureData.class);
 	private static final GeometryFactory geometryFactory = new GeometryFactory();
 
 	private final IdMap<Link, Double> parkingPressure;
@@ -55,10 +56,12 @@ public class ParkingPressureData {
 
 	static public ParkingPressureData createFromNetwork(Network network, File path) throws IOException {
 		logger.info(String.format("Loading parking pressure data from %s", path.toString()));
+		
+		Map<String, String> arguments = new HashMap<>();
+		arguments.put("dbtype", "geopkg");
+		arguments.put("database", path.toString());
 
-		DataStore geometryStore = DataStoreFinder.getDataStore(ImmutableMap.builder() //
-				.put("dbtype", "geopkg").put("database", path.toString()) //
-				.build());
+		DataStore geometryStore = DataStoreFinder.getDataStore(arguments);
 
 		SimpleFeatureSource geometrySource = geometryStore.getFeatureSource(geometryStore.getTypeNames()[0]);
 		SimpleFeatureCollection geometryCollection = geometrySource.getFeatures();

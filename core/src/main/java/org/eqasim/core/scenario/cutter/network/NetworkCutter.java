@@ -3,7 +3,8 @@ package org.eqasim.core.scenario.cutter.network;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -24,7 +25,7 @@ import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 public class NetworkCutter {
-	private final static Logger log = Logger.getLogger(NetworkCutter.class);
+	private final static Logger log = LogManager.getLogger(NetworkCutter.class);
 
 	private final ScenarioExtent extent;
 	private final MinimumNetworkFinder minimumNetworkFinder;

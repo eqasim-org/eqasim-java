@@ -12,7 +12,9 @@ import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.router.TransitRouter;
@@ -117,9 +119,10 @@ public class BatchPublicTransportRouter {
 					Facility fromFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, fromCoord));
 					Facility toFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, toCoord));
 
-					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
+					List<? extends PlanElement> elements = router.calcRoute(
+							DefaultRoutingRequest.of(fromFacility, toFacility, task.departureTime, null, null));
 
-					if (legs != null) {
+					if (elements != null) {
 						boolean isFirstVehicularLeg = true;
 						tripInformation.isOnlyWalk = 1;
 
@@ -130,86 +133,93 @@ public class BatchPublicTransportRouter {
 							tripInformation.headway_min = Double.NaN;
 						}
 
-						int currentIndex = 0;
+						int currentElementIndex = 0;
+						int currentLegIndex = 0;
 
-						for (Leg leg : legs) {
-							boolean isFirstLeg = currentIndex == 0;
-							boolean isLastLeg = currentIndex == legs.size() - 1;
-
-							if (leg.getMode().contains("walk") && isFirstLeg) {
-								tripInformation.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-								tripInformation.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getMode().contains("walk") && isLastLeg) {
-								tripInformation.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-								tripInformation.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getMode().contains("walk") && !isFirstLeg && !isLastLeg) {
-								tripInformation.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
-								tripInformation.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
-							} else if (leg.getRoute() instanceof TransitPassengerRoute) {
-								TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
-
-								double waitingTime = route.getBoardingTime().seconds()
-										- leg.getDepartureTime().seconds();
-
-								if (isFirstVehicularLeg) {
-									tripInformation.initialWaitingTime_min += waitingTime / 60.0;
-									isFirstVehicularLeg = false;
+						for (PlanElement element : elements) {
+							if (element instanceof Leg) {
+								Leg leg = (Leg) element;
+								
+								boolean isFirstLeg = currentElementIndex == 0;
+								boolean isLastLeg = currentElementIndex == elements.size() - 1;
+	
+								if (leg.getMode().contains("walk") && isFirstLeg) {
+									tripInformation.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+									tripInformation.accessDistance_km += leg.getRoute().getDistance() * 1e-3;
+								} else if (leg.getMode().contains("walk") && isLastLeg) {
+									tripInformation.egressTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+									tripInformation.egressDistance_km += leg.getRoute().getDistance() * 1e-3;
+								} else if (leg.getMode().contains("walk") && !isFirstLeg && !isLastLeg) {
+									tripInformation.transferTravelTime_min += leg.getTravelTime().seconds() / 60.0;
+									tripInformation.transferDistance_km += leg.getRoute().getDistance() * 1e-3;
+								} else if (leg.getRoute() instanceof TransitPassengerRoute) {
+									TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+	
+									double waitingTime = route.getBoardingTime().seconds()
+											- leg.getDepartureTime().seconds();
+	
+									if (isFirstVehicularLeg) {
+										tripInformation.initialWaitingTime_min += waitingTime / 60.0;
+										isFirstVehicularLeg = false;
+									} else {
+										tripInformation.numberOfTransfers += 1;
+										tripInformation.transferWaitingTime_min += waitingTime / 60.0;
+									}
+	
+									TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
+									TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
+									String transitMode = transitRoute.getTransportMode();
+	
+									double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
+	
+									switch (transitMode) {
+									case "rail":
+										tripInformation.inVehicleTimeRail_min += inVehicleTime / 60.0;
+										tripInformation.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
+										break;
+									case "subway":
+										tripInformation.inVehicleTimeSubway_min += inVehicleTime / 60.0;
+										tripInformation.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
+										break;
+									case "bus":
+										tripInformation.inVehicleTimeBus_min += inVehicleTime / 60.0;
+										tripInformation.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
+										break;
+									case "tram":
+										tripInformation.inVehicleTimeTram_min += inVehicleTime / 60.0;
+										tripInformation.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
+										break;
+									default:
+										tripInformation.inVehicleTimeOther_min += inVehicleTime / 60.0;
+										tripInformation.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
+									}
+	
+									tripInformation.isOnlyWalk = 0;
+	
+									{ // Legs
+										Departure departure = findDeparture(route, transitRoute);
+	
+										LegInformation legInformation = new LegInformation();
+										legInformation.identifier = task.identifier;
+										legInformation.legIndex = currentLegIndex;
+										legInformation.transitMode = transitMode;
+										legInformation.lineId = transitLine.getId().toString();
+										legInformation.routeId = transitRoute.getId().toString();
+										legInformation.vehicleId = departure.getVehicleId().toString();
+										legInformation.accessTime = route.getBoardingTime().seconds();
+										legInformation.egressTime = leg.getDepartureTime().seconds()
+												+ leg.getTravelTime().seconds();
+	
+										localLegResults.add(legInformation);
+									}
 								} else {
-									tripInformation.numberOfTransfers += 1;
-									tripInformation.transferWaitingTime_min += waitingTime / 60.0;
+									throw new IllegalStateException();
 								}
-
-								TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
-								TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
-								String transitMode = transitRoute.getTransportMode();
-
-								double inVehicleTime = route.getTravelTime().seconds() - waitingTime;
-
-								switch (transitMode) {
-								case "rail":
-									tripInformation.inVehicleTimeRail_min += inVehicleTime / 60.0;
-									tripInformation.inVehicleDistanceRail_km += route.getDistance() * 1e-3;
-									break;
-								case "subway":
-									tripInformation.inVehicleTimeSubway_min += inVehicleTime / 60.0;
-									tripInformation.inVehicleDistanceSubway_km += route.getDistance() * 1e-3;
-									break;
-								case "bus":
-									tripInformation.inVehicleTimeBus_min += inVehicleTime / 60.0;
-									tripInformation.inVehicleDistanceBus_km += route.getDistance() * 1e-3;
-									break;
-								case "tram":
-									tripInformation.inVehicleTimeTram_min += inVehicleTime / 60.0;
-									tripInformation.inVehicleDistanceTram_km += route.getDistance() * 1e-3;
-									break;
-								default:
-									tripInformation.inVehicleTimeOther_min += inVehicleTime / 60.0;
-									tripInformation.inVehicleDistanceOther_km += route.getDistance() * 1e-3;
-								}
-
-								tripInformation.isOnlyWalk = 0;
-
-								{ // Legs
-									Departure departure = findDeparture(route, transitRoute);
-
-									LegInformation legInformation = new LegInformation();
-									legInformation.identifier = task.identifier;
-									legInformation.legIndex = currentIndex;
-									legInformation.transitMode = transitMode;
-									legInformation.lineId = transitLine.getId().toString();
-									legInformation.routeId = transitRoute.getId().toString();
-									legInformation.vehicleId = departure.getVehicleId().toString();
-									legInformation.accessTime = route.getBoardingTime().seconds();
-									legInformation.egressTime = leg.getDepartureTime().seconds()
-											+ leg.getTravelTime().seconds();
-
-									localLegResults.add(legInformation);
-								}
-							} else {
-								throw new IllegalStateException();
+	
+								currentLegIndex++;
 							}
-
-							currentIndex++;
+							
+							currentElementIndex++;
 						}
 
 						tripInformation.inVehicleTimeTotal_min = tripInformation.inVehicleTimeRail_min
