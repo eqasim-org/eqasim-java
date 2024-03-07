@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-geopkg</artifactId>
-			<version>24.2</version>
+			<version>29.0</version>
 		</dependency>
 
 		<dependency>
