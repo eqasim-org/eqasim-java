@@ -46,6 +46,12 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-geopkg</artifactId>
+			<version>29.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>3.8.0</version>
@@ -111,7 +117,7 @@
 			<artifactId>matsim-examples</artifactId>
 			<version>${matsim.version}</version>
 		</dependency>
-    
+
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

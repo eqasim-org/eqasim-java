@@ -18,7 +18,7 @@ public class RunImputeHeadway {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
-				.allowOptions("threads", "batch-size") //
+				.allowOptions("threads", "batch-size", "interval") //
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
@@ -29,13 +29,14 @@ public class RunImputeHeadway {
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
-
+		double interval = cmd.getOption("interval").map(Double::parseDouble).orElse(3600.0);
+		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		ScenarioUtils.loadScenario(scenario);
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
-				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, 2.0 * 3600.0)) //
+				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, interval)) //
 				.build();
 
 		HeadwayImputer headwayImputer = injector.getInstance(HeadwayImputer.class);
