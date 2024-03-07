@@ -57,6 +57,7 @@ public class ExportTransitLinesToShapefile {
 				.addAttribute("line_name", String.class)//
 				.addAttribute("route_id", String.class) //
 				.addAttribute("mode", String.class) //
+				.addAttribute("description", String.class) //
 				.create();
 
 		Network network = scenario.getNetwork();
@@ -108,7 +109,8 @@ public class ExportTransitLinesToShapefile {
 								transitLine.getId().toString(),
 								transitLine.getName(),//
 								transitRoute.getId().toString(), //
-								transitRoute.getTransportMode(),//
+								transitRoute.getTransportMode(), //
+								transitRoute.getDescription() //
 						}, null);
 
 				features.add(feature);

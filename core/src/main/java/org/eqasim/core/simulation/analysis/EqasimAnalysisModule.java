@@ -5,6 +5,7 @@ import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.legs.LegListener;
 import org.eqasim.core.analysis.pt.PublicTransportLegListener;
 import org.eqasim.core.analysis.trips.TripListener;
+import org.eqasim.core.simulation.analysis.stuck.StuckAnalysisModule;
 import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
@@ -20,6 +21,7 @@ public class EqasimAnalysisModule extends AbstractModule {
 	@Override
 	public void install() {
 		addControlerListenerBinding().to(AnalysisOutputListener.class);
+		
 		if(getConfig().getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
 			install(new DrtAnalysisModule());
 		} else {
@@ -28,6 +30,8 @@ public class EqasimAnalysisModule extends AbstractModule {
 			bind(DefaultPersonAnalysisFilter.class);
 			bind(PersonAnalysisFilter.class).to(DefaultPersonAnalysisFilter.class);
 		}
+		
+		install(new StuckAnalysisModule());
 	}
 
 	@Provides
