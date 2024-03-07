@@ -30,7 +30,7 @@ public class RunImputeHeadway {
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
 		double interval = cmd.getOption("interval").map(Double::parseDouble).orElse(3600.0);
-
+		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		ScenarioUtils.loadScenario(scenario);
 
