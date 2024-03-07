@@ -15,7 +15,7 @@ import org.eqasim.ile_de_france.tools.routing.BatchRoadRouter.Task;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
 import org.eqasim.vdf.VDFScope;
-import org.eqasim.vdf.VDFTrafficHandler;
+import org.eqasim.vdf.handlers.VDFTrafficHandler;
 import org.eqasim.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
