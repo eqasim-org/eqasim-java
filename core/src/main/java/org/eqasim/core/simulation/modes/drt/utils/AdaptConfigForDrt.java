@@ -84,7 +84,7 @@ public class AdaptConfigForDrt {
             // Set up choice model
             EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
             eqasimConfig.setCostModel(drtMode, drtCostModels.get(drtMode));
-            eqasimConfig.setEstimator(drtMode, drtUtilityEstimators.get(drtMode));
+            eqasimConfig.addMode(drtMode).setEstimator(drtUtilityEstimators.get(drtMode));
 
             PlanCalcScoreConfigGroup.ModeParams modeParams = new PlanCalcScoreConfigGroup.ModeParams(drtMode);
             config.planCalcScore().addModeParams(modeParams);

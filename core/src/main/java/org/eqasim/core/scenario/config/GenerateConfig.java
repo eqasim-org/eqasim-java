@@ -166,13 +166,13 @@ public class GenerateConfig {
 
 		// Set up modes
 
-		eqasimConfig.setEstimator(TransportMode.car, EqasimModeChoiceModule.CAR_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(TransportMode.pt, EqasimModeChoiceModule.PT_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(TransportMode.bike, EqasimModeChoiceModule.BIKE_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(TransportMode.walk, EqasimModeChoiceModule.WALK_ESTIMATOR_NAME);
+		eqasimConfig.addMode(TransportMode.car).setEstimator(EqasimModeChoiceModule.CAR_ESTIMATOR_NAME);
+		eqasimConfig.addMode(TransportMode.pt).setEstimator(EqasimModeChoiceModule.PT_ESTIMATOR_NAME);
+		eqasimConfig.addMode(TransportMode.bike).setEstimator(EqasimModeChoiceModule.BIKE_ESTIMATOR_NAME);
+		eqasimConfig.addMode(TransportMode.walk).setEstimator(EqasimModeChoiceModule.WALK_ESTIMATOR_NAME);
 
 		for (String mode : Arrays.asList("outside", "car_passenger", "truck")) {
-			eqasimConfig.setEstimator(mode, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+			eqasimConfig.addMode(mode).setEstimator(EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
 		}
 
 		eqasimConfig.setCostModel(TransportMode.car, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);

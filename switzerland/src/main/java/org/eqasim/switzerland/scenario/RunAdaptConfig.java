@@ -21,8 +21,8 @@ public class RunAdaptConfig {
 	static public void adaptConfiguration(Config config) {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
-		eqasimConfig.setEstimator(TransportMode.car, SwissModeChoiceModule.CAR_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(TransportMode.bike, SwissModeChoiceModule.BIKE_ESTIMATOR_NAME);
+		eqasimConfig.addMode(TransportMode.car).setEstimator(SwissModeChoiceModule.CAR_ESTIMATOR_NAME);
+		eqasimConfig.addMode(TransportMode.bike).setEstimator(SwissModeChoiceModule.BIKE_ESTIMATOR_NAME);
 
 		eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, SwissModeChoiceModule.PT_COST_MODEL_NAME);

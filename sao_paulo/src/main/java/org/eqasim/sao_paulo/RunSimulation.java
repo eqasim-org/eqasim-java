@@ -59,10 +59,10 @@ public class RunSimulation {
 			}
 		}
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-		eqasimConfig.setEstimator("walk", "spWalkEstimator");
-		eqasimConfig.setEstimator("pt", "spPTEstimator");
-		eqasimConfig.setEstimator("car", "spCarEstimator");
-		eqasimConfig.setEstimator("taxi", "spTaxiEstimator");
+		eqasimConfig.addMode("walk").setEstimator("spWalkEstimator");
+		eqasimConfig.addMode("pt").setEstimator("spPTEstimator");
+		eqasimConfig.addMode("car").setEstimator("spCarEstimator");
+		eqasimConfig.addMode("taxi").setEstimator("spTaxiEstimator");
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);

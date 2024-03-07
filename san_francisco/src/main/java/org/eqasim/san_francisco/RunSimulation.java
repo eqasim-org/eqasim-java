@@ -33,10 +33,10 @@ public class RunSimulation {
 		configurator.adjustScenario(scenario);
 
 		EqasimConfigGroup eqasimConfig = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-		eqasimConfig.setEstimator("walk", "sfWalkEstimator");
-		eqasimConfig.setEstimator("bike", "sfBikeEstimator");
-		eqasimConfig.setEstimator("pt", "sfPTEstimator");
-		eqasimConfig.setEstimator("car", "sfCarEstimator");
+		eqasimConfig.addMode("walk").setEstimator("sfWalkEstimator");
+		eqasimConfig.addMode("bike").setEstimator("sfBikeEstimator");
+		eqasimConfig.addMode("pt").setEstimator("sfPTEstimator");
+		eqasimConfig.addMode("car").setEstimator("sfCarEstimator");
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);

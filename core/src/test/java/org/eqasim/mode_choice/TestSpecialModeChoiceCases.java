@@ -147,8 +147,8 @@ public class TestSpecialModeChoiceCases {
 
 		// Make sure the two relevant options (walk vs. bike) both get zero utility
 		DiscreteModeChoiceConfigGroup.getOrCreate(config).setModeAvailability("static");
-		EqasimConfigGroup.get(config).setEstimator("walk", EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
-		EqasimConfigGroup.get(config).setEstimator("bike", EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+		EqasimConfigGroup.get(config).addMode("walk").setEstimator(EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+		EqasimConfigGroup.get(config).addMode("bike").setEstimator(EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
 
 		// Now create the model
 		EqasimConfigurator configurator = new EqasimConfigurator();

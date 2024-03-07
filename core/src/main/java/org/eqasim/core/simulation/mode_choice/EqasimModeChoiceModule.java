@@ -6,11 +6,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.config.ModeParameterSet;
 import org.eqasim.core.simulation.mode_choice.constraints.EqasimVehicleTourConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.PassengerConstraint;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
+import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
 import org.eqasim.core.simulation.mode_choice.utilities.ModalUtilityEstimator;
@@ -101,14 +103,18 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			TimeInterpretation timeInterpretation, DiscreteModeChoiceConfigGroup dmcConfig) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
 
-		for (Map.Entry<String, String> entry : config.getEstimators().entrySet()) {
-			Provider<UtilityEstimator> estimatorFactory = factory.get(entry.getValue());
+		for (ModeParameterSet mode : config.getModes()) {
+			String estimatorName = mode.isUsePseudoRandomError()
+					? EpsilonModule.getEstimator(mode.getEstimator())
+					: mode.getEstimator();
+
+			Provider<UtilityEstimator> estimatorFactory = factory.get(estimatorName);
 
 			if (estimatorFactory == null) {
 				throw new IllegalStateException(
-						String.format("Estimator '%s' for mode '%s' is unknown", entry.getValue(), entry.getKey()));
+						String.format("Estimator '%s' for mode '%s' is unknown", estimatorName, mode.getMode()));
 			} else {
-				estimators.put(entry.getKey(), estimatorFactory.get());
+				estimators.put(mode.getMode(), estimatorFactory.get());
 			}
 		}
 
@@ -138,11 +144,13 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	public DefaultDrtPredictor provideDefaultDrtPredictor(Config config, Map<String, Provider<CostModel>> factory) {
-		if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
+		if (!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
 			throw new IllegalStateException(String.format("%s module not found", MultiModeDrtConfigGroup.GROUP_NAME));
 		}
 		EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-		MultiModeDrtConfigGroup multiModeDrtConfigGroup = (MultiModeDrtConfigGroup) config.getModules().get(MultiModeDrtConfigGroup.GROUP_NAME);
-		return new DefaultDrtPredictor(multiModeDrtConfigGroup.modes().collect(Collectors.toMap(mode -> mode, mode -> getCostModel(factory, eqasimConfigGroup, mode))));
+		MultiModeDrtConfigGroup multiModeDrtConfigGroup = (MultiModeDrtConfigGroup) config.getModules()
+				.get(MultiModeDrtConfigGroup.GROUP_NAME);
+		return new DefaultDrtPredictor(multiModeDrtConfigGroup.modes()
+				.collect(Collectors.toMap(mode -> mode, mode -> getCostModel(factory, eqasimConfigGroup, mode))));
 	}
 }

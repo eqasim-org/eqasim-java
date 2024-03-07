@@ -108,7 +108,7 @@ public class RunCorsicaDrtSimulation {
 			// Set up choice model
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 			eqasimConfig.setCostModel("drt", "drt");
-			eqasimConfig.setEstimator("drt", "drt");
+			eqasimConfig.addMode("drt").setEstimator("drt");
 
 			// Add rejection constraint
 			if (cmd.getOption("use-rejection-constraint").map(Boolean::parseBoolean).orElse(false)) {
