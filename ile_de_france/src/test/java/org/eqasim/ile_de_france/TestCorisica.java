@@ -40,7 +40,7 @@ public class TestCorisica {
 	public void testCorsicaPipeline()
 			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
 
-		Assert.assertEquals(3162, countPersons("corsica_test/corsica_population.xml.gz"));
+		Assert.assertEquals(389, countPersons("corsica_test/corsica_population.xml.gz"));
 
 		// Run the simulation
 		{
@@ -50,14 +50,14 @@ public class TestCorisica {
 					"--config:controler.outputDirectory", "corsica_test/simulation_output", //
 			});
 
-			Assert.assertEquals(3162, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
+			Assert.assertEquals(389, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/simulation_output/output_events.xml.gz");
-			Assert.assertEquals(7759, (long) counts.get("car"));
-			Assert.assertEquals(894, (long) counts.get("car_passenger"));
-			Assert.assertEquals(3699, (long) counts.get("walk"));
-			Assert.assertEquals(2, (long) counts.get("bike"));
-			Assert.assertEquals(47, (long) counts.get("pt"));
+			Assert.assertEquals(994, (long) counts.get("car"));
+			Assert.assertEquals(129, (long) counts.get("car_passenger"));
+			Assert.assertEquals(221, (long) counts.get("walk"));
+			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
+			Assert.assertEquals(5, (long) counts.get("pt"));
 		}
 
 		// Run the mode choice + following simulation
@@ -82,7 +82,7 @@ public class TestCorisica {
 					"--output-path", "corsica_test", //
 			});
 
-			Assert.assertEquals(1286, countPersons("corsica_test/cut_population.xml.gz"));
+			Assert.assertEquals(171, countPersons("corsica_test/cut_population.xml.gz"));
 		}
 
 		// Run the cut simulation
@@ -94,18 +94,12 @@ public class TestCorisica {
 			});
 
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
-			Assert.assertEquals(2991, (long) counts.get("car"));
-			Assert.assertEquals(387, (long) counts.get("car_passenger"));
-      // Note that walk has increased from 847 to 7458 when integrating access/egress
-			// for network-based modes. This is because MATSim really generates an access
-			// and egress for *every* network-based trip, even if the distance is zero. This
-			// value is higher than in the baseline (before cutting) case, because in the
-			// current Corsica scenario, there are no access egress legs in the base version
-			// (and don't get generated a lot after only two iterations).
-			Assert.assertEquals(7458, (long) counts.get("walk"));
-      Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
-			Assert.assertEquals(9, (long) counts.get("pt"));
-			Assert.assertEquals(95, (long) counts.get("outside"));
+			Assert.assertEquals(423, (long) counts.get("car"));
+			Assert.assertEquals(53, (long) counts.get("car_passenger"));
+			Assert.assertEquals(103, (long) counts.get("walk"));
+			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
+			Assert.assertEquals(0, (long) counts.getOrDefault("pt", 0L));
+			Assert.assertEquals(6, (long) counts.get("outside"));
 		}
 	}
 

@@ -75,9 +75,9 @@ public class RunCorsicaDrtSimulation {
 			drtConfig.mode = "drt";
 			drtConfig.operationalScheme = OperationalScheme.door2door;
 			drtConfig.stopDuration = 15.0;
-			drtConfig.maxWaitTime = 600.0;
-			drtConfig.maxTravelTimeAlpha = 1.5;
-			drtConfig.maxTravelTimeBeta = 300.0;
+			drtConfig.maxWaitTime = 3600.0;
+			drtConfig.maxTravelTimeAlpha = 3.0;
+			drtConfig.maxTravelTimeBeta = 3600.0;
 			drtConfig.vehiclesFile = Resources.getResource("corsica_drt/drt_vehicles.xml").toString();
 
 			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
