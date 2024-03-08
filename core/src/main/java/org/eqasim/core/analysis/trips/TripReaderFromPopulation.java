@@ -18,7 +18,6 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
-import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
@@ -28,15 +27,13 @@ import org.matsim.facilities.ActivityFacility;
 
 public class TripReaderFromPopulation {
 	final private Collection<String> networkModes;
-	final private MainModeIdentifier mainModeIdentifier;
 	final private PersonAnalysisFilter personFilter;
 	final private Optional<Network> network;
 	final private Optional<ActivityFacilities> facilities;
 
-	public TripReaderFromPopulation(Collection<String> networkModes, MainModeIdentifier mainModeIdentifier,
-			PersonAnalysisFilter personFilter, Optional<Network> network, Optional<ActivityFacilities> facilities) {
+	public TripReaderFromPopulation(Collection<String> networkModes, PersonAnalysisFilter personFilter,
+			Optional<Network> network, Optional<ActivityFacilities> facilities) {
 		this.networkModes = networkModes;
-		this.mainModeIdentifier = mainModeIdentifier;
 		this.personFilter = personFilter;
 		this.network = network;
 		this.facilities = facilities;
@@ -109,7 +106,7 @@ public class TripReaderFromPopulation {
 
 					tripItems.add(new TripItem(person.getId(), personTripIndex, originCoord, destinationCoord,
 							departureTime, duration, getVehicleDistance(trip), getRoutedDistance(trip),
-							mainModeIdentifier.identifyMainMode(trip.getTripElements()),
+							TripStructureUtils.getRoutingMode(trip.getLegsOnly().get(0)),
 							trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
 							CoordUtils.calcEuclideanDistance(originCoord, destinationCoord)));
 
