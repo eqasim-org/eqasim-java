@@ -4,10 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.components.transit.events.PublicTransitEvent;
@@ -27,25 +24,19 @@ import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.PopulationFactory;
 import org.matsim.core.api.experimental.events.TeleportationArrivalEvent;
 import org.matsim.core.api.experimental.events.handler.TeleportationArrivalEventHandler;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
 
-import com.google.common.base.Verify;
-
 public class TripListener implements ActivityStartEventHandler, ActivityEndEventHandler, PersonDepartureEventHandler,
 		PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, LinkEnterEventHandler,
 		TeleportationArrivalEventHandler, GenericEventHandler {
-	final private MainModeIdentifier mainModeIdentifier;
 	final private Network network;
 	final private PopulationFactory factory;
 
@@ -56,9 +47,8 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 	final private PersonAnalysisFilter personFilter;
 
-	public TripListener(Network network, MainModeIdentifier mainModeIdentifier, PersonAnalysisFilter personFilter) {
+	public TripListener(Network network, PersonAnalysisFilter personFilter) {
 		this.network = network;
-		this.mainModeIdentifier = mainModeIdentifier;
 		this.factory = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation().getFactory();
 		this.personFilter = personFilter;
 	}
@@ -99,54 +89,20 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 	@Override
 	public void handleEvent(PersonDepartureEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
-			Leg leg = factory.createLeg(event.getLegMode());
-			leg.setRoutingMode(event.getRoutingMode());
-			ongoing.get(event.getPersonId()).elements.add(leg);
+			ongoing.get(event.getPersonId()).mode = event.getRoutingMode();
 		}
-	}
-
-	private String identifyMainMode(List<? extends PlanElement> elements) {
-		// TODO MATSim 14/15 : We can obtain the trip (routing) mode from the departure
-		// events!
-
-		Set<String> modes = new HashSet<>();
-		TripStructureUtils.getLegs(elements).forEach(leg -> modes.add(leg.getMode()));
-
-		if (modes.contains("car")) {
-			return "car";
-		} else if (modes.contains("car_passenger")) {
-			return "car_passenger";
-		} else if (modes.contains("bike")) {
-			return "bike";
-		} else if (modes.contains("outside")) {
-			return "outside";
-		}
-
-		for (String mode : modes) {
-			if (mode.startsWith("pt")) {
-				return "pt";
-			}
-		}
-
-		Verify.verify(modes.contains("walk") && modes.size() == 1,
-				"Don't understand the modes: " + modes.stream().collect(Collectors.joining(", ")));
-		return "walk";
 	}
 
 	@Override
 	public void handleEvent(ActivityStartEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
-			if (TripStructureUtils.isStageActivityType(event.getActType())) {
-				ongoing.get(event.getPersonId()).elements
-						.add(factory.createActivityFromLinkId(event.getActType(), event.getLinkId()));
-			} else {
+			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
 				TripListenerItem trip = ongoing.remove(event.getPersonId());
 
 				if (trip != null) {
 					trip.returning = event.getActType().equals("home");
 					trip.followingPurpose = event.getActType();
 					trip.travelTime = event.getTime() - trip.departureTime;
-					trip.mode = identifyMainMode(trip.elements);
 					trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
 					trip.euclideanDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
