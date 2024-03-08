@@ -24,8 +24,6 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.RoutingModeMainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.MatsimFacilitiesReader;
@@ -66,8 +64,6 @@ public class RunTripAnalysis {
 
 		String outputPath = cmd.getOptionStrict("output-path");
 
-		MainModeIdentifier mainModeIdentifier = new RoutingModeMainModeIdentifier();
-
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
 
@@ -79,7 +75,7 @@ public class RunTripAnalysis {
 			new MatsimNetworkReader(network).readFile(networkPath);
 
 			String eventsPath = cmd.getOptionStrict("events-path");
-			TripListener tripListener = new TripListener(network, mainModeIdentifier, personAnalysisFilter);
+			TripListener tripListener = new TripListener(network, personAnalysisFilter);
 			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
 		} else {
 			Network network = null;
@@ -102,8 +98,8 @@ public class RunTripAnalysis {
 			}
 
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(vehicleModes, mainModeIdentifier, personAnalysisFilter,
-					Optional.ofNullable(network), Optional.ofNullable(facilities)).readTrips(populationPath);
+			trips = new TripReaderFromPopulation(vehicleModes, personAnalysisFilter, Optional.ofNullable(network),
+					Optional.ofNullable(facilities)).readTrips(populationPath);
 		}
 
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));
