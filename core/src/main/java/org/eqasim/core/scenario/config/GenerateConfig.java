@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.ConstraintModule;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
@@ -49,7 +50,12 @@ public class GenerateConfig {
 		this.threads = threads;
 	}
 
-	private final static int DEFAULT_ITERATIONS = 60;
+	/**
+	 * This value is the last resort to stop the simulation, in case the termination
+	 * criterion is never fulfilled. Otherwise, the simulation is stopped when the
+	 * termination criterion kicks in.
+	 */
+	private final static int DEFAULT_ITERATIONS = 1000;
 
 	protected void adaptConfiguration(Config config) {
 		// General settings
@@ -79,6 +85,10 @@ public class GenerateConfig {
 		eqasimConfig.setCrossingPenalty(3.0);
 		eqasimConfig.setSampleSize(sampleSize);
 		eqasimConfig.setAnalysisInterval(DEFAULT_ITERATIONS);
+		
+		// Termination settings
+		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+		terminationConfig.setModes(MODES);
 
 		// Scoring config
 		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();

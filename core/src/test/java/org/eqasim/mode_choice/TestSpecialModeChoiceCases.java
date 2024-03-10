@@ -19,6 +19,7 @@ import org.eqasim.core.scenario.config.GenerateConfig;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.junit.Test;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -152,6 +153,7 @@ public class TestSpecialModeChoiceCases {
 
 		// Now create the model
 		EqasimConfigurator configurator = new EqasimConfigurator();
+		configurator.getModules().removeIf(m -> m instanceof EqasimTerminationModule);
 		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		

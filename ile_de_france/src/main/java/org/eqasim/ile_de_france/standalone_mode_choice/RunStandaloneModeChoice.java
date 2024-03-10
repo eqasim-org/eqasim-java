@@ -27,6 +27,7 @@ import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.RunSimulation;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
@@ -225,6 +226,10 @@ public class RunStandaloneModeChoice {
         });
 
         for(AbstractModule module: configurator.getModules()) {
+        	if (module instanceof EqasimTerminationModule) {
+        		continue;
+        	}
+        	
             injectorBuilder.addOverridingModule(module);
         }
 
