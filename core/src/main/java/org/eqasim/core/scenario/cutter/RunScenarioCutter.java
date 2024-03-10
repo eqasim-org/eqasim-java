@@ -27,6 +27,7 @@ import org.eqasim.core.scenario.routing.PopulationRouter;
 import org.eqasim.core.scenario.routing.PopulationRouterModule;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -61,6 +62,8 @@ public class RunScenarioCutter {
 
 		// Load scenario
 		EqasimConfigurator configurator = new EqasimConfigurator();
+		configurator.getModules().removeIf(m -> m instanceof EqasimTerminationModule);
+		
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
