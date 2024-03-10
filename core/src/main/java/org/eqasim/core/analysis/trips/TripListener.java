@@ -25,12 +25,9 @@ import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.PopulationFactory;
 import org.matsim.core.api.experimental.events.TeleportationArrivalEvent;
 import org.matsim.core.api.experimental.events.handler.TeleportationArrivalEventHandler;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.router.TripStructureUtils;
-import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
 
@@ -38,7 +35,6 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 		PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, LinkEnterEventHandler,
 		TeleportationArrivalEventHandler, GenericEventHandler {
 	final private Network network;
-	final private PopulationFactory factory;
 
 	final private Collection<TripItem> trips = new LinkedList<>();
 	final private Map<Id<Person>, TripListenerItem> ongoing = new HashMap<>();
@@ -49,7 +45,6 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 
 	public TripListener(Network network, PersonAnalysisFilter personFilter) {
 		this.network = network;
-		this.factory = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation().getFactory();
 		this.personFilter = personFilter;
 	}
 
