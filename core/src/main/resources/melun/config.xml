@@ -233,11 +233,6 @@
 			<param name="mode" value="truck" />
 		</parameterset>
 	</module>
-	<module name="eqasim:calibration" >
-		<param name="enableOutput" value="false" />
-		<param name="hint" value="No hint given." />
-		<param name="referencePath" value="null" />
-	</module>
 	<module name="facilities" >
 		<!-- This defines how facilities should be created. Possible values: none fromFile setInScenario onePerActivityLinkInPlansFile onePerActivityLinkInPlansFileExceptWhenCoordinatesAreGiven onePerActivityLocationInPlansFile  -->
 		<param name="facilitiesSource" value="none" />
