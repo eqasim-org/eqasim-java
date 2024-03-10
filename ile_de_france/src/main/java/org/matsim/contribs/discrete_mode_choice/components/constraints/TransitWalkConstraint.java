@@ -20,6 +20,8 @@ import org.matsim.pt.routes.TransitPassengerRoute;
  * This contraint forbids "pt" trips that only consist of walk legs, i.e. there
  * is no "pt" leg included.
  * 
+ * NOTE: This constraint is included in this way now in MATSim 16. The class can be removed once we update to MATSim 16.
+ * 
  * @author sebhoerl
  */
 public class TransitWalkConstraint extends AbstractTripConstraint {
