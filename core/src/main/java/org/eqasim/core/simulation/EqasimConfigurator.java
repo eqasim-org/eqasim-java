@@ -1,6 +1,13 @@
 package org.eqasim.core.simulation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 import org.eqasim.core.components.EqasimComponentsModule;
@@ -8,7 +15,6 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
-import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.termination.mode_share.ModeShareModule;
@@ -49,8 +55,7 @@ public class EqasimConfigurator {
 		configGroups.addAll(Arrays.asList( //
 				new SwissRailRaptorConfigGroup(), //
 				new EqasimConfigGroup(), //
-				new DiscreteModeChoiceConfigGroup(), //
-				new CalibrationConfigGroup() //
+				new DiscreteModeChoiceConfigGroup() //
 		));
 
 		modules.addAll(Arrays.asList( //
