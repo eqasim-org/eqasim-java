@@ -4,13 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import javax.annotation.Nullable;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.ile_de_france.analysis.counts.calibration.CalibrationManager;
-import org.eqasim.ile_de_france.analysis.counts.calibration.CalibrationUpdate;
-import org.eqasim.ile_de_france.analysis.counts.calibration.CalibrationUpdateWriter;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -23,6 +21,8 @@ import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 
 public class CountsListener implements IterationStartsListener, IterationEndsListener, ShutdownListener {
+	private final Logger logger = LogManager.getLogger(CountsListener.class);
+
 	static public final String OUTPUT_FILE = "eqasim_counts.csv";
 
 	private final CountsHandler handler;
@@ -30,26 +30,23 @@ public class CountsListener implements IterationStartsListener, IterationEndsLis
 	private final EqasimConfigGroup eqasimConfig;
 	private final OutputDirectoryHierarchy outputDirectoryHierarchy;
 	private final Network network;
-	private final CalibrationManager calibrationManager;
 
 	private boolean isActive = false;
 
 	public CountsListener(EqasimConfigGroup eqasimConfig, EventsManager eventsManager,
-			OutputDirectoryHierarchy outputDirectoryHierarchy, Network network, DailyCounts counts,
-			@Nullable CalibrationManager calibration) {
+			OutputDirectoryHierarchy outputDirectoryHierarchy, Network network, IdSet<Link> linkIds) {
 		this.eqasimConfig = eqasimConfig;
 		this.eventsManager = eventsManager;
 		this.network = network;
 		this.outputDirectoryHierarchy = outputDirectoryHierarchy;
 
-		for (Id<Link> linkId : counts.getCounts().keySet()) {
+		for (Id<Link> linkId : linkIds) {
 			if (!network.getLinks().containsKey(linkId)) {
-				throw new IllegalStateException("Link for counting does not exist: " + linkId);
+				logger.warn("Link for counting does not exist in network: " + linkId);
 			}
 		}
 
-		this.handler = new CountsHandler(counts.getCounts().keySet());
-		this.calibrationManager = calibration;
+		this.handler = new CountsHandler(linkIds);
 	}
 
 	@Override
@@ -71,11 +68,6 @@ public class CountsListener implements IterationStartsListener, IterationEndsLis
 				File outputPath = new File(
 						outputDirectoryHierarchy.getIterationFilename(event.getIteration(), OUTPUT_FILE));
 				new CountsWriter(handler.getCounts(), network, 1.0 / eqasimConfig.getSampleSize()).write(outputPath);
-
-				if (calibrationManager != null) {
-					CalibrationUpdate update = calibrationManager.update(event.getIteration(), handler.getCounts());
-					new CalibrationUpdateWriter(outputDirectoryHierarchy).write(update);
-				}
 			} catch (IOException e) {
 			}
 		}

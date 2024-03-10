@@ -36,8 +36,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("counts-path", "external-convergence", "signal-input-path", "use-epsilon", "use-vdf",
-						"use-counts-calibration", "use-vdf-engine", "vdf-generate-network-events",
+				.allowOptions("counts-path", "use-epsilon", "use-vdf", "use-vdf-engine", "vdf-generate-network-events",
 						"line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX, "raptor") //
@@ -88,9 +87,7 @@ public class RunSimulation {
 		}
 
 		if (cmd.hasOption("counts-path")) {
-			boolean useCountsCalibration = cmd.getOption("use-counts-calibration").map(Boolean::parseBoolean)
-					.orElse(false);
-			controller.addOverridingModule(new CountsModule(cmd, useCountsCalibration));
+			controller.addOverridingModule(new CountsModule(cmd));
 		}
 
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(true)) {
@@ -98,7 +95,7 @@ public class RunSimulation {
 			dmcConfig.setSelector(SelectorModule.MAXIMUM);
 
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-			
+
 			eqasimConfig.setEstimator("car", "epsilon_" + IDFModeChoiceModule.CAR_ESTIMATOR_NAME);
 			eqasimConfig.setEstimator("pt", "epsilon_" + IDFModeChoiceModule.PT_ESTIMATOR_NAME);
 			eqasimConfig.setEstimator("bike", "epsilon_" + IDFModeChoiceModule.BIKE_ESTIMATOR_NAME);
@@ -119,7 +116,7 @@ public class RunSimulation {
 			Set<String> mainModes = new HashSet<>(config.qsim().getMainModes());
 			mainModes.remove("car");
 			config.qsim().setMainModes(mainModes);
-			
+
 			VDFEngineConfigGroup vdfEngineConfig = new VDFEngineConfigGroup();
 			config.addModule(vdfEngineConfig);
 

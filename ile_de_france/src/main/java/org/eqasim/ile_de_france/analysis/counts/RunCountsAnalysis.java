@@ -3,6 +3,8 @@ package org.eqasim.ile_de_france.analysis.counts;
 import java.io.File;
 import java.io.IOException;
 
+import org.matsim.api.core.v01.IdSet;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
@@ -27,8 +29,8 @@ public class RunCountsAnalysis {
 		Network network = NetworkUtils.createNetwork();
 		new MatsimNetworkReader(network).readFile(networkPath.toString());
 
-		DailyCounts counts = new CountsReader().read(referencePath);
-		CountsHandler handler = new CountsHandler(counts.getCounts().keySet());
+		IdSet<Link> linkIds = new CountsReader().readLinks(referencePath);
+		CountsHandler handler = new CountsHandler(linkIds);
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
 		eventsManager.addHandler(handler);
