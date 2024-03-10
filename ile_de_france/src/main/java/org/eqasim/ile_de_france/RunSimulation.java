@@ -1,16 +1,13 @@
 package org.eqasim.ile_de_france;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.convergence.ConvergenceTerminationCriterion;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.analysis.counts.CountsModule;
 import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
@@ -32,14 +29,8 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.TerminationCriterion;
 import org.matsim.core.scenario.ScenarioUtils;
-
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
@@ -143,25 +134,6 @@ public class RunSimulation {
 				cfg.addNamedComponent(VDFEngineModule.COMPONENT_NAME);
 			});
 		}
-
-		controller.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				addEventHandlerBinding().to(ModeShareListener.class);
-				addControlerListenerBinding().to(ModeShareListener.class);
-
-				bind(ConvergenceTerminationCriterion.class).asEagerSingleton();
-				bind(TerminationCriterion.class).to(ConvergenceTerminationCriterion.class);
-			}
-
-			@Provides
-			@Singleton
-			public ModeShareListener provideModeShareListener(OutputDirectoryHierarchy outputHierarchy,
-					ConvergenceTerminationCriterion terminationCriterion) {
-				Optional<File> signalInputPath = cmd.getOption("signal-input-path").map(p -> new File(p));
-				return new ModeShareListener(outputHierarchy, terminationCriterion, signalInputPath);
-			}
-		});
 
 		controller.addOverridingModule(new ParkingModule(3.0));
 		controller.addOverridingModule(new IDFRaptorModule(cmd));
