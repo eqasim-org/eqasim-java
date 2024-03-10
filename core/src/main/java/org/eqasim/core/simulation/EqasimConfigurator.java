@@ -10,6 +10,8 @@ import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.calibration.CalibrationConfigGroup;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationModule;
+import org.eqasim.core.simulation.termination.mode_share.ModeShareModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -55,8 +57,10 @@ public class EqasimConfigurator {
 				new SwissRailRaptorModule(), //
 				new EqasimTransitModule(), //
 				new DiscreteModeChoiceModule(), //
-				new EqasimComponentsModule(),
-				new EpsilonModule()//
+				new EqasimComponentsModule(), //
+				new EpsilonModule(), //
+				new EqasimTerminationModule(), //
+				new ModeShareModule() //
 		));
 
 		qsimModules.addAll(Arrays.asList( //

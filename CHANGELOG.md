@@ -6,6 +6,8 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Add terminaton criterion
+- Several cleanups in the recent commits
 - Updated to MATSim 15
 - Improve emissions tools and add tests
 - Add support for multi-stage taxi trips in Sao Paulo
