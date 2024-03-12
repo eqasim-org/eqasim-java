@@ -38,7 +38,10 @@ public class PublicTransportLegReaderFromPopulation {
     }
 
     public Collection<PublicTransportLegItem> readPublicTransportLegs(Population population) {
-        return population.getPersons().values().stream().flatMap(person -> getPublicTransportLegs(person).stream()).collect(Collectors.toList());
+        return population.getPersons().values().stream()
+                .filter(person -> personAnalysisFilter.analyzePerson(person.getId()))
+                .flatMap(person -> getPublicTransportLegs(person).stream())
+                .collect(Collectors.toList());
     }
 
     public Collection<PublicTransportLegItem> getPublicTransportLegs(Person person) {
