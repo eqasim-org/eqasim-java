@@ -16,6 +16,7 @@ import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.termination.mode_share.ModeShareModule;
 import org.matsim.api.core.v01.Id;
@@ -64,7 +65,6 @@ public class EqasimConfigurator {
 				new DiscreteModeChoiceModule(), //
 				new EqasimComponentsModule(), //
 				new EpsilonModule(), //
-				new EqasimTerminationModule(), //
 				new ModeShareModule() //
 		));
 
@@ -80,6 +80,7 @@ public class EqasimConfigurator {
 						DvrpQSimComponents.activateAllModes((MultiModal<?>) controller.getConfig().getModules().get(MultiModeDrtConfigGroup.GROUP_NAME)).configure(components)));
 
 		this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
+		this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), Collections.singleton(new EqasimTerminationModule()));
 	}
 
 	public ConfigGroup[] getConfigGroups() {
