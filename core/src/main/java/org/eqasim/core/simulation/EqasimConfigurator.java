@@ -64,8 +64,7 @@ public class EqasimConfigurator {
 				new EqasimTransitModule(), //
 				new DiscreteModeChoiceModule(), //
 				new EqasimComponentsModule(), //
-				new EpsilonModule(), //
-				new ModeShareModule() //
+				new EpsilonModule() //
 		));
 
 		qsimModules.addAll(Arrays.asList( //
@@ -80,7 +79,7 @@ public class EqasimConfigurator {
 						DvrpQSimComponents.activateAllModes((MultiModal<?>) controller.getConfig().getModules().get(MultiModeDrtConfigGroup.GROUP_NAME)).configure(components)));
 
 		this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
-		this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), Collections.singleton(new EqasimTerminationModule()));
+		this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), List.of(new EqasimTerminationModule(), new ModeShareModule()));
 	}
 
 	public ConfigGroup[] getConfigGroups() {
