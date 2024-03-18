@@ -17,6 +17,9 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityE
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
+import org.matsim.contribs.discrete_mode_choice.components.tour_finder.ActivityTourFinder;
+import org.matsim.contribs.discrete_mode_choice.modules.config.ActivityTourFinderConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
@@ -87,7 +90,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public ActivityTourFinderWithExcludedActivities provideActivityTourFinderWithExcludedActivities() {
-		return new ActivityTourFinderWithExcludedActivities(List.of("home"), List.of("outside"));
+	public ActivityTourFinderWithExcludedActivities provideActivityTourFinderWithExcludedActivities(DiscreteModeChoiceConfigGroup dmcConfig) {
+		ActivityTourFinderConfigGroup config = dmcConfig.getActivityTourFinderConfigGroup();
+		return new ActivityTourFinderWithExcludedActivities(List.of("outside"), new ActivityTourFinder(config.getActivityTypes()));
 	}
 }
