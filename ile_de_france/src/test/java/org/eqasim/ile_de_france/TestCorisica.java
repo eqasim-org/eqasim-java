@@ -101,6 +101,17 @@ public class TestCorisica {
 			Assert.assertEquals(0, (long) counts.getOrDefault("pt", 0L));
 			Assert.assertEquals(6, (long) counts.get("outside"));
 		}
+
+		{
+			RunStandaloneModeChoice.main(new String[] {
+					"--config-path", "corsica_test/cut_config.xml",
+					"--config:DiscreteModeChoice.tourFinder", "IsolatedOutsideTrips",
+					"--config:standaloneModeChoice.outputDirectory", "corsica_test/cut_output_mode_choice",
+					"--config:standaloneModeChoice.removePersonsWithNoValidAlternatives", "true",
+					"--write-input-csv-trips", "true",
+					"--write-output-csv-trips", "true"
+			});
+		}
 	}
 
 	static Map<String, Long> countLegs(String eventsPath) {
