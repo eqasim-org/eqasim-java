@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Leg;
@@ -39,6 +40,8 @@ public class RunPopulationRouting {
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+        config.getModules().remove(EqasimTerminationConfigGroup.GROUP_NAME);
+		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
 		config.strategy().clearStrategySettings();
 
