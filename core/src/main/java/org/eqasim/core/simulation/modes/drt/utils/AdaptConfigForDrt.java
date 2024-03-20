@@ -137,7 +137,7 @@ public class AdaptConfigForDrt {
 
         String inputConfigPath = cmd.getOptionStrict("input-config-path");
         String outputConfigPath = cmd.getOptionStrict("output-config-path");
-        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("drt").split(",")).collect(Collectors.toSet()).toArray(String[]::new);
+        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("drt").split(",")).toList().toArray(String[]::new);
         String[] vehiclesPath = cmd.getOptionStrict("vehicles-paths").split(",");
         String qsimEndtime = cmd.getOption("qsim-endtime").orElse("30:00:00");
         String[] costModel = cmd.getOption("cost-models").orElse(EqasimModeChoiceModule.ZERO_COST_MODEL_NAME).split(",");

@@ -3,7 +3,6 @@ package org.eqasim.core.simulation.modes.feeder_drt.utils;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
 import org.eqasim.core.simulation.modes.feeder_drt.config.FeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
@@ -18,7 +17,6 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.pt.config.TransitConfigGroup;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class AdaptConfigForFeederDrt {
 
@@ -88,7 +86,7 @@ public class AdaptConfigForFeederDrt {
 
         String inputConfigPath = cmd.getOptionStrict("input-config-path");
         String outputConfigPath = cmd.getOptionStrict("output-config-path");
-        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("feeder_drt").split(",")).collect(Collectors.toSet()).toArray(String[]::new);
+        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("feeder_drt").split(",")).toList().toArray(String[]::new);
         String[] baseDrtModes = cmd.getOption("base-drt-modes").orElse("drt").split(",");
         String[] basePtModes = cmd.getOption("base-pt-modes").orElse("pt").split(",");
         String[] estimators = cmd.getOption("estimators").orElse(EqasimFeederDrtModeChoiceModule.FEEDER_DRT_ESTIMATOR_NAME).split(",");
