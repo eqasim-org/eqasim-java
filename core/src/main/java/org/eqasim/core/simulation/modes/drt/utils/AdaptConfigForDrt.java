@@ -100,7 +100,7 @@ public class AdaptConfigForDrt {
 
     }
 
-    private static Map<String, Map<String, String>> extractDrtInfo(String[] drtModeNames, Map<String, String[]> values) {
+    public static Map<String, Map<String, String>> extractDrtInfo(String[] drtModeNames, Map<String, String[]> values) {
         Map<String, Map<String, String>> result = new HashMap<>();
         if(drtModeNames.length == 0) {
             throw new IllegalStateException("No drt modes provided");
