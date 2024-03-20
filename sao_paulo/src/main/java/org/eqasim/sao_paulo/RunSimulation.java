@@ -29,6 +29,7 @@ public class RunSimulation {
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		configurator.addOptionalConfigGroups(config);
 		EqasimConfigGroup.get(config).setAnalysisInterval(1);
 		cmd.applyConfiguration(config);
 

@@ -51,6 +51,7 @@ public class RunSimulation {
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		config.addModule(new VDFConfigGroup());
+		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
 
 		{
