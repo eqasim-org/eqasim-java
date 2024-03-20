@@ -10,6 +10,8 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.modes.feeder_drt.FeederDrtModeModule;
+import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
 import org.eqasim.core.tools.*;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
 import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
@@ -193,6 +195,41 @@ public class TestSimulationPipeline {
 
         runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt", List.of("drt_a", "drt_b"));
     }
+
+    @Test
+    public void testFeeder() throws MalformedURLException, CommandLine.ConfigurationException {
+            CreateDrtVehicles.main(new String[]{
+                    "--network-path", "melun_test/input/network.xml.gz",
+                    "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_a.xml.gz",
+                    "--vehicles-number", "50",
+                    "--vehicle-id-prefix", "vehicle_drt_feeder_a_"
+            });
+
+            CreateDrtVehicles.main(new String[]{
+                    "--network-path", "melun_test/input/network.xml.gz",
+                    "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_b.xml.gz",
+                    "--vehicles-number", "50",
+                    "--vehicle-id-prefix", "vehicle_drt_feeder_b_"
+            });
+
+        AdaptConfigForDrt.main(new String[]{
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_feeder.xml",
+                "--mode-names", "drt_for_feeder_a,drt_for_feeder_b",
+                "--vehicles-paths", "melun_test/input/feeder_drt_vehicles_a.xml.gz,melun_test/input/feeder_drt_vehicles_b.xml.gz"
+        });
+
+
+        AdaptConfigForFeederDrt.main(new String[]{
+                "--input-config-path", "melun_test/input/config_feeder.xml",
+                "--output-config-path", "melun_test/input/config_feeder.xml",
+                "--mode-names", "feeder_a,feeder_b",
+                "--base-drt-modes", "drt_for_feeder_a,drt_for_feeder_b"
+        });
+
+        runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output/feeder", List.of("feeder_a", "feeder_b"));
+
+     }
 
     @Test
     public void testEpsilon() throws CommandLine.ConfigurationException {
