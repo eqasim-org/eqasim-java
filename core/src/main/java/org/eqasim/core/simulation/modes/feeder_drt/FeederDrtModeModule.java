@@ -51,6 +51,6 @@ public class FeederDrtModeModule extends AbstractDvrpModeModule {
 				Provider<Network> networkProvider = injector.getProvider(modalAnnotationCreator.key(Network.class, feederDrtConfigGroup.accessEgressModeName));
 				return new FeederDrtRoutingModule(feederDrtConfigGroup.mode, drtRoutingModule, ptRoutingModule, population.getFactory(), transitSchedule, networkProvider.get());
 			}
-		}).asEagerSingleton();
+		});
 	}
 }
