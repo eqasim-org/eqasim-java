@@ -20,7 +20,7 @@ import java.util.*;
 
 public class AdaptConfigForFeederDrt {
 
-    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, String modeAvailability) {
+    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, Map<String, String> accessEgressTransitStopModes, String modeAvailability) {
         if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
             throw new IllegalStateException(String.format("Cannot add module '%s' if module '%s' is not present already. You can use '%s' to configure it.", MultiModeFeederDrtConfigGroup.GROUP_NAME, MultiModeDrtConfigGroup.GROUP_NAME, AdaptConfigForDrt.class.getCanonicalName()));
         }
@@ -62,6 +62,9 @@ public class AdaptConfigForFeederDrt {
             if(!drtModes.contains(feederDrtConfigGroup.accessEgressModeName)) {
                 throw new IllegalStateException(String.format("DRT mode '%s' supplied for '%s' is not registered in the '%s' config group. You can use '%s' to configure it", feederDrtConfigGroup.accessEgressModeName, feederDrtMode, MultiModeDrtConfigGroup.GROUP_NAME, AdaptConfigForDrt.class.getCanonicalName()));
             }
+
+            feederDrtConfigGroup.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
+
             multiModeFeederDrtConfigGroup.addParameterSet(feederDrtConfigGroup);
 
             eqasimConfigGroup.setEstimator(feederDrtMode, utilityEstimators.get(feederDrtMode));
@@ -80,6 +83,7 @@ public class AdaptConfigForFeederDrt {
                 .allowOptions("base-drt-modes")
                 .allowOptions("base-pt-modes")
                 .allowOptions("estimators")
+                .allowOptions("access-egress-transit-stop-modes")
                 .allowOptions("mode-availability")
                 .allowOptions("configurator-class")
                 .build();
@@ -90,12 +94,14 @@ public class AdaptConfigForFeederDrt {
         String[] baseDrtModes = cmd.getOption("base-drt-modes").orElse("drt").split(",");
         String[] basePtModes = cmd.getOption("base-pt-modes").orElse("pt").split(",");
         String[] estimators = cmd.getOption("estimators").orElse(EqasimFeederDrtModeChoiceModule.FEEDER_DRT_ESTIMATOR_NAME).split(",");
+        String[] accessEgressTransitStopModes = cmd.getOption("access-egress-transit-stop-modes").orElse("").split(",");
 
 
         Map<String, String[]> toExtract = new HashMap<>();
         toExtract.put("base-drt-modes", baseDrtModes);
         toExtract.put("base-pt-modes", basePtModes);
         toExtract.put("estimators", estimators);
+        toExtract.put("access-egress-transit-stop-modes", accessEgressTransitStopModes);
 
         Map<String, Map<String, String>> info = AdaptConfigForDrt.extractDrtInfo(modeNames, toExtract);
 
@@ -109,7 +115,7 @@ public class AdaptConfigForFeederDrt {
         Config config = ConfigUtils.loadConfig(inputConfigPath, configurator.getConfigGroups());
         configurator.addOptionalConfigGroups(config);
 
-        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), cmd.getOption("mode-availability").orElse(null));
+        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), cmd.getOption("mode-availability").orElse(null));
 
         ConfigUtils.writeConfig(config, outputConfigPath);
     }

@@ -4,6 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import org.matsim.contrib.dvrp.run.Modal;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 public class FeederDrtConfigGroup extends ReflectiveConfigGroup implements Modal {
     public static final String GROUP_NAME = "feederDrt";
     public FeederDrtConfigGroup() {
@@ -25,8 +28,16 @@ public class FeederDrtConfigGroup extends ReflectiveConfigGroup implements Modal
     @NotBlank
     public String mode = "feederDrt";
 
+    @Parameter
+    @Comment("Comma separated list of PT transit modes (rail, bus...) where intermodality can happen, leave empty to allow intermodality everywhere")
+    public String accessEgressTransitStopModes="";
+
     @Override
     public String getMode() {
         return this.mode;
+    }
+
+    public Collection<String> getAccessEgressTransitStopModes() {
+        return Arrays.stream(this.accessEgressTransitStopModes.split(",")).toList();
     }
 }

@@ -49,7 +49,7 @@ public class FeederDrtModeModule extends AbstractDvrpModeModule {
 				RoutingModule drtRoutingModule = routingModuleProviders.get(feederDrtConfigGroup.accessEgressModeName).get();
 				ModalAnnotationCreator<DvrpMode> modalAnnotationCreator = DvrpModes::mode;
 				Provider<Network> networkProvider = injector.getProvider(modalAnnotationCreator.key(Network.class, feederDrtConfigGroup.accessEgressModeName));
-				return new FeederDrtRoutingModule(feederDrtConfigGroup.mode, drtRoutingModule, ptRoutingModule, population.getFactory(), transitSchedule, networkProvider.get());
+				return new FeederDrtRoutingModule(feederDrtConfigGroup.mode, feederDrtConfigGroup.getAccessEgressTransitStopModes(), drtRoutingModule, ptRoutingModule, population.getFactory(), transitSchedule, networkProvider.get());
 			}
 		});
 	}

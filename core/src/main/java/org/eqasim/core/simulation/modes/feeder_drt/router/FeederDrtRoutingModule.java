@@ -15,10 +15,7 @@ import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.transitSchedule.api.*;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 public class FeederDrtRoutingModule implements RoutingModule {
@@ -36,7 +33,7 @@ public class FeederDrtRoutingModule implements RoutingModule {
     private final QuadTree<Facility> quadTree;
     private final String mode;
 
-    public FeederDrtRoutingModule(String mode, RoutingModule feederRoutingModule, RoutingModule transitRoutingModule,
+    public FeederDrtRoutingModule(String mode, Collection<String> accessEgressTransitStopModes, RoutingModule feederRoutingModule, RoutingModule transitRoutingModule,
                                   PopulationFactory populationFactory, TransitSchedule schedule, Network drtNetwork) {
         logger.info("Starting initialization");
         this.mode = mode;
@@ -49,7 +46,7 @@ public class FeederDrtRoutingModule implements RoutingModule {
 
         for (TransitLine transitLine : schedule.getTransitLines().values()) {
             for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
-                if (transitRoute.getTransportMode().equals("rail") || transitRoute.getTransportMode().equals("subway")) {
+                if (accessEgressTransitStopModes.size() == 0 || accessEgressTransitStopModes.contains(transitRoute.getTransportMode())) {
                     for (TransitRouteStop transitRouteStop : transitRoute.getStops()) {
                         TransitStopFacility transitStopFacility = transitRouteStop.getStopFacility();
                         if (!processedFacilities.contains(transitStopFacility.getId())) {

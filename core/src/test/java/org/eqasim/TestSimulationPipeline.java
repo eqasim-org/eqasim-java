@@ -213,19 +213,19 @@ public class TestSimulationPipeline {
 
     @Test
     public void testFeeder() throws IOException, CommandLine.ConfigurationException {
-            CreateDrtVehicles.main(new String[]{
-                    "--network-path", "melun_test/input/network.xml.gz",
-                    "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_a.xml.gz",
-                    "--vehicles-number", "50",
-                    "--vehicle-id-prefix", "vehicle_drt_feeder_a_"
-            });
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_a.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_feeder_a_"
+        });
 
-            CreateDrtVehicles.main(new String[]{
-                    "--network-path", "melun_test/input/network.xml.gz",
-                    "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_b.xml.gz",
-                    "--vehicles-number", "50",
-                    "--vehicle-id-prefix", "vehicle_drt_feeder_b_"
-            });
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_b.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_feeder_b_"
+        });
 
         AdaptConfigForDrt.main(new String[]{
                 "--input-config-path", "melun_test/input/config.xml",
@@ -239,7 +239,8 @@ public class TestSimulationPipeline {
                 "--input-config-path", "melun_test/input/config_feeder.xml",
                 "--output-config-path", "melun_test/input/config_feeder.xml",
                 "--mode-names", "feeder_a,feeder_b",
-                "--base-drt-modes", "drt_for_feeder_a,drt_for_feeder_b"
+                "--base-drt-modes", "drt_for_feeder_a,drt_for_feeder_b",
+                "--access-egress-transit-stop-modes", "rail|tram|subway"
         });
 
         runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output_feeder", List.of("feeder_a", "feeder_b"));
