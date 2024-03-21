@@ -5,6 +5,7 @@ import org.eqasim.core.simulation.modes.drt.analysis.dvrp_vehicles.VehicleAnalys
 import org.eqasim.core.simulation.modes.drt.analysis.utils.LinkFinder;
 import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.contrib.drt.util.DrtEventsReaders;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -16,7 +17,7 @@ import org.matsim.core.network.io.MatsimNetworkReader;
 import java.io.File;
 import java.io.IOException;
 
-public class RunDvrpVehicleAnalysis {
+public class RunDrtVehicleAnalysis {
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("events-path", "network-path", "movements-output-path", "activities-output-path") //
@@ -39,7 +40,7 @@ public class RunDvrpVehicleAnalysis {
 		eventsManager.addHandler(listener);
 
 		eventsManager.initProcessing();
-		new MatsimEventsReader(eventsManager).readFile(eventsPath);
+		DrtEventsReaders.createEventsReader(eventsManager).readFile(eventsPath);
 		eventsManager.finishProcessing();
 
 		new VehicleAnalysisWriter(listener).writeMovements(new File(movementsOutputPath));
