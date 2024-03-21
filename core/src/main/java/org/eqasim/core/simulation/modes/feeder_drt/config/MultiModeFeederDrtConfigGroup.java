@@ -5,6 +5,8 @@ import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MultiModeFeederDrtConfigGroup extends ReflectiveConfigGroup implements MultiModal<FeederDrtConfigGroup> {
 
@@ -37,4 +39,12 @@ public class MultiModeFeederDrtConfigGroup extends ReflectiveConfigGroup impleme
     public Collection<FeederDrtConfigGroup> getModalElements() {
         return (Collection<FeederDrtConfigGroup>) this.getParameterSets(FeederDrtConfigGroup.GROUP_NAME);
     }
+
+    public Map<String, FeederDrtConfigGroup> getModeConfigs() {
+        return this.getModalElements().stream().collect(Collectors.toMap(FeederDrtConfigGroup::getMode, cfg -> cfg));
+    }
+
+    @Parameter
+    @Comment("Whether or not to perform the analysis for feeder drt services. If set to true, will follow the analysis interval specified in the configuration of the eqasim module")
+    public boolean performAnalysis=true;
 }
