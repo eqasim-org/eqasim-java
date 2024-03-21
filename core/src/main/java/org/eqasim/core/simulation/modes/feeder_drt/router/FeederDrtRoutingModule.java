@@ -44,6 +44,8 @@ public class FeederDrtRoutingModule implements RoutingModule {
         quadTree = new QuadTree<>(bounds[0], bounds[1], bounds[2], bounds[3]);
         Set<Id<TransitStopFacility>> processedFacilities = new HashSet<>();
 
+        boolean addedOneFacitlity=false;
+
         for (TransitLine transitLine : schedule.getTransitLines().values()) {
             for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
                 if (accessEgressTransitStopModes.size() == 0 || accessEgressTransitStopModes.contains(transitRoute.getTransportMode())) {
@@ -55,6 +57,8 @@ public class FeederDrtRoutingModule implements RoutingModule {
                             try {
                                 if (!quadTree.put(transitStopFacility.getCoord().getX(), transitStopFacility.getCoord().getY(), interactionFacility)) {
                                     logger.warn("Cannot add this stop : " + transitStopFacility.getName());
+                                } else {
+                                    addedOneFacitlity = true;
                                 }
                             } catch (IllegalArgumentException exception) {
                                 logger.warn("Cannot add this stop because it's out of DRT's network : " + transitStopFacility.getName());
@@ -63,6 +67,9 @@ public class FeederDrtRoutingModule implements RoutingModule {
                     }
                 }
             }
+        }
+        if(!addedOneFacitlity) {
+            throw new IllegalStateException("No facility available for intermodality");
         }
         logger.info("Initialization finished");
     }
