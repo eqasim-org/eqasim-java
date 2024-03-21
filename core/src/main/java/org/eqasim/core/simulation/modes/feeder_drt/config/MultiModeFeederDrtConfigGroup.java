@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class MultiModeFeederDrtConfigGroup extends ReflectiveConfigGroup implements MultiModal<FeederDrtConfigGroup> {
 
-    public static final String GROUP_NAME = "multiModeFeederDrtModule";
+    public static final String GROUP_NAME = "multiModeFeederDrt";
 
     public MultiModeFeederDrtConfigGroup() {
         super(GROUP_NAME);
