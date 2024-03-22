@@ -6,6 +6,7 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 public class FeederDrtConfigGroup extends ReflectiveConfigGroup implements Modal {
     public static final String GROUP_NAME = "feederDrt";
@@ -38,6 +39,9 @@ public class FeederDrtConfigGroup extends ReflectiveConfigGroup implements Modal
     }
 
     public Collection<String> getAccessEgressTransitStopModes() {
+        if(this.accessEgressTransitStopModes.length() == 0) {
+            return Collections.emptyList();
+        }
         return Arrays.stream(this.accessEgressTransitStopModes.split(",")).toList();
     }
 }
