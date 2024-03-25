@@ -1,8 +1,10 @@
 package org.eqasim.core.components.config;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eqasim.core.analysis.DistanceUnit;
 import org.matsim.core.config.Config;
@@ -65,8 +67,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@Override
 	public ConfigGroup createParameterSet(String type) {
 		switch (type) {
-		case EstimatorParameterSet.GROUP_NAME:
-			return new EstimatorParameterSet();
+		case ModeParameterSet.GROUP_NAME:
+			return new ModeParameterSet();
 		case CostModelParameterSet.GROUP_NAME:
 			return new CostModelParameterSet();
 		default:
@@ -74,52 +76,43 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 		}
 	}
 
-	private Optional<EstimatorParameterSet> getEstimatorParameterSet(String mode) {
-		EstimatorParameterSet result = null;
+	public Optional<ModeParameterSet> getMode(String mode) {
+		ModeParameterSet result = null;
 
-		for (ConfigGroup group : getParameterSets(EstimatorParameterSet.GROUP_NAME)) {
-			EstimatorParameterSet candidate = (EstimatorParameterSet) group;
-
+		for (ModeParameterSet candidate : getModes()) {
 			if (candidate.getMode().contentEquals(mode)) {
 				result = candidate;
+				break;
 			}
 		}
 
 		return Optional.ofNullable(result);
 	}
 
-	public void setEstimator(String mode, String estimator) {
-		Optional<EstimatorParameterSet> set = getEstimatorParameterSet(mode);
-
-		if (set.isPresent()) {
-			set.get().setEstimator(estimator);
-		} else {
-			EstimatorParameterSet newSet = new EstimatorParameterSet();
-
-			newSet.setMode(mode);
-			newSet.setEstimator(estimator);
-
-			addParameterSet(newSet);
+	public ModeParameterSet addMode(String mode) {
+		Optional<ModeParameterSet> existingSet = getMode(mode);
+		
+		if (existingSet.isPresent()) {
+			return existingSet.get();
 		}
+
+		ModeParameterSet newSet = new ModeParameterSet();
+		newSet.setMode(mode);
+		addParameterSet(newSet);
+		return newSet;
 	}
 
-	public void removeEstimator(String mode) {
-		Optional<EstimatorParameterSet> set = getEstimatorParameterSet(mode);
+	public void removeMode(String mode) {
+		Optional<ModeParameterSet> set = getMode(mode);
 
 		if (set.isPresent()) {
 			removeParameterSet(set.get());
 		}
 	}
 
-	public Map<String, String> getEstimators() {
-		Map<String, String> map = new HashMap<>();
-
-		for (ConfigGroup group : getParameterSets(EstimatorParameterSet.GROUP_NAME)) {
-			EstimatorParameterSet estimator = (EstimatorParameterSet) group;
-			map.put(estimator.getMode(), estimator.getEstimator());
-		}
-
-		return map;
+	public Collection<ModeParameterSet> getModes() {
+		return getParameterSets(ModeParameterSet.GROUP_NAME).stream().map(ModeParameterSet.class::cast)
+				.collect(Collectors.toUnmodifiableList());
 	}
 
 	private Optional<CostModelParameterSet> getCostModelParameterSet(String mode) {
