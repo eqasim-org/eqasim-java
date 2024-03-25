@@ -18,7 +18,7 @@ public class FeederDrtModeAvailabilityWrapper implements ModeAvailability {
     public FeederDrtModeAvailabilityWrapper(MultiModeDrtConfigGroup multiModeDrtConfigGroup, MultiModeFeederDrtConfigGroup multiModeFeederDrtConfigGroup, ModeAvailability delegate) {
         this.delegate = delegate;
         this.extraModes = multiModeFeederDrtConfigGroup.modes().collect(Collectors.toSet());
-        Collection<String> coveredDrtModes = multiModeFeederDrtConfigGroup.getModalElements().stream().map(cfg -> cfg.accessEgressTransitStopModes).toList();
+        Collection<String> coveredDrtModes = multiModeFeederDrtConfigGroup.getModalElements().stream().map(cfg -> cfg.accessEgressModeName).toList();
         this.extraModes.addAll(multiModeDrtConfigGroup.modes().filter(mode -> !coveredDrtModes.contains(mode)).toList());
     }
 
