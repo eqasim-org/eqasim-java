@@ -57,6 +57,8 @@ public class FeederDrtConstraint implements TripConstraint {
 	@Override
 	public boolean validateAfterEstimation(DiscreteModeChoiceTrip trip, TripCandidate candidate,
 			List<TripCandidate> previousCandidates) {
+		boolean forbiddingAccessDrt = trip.getOriginActivity().getType().equals("outside");
+		boolean forbiddingEgressDrt = trip.getDestinationActivity().getType().equals("outside");
 		if (this.ptModes.containsKey(candidate.getMode())) {
 			RoutedTripCandidate routedTripCandidate = (RoutedTripCandidate) candidate;
 			List<? extends PlanElement> elements = routedTripCandidate.getRoutedPlanElements();
@@ -67,11 +69,20 @@ public class FeederDrtConstraint implements TripConstraint {
 			for (PlanElement element : elements) {
 				if (element instanceof Leg leg) {
 					if (leg.getMode().equals(this.ptModes.get(candidate.getMode()))) {
+						// if, when finding a PT, a DRT leg has already been found, that means there's an access drt. So we check this here
+						if(forbiddingAccessDrt && foundDrt) {
+							return false;
+						}
 						foundPt = true;
 					} else if(leg.getMode().equals(this.drtModes.get(candidate.getMode()))) {
+						// if, when finding a DRT, a PT leg has already been found, that means this is an egress drt. So we check this here
+						if(forbiddingEgressDrt && foundPt) {
+							return false;
+						}
 						foundDrt = true;
 					}
-					if(foundDrt && foundPt) {
+					if(foundDrt && foundPt && !forbiddingEgressDrt) {
+						// If we already found pt and drt and we do not forbid drt for egress, the constraint cannot be broken by further examining the plan, we can just stop here
 						break;
 					}
 				}
