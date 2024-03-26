@@ -17,8 +17,11 @@ such as for:
 - [Sao Paulo](https://github.com/eqasim-org/sao_paulo)
 
 To understand how to set up a simulation and run it, please refer to the
-respective repositories. To cut out smaller parts of existing simulations
-check out how to use this repository to [create simulation cut-outs](docs/cutting.md).
+respective repositories. 
+
+Additional topics:
+- How to [cut out smaller parts of existing simulations](docs/cutting.md).
+- How to [run a simulation with on-demand mobility services](docs/on_demand_mobility.md) (as a main mode and as a transit feeder).
 
 ## Main reference
 
