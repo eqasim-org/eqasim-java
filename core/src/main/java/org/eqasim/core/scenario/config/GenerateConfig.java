@@ -25,6 +25,7 @@ import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.AccessEgressType;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
+import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 
 public class GenerateConfig {
@@ -187,6 +188,9 @@ public class GenerateConfig {
 
 		eqasimConfig.setCostModel(TransportMode.car, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+
+		// To make sure trips arriving later than the next activity end time are taken into account when routing the next trip during mode choice
+		config.plans().setTripDurationHandling(PlansConfigGroup.TripDurationHandling.shiftActivityEndTimes);
 
 		// Update paths
 		config.network().setInputFile(prefix + "network.xml.gz");
