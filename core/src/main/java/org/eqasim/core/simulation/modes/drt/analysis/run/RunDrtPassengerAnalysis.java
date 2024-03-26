@@ -5,11 +5,11 @@ import org.eqasim.core.simulation.modes.drt.analysis.passengers.PassengerAnalysi
 import org.eqasim.core.simulation.modes.drt.analysis.utils.LinkFinder;
 import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.contrib.drt.util.DrtEventsReaders;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.events.EventsUtils;
-import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 
@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class RunPassengerAnalysis {
+public class RunDrtPassengerAnalysis {
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("events-path", "network-path", "output-path", "modes") //
@@ -44,7 +44,7 @@ public class RunPassengerAnalysis {
 		eventsManager.addHandler(listener);
 
 		eventsManager.initProcessing();
-		new MatsimEventsReader(eventsManager).readFile(eventsPath);
+		DrtEventsReaders.createEventsReader(eventsManager).readFile(eventsPath);
 		eventsManager.finishProcessing();
 
 		new PassengerAnalysisWriter(listener).writeRides(new File(outputPath));

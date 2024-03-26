@@ -100,7 +100,7 @@ public class AdaptConfigForDrt {
 
     }
 
-    private static Map<String, Map<String, String>> extractDrtInfo(String[] drtModeNames, Map<String, String[]> values) {
+    public static Map<String, Map<String, String>> extractDrtInfo(String[] drtModeNames, Map<String, String[]> values) {
         Map<String, Map<String, String>> result = new HashMap<>();
         if(drtModeNames.length == 0) {
             throw new IllegalStateException("No drt modes provided");
@@ -137,7 +137,7 @@ public class AdaptConfigForDrt {
 
         String inputConfigPath = cmd.getOptionStrict("input-config-path");
         String outputConfigPath = cmd.getOptionStrict("output-config-path");
-        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("drt").split(",")).collect(Collectors.toSet()).toArray(String[]::new);
+        String[] modeNames = Arrays.stream(cmd.getOption("mode-names").orElse("drt").split(",")).toList().toArray(String[]::new);
         String[] vehiclesPath = cmd.getOptionStrict("vehicles-paths").split(",");
         String qsimEndtime = cmd.getOption("qsim-endtime").orElse("30:00:00");
         String[] costModel = cmd.getOption("cost-models").orElse(EqasimModeChoiceModule.ZERO_COST_MODEL_NAME).split(",");
