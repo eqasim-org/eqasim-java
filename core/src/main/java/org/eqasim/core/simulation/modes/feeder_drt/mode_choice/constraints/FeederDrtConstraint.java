@@ -9,22 +9,48 @@ import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripConstraintF
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.RoutedTripCandidate;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FeederDrtConstraint implements TripConstraint {
 	public final static String NAME = "FeederConstraint";
-
 	private final Map<String, String> ptModes;
 	private final Map<String, String> drtModes;
+	private final Map<String, List<String>> feedersUsingPtModes;
 	public FeederDrtConstraint(Map<String, String> ptModes, Map<String, String> drtModes) {
 		this.ptModes = ptModes;
 		this.drtModes = drtModes;
+		this.feedersUsingPtModes = this.ptModes.keySet()
+				.stream()
+				.collect(Collectors.toMap(this.ptModes::get, feederMode -> {
+					List<String> modeList = new ArrayList<>();
+					modeList.add(feederMode);
+					return modeList;
+				}, (rightList, leftList) -> {
+					leftList.addAll(rightList);
+					return leftList;
+				}));
 	}
 
 	@Override
 	public boolean validateBeforeEstimation(DiscreteModeChoiceTrip trip, String mode, List<String> previousModes) {
+		int numberOfOutsideBorders = (trip.getOriginActivity().getType().equals("outside") ? 1 : 0) + ((trip.getDestinationActivity().getType().equals("outside")) ? 1 : 0);
+		if(numberOfOutsideBorders == 1) {
+			// If only one of the previous or next activity is an outside activity, we ensure that only transitions between PT and Feeder are possible.
+			if(trip.getInitialMode().equals(mode)) {
+				// If the mode doesn't change, it's ok
+				return true;
+			}
+			if(this.feedersUsingPtModes.containsKey(trip.getInitialMode())) {
+				// If the initial mode is a pt mode, and the next mode is different, we make sure the next mode is a feeder one.
+				return this.feedersUsingPtModes.get(trip.getInitialMode()).contains(mode);
+			} else if (this.ptModes.containsKey(trip.getInitialMode())) {
+				// if the initial mode is a feeder one, we make sure the next one is a pt mode.
+				return this.ptModes.get(trip.getInitialMode()).equals(mode);
+			}
+		} else if (numberOfOutsideBorders == 2) {
+			return trip.getInitialMode().equals(mode);
+		}
 		return true;
 	}
 
