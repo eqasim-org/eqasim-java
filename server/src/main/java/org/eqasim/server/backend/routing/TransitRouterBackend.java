@@ -50,8 +50,8 @@ public class TransitRouterBackend {
 		Network network = scenario.getNetwork();
 
 		RaptorStaticConfig staticConfig = new RaptorStaticConfig();
-		staticConfig.setOptimization(RaptorOptimization.OneToAllRouting);
-		staticConfig.setBeelineWalkConnectionDistance(1000.0);
+		// staticConfig.setOptimization(RaptorOptimization.OneToAllRouting);
+		staticConfig.setBeelineWalkConnectionDistance(400.0);
 		staticConfig.setBeelineWalkDistanceFactor(1.3);
 		staticConfig.setBeelineWalkSpeed(1.3);
 
