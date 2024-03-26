@@ -1,19 +1,11 @@
 package org.eqasim.core.simulation.modes.feeder_drt.router;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.network.Network;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_selector.AccessEgressStopsSelector;
 import org.matsim.api.core.v01.population.*;
-import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.RoutingRequest;
-import org.matsim.core.utils.collections.QuadTree;
-import org.matsim.facilities.ActivityFacilityImpl;
-import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
-import org.matsim.pt.transitSchedule.api.*;
 
 import java.util.*;
 
@@ -29,62 +21,35 @@ public class FeederDrtRoutingModule implements RoutingModule {
 
     private final PopulationFactory populationFactory;
 
-    private static final Logger logger = LogManager.getLogger(FeederDrtRoutingModule.class);
-    private final QuadTree<Facility> quadTree;
     private final String mode;
+    private final AccessEgressStopsSelector accessEgressStopsSelector;
 
-    public FeederDrtRoutingModule(String mode, Collection<String> accessEgressTransitStopModes, RoutingModule feederRoutingModule, RoutingModule transitRoutingModule,
-                                  PopulationFactory populationFactory, TransitSchedule schedule, Network drtNetwork) {
-        logger.info("Starting initialization");
+    public FeederDrtRoutingModule(String mode,RoutingModule feederRoutingModule, RoutingModule transitRoutingModule,
+                                  PopulationFactory populationFactory, AccessEgressStopsSelector accessEgressStopsSelector) {
         this.mode = mode;
         this.drtRoutingModule = feederRoutingModule;
         this.transitRoutingModule = transitRoutingModule;
         this.populationFactory = populationFactory;
-        double[] bounds = NetworkUtils.getBoundingBox(drtNetwork.getNodes().values());
-        quadTree = new QuadTree<>(bounds[0], bounds[1], bounds[2], bounds[3]);
-        Set<Id<TransitStopFacility>> processedFacilities = new HashSet<>();
-
-        boolean addedOneFacitlity=false;
-
-        for (TransitLine transitLine : schedule.getTransitLines().values()) {
-            for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
-                if (accessEgressTransitStopModes.size() == 0 || accessEgressTransitStopModes.contains(transitRoute.getTransportMode())) {
-                    for (TransitRouteStop transitRouteStop : transitRoute.getStops()) {
-                        TransitStopFacility transitStopFacility = transitRouteStop.getStopFacility();
-                        if (!processedFacilities.contains(transitStopFacility.getId())) {
-                            processedFacilities.add(transitStopFacility.getId());
-                            Facility interactionFacility = FacilitiesUtils.wrapLink(NetworkUtils.getNearestLink(drtNetwork, transitStopFacility.getCoord()));
-                            try {
-                                if (!quadTree.put(transitStopFacility.getCoord().getX(), transitStopFacility.getCoord().getY(), interactionFacility)) {
-                                    logger.warn("Cannot add this stop : " + transitStopFacility.getName());
-                                } else {
-                                    addedOneFacitlity = true;
-                                }
-                            } catch (IllegalArgumentException exception) {
-                                logger.warn("Cannot add this stop because it's out of DRT's network : " + transitStopFacility.getName());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if(!addedOneFacitlity) {
-            throw new IllegalStateException("No facility available for intermodality");
-        }
-        logger.info("Initialization finished");
+        this.accessEgressStopsSelector = accessEgressStopsSelector;
     }
 
-    public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime,
-                                                 Person person) {
+    @Override
+    public List<? extends PlanElement> calcRoute(RoutingRequest routingRequest) {
+        Facility fromFacility = routingRequest.getFromFacility();
+        Facility toFacility = routingRequest.getToFacility();
+        double departureTime = routingRequest.getDepartureTime();
+        Person person = routingRequest.getPerson();
+
+
         // Identify closest stations from the origin and destination of the trip
-        Facility accessFacility = this.quadTree.getClosest(fromFacility.getCoord().getX(), fromFacility.getCoord().getY());
-        Facility egressFacility = this.quadTree.getClosest(toFacility.getCoord().getX(), toFacility.getCoord().getY());
+        Facility accessFacility = this.accessEgressStopsSelector.getAccessFacility(routingRequest);
+        Facility egressFacility = this.accessEgressStopsSelector.getEgressFacility(routingRequest);
 
         List<PlanElement> intermodalRoute = new LinkedList<>();
         // Computing the access DRT route
         List<? extends PlanElement> drtRoute = null;
-        // If the trip starts right after an outside activity, we leave its first part as PT
-        if (!(fromFacility instanceof ActivityFacilityImpl) || !((ActivityFacilityImpl) fromFacility).getId().toString().startsWith("outside")) {
+
+        if (accessFacility != null) {
             drtRoute = drtRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(fromFacility, accessFacility, departureTime, person));
         }
         double accessTime = departureTime;
@@ -117,9 +82,7 @@ public class FeederDrtRoutingModule implements RoutingModule {
             }
         }
 
-        // Compute the egress DRT route
-        // Same as above, if the trip ends right before an outside activity, we leave its last part as PT
-        if (!(egressFacility instanceof ActivityFacilityImpl) || !((ActivityFacilityImpl) egressFacility).getId().toString().startsWith("outside")) {
+        if (egressFacility != null) {
             drtRoute = drtRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(egressFacility, toFacility, egressTime, person));
         } else {
             drtRoute = null;
@@ -138,10 +101,5 @@ public class FeederDrtRoutingModule implements RoutingModule {
             intermodalRoute.addAll(drtRoute);
         }
         return intermodalRoute;
-    }
-
-    @Override
-    public List<? extends PlanElement> calcRoute(RoutingRequest routingRequest) {
-        return this.calcRoute(routingRequest.getFromFacility(), routingRequest.getToFacility(), routingRequest.getDepartureTime(), routingRequest.getPerson());
     }
 }

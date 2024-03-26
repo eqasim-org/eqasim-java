@@ -4,10 +4,12 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
+import org.eqasim.core.simulation.modes.feeder_drt.config.AccessEgressStopSelectorParams;
 import org.eqasim.core.simulation.modes.feeder_drt.config.FeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.EqasimFeederDrtModeChoiceModule;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.constraints.FeederDrtConstraint;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_selector.ClosestAccessEgressStopSelectorParameterSet;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -63,7 +65,15 @@ public class AdaptConfigForFeederDrt {
                 throw new IllegalStateException(String.format("DRT mode '%s' supplied for '%s' is not registered in the '%s' config group. You can use '%s' to configure it", feederDrtConfigGroup.accessEgressModeName, feederDrtMode, MultiModeDrtConfigGroup.GROUP_NAME, AdaptConfigForDrt.class.getCanonicalName()));
             }
 
-            feederDrtConfigGroup.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
+
+            ClosestAccessEgressStopSelectorParameterSet closestAccessEgressStopSelectorParameterSet = new ClosestAccessEgressStopSelectorParameterSet();
+            closestAccessEgressStopSelectorParameterSet.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
+            closestAccessEgressStopSelectorParameterSet.skipAccessAndEgressAtFacilities = "outside";
+
+            AccessEgressStopSelectorParams accessEgressStopSelectorParams = new AccessEgressStopSelectorParams();
+            accessEgressStopSelectorParams.addParameterSet(closestAccessEgressStopSelectorParameterSet);
+
+            feederDrtConfigGroup.addParameterSet(accessEgressStopSelectorParams);
 
             multiModeFeederDrtConfigGroup.addParameterSet(feederDrtConfigGroup);
 

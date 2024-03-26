@@ -1,17 +1,16 @@
 package org.eqasim.core.simulation.modes.feeder_drt.config;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.matsim.contrib.dvrp.run.Modal;
-import org.matsim.core.config.ReflectiveConfigGroup;
+import org.matsim.contrib.util.ReflectiveConfigGroupWithConfigurableParameterSets;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
-public class FeederDrtConfigGroup extends ReflectiveConfigGroup implements Modal {
+public class FeederDrtConfigGroup extends ReflectiveConfigGroupWithConfigurableParameterSets implements Modal {
     public static final String GROUP_NAME = "feederDrt";
     public FeederDrtConfigGroup() {
         super(GROUP_NAME);
+        this.addDefinition(AccessEgressStopSelectorParams.NAME, AccessEgressStopSelectorParams::new, () -> this.accessEgressStopSelectorConfig,
+                params -> this.accessEgressStopSelectorConfig = (AccessEgressStopSelectorParams) params);
     }
 
     @Parameter
@@ -29,19 +28,15 @@ public class FeederDrtConfigGroup extends ReflectiveConfigGroup implements Modal
     @NotBlank
     public String mode = "feederDrt";
 
-    @Parameter
-    @Comment("Comma separated list of PT transit modes (rail, bus...) where intermodality can happen, leave empty to allow intermodality everywhere")
-    public String accessEgressTransitStopModes="";
+    @NotNull
+    private AccessEgressStopSelectorParams accessEgressStopSelectorConfig;
 
     @Override
     public String getMode() {
         return this.mode;
     }
 
-    public Collection<String> getAccessEgressTransitStopModes() {
-        if(this.accessEgressTransitStopModes.length() == 0) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(this.accessEgressTransitStopModes.split(",")).toList();
+    public AccessEgressStopSelectorParams getAccessEgressStopSelectorConfig() {
+        return this.accessEgressStopSelectorConfig;
     }
 }
