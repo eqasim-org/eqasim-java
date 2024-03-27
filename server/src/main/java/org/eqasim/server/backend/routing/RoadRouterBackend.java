@@ -56,7 +56,7 @@ public class RoadRouterBackend {
 
 		Route route = new Route();
 		route.accessEgressWalkTime = walkTravelTime;
-		route.inVehicletravelTime = path.travelTime;
+		route.inVehicleTravelTime = path.travelTime;
 		route.totalTravelTime = walkTravelTime + path.travelTime;
 		return route;
 	}
@@ -78,7 +78,7 @@ public class RoadRouterBackend {
 
 	static public class Route {
 		public double accessEgressWalkTime;
-		public double inVehicletravelTime;
+		public double inVehicleTravelTime;
 		public double totalTravelTime;
 	}
 }

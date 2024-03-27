@@ -25,14 +25,14 @@ public class TransitRoutingApi extends AbstractApi {
 		writeResponse(ctx, response);
 	}
 
-	public class Request {
+	static public class Request {
 		public int requestIndex;
 
 		public TransitRouterBackend.Request request;
 		public TransitRouterBackend.Configuration configuration = new TransitRouterBackend.Configuration();
 	}
 
-	public class Response {
+	static public class Response {
 		public int requestIndex;
 		public TransitRouterBackend.Route route;
 	}
