@@ -25,14 +25,14 @@ public class RoadRoutingApi extends AbstractApi {
 		writeResponse(ctx, response);
 	}
 
-	public class Request {
+	static public class Request {
 		public int requestIndex;
 
 		public RoadRouterBackend.Request request;
 		public RoadRouterBackend.Configuration configuration = new RoadRouterBackend.Configuration();
 	}
 
-	public class Response {
+	static public class Response {
 		public int requestIndex;
 		public RoadRouterBackend.Route route;
 	}

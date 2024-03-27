@@ -55,7 +55,9 @@ public class RoadRouterBackend {
 		Path path = router.calcLeastCostPath(fromNode, toNode, request.departureTime, null, null);
 
 		Route route = new Route();
-		route.travelTime = path.travelTime + walkTravelTime;
+		route.accessEgressWalkTime = walkTravelTime;
+		route.inVehicletravelTime = path.travelTime;
+		route.totalTravelTime = walkTravelTime + path.travelTime;
 		return route;
 	}
 
@@ -75,6 +77,8 @@ public class RoadRouterBackend {
 	}
 
 	static public class Route {
-		public double travelTime;
+		public double accessEgressWalkTime;
+		public double inVehicletravelTime;
+		public double totalTravelTime;
 	}
 }
