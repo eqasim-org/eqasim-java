@@ -1,5 +1,7 @@
 package org.eqasim;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
@@ -13,6 +15,7 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtPassengerAnalysis;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtVehicleAnalysis;
 import org.eqasim.core.simulation.modes.feeder_drt.analysis.run.RunFeederDrtPassengerAnalysis;
+import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
 import org.eqasim.core.tools.*;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
@@ -22,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -49,7 +53,7 @@ public class TestSimulationPipeline {
         FileUtils.deleteDirectory(new File("melun_test"));
     }
 
-    private void runMelunSimulation(String configPath, String outputPath, Collection<String> extraModes) {
+    private void runMelunSimulation(String configPath, String outputPath) {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
         ((ControlerConfigGroup) config.getModules().get(ControlerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
@@ -69,19 +73,25 @@ public class TestSimulationPipeline {
             @Override
             protected void installEqasimExtension() {
                 bind(ModeParameters.class);
-                bindModeAvailability("DefaultModeAvailability").toProvider(() -> (person, trips) -> {
-                    Set<String> modes = new HashSet<>();
-                    modes.add(TransportMode.walk);
-                    modes.add(TransportMode.pt);
-                    modes.add(TransportMode.car);
-                    modes.add(TransportMode.bike);
-                    // Add special mode "car_passenger" if applicable
-                    Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-                    if(isCarPassenger) {
-                        modes.add("car_passenger");
+                bindModeAvailability("DefaultModeAvailability").toProvider(new Provider<>() {
+                    @Inject
+                    private Config config;
+                    @Override
+                    public ModeAvailability get() {
+                        return new FeederDrtModeAvailabilityWrapper(config, (person, trips) -> {
+                            Set<String> modes = new HashSet<>();
+                            modes.add(TransportMode.walk);
+                            modes.add(TransportMode.pt);
+                            modes.add(TransportMode.car);
+                            modes.add(TransportMode.bike);
+                            // Add special mode "car_passenger" if applicable
+                            Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
+                            if(isCarPassenger) {
+                                modes.add("car_passenger");
+                            }
+                            return modes;
+                        });
                     }
-                    modes.addAll(extraModes);
-                    return modes;
                 }).asEagerSingleton();
             }
         });
@@ -194,7 +204,7 @@ public class TestSimulationPipeline {
                 "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz"
         });
 
-        runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt", List.of("drt_a", "drt_b"));
+        runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt");
 
         RunDrtPassengerAnalysis.main(new String[] {
                 "--events-path", "melun_test/output_drt/output_events.xml.gz",
@@ -243,7 +253,7 @@ public class TestSimulationPipeline {
                 "--access-egress-transit-stop-modes", "rail|tram|subway"
         });
 
-        runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output_feeder", List.of("feeder_a", "feeder_b"));
+        runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output_feeder");
 
         RunFeederDrtPassengerAnalysis.main(new String[] {
                 "--config-path", "melun_test/input/config_feeder.xml",
@@ -260,12 +270,12 @@ public class TestSimulationPipeline {
                 "--output-config-path", "melun_test/input/config_epsilon.xml"
         });
 
-        runMelunSimulation("melun_test/input/config_epsilon.xml", "melun_test/output_epsilon", Collections.emptyList());
+        runMelunSimulation("melun_test/input/config_epsilon.xml", "melun_test/output_epsilon");
     }
 
     @Test
     public void testPipeline() throws Exception {
-        runMelunSimulation("melun_test/input/config.xml", "melun_test/output", Collections.emptyList());
+        runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
         runAnalyses();
         runExports();
     }
