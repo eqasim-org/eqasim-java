@@ -3,6 +3,7 @@ package org.eqasim.core.simulation.modes.feeder_drt.utils;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
 import org.eqasim.core.simulation.modes.feeder_drt.config.AccessEgressStopSelectorParams;
 import org.eqasim.core.simulation.modes.feeder_drt.config.FeederDrtConfigGroup;
@@ -45,6 +46,8 @@ public class AdaptConfigForFeederDrt {
 
         //This constraint need to be added
         dmcConfig.getTripConstraints().add(FeederDrtConstraint.NAME);
+        dmcConfig.getTourFilters().remove(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME);
+        dmcConfig.getTourFilters().add(EqasimModeChoiceModule.OUTSIDE_TRIPS_ONLY_FILTER_NAME);
 
         // Add DRT to cached modes
         Set<String> cachedModes = new HashSet<>(dmcConfig.getCachedModes());
