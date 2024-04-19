@@ -51,7 +51,7 @@ class DelayAnalysisHandler implements ActivityStartEventHandler, ActivityEndEven
 
 	@Override
 	public void handleEvent(ActivityStartEvent event) {
-		if (personFilter.analyzePerson(event.getPersonId())) {
+		if (personFilter.analyzePerson(event.getPersonId()) && !event.getPersonId().toString().startsWith("drt")) {
 			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
 				int activityIndex = indices.compute(event.getPersonId(), (id, index) -> index == null ? 0 : index + 1);
 				Verify.verify(activityIndex > 0);
@@ -84,7 +84,7 @@ class DelayAnalysisHandler implements ActivityStartEventHandler, ActivityEndEven
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
-		if (personFilter.analyzePerson(event.getPersonId())) {
+		if (personFilter.analyzePerson(event.getPersonId()) && !event.getPersonId().toString().startsWith("drt")) {
 			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
 				DelayItem item = ongoing.remove(event.getPersonId());
 				int activityIndex = indices.computeIfAbsent(event.getPersonId(), id -> 0);

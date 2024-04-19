@@ -63,7 +63,7 @@ public class AdaptConfigForDrt {
             drtConfigGroup.maxWaitTime = 600;
             drtConfigGroup.maxTravelTimeAlpha = 1.5;
             drtConfigGroup.maxTravelTimeBeta = 300.0;
-            drtConfigGroup.vehiclesFile  = vehiclesPathByDrtMode.get(drtMode);
+            drtConfigGroup.vehiclesFile  = vehiclesPathByDrtMode.getOrDefault(drtMode, "VEHICLES FILE NOT PROVIDED");
 
             DrtInsertionSearchParams searchParams = new ExtensiveInsertionSearchParams();
             drtConfigGroup.addDrtInsertionSearchParams(searchParams);
