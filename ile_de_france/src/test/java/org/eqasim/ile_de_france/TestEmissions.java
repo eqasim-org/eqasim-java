@@ -4,8 +4,11 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -13,8 +16,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -47,7 +50,6 @@ import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
-import org.matsim.core.utils.misc.CRCChecksum;
 import org.matsim.examples.ExamplesUtils;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.matsim.vehicles.MatsimVehicleWriter;
@@ -59,164 +61,158 @@ import org.opengis.feature.simple.SimpleFeature;
 
 public class TestEmissions {
 
-    @Before
-    public void setUp() throws IOException {
-        URL fixtureUrl = getClass().getResource("/melun");
-        FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
-        var coldAverageFile = "sample_41_EFA_ColdStart_vehcat_2020average.csv";
-        var coldDetailedFile = "sample_41_EFA_ColdStart_SubSegm_2020detailed.csv";
-        var hotAverageFile = "sample_41_EFA_HOT_vehcat_2020average.csv";
-        var hotDetailedFile = "sample_41_EFA_HOT_SubSegm_2020detailed.csv";
-        for (String file: new String[]{ coldAverageFile, coldDetailedFile, hotAverageFile, hotDetailedFile}) {
-            Files.copy(ExamplesUtils.class.getResourceAsStream("/test/scenarios/emissions-sampleScenario/" + file),
-                    Paths.get("melun_test/input/", file),
-                    REPLACE_EXISTING);
-        }
-    }
+	@Before
+	public void setUp() throws IOException {
+		URL fixtureUrl = getClass().getResource("/melun");
+		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
+		var coldAverageFile = "sample_41_EFA_ColdStart_vehcat_2020average.csv";
+		var coldDetailedFile = "sample_41_EFA_ColdStart_SubSegm_2020detailed.csv";
+		var hotAverageFile = "sample_41_EFA_HOT_vehcat_2020average.csv";
+		var hotDetailedFile = "sample_41_EFA_HOT_SubSegm_2020detailed.csv";
+		for (String file : new String[] { coldAverageFile, coldDetailedFile, hotAverageFile, hotDetailedFile }) {
+			Files.copy(ExamplesUtils.class.getResourceAsStream("/test/scenarios/emissions-sampleScenario/" + file),
+					Paths.get("melun_test/input/", file), REPLACE_EXISTING);
+		}
+	}
 
-    @After
-    public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(new File("melun_test"));
-    }
+	@After
+	public void tearDown() throws IOException {
+		FileUtils.deleteDirectory(new File("melun_test"));
+	}
 
-    private void runMelunSimulation() {
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig("melun_test/input/config_emissions.xml", eqasimConfigurator.getConfigGroups());
-        ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory("melun_test/output");
+	private void runMelunSimulation() {
+		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+		Config config = ConfigUtils.loadConfig("melun_test/input/config_emissions.xml",
+				eqasimConfigurator.getConfigGroups());
+		((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME))
+				.setOutputDirectory("melun_test/output");
 
-        Scenario scenario = ScenarioUtils.createScenario(config);
-        eqasimConfigurator.configureScenario(scenario);
-        ScenarioUtils.loadScenario(scenario);
-        eqasimConfigurator.adjustScenario(scenario);
+		Scenario scenario = ScenarioUtils.createScenario(config);
+		eqasimConfigurator.configureScenario(scenario);
+		ScenarioUtils.loadScenario(scenario);
+		eqasimConfigurator.adjustScenario(scenario);
 
+		Controler controller = new Controler(scenario);
+		eqasimConfigurator.configureController(controller);
+		controller.addOverridingModule(new EqasimModeChoiceModule());
+		controller.addOverridingModule(new EqasimAnalysisModule());
+		controller.addOverridingModule(new AbstractEqasimExtension() {
+			@Override
+			protected void installEqasimExtension() {
+				bind(ModeParameters.class);
+				bindModeAvailability("DefaultModeAvailability").toProvider(() -> (person, trips) -> {
+					Set<String> modes = new HashSet<>();
+					modes.add(TransportMode.walk);
+					modes.add(TransportMode.pt);
+					modes.add(TransportMode.car);
+					modes.add(TransportMode.bike);
+					// Add special mode "car_passenger" if applicable
+					Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
+					if (isCarPassenger) {
+						modes.add("car_passenger");
+					}
+					return modes;
+				}).asEagerSingleton();
+			}
+		});
+		controller.run();
+	}
 
-        Controler controller = new Controler(scenario);
-        eqasimConfigurator.configureController(controller);
-        controller.addOverridingModule(new EqasimModeChoiceModule());
-        controller.addOverridingModule(new EqasimAnalysisModule());
-        controller.addOverridingModule(new AbstractEqasimExtension() {
-            @Override
-            protected void installEqasimExtension() {
-                bind(ModeParameters.class);
-                bindModeAvailability("DefaultModeAvailability").toProvider(() -> (person, trips) -> {
-                    Set<String> modes = new HashSet<>();
-                    modes.add(TransportMode.walk);
-                    modes.add(TransportMode.pt);
-                    modes.add(TransportMode.car);
-                    modes.add(TransportMode.bike);
-                    // Add special mode "car_passenger" if applicable
-                    Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-                    if(isCarPassenger) {
-                        modes.add("car_passenger");
-                    }
-                    return modes;
-                }).asEagerSingleton();
-            }
-        });
-        controller.run();
-    }
+	private void runCreateVehicles() {
+		VehicleType testCarType = VehicleUtils.createVehicleType(Id.create("test_car", VehicleType.class));
+		testCarType.setLength(7.5);
+		testCarType.setWidth(1.);
+		testCarType.setNetworkMode("car");
+		Attributes hbefa_attributes = testCarType.getEngineInformation().getAttributes();
+		hbefa_attributes.putAttribute("HbefaVehicleCategory", "PASSENGER_CAR");
+		hbefa_attributes.putAttribute("HbefaTechnology", "diesel");
+		hbefa_attributes.putAttribute("HbefaSizeClass", "&lt;1,4L");
+		hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC diesel Euro-3 (DPF)");
 
-    private void runCreateVehicles() {
-        VehicleType testCarType = VehicleUtils.createVehicleType(Id.create("test_car", VehicleType.class));
-        testCarType.setLength(7.5);
-        testCarType.setWidth(1.);
-        testCarType.setNetworkMode("car");
-        Attributes hbefa_attributes = testCarType.getEngineInformation().getAttributes();
-        hbefa_attributes.putAttribute("HbefaVehicleCategory", "PASSENGER_CAR");
-        hbefa_attributes.putAttribute("HbefaTechnology", "diesel");
-        hbefa_attributes.putAttribute("HbefaSizeClass", "&lt;1,4L");
-        hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC diesel Euro-3 (DPF)");
+		Vehicles vehicles = VehicleUtils.createVehiclesContainer();
+		vehicles.addVehicleType(testCarType);
 
-        Vehicles vehicles = VehicleUtils.createVehiclesContainer();
-        vehicles.addVehicleType(testCarType);
+		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml", eqasimConfigurator.getConfigGroups());
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		for (Person person : scenario.getPopulation().getPersons().values()) {
+			Vehicle vehicle = VehicleUtils.createVehicle(Id.createVehicleId(person.getId().toString()), testCarType);
+			vehicles.addVehicle(vehicle);
+		}
 
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml", eqasimConfigurator.getConfigGroups());
-        Scenario scenario = ScenarioUtils.loadScenario(config);
-        for (Person person: scenario.getPopulation().getPersons().values()) {
-            Vehicle vehicle = VehicleUtils.createVehicle(
-                    Id.createVehicleId(person.getId().toString()),
-                    testCarType);
-            vehicles.addVehicle(vehicle);
-        }
+		MatsimVehicleWriter writer = new MatsimVehicleWriter(vehicles);
+		writer.writeFile("melun_test/input/vehicles.xml");
+	}
 
-        MatsimVehicleWriter writer = new MatsimVehicleWriter(vehicles);
-        writer.writeFile("melun_test/input/vehicles.xml");
-    }
+	private void runModifyConfig() {
+		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+		config.controller().setOutputDirectory("melun_test/output");
+		config.qsim().setVehiclesSource(QSimConfigGroup.VehiclesSource.fromVehiclesData);
+		config.vehicles().setVehiclesFile("vehicles.xml");
+		ConfigUtils.writeConfig(config, "melun_test/input/config_emissions.xml");
+	}
 
-    private void runModifyConfig() {
-        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
-        config.controller().setOutputDirectory("melun_test/output");
-        config.qsim().setVehiclesSource(QSimConfigGroup.VehiclesSource.fromVehiclesData);
-        config.vehicles().setVehiclesFile("vehicles.xml");
-        ConfigUtils.writeConfig(config, "melun_test/input/config_emissions.xml");
-    }
+	private void runModifyNetwork() {
+		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		Network network = scenario.getNetwork();
+		for (Link link : network.getLinks().values()) {
+			// this forces the OSM Mapping code to use URB/Local/50 as it the only thing we
+			// have in the sample HBEFA.
+			NetworkUtils.setType(link, "tertiary");
+			link.getAttributes().putAttribute(NetworkUtils.ALLOWED_SPEED, 50 / 3.6);
+		}
+		NetworkUtils.writeNetwork(network, "melun_test/input/network.xml.gz");
+	}
 
-    private void runModifyNetwork() {
-        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
-        Scenario scenario = ScenarioUtils.loadScenario(config);
-        Network network = scenario.getNetwork();
-        for (Link link: network.getLinks().values()) {
-            // this forces the OSM Mapping code to use URB/Local/50 as it the only thing we have in the sample HBEFA.
-            NetworkUtils.setType(link, "tertiary");
-            link.getAttributes().putAttribute(NetworkUtils.ALLOWED_SPEED, 50 / 3.6);
-        }
-        NetworkUtils.writeNetwork(network, "melun_test/input/network.xml.gz");
-    }
-
-    private void runMelunEmissions() throws CommandLine.ConfigurationException {
-    	Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
+	private void runMelunEmissions() throws CommandLine.ConfigurationException, IOException {
+		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
 		Assert.assertEquals(3297, (long) counts.get("car"));
 		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
 		Assert.assertEquals(9348, (long) counts.get("walk"));
 		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
 		Assert.assertEquals(2108, (long) counts.get("pt"));
-    	
-        RunComputeEmissionsEvents.main(new String[] {
-                "--config-path", "melun_test/input/config_emissions.xml",
-                "--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv",
-                "--hbefa-hot-avg", "sample_41_EFA_HOT_vehcat_2020average.csv",
-                "--hbefa-cold-detailed", "sample_41_EFA_ColdStart_SubSegm_2020detailed.csv",
-                "--hbefa-hot-detailed", "sample_41_EFA_HOT_SubSegm_2020detailed.csv",
-        });
 
-        RunExportEmissionsNetwork.main(new String[] {
-                "--config-path", "melun_test/input/config_emissions.xml",
-                "--pollutants", "PM,CO,NOx,Unknown",
-                "--time-bin-size", "3600"
-        });
+		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config_emissions.xml",
+				"--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv", "--hbefa-hot-avg",
+				"sample_41_EFA_HOT_vehcat_2020average.csv", "--hbefa-cold-detailed",
+				"sample_41_EFA_ColdStart_SubSegm_2020detailed.csv", "--hbefa-hot-detailed",
+				"sample_41_EFA_HOT_SubSegm_2020detailed.csv", });
 
-        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
-        assertEquals(features.size(), 32527);
-        
-        SimpleFeature feature = features.stream().filter(f ->
-                f.getAttribute("link").toString().equals("163994")
-                & f.getAttribute("time").toString().equals("43200")
-        ).findFirst().orElse(null);
-        assertNotNull(feature);
+		assertEquals(355977, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
-		double expectedPm = 0.006847378350421; 
+		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config_emissions.xml",
+				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600" });
+
+		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
+		assertEquals(features.size(), 32527);
+
+		SimpleFeature feature = features.stream().filter(f -> f.getAttribute("link").toString().equals("163994")
+				& f.getAttribute("time").toString().equals("43200")).findFirst().orElse(null);
+		assertNotNull(feature);
+
+		double expectedPm = 0.006847378350421;
 		double expectedCo = 0.456258730331835;
-		double expectedNox = 0.477558671071797; 
+		double expectedNox = 0.477558671071797;
 		double expectedUnknown = Double.NaN;
-        
-        assertEquals(expectedPm, feature.getAttribute("PM"));
-        assertEquals(expectedCo, feature.getAttribute("CO"));
-        assertEquals(expectedNox, feature.getAttribute("NOx"));
-        assertEquals(expectedUnknown, feature.getAttribute("Unknown"));
 
-        // TODO : test RunComputeEmissionsGrid
-    }
+		assertEquals(expectedPm, feature.getAttribute("PM"));
+		assertEquals(expectedCo, feature.getAttribute("CO"));
+		assertEquals(expectedNox, feature.getAttribute("NOx"));
+		assertEquals(expectedUnknown, feature.getAttribute("Unknown"));
 
-    @Test
-    public void runTestEmissions() throws CommandLine.ConfigurationException {
-        runCreateVehicles();
-        runModifyConfig();
-        runModifyNetwork();
-        runMelunSimulation();
-        runMelunEmissions();
-    }
-    
+		// TODO : test RunComputeEmissionsGrid
+	}
+
+	@Test
+	public void runTestEmissions() throws CommandLine.ConfigurationException, IOException {
+		runCreateVehicles();
+		runModifyConfig();
+		runModifyNetwork();
+		runMelunSimulation();
+		runMelunEmissions();
+	}
+
 	static Map<String, Long> countLegs(String eventsPath) {
 		EventsManager manager = EventsUtils.createEventsManager();
 
@@ -233,5 +229,20 @@ public class TestEmissions {
 		}
 
 		return counts;
+	}
+
+	static long countLines(File file) throws IOException {
+		String line;
+		int lines = 0;
+
+		BufferedReader reader = new BufferedReader(
+				new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
+
+		while ((line = reader.readLine()) != null) {
+			lines++;
+		}
+
+		reader.close();
+		return lines;
 	}
 }
