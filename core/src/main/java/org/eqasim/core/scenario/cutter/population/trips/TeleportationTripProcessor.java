@@ -15,6 +15,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.population.PopulationUtils;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 public class TeleportationTripProcessor implements TripProcessor {
@@ -29,7 +30,8 @@ public class TeleportationTripProcessor implements TripProcessor {
 
 	@Override
 	public List<PlanElement> process(Id<Person> personId, int firstLegIndex, Activity firstActivity,
-			List<PlanElement> trip, Activity secondActivity) {
+			List<PlanElement> trip, Activity secondActivity, String routingMode) {
+		Preconditions.checkArgument(trip.size() == 1);
 		Leg leg = (Leg) trip.get(0);
 
 		return process(firstActivity.getCoord(), secondActivity.getCoord(), leg.getTravelTime().seconds(),

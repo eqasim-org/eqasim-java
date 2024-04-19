@@ -6,9 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
-import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkCrossingPointFinder;
-import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkCrossingPoint;
-import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkCrossingPointFinder;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkRouteCrossingPointFinder;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkRouteCrossingPoint;
+import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkRouteCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingRegistry;
 import org.junit.Assert;
 import org.junit.Test;
@@ -94,11 +94,11 @@ public class TestDefaultNetworkCrossingPointFinder {
 
 	@Test
 	public void testFindCrossingPoints() {
-		NetworkCrossingPointFinder finder = new DefaultNetworkCrossingPointFinder(extentMock, networkMock,
+		NetworkRouteCrossingPointFinder finder = new DefaultNetworkRouteCrossingPointFinder(extentMock, networkMock,
 				Collections.singletonMap("car", travelTimeMock), new LinkTimingRegistry());
 
 		NetworkRoute route;
-		List<NetworkCrossingPoint> result;
+		List<NetworkRouteCrossingPoint> result;
 
 		// 1) Outside -> Inside
 		route = createRouteMock(1, 3);
@@ -170,11 +170,11 @@ public class TestDefaultNetworkCrossingPointFinder {
 		registry.register(personId, 23, Id.createLinkId("23"), 600.0, 700.0);
 		registry.register(personId, 53, Id.createLinkId("23"), 650.0, 750.0);
 		
-		NetworkCrossingPointFinder finder = new DefaultNetworkCrossingPointFinder(extentMock, networkMock,
+		NetworkRouteCrossingPointFinder finder = new DefaultNetworkRouteCrossingPointFinder(extentMock, networkMock,
 				Collections.singletonMap("car", travelTimeMock), registry);
 
 		NetworkRoute route = createRouteMock(1, 3);
-		List<NetworkCrossingPoint> result;
+		List<NetworkRouteCrossingPoint> result;
 
 		// Leg 23
 		result = finder.findCrossingPoints(personId, 23, "car", route, 100.0);

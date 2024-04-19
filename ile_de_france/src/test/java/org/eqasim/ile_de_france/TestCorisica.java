@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
+import org.eqasim.ile_de_france.standalone_mode_choice.RunStandaloneModeChoice;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,7 +40,7 @@ public class TestCorisica {
 	public void testCorsicaPipeline()
 			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
 
-		Assert.assertEquals(3162, countPersons("corsica_test/corsica_population.xml.gz"));
+		Assert.assertEquals(389, countPersons("corsica_test/corsica_population.xml.gz"));
 
 		// Run the simulation
 		{
@@ -49,14 +50,25 @@ public class TestCorisica {
 					"--config:controler.outputDirectory", "corsica_test/simulation_output", //
 			});
 
-			Assert.assertEquals(3162, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
+			Assert.assertEquals(389, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/simulation_output/output_events.xml.gz");
-			Assert.assertEquals(7788, (long) counts.get("car"));
-			Assert.assertEquals(894, (long) counts.get("car_passenger"));
-			Assert.assertEquals(2087, (long) counts.get("walk"));
-			Assert.assertEquals(2, (long) counts.get("bike"));
-			Assert.assertEquals(47, (long) counts.get("pt"));
+			Assert.assertEquals(992, (long) counts.get("car"));
+			Assert.assertEquals(129, (long) counts.get("car_passenger"));
+			Assert.assertEquals(221, (long) counts.get("walk"));
+			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
+			Assert.assertEquals(5, (long) counts.get("pt"));
+		}
+
+		// Run the mode choice + following simulation
+		{
+			RunStandaloneModeChoice.main(new String[]{
+					"--config-path", "corsica_test/corsica_config.xml",
+					"--write-input-csv-trips", "true",
+					"--write-output-csv-trips", "true",
+					"--simulate-after", "true",
+					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output"
+			});
 		}
 
 		// Cut the scenario based on output plans
@@ -70,7 +82,7 @@ public class TestCorisica {
 					"--output-path", "corsica_test", //
 			});
 
-			Assert.assertEquals(1286, countPersons("corsica_test/cut_population.xml.gz"));
+			Assert.assertEquals(171, countPersons("corsica_test/cut_population.xml.gz"));
 		}
 
 		// Run the cut simulation
@@ -81,15 +93,24 @@ public class TestCorisica {
 					"--config:controler.outputDirectory", "corsica_test/cut_output", //
 			});
 
-			Assert.assertEquals(1286, countPersons("corsica_test/cut_output/output_plans.xml.gz"));
-
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
-			Assert.assertEquals(3003, (long) counts.get("car"));
-			Assert.assertEquals(387, (long) counts.get("car_passenger"));
-			Assert.assertEquals(843, (long) counts.get("walk"));
+			Assert.assertEquals(420, (long) counts.get("car"));
+			Assert.assertEquals(53, (long) counts.get("car_passenger"));
+			Assert.assertEquals(103, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
-			Assert.assertEquals(6, (long) counts.get("pt"));
-			Assert.assertEquals(95, (long) counts.get("outside"));
+			Assert.assertEquals(0, (long) counts.getOrDefault("pt", 0L));
+			Assert.assertEquals(6, (long) counts.get("outside"));
+		}
+
+		{
+			RunStandaloneModeChoice.main(new String[] {
+					"--config-path", "corsica_test/cut_config.xml",
+					"--config:DiscreteModeChoice.tourFinder", "IsolatedOutsideTrips",
+					"--config:standaloneModeChoice.outputDirectory", "corsica_test/cut_output_mode_choice",
+					"--config:standaloneModeChoice.removePersonsWithNoValidAlternatives", "true",
+					"--write-input-csv-trips", "true",
+					"--write-output-csv-trips", "true"
+			});
 		}
 	}
 

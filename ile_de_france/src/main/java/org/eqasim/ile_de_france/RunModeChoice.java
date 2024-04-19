@@ -38,7 +38,6 @@ import org.matsim.core.controler.NewControlerModule;
 import org.matsim.core.controler.corelisteners.ControlerDefaultCoreListenersModule;
 import org.matsim.core.replanning.PlanStrategy;
 import org.matsim.core.replanning.ReplanningContext;
-import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
@@ -190,7 +189,7 @@ public class RunModeChoice {
          * In the former case, the threads need to be created before running the strategy.
          */
 
-        TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(MainModeIdentifier.class), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
+        TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         cmd.getOption("base-csv-path").ifPresent(s -> {
             //We write the initial trip modes
             Collection<TripItem> trips = tripReader.readTrips(population);

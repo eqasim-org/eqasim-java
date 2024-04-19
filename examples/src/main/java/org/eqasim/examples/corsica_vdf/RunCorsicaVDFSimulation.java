@@ -37,7 +37,17 @@ public class RunCorsicaVDFSimulation {
 		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
 
 		config.controller().setLastIteration(2);
+
+		// VDF: Add config group
 		config.addModule(new VDFConfigGroup());
+
+		// VDF: Disable queue logic
+		config.qsim().setFlowCapFactor(1e9);
+		config.qsim().setStorageCapFactor(1e9);
+		
+		// VDF: Optional
+		VDFConfigGroup.getOrCreate(config).setWriteInterval(1);
+		VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(1);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
@@ -49,6 +59,7 @@ public class RunCorsicaVDFSimulation {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 
+		// VDF: Add modules
 		controller.addOverridingModule(new VDFModule());
 		controller.addOverridingQSimModule(new VDFQSimModule());
 

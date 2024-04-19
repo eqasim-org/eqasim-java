@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.ConstraintModule;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
@@ -18,10 +19,10 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControllerConfigGroup.RoutingAlgorithmType;
-import org.matsim.core.config.groups.RoutingConfigGroup.AccessEgressType;
-import org.matsim.core.config.groups.RoutingConfigGroup.ModeRoutingParams;
-import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
+import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.RoutingConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup.AccessEgressType;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
 import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.config.groups.ScoringConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
@@ -50,7 +51,12 @@ public class GenerateConfig {
 		this.threads = threads;
 	}
 
-	private final static int DEFAULT_ITERATIONS = 60;
+	/**
+	 * This value is the last resort to stop the simulation, in case the termination
+	 * criterion is never fulfilled. Otherwise, the simulation is stopped when the
+	 * termination criterion kicks in.
+	 */
+	private final static int DEFAULT_ITERATIONS = 1000;
 
 	protected void adaptConfiguration(Config config) {
 		// General settings
@@ -80,6 +86,10 @@ public class GenerateConfig {
 		eqasimConfig.setCrossingPenalty(3.0);
 		eqasimConfig.setSampleSize(sampleSize);
 		eqasimConfig.setAnalysisInterval(DEFAULT_ITERATIONS);
+		
+		// Termination settings
+		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+		terminationConfig.setModes(MODES);
 
 		// Scoring config
 		ScoringConfigGroup scoringConfig = config.scoring();
@@ -115,8 +125,7 @@ public class GenerateConfig {
 
 		config.routing().setNetworkModes(NETWORK_MODES);
 
-		// TODO: Potentially defaults we should change after MATSim 12
-		config.routing().setAccessEgressType(AccessEgressType.none);
+		config.routing().setAccessEgressType(AccessEgressType.accessEgressModeToLink);
 		config.routing().setRoutingRandomness(0.0);
 
 		TeleportedModeParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
@@ -179,6 +188,9 @@ public class GenerateConfig {
 
 		eqasimConfig.setCostModel(TransportMode.car, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+
+		// To make sure trips arriving later than the next activity end time are taken into account when routing the next trip during mode choice
+		config.plans().setTripDurationHandling(PlansConfigGroup.TripDurationHandling.shiftActivityEndTimes);
 
 		// Update paths
 		config.network().setInputFile(prefix + "network.xml.gz");

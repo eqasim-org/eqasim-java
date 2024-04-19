@@ -21,6 +21,8 @@ import org.matsim.pt.transitSchedule.TransitScheduleFactoryImpl;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.mockito.Mockito;
 
 public class TestTransitTripProcessor {
 	static private class PublicTransitFinderMock implements TransitTripCrossingPointFinder {
@@ -71,7 +73,7 @@ public class TestTransitTripProcessor {
 		// No crossing points
 		finderMock = new PublicTransitFinderMock();
 		processor = new TransitTripProcessor(finderMock, scenarioExtentMock, 1.0);
-		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false);
+		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false, "pt");
 
 		Assert.assertEquals(1, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -83,7 +85,7 @@ public class TestTransitTripProcessor {
 				new TransitRouteCrossingPoint(null, null, outsideStop, insideStop, 20.0, 10.0, true)));
 
 		processor = new TransitTripProcessor(finderMock, scenarioExtentMock, 1.0);
-		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false);
+		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false, "pt");
 
 		Assert.assertEquals(3, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -100,7 +102,7 @@ public class TestTransitTripProcessor {
 		finderMock.add(new TransitTripCrossingPoint(new TeleportationCrossingPoint(new Coord(5.0, 0.0), 50.0, true)));
 
 		processor = new TransitTripProcessor(finderMock, scenarioExtentMock, 1.0);
-		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false);
+		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false, "pt");
 
 		Assert.assertEquals(3, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -118,7 +120,7 @@ public class TestTransitTripProcessor {
 				new TransitRouteCrossingPoint(null, null, outsideStop, insideStop, 20.0, 10.0, false)));
 
 		processor = new TransitTripProcessor(finderMock, scenarioExtentMock, 1.0);
-		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false);
+		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false, "pt");
 
 		Assert.assertEquals(3, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -135,7 +137,7 @@ public class TestTransitTripProcessor {
 		finderMock.add(new TransitTripCrossingPoint(new TeleportationCrossingPoint(new Coord(5.0, 0.0), 50.0, false)));
 
 		processor = new TransitTripProcessor(finderMock, scenarioExtentMock, 1.0);
-		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false);
+		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false, "pt");
 
 		Assert.assertEquals(3, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
@@ -154,7 +156,7 @@ public class TestTransitTripProcessor {
 		finderMock.add(new TransitTripCrossingPoint(new TeleportationCrossingPoint(new Coord(5.0, 0.0), 50.0, false)));
 
 		processor = new TransitTripProcessor(finderMock, scenarioExtentMock, 1.0);
-		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false);
+		result = processor.process(new Coord(0.0, 0.0), Collections.emptyList(), new Coord(0.0, 0.0), false, "pt");
 
 		Assert.assertEquals(5, result.size());
 		Assert.assertTrue(result.get(0) instanceof Leg);
