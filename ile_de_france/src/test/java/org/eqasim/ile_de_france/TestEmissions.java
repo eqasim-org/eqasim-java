@@ -10,7 +10,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -23,23 +25,29 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.ile_de_france.emissions.RunComputeEmissionsEvents;
 import org.eqasim.ile_de_france.emissions.RunExportEmissionsNetwork;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.events.EventsUtils;
+import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
+import org.matsim.core.utils.misc.CRCChecksum;
 import org.matsim.examples.ExamplesUtils;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.matsim.vehicles.MatsimVehicleWriter;
@@ -157,6 +165,13 @@ public class TestEmissions {
     }
 
     private void runMelunEmissions() throws CommandLine.ConfigurationException {
+    	Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
+		Assert.assertEquals(3297, (long) counts.get("car"));
+		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
+		Assert.assertEquals(9348, (long) counts.get("walk"));
+		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
+		Assert.assertEquals(2108, (long) counts.get("pt"));
+    	
         RunComputeEmissionsEvents.main(new String[] {
                 "--config-path", "melun_test/input/config_emissions.xml",
                 "--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv",
@@ -202,4 +217,21 @@ public class TestEmissions {
         runMelunEmissions();
     }
     
+	static Map<String, Long> countLegs(String eventsPath) {
+		EventsManager manager = EventsUtils.createEventsManager();
+
+		Map<String, Long> counts = new HashMap<>();
+		manager.addHandler((PersonDepartureEventHandler) event -> {
+			counts.compute(event.getLegMode(), (k, v) -> v == null ? 1 : v + 1);
+		});
+
+		new MatsimEventsReader(manager).readFile(eventsPath);
+
+		System.out.println("Counts:");
+		for (Map.Entry<String, Long> entry : counts.entrySet()) {
+			System.out.println("  " + entry.getKey() + " " + entry.getValue());
+		}
+
+		return counts;
+	}
 }
