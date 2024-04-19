@@ -1,4 +1,15 @@
-package org.eqasim.ile_de_france;
+package org.eqasim;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.assertEquals;
@@ -20,13 +31,13 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.components.emissions.RunComputeEmissionsEvents;
+import org.eqasim.core.components.emissions.RunExportEmissionsNetwork;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.ile_de_france.emissions.RunComputeEmissionsEvents;
-import org.eqasim.ile_de_france.emissions.RunExportEmissionsNetwork;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
