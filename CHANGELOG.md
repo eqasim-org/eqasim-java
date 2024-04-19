@@ -6,6 +6,10 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- No changes yet
+
+**1.5.0**
+
 - Add terminaton criterion
 - Several cleanups in the recent commits
 - Updated to MATSim 15
