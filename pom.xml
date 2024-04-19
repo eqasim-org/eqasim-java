@@ -22,7 +22,7 @@
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
-		<matsim.version>16.0-PR2990</matsim.version>
+		<matsim.version>2025.0-PR3223</matsim.version>
 	</properties>
 
 	<distributionManagement>
