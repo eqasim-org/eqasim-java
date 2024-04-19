@@ -1,13 +1,24 @@
-package org.eqasim.ile_de_france;
+package org.eqasim;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.components.emissions.RunComputeEmissionsEvents;
+import org.eqasim.core.components.emissions.RunExportEmissionsNetwork;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.ile_de_france.emissions.RunComputeEmissionsEvents;
-import org.eqasim.ile_de_france.emissions.RunExportEmissionsNetwork;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,19 +39,12 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.examples.ExamplesUtils;
 import org.matsim.utils.objectattributes.attributable.Attributes;
-import org.matsim.vehicles.*;
+import org.matsim.vehicles.MatsimVehicleWriter;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
+import org.matsim.vehicles.Vehicles;
 import org.opengis.feature.simple.SimpleFeature;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class TestEmissions {
 
