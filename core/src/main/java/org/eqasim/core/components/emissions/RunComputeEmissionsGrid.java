@@ -36,7 +36,7 @@ public class RunComputeEmissionsGrid {
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
-        final String outputDirectory = config.controler().getOutputDirectory() + "/";
+        final String outputDirectory = config.controller().getOutputDirectory() + "/";
 
         Network network = NetworkUtils.createNetwork();
         new MatsimNetworkReader(network).readFile(outputDirectory + "output_network.xml.gz");
