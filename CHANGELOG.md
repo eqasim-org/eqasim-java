@@ -6,7 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
-- No changes yet
+- Switched to MATSim 2025 (PR)
 
 **1.5.0**
 
