@@ -13,8 +13,8 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel.Fa
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
+import org.matsim.core.config.groups.ScoringConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup.ActivityParams;
 
 public class RunAdaptConfig {
 
@@ -42,14 +42,14 @@ public class RunAdaptConfig {
 		dmcConfig.setTripConstraints(tripConstraints);
 		dmcConfig.setTourConstraintsAsString("FromTripBased, VehicleTourConstraintWithCarPassenger");
 		dmcConfig.setFallbackBehaviour(FallbackBehaviour.INITIAL_CHOICE);
-		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
+		ScoringConfigGroup scoringConfig = config.scoring();
 
 		for (String activityType : ACTIVITY_TYPES) {
 			ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
 
 			if (activityParams == null) {
 				activityParams = new ActivityParams(activityType);
-				config.planCalcScore().addActivityParams(activityParams);
+				config.scoring().addActivityParams(activityParams);
 			}
 
 			activityParams.setScoringThisActivityAtAll(false);

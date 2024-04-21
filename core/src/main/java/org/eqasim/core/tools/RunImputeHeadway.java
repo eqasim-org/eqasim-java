@@ -24,7 +24,7 @@ public class RunImputeHeadway {
 		EqasimConfigurator configurator = new EqasimConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
-		config.strategy().clearStrategySettings();
+		config.replanning().clearStrategySettings();
 
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)

@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.eqasim</groupId>
 	<artifactId>eqasim</artifactId>
-	<version>1.3.1</version>
+	<version>1.5.0</version>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -22,7 +22,7 @@
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
-		<matsim.version>15.0</matsim.version>
+		<matsim.version>2025.0-PR3223</matsim.version>
 	</properties>
 
 	<distributionManagement>

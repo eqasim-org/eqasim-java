@@ -91,7 +91,7 @@ public class RunComputeEmissionsEvents {
         com.google.inject.Injector injector = Injector.createInjector(config, module );
         EmissionModule emissionModule = injector.getInstance(EmissionModule.class);
 
-        final String outputDirectory = scenario.getConfig().controler().getOutputDirectory() + "/";
+        final String outputDirectory = scenario.getConfig().controller().getOutputDirectory() + "/";
         EventWriterXML emissionEventWriter = new EventWriterXML( outputDirectory + "output_emissions_events.xml.gz" ) ;
         emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
 

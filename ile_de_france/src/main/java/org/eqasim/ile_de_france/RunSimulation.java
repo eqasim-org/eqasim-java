@@ -56,7 +56,7 @@ public class RunSimulation {
 
 		{
 			// Avoid logging errors when using TripsAndLegsCSV
-			config.controler().setWriteTripsInterval(0);
+			config.controller().setWriteTripsInterval(0);
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -65,7 +65,7 @@ public class RunSimulation {
 		configurator.adjustScenario(scenario);
 
 		{
-			config.planCalcScore().setMarginalUtlOfWaiting_utils_hr(-1.0);
+			config.scoring().setMarginalUtlOfWaiting_utils_hr(-1.0);
 			IDFRaptorUtils.updateScoring(config);
 		}
 
@@ -84,7 +84,7 @@ public class RunSimulation {
 
 		if (cmd.hasOption("line-switch-utility")) {
 			double lineSwitchUtility = Double.parseDouble(cmd.getOptionStrict("line-switch-utility"));
-			config.planCalcScore().setUtilityOfLineSwitch(lineSwitchUtility);
+			config.scoring().setUtilityOfLineSwitch(lineSwitchUtility);
 		}
 
 		if (cmd.hasOption("counts-path")) {

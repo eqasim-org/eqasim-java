@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
+import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -111,9 +111,9 @@ public class CoreRaptorUtils {
 		}
 
 		for (String mode : modes) {
-			if (!config.planCalcScore().getAllModes().contains(mode)) {
+			if (!config.scoring().getAllModes().contains(mode)) {
 				ModeParams modeParams = new ModeParams(mode);
-				config.planCalcScore().addModeParams(modeParams);
+				config.scoring().addModeParams(modeParams);
 			}
 		}
 	}

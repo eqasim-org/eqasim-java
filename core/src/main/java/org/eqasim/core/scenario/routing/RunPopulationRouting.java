@@ -45,7 +45,7 @@ public class RunPopulationRouting {
         config.getModules().remove(EqasimTerminationConfigGroup.GROUP_NAME);
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
-		config.strategy().clearStrategySettings();
+		config.replanning().clearStrategySettings();
 
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
@@ -93,7 +93,7 @@ public class RunPopulationRouting {
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Map<String, Id<Vehicle>> personVehicles = new HashMap<>();
 
-				for (String mode : config.plansCalcRoute().getNetworkModes()) {
+				for (String mode : config.routing().getNetworkModes()) {
 					Vehicle vehicle = factory.createVehicle(Id.createVehicleId(person.getId().toString() + ":" + mode),
 							VehicleUtils.getDefaultVehicleType());
 					vehicles.addVehicle(vehicle);
