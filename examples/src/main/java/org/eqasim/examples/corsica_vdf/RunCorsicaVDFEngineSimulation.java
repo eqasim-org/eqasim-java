@@ -41,7 +41,7 @@ public class RunCorsicaVDFEngineSimulation {
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
 		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
 
-		config.controler().setLastIteration(2);
+		config.controller().setLastIteration(2);
 
 		// VDF: Add config group
 		config.addModule(new VDFConfigGroup());

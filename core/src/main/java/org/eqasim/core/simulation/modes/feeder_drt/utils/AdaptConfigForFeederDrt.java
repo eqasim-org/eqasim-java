@@ -1,5 +1,12 @@
 package org.eqasim.core.simulation.modes.feeder_drt.utils;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -15,10 +22,8 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoic
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.pt.config.TransitConfigGroup;
-
-import java.util.*;
 
 public class AdaptConfigForFeederDrt {
 
@@ -79,8 +84,8 @@ public class AdaptConfigForFeederDrt {
 
             eqasimConfigGroup.setEstimator(feederDrtMode, utilityEstimators.get(feederDrtMode));
 
-            PlanCalcScoreConfigGroup.ActivityParams activityParams = new PlanCalcScoreConfigGroup.ActivityParams(feederDrtMode + " interaction");
-            config.planCalcScore().addActivityParams(activityParams);
+            ScoringConfigGroup.ActivityParams activityParams = new ScoringConfigGroup.ActivityParams(feederDrtMode + " interaction");
+            config.scoring().addActivityParams(activityParams);
             activityParams.setTypicalDuration(1);
             activityParams.setScoringThisActivityAtAll(false);
         }

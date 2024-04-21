@@ -19,7 +19,7 @@ public class VDFEngineModule extends AbstractModule {
 
 		for (String mode : engineConfig.getModes()) {
 			Verify.verify(!getConfig().qsim().getMainModes().contains(mode));
-			Verify.verify(!getConfig().plansCalcRoute().getModeRoutingParams().containsKey(mode));
+			Verify.verify(!getConfig().routing().getTeleportedModeParams().containsKey(mode));
 		}
 
 		installQSimModule(new AbstractQSimModule() {

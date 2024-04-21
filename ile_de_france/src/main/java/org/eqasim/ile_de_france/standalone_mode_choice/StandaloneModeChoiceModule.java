@@ -4,14 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-import javax.inject.Named;
-
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
@@ -21,6 +19,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 public class StandaloneModeChoiceModule extends AbstractModule {
     private final StandaloneModeChoiceConfigGroup configGroup;
@@ -65,7 +64,7 @@ public class StandaloneModeChoiceModule extends AbstractModule {
     @Named("StandaloneModeChoice")
     @Singleton
     public OutputDirectoryHierarchy provideOutputDirectoryHierarchy() {
-        OutputDirectoryHierarchy outputDirectoryHierarchy = new OutputDirectoryHierarchy(this.configGroup.getOutputDirectory(), null, OutputDirectoryHierarchy.OverwriteFileSetting.overwriteExistingFiles, false, ControlerConfigGroup.CompressionType.gzip);
+        OutputDirectoryHierarchy outputDirectoryHierarchy = new OutputDirectoryHierarchy(this.configGroup.getOutputDirectory(), null, OutputDirectoryHierarchy.OverwriteFileSetting.overwriteExistingFiles, false, ControllerConfigGroup.CompressionType.gzip);
         File outputDir = new File(outputDirectoryHierarchy.getOutputPath());
         if (outputDir.exists()) {
             if (outputDir.isFile()) {

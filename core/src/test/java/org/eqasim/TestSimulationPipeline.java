@@ -1,7 +1,11 @@
 package org.eqasim;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
@@ -14,12 +18,16 @@ import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtPassengerAnalysis;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtVehicleAnalysis;
+import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
+import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.eqasim.core.simulation.modes.feeder_drt.analysis.run.RunFeederDrtPassengerAnalysis;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
-import org.eqasim.core.tools.*;
-import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
-import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
+import org.eqasim.core.tools.ExportActivitiesToShapefile;
+import org.eqasim.core.tools.ExportNetworkToShapefile;
+import org.eqasim.core.tools.ExportPopulationToCSV;
+import org.eqasim.core.tools.ExportTransitLinesToShapefile;
+import org.eqasim.core.tools.ExportTransitStopsToShapefile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,15 +37,13 @@ import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvai
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class TestSimulationPipeline {
     
@@ -56,7 +62,7 @@ public class TestSimulationPipeline {
     private void runMelunSimulation(String configPath, String outputPath) {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
-        ((ControlerConfigGroup) config.getModules().get(ControlerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
+        ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
         eqasimConfigurator.addOptionalConfigGroups(config);
 
         Scenario scenario = ScenarioUtils.createScenario(config);
