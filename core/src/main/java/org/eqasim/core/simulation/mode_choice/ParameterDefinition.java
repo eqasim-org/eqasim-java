@@ -6,7 +6,8 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
@@ -16,7 +17,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 public interface ParameterDefinition {
-	final static Logger logger = Logger.getLogger(ParameterDefinition.class);
+	final static Logger logger = LogManager.getLogger(ParameterDefinition.class);
 
 	static public void applyCommandLine(String prefix, CommandLine cmd, ParameterDefinition parameterDefinition) {
 		Map<String, String> values = new HashMap<>();

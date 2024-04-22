@@ -12,7 +12,9 @@ import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.router.TransitRouter;
@@ -117,9 +119,9 @@ public class BatchPublicTransportRouter {
 					Facility fromFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, fromCoord));
 					Facility toFacility = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, toCoord));
 
-					List<Leg> legs = router.calcRoute(fromFacility, toFacility, task.departureTime, null);
+					List<? extends PlanElement> planElements = router.calcRoute(DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, task.departureTime, null));
 
-					if (legs != null) {
+					if (planElements != null) {
 						boolean isFirstVehicularLeg = true;
 						tripInformation.isOnlyWalk = 1;
 
@@ -132,9 +134,13 @@ public class BatchPublicTransportRouter {
 
 						int currentIndex = 0;
 
-						for (Leg leg : legs) {
+						for (PlanElement planElement : planElements) {
+							if(!(planElement instanceof Leg)) {
+								continue;
+							}
+							Leg leg = (Leg) planElement;
 							boolean isFirstLeg = currentIndex == 0;
-							boolean isLastLeg = currentIndex == legs.size() - 1;
+							boolean isLastLeg = currentIndex == planElements.size() - 1;
 
 							if (leg.getMode().contains("walk") && isFirstLeg) {
 								tripInformation.accessTravelTime_min += leg.getTravelTime().seconds() / 60.0;

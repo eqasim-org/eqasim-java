@@ -6,6 +6,27 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Emissions tools have been moved to core package (from ile_de_france)
+- Switched to MATSim 2025 (PR)
+
+**1.5.0**
+
+- Add terminaton criterion
+- Several cleanups in the recent commits
+- Updated to MATSim 15
+- Improve emissions tools and add tests
+- Add support for multi-stage taxi trips in Sao Paulo
+- fix: make compatible with downstream population pipelines
+- Ensure outside activity id doesn't already exist
+- Network-based (car) routing now generates access and egress walk legs
+- Convert initial-routing only-walk legs to actual walk (instead of transit)
+- Don't put activities on motorway/trunk/link in the network
+- Updated to MATSim 14
+- Isolated the mode choice model in a standalone runnable script
+- Fixed LegIndex count between iterations in legs analysis
+- Improved batch routing tools
+- Allow boolean values in parameter definition
+- Added stop area to transit leg analysis output
 - Improve functionality of routing tools to set utilities in detail
 - Fix bug in EqasimTransitQSimModule: first check if EqasimConfigGroup has TransitEngineModule before removing it
 - Updated config option from `eqasim.tripAnalysisInterval` to `eqasim.analysisInterval`

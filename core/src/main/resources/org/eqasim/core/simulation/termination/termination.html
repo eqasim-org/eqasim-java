@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script src="https://cdn.plot.ly/plotly-2.29.1.min.js" charset="utf-8"></script>
+		<style>
+			body {
+				margin: 0px;
+				padding: 0px;
+			}
+
+			.plot {
+				display: inline-block;
+				width: 45vw;
+				height: 70vh;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="indicators" class="plot"></div>
+		<div id="criteria" class="plot"></div>
+		<script type="text/javascript">
+			const data = {};
+		
+			const iterations = []
+			const indicators = {}
+			const criteria = {}
+
+			data.forEach(item => {
+				iterations.push(item.iteration)
+
+				for (const indicator in item.indicators) {
+					if (indicators[indicator] == undefined) {
+						indicators[indicator] = []
+					}
+
+					indicators[indicator].push(item.indicators[indicator])
+				}
+
+				for (const criterion in item.criteria) {
+					if (criteria[criterion] == undefined) {
+						criteria[criterion] = []
+					}
+
+					criteria[criterion].push(item.criteria[criterion])
+				}
+			})
+
+			const plotIndicators = []
+			const plotCriteria = []
+
+			for (const indicator in indicators) {
+				plotIndicators.push({
+					x: iterations, y: indicators[indicator], name: indicator
+				})
+			}
+
+			for (const criterion in criteria) {
+				plotCriteria.push({
+					x: iterations, y: criteria[criterion], name: criterion
+				})
+			}
+
+			const indicatorsDiv = document.getElementById("indicators")
+			Plotly.newPlot(indicatorsDiv, plotIndicators, { 
+				title: "Termination indicators",
+				xaxis: { title: "Iteration" },
+				yaxis: { title: "Value" } })
+			
+			const criteriaDiv = document.getElementById("criteria")
+			Plotly.newPlot(criteriaDiv, plotCriteria, { 
+				title: "Termination criteria",
+				xaxis: { title: "Iteration" },
+				yaxis: { title: "Value" } })
+		</script>
+	</body>
+</html>

@@ -6,7 +6,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
@@ -15,7 +16,6 @@ import org.eqasim.core.analysis.trips.TripListener;
 import org.eqasim.core.analysis.trips.TripReaderFromEvents;
 import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
 import org.eqasim.core.analysis.trips.TripWriter;
-import org.eqasim.core.components.EqasimMainModeIdentifier;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -24,13 +24,12 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.router.MainModeIdentifier;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.MatsimFacilitiesReader;
 
 public class RunTripAnalysis {
-	private final static Logger logger = Logger.getLogger(RunTripAnalysis.class);
+	private final static Logger logger = LogManager.getLogger(RunTripAnalysis.class);
 
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
@@ -65,8 +64,6 @@ public class RunTripAnalysis {
 
 		String outputPath = cmd.getOptionStrict("output-path");
 
-		MainModeIdentifier mainModeIdentifier = new EqasimMainModeIdentifier();
-
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
 
@@ -78,7 +75,7 @@ public class RunTripAnalysis {
 			new MatsimNetworkReader(network).readFile(networkPath);
 
 			String eventsPath = cmd.getOptionStrict("events-path");
-			TripListener tripListener = new TripListener(network, mainModeIdentifier, personAnalysisFilter);
+			TripListener tripListener = new TripListener(network, personAnalysisFilter);
 			trips = new TripReaderFromEvents(tripListener).readTrips(eventsPath);
 		} else {
 			Network network = null;
@@ -101,8 +98,8 @@ public class RunTripAnalysis {
 			}
 
 			String populationPath = cmd.getOptionStrict("population-path");
-			trips = new TripReaderFromPopulation(vehicleModes, mainModeIdentifier, personAnalysisFilter,
-					Optional.ofNullable(network), Optional.ofNullable(facilities)).readTrips(populationPath);
+			trips = new TripReaderFromPopulation(vehicleModes, personAnalysisFilter, Optional.ofNullable(network),
+					Optional.ofNullable(facilities)).readTrips(populationPath);
 		}
 
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));

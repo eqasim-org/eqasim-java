@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.ConstraintModule;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
@@ -17,13 +18,14 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoic
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.AccessEgressType;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
+import org.matsim.core.config.groups.ControllerConfigGroup.RoutingAlgorithmType;
+import org.matsim.core.config.groups.PlansConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup.AccessEgressType;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
+import org.matsim.core.config.groups.ScoringConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup.ActivityParams;
+import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 
 public class GenerateConfig {
@@ -49,22 +51,27 @@ public class GenerateConfig {
 		this.threads = threads;
 	}
 
-	private final static int DEFAULT_ITERATIONS = 60;
+	/**
+	 * This value is the last resort to stop the simulation, in case the termination
+	 * criterion is never fulfilled. Otherwise, the simulation is stopped when the
+	 * termination criterion kicks in.
+	 */
+	private final static int DEFAULT_ITERATIONS = 1000;
 
 	protected void adaptConfiguration(Config config) {
 		// General settings
 
-		config.controler().setFirstIteration(0);
-		config.controler().setLastIteration(DEFAULT_ITERATIONS);
-		config.controler().setWriteEventsInterval(DEFAULT_ITERATIONS);
-		config.controler().setWritePlansInterval(DEFAULT_ITERATIONS);
-		config.controler().setOutputDirectory("simulation_output");
-		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controller().setFirstIteration(0);
+		config.controller().setLastIteration(DEFAULT_ITERATIONS);
+		config.controller().setWriteEventsInterval(DEFAULT_ITERATIONS);
+		config.controller().setWritePlansInterval(DEFAULT_ITERATIONS);
+		config.controller().setOutputDirectory("simulation_output");
+		config.controller().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 
 		config.global().setRandomSeed(randomSeed);
 		config.global().setNumberOfThreads(threads);
 
-		config.controler().setRoutingAlgorithmType(RoutingAlgorithmType.FastAStarLandmarks);
+		config.controller().setRoutingAlgorithmType(RoutingAlgorithmType.SpeedyALT);
 
 		config.transit().setUseTransit(true);
 
@@ -79,9 +86,13 @@ public class GenerateConfig {
 		eqasimConfig.setCrossingPenalty(3.0);
 		eqasimConfig.setSampleSize(sampleSize);
 		eqasimConfig.setAnalysisInterval(DEFAULT_ITERATIONS);
+		
+		// Termination settings
+		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+		terminationConfig.setModes(MODES);
 
 		// Scoring config
-		PlanCalcScoreConfigGroup scoringConfig = config.planCalcScore();
+		ScoringConfigGroup scoringConfig = config.scoring();
 
 		scoringConfig.setMarginalUtilityOfMoney(0.0);
 		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(0.0);
@@ -91,7 +102,7 @@ public class GenerateConfig {
 
 			if (activityParams == null) {
 				activityParams = new ActivityParams(activityType);
-				config.planCalcScore().addActivityParams(activityParams);
+				config.scoring().addActivityParams(activityParams);
 			}
 
 			activityParams.setScoringThisActivityAtAll(false);
@@ -110,23 +121,22 @@ public class GenerateConfig {
 		}
 
 		// Routing configuration
-		PlansCalcRouteConfigGroup routingConfig = config.plansCalcRoute();
+		RoutingConfigGroup routingConfig = config.routing();
 
-		config.plansCalcRoute().setNetworkModes(NETWORK_MODES);
+		config.routing().setNetworkModes(NETWORK_MODES);
 
-		// TODO: Potentially defaults we should change after MATSim 12
-		config.plansCalcRoute().setAccessEgressType(AccessEgressType.none);
-		config.plansCalcRoute().setRoutingRandomness(0.0);
+		config.routing().setAccessEgressType(AccessEgressType.accessEgressModeToLink);
+		config.routing().setRoutingRandomness(0.0);
 
-		ModeRoutingParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
+		TeleportedModeParams outsideParams = routingConfig.getOrCreateModeRoutingParams("outside");
 		outsideParams.setBeelineDistanceFactor(1.0);
 		outsideParams.setTeleportedModeSpeed(1000.0);
 
-		ModeRoutingParams bikeParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.bike);
+		TeleportedModeParams bikeParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.bike);
 		bikeParams.setBeelineDistanceFactor(1.4);
 		bikeParams.setTeleportedModeSpeed(3.1); // 11.6 km/h
 
-		ModeRoutingParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
+		TeleportedModeParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
 		walkParams.setBeelineDistanceFactor(1.3);
 		walkParams.setTeleportedModeSpeed(1.2); // 4.32 km/h
 
@@ -178,6 +188,9 @@ public class GenerateConfig {
 
 		eqasimConfig.setCostModel(TransportMode.car, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+
+		// To make sure trips arriving later than the next activity end time are taken into account when routing the next trip during mode choice
+		config.plans().setTripDurationHandling(PlansConfigGroup.TripDurationHandling.shiftActivityEndTimes);
 
 		// Update paths
 		config.network().setInputFile(prefix + "network.xml.gz");

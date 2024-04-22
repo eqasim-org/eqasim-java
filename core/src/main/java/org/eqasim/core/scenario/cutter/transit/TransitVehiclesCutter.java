@@ -3,7 +3,8 @@ package org.eqasim.core.scenario.cutter.transit;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
@@ -12,7 +13,7 @@ import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.Vehicles;
 
 public class TransitVehiclesCutter {
-	private final static Logger log = Logger.getLogger(TransitVehiclesCutter.class);
+	private final static Logger log = LogManager.getLogger(TransitVehiclesCutter.class);
 
 	private final TransitSchedule schedule;
 
