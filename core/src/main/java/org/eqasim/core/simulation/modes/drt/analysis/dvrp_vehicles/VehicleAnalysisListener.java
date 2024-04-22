@@ -6,6 +6,7 @@ import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
+import org.matsim.contrib.dvrp.vrpagent.VrpAgentLogic;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.HashMap;
@@ -100,7 +101,7 @@ public class VehicleAnalysisListener implements PersonDepartureEventHandler, Per
 
     @Override
     public void handleEvent(ActivityStartEvent event) {
-        if (vehicleRegistry.isFleet(event.getPersonId())) {
+        if (this.vehicleRegistry.isFleet(event.getPersonId()) && !VrpAgentLogic.BEFORE_SCHEDULE_ACTIVITY_TYPE.equals(event.getActType()) && !VrpAgentLogic.AFTER_SCHEDULE_ACTIVITY_TYPE.equals(event.getActType())) {
             String mode = vehicleRegistry.getMode(event.getPersonId());
             Id<Vehicle> vehicleId = Id.createVehicleId(event.getPersonId());
 
@@ -121,10 +122,7 @@ public class VehicleAnalysisListener implements PersonDepartureEventHandler, Per
 
     @Override
     public void handleEvent(ActivityEndEvent event) {
-        // Here we want to skip activity type 'BeforeVrpSchedule'
-        // Since the current version of the VehicleRegistry considers the vehicle to be part of the fleet only after the TaskStartedEvent
-        // It is safe to just check the vehicle against the fleet here.
-         if (vehicleRegistry.isFleet(event.getPersonId())) {
+        if (this.vehicleRegistry.isFleet(event.getPersonId()) && !VrpAgentLogic.BEFORE_SCHEDULE_ACTIVITY_TYPE.equals(event.getActType()) && !VrpAgentLogic.AFTER_SCHEDULE_ACTIVITY_TYPE.equals(event.getActType())) {
             String mode = vehicleRegistry.getMode(event.getPersonId());
             Id<Vehicle> vehicleId = Id.createVehicleId(event.getPersonId());
 

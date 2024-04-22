@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.matsim.core.config.ConfigGroup;
-import org.matsim.core.config.groups.ControlerConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.TerminationCriterion;
@@ -29,7 +29,7 @@ public class EqasimTerminationModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	EqasimTerminationCriterion provideEqasimTerminationCriterion(ControlerConfigGroup controllerConfig,
+	EqasimTerminationCriterion provideEqasimTerminationCriterion(ControllerConfigGroup controllerConfig,
 			Map<String, TerminationIndicatorSupplier> indicators, Map<String, TerminationCriterionCalculator> criteria,
 			TerminationWriter writer) {
 		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(getConfig());

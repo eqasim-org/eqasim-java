@@ -16,6 +16,9 @@ import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
+import org.eqasim.core.simulation.modes.feeder_drt.MultiModeFeederDrtModule;
+import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
+import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.EqasimFeederDrtModeChoiceModule;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.termination.mode_share.ModeShareModule;
@@ -80,6 +83,7 @@ public class EqasimConfigurator {
 
 		this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
 		this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), List.of(new EqasimTerminationModule(), new ModeShareModule()));
+		this.registerOptionalConfigGroup(new MultiModeFeederDrtConfigGroup(), List.of(new MultiModeFeederDrtModule(), new EqasimFeederDrtModeChoiceModule()));
 	}
 
 	public ConfigGroup[] getConfigGroups() {

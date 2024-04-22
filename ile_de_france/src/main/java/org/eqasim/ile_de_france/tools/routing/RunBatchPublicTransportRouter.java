@@ -25,7 +25,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.ConfigWriter;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.pt.router.TransitRouter;
@@ -62,9 +62,9 @@ public class RunBatchPublicTransportRouter {
 		cmd.applyConfiguration(config);
 
 		// No opportunity scoring
-		config.planCalcScore().setPerforming_utils_hr(0.0);
+		config.scoring().setPerforming_utils_hr(0.0);
 
-		if (config.planCalcScore().getPerforming_utils_hr() != 0.0) {
+		if (config.scoring().getPerforming_utils_hr() != 0.0) {
 			logger.warn("Setting opporunity cost to zero");
 		}
 
@@ -77,15 +77,15 @@ public class RunBatchPublicTransportRouter {
 
 		// Transfer utility
 		if (cmd.hasOption("transfer-utility")) {
-			config.planCalcScore().setUtilityOfLineSwitch(Double.parseDouble(cmd.getOptionStrict("transfer-utility")));
-			logger.info("Setting transfer utility to " + config.planCalcScore().getUtilityOfLineSwitch());
+			config.scoring().setUtilityOfLineSwitch(Double.parseDouble(cmd.getOptionStrict("transfer-utility")));
+			logger.info("Setting transfer utility to " + config.scoring().getUtilityOfLineSwitch());
 		}
 
 		// Waiting utility
 		if (cmd.hasOption("waiting-utility")) {
-			config.planCalcScore()
+			config.scoring()
 					.setMarginalUtlOfWaitingPt_utils_hr(Double.parseDouble(cmd.getOptionStrict("waiting-utility")));
-			logger.info("Setting waiting utility to " + config.planCalcScore().getMarginalUtlOfWaitingPt_utils_hr());
+			logger.info("Setting waiting utility to " + config.scoring().getMarginalUtlOfWaitingPt_utils_hr());
 		}
 
 		// Direct walk factor
@@ -95,7 +95,7 @@ public class RunBatchPublicTransportRouter {
 		}
 
 		// Walking
-		ModeRoutingParams walkRoutingParams = config.plansCalcRoute().getModeRoutingParams().get("walk");
+		TeleportedModeParams walkRoutingParams = config.routing().getTeleportedModeParams().get("walk");
 
 		if (cmd.hasOption("walk-factor")) {
 			walkRoutingParams.setBeelineDistanceFactor(Double.parseDouble(cmd.getOptionStrict("walk-factor")));

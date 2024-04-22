@@ -28,8 +28,8 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.ConfigWriter;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ModeParams;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup.ModeRoutingParams;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
+import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.pt.router.TransitRouter;
@@ -70,9 +70,9 @@ public class RunBatchPublicTransportRouter {
 		cmd.applyConfiguration(config);
 
 		// No opportunity scoring
-		config.planCalcScore().setPerforming_utils_hr(0.0);
+		config.scoring().setPerforming_utils_hr(0.0);
 
-		if (config.planCalcScore().getPerforming_utils_hr() != 0.0) {
+		if (config.scoring().getPerforming_utils_hr() != 0.0) {
 			logger.warn("Setting opporunity cost to zero");
 		}
 
@@ -85,15 +85,15 @@ public class RunBatchPublicTransportRouter {
 
 		// Transfer utility
 		if (cmd.hasOption("transfer-utility")) {
-			config.planCalcScore().setUtilityOfLineSwitch(Double.parseDouble(cmd.getOptionStrict("transfer-utility")));
-			logger.info("Setting transfer utility to " + config.planCalcScore().getUtilityOfLineSwitch());
+			config.scoring().setUtilityOfLineSwitch(Double.parseDouble(cmd.getOptionStrict("transfer-utility")));
+			logger.info("Setting transfer utility to " + config.scoring().getUtilityOfLineSwitch());
 		}
 
 		// Waiting utility
 		if (cmd.hasOption("waiting-utility")) {
-			config.planCalcScore()
+			config.scoring()
 					.setMarginalUtlOfWaitingPt_utils_hr(Double.parseDouble(cmd.getOptionStrict("waiting-utility")));
-			logger.info("Setting waiting utility to " + config.planCalcScore().getMarginalUtlOfWaitingPt_utils_hr());
+			logger.info("Setting waiting utility to " + config.scoring().getMarginalUtlOfWaitingPt_utils_hr());
 		}
 
 		// Direct walk factor
@@ -103,7 +103,7 @@ public class RunBatchPublicTransportRouter {
 		}
 
 		// Walking
-		ModeRoutingParams walkRoutingParams = config.plansCalcRoute().getModeRoutingParams().get("walk");
+		TeleportedModeParams walkRoutingParams = config.routing().getTeleportedModeParams().get("walk");
 
 		if (cmd.hasOption("walk-factor")) {
 			walkRoutingParams.setBeelineDistanceFactor(Double.parseDouble(cmd.getOptionStrict("walk-factor")));
@@ -165,7 +165,7 @@ public class RunBatchPublicTransportRouter {
 				srrConfig.setUseModeMappingForPassengers(false);
 
 				for (String mode : utilities.keySet()) {
-					ModeParams modeParameters = config.planCalcScore().getModes().get(mode);
+					ModeParams modeParameters = config.scoring().getModes().get(mode);
 					modeParameters.setMarginalUtilityOfTraveling(utilities.get(mode));
 					logger.info(String.format("Setting travel utility for %s to %f", mode,
 							modeParameters.getMarginalUtilityOfTraveling()));
@@ -184,14 +184,14 @@ public class RunBatchPublicTransportRouter {
 						throw new IllegalStateException("No need to set travel utility for mode: " + mode);
 					}
 
-					ModeParams modeParameters = config.planCalcScore().getModes().get(mode);
+					ModeParams modeParameters = config.scoring().getModes().get(mode);
 
 					if (modeParameters == null) {
 						modeParameters = new ModeParams(mode);
 						modeParameters.setConstant(0.0);
 						modeParameters.setMarginalUtilityOfDistance(0.0);
 						modeParameters.setMonetaryDistanceRate(0.0);
-						config.planCalcScore().addModeParams(modeParameters);
+						config.scoring().addModeParams(modeParameters);
 					}
 
 					modeParameters.setMarginalUtilityOfTraveling(utilities.get(mode));
@@ -216,7 +216,7 @@ public class RunBatchPublicTransportRouter {
 				}
 
 				for (String mode : availableModes) {
-					ModeParams modeParameters = config.planCalcScore().getModes().get(mode);
+					ModeParams modeParameters = config.scoring().getModes().get(mode);
 
 					if (modeParameters == null) {
 						double utility = utilities.getOrDefault("other", -1.0);
@@ -226,7 +226,7 @@ public class RunBatchPublicTransportRouter {
 						modeParameters.setMarginalUtilityOfDistance(0.0);
 						modeParameters.setMonetaryDistanceRate(0.0);
 						modeParameters.setMarginalUtilityOfTraveling(utility);
-						config.planCalcScore().addModeParams(modeParameters);
+						config.scoring().addModeParams(modeParameters);
 
 						logger.info(String.format("Creating mode with travel utility for %s as %f", mode,
 								modeParameters.getMarginalUtilityOfTraveling()));
