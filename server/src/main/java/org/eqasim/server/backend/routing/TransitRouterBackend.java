@@ -10,10 +10,11 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.core.utils.collections.QuadTrees;
+import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
-import org.matsim.pt.router.FakeFacility;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.utils.objectattributes.attributable.AttributesImpl;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.DefaultRaptorInVehicleCostCalculator;
@@ -26,7 +27,6 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRouteSelector;
 import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
-import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig.RaptorOptimization;
 import ch.sbb.matsim.routing.pt.raptor.RaptorStopFinder;
 import ch.sbb.matsim.routing.pt.raptor.RaptorTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
@@ -99,11 +99,11 @@ public class TransitRouterBackend {
 		Coord fromCoord = new Coord(request.originX, request.originY);
 		Coord toCoord = new Coord(request.destinationX, request.destinationY);
 
-		Facility fromFacility = new FakeFacility(fromCoord);
-		Facility toFacility = new FakeFacility(toCoord);
+		Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(null, fromCoord);
+		Facility toFacility = FacilitiesUtils.wrapLinkAndCoord(null, toCoord);
 
 		List<RaptorRoute> routes = raptor.calcRoutes(fromFacility, toFacility, request.departureTime,
-				request.departureTime, request.departureTime, null);
+				request.departureTime, request.departureTime, null, new AttributesImpl());
 
 		if (routes.size() > 0) {
 			Route data = new Route();

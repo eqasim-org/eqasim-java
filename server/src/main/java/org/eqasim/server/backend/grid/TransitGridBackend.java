@@ -13,6 +13,7 @@ import org.matsim.core.utils.collections.QuadTrees;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.utils.objectattributes.attributable.AttributesImpl;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorCore.TravelInfo;
@@ -60,7 +61,7 @@ public class TransitGridBackend {
 		SwissRailRaptor router = routerBackend.getInstance(configuration);
 
 		TransitStopFacility originStop = stopIndex.getClosest(originX, originY);
-		var tree = router.calcTree(originStop, departureTime, null);
+		var tree = router.calcTree(originStop, departureTime, null, new AttributesImpl());
 
 		for (var item : tree.entrySet()) {
 			TransitStopFacility destinationStop = schedule.getFacilities().get(item.getKey());
