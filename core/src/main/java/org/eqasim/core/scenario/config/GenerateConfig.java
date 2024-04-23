@@ -95,7 +95,7 @@ public class GenerateConfig {
 		ScoringConfigGroup scoringConfig = config.scoring();
 
 		scoringConfig.setMarginalUtilityOfMoney(0.0);
-		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(0.0);
+		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(-1.0);
 
 		for (String activityType : ACTIVITY_TYPES) {
 			ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
@@ -119,7 +119,7 @@ public class GenerateConfig {
 			modeParams.setMarginalUtilityOfTraveling(-1.0);
 			modeParams.setMonetaryDistanceRate(0.0);
 		}
-
+		
 		// Routing configuration
 		RoutingConfigGroup routingConfig = config.routing();
 

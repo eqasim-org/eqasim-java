@@ -12,6 +12,8 @@ import java.util.function.BiConsumer;
 
 import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
+import org.eqasim.core.components.raptor.EqasimRaptorModule;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
@@ -65,7 +67,8 @@ public class EqasimConfigurator {
         configGroups.addAll(Arrays.asList( //
                 new SwissRailRaptorConfigGroup(), //
                 new EqasimConfigGroup(), //
-                new DiscreteModeChoiceConfigGroup() //
+                new DiscreteModeChoiceConfigGroup(), //
+                new EqasimRaptorConfigGroup() //
         ));
 
         modules.addAll(Arrays.asList( //
@@ -73,7 +76,8 @@ public class EqasimConfigurator {
                 new EqasimTransitModule(), //
                 new DiscreteModeChoiceModule(), //
                 new EqasimComponentsModule(), //
-                new EpsilonModule() //
+                new EpsilonModule(), //
+                new EqasimRaptorModule() //
         ));
 
         qsimModules.addAll(Arrays.asList( //

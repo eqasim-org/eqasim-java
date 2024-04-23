@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.config.GenerateConfig;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -145,6 +146,7 @@ public class TestSpecialModeChoiceCases {
 		CommandLine cmd = new CommandLine.Builder(new String[] {}).build();
 
 		new GenerateConfig(cmd, "", 1.0, 1, 1).run(config);
+		config.addModule(new EqasimRaptorConfigGroup());
 
 		// Make sure the two relevant options (walk vs. bike) both get zero utility
 		DiscreteModeChoiceConfigGroup.getOrCreate(config).setModeAvailability("static");
