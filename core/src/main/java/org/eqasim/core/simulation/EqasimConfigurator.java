@@ -19,6 +19,12 @@ import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.modes.feeder_drt.MultiModeFeederDrtModule;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.EqasimFeederDrtModeChoiceModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAbstractAccessModuleConfigGroup;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessQSimModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeChoiceModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.AbstractAccessRouteFactory;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.DefaultAbstractAccessRoute;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.termination.mode_share.ModeShareModule;
@@ -55,81 +61,87 @@ public class EqasimConfigurator {
 	private final Map<String, List<BiConsumer<Controler, QSimComponentsConfig>>> optionalQSimComponentConfigurationSteps = new HashMap<>();
 	private final Map<String, ConfigGroup> optionalConfigGroups = new HashMap<>();
 
-	public EqasimConfigurator() {
-		configGroups.addAll(Arrays.asList( //
-				new SwissRailRaptorConfigGroup(), //
-				new EqasimConfigGroup(), //
-				new DiscreteModeChoiceConfigGroup() //
-		));
+    public EqasimConfigurator() {
+        configGroups.addAll(Arrays.asList( //
+                new SwissRailRaptorConfigGroup(), //
+                new EqasimConfigGroup(), //
+                new DiscreteModeChoiceConfigGroup() //
+        ));
 
-		modules.addAll(Arrays.asList( //
-				new SwissRailRaptorModule(), //
-				new EqasimTransitModule(), //
-				new DiscreteModeChoiceModule(), //
-				new EqasimComponentsModule(), //
-				new EpsilonModule() //
-		));
+        modules.addAll(Arrays.asList( //
+                new SwissRailRaptorModule(), //
+                new EqasimTransitModule(), //
+                new DiscreteModeChoiceModule(), //
+                new EqasimComponentsModule(), //
+                new EpsilonModule() //
+        ));
 
-		qsimModules.addAll(Arrays.asList( //
-				new EqasimTransitQSimModule(), //
-				new EqasimTrafficQSimModule() //
-		));
+        qsimModules.addAll(Arrays.asList( //
+                new EqasimTransitQSimModule(), //
+                new EqasimTrafficQSimModule() //
+        ));
 
-		this.registerOptionalConfigGroup(new MultiModeDrtConfigGroup(),
-				Collections.singleton(new MultiModeDrtModule()),
-				Collections.emptyList(),
-				Collections.singletonList((controller, components) ->
-						DvrpQSimComponents.activateAllModes((MultiModal<?>) controller.getConfig().getModules().get(MultiModeDrtConfigGroup.GROUP_NAME)).configure(components)));
+        this.registerOptionalConfigGroup(new MultiModeDrtConfigGroup(),
+                Collections.singleton(new MultiModeDrtModule()),
+                Collections.emptyList(),
+                Collections.singletonList((controller, components) ->
+                        DvrpQSimComponents.activateAllModes((MultiModal<?>) controller.getConfig().getModules().get(MultiModeDrtConfigGroup.GROUP_NAME)).configure(components)));
 
-		this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
-		this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), List.of(new EqasimTerminationModule(), new ModeShareModule()));
-		this.registerOptionalConfigGroup(new MultiModeFeederDrtConfigGroup(), List.of(new MultiModeFeederDrtModule(), new EqasimFeederDrtModeChoiceModule()));
-	}
+        this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
+        this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), List.of(new EqasimTerminationModule(), new ModeShareModule()));
+        this.registerOptionalConfigGroup(new MultiModeFeederDrtConfigGroup(), List.of(new MultiModeFeederDrtModule(), new EqasimFeederDrtModeChoiceModule()));
+        this.registerOptionalConfigGroup(
+                new TransitWithAbstractAbstractAccessModuleConfigGroup(),
+                List.of(new TransitWithAbstractAccessModule(),
+                        new TransitWithAbstractAccessModeChoiceModule()),
+                List.of(new TransitWithAbstractAccessQSimModule()),
+                Collections.singletonList((controller, components) -> TransitWithAbstractAccessQSimModule.configure(components, controller.getConfig())));
+    }
 
-	public ConfigGroup[] getConfigGroups() {
-		return configGroups.toArray(ConfigGroup[]::new);
-	}
+    public ConfigGroup[] getConfigGroups() {
+        return configGroups.toArray(ConfigGroup[]::new);
+    }
 
-	public List<AbstractModule> getModules() {
-		return modules;
-	}
+    public List<AbstractModule> getModules() {
+        return modules;
+    }
 
-	public List<AbstractQSimModule> getQSimModules() {
-		return qsimModules;
-	}
+    public List<AbstractQSimModule> getQSimModules() {
+        return qsimModules;
+    }
 
-	public void configureController(Controler controller) {
+    public void configureController(Controler controller) {
 
-		// The optional modules are added after the non-optional ones because we consider that their bindings have less priority
-		this.optionalModules.entrySet().stream()
-				.filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
-				.map(Map.Entry::getValue)
-				.flatMap(Collection::stream)
-				.forEach(controller::addOverridingModule);
+        // The optional modules are added after the non-optional ones because we consider that their bindings have less priority
+        this.optionalModules.entrySet().stream()
+                .filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
+                .map(Map.Entry::getValue)
+                .flatMap(Collection::stream)
+                .forEach(controller::addOverridingModule);
 
-		for (AbstractModule module : getModules()) {
-			controller.addOverridingModule(module);
-		}
+        for (AbstractModule module : getModules()) {
+            controller.addOverridingModule(module);
+        }
 
-		this.optionalQSimModules.entrySet().stream()
-				.filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
-				.map(Map.Entry::getValue)
-				.flatMap(Collection::stream)
-				.forEach(controller::addOverridingQSimModule);
+        this.optionalQSimModules.entrySet().stream()
+                .filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
+                .map(Map.Entry::getValue)
+                .flatMap(Collection::stream)
+                .forEach(controller::addOverridingQSimModule);
 
-		for (AbstractQSimModule module : getQSimModules()) {
-			controller.addOverridingQSimModule(module);
-		}
+        for (AbstractQSimModule module : getQSimModules()) {
+            controller.addOverridingQSimModule(module);
+        }
 
-		controller.configureQSimComponents(components -> {
-			optionalQSimComponentConfigurationSteps.entrySet().stream()
-					.filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
-					.map(Map.Entry::getValue)
-					.flatMap(Collection::stream)
-					.forEach(step -> step.accept(controller, components));
-			EqasimTransitQSimModule.configure(components, controller.getConfig());
-		});
-	}
+        controller.configureQSimComponents(components -> {
+            optionalQSimComponentConfigurationSteps.entrySet().stream()
+                    .filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
+                    .map(Map.Entry::getValue)
+                    .flatMap(Collection::stream)
+                    .forEach(step -> step.accept(controller, components));
+            EqasimTransitQSimModule.configure(components, controller.getConfig());
+        });
+    }
 
 	protected void registerOptionalConfigGroup(ConfigGroup configGroup) {
 		registerOptionalConfigGroup(configGroup, new ArrayList<>());
@@ -147,41 +159,42 @@ public class EqasimConfigurator {
 		this.optionalModules.putIfAbsent(configGroup.getName(), new ArrayList<>());
 		this.optionalModules.get(configGroup.getName()).addAll(modules);
 
-		this.optionalQSimModules.putIfAbsent(configGroup.getName(), new ArrayList<>());
-		this.optionalQSimModules.get(configGroup.getName()).addAll(qsimModules);
+        this.optionalQSimModules.putIfAbsent(configGroup.getName(), new ArrayList<>());
+        this.optionalQSimModules.get(configGroup.getName()).addAll(qsimModules);
 
-		this.optionalQSimComponentConfigurationSteps.putIfAbsent(configGroup.getName(), new ArrayList<>());
-		this.optionalQSimComponentConfigurationSteps.get(configGroup.getName()).addAll(componentsConsumers);
-	}
+        this.optionalQSimComponentConfigurationSteps.putIfAbsent(configGroup.getName(), new ArrayList<>());
+        this.optionalQSimComponentConfigurationSteps.get(configGroup.getName()).addAll(componentsConsumers);
+    }
 
-	public void addOptionalConfigGroups(Config config) {
-		for(ConfigGroup configGroup: optionalConfigGroups.values()) {
-			if(config.getModules().get(configGroup.getName()) != null) {
-				config.addModule(configGroup);
-			}
-		}
-	}
+    public void addOptionalConfigGroups(Config config) {
+        for (ConfigGroup configGroup : optionalConfigGroups.values()) {
+            if (config.getModules().get(configGroup.getName()) != null) {
+                config.addModule(configGroup);
+            }
+        }
+    }
 
-	public void configureScenario(Scenario scenario) {
-		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
-	}
+    public void configureScenario(Scenario scenario) {
+        scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class, new DrtRouteFactory());
+        scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DefaultAbstractAccessRoute.class, new AbstractAccessRouteFactory());
+    }
 
-	public void adjustScenario(Scenario scenario) {
-		for (Household household : scenario.getHouseholds().getHouseholds().values()) {
-			for (Id<Person> memberId : household.getMemberIds()) {
-				Person person = scenario.getPopulation().getPersons().get(memberId);
+    public void adjustScenario(Scenario scenario) {
+        for (Household household : scenario.getHouseholds().getHouseholds().values()) {
+            for (Id<Person> memberId : household.getMemberIds()) {
+                Person person = scenario.getPopulation().getPersons().get(memberId);
 
-				if (person != null) {
-					copyAttribute(household, person, "bikeAvailability");
-					copyAttribute(household, person, "spRegion");
-				}
-			}
-		}
-	}
+                if (person != null) {
+                    copyAttribute(household, person, "bikeAvailability");
+                    copyAttribute(household, person, "spRegion");
+                }
+            }
+        }
+    }
 
-	static protected void copyAttribute(Household household, Person person, String attribute) {
-		if (household.getAttributes().getAsMap().containsKey(attribute)) {
-			person.getAttributes().putAttribute(attribute, household.getAttributes().getAttribute(attribute));
-		}
-	}
+    static protected void copyAttribute(Household household, Person person, String attribute) {
+        if (household.getAttributes().getAsMap().containsKey(attribute)) {
+            person.getAttributes().putAttribute(attribute, household.getAttributes().getAttribute(attribute));
+        }
+    }
 }

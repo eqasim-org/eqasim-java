@@ -22,6 +22,10 @@ public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 		this.costModel = costModel;
 	}
 
+	protected CostModel getCostModel() {
+		return this.costModel;
+	}
+
 	@Override
 	public PtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		/*
