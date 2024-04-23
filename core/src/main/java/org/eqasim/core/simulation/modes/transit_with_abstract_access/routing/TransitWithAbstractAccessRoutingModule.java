@@ -130,8 +130,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         } else {
             List<? extends PlanElement> ptRoute = this.transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(routingRequest.getFromFacility(), egresssTransitStopFacility, routingRequest.getDepartureTime(), routingRequest.getPerson()));
             for(PlanElement element: ptRoute) {
-                if(element instanceof Leg) {
-                    Leg leg = (Leg) element;
+                if(element instanceof Leg leg) {
                     departureTime = leg.getDepartureTime().seconds();
                     departureTime+=leg.getTravelTime().seconds();
                 }
@@ -146,8 +145,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                 ptRoute = this.transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(routingRequest.getFromFacility(), egresssTransitStopFacility, departureTime, routingRequest.getPerson()));
             }
             for(PlanElement element: ptRoute) {
-                if(element instanceof Leg) {
-                    Leg leg = (Leg) element;
+                if(element instanceof Leg leg) {
                     departureTime = leg.getDepartureTime().seconds();
                     departureTime+=leg.getTravelTime().seconds();
                 }
@@ -187,7 +185,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             abstractAccessRoute.setDistance(distance);
             abstractAccessRoute.setTravelTime(accessItem.getTimeToCenter(distance));
         }
-        abstractAccessRoute.setWaitTime(accessItem.getWaitTime(departureTime));
+        abstractAccessRoute.setWaitTime(accessItem.getWaitTime());
         // we add the wait time to the travel time of the leg since the current departure handler does not explicitly simulate waiting
         leg.setTravelTime(abstractAccessRoute.getWaitTime() + abstractAccessRoute.getTravelTime().seconds());
         return leg;

@@ -110,7 +110,7 @@ public class AbstractAccessItem {
         return itemsByTransitStop;
     }
 
-    public double getWaitTime(double time) {
+    public double getWaitTime() {
         return (double) this.frequency / 2;
     }
 
