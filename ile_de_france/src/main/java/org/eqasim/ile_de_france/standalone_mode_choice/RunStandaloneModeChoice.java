@@ -132,6 +132,7 @@ public class RunStandaloneModeChoice {
     public static final String CMD_CONFIG_PATH = "config-path";
     public static final String CMD_TRAVEL_TIMES_FACTORS_PATH = "travel-times-factors-path";
     public static final String CMD_RECORDED_TRAVEL_TIMES_PATH = "recorded-travel-times-path";
+    public static final String CMD_SKIP_SCENARIO_CHECK = "skip-scenario-check";
 
 
     public static void main(String[] args) throws CommandLine.ConfigurationException, InterruptedException, IOException {
@@ -140,6 +141,7 @@ public class RunStandaloneModeChoice {
                 .allowOptions(CMD_WRITE_INPUT_CSV, CMD_WRITE_OUTPUT_CSV)
                 .allowOptions(CMD_TRAVEL_TIMES_FACTORS_PATH, CMD_RECORDED_TRAVEL_TIMES_PATH)
                 .allowOptions(CMD_SIMULATE_AFTER)
+                .allowOptions(CMD_SKIP_SCENARIO_CHECK)
                 .build();
 
         // Loading the config
@@ -173,8 +175,10 @@ public class RunStandaloneModeChoice {
         Scenario scenario = ScenarioUtils.createScenario(config);
         ScenarioUtils.loadScenario(scenario);
 
-        ScenarioValidator scenarioValidator = new ScenarioValidator();
-        scenarioValidator.checkScenario(scenario);
+        if(!cmd.hasOption(CMD_SKIP_SCENARIO_CHECK) || !Boolean.parseBoolean(cmd.getOptionStrict(CMD_SKIP_SCENARIO_CHECK))) {
+            ScenarioValidator scenarioValidator = new ScenarioValidator();
+            scenarioValidator.checkScenario(scenario);
+        }
         configurator.adjustScenario(scenario);
         //The line below has to be done here right after scenario loading and not in the StandaloneModeChoicePerformer
         RunPopulationRouting.insertVehicles(config, scenario);
@@ -194,36 +198,32 @@ public class RunStandaloneModeChoice {
                 .addOverridingModule(new StandaloneModeChoiceModule(config));
 
 
-        travelTimesFactorsPath.ifPresent(path -> {
-            injectorBuilder.addOverridingModule(new AbstractModule() {
-                @Override
-                public void install() {
-                    addTravelTimeBinding("car").toInstance(new TravelTimeFactors(path));
-                }
-            });
-        });
+        travelTimesFactorsPath.ifPresent(path -> injectorBuilder.addOverridingModule(new AbstractModule() {
+            @Override
+            public void install() {
+                addTravelTimeBinding("car").toInstance(new TravelTimeFactors(path));
+            }
+        }));
 
-        recordedTravelTimesPath.ifPresent(path -> {
-            injectorBuilder.addOverridingModule(new AbstractModule() {
-                @Override
-                public void install() {
-                    addTravelTimeBinding("car").to(RecordedTravelTime.class);
-                }
+        recordedTravelTimesPath.ifPresent(path -> injectorBuilder.addOverridingModule(new AbstractModule() {
+            @Override
+            public void install() {
+                addTravelTimeBinding("car").to(RecordedTravelTime.class);
+            }
 
-                @Provides
-                @Singleton
-                RecordedTravelTime provideRecordedTravelTime() {
-                    try {
-                        InputStream inputStream = new FileInputStream(path);
-                        RecordedTravelTime recordedTravelTime = RecordedTravelTime.readBinary(inputStream);
-                        inputStream.close();
-                        return recordedTravelTime;
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+            @Provides
+            @Singleton
+            RecordedTravelTime provideRecordedTravelTime() {
+                try {
+                    InputStream inputStream = new FileInputStream(path);
+                    RecordedTravelTime recordedTravelTime = RecordedTravelTime.readBinary(inputStream);
+                    inputStream.close();
+                    return recordedTravelTime;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            });
-        });
+            }
+        }));
 
         for(AbstractModule module: configurator.getModules()) {
         	if (module instanceof EqasimTerminationModule) {

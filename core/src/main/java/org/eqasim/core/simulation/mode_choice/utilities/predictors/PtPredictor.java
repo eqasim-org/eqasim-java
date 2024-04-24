@@ -15,11 +15,15 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 public class PtPredictor extends CachedVariablePredictor<PtVariables> {
-	private CostModel costModel;
+	private final CostModel costModel;
 
 	@Inject
 	public PtPredictor(@Named("pt") CostModel costModel) {
 		this.costModel = costModel;
+	}
+
+	protected CostModel getCostModel() {
+		return this.costModel;
 	}
 
 	@Override
@@ -39,8 +43,7 @@ public class PtPredictor extends CachedVariablePredictor<PtVariables> {
 		double accessEgressTime_min = 0.0;
 
 		for (PlanElement element : elements) {
-			if (element instanceof Leg) {
-				Leg leg = (Leg) element;
+			if (element instanceof Leg leg) {
 
 				switch (leg.getMode()) {
 				case TransportMode.walk:

@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Emissions tools have been moved to core package (from ile_de_france)
 - Switched to MATSim 2025 (PR)
 
 **1.5.0**

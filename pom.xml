@@ -17,6 +17,7 @@
 		<module>san_francisco</module>
 		<module>los_angeles</module>
 		<module>vdf</module>
+		<module>server</module>
 	</modules>
 
 	<properties>
