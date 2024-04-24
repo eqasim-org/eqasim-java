@@ -40,9 +40,9 @@ public class BatchRoadRouter {
 		this.writePaths = writePaths;
 	}
 
-	public Collection<RoadRoutingResult> run(Collection<RoadRoutingTask> tasks) throws InterruptedException {
-		Iterator<RoadRoutingTask> taskIterator = tasks.iterator();
-		List<RoadRoutingResult> results = new ArrayList<>(tasks.size());
+	public Collection<Result> run(Collection<Task> tasks) throws InterruptedException {
+		Iterator<Task> taskIterator = tasks.iterator();
+		List<Result> results = new ArrayList<>(tasks.size());
 
 		ParallelProgress progress = new ParallelProgress("Routing trips ...", tasks.size());
 		progress.start();
@@ -64,11 +64,11 @@ public class BatchRoadRouter {
 	}
 
 	private class Worker implements Runnable {
-		private final Iterator<RoadRoutingTask> taskIterator;
-		private final Collection<RoadRoutingResult> results;
+		private final Iterator<Task> taskIterator;
+		private final Collection<Result> results;
 		private final ParallelProgress progress;
 
-		private Worker(Iterator<RoadRoutingTask> taskIterator, Collection<RoadRoutingResult> results, ParallelProgress progress) {
+		private Worker(Iterator<Task> taskIterator, Collection<Result> results, ParallelProgress progress) {
 			this.taskIterator = taskIterator;
 			this.results = results;
 			this.progress = progress;
@@ -84,7 +84,7 @@ public class BatchRoadRouter {
 			LeastCostPathCalculator router = factory.createPathCalculator(network, travelDisutility, travelTime);
 
 			while (true) {
-				List<RoadRoutingTask> localTasks = new ArrayList<>(batchSize);
+				List<Task> localTasks = new ArrayList<>(batchSize);
 
 				synchronized (taskIterator) {
 					while (taskIterator.hasNext() && localTasks.size() < batchSize) {
@@ -96,10 +96,10 @@ public class BatchRoadRouter {
 					}
 				}
 
-				List<RoadRoutingResult> localResults = new ArrayList<>(localTasks.size());
+				List<Result> localResults = new ArrayList<>(localTasks.size());
 
-				for (RoadRoutingTask task : localTasks) {
-					RoadRoutingResult result = new RoadRoutingResult(task);
+				for (Task task : localTasks) {
+					Result result = new Result(task);
 
 					Coord fromCoord = new Coord(task.originX, task.originY);
 					Coord toCoord = new Coord(task.destinationX, task.destinationY);
@@ -133,7 +133,7 @@ public class BatchRoadRouter {
 		}
 	}
 
-	static public class RoadRoutingTask {
+	static public class Task {
 		@JsonProperty("identifier")
 		public String identifier;
 
@@ -153,7 +153,7 @@ public class BatchRoadRouter {
 		public double departureTime;
 	}
 
-	static public class RoadRoutingResult {
+	static public class Result {
 		@JsonProperty("identifier")
 		public String identifier;
 
@@ -172,7 +172,7 @@ public class BatchRoadRouter {
 		@JsonProperty("path")
 		public List<String> path = new LinkedList<>();
 
-		RoadRoutingResult(RoadRoutingTask task) {
+		Result(Task task) {
 			this.identifier = task.identifier;
 		}
 	}

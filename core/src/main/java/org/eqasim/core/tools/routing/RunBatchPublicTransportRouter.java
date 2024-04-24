@@ -18,7 +18,7 @@ import org.eqasim.core.components.headway.HeadwayImputerModule;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.tools.routing.BatchPublicTransportRouter.LegInformation;
-import org.eqasim.core.tools.routing.BatchPublicTransportRouter.TransitRoutingTask;
+import org.eqasim.core.tools.routing.BatchPublicTransportRouter.Task;
 import org.eqasim.core.tools.routing.BatchPublicTransportRouter.TripInformation;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
@@ -276,12 +276,12 @@ public class RunBatchPublicTransportRouter {
 		CsvMapper mapper = new CsvMapper();
 
 		File inputFile = new File(cmd.getOptionStrict("input-path"));
-		CsvSchema taskSchema = mapper.typedSchemaFor(TransitRoutingTask.class).withHeader().withColumnSeparator(',').withComments()
+		CsvSchema taskSchema = mapper.typedSchemaFor(Task.class).withHeader().withColumnSeparator(',').withComments()
 				.withColumnReordering(true);
 
-		MappingIterator<TransitRoutingTask> taskIterator = mapper.readerWithTypedSchemaFor(TransitRoutingTask.class).with(taskSchema)
+		MappingIterator<Task> taskIterator = mapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
 				.readValues(inputFile);
-		List<TransitRoutingTask> tasks = taskIterator.readAll();
+		List<Task> tasks = taskIterator.readAll();
 
 		Pair<Collection<TripInformation>, Collection<LegInformation>> results = batchRouter.run(tasks);
 		Collection<TripInformation> tripResults = results.getLeft();

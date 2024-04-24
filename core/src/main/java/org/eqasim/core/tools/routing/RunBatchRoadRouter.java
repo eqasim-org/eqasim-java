@@ -9,8 +9,8 @@ import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.tools.routing.BatchRoadRouter.RoadRoutingResult;
-import org.eqasim.core.tools.routing.BatchRoadRouter.RoadRoutingTask;
+import org.eqasim.core.tools.routing.BatchRoadRouter.Result;
+import org.eqasim.core.tools.routing.BatchRoadRouter.Task;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -91,14 +91,14 @@ public class RunBatchRoadRouter {
 		CsvMapper taskMapper = new CsvMapper();
 
 		File inputFile = new File(cmd.getOptionStrict("input-path"));
-		CsvSchema taskSchema = taskMapper.typedSchemaFor(RoadRoutingTask.class).withHeader().withColumnSeparator(',')
+		CsvSchema taskSchema = taskMapper.typedSchemaFor(Task.class).withHeader().withColumnSeparator(',')
 				.withComments().withColumnReordering(true);
 
-		MappingIterator<RoadRoutingTask> taskIterator = taskMapper.readerWithTypedSchemaFor(RoadRoutingTask.class).with(taskSchema)
+		MappingIterator<Task> taskIterator = taskMapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
 				.readValues(inputFile);
-		List<RoadRoutingTask> tasks = taskIterator.readAll();
+		List<Task> tasks = taskIterator.readAll();
 
-		Collection<RoadRoutingResult> results = batchRouter.run(tasks);
+		Collection<Result> results = batchRouter.run(tasks);
 
 		CsvSchema.Builder builder = new CsvSchema.Builder() //
 				.setColumnSeparator(',') //
@@ -120,7 +120,7 @@ public class RunBatchRoadRouter {
 
 		CsvMapper resultMapper = new CsvMapper();
 		resultMapper.configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true);
-		SequenceWriter writer = resultMapper.writerWithTypedSchemaFor(RoadRoutingResult.class).with(schema)
+		SequenceWriter writer = resultMapper.writerWithTypedSchemaFor(Result.class).with(schema)
 				.writeValues(outputFile);
 
 		writer.writeAll(results);

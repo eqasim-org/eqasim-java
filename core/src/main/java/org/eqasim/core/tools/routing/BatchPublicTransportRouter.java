@@ -49,9 +49,9 @@ public class BatchPublicTransportRouter {
 		this.interval = interval;
 	}
 
-	public Pair<Collection<TripInformation>, Collection<LegInformation>> run(Collection<TransitRoutingTask> tasks)
+	public Pair<Collection<TripInformation>, Collection<LegInformation>> run(Collection<Task> tasks)
 			throws InterruptedException {
-		Iterator<TransitRoutingTask> taskIterator = tasks.iterator();
+		Iterator<Task> taskIterator = tasks.iterator();
 
 		List<TripInformation> tripResults = new ArrayList<>(tasks.size());
 		List<LegInformation> legResults = new ArrayList<>(tasks.size());
@@ -76,12 +76,12 @@ public class BatchPublicTransportRouter {
 	}
 
 	private class Worker implements Runnable {
-		private final Iterator<TransitRoutingTask> taskIterator;
+		private final Iterator<Task> taskIterator;
 		private final Collection<TripInformation> tripResults;
 		private final Collection<LegInformation> legResults;
 		private final ParallelProgress progress;
 
-		private Worker(Iterator<TransitRoutingTask> taskIterator, Collection<TripInformation> tripResults,
+		private Worker(Iterator<Task> taskIterator, Collection<TripInformation> tripResults,
 				Collection<LegInformation> legResults, ParallelProgress progress) {
 			this.taskIterator = taskIterator;
 			this.tripResults = tripResults;
@@ -95,7 +95,7 @@ public class BatchPublicTransportRouter {
 			HeadwayCalculator headwayCalculator = headwayCalculatorProvider.get();
 
 			while (true) {
-				List<TransitRoutingTask> localTasks = new ArrayList<>(batchSize);
+				List<Task> localTasks = new ArrayList<>(batchSize);
 
 				synchronized (taskIterator) {
 					while (taskIterator.hasNext() && localTasks.size() < batchSize) {
@@ -110,7 +110,7 @@ public class BatchPublicTransportRouter {
 				List<TripInformation> localTripResults = new ArrayList<>(localTasks.size());
 				List<LegInformation> localLegResults = new ArrayList<>(localTasks.size() * 3);
 
-				for (TransitRoutingTask task : localTasks) {
+				for (Task task : localTasks) {
 					TripInformation tripInformation = new TripInformation(task);
 
 					Coord fromCoord = new Coord(task.originX, task.originY);
@@ -263,7 +263,7 @@ public class BatchPublicTransportRouter {
 		throw new IllegalStateException("Departure not found");
 	}
 
-	static public class TransitRoutingTask {
+	static public class Task {
 		@JsonProperty("identifier")
 		public String identifier;
 
@@ -362,7 +362,7 @@ public class BatchPublicTransportRouter {
 		@JsonProperty("is_only_walk")
 		public int isOnlyWalk;
 
-		TripInformation(TransitRoutingTask task) {
+		TripInformation(Task task) {
 			this.identifier = task.identifier;
 		}
 	}
