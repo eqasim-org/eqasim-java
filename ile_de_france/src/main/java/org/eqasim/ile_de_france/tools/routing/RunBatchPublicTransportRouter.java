@@ -13,7 +13,6 @@ import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.components.headway.HeadwayImputerModule;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.tools.routing.BatchPublicTransportRouter.LegInformation;
 import org.eqasim.ile_de_france.tools.routing.BatchPublicTransportRouter.Task;
 import org.eqasim.ile_de_france.tools.routing.BatchPublicTransportRouter.TripInformation;
@@ -133,7 +132,6 @@ public class RunBatchPublicTransportRouter {
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
-				.addOverridingModule(new IDFRaptorModule(cmd)) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, false, interval)).build();
 
 		Provider<TransitRouter> routerProvider = injector.getProvider(TransitRouter.class);

@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.tools.routing.BatchRoadRouter.Result;
 import org.eqasim.ile_de_france.tools.routing.BatchRoadRouter.Task;
 import org.eqasim.vdf.VDFConfigGroup;
@@ -78,7 +77,6 @@ public class RunBatchRoadRouter {
 
 		InjectorBuilder builder = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
-				.addOverridingModule(new IDFRaptorModule(cmd)) //
 				.addOverridingModule(new AbstractModule() {
 					@Override
 					public void install() {

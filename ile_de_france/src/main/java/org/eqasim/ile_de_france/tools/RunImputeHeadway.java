@@ -4,7 +4,6 @@ import org.eqasim.core.components.headway.HeadwayImputer;
 import org.eqasim.core.components.headway.HeadwayImputerModule;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -37,7 +36,6 @@ public class RunImputeHeadway {
 
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
-				.addOverridingModule(new IDFRaptorModule(cmd)) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, interval)) //
 				.build();
 

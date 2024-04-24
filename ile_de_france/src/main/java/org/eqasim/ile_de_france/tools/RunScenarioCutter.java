@@ -30,7 +30,6 @@ import org.eqasim.core.scenario.routing.PopulationRouter;
 import org.eqasim.core.scenario.routing.PopulationRouterModule;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -104,7 +103,6 @@ public class RunScenarioCutter {
 				.addOverridingModule(
 						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //)
-				.addOverridingModule(new IDFRaptorModule(cmd)) //
 				.build();
 
 		PopulationCutter populationCutter = populationCutterInjector.getInstance(PopulationCutter.class);
@@ -156,7 +154,6 @@ public class RunScenarioCutter {
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
-				.addOverridingModule(new IDFRaptorModule(cmd)) //
 				.build();
 
 		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);

@@ -31,8 +31,6 @@ import org.matsim.vehicles.VehiclesFactory;
 
 import com.google.inject.Injector;
 
-import ch.sbb.matsim.routing.pt.raptor.CoreRaptorModule;
-
 public class RunPopulationRouting {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
@@ -73,8 +71,8 @@ public class RunPopulationRouting {
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
-				.addOverridingModule(new TimeInterpretationModule())
-				.addOverridingModule(new CoreRaptorModule(cmd)).build();
+				.addOverridingModule(new TimeInterpretationModule()) //
+				.build();
 
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
 		populationRouter.run(scenario.getPopulation());

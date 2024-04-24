@@ -14,8 +14,6 @@ import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
-import org.eqasim.ile_de_france.routing.IDFRaptorModule;
-import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
 import org.eqasim.vdf.VDFConfigGroup;
 import org.eqasim.vdf.VDFModule;
@@ -63,11 +61,6 @@ public class RunSimulation {
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		configurator.adjustScenario(scenario);
-
-		{
-			config.scoring().setMarginalUtlOfWaiting_utils_hr(-1.0);
-			IDFRaptorUtils.updateScoring(config);
-		}
 
 		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
 
@@ -134,7 +127,6 @@ public class RunSimulation {
 		}
 
 		controller.addOverridingModule(new ParkingModule(3.0));
-		controller.addOverridingModule(new IDFRaptorModule(cmd));
 
 		controller.run();
 	}

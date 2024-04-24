@@ -9,6 +9,7 @@ import org.eqasim.core.components.transit.departure.DepartureFinder.NoDepartureF
 import org.eqasim.core.components.transit.departure.DepartureFinder.StopDeparture;
 import org.eqasim.core.components.transit.events.PublicTransitEvent;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.PersonStuckEvent;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Leg;
@@ -88,7 +89,7 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 
 	@Override
 	public boolean handleDeparture(double now, MobsimAgent agent, Id<Link> departureLinkId) {
-		if (agent.getMode().equals("pt") || agent.getMode().startsWith("pt:")) {
+		if (agent.getMode().equals(TransportMode.pt)) {
 			Leg leg = (Leg) ((PlanAgent) agent).getCurrentPlanElement();
 			TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 

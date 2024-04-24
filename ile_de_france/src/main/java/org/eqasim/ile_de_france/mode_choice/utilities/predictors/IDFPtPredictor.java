@@ -6,7 +6,7 @@ import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPtVariables;
-import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -52,7 +52,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 
 				if (leg.getMode().contains("walk")) {
 					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
-				} else if (leg.getMode().startsWith(IDFRaptorUtils.PT_MODE_PREFIX)) {
+				} else if (leg.getMode().equals(TransportMode.pt)) {
 					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
 					double departureTime = leg.getDepartureTime().seconds();

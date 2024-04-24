@@ -7,8 +7,8 @@ import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredic
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
-import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -39,7 +39,7 @@ public class IDFPtCostModel implements CostModel {
 			if (element instanceof Leg) {
 				Leg leg = (Leg) element;
 
-				if (leg.getMode().startsWith(IDFRaptorUtils.PT_MODE_PREFIX)) {
+				if (leg.getMode().equals(TransportMode.pt)) {
 					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
 					String transportMode = transitSchedule.getTransitLines().get(route.getLineId()).getRoutes()
