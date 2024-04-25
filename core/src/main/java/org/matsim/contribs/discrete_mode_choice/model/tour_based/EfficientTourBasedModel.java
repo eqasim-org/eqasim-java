@@ -80,10 +80,13 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
                 ModeChoiceModelTree modeChoiceModelTree = new ModeChoiceModelTree(person, tourTrips, compositeTourConstraint, cumulativeTourEstimator.getDelegate(), modes, tourCandidates, timeInterpretation);
                 modeChoiceModelTree.build();
                 UtilitySelector selector = selectorFactory.createUtilitySelector();
+                List<TourCandidate> oldCandidates = null;
+                if(COMPARE_AGAINST_OLD_METHOD) {
+                    oldCandidates = this.oldMethod(tourTrips, modes, person, constraint, tourCandidateModes);
+                }
                 List<TourCandidate> efficientCandidates = modeChoiceModelTree.getTourCandidates();
-                List<TourCandidate> oldCandidates = this.oldMethod(tourTrips, modes, person, constraint, tourCandidateModes);
                 if(COMPARE_AGAINST_OLD_METHOD && efficientCandidates.size() != oldCandidates.size()) {
-                    throw new IllegalStateException("Problem");
+                    throw new IllegalStateException(String.format("Problem with person %s at trip %d", person.getId(), tripIndex));
                 }
                 for(TourCandidate tourCandidate: modeChoiceModelTree.getTourCandidates()) {
                     selector.addCandidate(tourCandidate);
@@ -222,6 +225,8 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
         private final Person person;
         private final TimeInterpretation timeInterpretation;
         private ModeChoiceModelTreeNode root;
+        private final Set<String> restrictedModes = new HashSet<>();
+        private Id<? extends BasicLocation> vehicleLocationId;
 
         public List<TourCandidate> getPreviousTourCandidates() {
             return previousTourCandidates;
