@@ -38,6 +38,7 @@ public class RoadRouterService {
 
 	private final QuadTree<? extends Link> linkIndex;
 
+	private final SpeedyALTFactory routerFactory = new SpeedyALTFactory();
 	private final ConcurrentLinkedQueue<LeastCostPathCalculator> routerPool = new ConcurrentLinkedQueue<>();
 
 	RoadRouterService(Network network, QuadTree<? extends Link> linkIndex, WalkParameters walkParameters, int threads) {
@@ -50,7 +51,7 @@ public class RoadRouterService {
 	}
 
 	private LeastCostPathCalculator createRouterInstance(Network network) {
-		return new SpeedyALTFactory().createPathCalculator(network, travelDisutility, travelTime);
+		return routerFactory.createPathCalculator(network, travelDisutility, travelTime);
 	}
 
 	public RoadRouterResponse processRequest(RoadRouterRequest request) {
@@ -63,7 +64,8 @@ public class RoadRouterService {
 		List<Link> toLinks = new LinkedList<>();
 
 		if (request.accessEgressRadius_km != null) {
-			fromLinks.addAll(linkIndex.getDisk(fromCoord.getX(), fromCoord.getY(), request.accessEgressRadius_km * 1e3));
+			fromLinks
+					.addAll(linkIndex.getDisk(fromCoord.getX(), fromCoord.getY(), request.accessEgressRadius_km * 1e3));
 			toLinks.addAll(linkIndex.getDisk(toCoord.getX(), toCoord.getY(), request.accessEgressRadius_km * 1e3));
 		}
 
