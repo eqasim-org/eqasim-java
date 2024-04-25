@@ -210,24 +210,6 @@ public class RunStandaloneModeChoice {
                 .addOverridingModule(new IDFModeChoiceModule(cmd))
                 .addOverridingModule(new StandaloneModeChoiceModule(config));
 
-        if(cmd.hasOption(CMD_USE_EFFICIENT_TOUR_BASED_MODEL) && Boolean.parseBoolean(cmd.getOptionStrict(CMD_USE_EFFICIENT_TOUR_BASED_MODEL))) {
-            injectorBuilder.addOverridingModule(
-                    new AbstractModule() {
-                        @Override
-                        public void install() {
-                            bind(DiscreteModeChoiceModel.class).to(EfficientTourBasedModel.class);
-                        }
-
-                        @Provides
-                        public EfficientTourBasedModel provideEfficientTourBasedModel(ModeAvailability modeAvailability, TourFilter tourFilter,
-                                                                                      TourEstimator tourEstimator, TourConstraintFactory tourConstraintFactory, TourFinder tourFinder,
-                                                                                      UtilitySelectorFactory selectorFactory, ModeChainGeneratorFactory modeChainGeneratorFactory,
-                                                                                      DiscreteModeChoiceConfigGroup dmcConfig, TimeInterpretation timeInterpretation) {
-                            return new EfficientTourBasedModel(tourEstimator, modeAvailability, tourConstraintFactory, tourFinder, tourFilter,
-                                    selectorFactory, modeChainGeneratorFactory, dmcConfig.getFallbackBehaviour(), timeInterpretation);
-                        }});
-        }
-
 
         travelTimesFactorsPath.ifPresent(path -> injectorBuilder.addOverridingModule(new AbstractModule() {
             @Override
@@ -260,8 +242,25 @@ public class RunStandaloneModeChoice {
         	if (module instanceof EqasimTerminationModule) {
         		continue;
         	}
-        	
             injectorBuilder.addOverridingModule(module);
+        }
+
+        if(cmd.hasOption(CMD_USE_EFFICIENT_TOUR_BASED_MODEL) && Boolean.parseBoolean(cmd.getOptionStrict(CMD_USE_EFFICIENT_TOUR_BASED_MODEL))) {
+            injectorBuilder.addOverridingModule(
+                    new AbstractModule() {
+                        @Override
+                        public void install() {
+                            bind(DiscreteModeChoiceModel.class).to(EfficientTourBasedModel.class);
+                        }
+
+                        @Provides
+                        public EfficientTourBasedModel provideEfficientTourBasedModel(ModeAvailability modeAvailability, TourFilter tourFilter,
+                                                                                      TourEstimator tourEstimator, TourConstraintFactory tourConstraintFactory, TourFinder tourFinder,
+                                                                                      UtilitySelectorFactory selectorFactory, ModeChainGeneratorFactory modeChainGeneratorFactory,
+                                                                                      DiscreteModeChoiceConfigGroup dmcConfig, TimeInterpretation timeInterpretation) {
+                            return new EfficientTourBasedModel(tourEstimator, modeAvailability, tourConstraintFactory, tourFinder, tourFilter,
+                                    selectorFactory, modeChainGeneratorFactory, dmcConfig.getFallbackBehaviour(), timeInterpretation);
+                        }});
         }
 
         com.google.inject.Injector injector = injectorBuilder.build();
