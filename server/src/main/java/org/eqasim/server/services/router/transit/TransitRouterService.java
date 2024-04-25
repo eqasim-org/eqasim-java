@@ -45,6 +45,7 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
+import jakarta.annotation.Nullable;
 
 public class TransitRouterService {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
@@ -72,7 +73,7 @@ public class TransitRouterService {
 		this.schedule = schedule;
 	}
 
-	public TransitRouterResponse processRequest(TransitRouterRequest request) {
+	public TransitRouterResponse processRequest(TransitRouterRequest request, @Nullable TransitUtilities utilities) {
 		TransitRouterResponse response = new TransitRouterResponse();
 		response.requestIndex = request.requestIndex;
 
@@ -89,7 +90,10 @@ public class TransitRouterService {
 		Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
 		Facility toFacility = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
 
-		RaptorParameters parameters = createParameters(config, configuration, walkConfiguration, request, schedule);
+		TransitUtilities appliedUtilities = mergeUtilities(utilities, request.utilities);
+
+		RaptorParameters parameters = createParameters(config, configuration, walkConfiguration, appliedUtilities,
+				schedule);
 		SwissRailRaptor router = new SwissRailRaptor(data, person -> parameters, routeSelector, stopFinder,
 				inVehicleCostCalculator, transferCostCalculator);
 
@@ -410,7 +414,7 @@ public class TransitRouterService {
 	}
 
 	static private RaptorParameters createParameters(Config config, TransitConfiguration configuration,
-			WalkConfiguration walkConfiguration, TransitRouterRequest request, TransitSchedule schedule) {
+			WalkConfiguration walkConfiguration, @Nullable TransitUtilities utilities, TransitSchedule schedule) {
 		RaptorParameters parameters = RaptorUtils.createParameters(config);
 
 		EqasimRaptorConfigGroup raptorConfig = (EqasimRaptorConfigGroup) config.getModules()
@@ -424,35 +428,35 @@ public class TransitRouterService {
 			parameters.setDirectWalkFactor(configuration.directWalkFactor);
 		}
 
-		if (request.utilities != null) {
+		if (utilities != null) {
 			parameters.setUseTransportModeUtilities(true);
 
-			if (request.utilities.rail_u_h != null) {
-				parameters.setMarginalUtilityOfTravelTime_utl_s("rail", request.utilities.rail_u_h / 3600.0);
+			if (utilities.rail_u_h != null) {
+				parameters.setMarginalUtilityOfTravelTime_utl_s("rail", utilities.rail_u_h / 3600.0);
 			}
 
-			if (request.utilities.subway_u_h != null) {
-				parameters.setMarginalUtilityOfTravelTime_utl_s("subway", request.utilities.subway_u_h / 3600.0);
+			if (utilities.subway_u_h != null) {
+				parameters.setMarginalUtilityOfTravelTime_utl_s("subway", utilities.subway_u_h / 3600.0);
 			}
 
-			if (request.utilities.bus_u_h != null) {
-				parameters.setMarginalUtilityOfTravelTime_utl_s("bus", request.utilities.bus_u_h / 3600.0);
+			if (utilities.bus_u_h != null) {
+				parameters.setMarginalUtilityOfTravelTime_utl_s("bus", utilities.bus_u_h / 3600.0);
 			}
 
-			if (request.utilities.tram_u_h != null) {
-				parameters.setMarginalUtilityOfTravelTime_utl_s("tram", request.utilities.tram_u_h / 3600.0);
+			if (utilities.tram_u_h != null) {
+				parameters.setMarginalUtilityOfTravelTime_utl_s("tram", utilities.tram_u_h / 3600.0);
 			}
 
-			if (request.utilities.wait_u_h != null) {
-				parameters.setMarginalUtilityOfWaitingPt_utl_s(request.utilities.wait_u_h / 3600.0);
+			if (utilities.wait_u_h != null) {
+				parameters.setMarginalUtilityOfWaitingPt_utl_s(utilities.wait_u_h / 3600.0);
 			}
 
-			if (request.utilities.walk_u_h != null) {
-				parameters.setMarginalUtilityOfTravelTime_utl_s("walk", request.utilities.walk_u_h / 3600.0);
+			if (utilities.walk_u_h != null) {
+				parameters.setMarginalUtilityOfTravelTime_utl_s("walk", utilities.walk_u_h / 3600.0);
 			}
 
-			if (request.utilities.transfer_u != null) {
-				parameters.setTransferPenaltyFixCostPerTransfer(-request.utilities.transfer_u);
+			if (utilities.transfer_u != null) {
+				parameters.setTransferPenaltyFixCostPerTransfer(-utilities.transfer_u);
 			}
 		}
 
@@ -483,5 +487,61 @@ public class TransitRouterService {
 		SwissRailRaptorData data = SwissRailRaptorData.create(schedule, null, staticConfig, network, null);
 
 		return new TransitRouterService(data, config, network, configuration, walkConfiguration, schedule);
+	}
+
+	static public TransitUtilities mergeUtilities(TransitUtilities globalUtilities, TransitUtilities requestUtilities) {
+		if (globalUtilities == null && requestUtilities == null) {
+			return null;
+		}
+
+		if (globalUtilities == null) {
+			return requestUtilities;
+		}
+
+		TransitUtilities copy = new TransitUtilities();
+		copy.rail_u_h = globalUtilities.rail_u_h;
+		copy.subway_u_h = globalUtilities.subway_u_h;
+		copy.bus_u_h = globalUtilities.bus_u_h;
+		copy.tram_u_h = globalUtilities.tram_u_h;
+		copy.other_u_h = globalUtilities.other_u_h;
+		copy.wait_u_h = globalUtilities.wait_u_h;
+		copy.walk_u_h = globalUtilities.walk_u_h;
+		copy.transfer_u = globalUtilities.transfer_u;
+
+		if (requestUtilities != null) {
+			if (requestUtilities.rail_u_h != null) {
+				copy.rail_u_h = requestUtilities.rail_u_h;
+			}
+
+			if (requestUtilities.subway_u_h != null) {
+				copy.subway_u_h = requestUtilities.subway_u_h;
+			}
+
+			if (requestUtilities.bus_u_h != null) {
+				copy.bus_u_h = requestUtilities.bus_u_h;
+			}
+
+			if (requestUtilities.tram_u_h != null) {
+				copy.tram_u_h = requestUtilities.tram_u_h;
+			}
+
+			if (requestUtilities.other_u_h != null) {
+				copy.other_u_h = requestUtilities.other_u_h;
+			}
+
+			if (requestUtilities.wait_u_h != null) {
+				copy.wait_u_h = requestUtilities.wait_u_h;
+			}
+
+			if (requestUtilities.walk_u_h != null) {
+				copy.walk_u_h = requestUtilities.walk_u_h;
+			}
+
+			if (requestUtilities.transfer_u != null) {
+				copy.transfer_u = requestUtilities.transfer_u;
+			}
+		}
+
+		return copy;
 	}
 }
