@@ -324,11 +324,24 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
 
                     }
                     vehiclesLocations.put(mode, LocationUtils.getLocationId(currentTrip.getDestinationActivity()));
-                } else {
-
                 }
                 if(this.tree.tripConstraints.stream().anyMatch(tripConstraint -> !tripConstraint.validateBeforeEstimation(currentTrip, mode, allPreviousModes))) {
                     continue;
+                }
+                List<DiscreteModeChoiceTrip> remainingTrips = new ArrayList<>(this.remainingTrips);
+                remainingTrips.remove(0);
+                if(remainingTrips.size() == 0) {
+                    boolean breakingVehicleContinuity = false;
+                    for(String restrictedMode: this.tree.restrictedModes) {
+                        Id<? extends BasicLocation> lastVehicleLocation = vehiclesLocations.get(restrictedMode);
+                        if(lastVehicleLocation != null && !lastVehicleLocation.equals(LocationUtils.getLocationId(currentTrip.getDestinationActivity())) && !lastVehicleLocation.equals(tree.vehicleLocationId)) {
+                            breakingVehicleContinuity = true;
+                            break;
+                        }
+                    }
+                    if(breakingVehicleContinuity) {
+                        continue;
+                    }
                 }
                 TripCandidate tripCandidate = this.tree.getTripEstimator().estimateTrip(this.tree.getPerson(), mode, currentTrip, this.allPreviousTrips);
                 TimeTracker timeTracker = new TimeTracker(this.tree.getTimeInterpretation());
@@ -343,8 +356,6 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
                 List<TripCandidate> currentTourPreviousTrips = new ArrayList<>(this.currentTourPreviousTrips);
                 currentTourPreviousTrips.add(tripCandidate);
                 List<String> newPreviousModes = currentTourPreviousTrips.stream().map(TripCandidate::getMode).toList();
-                List<DiscreteModeChoiceTrip> remainingTrips = new ArrayList<>(this.remainingTrips);
-                remainingTrips.remove(0);
                 ModeChoiceModelTreeNode child = new ModeChoiceModelTreeNode(this.tree, allPreviousTrips, currentTourPreviousTrips, remainingTrips, timeTracker, this.modes, utility, vehiclesLocations);
                 if(remainingTrips.size() == 0) {
                     child.tourCandidate = new DefaultTourCandidate(utility, currentTourPreviousTrips);
@@ -358,18 +369,6 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
                         }
                         return false;
                     })) {
-                        continue;
-                    }
-
-                    boolean breakingVehicleContinuity = false;
-                    for(String restrictedMode: this.tree.restrictedModes) {
-                        Id<? extends BasicLocation> lastVehicleLocation = vehiclesLocations.get(restrictedMode);
-                        if(lastVehicleLocation != null && !lastVehicleLocation.equals(LocationUtils.getLocationId(currentTrip.getDestinationActivity())) && !lastVehicleLocation.equals(tree.vehicleLocationId)) {
-                            breakingVehicleContinuity = true;
-                            break;
-                        }
-                    }
-                    if(breakingVehicleContinuity) {
                         continue;
                     }
 
