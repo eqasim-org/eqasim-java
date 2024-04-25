@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.server.api.RoadIsochroneEndpoint;
 import org.eqasim.server.api.RoadRouterEndpoint;
 import org.eqasim.server.api.TransitIsochroneEndpoint;
@@ -58,7 +59,7 @@ public class RunServer {
 			});
 		});
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new EqasimRaptorConfigGroup());
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
 		new MatsimNetworkReader(scenario.getNetwork())
