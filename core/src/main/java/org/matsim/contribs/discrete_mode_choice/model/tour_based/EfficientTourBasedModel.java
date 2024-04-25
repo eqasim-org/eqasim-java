@@ -82,12 +82,12 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
                 CompositeTourConstraint compositeTourConstraint = (CompositeTourConstraint) constraint;
                 CumulativeTourEstimator cumulativeTourEstimator = (CumulativeTourEstimator) estimator;
                 ModeChoiceModelTree modeChoiceModelTree = new ModeChoiceModelTree(person, tourTrips, compositeTourConstraint, cumulativeTourEstimator.getDelegate(), modes, tourCandidates, timeInterpretation);
-                modeChoiceModelTree.build();
                 UtilitySelector selector = selectorFactory.createUtilitySelector();
                 List<TourCandidate> oldCandidates = null;
                 if(COMPARE_AGAINST_OLD_METHOD) {
                     oldCandidates = this.oldMethod(tourTrips, modes, person, constraint, tourCandidateModes);
                 }
+                modeChoiceModelTree.build();
                 List<TourCandidate> efficientCandidates = modeChoiceModelTree.getTourCandidates();
                 if(COMPARE_AGAINST_OLD_METHOD && efficientCandidates.size() != oldCandidates.size()) {
                     throw new IllegalStateException(String.format("Problem with person %s at trip %d", person.getId(), tripIndex));
@@ -255,6 +255,12 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
             for(TourConstraint innerTourConstraint: tourConstraint.getConstraints()) {
                 if(innerTourConstraint instanceof TourFromTripConstraint tourFromTripConstraint) {
                     this.tripConstraints.add(tourFromTripConstraint.getConstraint());
+                } else if (innerTourConstraint instanceof EqasimVehicleTourConstraint eqasimVehicleTourConstraint){
+                    if(this.vehicleLocationId != null) {
+                        throw new IllegalStateException("Two EqasimVehicleTourConstraints");
+                    }
+                    this.restrictedModes.addAll(eqasimVehicleTourConstraint.getRestrictedModes());
+                    this.vehicleLocationId = eqasimVehicleTourConstraint.getVehicleLocationId();
                 } else {
                     this.tourConstraints.add(innerTourConstraint);
                 }
@@ -265,7 +271,7 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
         public void build() {
             TimeTracker timeTracker = new TimeTracker(timeInterpretation);
             timeTracker.setTime(this.tourTrips.get(0).getDepartureTime());
-            this.root = new ModeChoiceModelTreeNode(this, this.previousTourCandidates.stream().flatMap(tourCandidate -> tourCandidate.getTripCandidates().stream()).toList(), new ArrayList<>(), this.tourTrips, timeTracker, this.modes, 0);
+            this.root = new ModeChoiceModelTreeNode(this, this.previousTourCandidates.stream().flatMap(tourCandidate -> tourCandidate.getTripCandidates().stream()).toList(), new ArrayList<>(), this.tourTrips, timeTracker, this.modes, 0, new HashMap<>());
             root.expand();
         }
 
@@ -281,9 +287,10 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
         private final Collection<String> modes;
         private final double currentUtility;
         private final ModeChoiceModelTree tree;
+        private final Map<String, Id<? extends BasicLocation>> currentVehicleLocations;
         private final Collection<ModeChoiceModelTreeNode> children;
         private TourCandidate tourCandidate;
-        public ModeChoiceModelTreeNode(ModeChoiceModelTree tree, List<TripCandidate> allPreviousTrips, List<TripCandidate> currentTourPreviousTrips, List<DiscreteModeChoiceTrip> remainingTrips, TimeTracker currentTimeTracker, Collection<String> modes, double currentUtility) {
+        public ModeChoiceModelTreeNode(ModeChoiceModelTree tree, List<TripCandidate> allPreviousTrips, List<TripCandidate> currentTourPreviousTrips, List<DiscreteModeChoiceTrip> remainingTrips, TimeTracker currentTimeTracker, Collection<String> modes, double currentUtility, Map<String, Id<? extends BasicLocation>> currentVehicleLocations) {
             this.allPreviousTrips = allPreviousTrips;
             this.currentTourPreviousTrips = currentTourPreviousTrips;
             this.remainingTrips = remainingTrips;
@@ -293,6 +300,7 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
             this.tree = tree;
             this.children = new ArrayList<>();
             this.tourCandidate = null;
+            this.currentVehicleLocations = currentVehicleLocations;
         }
 
         public boolean expand() {
@@ -303,9 +311,23 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
             DiscreteModeChoiceTrip currentTrip = this.remainingTrips.get(0);
             this.currentTimeTracker.addActivity(currentTrip.getOriginActivity());
             currentTrip.setDepartureTime(currentTimeTracker.getTime().seconds());
-            List<String> previousModes = this.allPreviousTrips.stream().map(TripCandidate::getMode).toList();
+            List<String> allPreviousModes = this.allPreviousTrips.stream().map(TripCandidate::getMode).toList();
+            List<String> currentTourPreviousModes = this.currentTourPreviousTrips.stream().map(TripCandidate::getMode).toList();
             for(String mode: modes)  {
-                if(this.tree.tripConstraints.stream().anyMatch(tripConstraint -> !tripConstraint.validateBeforeEstimation(currentTrip, mode, previousModes))) {
+                Map<String, Id<? extends BasicLocation>> vehiclesLocations = new HashMap<>(this.currentVehicleLocations);
+                Id<? extends BasicLocation> currentTripOriginLocationId = LocationUtils.getLocationId(currentTrip.getOriginActivity());
+                if(this.tree.restrictedModes.contains(mode)) {
+                    if(currentTourPreviousModes.size() > 0) {
+                        if(!currentTripOriginLocationId.equals(this.currentVehicleLocations.get(mode))) {
+                            continue;
+                        }
+
+                    }
+                    vehiclesLocations.put(mode, LocationUtils.getLocationId(currentTrip.getDestinationActivity()));
+                } else {
+
+                }
+                if(this.tree.tripConstraints.stream().anyMatch(tripConstraint -> !tripConstraint.validateBeforeEstimation(currentTrip, mode, allPreviousModes))) {
                     continue;
                 }
                 TripCandidate tripCandidate = this.tree.getTripEstimator().estimateTrip(this.tree.getPerson(), mode, currentTrip, this.allPreviousTrips);
@@ -323,7 +345,7 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
                 List<String> newPreviousModes = currentTourPreviousTrips.stream().map(TripCandidate::getMode).toList();
                 List<DiscreteModeChoiceTrip> remainingTrips = new ArrayList<>(this.remainingTrips);
                 remainingTrips.remove(0);
-                ModeChoiceModelTreeNode child = new ModeChoiceModelTreeNode(this.tree, allPreviousTrips, currentTourPreviousTrips, remainingTrips, timeTracker, this.modes, utility);
+                ModeChoiceModelTreeNode child = new ModeChoiceModelTreeNode(this.tree, allPreviousTrips, currentTourPreviousTrips, remainingTrips, timeTracker, this.modes, utility, vehiclesLocations);
                 if(remainingTrips.size() == 0) {
                     child.tourCandidate = new DefaultTourCandidate(utility, currentTourPreviousTrips);
                     if(this.tree.tourConstraints.stream().anyMatch(tourConstraint ->
@@ -338,6 +360,19 @@ public class EfficientTourBasedModel implements DiscreteModeChoiceModel {
                     })) {
                         continue;
                     }
+
+                    boolean breakingVehicleContinuity = false;
+                    for(String restrictedMode: this.tree.restrictedModes) {
+                        Id<? extends BasicLocation> lastVehicleLocation = vehiclesLocations.get(restrictedMode);
+                        if(lastVehicleLocation != null && !lastVehicleLocation.equals(LocationUtils.getLocationId(currentTrip.getDestinationActivity())) && !lastVehicleLocation.equals(tree.vehicleLocationId)) {
+                            breakingVehicleContinuity = true;
+                            break;
+                        }
+                    }
+                    if(breakingVehicleContinuity) {
+                        continue;
+                    }
+
                 }
                 if(child.expand()) {
                     this.children.add(child);

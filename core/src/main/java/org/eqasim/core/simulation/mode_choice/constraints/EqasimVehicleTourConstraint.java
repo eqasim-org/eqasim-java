@@ -48,6 +48,14 @@ public class EqasimVehicleTourConstraint implements TourConstraint {
 		this.vehicleLocationId = vehicleLocationId;
 	}
 
+	public Collection<String> getRestrictedModes() {
+		return restrictedModes;
+	}
+
+	public Id<? extends BasicLocation> getVehicleLocationId() {
+		return vehicleLocationId;
+	}
+
 	private int getFirstIndex(String mode, List<String> modes) {
 		for (int i = 0; i < modes.size(); i++) {
 			if (modes.get(i).equals(mode)) {
