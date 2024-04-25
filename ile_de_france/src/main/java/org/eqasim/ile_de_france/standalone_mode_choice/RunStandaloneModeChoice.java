@@ -35,6 +35,16 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.contribs.discrete_mode_choice.components.tour_finder.TourFinder;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
+import org.matsim.contribs.discrete_mode_choice.model.mode_chain.ModeChainGeneratorFactory;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.EfficientTourBasedModel;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourConstraintFactory;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourEstimator;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourFilter;
+import org.matsim.contribs.discrete_mode_choice.model.utilities.UtilitySelectorFactory;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -44,6 +54,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
@@ -133,6 +144,7 @@ public class RunStandaloneModeChoice {
     public static final String CMD_TRAVEL_TIMES_FACTORS_PATH = "travel-times-factors-path";
     public static final String CMD_RECORDED_TRAVEL_TIMES_PATH = "recorded-travel-times-path";
     public static final String CMD_SKIP_SCENARIO_CHECK = "skip-scenario-check";
+    public static final String CMD_USE_EFFICIENT_TOUR_BASED_MODEL = "use-efficient-tour-based-model";
 
 
     public static void main(String[] args) throws CommandLine.ConfigurationException, InterruptedException, IOException {
@@ -142,6 +154,7 @@ public class RunStandaloneModeChoice {
                 .allowOptions(CMD_TRAVEL_TIMES_FACTORS_PATH, CMD_RECORDED_TRAVEL_TIMES_PATH)
                 .allowOptions(CMD_SIMULATE_AFTER)
                 .allowOptions(CMD_SKIP_SCENARIO_CHECK)
+                .allowOptions(CMD_USE_EFFICIENT_TOUR_BASED_MODEL)
                 .build();
 
         // Loading the config
@@ -196,6 +209,24 @@ public class RunStandaloneModeChoice {
                 .addOverridingModule(new EqasimModeChoiceModule())
                 .addOverridingModule(new IDFModeChoiceModule(cmd))
                 .addOverridingModule(new StandaloneModeChoiceModule(config));
+
+        if(cmd.hasOption(CMD_USE_EFFICIENT_TOUR_BASED_MODEL) && Boolean.parseBoolean(cmd.getOptionStrict(CMD_USE_EFFICIENT_TOUR_BASED_MODEL))) {
+            injectorBuilder.addOverridingModule(
+                    new AbstractModule() {
+                        @Override
+                        public void install() {
+                            bind(DiscreteModeChoiceModel.class).to(EfficientTourBasedModel.class);
+                        }
+
+                        @Provides
+                        public EfficientTourBasedModel provideEfficientTourBasedModel(ModeAvailability modeAvailability, TourFilter tourFilter,
+                                                                                      TourEstimator tourEstimator, TourConstraintFactory tourConstraintFactory, TourFinder tourFinder,
+                                                                                      UtilitySelectorFactory selectorFactory, ModeChainGeneratorFactory modeChainGeneratorFactory,
+                                                                                      DiscreteModeChoiceConfigGroup dmcConfig, TimeInterpretation timeInterpretation) {
+                            return new EfficientTourBasedModel(tourEstimator, modeAvailability, tourConstraintFactory, tourFinder, tourFilter,
+                                    selectorFactory, modeChainGeneratorFactory, dmcConfig.getFallbackBehaviour(), timeInterpretation);
+                        }});
+        }
 
 
         travelTimesFactorsPath.ifPresent(path -> injectorBuilder.addOverridingModule(new AbstractModule() {
