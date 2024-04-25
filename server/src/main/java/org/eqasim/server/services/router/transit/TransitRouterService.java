@@ -283,10 +283,12 @@ public class TransitRouterService {
 					if (!response.inVehicleTravelTimeByMode_min.containsKey(mode)) {
 						response.inVehicleTravelTimeByMode_min.put(mode, 0.0);
 						response.inVehicleDistanceByMode_km.put(mode, 0.0);
+						response.vehicleLegsByMode.put(mode, 0);
 					}
 
 					response.inVehicleTravelTimeByMode_min.compute(mode, (m, v) -> v + inVehicleTime / 60.0);
 					response.inVehicleDistanceByMode_km.compute(mode, (m, v) -> v + distance * 1e-3);
+					response.vehicleLegsByMode.compute(mode, (m, v) -> v + 1);
 
 					if (request.provideItinerary) {
 						TransitRouterResponse.Itinerary.ItineraryLeg leg = new TransitRouterResponse.Itinerary.ItineraryLeg();
