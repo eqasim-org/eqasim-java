@@ -7,6 +7,8 @@ public class IDFCostParameters implements ParameterDefinition {
 
 	public double drtCost_EUR_access;
 	public double drtCost_EUR_km;
+	public double feederDrtCost_EUR_access;
+	public double feederDrtCost_EUR_km;
 
 	public static IDFCostParameters buildDefault() {
 		IDFCostParameters parameters = new IDFCostParameters();
