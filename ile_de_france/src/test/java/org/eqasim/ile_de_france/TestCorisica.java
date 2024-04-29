@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
+import org.eqasim.core.tools.ExtractPlanUtilities;
 import org.eqasim.ile_de_france.standalone_mode_choice.RunStandaloneModeChoice;
 import org.junit.After;
 import org.junit.Assert;
@@ -33,7 +34,7 @@ public class TestCorisica {
 
 	@After
 	public void tearDown() throws IOException {
-		FileUtils.deleteDirectory(new File("corsica_test"));
+		//FileUtils.deleteDirectory(new File("corsica_test"));
 	}
 
 	@Test
@@ -58,6 +59,11 @@ public class TestCorisica {
 			Assert.assertEquals(221, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
 			Assert.assertEquals(5, (long) counts.get("pt"));
+
+			ExtractPlanUtilities.main(new String[]{
+					"--plans-path", "corsica_test/simulation_output/output_plans.xml.gz",
+					"--output-path", "corsica_test/simulation_output/utilities.csv"
+			});
 		}
 
 		// Run the mode choice + following simulation
@@ -68,6 +74,11 @@ public class TestCorisica {
 					"--write-output-csv-trips", "true",
 					"--simulate-after", "true",
 					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output"
+			});
+
+			ExtractPlanUtilities.main(new String[]{
+					"--plans-path", "corsica_test/mode_choice_output/output_plans.xml.gz",
+					"--output-path", "corsica_test/mode_choice_output/utilities.csv"
 			});
 		}
 

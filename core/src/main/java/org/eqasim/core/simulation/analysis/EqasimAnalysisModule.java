@@ -19,6 +19,7 @@ public class EqasimAnalysisModule extends AbstractModule {
 	@Override
 	public void install() {
 		addControlerListenerBinding().to(AnalysisOutputListener.class);
+		addControlerListenerBinding().to(UtilitiesWriterHandler.class);
 
 		if (getConfig().getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
 			install(new DrtAnalysisModule());
