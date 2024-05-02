@@ -50,7 +50,11 @@ public class EpsilonModule extends AbstractEqasimExtension {
 
                     @Override
                     public UtilityEstimator get() {
-                        UtilityEstimator delegate = factory.get(baseEstimator).get();
+						Provider<UtilityEstimator> delegateProvider = factory.get(baseEstimator);
+						if(delegateProvider == null) {
+							throw new IllegalStateException(String.format("Provider for base estimator '%s' not found", baseEstimator));
+						}
+                        UtilityEstimator delegate = delegateProvider.get();
                         return new EpsilonAdapter(mode, delegate, epsilonProvider);
                     }
                 });

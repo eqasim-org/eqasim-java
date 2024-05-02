@@ -28,16 +28,6 @@ public class TransitWithAbstractAccessModule extends AbstractEqasimExtension {
     @Override
     protected void installEqasimExtension() {
         addRoutingModuleBinding(this.configGroup.getModeName()).to(TransitWithAbstractAccessRoutingModule.class);
-        bind(AbstractAccessLegListener.class).toProvider(new Provider<>() {
-
-            @Inject
-            private AbstractAccesses abstractAccesses;
-            @Override
-            public AbstractAccessLegListener get() {
-                return new AbstractAccessLegListener(abstractAccesses);
-            }
-        }).asEagerSingleton();
-        addControlerListenerBinding().to(AbstractAccessAnalysisOutputListener.class);
     }
 
     @Provides

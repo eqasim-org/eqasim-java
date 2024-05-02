@@ -21,6 +21,7 @@ import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.modes.feeder_drt.MultiModeFeederDrtModule;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.EqasimFeederDrtModeChoiceModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessAnalysisModule;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessModule;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAbstractAccessModuleConfigGroup;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessQSimModule;
@@ -97,7 +98,8 @@ public class EqasimConfigurator {
         this.registerOptionalConfigGroup(
                 new TransitWithAbstractAbstractAccessModuleConfigGroup(),
                 List.of(new TransitWithAbstractAccessModule(),
-                        new TransitWithAbstractAccessModeChoiceModule()),
+                        new TransitWithAbstractAccessModeChoiceModule(),
+                        new TransitWithAbstractAccessAnalysisModule()),
                 List.of(new TransitWithAbstractAccessQSimModule()),
                 Collections.singletonList((controller, components) -> TransitWithAbstractAccessQSimModule.configure(components, controller.getConfig())));
     }
@@ -117,21 +119,13 @@ public class EqasimConfigurator {
     public void configureController(Controler controller) {
 
         // The optional modules are added after the non-optional ones because we consider that their bindings have less priority
-        this.optionalModules.entrySet().stream()
-                .filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
-                .map(Map.Entry::getValue)
-                .flatMap(Collection::stream)
-                .forEach(controller::addOverridingModule);
+        this.getApplicableModules(controller.getConfig()).forEach(controller::addOverridingModule);
 
         for (AbstractModule module : getModules()) {
             controller.addOverridingModule(module);
         }
 
-        this.optionalQSimModules.entrySet().stream()
-                .filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
-                .map(Map.Entry::getValue)
-                .flatMap(Collection::stream)
-                .forEach(controller::addOverridingQSimModule);
+        this.getApplicableQSimModules(controller.getConfig()).forEach(controller::addOverridingQSimModule);
 
         for (AbstractQSimModule module : getQSimModules()) {
             controller.addOverridingQSimModule(module);
@@ -168,6 +162,22 @@ public class EqasimConfigurator {
 
         this.optionalQSimComponentConfigurationSteps.putIfAbsent(configGroup.getName(), new ArrayList<>());
         this.optionalQSimComponentConfigurationSteps.get(configGroup.getName()).addAll(componentsConsumers);
+    }
+
+    public List<AbstractModule> getApplicableModules(Config config) {
+        return this.optionalModules.entrySet().stream()
+                .filter(e -> config.getModules().containsKey(e.getKey()))
+                .map(Map.Entry::getValue)
+                .flatMap(Collection::stream)
+                .toList();
+    }
+
+    public List<AbstractQSimModule> getApplicableQSimModules(Config config) {
+        return this.optionalQSimModules.entrySet().stream()
+                .filter(e -> config.getModules().containsKey(e.getKey()))
+                .map(Map.Entry::getValue)
+                .flatMap(Collection::stream)
+                .toList();
     }
 
     public void addOptionalConfigGroups(Config config) {
