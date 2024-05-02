@@ -37,6 +37,22 @@ public class TestCorisica {
 	}
 
 	@Test
+	public void testModeChoice() throws ConfigurationException, IOException, InterruptedException {
+		// Run the mode choice + following simulation
+		{
+			RunStandaloneModeChoice.main(new String[]{
+					"--config-path", "corsica_test/corsica_config.xml",
+					"--write-input-csv-trips", "true",
+					"--write-output-csv-trips", "true",
+					"--simulate-after", "true",
+					"--config:global.numberOfThreads", "1",
+					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output",
+					"--use-efficient-tour-based-model", "true"
+			});
+		}
+	}
+
+	@Test
 	public void testCorsicaPipeline()
 			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
 
@@ -60,16 +76,6 @@ public class TestCorisica {
 			Assert.assertEquals(5, (long) counts.get("pt"));
 		}
 
-		// Run the mode choice + following simulation
-		{
-			RunStandaloneModeChoice.main(new String[]{
-					"--config-path", "corsica_test/corsica_config.xml",
-					"--write-input-csv-trips", "true",
-					"--write-output-csv-trips", "true",
-					"--simulate-after", "true",
-					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output"
-			});
-		}
 
 		// Cut the scenario based on output plans
 		{
