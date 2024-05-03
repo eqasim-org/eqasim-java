@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
@@ -266,11 +267,21 @@ public class RunStandaloneModeChoice {
             }
         });
         if(cmd.getOption(CMD_SIMULATE_AFTER).isPresent()) {
-            RunSimulation.main(new String[]{
-                    "--config-path", cmd.getOptionStrict(CMD_CONFIG_PATH),
-                    "--config:plans.inputPlansFile", Paths.get(outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz")).toAbsolutePath().toString(),
-                    "--config:controler.outputDirectory", outputDirectoryHierarchy.getOutputFilename("sim"),
-                    "--config:controler.lastIteration", "0"});
+            List<String> extraOptions = cmd.getAvailableOptions().stream()
+                    .filter(option -> option.startsWith("config:"))
+                    .filter(option -> !option.startsWith("config:standaloneModeChoice"))
+                    .filter(option -> !option.equals("config:controler.outputDirectory"))
+                    .filter(option -> !option.equals("config:controler.lastIteration"))
+                    .toList();
+            String[] runSimulationArgs = new String[4 + extraOptions.size()];
+            for(i=0; i<extraOptions.size(); i++) {
+                runSimulationArgs[i] = String.format("--%s=%s", extraOptions.get(i), cmd.getOptionStrict(extraOptions.get(i)));
+            }
+            runSimulationArgs[i] = String.format("--config-path=%s", cmd.getOptionStrict(CMD_CONFIG_PATH));
+            runSimulationArgs[i+1] = String.format("--config:plans.inputPlansFile=%s", Paths.get(outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz")).toAbsolutePath().toString());
+            runSimulationArgs[i+2] = String.format("--config:controler.outputDirectory=%s", outputDirectoryHierarchy.getOutputFilename("sim"));
+            runSimulationArgs[i+3] = "--config:controler.lastIteration=0";
+            RunSimulation.main(runSimulationArgs);
         }
     }
 
