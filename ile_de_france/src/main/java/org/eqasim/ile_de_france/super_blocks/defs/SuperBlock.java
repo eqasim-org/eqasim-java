@@ -1,5 +1,7 @@
-package org.eqasim.ile_de_france.super_blocks;
+package org.eqasim.ile_de_france.super_blocks.defs;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -19,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SuperBlock implements Identifiable<SuperBlock> {
+    public static final Logger logger = LogManager.getLogger(SuperBlock.class);
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
     private Id<SuperBlock> id;
     private Polygon polygon;
@@ -39,6 +42,7 @@ public class SuperBlock implements Identifiable<SuperBlock> {
     }
 
     public static IdMap<SuperBlock, SuperBlock> readFromShapefile(String filePath) throws IOException {
+        logger.info(String.format("Reading superblocks from %s", filePath));
         DataStore dataStore = DataStoreFinder.getDataStore(Collections.singletonMap("url", new File(filePath).toURI().toURL()));
         SimpleFeatureSource featureSource = dataStore.getFeatureSource(dataStore.getTypeNames()[0]);
         SimpleFeatureCollection featureCollection = featureSource.getFeatures();
@@ -72,7 +76,7 @@ public class SuperBlock implements Identifiable<SuperBlock> {
             Id<SuperBlock> superBlockId = Id.create(String.valueOf(i), SuperBlock.class);
             superBlocks.put(superBlockId, new SuperBlock(superBlockId, polygons.get(i)));
         }
-
+        logger.info(String.format("%d superblocks loaded", superBlocks.size()));
         return superBlocks;
     }
 }

@@ -1,7 +1,8 @@
 package org.eqasim.ile_de_france.super_blocks.routing;
 
 import com.google.inject.Inject;
-import org.eqasim.ile_de_france.super_blocks.SuperBlock;
+import org.eqasim.ile_de_france.super_blocks.defs.SuperBlock;
+import org.eqasim.ile_de_france.super_blocks.defs.SuperBlocksLogic;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.IdSet;
@@ -14,7 +15,6 @@ import org.matsim.vehicles.Vehicle;
 
 public class SuperBlocksTravelDisutility implements TravelDisutility {
     public static final double FORBIDDEN_SUPER_BLOCK_VALUE = Double.MAX_VALUE;
-
     private final IdMap<Person, IdSet<SuperBlock>> superBlocksByPerson;
     private final IdMap<Link, Id<SuperBlock>> superBlockByLink;
     private final TravelDisutility delegate;
@@ -47,6 +47,10 @@ public class SuperBlocksTravelDisutility implements TravelDisutility {
         private final TravelDisutilityFactory delegateFactory;
         private final IdMap<Person, IdSet<SuperBlock>> superBlocksByPerson;
         private final IdMap<Link, Id<SuperBlock>> superBlockByLink;
+
+        public Factory(TravelDisutilityFactory delegateFactory, SuperBlocksLogic superBlocksLogic) {
+            this(delegateFactory, superBlocksLogic.getSuperBlocksByPerson(), superBlocksLogic.getSuperBlockByLink());
+        }
 
         public Factory(TravelDisutilityFactory delegateFactory, IdMap<Person, IdSet<SuperBlock>> superBlocksByPerson, IdMap<Link, Id<SuperBlock>> superBlockByLink) {
             this.delegateFactory = delegateFactory;
