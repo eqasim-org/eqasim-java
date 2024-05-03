@@ -27,7 +27,7 @@ public class TransitWithAbstractAccessModule extends AbstractEqasimExtension {
 
     @Override
     protected void installEqasimExtension() {
-        addRoutingModuleBinding(this.configGroup.getModeName()).to(TransitWithAbstractAccessRoutingModule.class);
+        addRoutingModuleBinding(this.configGroup.getModeName()).to(TransitWithAbstractAccessRoutingModule.class).asEagerSingleton();
     }
 
     @Provides
