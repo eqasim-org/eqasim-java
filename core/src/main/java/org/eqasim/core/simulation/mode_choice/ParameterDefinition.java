@@ -99,4 +99,9 @@ public interface ParameterDefinition {
 			throw new RuntimeException(e);
 		}
 	}
+
+	static public void writeToFile(ParameterDefinition parameterDefinition, String filePath) throws IOException {
+		ObjectMapper om = new ObjectMapper(new YAMLFactory());
+		om.writeValue(new File(filePath),parameterDefinition);
+	}
 }

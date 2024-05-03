@@ -29,6 +29,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.matsim.core.config.Config;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -71,7 +72,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public IDFModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
+	public IDFModeParameters provideModeChoiceParameters(EqasimConfigGroup config, OutputDirectoryHierarchy outputDirectoryHierarchy)
 			throws IOException, ConfigurationException {
 		IDFModeParameters parameters = IDFModeParameters.buildDefault();
 
@@ -80,12 +81,13 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		}
 
 		ParameterDefinition.applyCommandLine("mode-choice-parameter", commandLine, parameters);
+		ParameterDefinition.writeToFile(parameters, outputDirectoryHierarchy.getOutputFilename("mode_params.yml"));
 		return parameters;
 	}
 
 	@Provides
 	@Singleton
-	public IDFCostParameters provideCostParameters(EqasimConfigGroup config) {
+	public IDFCostParameters provideCostParameters(EqasimConfigGroup config, OutputDirectoryHierarchy outputDirectoryHierarchy) throws IOException {
 		IDFCostParameters parameters = IDFCostParameters.buildDefault();
 
 		if (config.getCostParametersPath() != null) {
@@ -93,6 +95,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		}
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
+		ParameterDefinition.writeToFile(parameters, outputDirectoryHierarchy.getOutputFilename("cost_params.yml"));
 		return parameters;
 	}
 
