@@ -23,6 +23,6 @@ public class IDFFeederDrtCostModel extends AbstractCostModel {
     @Override
     public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         double distance = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(), trip.getDestinationActivity().getCoord()) / 1000;
-        return this.costParameters.feederDrtCost_EUR_access + this.costParameters.drtCost_EUR_km * distance;
+        return this.costParameters.feederDrtCost_EUR_access + this.costParameters.feederDrtCost_EUR_km * distance;
     }
 }
