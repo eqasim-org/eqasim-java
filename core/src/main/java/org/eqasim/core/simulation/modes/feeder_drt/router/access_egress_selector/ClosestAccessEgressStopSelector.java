@@ -22,6 +22,13 @@ public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelecto
     private static final Logger logger = LogManager.getLogger(ClosestAccessEgressStopSelector.class);
     private final QuadTree<Facility> quadTree;
     private final Pattern skippedFacilitiesIdPattern;
+    private final static String[] STOPS_INCLUDED_BY_DEFAULT = new String[]{"IDFM:424237.link:10198",
+                                                                            "IDFM:2974.link:47462",
+                                                                            "IDFM:2753.link:69520",
+                                                                            "IDFM:2752.link:47462",
+                                                                            "IDFM:2751.link:98965",
+                                                                            "IDFM:2750.link:98972",
+                                                                            "IDFM:2722.link:10198"};
 
     public ClosestAccessEgressStopSelector(ClosestAccessEgressStopSelectorParameterSet config, Network drtNetwork, TransitSchedule schedule) {
         logger.info("Starting initialization");
@@ -41,11 +48,11 @@ public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelecto
 
         for (TransitLine transitLine : schedule.getTransitLines().values()) {
             for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
-                if (accessEgressTransitStopModes.size() == 0 || accessEgressTransitStopModes.contains(transitRoute.getTransportMode())) {
-                    for (TransitRouteStop transitRouteStop : transitRoute.getStops()) {
-                        TransitStopFacility transitStopFacility = transitRouteStop.getStopFacility();
-                        if (!processedFacilities.contains(transitStopFacility.getId())) {
-                            processedFacilities.add(transitStopFacility.getId());
+                for (TransitRouteStop transitRouteStop : transitRoute.getStops()) {
+                    TransitStopFacility transitStopFacility = transitRouteStop.getStopFacility();
+                    if (!processedFacilities.contains(transitStopFacility.getId())) {
+                        processedFacilities.add(transitStopFacility.getId());
+                        if (accessEgressTransitStopModes.size() == 0 || accessEgressTransitStopModes.contains(transitRoute.getTransportMode()) || isIncludedByDefault(transitRouteStop)) {
                             Facility interactionFacility = FacilitiesUtils.wrapLink(NetworkUtils.getNearestLink(drtNetwork, transitStopFacility.getCoord()));
                             try {
                                 if (!quadTree.put(transitStopFacility.getCoord().getX(), transitStopFacility.getCoord().getY(), interactionFacility)) {
@@ -65,6 +72,17 @@ public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelecto
             throw new IllegalStateException("No facility available for intermodality");
         }
         logger.info("Initialization finished");
+    }
+
+    private static boolean isIncludedByDefault(TransitRouteStop transitRouteStop) {
+        boolean returnValue = false;
+        for(String stopId: STOPS_INCLUDED_BY_DEFAULT) {
+            if(transitRouteStop.getStopFacility().getId().toString().equals(stopId)) {
+                returnValue = true;
+                break;
+            }
+        }
+        return returnValue;
     }
 
     private boolean skipFacility(Facility facility) {
