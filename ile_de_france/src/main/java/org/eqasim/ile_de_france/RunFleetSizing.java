@@ -11,6 +11,7 @@ import org.matsim.core.config.ConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -161,9 +162,19 @@ public class RunFleetSizing {
                 simArgs.add(outputDirectoryPath.toString());
                 simArgs.add(String.format("--config:multiModeDrt.drt[mode=%s].vehiclesFile", drtMode));
                 simArgs.add(vehiclesPath.toString());
-                executorService.execute(new MainClassRunnable(RunSimulation.class, Collections.emptyList(), simArgs));
+                executorService.execute(new MainClassRunnable(RunSimulation.class, ManagementFactory.getRuntimeMXBean().getInputArguments(), simArgs));
             }
         }
+        var shutdownListener = new Thread(() -> {
+            System.out.println("shutdown in 5s");
+            try {
+                Thread.sleep(5000);
+                executorService.shutdownNow();
+            } catch (InterruptedException e) {}
+        });
+
+        Runtime.getRuntime().addShutdownHook(shutdownListener);
+
         executorService.shutdown();
         boolean success = executorService.awaitTermination(2, TimeUnit.DAYS);
         if(!success) {
