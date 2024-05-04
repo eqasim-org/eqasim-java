@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.modes.feeder_drt.mode_choice.utilities.estimator;
 
+import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.modes.feeder_drt.router.FeederDrtRoutingModule;
 import org.matsim.api.core.v01.population.Activity;
@@ -16,10 +17,12 @@ import java.util.Map;
 public class DefaultFeederDrtUtilityEstimator implements UtilityEstimator {
 	private final Map<String, UtilityEstimator> drtEstimators;
 	private final Map<String, UtilityEstimator> ptEstimators;
+	private final ModeParameters modeParameters;
 
-	public DefaultFeederDrtUtilityEstimator(Map<String, UtilityEstimator> ptEstimators, Map<String, UtilityEstimator> drtEstimators) {
+	public DefaultFeederDrtUtilityEstimator(Map<String, UtilityEstimator> ptEstimators, Map<String, UtilityEstimator> drtEstimators, ModeParameters modeParameters) {
 		this.drtEstimators = drtEstimators;
 		this.ptEstimators = ptEstimators;
+		this.modeParameters = modeParameters;
 	}
 
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -43,6 +46,7 @@ public class DefaultFeederDrtUtilityEstimator implements UtilityEstimator {
 					nextSegmentType = FeederDrtRoutingModule.FeederDrtTripSegmentType.DRT;
 				} else if (previousSegmentType.equals(FeederDrtRoutingModule.FeederDrtTripSegmentType.DRT)) {
 					totalUtility += drtEstimator.estimateUtility(person, trip, currentTrip);
+					totalUtility += modeParameters.pt.betaLineSwitch_u;
 					nextSegmentType = FeederDrtRoutingModule.FeederDrtTripSegmentType.MAIN;
 				} else {
 					throw new IllegalStateException(String.format("Unhandled previous segment type %s in trip of person %s", previousSegmentType, person.getId().toString()));
