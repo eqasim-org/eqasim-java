@@ -136,7 +136,7 @@ public class RunFleetSizing {
         for (int fleetSize : fleetSizes) {
             Path vehiclesPath = Paths.get(configPath, "..", "drt_vehicles", "drt_vehicles_" + fleetSize + ".xml").toAbsolutePath().normalize();
             CreateDrtVehicles.main(new String[]{
-                    "--network-path", Paths.get(configPath, "..", config.network().getInputFile()).toAbsolutePath().toString(),
+                    "--network-path", Paths.get(configPath, "..", config.network().getInputFile()).toAbsolutePath().normalize().toString(),
                     "--output-vehicles-path", vehiclesPath.toString(),
                     "--vehicles-number", String.valueOf(fleetSize)
             });
