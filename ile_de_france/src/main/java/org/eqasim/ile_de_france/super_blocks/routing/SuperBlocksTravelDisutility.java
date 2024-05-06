@@ -14,7 +14,7 @@ import org.matsim.core.router.util.TravelTime;
 import org.matsim.vehicles.Vehicle;
 
 public class SuperBlocksTravelDisutility implements TravelDisutility {
-    public static final double FORBIDDEN_SUPER_BLOCK_VALUE = Double.MAX_VALUE;
+    public static final double WITHIN_SUPERBLOCK_DISUTILITY_FACTOR = 10;
     private final IdMap<Person, IdSet<SuperBlock>> superBlocksByPerson;
     private final IdMap<Link, Id<SuperBlock>> superBlockByLink;
     private final TravelDisutility delegate;
@@ -28,13 +28,14 @@ public class SuperBlocksTravelDisutility implements TravelDisutility {
     @Override
     public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
         Id<SuperBlock> superBlockId = this.superBlockByLink.get(link.getId());
+        double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle);
         if(superBlockId != null) {
             IdSet<SuperBlock> personSuperBlocks = this.superBlocksByPerson.get(person.getId());
             if(personSuperBlocks == null || !personSuperBlocks.contains(superBlockId)) {
-                return FORBIDDEN_SUPER_BLOCK_VALUE;
+                disutility *= WITHIN_SUPERBLOCK_DISUTILITY_FACTOR;
             }
         }
-        return delegate.getLinkTravelDisutility(link, time, person, vehicle);
+        return disutility;
     }
 
     @Override
