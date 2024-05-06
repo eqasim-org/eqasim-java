@@ -8,6 +8,9 @@ import com.google.inject.name.Names;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.pt.PublicTransportLegItem;
+import org.eqasim.core.analysis.pt.PublicTransportLegWriter;
+import org.eqasim.core.analysis.pt.PublicTransportLegReaderFromPopulation;
 import org.eqasim.core.analysis.trips.TripItem;
 import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
 import org.eqasim.core.analysis.trips.TripWriter;
@@ -34,6 +37,7 @@ import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
 import java.io.*;
@@ -225,6 +229,7 @@ public class RunStandaloneModeChoice {
         Population population = injector.getInstance(Population.class);
         // We initialize the TripReaderFromPopulation here as we might need it just below
         TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(MainModeIdentifier.class), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
+        PublicTransportLegReaderFromPopulation ptLegReader = new PublicTransportLegReaderFromPopulation(injector.getInstance(TransitSchedule.class), injector.getInstance(PersonAnalysisFilter.class));
         OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(Key.get(OutputDirectoryHierarchy.class, Names.named("StandaloneModeChoice")));
 
         cmd.getOption(CMD_WRITE_INPUT_CSV).ifPresent(s -> {
@@ -236,7 +241,10 @@ public class RunStandaloneModeChoice {
         modeChoicePerformer.run();
 
         cmd.getOption(CMD_WRITE_OUTPUT_CSV).ifPresent(s -> {
-            if(Boolean.parseBoolean(s)) writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv"), tripReader);
+            if(Boolean.parseBoolean(s)) {
+                writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv"), tripReader);
+                writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_pt_legs.csv"), ptLegReader);
+            }
         });
         if(cmd.getOption(CMD_SIMULATE_AFTER).isPresent()) {
             scenario.getConfig().controler().setFirstIteration(0);
@@ -254,10 +262,18 @@ public class RunStandaloneModeChoice {
     }
 
     private static void writeTripsCsv(Population population, String filePath, TripReaderFromPopulation tripReader) {
-        //We write the initial trip modes
         Collection<TripItem> trips = tripReader.readTrips(population);
         try {
             new TripWriter(trips, DistanceUnit.meter, DistanceUnit.meter).write(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void writePtLegsCsv(Population population, String filePath, PublicTransportLegReaderFromPopulation legsReader) {
+        Collection<PublicTransportLegItem> legs = legsReader.readPublicTransportLegs(population);
+        try {
+            new PublicTransportLegWriter(legs).write(filePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
