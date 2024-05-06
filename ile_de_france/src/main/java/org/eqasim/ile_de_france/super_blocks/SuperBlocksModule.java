@@ -6,6 +6,7 @@ import org.eqasim.core.scenario.routing.PopulationRouterModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.ile_de_france.super_blocks.defs.SuperBlocksLogic;
 import org.eqasim.ile_de_france.super_blocks.handlers.SuperblockStartupListener;
+import org.eqasim.ile_de_france.super_blocks.handlers.SuperblockViolationHandler;
 import org.eqasim.ile_de_france.super_blocks.permissions.ActivityTypeBasedSuperBlockPermission;
 import org.eqasim.ile_de_france.super_blocks.permissions.SuperBlockPermission;
 import org.eqasim.ile_de_france.super_blocks.routing.SuperBlocksTravelDisutility;
@@ -23,6 +24,7 @@ public class SuperBlocksModule extends AbstractEqasimExtension {
     protected void installEqasimExtension() {
         addTravelDisutilityFactoryBinding("car").to(SuperBlocksTravelDisutility.Factory.class);
         bind(SuperBlockPermission.class).to(ActivityTypeBasedSuperBlockPermission.class);
+        addEventHandlerBinding().to(SuperblockViolationHandler.class);
         install(new PopulationRouterModule(getConfig().global().getNumberOfThreads(), 100, true, Set.of("car")));
         addControlerListenerBinding().to(SuperblockStartupListener.class);
     }
