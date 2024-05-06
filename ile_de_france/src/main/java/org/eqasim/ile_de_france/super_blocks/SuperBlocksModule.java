@@ -2,8 +2,10 @@ package org.eqasim.ile_de_france.super_blocks;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import org.eqasim.core.scenario.routing.PopulationRouterModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.ile_de_france.super_blocks.defs.SuperBlocksLogic;
+import org.eqasim.ile_de_france.super_blocks.handlers.SuperblockStartupListener;
 import org.eqasim.ile_de_france.super_blocks.permissions.ActivityTypeBasedSuperBlockPermission;
 import org.eqasim.ile_de_france.super_blocks.permissions.SuperBlockPermission;
 import org.eqasim.ile_de_france.super_blocks.routing.SuperBlocksTravelDisutility;
@@ -14,12 +16,15 @@ import org.matsim.core.router.costcalculators.RandomizingTimeDistanceTravelDisut
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 public class SuperBlocksModule extends AbstractEqasimExtension {
     @Override
     protected void installEqasimExtension() {
         addTravelDisutilityFactoryBinding("car").to(SuperBlocksTravelDisutility.Factory.class);
         bind(SuperBlockPermission.class).to(ActivityTypeBasedSuperBlockPermission.class);
+        install(new PopulationRouterModule(getConfig().global().getNumberOfThreads(), 100, true, Set.of("car")));
+        addControlerListenerBinding().to(SuperblockStartupListener.class);
     }
 
     @Provides
