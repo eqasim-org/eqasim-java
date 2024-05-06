@@ -36,18 +36,17 @@ public class DefaultFeederDrtUtilityEstimator implements UtilityEstimator {
 		UtilityEstimator ptEstimator = null;
 		UtilityEstimator drtEstimator = null;
 
-		FeederDrtRoutingModule.FeederDrtTripSegmentType nextSegmentType = FeederDrtRoutingModule.FeederDrtTripSegmentType.MAIN;
-
+		FeederDrtRoutingModule.FeederDrtTripSegmentType previousSegmentType = null;
 		for (PlanElement element : elements) {
 			if (element instanceof Activity stageActivity && stageActivity.getType().equals(stageActivityType)) {
-				FeederDrtRoutingModule.FeederDrtTripSegmentType previousSegmentType = (FeederDrtRoutingModule.FeederDrtTripSegmentType) stageActivity.getAttributes().getAttribute(FeederDrtRoutingModule.STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR);
+				if(previousSegmentType == null) {
+					throw new IllegalStateException("Encountered Feeder interaction activity before any leg");
+				}
 				if(previousSegmentType.equals(FeederDrtRoutingModule.FeederDrtTripSegmentType.MAIN)) {
 					totalUtility += ptEstimator.estimateUtility(person, trip, currentTrip);
-					nextSegmentType = FeederDrtRoutingModule.FeederDrtTripSegmentType.DRT;
 				} else if (previousSegmentType.equals(FeederDrtRoutingModule.FeederDrtTripSegmentType.DRT)) {
 					totalUtility += drtEstimator.estimateUtility(person, trip, currentTrip);
 					totalUtility += modeParameters.pt.betaLineSwitch_u;
-					nextSegmentType = FeederDrtRoutingModule.FeederDrtTripSegmentType.MAIN;
 				} else {
 					throw new IllegalStateException(String.format("Unhandled previous segment type %s in trip of person %s", previousSegmentType, person.getId().toString()));
 				}
@@ -61,6 +60,7 @@ public class DefaultFeederDrtUtilityEstimator implements UtilityEstimator {
 						drtEstimator = this.drtEstimators.get(routingMode);
 						stageActivityType = routingMode + " interaction";
 					}
+					previousSegmentType = (FeederDrtRoutingModule.FeederDrtTripSegmentType) leg.getAttributes().getAttribute(FeederDrtRoutingModule.STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR);
 				}
 			}
 		}
@@ -68,7 +68,7 @@ public class DefaultFeederDrtUtilityEstimator implements UtilityEstimator {
 			if(ptEstimator == null) {
 				throw new IllegalStateException(String.format("Plan of person %s has no legs", person.getId().toString()));
 			}
-			if (nextSegmentType.equals(FeederDrtRoutingModule.FeederDrtTripSegmentType.MAIN)) {
+			if (previousSegmentType.equals(FeederDrtRoutingModule.FeederDrtTripSegmentType.MAIN)) {
 				totalUtility += ptEstimator.estimateUtility(person, trip, currentTrip);
 			} else {
 				totalUtility += drtEstimator.estimateUtility(person, trip, currentTrip);

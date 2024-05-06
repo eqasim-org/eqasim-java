@@ -12,7 +12,7 @@ import java.util.*;
 
 public class FeederDrtRoutingModule implements RoutingModule {
 
-    public enum FeederDrtTripSegmentType {MAIN, DRT};
+    public enum FeederDrtTripSegmentType {MAIN, DRT}
 
     public static final String STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR = "previousSegmentType";
 
@@ -63,11 +63,11 @@ public class FeederDrtRoutingModule implements RoutingModule {
                 if (element instanceof Leg leg) {
                     accessTime = Math.max(accessTime, leg.getDepartureTime().seconds());
                     accessTime += leg.getTravelTime().seconds();
+                    leg.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.DRT);
                 }
             }
             Activity accessInteractionActivity = populationFactory.createActivityFromLinkId(this.mode + " interaction", accessFacility.getLinkId());
             accessInteractionActivity.setMaximumDuration(0);
-            accessInteractionActivity.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.DRT);
             intermodalRoute.add(accessInteractionActivity);
         }
 
@@ -79,6 +79,7 @@ public class FeederDrtRoutingModule implements RoutingModule {
             if (element instanceof Leg leg) {
                 egressTime = Math.max(egressTime, leg.getDepartureTime().seconds());
                 egressTime += leg.getTravelTime().seconds();
+                leg.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN);
             }
         }
 
@@ -90,13 +91,16 @@ public class FeederDrtRoutingModule implements RoutingModule {
 
         // If no valid DRT route is found, we recompute a PT route from the access facility to the trip destination
         if (drtRoute == null) {
-            intermodalRoute.addAll(transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, toFacility, accessTime, person)));
+            transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, toFacility, accessTime, person));
+            ptRoute = new LinkedList<>(transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, toFacility, accessTime, person)));
+            ptRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN));
+            intermodalRoute.addAll(ptRoute);
         } else {
             // Otherwise we add it as an egress to the whole route
             intermodalRoute.addAll(ptRoute);
             Activity egressInteractionActivity = populationFactory.createActivityFromLinkId(this.mode + " interaction", egressFacility.getLinkId());
             egressInteractionActivity.setMaximumDuration(0);
-            egressInteractionActivity.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN);
+            drtRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.DRT));
             intermodalRoute.add(egressInteractionActivity);
             intermodalRoute.addAll(drtRoute);
         }
