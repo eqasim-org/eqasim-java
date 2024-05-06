@@ -8,7 +8,7 @@ import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-
+import org.matsim.core.utils.collections.Tuple;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,12 +71,14 @@ public class RunFleetSizing {
             ProcessBuilder builder = new ProcessBuilder(command);
             Process process;
             try {
+                System.out.println(String.format("Starting %s %s", mainClass.getName(), String.join(" ", args)));
                 process = builder.inheritIO().start();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
             try {
                 process.waitFor();
+                System.out.println(String.format("Finished %s %s", mainClass.getName(), String.join(" ", args)));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -93,6 +95,7 @@ public class RunFleetSizing {
                 .allowOptions("config-options-separator")
                 .allowOptions("drt-mode")
                 .requireOptions("max-fleet-size", "min-fleet-size", "fleet-size-step")
+                .allowOptions("one-full-simulation-per-fleet-size")
                 .allowPrefixes("mode-choice-parameter", "cost-parameter")
                 .build();
 
@@ -106,6 +109,8 @@ public class RunFleetSizing {
         int maxFleetSize = Integer.parseInt(commandLine.getOptionStrict("max-fleet-size"));
         int minFleetSize = Integer.parseInt(commandLine.getOptionStrict("min-fleet-size"));
         int fleetSizeStep = Integer.parseInt(commandLine.getOptionStrict("fleet-size-step"));
+
+        boolean oneFullSimulationPerFleetSize = Boolean.parseBoolean(commandLine.getOption("one-full-simulation-per-fleet-size").orElse("false"));
 
 
         Map<String, Object> summary = new HashMap<>();
@@ -127,12 +132,12 @@ public class RunFleetSizing {
 
         Config config = ConfigUtils.loadConfig(configPath);
 
-        int[] fleetSizes = IntStream.rangeClosed(minFleetSize / fleetSizeStep, maxFleetSize / fleetSizeStep).map(i -> fleetSizeStep * i).toArray();
+        List<Integer> fleetSizes = IntStream.rangeClosed(minFleetSize / fleetSizeStep, maxFleetSize / fleetSizeStep).map(i -> fleetSizeStep * i).boxed().toList();
         summary.put("fleet_sizes", fleetSizes);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(processes);
         int totalSimulations = 0;
         int skippedSimulations = 0;
+        Map<Integer, Path> vehiclesPathPerFleetSize = new HashMap<>();
         for (int fleetSize : fleetSizes) {
             Path vehiclesPath = Paths.get(configPath, "..", "drt_vehicles", "drt_vehicles_" + fleetSize + ".xml").toAbsolutePath().normalize();
             CreateDrtVehicles.main(new String[]{
@@ -140,37 +145,74 @@ public class RunFleetSizing {
                     "--output-vehicles-path", vehiclesPath.toString(),
                     "--vehicles-number", String.valueOf(fleetSize)
             });
-            for(List<Object> argValues: cartesianProductValues) {
-                totalSimulations+=1;
-                List<String> argValuesString = argValues.stream().map(Object::toString).toList();
-                Path outputDirectoryPath = Paths.get(mainOutputDirectory, String.format("output_%d_%s", fleetSize, String.join("_", argValuesString))).normalize();
+            vehiclesPathPerFleetSize.put(fleetSize, vehiclesPath);
+        }
 
-                if (Files.exists(outputDirectoryPath.resolve("eqasim_trips.csv"))) {
-                    System.out.println("Skipping simulation with outputDirectory " + outputDirectoryPath);
+        ExecutorService executorService = Executors.newFixedThreadPool(processes);
+        List<Path> fullSimulationOutputDirectoryPerArgValue = new ArrayList<>();
+        for(List<Object> argValues: cartesianProductValues) {
+            if(oneFullSimulationPerFleetSize) {
+                totalSimulations += 1;
+                Tuple<Path, Boolean> runResult = startGivenSimulation(configPath, mainOutputDirectory, options, argValues, fleetSizes.get(fleetSizes.size()-1), threadsPerProcess, drtMode, vehiclesPathPerFleetSize.get(fleetSizes.get(0)), executorService, null);
+                if(!runResult.getSecond()) {
                     skippedSimulations+=1;
-                    continue;
                 }
-
-                List<String> simArgs = new ArrayList<>();
-                simArgs.add("--config-path");
-                simArgs.add(configPath);
-                IntStream.range(0, argValues.size()).mapToObj(i -> List.of("--"+options.get(i), argValuesString.get(i))).forEach(simArgs::addAll);
-                simArgs.add("--config:global.numberOfThreads");
-                simArgs.add(String.valueOf(threadsPerProcess));
-                simArgs.add("--config:controler.outputDirectory");
-                simArgs.add(outputDirectoryPath.toString());
-                simArgs.add(String.format("--config:multiModeDrt.drt[mode=%s].vehiclesFile", drtMode));
-                simArgs.add(vehiclesPath.toString());
-                executorService.execute(new MainClassRunnable(RunSimulation.class, Collections.emptyList(), simArgs));
+                fullSimulationOutputDirectoryPerArgValue.add(runResult.getFirst());
+            } else {
+                Tuple<Integer, Integer> stats = startGivenOptionsFleetSizing(configPath, mainOutputDirectory, options, argValues, fleetSizes, threadsPerProcess, drtMode, vehiclesPathPerFleetSize, executorService, null);
+                totalSimulations += stats.getFirst();
+                skippedSimulations += stats.getSecond();
             }
         }
         executorService.shutdown();
         boolean success = executorService.awaitTermination(2, TimeUnit.DAYS);
         if(!success) {
+            if(!oneFullSimulationPerFleetSize) {
+                System.out.println("All simulations did not finish successfully");
+            }
+        } else {
+            if(oneFullSimulationPerFleetSize) {
+                System.out.println("Finished Full simulations");
+            } else {
+                System.out.println("All simulations finished successfully");
+            }
+        }
+
+
+        if(oneFullSimulationPerFleetSize) {
+            executorService = Executors.newFixedThreadPool(processes);
+            for(int i=0; i<cartesianProductValues.size(); i++) {
+                List<Object> argValues = cartesianProductValues.get(i);
+                Path fullSimulationOutputDirectory = fullSimulationOutputDirectoryPerArgValue.get(i);
+                Path argValuesReferencePlans = Path.of(configPath).toAbsolutePath().resolve("..").toAbsolutePath().relativize(fullSimulationOutputDirectory.resolve("output_plans.xml.gz").toAbsolutePath());
+                if(!Files.exists(argValuesReferencePlans)) {
+                    System.out.println(String.format("Base simulation %s could not finish, won't proceed with the other simulations", fullSimulationOutputDirectory));
+                    skippedSimulations += fleetSizes.size()-1;
+                    continue;
+                }
+                Tuple<Integer, Integer> stats = startGivenOptionsFleetSizing(configPath,
+                        mainOutputDirectory,
+                        options,
+                        argValues,
+                        fleetSizes.subList(0, fleetSizes.size()-1),
+                        threadsPerProcess,
+                        drtMode,
+                        vehiclesPathPerFleetSize,
+                        executorService,
+                        argValuesReferencePlans);
+                totalSimulations += stats.getFirst();
+                skippedSimulations += stats.getSecond();
+            }
+        }
+
+        executorService.shutdown();
+        success = executorService.awaitTermination(2, TimeUnit.DAYS);
+        if(!success) {
             System.out.println("All simulations did not finish successfully");
         } else {
             System.out.println("All simulations finished successfully");
         }
+
         summary.put("total_simulations", totalSimulations);
         summary.put("skipped_simulations", skippedSimulations);
         Map<String, Object> summaryWithDate = new LinkedHashMap<>();
@@ -182,5 +224,46 @@ public class RunFleetSizing {
         }
         summaryWithDate.put(new Date(System.currentTimeMillis()).toString(), summary);
         new ObjectMapper(new YAMLFactory()).writeValue(new File(summaryFilePath.toString()), summaryWithDate);
+    }
+
+    private static Tuple<Integer, Integer> startGivenOptionsFleetSizing(String configPath, String mainOutputDirectory, List<String> options, List<Object> argValues, List<Integer> fleetSizes, int threadsPerProcess, String drtMode, Map<Integer, Path> vehiclesPathPerFleetSize, ExecutorService executorService, Path inputPlansPath) {
+        int totalSimulations = 0;
+        int skippedSimulations = 0;
+        for(Integer fleetSize: fleetSizes) {
+            totalSimulations+=1;
+            if(!startGivenSimulation(configPath, mainOutputDirectory, options, argValues, fleetSize, threadsPerProcess, drtMode, vehiclesPathPerFleetSize.get(fleetSize), executorService, inputPlansPath).getSecond()) {
+                skippedSimulations += 1;
+            }
+        }
+        return Tuple.of(totalSimulations, skippedSimulations);
+    }
+
+    private static Tuple<Path, Boolean> startGivenSimulation(String configPath, String mainOutputDirectory, List<String> options, List<Object> argValues, int fleetSize, int threadsPerProcess, String drtMode, Path vehiclesPath, ExecutorService executorService, Path inputPlansPath) {
+        List<String> argValuesString = argValues.stream().map(Object::toString).toList();
+        Path outputDirectoryPath = Paths.get(mainOutputDirectory, String.format("output_%s_%d", String.join("_", argValuesString), fleetSize)).normalize();
+
+        if (Files.exists(outputDirectoryPath.resolve("eqasim_trips.csv"))) {
+            System.out.println("Skipping simulation with outputDirectory " + outputDirectoryPath);
+            return Tuple.of(outputDirectoryPath, false);
+        }
+
+        List<String> simArgs = new ArrayList<>();
+        simArgs.add("--config-path");
+        simArgs.add(configPath);
+        IntStream.range(0, argValues.size()).mapToObj(i -> List.of("--"+options.get(i), argValuesString.get(i))).forEach(simArgs::addAll);
+        simArgs.add("--config:global.numberOfThreads");
+        simArgs.add(String.valueOf(threadsPerProcess));
+        simArgs.add("--config:controler.outputDirectory");
+        simArgs.add(outputDirectoryPath.toString());
+        simArgs.add(String.format("--config:multiModeDrt.drt[mode=%s].vehiclesFile", drtMode));
+        simArgs.add(vehiclesPath.toString());
+        if(inputPlansPath  != null) {
+            simArgs.add("--config:plans.inputPlansFile");
+            simArgs.add(inputPlansPath.normalize().toString());
+            simArgs.add("--config:controler.lastIteration");
+            simArgs.add("0");
+        }
+        executorService.execute(new MainClassRunnable(RunSimulation.class, Collections.emptyList(), simArgs));
+        return Tuple.of(outputDirectoryPath, true);
     }
 }
