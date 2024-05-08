@@ -313,18 +313,18 @@ public class TestSimulationPipeline {
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
+        runStandaloneModeChoice();
         runAnalyses();
         runExports();
     }
 
 
-    @Test
-    public void testStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+    public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunStandaloneModeChoice.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
+                "--recorded-travel-times-path", "melun_test/output/eqasim_travel_times.bin",
                 "--write-input-csv-trips", "true",
                 "--write-output-csv-trips", "true",
-                "--simulate-after", "true",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice",
                 "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
