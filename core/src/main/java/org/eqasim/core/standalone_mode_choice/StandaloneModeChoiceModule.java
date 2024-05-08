@@ -56,12 +56,11 @@ public class StandaloneModeChoiceModule extends AbstractModule {
     }
 
     @Provides
-    public StandaloneModeChoicePerformer provideBadPlansFilter(Provider<DiscreteModeChoiceModel> discreteModeChoiceModelProvider, Population population, @Named("StandaloneModeChoice") OutputDirectoryHierarchy outputDirectoryHierarchy, Scenario scenario) {
+    public StandaloneModeChoicePerformer provideStandaloneModeChoicePerformer(Provider<DiscreteModeChoiceModel> discreteModeChoiceModelProvider, Population population, OutputDirectoryHierarchy outputDirectoryHierarchy, Scenario scenario) {
         return new StandaloneModeChoicePerformer(discreteModeChoiceModelProvider, configGroup, population, this.numberOfThreads, this.randomSeed, outputDirectoryHierarchy, scenario);
     }
 
     @Provides
-    @Named("StandaloneModeChoice")
     @Singleton
     public OutputDirectoryHierarchy provideOutputDirectoryHierarchy() {
         OutputDirectoryHierarchy outputDirectoryHierarchy = new OutputDirectoryHierarchy(this.configGroup.getOutputDirectory(), null, OutputDirectoryHierarchy.OverwriteFileSetting.overwriteExistingFiles, false, ControllerConfigGroup.CompressionType.gzip);

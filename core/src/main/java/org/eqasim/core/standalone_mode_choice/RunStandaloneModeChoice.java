@@ -231,7 +231,7 @@ public class RunStandaloneModeChoice {
         // We initialize the TripReaderFromPopulation here as we might need it just below
         TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         PublicTransportLegReaderFromPopulation ptLegReader = new PublicTransportLegReaderFromPopulation(injector.getInstance(TransitSchedule.class), injector.getInstance(PersonAnalysisFilter.class));
-        OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(Key.get(OutputDirectoryHierarchy.class, Names.named("StandaloneModeChoice")));
+        OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(OutputDirectoryHierarchy.class);
 
         cmd.getOption(CMD_WRITE_INPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
