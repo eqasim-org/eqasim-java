@@ -55,7 +55,7 @@ import com.google.inject.name.Names;
  * The class requires one parameter:
  * - config-path: a path to a MATSim config file
  * The mode choice is performed via a StandaloneModeChoice module which is configurable via a config group.
- * The StandaloneModeChoiceConfigGroup can be included in the supplied config file, if not one with the default settings is added and these settings can be set via the commandline using the config: prefix. Below the list of supported parameters:
+ * The StandaloneModeChoiceConfigGroup can be included in the supplied config file. If it is not provided, one with the default settings is added and these settings can be set via the commandline using the config: prefix. Below the list of supported parameters:
  * - outputDirectory: The directory in which the resulting plans will as well as the logfiles be written
  * - removePersonsWithNoValidAlternatives: if set to true, persons with no valid alternative for at least one tour or trip will be removed in the resulting population
  * More parameters can be supplied via the command line
@@ -63,7 +63,14 @@ import com.google.inject.name.Names;
  * - write-output-csv-trips: writes out the trips resulting from the mode choice, as well as pt legs, into csv files called output_trips.csv and output_pt_legs.csv in addition to the plans file
  * - travel-times-factors-path: if provided, should point out to a csv file specifying the congestion levels on the network during the day as factors by which the free speed is divided. The file in question is a csv With a header timeUpperBound;travelTimeFactor in which the timeUpperBound should be ordered incrementally.
  * - recorded-travel-times-path: mutually exclusive with the travel-times-factors-path. Points to a RecordedTravelTime file.
- * - simulate-after: if set, a single-iteration simulation using the resulting population will be performed, allowing to generate the regular MATSim output files.
+ * - eqasim-configurator-class: The full name of a class extending the {@link org.eqasim.core.simulation.EqasimConfigurator} class, the provided configurator class will be instantiated and used to:
+ *   - Detect optional config groups using the {@link org.eqasim.core.simulation.EqasimConfigurator#addOptionalConfigGroups(Config)} method
+ *   - Configure the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#configureScenario(Scenario)} before loading
+ *   - Adjust the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#adjustScenario(Scenario)} after loading
+ * - mode-choice-configurator-class: The full name of a class the extending the {@link org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator} class.
+ *     Since the EqasimConfigurator objects are usually used to configure the controller with all modules necessary for a full simulation, some of these modules might cause problems during a standalone mode choice.
+ *     This is why you should implement a StandaloneModeChoice configurator and override the {@link StandaloneModeChoiceConfigurator#getSpecificModeChoiceModules()} to return only the modules necessary for mode choice.
+ * - simulate-after: the full name of a class that can be used to run a one-iteration simulation after the mode choice. The provided class should be be runnable (having a static main(String[] args) that expect a config-path argument as well as arguments prefixed with 'config:' that can be used to override configuration elements.
  */
 public class RunStandaloneModeChoice {
     public static class TravelTimeFactors implements TravelTime {
@@ -172,6 +179,7 @@ public class RunStandaloneModeChoice {
         }
 
         Scenario scenario = ScenarioUtils.createScenario(config);
+        configurator.configureScenario(scenario);
         ScenarioUtils.loadScenario(scenario);
 
         if(!cmd.hasOption(CMD_SKIP_SCENARIO_CHECK) || !Boolean.parseBoolean(cmd.getOptionStrict(CMD_SKIP_SCENARIO_CHECK))) {
