@@ -1,4 +1,4 @@
-package org.eqasim.ile_de_france.standalone_mode_choice;
+package org.eqasim.core.standalone_mode_choice;
 
 import jakarta.validation.constraints.NotNull;
 import org.matsim.core.config.ReflectiveConfigGroup;

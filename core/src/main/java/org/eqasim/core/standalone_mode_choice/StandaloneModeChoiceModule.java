@@ -1,4 +1,4 @@
-package org.eqasim.ile_de_france.standalone_mode_choice;
+package org.eqasim.core.standalone_mode_choice;
 
 import java.io.File;
 import java.io.IOException;
