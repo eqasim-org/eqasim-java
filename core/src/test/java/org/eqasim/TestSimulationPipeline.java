@@ -3,8 +3,7 @@ package org.eqasim;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
@@ -26,6 +25,8 @@ import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
+import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
+import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
 import org.eqasim.core.tools.ExportActivitiesToShapefile;
 import org.eqasim.core.tools.ExportNetworkToShapefile;
 import org.eqasim.core.tools.ExportPopulationToCSV;
@@ -36,11 +37,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
@@ -63,9 +67,19 @@ public class TestSimulationPipeline {
     }
 
     private void runMelunSimulation(String configPath, String outputPath) {
+        runMelunSimulation(configPath, outputPath, null, null);
+    }
+
+    private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
+        if(inputPlansFile != null) {
+            config.plans().setInputFile(inputPlansFile);
+        }
+        if(lastIteration != null) {
+            config.controller().setLastIteration(lastIteration);
+        }
         eqasimConfigurator.addOptionalConfigGroups(config);
 
         Scenario scenario = ScenarioUtils.createScenario(config);
@@ -88,19 +102,7 @@ public class TestSimulationPipeline {
 
                     @Override
                     public ModeAvailability get() {
-                        FeederDrtModeAvailabilityWrapper feederDrtModeAvailabilityWrapper = new FeederDrtModeAvailabilityWrapper(config, (person, trips) -> {
-                            Set<String> modes = new HashSet<>();
-                            modes.add(TransportMode.walk);
-                            modes.add(TransportMode.pt);
-                            modes.add(TransportMode.car);
-                            modes.add(TransportMode.bike);
-                            // Add special mode "car_passenger" if applicable
-                            Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-                            if (isCarPassenger) {
-                                modes.add("car_passenger");
-                            }
-                            return modes;
-                        });
+                        FeederDrtModeAvailabilityWrapper feederDrtModeAvailabilityWrapper = new FeederDrtModeAvailabilityWrapper(config, new TestModeAvailability());
                         return new TransitWithAbstractAccessModeAvailabilityWrapper(config, feederDrtModeAvailabilityWrapper);
                     }
                 }).asEagerSingleton();
@@ -311,7 +313,70 @@ public class TestSimulationPipeline {
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
+        runStandaloneModeChoice();
         runAnalyses();
         runExports();
+    }
+
+
+    public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+        RunStandaloneModeChoice.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--recorded-travel-times-path", "melun_test/output/eqasim_travel_times.bin",
+                "--write-input-csv-trips", "true",
+                "--write-output-csv-trips", "true",
+                "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice",
+                "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
+                "--simulate-after", TestRunSimulation.class.getName()
+        });
+    }
+
+    public static class TestRunSimulation {
+        public static void main(String[] args) throws CommandLine.ConfigurationException {
+            CommandLine commandLine = new CommandLine.Builder(args)
+                    .requireOptions("config-path")
+                    .build();
+
+            String configPath = commandLine.getOptionStrict("config-path");
+            String outputDirectory = commandLine.getOption("config:controler.outputDirectory").orElse("generic_output");
+            Optional<String> lastIterationOption = commandLine.getOption("config:controler.lastIteration");
+            Integer lastIteration = lastIterationOption.isPresent() ? Integer.parseInt(lastIterationOption.get()) : null;
+            String inputPlansFile = commandLine.getOption("config:plans.inputPlansFile").orElse(null);
+            new TestSimulationPipeline().runMelunSimulation(configPath, outputDirectory, inputPlansFile, lastIteration);
+        }
+    }
+
+    private static class TestModeAvailability implements ModeAvailability {
+        @Override
+        public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
+            Set<String> modes = new HashSet<>();
+            modes.add(TransportMode.walk);
+            modes.add(TransportMode.pt);
+            modes.add(TransportMode.car);
+            modes.add(TransportMode.bike);
+            // Add special mode "car_passenger" if applicable
+            Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
+            if (isCarPassenger) {
+                modes.add("car_passenger");
+            }
+            return modes;
+        }
+    }
+
+    public static class TestModeChoiceConfigurator extends StandaloneModeChoiceConfigurator {
+
+        public TestModeChoiceConfigurator(Config config, CommandLine commandLine) {
+            super(config, commandLine);
+        }
+
+        public List<AbstractModule> getSpecificModeChoiceModules() {
+            return List.of(new AbstractEqasimExtension() {
+                @Override
+                public void installEqasimExtension() {
+                    bind(ModeParameters.class);
+                    bindModeAvailability("DefaultModeAvailability").to(TestModeAvailability.class);
+                }
+            });
+        }
     }
 }

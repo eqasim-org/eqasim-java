@@ -9,7 +9,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
-import org.eqasim.ile_de_france.standalone_mode_choice.RunStandaloneModeChoice;
+import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -64,10 +64,13 @@ public class TestCorisica {
 		{
 			RunStandaloneModeChoice.main(new String[]{
 					"--config-path", "corsica_test/corsica_config.xml",
+					"--recorded-travel-times-path", "corsica_test/simulation_output/eqasim_travel_times.bin",
 					"--write-input-csv-trips", "true",
 					"--write-output-csv-trips", "true",
-					"--simulate-after", "true",
-					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output"
+					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output",
+					"--eqasim-configurator-class", IDFConfigurator.class.getName(),
+					"--mode-choice-configurator-class", IDFStandaloneModeChoiceConfigurator.class.getName(),
+					"--simulate-after", RunSimulation.class.getName()
 			});
 		}
 
@@ -105,11 +108,15 @@ public class TestCorisica {
 		{
 			RunStandaloneModeChoice.main(new String[] {
 					"--config-path", "corsica_test/cut_config.xml",
+					"--recorded-travel-times-path", "corsica_test/cut_output/eqasim_travel_times.bin",
 					"--config:DiscreteModeChoice.tourFinder", "IsolatedOutsideTrips",
 					"--config:standaloneModeChoice.outputDirectory", "corsica_test/cut_output_mode_choice",
 					"--config:standaloneModeChoice.removePersonsWithNoValidAlternatives", "true",
 					"--write-input-csv-trips", "true",
-					"--write-output-csv-trips", "true"
+					"--write-output-csv-trips", "true",
+					"--eqasim-configurator-class", IDFConfigurator.class.getCanonicalName(),
+					"--mode-choice-configurator-class", IDFStandaloneModeChoiceConfigurator.class.getCanonicalName(),
+					"--simulate-after", RunSimulation.class.getName()
 			});
 		}
 	}

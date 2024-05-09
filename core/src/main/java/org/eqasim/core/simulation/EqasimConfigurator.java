@@ -1,13 +1,6 @@
 package org.eqasim.core.simulation;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 import org.eqasim.core.components.EqasimComponentsModule;
@@ -17,6 +10,7 @@ import org.eqasim.core.components.raptor.EqasimRaptorModule;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.modes.feeder_drt.MultiModeFeederDrtModule;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
@@ -77,7 +71,8 @@ public class EqasimConfigurator {
                 new DiscreteModeChoiceModule(), //
                 new EqasimComponentsModule(), //
                 new EpsilonModule(), //
-                new EqasimRaptorModule() //
+                new EqasimRaptorModule(),
+                new EqasimModeChoiceModule()//
         ));
 
         qsimModules.addAll(Arrays.asList( //
@@ -115,27 +110,22 @@ public class EqasimConfigurator {
     }
 
     public void configureController(Controler controller) {
+        Map<String, ConfigGroup> modules = controller.getConfig().getModules();
 
-        // The optional modules are added after the non-optional ones because we consider that their bindings have less priority
-        this.optionalModules.entrySet().stream()
-                .filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
-                .map(Map.Entry::getValue)
+        this.optionalModules.keySet().stream()
+                .filter(modules::containsKey)
+                .map(this.optionalModules::get)
                 .flatMap(Collection::stream)
                 .forEach(controller::addOverridingModule);
 
-        for (AbstractModule module : getModules()) {
-            controller.addOverridingModule(module);
-        }
+        this.getModules().forEach(controller::addOverridingModule);
 
-        this.optionalQSimModules.entrySet().stream()
-                .filter(e -> controller.getConfig().getModules().containsKey(e.getKey()))
-                .map(Map.Entry::getValue)
+        this.optionalQSimModules.keySet().stream()
+                .filter(modules::containsKey)
+                .map(this.optionalQSimModules::get)
                 .flatMap(Collection::stream)
                 .forEach(controller::addOverridingQSimModule);
-
-        for (AbstractQSimModule module : getQSimModules()) {
-            controller.addOverridingQSimModule(module);
-        }
+        this.getQSimModules().forEach(controller::addOverridingQSimModule);
 
         controller.configureQSimComponents(components -> {
             optionalQSimComponentConfigurationSteps.entrySet().stream()
@@ -160,14 +150,9 @@ public class EqasimConfigurator {
 	}
 	protected void registerOptionalConfigGroup(ConfigGroup configGroup, Collection<AbstractModule> modules, Collection<AbstractQSimModule> qsimModules, List<BiConsumer<Controler, QSimComponentsConfig>> componentsConsumers) {
 		this.optionalConfigGroups.put(configGroup.getName(), configGroup);
-		this.optionalModules.putIfAbsent(configGroup.getName(), new ArrayList<>());
-		this.optionalModules.get(configGroup.getName()).addAll(modules);
-
-        this.optionalQSimModules.putIfAbsent(configGroup.getName(), new ArrayList<>());
-        this.optionalQSimModules.get(configGroup.getName()).addAll(qsimModules);
-
-        this.optionalQSimComponentConfigurationSteps.putIfAbsent(configGroup.getName(), new ArrayList<>());
-        this.optionalQSimComponentConfigurationSteps.get(configGroup.getName()).addAll(componentsConsumers);
+		this.optionalModules.computeIfAbsent(configGroup.getName(), key -> new ArrayList<>()).addAll(modules);
+        this.optionalQSimModules.computeIfAbsent(configGroup.getName(), key -> new ArrayList<>()).addAll(qsimModules);
+        this.optionalQSimComponentConfigurationSteps.computeIfAbsent(configGroup.getName(), key -> new ArrayList<>()).addAll(componentsConsumers);
     }
 
     public void addOptionalConfigGroups(Config config) {
