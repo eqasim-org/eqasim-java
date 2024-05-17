@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.tour_finder.ActivityTourFinderWithExcludedActivities;
+import org.eqasim.core.simulation.modes.drt.mode_choice.DrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFDrtCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
@@ -35,6 +36,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
 	public static final String MODE_AVAILABILITY_NAME = "IDFModeAvailability";
+	public static final String MODE_AVAILABILITY_UMIM_NAME = "IDFModeAvailabilityUMIM";
 
 	public static final String CAR_COST_MODEL_NAME = "IDFCarCostModel";
 	public static final String PT_COST_MODEL_NAME = "IDFPtCostModel";
@@ -53,6 +55,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(FeederDrtModeAvailabilityWrapper.class);
+		bindModeAvailability(MODE_AVAILABILITY_UMIM_NAME).to(DrtModeAvailabilityWrapper.class);
 
 		bind(IDFPersonPredictor.class);
 
@@ -109,5 +112,10 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	public FeederDrtModeAvailabilityWrapper provideFeederDrtModeAvailabilityWrapper(Config config) {
 		return new FeederDrtModeAvailabilityWrapper(config, new IDFModeAvailability());
+	}
+
+	@Provides
+	public DrtModeAvailabilityWrapper provideDrtModeAvailabilityWrapper(Config config) {
+		return new DrtModeAvailabilityWrapper(config, new FeederDrtModeAvailabilityWrapper(config, new IDFModeAvailability()));
 	}
 }
