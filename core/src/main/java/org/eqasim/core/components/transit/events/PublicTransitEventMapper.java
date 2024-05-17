@@ -21,8 +21,9 @@ public class PublicTransitEventMapper implements CustomEventMapper {
 				TransitStopFacility.class);
 		double vehicleDepartureTime = Double.parseDouble(event.getAttributes().get("vehicleDepartureTime"));
 		double travelDistance = Double.parseDouble(event.getAttributes().get("travelDistance"));
+		double boardingTime = Double.parseDouble(event.getAttributes().get("boardingTime"));
 
 		return new PublicTransitEvent(arrivalTime, personId, transitLineId, transitRouteId, accessStopId, egressStopId,
-				vehicleDepartureTime, travelDistance);
+				vehicleDepartureTime, travelDistance, boardingTime);
 	}
 }

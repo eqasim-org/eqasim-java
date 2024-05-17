@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.eqasim.core.analysis.cba.CbaConfigGroup;
+import org.eqasim.core.analysis.cba.CbaModule;
 import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
@@ -84,6 +86,7 @@ public class EqasimConfigurator {
 		this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
 		this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), List.of(new EqasimTerminationModule(), new ModeShareModule()));
 		this.registerOptionalConfigGroup(new MultiModeFeederDrtConfigGroup(), List.of(new MultiModeFeederDrtModule(), new EqasimFeederDrtModeChoiceModule()));
+		this.registerOptionalConfigGroup(new CbaConfigGroup(), List.of(new CbaModule()));
 	}
 
 	public ConfigGroup[] getConfigGroups() {
