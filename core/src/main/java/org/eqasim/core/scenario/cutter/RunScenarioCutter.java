@@ -25,6 +25,7 @@ import org.eqasim.core.scenario.cutter.transit.TransitScheduleCutter;
 import org.eqasim.core.scenario.cutter.transit.TransitVehiclesCutter;
 import org.eqasim.core.scenario.routing.PopulationRouter;
 import org.eqasim.core.scenario.routing.PopulationRouterModule;
+import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -44,13 +45,15 @@ public class RunScenarioCutter {
 			throws ConfigurationException, MalformedURLException, IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path", "extent-path") //
-				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
+				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path",
+						"insert-vehicles") //
 				.build();
 
 		// Load some configuration
 		String prefix = cmd.getOption("prefix").orElse("");
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
+		boolean insertVehicles = cmd.getOption("insert-vehicles").map(Boolean::parseBoolean).orElse(false);
 
 		File outputDirectory = new File(cmd.getOptionStrict("output-path")).getAbsoluteFile();
 		ScenarioWriter.checkOutputDirectory(outputDirectory);
@@ -64,7 +67,7 @@ public class RunScenarioCutter {
 		// Load scenario
 		EqasimConfigurator configurator = new EqasimConfigurator();
 		configurator.getModules().removeIf(m -> m instanceof EqasimTerminationModule);
-		
+
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		cmd.applyConfiguration(config);
 
@@ -83,6 +86,10 @@ public class RunScenarioCutter {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
+		
+		if (insertVehicles) {
+			RunPopulationRouting.insertVehicles(config, scenario);
+		}
 
 		// Check validity before cutting
 		ScenarioValidator scenarioValidator = new ScenarioValidator();
@@ -101,7 +108,8 @@ public class RunScenarioCutter {
 
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules().stream().filter(module -> !(module instanceof AbstractEqasimExtension)).toList()) //
+				.addOverridingModules(configurator.getModules().stream()
+						.filter(module -> !(module instanceof AbstractEqasimExtension)).toList()) //
 				.addOverridingModule(
 						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
@@ -154,7 +162,8 @@ public class RunScenarioCutter {
 
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules().stream().filter(module -> !(module instanceof AbstractEqasimExtension)).toList()) //
+				.addOverridingModules(configurator.getModules().stream()
+						.filter(module -> !(module instanceof AbstractEqasimExtension)).toList()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.addOverridingModule(new TimeInterpretationModule()) //
