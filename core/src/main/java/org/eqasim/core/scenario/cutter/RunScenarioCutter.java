@@ -174,6 +174,10 @@ public class RunScenarioCutter {
 
 		// Check validity after cutting
 		scenarioValidator.checkScenario(scenario);
+		
+		if (insertVehicles) {
+			RunPopulationRouting.clearVehicles(config, scenario);
+		}
 
 		// Write scenario
 		ScenarioWriter scenarioWriter = new ScenarioWriter(config, scenario, prefix);
