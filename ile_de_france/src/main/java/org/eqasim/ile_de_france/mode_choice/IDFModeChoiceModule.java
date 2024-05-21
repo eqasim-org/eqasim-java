@@ -2,11 +2,15 @@ package org.eqasim.ile_de_france.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.ile_de_france.mode_choice.constraints.InitialWaitingTimeConstraint;
 import org.eqasim.ile_de_france.mode_choice.constraints.SameLocationWalkConstraint;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
@@ -15,6 +19,7 @@ import org.eqasim.ile_de_france.mode_choice.costs.NantesPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarPTUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPassengerUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
@@ -24,6 +29,7 @@ import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredi
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
@@ -38,6 +44,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	public static final String CAR_ESTIMATOR_NAME = "IDFCarUtilityEstimator";
 	public static final String PT_ESTIMATOR_NAME = "IDFPtUtilityEstimator";
 	public static final String BIKE_ESTIMATOR_NAME = "IDFBikeUtilityEstimator";
+	public static final String CAR_PT_ESTIMATOR_NAME = "IDFCarPTUtilityEstimator";
 	public static final String PASSENGER_ESTIMATOR_NAME = "IDFPassengerUtilityEstimator";
 
 	public static final String INITIAL_WAITING_TIME_CONSTRAINT = "InitialWaitingTimeConstraint";
@@ -59,6 +66,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(IDFCarUtilityEstimator.class);
 		bindUtilityEstimator(PT_ESTIMATOR_NAME).to(IDFPtUtilityEstimator.class);
 		bindUtilityEstimator(PASSENGER_ESTIMATOR_NAME).to(IDFPassengerUtilityEstimator.class);
+		bindUtilityEstimator(CAR_PT_ESTIMATOR_NAME).to(IDFCarPTUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(IDFBikeUtilityEstimator.class);
 		bind(IDFSpatialPredictor.class);
 
@@ -80,6 +88,22 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 			throw new IllegalStateException();
 		}
 	}
+
+	@Provides
+	@Singleton
+	public IDFCarPTUtilityEstimator provideIDFCarPTUtilityEstimator(ModeParameters parameters, CarPredictor predictor, EqasimConfigGroup eqasimConfigGroup, Map<String, Provider<UtilityEstimator>> utilityEstimatorProviders) {
+		UtilityEstimator carEstimator = utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get("car")).get();
+		UtilityEstimator ptEstimator = utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get("pt")).get();
+
+		return new IDFCarPTUtilityEstimator(parameters, predictor, carEstimator, ptEstimator);
+	}
+
+	// @Provides
+    // public DefaultFeederDrtUtilityEstimator provideDefaultFeederDrtUtilityEstimator(EqasimConfigGroup eqasimConfigGroup, MultiModeFeederDrtConfigGroup multiModeFeederDrtConfigGroup, Map<String, Provider<UtilityEstimator>> utilityEstimatorProviders) {
+    //     Map<String, UtilityEstimator> ptEstimators = multiModeFeederDrtConfigGroup.getModalElements().stream().collect(Collectors.toMap(cfg -> cfg.mode, cfg -> utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get(cfg.ptModeName)).get()));
+    //     Map<String, UtilityEstimator> drtEstimators = multiModeFeederDrtConfigGroup.getModalElements().stream().collect(Collectors.toMap(cfg -> cfg.mode, cfg -> utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get(cfg.accessEgressModeName)).get()));
+    //     return new DefaultFeederDrtUtilityEstimator(ptEstimators, drtEstimators);
+    // }
 
 	@Provides
 	@Singleton

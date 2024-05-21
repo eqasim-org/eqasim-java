@@ -1,4 +1,4 @@
-package org.eqasim.core.scenario.routing;
+package org.eqasim.ile_de_france.tools.routing;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
+import org.eqasim.core.scenario.routing.PopulationRouter;
+import org.eqasim.core.scenario.routing.PopulationRouterModule;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Id;
@@ -31,7 +33,7 @@ import org.matsim.vehicles.VehiclesFactory;
 
 import com.google.inject.Injector;
 
-public class RunPopulationRouting {
+public class RunRouting {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
@@ -71,10 +73,7 @@ public class RunPopulationRouting {
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
-				.addOverridingModule(new TimeInterpretationModule())
-				.addOverridingModule(new ParkingAvailabilityModule())
-				.addOverridingModule(new MyMultimodalLinkChooserModule()).build();
-
+				.addOverridingModule(new TimeInterpretationModule()).build();
 
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
 		populationRouter.run(scenario.getPopulation());
@@ -123,3 +122,4 @@ public class RunPopulationRouting {
 		}
 	}
 }
+

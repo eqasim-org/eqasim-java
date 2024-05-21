@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.math3.ml.neuralnet.Network;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
@@ -14,6 +15,9 @@ import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
+import org.eqasim.ile_de_france.policies.CarPTRouterModule;
+import org.eqasim.ile_de_france.policies.MyMultiModalLinkChooserModule;
+import org.eqasim.ile_de_france.policies.ParkingAvailabilityModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
@@ -104,6 +108,9 @@ public class RunSimulation {
 			eqasimConfig.setEstimator("car_passenger", "epsilon_" + IDFModeChoiceModule.PASSENGER_ESTIMATOR_NAME);
 		}
 
+		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+		eqasimConfig.setEstimator("car_pt", IDFModeChoiceModule.CAR_PT_ESTIMATOR_NAME);
+
 		if (useVdf) {
 			controller.addOverridingModule(new VDFModule());
 			controller.addOverridingQSimModule(new VDFQSimModule());
@@ -135,6 +142,10 @@ public class RunSimulation {
 
 		controller.addOverridingModule(new ParkingModule(3.0));
 		controller.addOverridingModule(new IDFRaptorModule(cmd));
+		controller.addOverridingModule(new MyMultiModalLinkChooserModule());
+		controller.addOverridingModule(new ParkingAvailabilityModule());
+		controller.addOverridingModule(new CarPTRouterModule());
+		
 
 		controller.run();
 	}

@@ -34,7 +34,7 @@ public class GenerateConfig {
 	protected final List<String> MODES = Arrays.asList("walk", "bike", "pt", "car", "car_passenger", "truck",
 			"outside");
 
-	private final List<String> NETWORK_MODES = Arrays.asList("car", "car_passenger", "truck");
+	private final List<String> NETWORK_MODES = Arrays.asList("car", "car_passenger", "truck", "outside");
 
 	private final CommandLine cmd;
 	private final String prefix;

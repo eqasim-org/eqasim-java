@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.scenario.routing.ParkingLinkChooser;
 import org.eqasim.core.simulation.mode_choice.constraints.EqasimVehicleTourConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.PassengerConstraint;
@@ -34,10 +35,12 @@ import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.Hom
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 import org.matsim.core.config.Config;
+import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.facilities.ActivityFacilities;
 
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -131,9 +134,9 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public EqasimVehicleTourConstraint.Factory provideEqasimVehicleTourConstraintFactory(
-			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
+			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder, MultimodalLinkChooser linkChooser) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
-		return new EqasimVehicleTourConstraint.Factory(config.getRestrictedModes(), homeFinder);
+		return new EqasimVehicleTourConstraint.Factory(config.getRestrictedModes(), homeFinder, linkChooser);
 	}
 
 	@Provides

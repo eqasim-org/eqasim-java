@@ -33,6 +33,7 @@ public class IDFModeAvailability implements ModeAvailability {
 
 		if (carAvailability) {
 			modes.add(TransportMode.car);
+			modes.add("car_pt");
 		}
 
 		// Check bike availability
