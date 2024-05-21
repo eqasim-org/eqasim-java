@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Identifiable;
+import org.matsim.api.core.v01.network.Link;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.io.File;
@@ -40,6 +41,16 @@ public class SuperBlock implements Identifiable<SuperBlock> {
         Point point = GEOMETRY_FACTORY.createPoint(coordinate);
         return this.polygon.contains(point);
     }
+
+    public boolean intersectsWithLink(Link link) {
+        return this.containsCoord(link.getFromNode().getCoord()) || this.containsCoord(link.getToNode().getCoord());
+    }
+
+    public boolean isLinkAtFrontier(Link link) {
+        return this.containsCoord(link.getFromNode().getCoord()) ^ this.containsCoord(link.getToNode().getCoord());
+    }
+
+
 
     public static IdMap<SuperBlock, SuperBlock> readFromShapefile(String filePath) throws IOException {
         logger.info(String.format("Reading superblocks from %s", filePath));

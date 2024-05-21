@@ -24,7 +24,8 @@ public class SuperBlocksModule extends AbstractEqasimExtension {
     protected void installEqasimExtension() {
         addTravelDisutilityFactoryBinding("car").to(SuperBlocksTravelDisutility.Factory.class);
         bind(SuperBlockPermission.class).to(ActivityTypeBasedSuperBlockPermission.class);
-        addEventHandlerBinding().to(SuperblockViolationHandler.class);
+        addEventHandlerBinding().to(SuperblockViolationHandler.class).asEagerSingleton();
+        addControlerListenerBinding().to(SuperblockViolationHandler.class).asEagerSingleton();
         install(new PopulationRouterModule(getConfig().global().getNumberOfThreads(), 100, true, Set.of("car")));
         addControlerListenerBinding().to(SuperblockStartupListener.class);
     }

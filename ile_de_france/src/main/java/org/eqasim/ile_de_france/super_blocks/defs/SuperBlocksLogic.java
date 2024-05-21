@@ -16,6 +16,8 @@ import java.util.List;
 public class SuperBlocksLogic {
     private final IdMap<Person, IdSet<SuperBlock>> superBlocksByPerson = new IdMap<>(Person.class);
     private final IdMap<Link, Id<SuperBlock>> superBlockByLink = new IdMap<>(Link.class);
+    private final IdMap<Link, IdSet<SuperBlock>> borderingSuperBlockByLink = new IdMap<>(Link.class);
+
     public SuperBlocksLogic(String filePath, Population population, Network network, SuperBlockPermission superBlockPermission) throws IOException {
         IdMap<SuperBlock, SuperBlock> superBlocks = SuperBlock.readFromShapefile(filePath);
         for(Person person: population.getPersons().values()) {
@@ -34,7 +36,7 @@ public class SuperBlocksLogic {
             }
             List<Id<SuperBlock>> superBlockIdList = new ArrayList<>();
             superBlocks.values().stream()
-                    .filter(superBlock -> superBlock.containsCoord(link.getFromNode().getCoord()) || superBlock.containsCoord(link.getToNode().getCoord()))
+                    .filter(superBlock -> superBlock.intersectsWithLink(link))
                     .map(SuperBlock::getId)
                     .forEach(superBlockIdList::add);
             if(superBlockIdList.size() > 1) {
@@ -42,6 +44,15 @@ public class SuperBlocksLogic {
             }
             if(superBlockIdList.size() > 0) {
                 superBlockByLink.put(link.getId(), superBlockIdList.get(0));
+            }
+
+            IdSet<SuperBlock> borderingSuperblocksIdSet = new IdSet<>(SuperBlock.class);
+            superBlocks.values().stream()
+                    .filter(superBlock -> superBlock.isLinkAtFrontier(link))
+                    .map(SuperBlock::getId)
+                    .forEach(borderingSuperblocksIdSet::add);
+            if(borderingSuperblocksIdSet.size() > 0) {
+                borderingSuperBlockByLink.put(link.getId(), borderingSuperblocksIdSet);
             }
         }
     }
@@ -52,5 +63,9 @@ public class SuperBlocksLogic {
 
     public IdMap<Link, Id<SuperBlock>> getSuperBlockByLink() {
         return superBlockByLink;
+    }
+
+    public IdMap<Link, IdSet<SuperBlock>> getBorderingSuperBlockByLink() {
+        return borderingSuperBlockByLink;
     }
 }
