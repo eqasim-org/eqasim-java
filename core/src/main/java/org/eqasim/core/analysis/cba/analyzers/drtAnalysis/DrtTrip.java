@@ -51,6 +51,7 @@ final class DrtTrip {
 	final String afterActivityType;
 	final double accessTime;
 	final double egressTime;
+	final String mainMode;
 
 	DrtTrip(DrtAnalyzer.PerformedRequestEventSequence sequence, Function<Id<Link>, ? extends Link> linkProvider, DrtConfigGroup.OperationalScheme scheme) {
 		Preconditions.checkArgument(sequence.isCompleted());
@@ -80,5 +81,6 @@ final class DrtTrip {
 			this.accessTime = submittedEvent.getTime() - sequence.getBeforeActivity().getTime();
 			this.egressTime = sequence.getAfterActivity().getTime() - sequence.getDroppedOff().get().getTime();
 		}
+		this.mainMode = sequence.getMainMode();
 	}
 }

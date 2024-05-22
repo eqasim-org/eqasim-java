@@ -28,6 +28,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.eqasim.core.analysis.cba.analyzers.CbaAnalyzer;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.events.*;
 import org.matsim.api.core.v01.events.handler.*;
 import org.matsim.api.core.v01.network.Network;
@@ -55,20 +56,21 @@ import static java.util.stream.Collectors.toList;
 
 public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, PassengerRequestScheduledEventHandler,
         DrtRequestSubmittedEventHandler, PassengerPickedUpEventHandler, PassengerDroppedOffEventHandler, PersonMoneyEventHandler, LinkLeaveEventHandler,
-        ActivityStartEventHandler, ActivityEndEventHandler, PersonScoreEventHandler, MobsimScopeEventHandler, CbaAnalyzer {
+        ActivityStartEventHandler, ActivityEndEventHandler, PersonScoreEventHandler, PersonDepartureEventHandler, MobsimScopeEventHandler, CbaAnalyzer {
 
-    private static final String[] TRIPS_HEADERS = new String[]{"departureTime", "personId", "vehicleId", "fromLinkId", "fromX", "fromY", "tiLinkId", "toX", "toY", "waitTime", "arrivalTime", "travelTime", "unsharedDistance", "traveledDistance" ,"fare", "motive", "accessTime", "egressTime"};
+    private static final String[] TRIPS_HEADERS = new String[]{"departureTime", "personId", "vehicleId", "fromLinkId", "fromX", "fromY", "tiLinkId", "toX", "toY", "waitTime", "arrivalTime", "travelTime", "unsharedDistance", "traveledDistance" ,"fare", "motive", "accessTime", "egressTime", "mainMode"};
     private static final String[] VEHICLES_HEADERS = new String[]{"vehicleId", "distance"};
 
     private final String mode;
     private final Network network;
     private final Fleet fleet;
-    private final Map<Id<Vehicle>, Double> vehiclesDistances = new HashMap<>();
-    private final Map<Id<Request>, DrtRequestSubmittedEvent> requestSubmissions = new HashMap<>();
-    private final Map<Id<Request>, RejectedRequestEventSequence> rejectedRequestSequences = new HashMap<>();
-    private final Map<Id<Request>, PerformedRequestEventSequence> performedRequestSequences = new HashMap<>();
-    private final Map<Id<Person>, Id<Request>> personsRequests = new HashMap<>();
-    private final Map<Id<Person>, ActivityEndEvent> personsLastFinishedActivity = new HashMap<>();
+    private final IdMap<Vehicle, Double> vehiclesDistances = new IdMap<>(Vehicle.class);
+    private final IdMap<Request, DrtRequestSubmittedEvent> requestSubmissions = new IdMap<>(Request.class);
+    private final IdMap<Request, RejectedRequestEventSequence> rejectedRequestSequences = new IdMap<>(Request.class);
+    private final IdMap<Request, PerformedRequestEventSequence> performedRequestSequences = new IdMap<>(Request.class);
+    private final IdMap<Person, Id<Request>> personsRequests = new IdMap<>(Person.class);
+    private final IdMap<Person, ActivityEndEvent> personsLastFinishedActivity = new IdMap<>(Person.class);
+    private final IdMap<Person, PersonDepartureEvent> lastDeparturePerPerson = new IdMap<>(Person.class);
     private final DrtConfigGroup.OperationalScheme scheme;
     private final DrtAnalyzerConfigGroup configGroup;
     private final String[] sheetsNames;
@@ -149,7 +151,7 @@ public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, Passen
         if (event.getMode().equals(mode)) {
             this.personsRequests.put(event.getPersonId(), event.getRequestId());
             performedRequestSequences.put(event.getRequestId(),
-                    new PerformedRequestEventSequence(requestSubmissions.get(event.getRequestId()), event, this.personsLastFinishedActivity.get(event.getPersonId())));
+                    new PerformedRequestEventSequence(requestSubmissions.get(event.getRequestId()), event, this.personsLastFinishedActivity.get(event.getPersonId()), this.lastDeparturePerPerson.get(event.getPersonId()).getRoutingMode()));
         }
     }
 
@@ -176,7 +178,7 @@ public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, Passen
         if (event.getMode().equals(mode)) {
             PerformedRequestEventSequence sequence = this.performedRequestSequences.get(event.getRequestId());
             sequence.droppedOff = event;
-            Id<DvrpVehicle> id = Id.create(event.getVehicleId(), DvrpVehicle.class);
+            Id<Vehicle> id = Id.createVehicleId(event.getVehicleId());
             sequence.distance = this.vehiclesDistances.get(id) - sequence.getDistance();
         }
     }
@@ -261,6 +263,8 @@ public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, Passen
             cell.setCellValue(trips.get(i).accessTime);
             cell = row.createCell(17);
             cell.setCellValue(trips.get(i).egressTime);
+            cell = row.createCell(18);
+            cell.setCellValue(trips.get(i).mainMode);
         }
     }
 
@@ -282,6 +286,11 @@ public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, Passen
         }
     }
 
+    @Override
+    public void handleEvent(PersonDepartureEvent event) {
+        this.lastDeparturePerPerson.put(event.getPersonId(), event);
+    }
+
     public static class PerformedRequestEventSequence {
         private final DrtRequestSubmittedEvent submitted;
         private final PassengerRequestScheduledEvent scheduled;
@@ -296,21 +305,23 @@ public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, Passen
 
         private ActivityEndEvent beforeActivity;
         private ActivityStartEvent afterActivity;
+        private final String mainMode;
 
         public PerformedRequestEventSequence(DrtRequestSubmittedEvent submitted,
-                                             PassengerRequestScheduledEvent scheduled) {
-            this(submitted, scheduled, null, null, null, null);
+                                             PassengerRequestScheduledEvent scheduled, String mainMode) {
+            this(submitted, scheduled, null, null, null, null, mainMode);
         }
 
         public PerformedRequestEventSequence(DrtRequestSubmittedEvent submitted,
-                                             PassengerRequestScheduledEvent scheduled, ActivityEndEvent beforeActivity) {
-            this(submitted, scheduled, null, null, beforeActivity, null);
+                                             PassengerRequestScheduledEvent scheduled, ActivityEndEvent beforeActivity, String mainMode) {
+            this(submitted, scheduled, null, null, beforeActivity, null, mainMode);
         }
 
         public PerformedRequestEventSequence(DrtRequestSubmittedEvent submitted,
                                              PassengerRequestScheduledEvent scheduled, PassengerPickedUpEvent pickedUp,
                                              PassengerDroppedOffEvent droppedOff, ActivityEndEvent beforeActivity,
-                                             ActivityStartEvent afterActivity) {
+                                             ActivityStartEvent afterActivity,
+                                             String mainMode) {
             this.submitted = Objects.requireNonNull(submitted);
             this.scheduled = Objects.requireNonNull(scheduled);
             this.pickedUp = pickedUp;
@@ -318,6 +329,7 @@ public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, Passen
             this.distance = 0;
             this.beforeActivity = beforeActivity;
             this.afterActivity = afterActivity;
+            this.mainMode = mainMode;
         }
 
         public DrtRequestSubmittedEvent getSubmitted() {
@@ -354,6 +366,10 @@ public class DrtAnalyzer implements PassengerRequestRejectedEventHandler, Passen
 
         public boolean isCompleted() {
             return droppedOff != null;
+        }
+
+        public String getMainMode() {
+            return this.mainMode;
         }
     }
 
