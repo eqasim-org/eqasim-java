@@ -12,6 +12,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
+import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.MatsimVehicleWriter;
 import org.matsim.vehicles.Vehicle;
@@ -22,12 +23,13 @@ import org.matsim.vehicles.VehiclesFactory;
 public class RunInsertVehicles {
 	static public void main(String[] args) throws UncheckedIOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "population-path", "output-path") //
+				.requireOptions("config-path", "input-population-path", "output-vehicles-path",
+						"output-population-path") //
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		new PopulationReader(scenario).readFile(cmd.getOptionStrict("population-path"));
+		new PopulationReader(scenario).readFile(cmd.getOptionStrict("input-population-path"));
 
 		Vehicles vehicles = scenario.getVehicles();
 		VehiclesFactory factory = vehicles.getFactory();
@@ -48,6 +50,7 @@ public class RunInsertVehicles {
 			VehicleUtils.insertVehicleIdsIntoAttributes(person, personVehicles);
 		}
 
-		new MatsimVehicleWriter(vehicles).writeFile(cmd.getOptionStrict("output-path"));
+		new MatsimVehicleWriter(vehicles).writeFile(cmd.getOptionStrict("output-vehicles-path"));
+		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-population-path"));
 	}
 }
