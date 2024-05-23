@@ -37,7 +37,7 @@ public class IDFFeederDrtCostModel extends AbstractCostModel {
         if(elements.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).map(Leg::getRoutingMode).anyMatch(this.feederDrtModes::contains)) {
             return this.costParameters.feederDrtCost_EUR_access + this.costParameters.feederDrtCost_EUR_km * distance;
         } else {
-            return this.costParameters.drtCost_EUR_access + this.costParameters.feederDrtCost_EUR_km * distance;
+            return this.costParameters.feederDrtCost_EUR_km + this.costParameters.feederDrtCost_EUR_km * distance;
         }
      }
 }
