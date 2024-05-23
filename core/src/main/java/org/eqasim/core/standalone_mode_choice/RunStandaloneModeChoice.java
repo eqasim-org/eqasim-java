@@ -187,8 +187,6 @@ public class RunStandaloneModeChoice {
             scenarioValidator.checkScenario(scenario);
         }
         configurator.adjustScenario(scenario);
-        //The line below has to be done here right after scenario loading and not in the StandaloneModeChoicePerformer
-        RunPopulationRouting.insertVehicles(config, scenario);
 
         StandaloneModeChoiceConfigurator standaloneModeChoiceConfigurator = cmd.hasOption(MODE_CHOICE_CONFIGURATOR_CLASS) ? StandaloneModeChoiceConfigurator.getSubclassInstance(cmd.getOptionStrict(MODE_CHOICE_CONFIGURATOR_CLASS), config, cmd) : new StandaloneModeChoiceConfigurator(config, cmd);
 
