@@ -95,7 +95,7 @@ public class RunFleetSizing {
                 .allowOptions("config-options-separator")
                 .allowOptions("drt-mode")
                 .requireOptions("max-fleet-size", "min-fleet-size", "fleet-size-step")
-                .allowOptions("one-full-simulation-per-fleet-size")
+                .allowOptions("one-full-simulation-per-option-value")
                 .allowPrefixes("mode-choice-parameter", "cost-parameter")
                 .build();
 
@@ -110,7 +110,7 @@ public class RunFleetSizing {
         int minFleetSize = Integer.parseInt(commandLine.getOptionStrict("min-fleet-size"));
         int fleetSizeStep = Integer.parseInt(commandLine.getOptionStrict("fleet-size-step"));
 
-        boolean oneFullSimulationPerFleetSize = Boolean.parseBoolean(commandLine.getOption("one-full-simulation-per-fleet-size").orElse("false"));
+        boolean oneFullSimulationPerFleetSize = Boolean.parseBoolean(commandLine.getOption("one-full-simulation-per-option-value").orElse("false"));
 
 
         Map<String, Object> summary = new HashMap<>();
