@@ -14,6 +14,7 @@ import org.eqasim.ile_de_france.analysis.counts.CountsModule;
 import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
+import org.eqasim.ile_de_france.super_blocks.SuperBlocksModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
 import org.eqasim.ile_de_france.policies.CarPTRouterModule;
 import org.eqasim.ile_de_france.policies.MyMultiModalLinkChooserModule;
@@ -83,6 +84,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
+		controller.addOverridingModule(new SuperBlocksModule());
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new DelayAnalysisModule());
 
