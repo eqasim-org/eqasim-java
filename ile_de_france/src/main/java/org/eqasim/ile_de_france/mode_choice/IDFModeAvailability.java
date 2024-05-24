@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPredictorUtils;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
-import org.matsim.core.population.PersonUtils;
 
 public class IDFModeAvailability implements ModeAvailability {
 	@Override
@@ -18,11 +18,12 @@ public class IDFModeAvailability implements ModeAvailability {
 		// Modes that are always available
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
+		modes.add("car_passenger");
 
 		// Check car availability
 		boolean carAvailability = true;
 
-		if ("no".equals(PersonUtils.getLicense(person))) {
+		if (!IDFPredictorUtils.hasDrivingPermit(person)) {
 			carAvailability = false;
 		}
 
@@ -50,13 +51,6 @@ public class IDFModeAvailability implements ModeAvailability {
 
 		if (isOutside != null && isOutside) {
 			modes.add("outside");
-		}
-
-		// Add special mode "car_passenger" if applicable
-		Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-
-		if (isCarPassenger != null && isCarPassenger) {
-			modes.add("car_passenger");
 		}
 
 		return modes;
