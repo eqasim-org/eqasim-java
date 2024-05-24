@@ -1,8 +1,9 @@
-package org.eqasim.ile_de_france.emissions;
+package org.eqasim.core.components.emissions;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eqasim.ile_de_france.IDFConfigurator;
+import org.eqasim.core.misc.ClassUtils;
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -28,10 +29,17 @@ public class RunComputeEmissionsEvents {
 
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "hbefa-cold-avg", "hbefa-hot-avg") //
-                .allowOptions("hbefa-cold-detailed", "hbefa-hot-detailed")
+                .allowOptions("hbefa-cold-detailed", "hbefa-hot-detailed", "configurator-class")
                 .build();
+        
+        EqasimConfigurator configurator;
+        if(cmd.hasOption("configurator-class")) {
+            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
+        } else {
+            configurator = new EqasimConfigurator();
+        }
 
-        ConfigGroup[] configGroups = ArrayUtils.addAll(new IDFConfigurator().getConfigGroups(), new EmissionsConfigGroup());
+        ConfigGroup[] configGroups = ArrayUtils.addAll(configurator.getConfigGroups(), new EmissionsConfigGroup());
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
@@ -91,7 +99,7 @@ public class RunComputeEmissionsEvents {
         com.google.inject.Injector injector = Injector.createInjector(config, module );
         EmissionModule emissionModule = injector.getInstance(EmissionModule.class);
 
-        final String outputDirectory = scenario.getConfig().controler().getOutputDirectory() + "/";
+        final String outputDirectory = scenario.getConfig().controller().getOutputDirectory() + "/";
         EventWriterXML emissionEventWriter = new EventWriterXML( outputDirectory + "output_emissions_events.xml.gz" ) ;
         emissionModule.getEmissionEventsManager().addHandler(emissionEventWriter);
 

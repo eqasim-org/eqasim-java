@@ -1,7 +1,8 @@
-package org.eqasim.ile_de_france.emissions;
+package org.eqasim.core.components.emissions;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.eqasim.ile_de_france.IDFConfigurator;
+import org.eqasim.core.misc.ClassUtils;
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.analysis.EmissionGridAnalyzer;
@@ -21,14 +22,21 @@ public class RunComputeEmissionsGrid {
 
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "domain-shp-path") //
-                .allowOptions("scale-factor", "grid-size", "smooth-radius", "time-bin-size")
+                .allowOptions("scale-factor", "grid-size", "smooth-radius", "time-bin-size", "configurator-class")
                 .build();
+        
+        EqasimConfigurator configurator;
+        if(cmd.hasOption("configurator-class")) {
+            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
+        } else {
+            configurator = new EqasimConfigurator();
+        }
 
-        ConfigGroup[] configGroups = ArrayUtils.addAll(new IDFConfigurator().getConfigGroups(), new EmissionsConfigGroup());
+        ConfigGroup[] configGroups = ArrayUtils.addAll(configurator.getConfigGroups(), new EmissionsConfigGroup());
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
-        final String outputDirectory = config.controler().getOutputDirectory() + "/";
+        final String outputDirectory = config.controller().getOutputDirectory() + "/";
 
         Network network = NetworkUtils.createNetwork();
         new MatsimNetworkReader(network).readFile(outputDirectory + "output_network.xml.gz");

@@ -5,11 +5,9 @@ import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
 import org.matsim.core.mobsim.qsim.qnetsimengine.linkspeedcalculator.LinkSpeedCalculator;
 
 public class EqasimLinkSpeedCalculator implements LinkSpeedCalculator {
-	final private LinkSpeedCalculator delegate;
 	final private double crossingPenalty;
 
-	public EqasimLinkSpeedCalculator(LinkSpeedCalculator delegate, double crossingPenalty) {
-		this.delegate = delegate;
+	public EqasimLinkSpeedCalculator(double crossingPenalty) {
 		this.crossingPenalty = crossingPenalty;
 	}
 
@@ -23,10 +21,12 @@ public class EqasimLinkSpeedCalculator implements LinkSpeedCalculator {
 			}
 		}
 
+		double maximumVelocity = Math.min(vehicle.getMaximumVelocity(), link.getFreespeed(time));
+
 		if (isMajor || link.getToNode().getInLinks().size() == 1) {
-			return delegate.getMaximumVelocity(vehicle, link, time);
+			return maximumVelocity;
 		} else {
-			double travelTime =  link.getLength() / delegate.getMaximumVelocity(vehicle, link, time);
+			double travelTime = link.getLength() / maximumVelocity;
 			travelTime += crossingPenalty;
 			return link.getLength() / travelTime;
 		}

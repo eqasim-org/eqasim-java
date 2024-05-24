@@ -1,7 +1,14 @@
-package org.eqasim.ile_de_france.emissions;
+package org.eqasim.core.components.emissions;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.eqasim.ile_de_france.IDFConfigurator;
+import org.eqasim.core.misc.ClassUtils;
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.locationtech.jts.geom.Coordinate;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -25,8 +32,6 @@ import org.matsim.core.utils.gis.PolylineFeatureFactory;
 import org.matsim.core.utils.gis.ShapeFileWriter;
 import org.opengis.feature.simple.SimpleFeature;
 
-import java.util.*;
-
 public class RunExportEmissionsNetwork {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
@@ -34,14 +39,21 @@ public class RunExportEmissionsNetwork {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path") //
                 .allowOptions("time-bin-size")
-                .allowOptions("pollutants")
+                .allowOptions("pollutants", "configurator-class")
                 .build();
 
-        ConfigGroup[] configGroups = ArrayUtils.addAll(new IDFConfigurator().getConfigGroups(), new EmissionsConfigGroup());
+        EqasimConfigurator configurator;
+        if(cmd.hasOption("configurator-class")) {
+            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
+        } else {
+            configurator = new EqasimConfigurator();
+        }
+        
+        ConfigGroup[] configGroups = ArrayUtils.addAll(configurator.getConfigGroups(), new EmissionsConfigGroup());
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
         cmd.applyConfiguration(config);
-        final String outputDirectory = config.controler().getOutputDirectory() + "/";
+        final String outputDirectory = config.controller().getOutputDirectory() + "/";
 
         int timeBinSize = Integer.parseInt(cmd.getOption("time-bin-size").orElse("3600"));
 
