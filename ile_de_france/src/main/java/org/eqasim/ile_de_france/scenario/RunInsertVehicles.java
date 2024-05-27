@@ -28,7 +28,7 @@ public class RunInsertVehicles {
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
-		Scenario scenario = ScenarioUtils.createScenario(config);
+		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 		new PopulationReader(scenario).readFile(cmd.getOptionStrict("input-population-path"));
 
 		Vehicles vehicles = scenario.getVehicles();

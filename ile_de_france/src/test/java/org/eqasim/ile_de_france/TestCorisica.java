@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
+import org.eqasim.ile_de_france.scenario.RunInsertVehicles;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -76,9 +77,17 @@ public class TestCorisica {
 
 		// Cut the scenario based on output plans
 		{
+			RunInsertVehicles.main(new String[] { //
+					"--config-path", "corsica_test/corsica_config.xml", //
+					"--input-population-path", "corsica_test/simulation_output/output_plans.xml.gz", //
+					"--output-population-path", "corsica_test/simulation_output/corsica_population_with_vehicles.xml.gz", //
+					"--output-vehicles-path", "corsica_test/simulation_output/corsica_vehicles.xml.gz", //
+			});
+			
 			RunScenarioCutter.main(new String[] { //
 					"--config-path", "corsica_test/corsica_config.xml", //
-					"--config:plans.inputPlansFile", "simulation_output/output_plans.xml.gz", //
+					"--config:plans.inputPlansFile", "simulation_output/corsica_population_with_vehicles.xml.gz", //
+					"--config:vehicles.vehiclesFile", "simulation_output/corsica_vehicles.xml.gz", //
 					"--extent-path", "corsica_test/extent.shp", //
 					"--threads", "4", //
 					"--prefix", "cut_", //
@@ -89,7 +98,7 @@ public class TestCorisica {
 		}
 
 		// Run the cut simulation
-		{
+		{			
 			RunSimulation.main(new String[] { //
 					"--config-path", "corsica_test/cut_config.xml", //
 					"--config:controler.lastIteration", "2", // ,

@@ -16,6 +16,7 @@ import org.eqasim.core.scenario.cutter.network.NetworkCutter;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.scenario.cutter.outside.OutsideActivityAdapter;
 import org.eqasim.core.scenario.cutter.population.CleanHouseholds;
+import org.eqasim.core.scenario.cutter.population.CleanVehicles;
 import org.eqasim.core.scenario.cutter.population.PopulationCutter;
 import org.eqasim.core.scenario.cutter.population.PopulationCutterModule;
 import org.eqasim.core.scenario.cutter.population.RemoveEmptyPlans;
@@ -122,6 +123,10 @@ public class RunScenarioCutter {
 		// ... and make households consistent
 		CleanHouseholds cleanHouseholds = new CleanHouseholds(scenario.getPopulation());
 		cleanHouseholds.run(scenario.getHouseholds());
+		
+		// .. and make vehicles consistent
+		CleanVehicles cleanVehicles = new CleanVehicles(scenario.getPopulation());
+		cleanVehicles.run(scenario.getVehicles());
 
 		// Cut transit
 		StopSequenceCrossingPointFinder stopSequenceCrossingPointFinder = new DefaultStopSequenceCrossingPointFinder(
