@@ -2,6 +2,7 @@ package org.eqasim.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -12,11 +13,15 @@ import org.eqasim.server.services.ServiceConfiguration;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneService;
 import org.eqasim.server.services.router.road.RoadRouterService;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.NetworkCleaner;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
 
@@ -66,12 +71,16 @@ public class RunServer {
 
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
 
-		RoadRouterService roadRouterService = RoadRouterService.create(config, scenario.getNetwork(),
-				configuration.walk, threads);
+		Network roadNetwork = NetworkUtils.createNetwork();
+		new TransportModeNetworkFilter(scenario.getNetwork()).filter(roadNetwork, Collections.singleton("car"));
+		new NetworkCleaner().run(roadNetwork);
+
+		RoadRouterService roadRouterService = RoadRouterService.create(config, roadNetwork, configuration.walk,
+				threads);
 		RoadRouterEndpoint roadRouterEndpoint = new RoadRouterEndpoint(executor, roadRouterService);
 		app.post("/router/road", roadRouterEndpoint::post);
 
-		RoadIsochroneService roadIsochroneService = RoadIsochroneService.create(config, scenario.getNetwork(),
+		RoadIsochroneService roadIsochroneService = RoadIsochroneService.create(config, roadNetwork,
 				configuration.walk);
 		RoadIsochroneEndpoint roadIsochroneEndpoint = new RoadIsochroneEndpoint(executor, roadIsochroneService);
 		app.post("/isochrone/road", roadIsochroneEndpoint::post);

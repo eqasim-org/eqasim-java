@@ -51,9 +51,7 @@ public class ModifiedFreeSpeedTravelTime {
 		IdMap<Link, LinkRecord> links = new IdMap<>(Link.class);
 
 		for (Link link : network.getLinks().values()) {
-			if (link.getAllowedModes().contains("car")) {
-				links.put(link.getId(), new LinkRecord(decideLinkType(link), decideCrossingType(link)));
-			}
+			links.put(link.getId(), new LinkRecord(decideLinkType(link), decideCrossingType(link)));
 		}
 
 		return new ModifiedFreeSpeedTravelTime(links);
