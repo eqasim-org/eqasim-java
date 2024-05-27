@@ -42,18 +42,18 @@ public class IDFCarPTUtilityEstimator extends CarUtilityEstimator{
         final String direction = trip.getTripAttributes().getAttribute("car_pt").toString();
 
         if (direction == "ACCESS"){
-            int ptInteractionIndex = -1;
+            int carPtInteractionIndex = -1;
             for (int i = 0; i < elements.size(); i++){
                 PlanElement element = elements.get(i);
-                if (element instanceof Activity && ((Activity) element).getType().equals("pt interaction")){
-                    ptInteractionIndex = i;
+                if (element instanceof Activity && ((Activity) element).getType().equals("car-pt interaction")){
+                    carPtInteractionIndex = i;
                     break;
                 }
             }
     
-            if (ptInteractionIndex != -1){
-                List<? extends PlanElement> carElements = elements.subList(0, ptInteractionIndex);
-                List<? extends PlanElement> ptElements = elements.subList(ptInteractionIndex, elements.size());
+            if (carPtInteractionIndex != -1){
+                List<? extends PlanElement> carElements = elements.subList(0, carPtInteractionIndex);
+                List<? extends PlanElement> ptElements = elements.subList(carPtInteractionIndex + 1, elements.size());
     
                 utility += carUtilityEstimator.estimateUtility(person, trip, carElements);
                 utility += ptUtilityEstimator.estimateUtility(person, trip, ptElements);
@@ -64,18 +64,18 @@ public class IDFCarPTUtilityEstimator extends CarUtilityEstimator{
 
         }
         else if (direction == "EGRESS"){
-            int carInteractionIndex = -1;
+            int carPtInteractionIndex = -1;
             for (int i = 0; i < elements.size(); i++){
                 PlanElement element = elements.get(i);
-                if (element instanceof Activity && ((Activity) element).getType().equals("car interaction")){
-                    carInteractionIndex = i;
+                if (element instanceof Activity && ((Activity) element).getType().equals("car-pt interaction")){
+                    carPtInteractionIndex = i;
                     break;
                 }
             }
 
-            if (carInteractionIndex != -1){
-                List<? extends PlanElement> ptElements = elements.subList(0, carInteractionIndex);
-                List<? extends PlanElement> carElements = elements.subList(carInteractionIndex, elements.size());
+            if (carPtInteractionIndex != -1){
+                List<? extends PlanElement> ptElements = elements.subList(0, carPtInteractionIndex);
+                List<? extends PlanElement> carElements = elements.subList(carPtInteractionIndex + 1, elements.size());
 
                 utility += ptUtilityEstimator.estimateUtility(person, trip, ptElements);
                 utility += carUtilityEstimator.estimateUtility(person, trip, carElements);

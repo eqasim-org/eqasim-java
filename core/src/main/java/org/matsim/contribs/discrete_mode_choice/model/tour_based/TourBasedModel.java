@@ -90,6 +90,9 @@ public class TourBasedModel implements DiscreteModeChoiceModel {
 						continue;
 					}
 
+					if (tourModes.contains("car_pt")){
+						System.out.println("car_pt");
+					}
 					TourCandidate candidate = estimator.estimateTour(person, tourModes, tourTrips, tourCandidates);
 
 					if (!Double.isFinite(candidate.getUtility())) {

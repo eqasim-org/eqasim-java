@@ -58,4 +58,17 @@ public class ParkingLinkChooser implements MultimodalLinkChooser{
 
         return accessActLink;
     }
+
+    public Link decideOnLink(Facility facility, Person person){
+        Link accessActLink = null;
+
+        if(facility.getCoord()==null ) {
+                throw new RuntimeException("link for facility cannot be determined when neither facility link id nor facility coordinate given") ;
+        }
+
+        accessActLink = parkingAssignment.getNearestParkingLinkforPerson(person, facility.getCoord());
+        Gbl.assertNotNull(accessActLink);
+
+        return accessActLink;
+    }
 }

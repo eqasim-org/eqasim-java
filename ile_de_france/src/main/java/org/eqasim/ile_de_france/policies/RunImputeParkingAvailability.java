@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france.policies;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -30,16 +32,16 @@ public class RunImputeParkingAvailability {
 
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("no-parking-path", "network-path", "output-path") //
+				.requireOptions("no-parking-shp", "network-path", "output-path") //
 				.build();
 
 		String networkPath = cmd.getOptionStrict("network-path");
 		String outputPath = cmd.getOptionStrict("output-path");
-		String noParking = cmd.getOptionStrict("no-parking-path");
+		String noParking = cmd.getOptionStrict("no-parking-shp");
 
         Network network = NetworkUtils.readNetwork(networkPath);
 
-        CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation("EPSG:2154", "EPSG:4326");
+       // CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation("EPSG:2154", "EPSG:4326");
 
 
         Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(noParking);
@@ -47,17 +49,17 @@ public class RunImputeParkingAvailability {
                     .map(simpleFeature -> (Geometry) simpleFeature.getDefaultGeometry())
                     .toList();
 
-        for (Link link : network.getLinks().values()) {
-
-            link.getAttributes().putAttribute(ATTRIBUTE, "true");
+        // for (Link link : network.getLinks().values()) {
+        for (Link link : Arrays.asList(network.getLinks().get(Id.createLinkId(471408)))) {
+            link.getAttributes().putAttribute(ATTRIBUTE, true);
 
             Coord coord = link.getCoord();
-            Coord transformedCoord = transformation.transform(coord);
-            Geometry geotoolsPoint = MGC.coord2Point(transformedCoord);
+            //Coord transformedCoord = transformation.transform(coord);
+            Geometry geotoolsPoint = MGC.coord2Point(coord);
 
             for (Geometry geometry : geometries) {
-                if (geometry.contains(geotoolsPoint)) {
-                    link.getAttributes().putAttribute(ATTRIBUTE, "false");
+                if (geometry.covers(geotoolsPoint)) {
+                    link.getAttributes().putAttribute(ATTRIBUTE, false);
                     break;
                 }
             }

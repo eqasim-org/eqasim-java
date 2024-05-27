@@ -46,6 +46,8 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
+
 public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String PASSENGER_CONSTRAINT_NAME = "PassengerConstraint";
 	public static final String OUTSIDE_CONSTRAINT_NAME = "OutsideConstraint";
@@ -134,9 +136,9 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public EqasimVehicleTourConstraint.Factory provideEqasimVehicleTourConstraintFactory(
-			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder, MultimodalLinkChooser linkChooser) {
+			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder, MultimodalLinkChooser linkChooser, SwissRailRaptor raptor) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
-		return new EqasimVehicleTourConstraint.Factory(config.getRestrictedModes(), homeFinder, linkChooser);
+		return new EqasimVehicleTourConstraint.Factory(config.getRestrictedModes(), homeFinder, linkChooser, raptor.getUnderlyingData());
 	}
 
 	@Provides

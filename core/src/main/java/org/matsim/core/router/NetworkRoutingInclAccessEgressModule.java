@@ -256,6 +256,7 @@
                                                                    final Link accessActLink, double departureTime,
                                                                    final PopulationFactory populationFactory, final String stageActivityType,
                                                                    Config config, Attributes routingAttributes) {
+
          if (isNotNeedingBushwhackingLeg(fromFacility)) {
              return Collections.emptyList();
          }

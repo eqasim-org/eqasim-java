@@ -7,6 +7,7 @@ import java.util.List;
 import org.eqasim.core.scenario.routing.ParkingLinkChooser;
 import org.matsim.api.core.v01.BasicLocation;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.components.utils.LocationUtils;
 import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
@@ -15,8 +16,12 @@ import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourCandidate;
 import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourConstraint;
 import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourConstraintFactory;
 import org.matsim.core.router.MultimodalLinkChooser;
+import org.matsim.facilities.FacilitiesUtils;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.google.inject.Inject;
+
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 
 /**
  * Attention. This constraint generalizes the existing vehicle tour constraint
@@ -47,12 +52,14 @@ public class EqasimVehicleTourConstraint implements TourConstraint {
 	private final Collection<String> restrictedModes;
 	private final Id<? extends BasicLocation> vehicleLocationId;
 	private final MultimodalLinkChooser linkChooser;
+	private final SwissRailRaptorData data;
 
 	public EqasimVehicleTourConstraint(Collection<String> restrictedModes,
-			Id<? extends BasicLocation> vehicleLocationId, MultimodalLinkChooser linkChooser) {
+			Id<? extends BasicLocation> vehicleLocationId, MultimodalLinkChooser linkChooser, SwissRailRaptorData data) {
 		this.restrictedModes = restrictedModes;
 		this.vehicleLocationId = vehicleLocationId;
 		this.linkChooser = linkChooser;
+		this.data = data;
 	}
 
 	private int getFirstIndex(String mode, List<String> modes) {
@@ -164,12 +171,30 @@ public class EqasimVehicleTourConstraint implements TourConstraint {
 						return false;
 					}
 					else if (modes.get(0).equals("car_pt")){
-						tour.get(0).getTripAttributes().putAttribute("car_pt", "ACCESS");
+						DiscreteModeChoiceTrip trip = tour.get(0);
+						trip.getTripAttributes().putAttribute("car_pt", "ACCESS");
+						TransitStopFacility stopFacility = data.findNearestStop(trip.getOriginActivity().getCoord().getX(), trip.getOriginActivity().getCoord().getY());
+						if (stopFacility == null){
+							return false;
+						}
+						else{
+							Link parkingLink = linkChooser.decideOnLink(stopFacility, null, person);
+							trip.getTripAttributes().putAttribute("parking", parkingLink);
+						}
 					}
 				}
 
 				if (startLocationId.equals(vehicleLocationId) && modes.get(0).equals("car_pt")){
-					tour.get(0).getTripAttributes().putAttribute("car_pt", "ACCESS");
+					DiscreteModeChoiceTrip trip = tour.get(0);
+					trip.getTripAttributes().putAttribute("car_pt", "ACCESS");
+						TransitStopFacility stopFacility = data.findNearestStop(trip.getOriginActivity().getCoord().getX(), trip.getOriginActivity().getCoord().getY());
+						if (stopFacility == null){
+							return false;
+						}
+						else{
+							Link parkingLink = linkChooser.decideOnLink(stopFacility, null, person);
+							trip.getTripAttributes().putAttribute("parking", parkingLink);
+						}
 				}
 
 				if (!endLocationId.equals(vehicleLocationId)) {
@@ -195,6 +220,8 @@ public class EqasimVehicleTourConstraint implements TourConstraint {
 						.getLocationId(tour.get(firstIndex).getDestinationActivity());
 
 				boolean foundAccess = true;
+				int lastAccessIndex = 0;
+
 				for (int index = firstIndex + 1; index <= lastIndex; index++) {
 					if (modes.get(index).equals(restrictedMode)) {
 						DiscreteModeChoiceTrip trip = tour.get(index);
@@ -209,11 +236,25 @@ public class EqasimVehicleTourConstraint implements TourConstraint {
 					if (modes.get(index).equals("car_pt")){
 						if (foundAccess){
 							tour.get(index).getTripAttributes().putAttribute("car_pt", "EGRESS");
+							Link parkingLink = (Link) tour.get(lastAccessIndex).getTripAttributes().getAttribute("parking");
+							tour.get(index).getTripAttributes().putAttribute("parking", parkingLink);
+
 							foundAccess = false;
 						}
 						else {
-							tour.get(index).getTripAttributes().putAttribute("car_pt", "ACCESS");
+							DiscreteModeChoiceTrip trip = tour.get(index);
+							trip.getTripAttributes().putAttribute("car_pt", "ACCESS");
+							TransitStopFacility stopFacility = data.findNearestStop(trip.getOriginActivity().getCoord().getX(), trip.getOriginActivity().getCoord().getY());
+							if (stopFacility == null){
+								return false;
+							}
+							else{
+								Link parkingLink = linkChooser.decideOnLink(stopFacility, null, person);
+								trip.getTripAttributes().putAttribute("parking", parkingLink);
+						}
+
 							foundAccess = true;
+							lastAccessIndex = index;
 						}
 					}
 				}
@@ -233,17 +274,19 @@ public class EqasimVehicleTourConstraint implements TourConstraint {
 		private final Collection<String> restrictedModes;
 		private final HomeFinder homeFinder;
 		private final MultimodalLinkChooser linkChooser;
+		private final SwissRailRaptorData data;
 
-		public Factory(Collection<String> restrictedModes, HomeFinder homeFinder, MultimodalLinkChooser linkChooser) {
+		public Factory(Collection<String> restrictedModes, HomeFinder homeFinder, MultimodalLinkChooser linkChooser, SwissRailRaptorData data) {
 			this.restrictedModes = restrictedModes;
 			this.homeFinder = homeFinder;
 			this.linkChooser = linkChooser;
+			this.data = data;
 		}
 
 		@Override
 		public TourConstraint createConstraint(Person person, List<DiscreteModeChoiceTrip> planTrips,
 				Collection<String> availableModes) {
-			return new EqasimVehicleTourConstraint(restrictedModes, homeFinder.getHomeLocationId(planTrips), linkChooser);
+			return new EqasimVehicleTourConstraint(restrictedModes, homeFinder.getHomeLocationId(planTrips), linkChooser, data);
 		}
 	}
 }

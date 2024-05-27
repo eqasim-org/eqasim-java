@@ -8,11 +8,14 @@ import java.util.Map;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.gbl.Gbl;
+import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.DefaultRoutingRequest;
+import org.matsim.core.router.LinkWrapperFacility;
 import org.matsim.core.router.NetworkRoutingInclAccessEgressModule;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.RoutingRequest;
@@ -73,33 +76,40 @@ public class CarPTRouter implements RoutingModule{
             RoutingRequest carRequest = DefaultRoutingRequest.of(fromFacility, stopFacility, departureTime, person, routingAttributes);
             List<? extends PlanElement> carRoute = carRoutingModule.calcRoute(carRequest);
     
+            Activity interactionActivity = createInteractionActivity(stopFacility.getCoord(), stopFacility.getLinkId(), "car-pt");
+
             Leg lastCarLeg = (Leg) carRoute.get(carRoute.size() - 1);
             RoutingRequest ptRequest = DefaultRoutingRequest.of(stopFacility, toFacility, lastCarLeg.getDepartureTime().seconds() + lastCarLeg.getTravelTime().seconds(), person, routingAttributes);
             List<? extends PlanElement> ptRoute = ptRoutingModule.calcRoute(ptRequest);
     
             List<PlanElement> combinedRoute = new ArrayList<>(carRoute);
+            combinedRoute.add(interactionActivity);
             combinedRoute.addAll(ptRoute);
             return combinedRoute;
         }
         else if (direction == "EGRESS"){
             Gbl.assertNotNull(fromFacility);
             Gbl.assertNotNull(toFacility);
-            
-            double x = toFacility.getCoord().getX();
-            double y = toFacility.getCoord().getY();
-            
-            TransitStopFacility stopFacility = data.findNearestStop(x, y);
-            
-            Gbl.assertNotNull(stopFacility);
 
-            RoutingRequest ptRequest = DefaultRoutingRequest.of(fromFacility, stopFacility, departureTime, person, routingAttributes);
+            Link parkingLink = (Link) routingAttributes.getAttribute("parking");
+            
+            if (parkingLink == null){
+                throw new IllegalArgumentException("No parking link specified");
+            }
+
+            Facility parkingFacility = new LinkWrapperFacility(parkingLink);
+
+            RoutingRequest ptRequest = DefaultRoutingRequest.of(fromFacility, parkingFacility, departureTime, person, routingAttributes);
             List<? extends PlanElement> ptRoute = ptRoutingModule.calcRoute(ptRequest);
 
+            Activity interactionActivity = createInteractionActivity(parkingLink.getCoord(), parkingFacility.getLinkId(), "car-pt");
+
             Leg lastPtLeg = (Leg) ptRoute.get(ptRoute.size() - 1);
-            RoutingRequest carRequest = DefaultRoutingRequest.of(stopFacility, toFacility, lastPtLeg.getDepartureTime().seconds() + lastPtLeg.getTravelTime().seconds(), person, routingAttributes);
+            RoutingRequest carRequest = DefaultRoutingRequest.of(parkingFacility, toFacility, lastPtLeg.getDepartureTime().seconds() + lastPtLeg.getTravelTime().seconds(), person, routingAttributes);
             List<? extends PlanElement> carRoute = carRoutingModule.calcRoute(carRequest);
 
             List<PlanElement> combinedRoute = new ArrayList<>(ptRoute);
+            combinedRoute.add(interactionActivity);
             combinedRoute.addAll(carRoute);
             return combinedRoute;
         }
@@ -108,5 +118,9 @@ public class CarPTRouter implements RoutingModule{
         }
     }
     
+    private static Activity createInteractionActivity(final Coord interactionCoord, final Id<Link> interactionLink, final String mode) {
+         Activity act = PopulationUtils.createStageActivityFromCoordLinkIdAndModePrefix(interactionCoord, interactionLink, mode);		
+         return act;
+     }
 
 }
