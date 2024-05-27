@@ -14,6 +14,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
 import org.matsim.core.population.routes.RouteUtils;
@@ -21,25 +22,27 @@ import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
 import org.matsim.core.router.speedy.SpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculator.Path;
+import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.core.utils.collections.QuadTrees;
 import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.vehicles.Vehicle;
 
 public class RoadRouterService {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
-
-	private final TravelTime travelTime = new FreeSpeedTravelTime();
-	private final TravelDisutility travelDisutility = new OnlyTimeDependentTravelDisutility(travelTime);
 
 	private final WalkParameters walkParameters;
 
 	private final QuadTree<? extends Link> linkIndex;
 
 	private final SpeedyALTFactory routerFactory = new SpeedyALTFactory();
-	private final ConcurrentLinkedQueue<LeastCostPathCalculator> routerPool = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedQueue<RouterInstance> routerPool = new ConcurrentLinkedQueue<>();
+
+	private final FreeSpeedTravelTime defaultTravelTime = new FreeSpeedTravelTime();
+	private final ModifiedFreeSpeedTravelTime modifiedTravelTime;
 
 	RoadRouterService(Network network, QuadTree<? extends Link> linkIndex, WalkParameters walkParameters, int threads) {
 		this.walkParameters = walkParameters;
@@ -48,10 +51,12 @@ public class RoadRouterService {
 		for (int k = 0; k < threads; k++) {
 			routerPool.add(createRouterInstance(network));
 		}
+
+		this.modifiedTravelTime = ModifiedFreeSpeedTravelTime.create(network);
 	}
 
-	private LeastCostPathCalculator createRouterInstance(Network network) {
-		return routerFactory.createPathCalculator(network, travelDisutility, travelTime);
+	private RouterInstance createRouterInstance(Network network) {
+		return new RouterInstance(routerFactory, network);
 	}
 
 	public RoadRouterResponse processRequest(RoadRouterRequest request) {
@@ -75,6 +80,13 @@ public class RoadRouterService {
 
 		if (toLinks.size() == 0) {
 			toLinks.add(linkIndex.getClosest(toCoord.getX(), toCoord.getY()));
+		}
+
+		TravelTime travelTime = defaultTravelTime;
+
+		if (request.freespeed != null) {
+			travelTime = (Link link, double time, Person person, Vehicle vehicle) -> modifiedTravelTime
+					.getLinkTravelTime(request.freespeed, link, time, person, vehicle);
 		}
 
 		for (Link fromLink : fromLinks) {
@@ -101,8 +113,9 @@ public class RoadRouterService {
 
 				double departureTime = request.departureTime_s + response.accessTime_min * 60.0;
 
-				LeastCostPathCalculator router = routerPool.poll();
-				Path path = router.calcLeastCostPath(fromNode, toNode, departureTime, null, null);
+				RouterInstance router = routerPool.poll();
+				router.travelTime = travelTime;
+				Path path = router.router.calcLeastCostPath(fromNode, toNode, departureTime, null, null);
 				routerPool.add(router);
 
 				response.inVehicleTime_min = path.travelTime / 60.0;
@@ -184,5 +197,18 @@ public class RoadRouterService {
 		}
 
 		return new WalkParameters(beelineWalkFactor, beelineWalkSpeed_m_s);
+	}
+
+	private class RouterInstance {
+		LeastCostPathCalculator router;
+		TravelTime travelTime;
+
+		RouterInstance(LeastCostPathCalculatorFactory factory, Network network) {
+			TravelTime travelTime = (Link link, double time, Person person, Vehicle vehicle) -> this.travelTime
+					.getLinkTravelTime(link, time, person, vehicle);
+			TravelDisutility travelDisutility = new OnlyTimeDependentTravelDisutility(travelTime);
+
+			this.router = factory.createPathCalculator(network, travelDisutility, travelTime);
+		}
 	}
 }
