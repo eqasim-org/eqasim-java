@@ -2,6 +2,7 @@ package org.eqasim.core.scenario.cutter.network;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -19,7 +20,6 @@ import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.network.io.NetworkWriter;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.utils.io.UncheckedIOException;
 
 public class RunNetworkCutter {
 	static public void main(String[] args) throws MalformedURLException, IOException, InterruptedException,

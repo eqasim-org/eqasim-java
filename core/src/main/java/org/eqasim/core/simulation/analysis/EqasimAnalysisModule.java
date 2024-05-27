@@ -10,6 +10,8 @@ import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.core.router.RoutingModeMainModeIdentifier;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provides;
@@ -31,6 +33,8 @@ public class EqasimAnalysisModule extends AbstractModule {
 		}
 
 		install(new StuckAnalysisModule());
+		
+		bind(AnalysisMainModeIdentifier.class).toInstance(new RoutingModeMainModeIdentifier());
 	}
 
 	@Provides

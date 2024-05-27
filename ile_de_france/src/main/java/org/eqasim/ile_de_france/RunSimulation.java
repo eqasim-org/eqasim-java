@@ -14,6 +14,7 @@ import org.eqasim.ile_de_france.analysis.counts.CountsModule;
 import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
+import org.eqasim.ile_de_france.super_blocks.SuperBlocksModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
 import org.eqasim.ile_de_france.policies.CarPTRouterModule;
 import org.eqasim.ile_de_france.policies.MyMultiModalLinkChooserModule;
@@ -60,7 +61,7 @@ public class RunSimulation {
 
 		{
 			// Avoid logging errors when using TripsAndLegsCSV
-			config.controler().setWriteTripsInterval(0);
+			config.controller().setWriteTripsInterval(0);
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -69,7 +70,7 @@ public class RunSimulation {
 		configurator.adjustScenario(scenario);
 
 		{
-			config.planCalcScore().setMarginalUtlOfWaiting_utils_hr(-1.0);
+			config.scoring().setMarginalUtlOfWaiting_utils_hr(-1.0);
 			IDFRaptorUtils.updateScoring(config);
 		}
 
@@ -83,12 +84,13 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
+		controller.addOverridingModule(new SuperBlocksModule());
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new DelayAnalysisModule());
 
 		if (cmd.hasOption("line-switch-utility")) {
 			double lineSwitchUtility = Double.parseDouble(cmd.getOptionStrict("line-switch-utility"));
-			config.planCalcScore().setUtilityOfLineSwitch(lineSwitchUtility);
+			config.scoring().setUtilityOfLineSwitch(lineSwitchUtility);
 		}
 
 		if (cmd.hasOption("counts-path")) {
