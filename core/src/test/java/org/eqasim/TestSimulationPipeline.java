@@ -3,12 +3,17 @@ package org.eqasim;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
+import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -193,6 +198,16 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/persons.csv"
         });
     }
+    
+    private void runCutter() throws Exception {
+    	RunScenarioCutter.main(new String[] {
+    		"--config-path", "melun_test/input/config.xml",
+    		"--events-path", "melun_test/output/output_events.xml.gz",
+            "--output-path", "melun_test/cutter",
+            "--prefix", "center_",
+            "--extent-path", "melun_test/input/center.shp"
+    	});
+    }
 
     @Test
     public void testDrt() throws IOException, CommandLine.ConfigurationException {
@@ -316,6 +331,7 @@ public class TestSimulationPipeline {
         runStandaloneModeChoice();
         runAnalyses();
         runExports();
+        runCutter();
     }
 
 
