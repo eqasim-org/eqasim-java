@@ -54,6 +54,54 @@ public class ModifiedFreeSpeedTravelTime {
 			links.put(link.getId(), new LinkRecord(decideLinkType(link), decideCrossingType(link)));
 		}
 
+		int crossingNone = 0;
+		int crossingMinor = 0;
+		int crossingMajor = 0;
+
+		int linkMajor = 0;
+		int linkIntermediate = 0;
+		int linkMinor = 0;
+
+		for (LinkRecord record : links.values()) {
+			switch (record.crossingType) {
+			case major:
+				crossingMajor += 1;
+				break;
+			case minor:
+				crossingMinor += 1;
+				break;
+			case none:
+				crossingNone += 1;
+				break;
+			default:
+				break;
+			}
+
+			switch (record.linkType) {
+			case intermediate:
+				linkIntermediate += 1;
+				break;
+			case major:
+				linkMajor += 1;
+				break;
+			case minor:
+				linkMinor += 1;
+				break;
+			default:
+				break;
+			}
+		}
+
+		System.out.println("Crossing none: " + crossingNone);
+		System.out.println("Crossing minor: " + crossingMinor);
+		System.out.println("Crossing major: " + crossingMajor);
+
+		System.out.println("Link minor: " + linkMinor);
+		System.out.println("Link intermediate: " + linkIntermediate);
+		System.out.println("Link major: " + linkMajor);
+
+		// System.exit(1);
+
 		return new ModifiedFreeSpeedTravelTime(links);
 	}
 
@@ -72,24 +120,26 @@ public class ModifiedFreeSpeedTravelTime {
 	}
 
 	private static CrossingType decideCrossingType(Link link) {
-		if (link.getToNode().getInLinks().size() == 1 && link.getToNode().getOutLinks().size() == 1) {
+		if (link.getToNode().getInLinks().size() == 1) { // straight road or diverge
 			return CrossingType.none;
 		} else {
 			double maximumCapacity = Double.NEGATIVE_INFINITY;
 			int maximumCount = 0;
+			boolean foundLower = false;
 
 			for (Link inlink : link.getToNode().getInLinks().values()) {
-
 				if (inlink.getCapacity() > maximumCapacity) {
 					maximumCapacity = inlink.getCapacity();
 					maximumCount = 1;
 				} else if (inlink.getCapacity() == maximumCapacity) {
 					maximumCount++;
 				}
+				
+				foundLower |= inlink.getCapacity() < link.getCapacity();
 			}
 
-			if (maximumCapacity == link.getCapacity() && maximumCount == 2) {
-				// highest capacity and only one other link coming in (from opposite direction)
+			boolean isMajor = link.getCapacity() == maximumCapacity && foundLower; //maximumCount == 2;
+			if (isMajor) {
 				return CrossingType.major;
 			} else {
 				return CrossingType.minor;

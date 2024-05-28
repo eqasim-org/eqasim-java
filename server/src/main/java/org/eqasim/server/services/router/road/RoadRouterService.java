@@ -31,6 +31,8 @@ import org.matsim.core.utils.collections.QuadTrees;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
 
+import jakarta.annotation.Nullable;
+
 public class RoadRouterService {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
 
@@ -59,7 +61,7 @@ public class RoadRouterService {
 		return new RouterInstance(routerFactory, network);
 	}
 
-	public RoadRouterResponse processRequest(RoadRouterRequest request) {
+	public RoadRouterResponse processRequest(RoadRouterRequest request, @Nullable FreespeedSettings freespeed) {
 		RoadRouterResponse bestResponse = null;
 
 		Coord fromCoord = new Coord(request.originX, request.originY);
@@ -84,9 +86,10 @@ public class RoadRouterService {
 
 		TravelTime travelTime = defaultTravelTime;
 
-		if (request.freespeed != null) {
+		if (request.freespeed != null || freespeed != null) {
+			FreespeedSettings settings = request.freespeed == null ? freespeed : request.freespeed;
 			travelTime = (Link link, double time, Person person, Vehicle vehicle) -> modifiedTravelTime
-					.getLinkTravelTime(request.freespeed, link, time, person, vehicle);
+					.getLinkTravelTime(settings, link, time, person, vehicle);
 		}
 
 		for (Link fromLink : fromLinks) {

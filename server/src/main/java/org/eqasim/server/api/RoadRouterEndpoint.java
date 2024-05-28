@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
+import org.eqasim.server.services.router.road.FreespeedSettings;
 import org.eqasim.server.services.router.road.RoadRouterRequest;
 import org.eqasim.server.services.router.road.RoadRouterResponse;
 import org.eqasim.server.services.router.road.RoadRouterService;
@@ -25,11 +26,11 @@ public class RoadRouterEndpoint extends AbstractEndpoint {
 		this.service = service;
 	}
 
-	private Collection<RoadRouterResponse> process(List<RoadRouterRequest> requests)
+	private Collection<RoadRouterResponse> process(List<RoadRouterRequest> requests, FreespeedSettings freespeed)
 			throws InterruptedException, ExecutionException {
 		List<Callable<RoadRouterResponse>> tasks = new LinkedList<>();
 		for (RoadRouterRequest request : requests) {
-			tasks.add(() -> service.processRequest(request));
+			tasks.add(() -> service.processRequest(request, freespeed));
 		}
 
 		List<RoadRouterResponse> response = new LinkedList<>();
@@ -44,14 +45,16 @@ public class RoadRouterEndpoint extends AbstractEndpoint {
 		Request request = readRequest(ctx, Request.class);
 
 		if (request.request != null) {
-			writeResponse(ctx, process(Collections.singletonList(request.request)).iterator().next());
+			writeResponse(ctx,
+					process(Collections.singletonList(request.request), request.freespeed).iterator().next());
 		} else {
-			writeResponse(ctx, process(request.batch));
+			writeResponse(ctx, process(request.batch, request.freespeed));
 		}
 	}
 
 	static public class Request {
 		public RoadRouterRequest request = null;
 		public List<RoadRouterRequest> batch = new LinkedList<>();
+		public FreespeedSettings freespeed = null;
 	}
 }
