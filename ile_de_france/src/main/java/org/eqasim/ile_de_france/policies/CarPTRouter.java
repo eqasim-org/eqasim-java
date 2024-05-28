@@ -1,9 +1,7 @@
 package org.eqasim.ile_de_france.policies;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -16,37 +14,21 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.LinkWrapperFacility;
-import org.matsim.core.router.NetworkRoutingInclAccessEgressModule;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.RoutingRequest;
-import org.matsim.core.router.Transit;
 import org.matsim.facilities.Facility;
-import org.matsim.pt.router.TransitRouter;
-import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 
-import com.google.inject.Inject;
-
-import ch.sbb.matsim.routing.pt.raptor.InitialStop;
-import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
-import ch.sbb.matsim.routing.pt.raptor.RaptorParametersForPerson;
-import ch.sbb.matsim.routing.pt.raptor.RaptorRoute;
-import ch.sbb.matsim.routing.pt.raptor.RaptorStopFinder;
-import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorCore;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorRoutingModule;
 
 public class CarPTRouter implements RoutingModule{
 
     private final RoutingModule carRoutingModule;
     private final RoutingModule ptRoutingModule;
-    private final SwissRailRaptorData data;
-
+    
     public CarPTRouter(RoutingModule carRoutingModule, RoutingModule ptRoutingModule, SwissRailRaptorData data) {
         this.carRoutingModule = carRoutingModule;
         this.ptRoutingModule = ptRoutingModule;
-        this.data = data;
     }
 
     @Override
@@ -66,20 +48,21 @@ public class CarPTRouter implements RoutingModule{
             Gbl.assertNotNull(fromFacility);
             Gbl.assertNotNull(toFacility);
             
-            double x = fromFacility.getCoord().getX();
-            double y = fromFacility.getCoord().getY();
-            
-            TransitStopFacility stopFacility = data.findNearestStop(x, y);
-            
-            Gbl.assertNotNull(stopFacility);
+            Link parkingLink = (Link) routingAttributes.getAttribute("parking");
+
+            if (parkingLink == null){
+                throw new IllegalArgumentException("No parking link specified");
+            }
+
+            Facility parkingFacility = new LinkWrapperFacility(parkingLink);
     
-            RoutingRequest carRequest = DefaultRoutingRequest.of(fromFacility, stopFacility, departureTime, person, routingAttributes);
+            RoutingRequest carRequest = DefaultRoutingRequest.of(fromFacility, parkingFacility, departureTime, person, routingAttributes);
             List<? extends PlanElement> carRoute = carRoutingModule.calcRoute(carRequest);
     
-            Activity interactionActivity = createInteractionActivity(stopFacility.getCoord(), stopFacility.getLinkId(), "car-pt");
+            Activity interactionActivity = createInteractionActivity(parkingFacility.getCoord(), parkingLink.getId(), "car-pt");
 
             Leg lastCarLeg = (Leg) carRoute.get(carRoute.size() - 1);
-            RoutingRequest ptRequest = DefaultRoutingRequest.of(stopFacility, toFacility, lastCarLeg.getDepartureTime().seconds() + lastCarLeg.getTravelTime().seconds(), person, routingAttributes);
+            RoutingRequest ptRequest = DefaultRoutingRequest.of(parkingFacility, toFacility, lastCarLeg.getDepartureTime().seconds() + lastCarLeg.getTravelTime().seconds(), person, routingAttributes);
             List<? extends PlanElement> ptRoute = ptRoutingModule.calcRoute(ptRequest);
     
             List<PlanElement> combinedRoute = new ArrayList<>(carRoute);

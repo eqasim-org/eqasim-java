@@ -1,6 +1,5 @@
 package org.eqasim.ile_de_france.mode_choice.utilities.predictors;
 
-import java.util.Objects;
 
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;

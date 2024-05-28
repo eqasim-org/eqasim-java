@@ -21,12 +21,10 @@ import com.google.inject.Inject;
 public class ParkingLinkChooser implements MultimodalLinkChooser{
 
     private final Network parkingNetwork;
-    private final ParkingAvailabilityData parkingAvailabilityData;
-
+    
     @Inject
     public ParkingLinkChooser(Network network, ParkingAvailabilityData parkingAvailabilityData){
         this.parkingNetwork = createParkingNetwork(network, parkingAvailabilityData);
-        this.parkingAvailabilityData = parkingAvailabilityData;
     }
 
     public Network createParkingNetwork(Network network, ParkingAvailabilityData parkingAvailabilityData){

@@ -22,8 +22,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.opengis.feature.simple.SimpleFeature;
 
-import com.google.common.collect.ImmutableMap;
-
 public class ParkingPressureData {
 	public static final String ATTRIBUTE = "parkingPressure";
 

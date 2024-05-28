@@ -27,15 +27,20 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEst
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
+import org.eqasim.ile_de_france.policies.CarPtTourConstraint;
 import org.matsim.contribs.discrete_mode_choice.components.tour_finder.ActivityTourFinder;
+import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.ActivityTourFinderConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.router.MultimodalLinkChooser;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 
 public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -53,6 +58,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	public static final String INITIAL_WAITING_TIME_CONSTRAINT = "InitialWaitingTimeConstraint";
 	public static final String SAME_LOCATION_WALK_CONSTRAINT = "SameLocationWalkConstraint";
+	public static final String CAR_PT_CONSTRAINT = "CarPtTourConstraint";
 
 	public static final String ISOLATED_OUTSIDE_TOUR_FINDER_NAME = "IsolatedOutsideTrips";
 
@@ -78,6 +84,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTripConstraintFactory(INITIAL_WAITING_TIME_CONSTRAINT).to(InitialWaitingTimeConstraint.Factory.class);
 		bindTripConstraintFactory(SAME_LOCATION_WALK_CONSTRAINT).to(SameLocationWalkConstraint.Factory.class);
+
+		bindTourConstraintFactory(CAR_PT_CONSTRAINT).to(CarPtTourConstraint.Factory.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 
@@ -138,6 +146,13 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
+	}
+
+	@Provides
+	@Singleton
+	public CarPtTourConstraint.Factory provideCarPtTourConstraintFactory(
+		HomeFinder homeFinder, MultimodalLinkChooser linkChooser, SwissRailRaptor raptor) {
+		return new CarPtTourConstraint.Factory(homeFinder, linkChooser, raptor.getUnderlyingData());
 	}
 
 	@Provides
