@@ -2,7 +2,7 @@ package org.eqasim.ile_de_france.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -10,6 +10,7 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.tour_finder.ActivityTourFinderWithExcludedActivities;
 import org.eqasim.core.simulation.modes.drt.mode_choice.DrtModeAvailabilityWrapper;
+import org.eqasim.core.simulation.modes.drt.mode_choice.constraints.DrtServiceTimeConstraint;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFDrtCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
@@ -48,6 +49,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	public static final String ISOLATED_OUTSIDE_TOUR_FINDER_NAME = "IsolatedOutsideTrips";
 
+	public static final String DRT_SERVICE_TIME_CONSTRAINT_NAME = "DrtServiceTimeConstraint";
+
 	public IDFModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
 	}
@@ -71,6 +74,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 
 		bindTourFinder(ISOLATED_OUTSIDE_TOUR_FINDER_NAME).to(ActivityTourFinderWithExcludedActivities.class);
+		bindTripConstraintFactory(DRT_SERVICE_TIME_CONSTRAINT_NAME).to(DrtServiceTimeConstraint.Factory.class);
 	}
 
 	@Provides
@@ -117,5 +121,27 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	public DrtModeAvailabilityWrapper provideDrtModeAvailabilityWrapper(Config config) {
 		return new DrtModeAvailabilityWrapper(config, new FeederDrtModeAvailabilityWrapper(config, new IDFModeAvailability()));
+	}
+
+	@Provides
+	@Singleton
+	public DrtServiceTimeConstraint.Factory provideDrtServiceTimeConstraintFactory() throws ConfigurationException {
+		String prefix = "drt-service-time:";
+		Map<String, Map<String, List<List<Integer>>>> timeSlotsPerDrtModePerMainMode = new HashMap<>();
+		for(String option: this.commandLine.getAvailableOptions()) {
+			if(!option.startsWith(prefix)) {
+				continue;
+			}
+			String[] parts = option.split(":");
+			if(parts.length != 3) {
+				throw new IllegalStateException(String.format("%s options should be of the form %smainMode:drtMode", prefix, prefix));
+			}
+			List<List<Integer>> slots = Arrays.stream(this.commandLine.getOptionStrict(option).split(";"))
+					.map(slotString -> Arrays.stream(slotString.split(":")).map(Integer::parseInt).toList())
+					.toList();
+
+			timeSlotsPerDrtModePerMainMode.computeIfAbsent(parts[1], mainMode -> new HashMap<>()).computeIfAbsent(parts[2], drtMode -> slots);
+		}
+		return new DrtServiceTimeConstraint.Factory(timeSlotsPerDrtModePerMainMode);
 	}
 }
