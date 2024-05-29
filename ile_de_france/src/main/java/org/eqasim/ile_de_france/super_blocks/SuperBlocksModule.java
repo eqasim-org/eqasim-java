@@ -20,6 +20,12 @@ import java.util.List;
 import java.util.Set;
 
 public class SuperBlocksModule extends AbstractEqasimExtension {
+	private final String superblocksPath;
+	
+	public SuperBlocksModule(String superblocksPath) {
+		this.superblocksPath = superblocksPath;
+	}
+	
     @Override
     protected void installEqasimExtension() {
         addTravelDisutilityFactoryBinding("car").to(SuperBlocksTravelDisutility.Factory.class);
@@ -38,8 +44,7 @@ public class SuperBlocksModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     public SuperBlocksLogic provideSuperBlocksLogic(Population population, Network network, SuperBlockPermission superBlockPermission) throws IOException {
-        String superBlocksShapefilePath = "F:\\scenarios\\idf\\misc\\superblocks\\Paris-superblocks_epsg2154.shp";
-        return new SuperBlocksLogic(superBlocksShapefilePath, population, network, superBlockPermission);
+        return new SuperBlocksLogic(superblocksPath, population, network, superBlockPermission);
     }
 
     @Provides

@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.math3.ml.neuralnet.Network;
@@ -42,7 +43,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("counts-path", "use-epsilon", "use-vdf", "use-vdf-engine", "vdf-generate-network-events",
-						"line-switch-utility", "cost-model") //
+						"line-switch-utility", "cost-model", "superblocks-path") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX, "raptor") //
 				.build();
@@ -84,7 +85,12 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
-		controller.addOverridingModule(new SuperBlocksModule());
+		
+		Optional<String> superblocksPath = cmd.getOption("superblocks-path");
+		if (superblocksPath.isPresent()) {
+			controller.addOverridingModule(new SuperBlocksModule(superblocksPath.get()));
+		}
+		
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new DelayAnalysisModule());
 
