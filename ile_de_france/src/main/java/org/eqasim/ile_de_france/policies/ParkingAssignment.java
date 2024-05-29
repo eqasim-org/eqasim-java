@@ -139,8 +139,11 @@ public class ParkingAssignment {
                 nearestLinks.add(link);
             }
         }
-
-        return new ArrayList<>(nearestLinks).subList(0, numLinks);
+        if (nearestLinks.size() >= numLinks) {
+            return new ArrayList<>(nearestLinks).subList(0, numLinks - 1);
+        } else {
+            return new ArrayList<>(nearestLinks);
+        }
 
     }
 
@@ -184,7 +187,11 @@ public class ParkingAssignment {
             nearestLinks.add(link);
         }
 
-        return new ArrayList<>(nearestLinks).subList(0, numLinks);
+        if (nearestLinks.size() >= numLinks) {
+            return new ArrayList<>(nearestLinks).subList(0, numLinks - 1);
+        } else {
+            return new ArrayList<>(nearestLinks);
+        }
 
     }
     
