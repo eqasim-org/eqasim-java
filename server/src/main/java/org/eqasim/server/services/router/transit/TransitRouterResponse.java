@@ -25,6 +25,9 @@ public class TransitRouterResponse {
 	@JsonProperty("in_vehicle_distance_by_mode_km")
 	public Map<String, Double> inVehicleDistanceByMode_km = new HashMap<>();
 
+	@JsonProperty("vehicle_legs_by_mode")
+	public Map<String, Integer> vehicleLegsByMode = new HashMap<>();
+
 	@JsonProperty("access_walk_time_min")
 	public double accessWalkTime_min;
 
