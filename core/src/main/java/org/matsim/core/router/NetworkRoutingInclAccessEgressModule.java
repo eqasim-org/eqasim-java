@@ -139,13 +139,18 @@
          final Facility toFacility = request.getToFacility();
          final double departureTime = request.getDepartureTime();
          final Person person = request.getPerson();
+         Link accessActLink = (Link) request.getAttributes().getAttribute("access_link");
+         Link egressActLink = (Link) request.getAttributes().getAttribute("egress_link");
  
          Gbl.assertNotNull(fromFacility);
          Gbl.assertNotNull(toFacility);
  
-         Link accessActLink = multimodalLinkChooser.decideOnLink(fromFacility, filteredNetwork, person);
- 
-         Link egressActLink = multimodalLinkChooser.decideOnLink(toFacility, filteredNetwork, person);
+         if (accessActLink == null){
+             accessActLink = multimodalLinkChooser.decideOnLink(fromFacility, filteredNetwork, person);
+         }
+         if (egressActLink == null){
+             egressActLink = multimodalLinkChooser.decideOnLink(toFacility, filteredNetwork, person);
+         }
  
          double now = departureTime;
  

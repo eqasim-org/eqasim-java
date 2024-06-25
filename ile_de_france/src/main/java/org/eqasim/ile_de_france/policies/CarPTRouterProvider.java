@@ -13,10 +13,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 
 public class CarPTRouterProvider implements Provider<RoutingModule>{
 
-    private final String routingMode;
-    private final String mode;
-
-	@Inject
+    @Inject
     @Named(TransportMode.pt)
     private Provider<RoutingModule> ptRouterProvider;
 	@Inject
@@ -29,8 +26,6 @@ public class CarPTRouterProvider implements Provider<RoutingModule>{
     }
 
     public CarPTRouterProvider(String mode, String routingMode) {
-        this.mode = "car_pt";
-        this.routingMode = "car_pt";
     }
 
 

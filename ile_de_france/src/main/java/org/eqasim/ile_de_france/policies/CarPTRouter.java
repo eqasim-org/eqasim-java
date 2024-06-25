@@ -40,26 +40,23 @@ public class CarPTRouter implements RoutingModule{
 		final Person person = request.getPerson();
         final Attributes routingAttributes = request.getAttributes();
 
+        Link accessLink = (Link) routingAttributes.getAttribute("access_link");
+        Link egressLink = (Link) routingAttributes.getAttribute("egress_link");
+
         final String direction = request.getAttributes().getAttribute("car_pt").toString();
         if (direction == null){
             throw new IllegalArgumentException("No direction specified");
         }
         else if (direction == "ACCESS"){
-            Gbl.assertNotNull(fromFacility);
-            Gbl.assertNotNull(toFacility);
-            
-            Link parkingLink = (Link) routingAttributes.getAttribute("parking");
+            Gbl.assertNotNull(accessLink);
+            Gbl.assertNotNull(egressLink);
 
-            if (parkingLink == null){
-                throw new IllegalArgumentException("No parking link specified");
-            }
-
-            Facility parkingFacility = new LinkWrapperFacility(parkingLink);
+            Facility parkingFacility = new LinkWrapperFacility(egressLink);
     
             RoutingRequest carRequest = DefaultRoutingRequest.of(fromFacility, parkingFacility, departureTime, person, routingAttributes);
             List<? extends PlanElement> carRoute = carRoutingModule.calcRoute(carRequest);
     
-            Activity interactionActivity = createInteractionActivity(parkingFacility.getCoord(), parkingLink.getId(), "car-pt");
+            Activity interactionActivity = createInteractionActivity(parkingFacility.getCoord(), egressLink.getId(), "car-pt");
 
             Leg lastCarLeg = (Leg) carRoute.get(carRoute.size() - 1);
             RoutingRequest ptRequest = DefaultRoutingRequest.of(parkingFacility, toFacility, lastCarLeg.getDepartureTime().seconds() + lastCarLeg.getTravelTime().seconds(), person, routingAttributes);
@@ -74,18 +71,12 @@ public class CarPTRouter implements RoutingModule{
             Gbl.assertNotNull(fromFacility);
             Gbl.assertNotNull(toFacility);
 
-            Link parkingLink = (Link) routingAttributes.getAttribute("parking");
-            
-            if (parkingLink == null){
-                throw new IllegalArgumentException("No parking link specified");
-            }
-
-            Facility parkingFacility = new LinkWrapperFacility(parkingLink);
+            Facility parkingFacility = new LinkWrapperFacility(accessLink);
 
             RoutingRequest ptRequest = DefaultRoutingRequest.of(fromFacility, parkingFacility, departureTime, person, routingAttributes);
             List<? extends PlanElement> ptRoute = ptRoutingModule.calcRoute(ptRequest);
 
-            Activity interactionActivity = createInteractionActivity(parkingLink.getCoord(), parkingFacility.getLinkId(), "car-pt");
+            Activity interactionActivity = createInteractionActivity(parkingFacility.getCoord(), parkingFacility.getLinkId(), "car-pt");
 
             Leg lastPtLeg = (Leg) ptRoute.get(ptRoute.size() - 1);
             RoutingRequest carRequest = DefaultRoutingRequest.of(parkingFacility, toFacility, lastPtLeg.getDepartureTime().seconds() + lastPtLeg.getTravelTime().seconds(), person, routingAttributes);
@@ -100,6 +91,76 @@ public class CarPTRouter implements RoutingModule{
             throw new IllegalArgumentException("Invalid direction specified");
         }
     }
+
+    // @Override
+    // public List<? extends PlanElement> calcRoute(RoutingRequest request) {
+        
+    //     final Facility fromFacility = request.getFromFacility();
+	// 	final Facility toFacility = request.getToFacility();
+	// 	final double departureTime = request.getDepartureTime();
+	// 	final Person person = request.getPerson();
+    //     final Attributes routingAttributes = request.getAttributes();
+
+    //     final String direction = request.getAttributes().getAttribute("car_pt").toString();
+    //     if (direction == null){
+    //         throw new IllegalArgumentException("No direction specified");
+    //     }
+    //     else if (direction == "ACCESS"){
+    //         Gbl.assertNotNull(fromFacility);
+    //         Gbl.assertNotNull(toFacility);
+            
+    //         Link parkingLink = (Link) routingAttributes.getAttribute("parking");
+
+    //         if (parkingLink == null){
+    //             throw new IllegalArgumentException("No parking link specified");
+    //         }
+
+    //         Facility parkingFacility = new LinkWrapperFacility(parkingLink);
+    
+    //         RoutingRequest carRequest = DefaultRoutingRequest.of(fromFacility, parkingFacility, departureTime, person, routingAttributes);
+    //         List<? extends PlanElement> carRoute = carRoutingModule.calcRoute(carRequest);
+    
+    //         Activity interactionActivity = createInteractionActivity(parkingFacility.getCoord(), parkingLink.getId(), "car-pt");
+
+    //         Leg lastCarLeg = (Leg) carRoute.get(carRoute.size() - 1);
+    //         RoutingRequest ptRequest = DefaultRoutingRequest.of(parkingFacility, toFacility, lastCarLeg.getDepartureTime().seconds() + lastCarLeg.getTravelTime().seconds(), person, routingAttributes);
+    //         List<? extends PlanElement> ptRoute = ptRoutingModule.calcRoute(ptRequest);
+    
+    //         List<PlanElement> combinedRoute = new ArrayList<>(carRoute);
+    //         combinedRoute.add(interactionActivity);
+    //         combinedRoute.addAll(ptRoute);
+    //         return combinedRoute;
+    //     }
+    //     else if (direction == "EGRESS"){
+    //         Gbl.assertNotNull(fromFacility);
+    //         Gbl.assertNotNull(toFacility);
+
+    //         Link parkingLink = (Link) routingAttributes.getAttribute("parking");
+            
+    //         if (parkingLink == null){
+    //             throw new IllegalArgumentException("No parking link specified");
+    //         }
+
+    //         Facility parkingFacility = new LinkWrapperFacility(parkingLink);
+
+    //         RoutingRequest ptRequest = DefaultRoutingRequest.of(fromFacility, parkingFacility, departureTime, person, routingAttributes);
+    //         List<? extends PlanElement> ptRoute = ptRoutingModule.calcRoute(ptRequest);
+
+    //         Activity interactionActivity = createInteractionActivity(parkingLink.getCoord(), parkingFacility.getLinkId(), "car-pt");
+
+    //         Leg lastPtLeg = (Leg) ptRoute.get(ptRoute.size() - 1);
+    //         RoutingRequest carRequest = DefaultRoutingRequest.of(parkingFacility, toFacility, lastPtLeg.getDepartureTime().seconds() + lastPtLeg.getTravelTime().seconds(), person, routingAttributes);
+    //         List<? extends PlanElement> carRoute = carRoutingModule.calcRoute(carRequest);
+
+    //         List<PlanElement> combinedRoute = new ArrayList<>(ptRoute);
+    //         combinedRoute.add(interactionActivity);
+    //         combinedRoute.addAll(carRoute);
+    //         return combinedRoute;
+    //     }
+    //     else {
+    //         throw new IllegalArgumentException("Invalid direction specified");
+    //     }
+    // }
     
     private static Activity createInteractionActivity(final Coord interactionCoord, final Id<Link> interactionLink, final String mode) {
          Activity act = PopulationUtils.createStageActivityFromCoordLinkIdAndModePrefix(interactionCoord, interactionLink, mode);		

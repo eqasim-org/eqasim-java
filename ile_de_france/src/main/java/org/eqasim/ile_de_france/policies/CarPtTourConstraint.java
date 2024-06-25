@@ -91,14 +91,13 @@ public class CarPtTourConstraint implements TourConstraint{
                     // If vehicle starts at very first activity, we still allow this tour!
                     return false;
                 }
-                else if (modes.get(0).equals("car_pt")){
-                    DiscreteModeChoiceTrip trip = tour.get(0);
-                    trip.getTripAttributes().putAttribute("car_pt", "ACCESS");
-                    setParkingLink(person, trip);
-                }
+
+                DiscreteModeChoiceTrip trip = tour.get(0);
+                trip.getTripAttributes().putAttribute("car_pt", "ACCESS");
+                setParkingLink(person, trip);
             }
 
-            if (startLocationId.equals(vehicleLocationId) && modes.get(0).equals("car_pt")){
+            if (startLocationId.equals(vehicleLocationId)){
                 DiscreteModeChoiceTrip trip = tour.get(0);
                 trip.getTripAttributes().putAttribute("car_pt", "ACCESS");
                 setParkingLink(person, trip);
@@ -111,12 +110,11 @@ public class CarPtTourConstraint implements TourConstraint{
                     // If vehicle ends at the very last activity, we still allow this tour!
                     return false;
                 }
-                else if (modes.get(lastIndex).equals("car_pt")){
-                    tour.get(lastIndex).getTripAttributes().putAttribute("car_pt", "EGRESS");
-                }
+
+                tour.get(lastIndex).getTripAttributes().putAttribute("car_pt", "EGRESS");
             }
 
-            if (endLocationId.equals(vehicleLocationId) && modes.get(lastIndex).equals("car_pt")){
+            if (endLocationId.equals(vehicleLocationId)){
                 tour.get(lastIndex).getTripAttributes().putAttribute("car_pt", "EGRESS");
             }
 
@@ -179,6 +177,8 @@ public class CarPtTourConstraint implements TourConstraint{
         @Override
         public TourConstraint createConstraint(Person person, List<DiscreteModeChoiceTrip> planTrips,
                 Collection<String> availableModes) {
+
+                    
             return new CarPtTourConstraint(homeFinder.getHomeLocationId(planTrips), linkChooser, data);
         }
     }

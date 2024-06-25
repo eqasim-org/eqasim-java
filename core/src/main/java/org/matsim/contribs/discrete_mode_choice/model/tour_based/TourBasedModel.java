@@ -89,14 +89,14 @@ public class TourBasedModel implements DiscreteModeChoiceModel {
 					if (!constraint.validateBeforeEstimation(tourTrips, tourModes, tourCandidateModes, person)) {
 						continue;
 					}
-
+					
 					TourCandidate candidate = estimator.estimateTour(person, tourModes, tourTrips, tourCandidates);
-
+					
+					
 					if (!Double.isFinite(candidate.getUtility())) {
 						logger.warn(buildIllegalUtilityMessage(tripIndex, person));
 						continue;
 					}
-
 					if (!constraint.validateAfterEstimation(tourTrips, candidate, tourCandidates)) {
 						continue;
 					}
