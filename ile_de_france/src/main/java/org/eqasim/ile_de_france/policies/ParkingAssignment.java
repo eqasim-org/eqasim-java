@@ -103,7 +103,7 @@ public class ParkingAssignment {
         Set<Link> nearestLinks = new LinkedHashSet<>();
         Queue<Link> linkQueue = new LinkedList<>();
 
-        Node nearestNode = NetworkUtils.getNearestNode(network, coordinate);
+        Node nearestNode = NetworkUtils.getNearestNode(parkingNetwork, coordinate);
         visitedNodes.add(nearestNode);
 
         if (nearestNode == null){
