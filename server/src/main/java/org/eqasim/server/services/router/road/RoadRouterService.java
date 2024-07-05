@@ -1,5 +1,6 @@
 package org.eqasim.server.services.router.road;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -30,6 +31,8 @@ import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.core.utils.collections.QuadTrees;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
+
+import com.google.common.base.Verify;
 
 import jakarta.annotation.Nullable;
 
@@ -78,10 +81,28 @@ public class RoadRouterService {
 
 		if (fromLinks.size() == 0) {
 			fromLinks.add(linkIndex.getClosest(fromCoord.getX(), fromCoord.getY()));
+
+			if (request.considerParallelLinks) {
+				Collection<? extends Link> candidates = linkIndex.getDisk(fromLinks.get(0).getCoord().getX(),
+						fromLinks.get(0).getCoord().getY(), 0.0);
+
+				Verify.verify(candidates.size() > 0);
+				fromLinks.clear();
+				fromLinks.addAll(candidates);
+			}
 		}
 
 		if (toLinks.size() == 0) {
 			toLinks.add(linkIndex.getClosest(toCoord.getX(), toCoord.getY()));
+
+			if (request.considerParallelLinks) {
+				Collection<? extends Link> candidates = linkIndex.getDisk(toLinks.get(0).getCoord().getX(),
+						toLinks.get(0).getCoord().getY(), 0.0);
+
+				Verify.verify(candidates.size() > 0);
+				toLinks.clear();
+				toLinks.addAll(candidates);
+			}
 		}
 
 		TravelTime travelTime = defaultTravelTime;
