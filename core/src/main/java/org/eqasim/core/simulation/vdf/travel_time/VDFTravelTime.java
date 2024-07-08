@@ -1,4 +1,4 @@
-package org.eqasim.vdf.travel_time;
+package org.eqasim.core.simulation.vdf.travel_time;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eqasim.vdf.VDFScope;
-import org.eqasim.vdf.travel_time.function.VolumeDelayFunction;
+import org.eqasim.core.simulation.vdf.VDFScope;
+import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;

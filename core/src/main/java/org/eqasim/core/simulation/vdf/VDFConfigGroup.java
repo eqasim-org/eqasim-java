@@ -1,4 +1,4 @@
-package org.eqasim.vdf;
+package org.eqasim.core.simulation.vdf;
 
 import java.util.Arrays;
 import java.util.Set;

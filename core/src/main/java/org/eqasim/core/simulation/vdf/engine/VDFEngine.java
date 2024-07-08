@@ -1,4 +1,4 @@
-package org.eqasim.vdf.engine;
+package org.eqasim.core.simulation.vdf.engine;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,8 +6,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 
-import org.eqasim.vdf.handlers.VDFTrafficHandler;
-import org.eqasim.vdf.travel_time.VDFTravelTime;
+import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;

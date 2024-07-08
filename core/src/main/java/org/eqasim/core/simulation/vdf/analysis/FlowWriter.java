@@ -1,4 +1,4 @@
-package org.eqasim.vdf.analysis;
+package org.eqasim.core.simulation.vdf.analysis;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -8,7 +8,7 @@ import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
-import org.eqasim.vdf.VDFScope;
+import org.eqasim.core.simulation.vdf.VDFScope;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;

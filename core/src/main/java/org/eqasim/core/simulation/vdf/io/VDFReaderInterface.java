@@ -1,4 +1,4 @@
-package org.eqasim.vdf.io;
+package org.eqasim.core.simulation.vdf.io;
 
 import java.net.URL;
 

@@ -1,14 +1,14 @@
-package org.eqasim.vdf;
+package org.eqasim.core.simulation.vdf;
 
 import java.net.URL;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.vdf.handlers.VDFHorizonHandler;
-import org.eqasim.vdf.handlers.VDFInterpolationHandler;
-import org.eqasim.vdf.handlers.VDFTrafficHandler;
-import org.eqasim.vdf.travel_time.VDFTravelTime;
-import org.eqasim.vdf.travel_time.function.BPRFunction;
-import org.eqasim.vdf.travel_time.function.VolumeDelayFunction;
+import org.eqasim.core.simulation.vdf.handlers.VDFHorizonHandler;
+import org.eqasim.core.simulation.vdf.handlers.VDFInterpolationHandler;
+import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
+import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
+import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
