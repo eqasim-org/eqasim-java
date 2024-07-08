@@ -1,6 +1,7 @@
 package org.eqasim.core.simulation.vdf;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.matsim.api.core.v01.TransportMode;
@@ -37,7 +38,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private double bprFactor = 0.15;
 	private double bprExponent = 4.0;
 
-	private Set<String> modes = Set.of(TransportMode.car, "car_passenger");
+	private Set<String> modes = new HashSet<>(Set.of(TransportMode.car, "car_passenger"));
 
 	private double capacityFactor = 1.0;
 
