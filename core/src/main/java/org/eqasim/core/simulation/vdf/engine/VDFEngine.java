@@ -56,9 +56,8 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 
 	@Override
 	public boolean handleDeparture(double now, MobsimAgent agent, Id<Link> linkId) {
-		Leg leg = (Leg) ((PlanAgent) agent).getCurrentPlanElement();
-
-		if (!modes.contains(leg.getMode())) {
+		String legMode = agent.getMode();
+		if(!modes.contains(legMode)) {
 			return false;
 		}
 
@@ -74,13 +73,19 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 			traversal.agent = (MobsimDriverAgent) agent;
 			traversal.linkId = agent.getCurrentLinkId();
 			traversal.arrivalTime = now + getTraversalTime(now, linkId, driverAgent);
-			traversal.modeIndex = modes.indexOf(leg.getMode());
+			traversal.modeIndex = modes.indexOf(legMode);
 			traversals.add(traversal);
 
 			eventsManager.processEvent(new VehicleEntersTrafficEvent(now, traversal.agent.getId(), traversal.linkId,
 					Id.createVehicleId(agent.getId()), modes.get(traversal.modeIndex), 1.0));
 		} else { // We have a handler and register traversals directly
-			NetworkRoute route = (NetworkRoute) leg.getRoute();
+			NetworkRoute route;
+			if(agent instanceof PlanAgent planAgent) {
+				Leg leg = (Leg) planAgent.getCurrentPlanElement();
+				route = (NetworkRoute) leg.getRoute();
+			} else {
+				throw new IllegalStateException("generateNetworkEvents is set to false while some agents to be processed by the VDF engine are not planAgent instances. Set generateNetworkEvents to false to fix this");
+			}
 			now += getTraversalTime(now, route.getStartLinkId(), driverAgent);
 
 			for (Id<Link> nextLinkId : route.getLinkIds()) {
@@ -92,7 +97,7 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 			traversal.agent = (MobsimDriverAgent) agent;
 			traversal.linkId = route.getEndLinkId();
 			traversal.arrivalTime = now;
-			traversal.modeIndex = modes.indexOf(leg.getMode());
+			traversal.modeIndex = modes.indexOf(legMode);
 			traversal.distance = route.getDistance();
 			traversals.add(traversal);
 		}
@@ -161,7 +166,12 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 	}
 
 	double getTraversalTime(double now, Id<Link> linkId, MobsimDriverAgent agent) {
-		Person person = ((HasPerson) agent).getPerson();
+		// The current VDF travel time does not need a person object.
+		// We just pass one to respect the interface.
+		Person person = null;
+		if(agent instanceof HasPerson hasPerson) {
+			person = hasPerson.getPerson();
+		}
 		Vehicle vehicle = null; // agent.getVehicle().getVehicle();
 		Link link = network.getLinks().get(linkId);
 
