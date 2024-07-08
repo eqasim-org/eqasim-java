@@ -27,8 +27,6 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	static private final String INPUT_FILE = "inputFile";
 	static private final String WRITE_INTERVAL = "writeInterval";
 	static private final String WRITE_FLOW_INTERVAL = "writeFlowInterval";
-	
-	static private final String GENERATE_NETWORK_EVENTS = "generateNetworkEvents";
 
 	private double startTime = 0.0 * 3600.0;
 	private double endTime = 24.0 * 3600.0;
@@ -46,8 +44,6 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private String inputFile = null;
 	private int writeInterval = 0;
 	private int writeFlowInterval = 0;
-	
-	private boolean generateNetworkEvents = true;
 
 	public enum HandlerType {
 		Horizon, Interpolation
@@ -221,16 +217,6 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(WRITE_FLOW_INTERVAL)
 	public void setWriteFlowInterval(int val) {
 		this.writeFlowInterval = val;
-	}
-	
-	@StringGetter(GENERATE_NETWORK_EVENTS)
-	public boolean getNetworkEvents() {
-		return generateNetworkEvents;
-	}
-
-	@StringSetter(GENERATE_NETWORK_EVENTS)
-	public void setNetworkEvents(boolean val) {
-		this.generateNetworkEvents = val;
 	}
 
 	public static VDFConfigGroup getOrCreate(Config config) {
