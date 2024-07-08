@@ -2,6 +2,7 @@ package org.eqasim;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,6 +31,7 @@ import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
+import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
 import org.eqasim.core.tools.ExportActivitiesToShapefile;
@@ -323,6 +325,32 @@ public class TestSimulationPipeline {
 
 
         runMelunSimulation("melun_test/input/config_abstract_access.xml", "melun_test/output_abstract_access");
+    }
+
+    @Test
+    public void testVDF() throws CommandLine.ConfigurationException, MalformedURLException {
+        AdaptConfigForVDF.main(new String[] {
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_vdf.xml",
+                "--engine", "true",
+                // We need to do this for DRT as DRT drivers are not PlanAgents
+                "--config:eqasim:vdf_engine.generateNetworkEvents", "true"
+        });
+
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/drt_vehicles.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_"
+        });
+
+        AdaptConfigForDrt.main(new String[]{
+                "--input-config-path", "melun_test/input/config_vdf.xml",
+                "--output-config-path", "melun_test/input/config_vdf_drt.xml",
+                "--vehicles-paths", "melun_test/input/drt_vehicles.xml.gz"
+        });
+
+        runMelunSimulation("melun_test/input/config_vdf_drt.xml", "melun_test/output_vdf_drt");
     }
 
     @Test
