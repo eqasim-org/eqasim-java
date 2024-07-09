@@ -8,7 +8,7 @@ included in the (note yet determined) next version number.
 
 - Emissions tools have been moved to core package (from ile_de_france)
 - Switched to MATSim 2025 (PR)
-- Fixed a bug in VDF that prevented configuration from teh config file
+- Fixed a bug in VDF that prevented configuration from the config file
 
 **1.5.0**
 
