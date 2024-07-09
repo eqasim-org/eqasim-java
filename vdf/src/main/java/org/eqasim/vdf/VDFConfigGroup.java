@@ -2,6 +2,8 @@ package org.eqasim.vdf;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
