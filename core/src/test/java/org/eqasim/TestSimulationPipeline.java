@@ -197,7 +197,7 @@ public class TestSimulationPipeline {
         ExportNetworkRoutesToGeopackage.main(new String[]{
                 "--plans-path", "melun_test/output/output_plans.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
-                "--output-path", "melun_test/exports/networkRoutes.gpkg",
+                "--output-path", "melun_test/exports/network_routes.gpkg",
                 "--crs", "EPSG:2154"
         });
     }
