@@ -12,8 +12,7 @@ public class VDFEngineConfigGroup extends ReflectiveConfigGroup {
 
 	static private final String MODES = "modes";
 	static private final String GENERATE_NETWORK_EVENTS = "generateNetworkEvents";
-
-	private Set<String> modes = Set.of(TransportMode.car);
+	private Set<String> modes = Stream.of(TransportMode.car) .collect(Collectors.toSet());
 
 	private boolean generateNetworkEvents = true;
 

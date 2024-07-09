@@ -39,7 +39,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private double bprFactor = 0.15;
 	private double bprExponent = 4.0;
 
-	private Set<String> modes = Set.of(TransportMode.car, "car_passenger");
+	private Set<String> modes = Stream.of(TransportMode.car, "car_passenger") .collect(Collectors.toSet());
 
 	private double capacityFactor = 1.0;
 
