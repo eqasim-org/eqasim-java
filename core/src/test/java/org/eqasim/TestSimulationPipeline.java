@@ -32,11 +32,7 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.Adapt
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.ExportActivitiesToShapefile;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
-import org.eqasim.core.tools.ExportPopulationToCSV;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -196,6 +192,13 @@ public class TestSimulationPipeline {
         ExportPopulationToCSV.main(new String[]{
                 "--plans-path", "melun_test/input/population.xml.gz",
                 "--output-path", "melun_test/exports/persons.csv"
+        });
+
+        ExportNetworkRoutesToGeopackage.main(new String[]{
+                "--plans-path", "melun_test/output/output_plans.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-path", "melun_test/exports/networkRoutes.gpkg",
+                "--crs", "EPSG:2154"
         });
     }
     
