@@ -18,6 +18,15 @@ import org.matsim.utils.objectattributes.attributable.AttributesUtils;
 
 import com.google.inject.Inject;
 
+/**
+ * MultimodalLinkChooser implementation that takes
+ * into account parking link choice
+ * A parking network is created from the car network
+ * Agents look for parking in car network and choose
+ * a random parking link from closest parking links
+ * 
+ * @author akramelb
+ */
 public class ParkingLinkChooser implements MultimodalLinkChooser{
 
     private final Network parkingNetwork;

@@ -61,12 +61,12 @@
  
  import javax.annotation.Nullable;
  
- /**
-  * This wraps a "computer science" {@link LeastCostPathCalculator}, which routes from a node to another node, into something that routes from a {@link Facility} to another {@link Facility}, as we need
-  * in MATSim.
-  *
-  * @author thibautd, nagel
-  */
+/**
+ * If access and egress links are provided (during constraint phase), they will not be computed.
+ * MultimodalLinkChooser now takes into account person parameter to decide on link.
+ * 
+ * @author akramelb
+ */
  public final class NetworkRoutingInclAccessEgressModule implements RoutingModule {
  
      private static final Logger log = LogManager.getLogger(NetworkRoutingInclAccessEgressModule.class);

@@ -5,6 +5,11 @@ import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 
+/**
+ * Maps parking availability to links
+ * 
+ * @author akramelb
+ */
 public class ParkingAvailabilityData{
 	public static final String ATTRIBUTE = "parkingAvailability";
 

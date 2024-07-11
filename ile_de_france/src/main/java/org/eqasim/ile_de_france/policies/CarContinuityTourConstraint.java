@@ -30,6 +30,12 @@ import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
+/**
+ * Distance-based Car continuity constraint
+ * Checks if car is in a 800m radius when car is used as a mode
+ * 
+ * @author akramelb
+ */
 public class CarContinuityTourConstraint implements TourConstraint{
 
     private final MultimodalLinkChooser linkChooser;
@@ -205,7 +211,7 @@ public class CarContinuityTourConstraint implements TourConstraint{
                 for (PlanElement pe : planElement){
                     if (pe instanceof Leg){
                         Leg leg = (Leg) pe;
-                        if ((!leg.getMode().equals("pt:rail")) && (!leg.getMode().equals("walk"))){
+                        if ((!leg.getMode().equals("pt:rail")) && (!leg.getMode().equals("walk")) && (!leg.getMode().equals("car"))){
                             return false;
                         }
                     }
@@ -219,19 +225,16 @@ public class CarContinuityTourConstraint implements TourConstraint{
     public static class Factory implements TourConstraintFactory {
         private final HomeFinder homeFinder;
         private final MultimodalLinkChooser linkChooser;
-        private final TransitSchedule schedule;
+        private final QuadTree<TransitStopFacility> railStops;
 
         public Factory(HomeFinder homeFinder, MultimodalLinkChooser linkChooser, TransitSchedule schedule) {
             this.homeFinder = homeFinder;
             this.linkChooser = linkChooser;
-            this.schedule = schedule;
+            this.railStops = createRailStops(schedule);
         }
 
-
-        public TourConstraint createConstraint(Person person, List<DiscreteModeChoiceTrip> planTrips,
-                Collection<String> availableModes) {
-
-                List<TransitStopFacility> railStops = new LinkedList<>();
+        public QuadTree<TransitStopFacility> createRailStops(TransitSchedule schedule){
+            List<TransitStopFacility> railStops = new LinkedList<>();
 
                 for (TransitLine transitLine : schedule.getTransitLines().values()) {
                     for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
@@ -245,7 +248,14 @@ public class CarContinuityTourConstraint implements TourConstraint{
 
                 QuadTree<TransitStopFacility> railQT = QuadTrees.createQuadTree(railStops);
 
-                return new CarContinuityTourConstraint(homeFinder.getHomeLocationId(planTrips), linkChooser, railQT);
+                return railQT;
+        }
+
+
+        public TourConstraint createConstraint(Person person, List<DiscreteModeChoiceTrip> planTrips,
+                Collection<String> availableModes) {
+
+                return new CarContinuityTourConstraint(homeFinder.getHomeLocationId(planTrips), linkChooser, railStops);
         }
     }
 

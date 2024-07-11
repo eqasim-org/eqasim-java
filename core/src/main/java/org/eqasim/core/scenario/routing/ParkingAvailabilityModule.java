@@ -8,6 +8,11 @@ import org.matsim.core.controler.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
+/**
+ * Provider for Parking Availability Data
+ * 
+ * @author akramelb
+ */
 public class ParkingAvailabilityModule extends AbstractModule {
 
     @Provides

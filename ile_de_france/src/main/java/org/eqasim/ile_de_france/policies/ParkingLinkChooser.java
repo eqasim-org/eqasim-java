@@ -7,7 +7,15 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.facilities.Facility;
 import com.google.inject.Inject;
-
+/**
+ * MultimodalLinkChooser implementation that takes
+ * into account parking link choice
+ * A parking network is created from the car network
+ * Agents look for parking in car network and choose
+ * a random parking link from closest parking links
+ * 
+ * @author akramelb
+ */
 public class ParkingLinkChooser implements MultimodalLinkChooser{
 
     private final ParkingAssignment parkingAssignment;

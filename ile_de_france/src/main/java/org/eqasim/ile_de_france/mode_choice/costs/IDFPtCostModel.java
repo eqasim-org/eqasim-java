@@ -1,6 +1,7 @@
 package org.eqasim.ile_de_france.mode_choice.costs;
 
 import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
@@ -19,19 +20,27 @@ import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Inject;
 
+/**
+ * Added PT subsidy for agents working too far away
+ * 
+ * @author akramelb
+ */
+
 public class IDFPtCostModel implements CostModel {
 	private final IDFPersonPredictor personPredictor;
 	private final IDFSpatialPredictor spatialPredictor;
+	private final Map<Person, Double> homeWorkDistances;
 
 	// TODO: This should be hidden by some custom predictor
 	private final TransitSchedule transitSchedule;
 
 	@Inject
 	public IDFPtCostModel(IDFPersonPredictor personPredictor, IDFSpatialPredictor spatialPredictor,
-			TransitSchedule transitSchedule) {
+			TransitSchedule transitSchedule, Map<Person, Double> homeWorkDistances) {
 		this.personPredictor = personPredictor;
 		this.spatialPredictor = spatialPredictor;
 		this.transitSchedule = transitSchedule;
+		this.homeWorkDistances = homeWorkDistances;
 	}
 
 	private boolean isOnlyMetroOrBus(List<? extends PlanElement> elements) {
@@ -63,6 +72,12 @@ public class IDFPtCostModel implements CostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+		// 0) If agent works too far away, PT cost is subsidized
+		double homeWorkDistance_km = homeWorkDistances.get(person);
+		if (homeWorkDistance_km > 3000) {
+			return 0;
+		}
+
 		// I) If the person has a subscription, the price is zero!
 
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);

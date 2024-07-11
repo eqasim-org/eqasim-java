@@ -24,6 +24,11 @@ import org.matsim.utils.objectattributes.attributable.AttributesUtils;
 
 import com.google.inject.Inject;
 
+/**
+ * Handles parking assignment for agents
+ * 
+ * @author akramelb
+ */
 public class ParkingAssignment {
 
     private static final Logger log = LogManager.getLogger(NetworkUtils.class);

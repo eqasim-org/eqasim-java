@@ -15,6 +15,11 @@ import org.matsim.facilities.Facility;
 
 import com.google.inject.Inject;
  
+/**
+ * Deprecated as it's the same thing as the default implementation
+ * 
+ * @author akramelb
+ */
 public class MyMultiModalLinkChooser implements MultimodalLinkChooser {
 
     private final Network carNetwork;

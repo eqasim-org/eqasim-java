@@ -18,13 +18,19 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 
-public class CarPtTourConstraint implements TourConstraint{
+/**
+ * Non distance-based constraint for car_pt tours
+ * More restrictive version of CarContinuousTourConstraint
+ * 
+ * @author akramelb
+ */
+public class CarPTTourConstraint implements TourConstraint{
 
     private final Id<? extends BasicLocation> vehicleLocationId;
     private final MultimodalLinkChooser linkChooser;
     private final SwissRailRaptorData data;
 
-    public CarPtTourConstraint(Id<? extends BasicLocation> vehicleLocationId, MultimodalLinkChooser linkChooser, SwissRailRaptorData data) {
+    public CarPTTourConstraint(Id<? extends BasicLocation> vehicleLocationId, MultimodalLinkChooser linkChooser, SwissRailRaptorData data) {
         this.vehicleLocationId = vehicleLocationId;
         this.linkChooser = linkChooser;
         this.data = data;
@@ -179,7 +185,7 @@ public class CarPtTourConstraint implements TourConstraint{
                 Collection<String> availableModes) {
 
                     
-            return new CarPtTourConstraint(homeFinder.getHomeLocationId(planTrips), linkChooser, data);
+            return new CarPTTourConstraint(homeFinder.getHomeLocationId(planTrips), linkChooser, data);
         }
     }
 

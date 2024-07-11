@@ -18,6 +18,7 @@ import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.super_blocks.SuperBlocksModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
 import org.eqasim.ile_de_france.policies.CarPTRouterModule;
+import org.eqasim.ile_de_france.policies.HomeWorkDistanceModule;
 import org.eqasim.ile_de_france.policies.MyMultiModalLinkChooserModule;
 import org.eqasim.ile_de_france.policies.ParkingAvailabilityModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorModule;
@@ -103,21 +104,20 @@ public class RunSimulation {
 			controller.addOverridingModule(new CountsModule(cmd));
 		}
 
+		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+		eqasimConfig.setEstimator("car_pt", IDFModeChoiceModule.CAR_PT_ESTIMATOR_NAME);
+
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(true)) {
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 			dmcConfig.setSelector(SelectorModule.MAXIMUM);
-
-			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
 			eqasimConfig.setEstimator("car", "epsilon_" + IDFModeChoiceModule.CAR_ESTIMATOR_NAME);
 			eqasimConfig.setEstimator("pt", "epsilon_" + IDFModeChoiceModule.PT_ESTIMATOR_NAME);
 			eqasimConfig.setEstimator("bike", "epsilon_" + IDFModeChoiceModule.BIKE_ESTIMATOR_NAME);
 			eqasimConfig.setEstimator("walk", "epsilon_" + EqasimModeChoiceModule.WALK_ESTIMATOR_NAME);
 			eqasimConfig.setEstimator("car_passenger", "epsilon_" + IDFModeChoiceModule.PASSENGER_ESTIMATOR_NAME);
+			eqasimConfig.setEstimator("car_pt", "epsilon_" + IDFModeChoiceModule.CAR_PT_ESTIMATOR_NAME);
 		}
-
-		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-		eqasimConfig.setEstimator("car_pt", IDFModeChoiceModule.CAR_PT_ESTIMATOR_NAME);
 
 		if (useVdf) {
 			controller.addOverridingModule(new VDFModule());
@@ -153,6 +153,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new MyMultiModalLinkChooserModule());
 		controller.addOverridingModule(new ParkingAvailabilityModule());
 		controller.addOverridingModule(new CarPTRouterModule());
+		controller.addOverridingModule(new HomeWorkDistanceModule());
 		
 
 		controller.run();

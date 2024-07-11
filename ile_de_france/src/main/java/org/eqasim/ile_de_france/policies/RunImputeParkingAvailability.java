@@ -12,15 +12,23 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
-
+/**
+ * Imputes parking availability to links based on a shapefile
+ * containing areas where parking is not allowed
+ * 
+ * @author akramelb
+ */
 public class RunImputeParkingAvailability {
     public static final String ATTRIBUTE = "parkingAvailability";
 
 
-	static public void main(String[] args) throws ConfigurationException, IOException {
+	@SuppressWarnings("deprecation")
+    static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("no-parking-shp", "network-path", "output-path") //
 				.build();
@@ -31,7 +39,7 @@ public class RunImputeParkingAvailability {
 
         Network network = NetworkUtils.readNetwork(networkPath);
 
-       // CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation("EPSG:2154", "EPSG:4326");
+       CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation("EPSG:2154", "EPSG:4326");
 
 
         Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(noParking);
@@ -39,13 +47,12 @@ public class RunImputeParkingAvailability {
                     .map(simpleFeature -> (Geometry) simpleFeature.getDefaultGeometry())
                     .toList();
 
-        // for (Link link : network.getLinks().values()) {
-        for (Link link : Arrays.asList(network.getLinks().get(Id.createLinkId(471408)))) {
+        for (Link link : network.getLinks().values()) {
             link.getAttributes().putAttribute(ATTRIBUTE, true);
 
             Coord coord = link.getCoord();
-            //Coord transformedCoord = transformation.transform(coord);
-            Geometry geotoolsPoint = MGC.coord2Point(coord);
+            Coord transformedCoord = transformation.transform(coord);
+            Geometry geotoolsPoint = MGC.coord2Point(transformedCoord);
 
             for (Geometry geometry : geometries) {
                 if (geometry.covers(geotoolsPoint)) {

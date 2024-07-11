@@ -28,7 +28,7 @@ import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredic
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.policies.CarContinuityTourConstraint;
-import org.eqasim.ile_de_france.policies.CarPtTourConstraint;
+import org.eqasim.ile_de_france.policies.CarPTTourConstraint;
 import org.matsim.contribs.discrete_mode_choice.components.tour_finder.ActivityTourFinder;
 import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.ActivityTourFinderConfigGroup;
@@ -43,6 +43,12 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
+
+/**
+ * Added CarPTTourConstraint and CarContinuityTourConstraint and CarPTUtilityEstimator
+ * 
+ * @author akramelb
+ */
 
 public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -88,7 +94,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(INITIAL_WAITING_TIME_CONSTRAINT).to(InitialWaitingTimeConstraint.Factory.class);
 		bindTripConstraintFactory(SAME_LOCATION_WALK_CONSTRAINT).to(SameLocationWalkConstraint.Factory.class);
 
-		bindTourConstraintFactory(CAR_PT_CONSTRAINT).to(CarPtTourConstraint.Factory.class);
+		bindTourConstraintFactory(CAR_PT_CONSTRAINT).to(CarPTTourConstraint.Factory.class);
 		bindTourConstraintFactory(CAR_CONTINUITY_CONSTRAINT).to(CarContinuityTourConstraint.Factory.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
@@ -154,9 +160,9 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public CarPtTourConstraint.Factory provideCarPtTourConstraintFactory(
+	public CarPTTourConstraint.Factory provideCarPtTourConstraintFactory(
 		HomeFinder homeFinder, MultimodalLinkChooser linkChooser, SwissRailRaptor raptor) {
-		return new CarPtTourConstraint.Factory(homeFinder, linkChooser, raptor.getUnderlyingData());
+		return new CarPTTourConstraint.Factory(homeFinder, linkChooser, raptor.getUnderlyingData());
 	}
 
 	@Provides

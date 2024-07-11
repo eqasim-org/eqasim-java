@@ -21,6 +21,14 @@ import org.matsim.utils.objectattributes.attributable.Attributes;
 
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 
+/**
+ * Car-PT mode router
+ * Access direction corresponding to Car-PT
+ * Egress direction corresponding to PT-Car
+ * 
+ * @author akramelb
+ */
+
 public class CarPTRouter implements RoutingModule{
 
     private final RoutingModule carRoutingModule;

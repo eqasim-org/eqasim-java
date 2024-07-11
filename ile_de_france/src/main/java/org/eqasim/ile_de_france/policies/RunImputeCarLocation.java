@@ -11,6 +11,15 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
 
+/**
+ * Imputes car location for agents
+ * 50% of agents have their car at home
+ * 50% of agents have their car elsewhere
+ * Used to decide whether first trip can be a car trip
+ * or not
+ * 
+ * @author akramelb
+ */
 public class RunImputeCarLocation {
     public static void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
