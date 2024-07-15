@@ -21,7 +21,7 @@ public class ParkingAvailabilityData{
 	}
 
 	public boolean getParkingAvailability(Id<Link> linkId) {
-		return parkingAvailability.computeIfAbsent(linkId, id -> false).booleanValue();
+		return parkingAvailability.computeIfAbsent(linkId, id -> true).booleanValue();
 	}
 
 	static public ParkingAvailabilityData loadFromAttributes(Network network) {
@@ -32,6 +32,9 @@ public class ParkingAvailabilityData{
 
 			if (value != null) {
 				parkingAvailability.put(link.getId(), value);
+			}
+			else {
+				parkingAvailability.put(link.getId(), true);
 			}
 		}
 
