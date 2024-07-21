@@ -15,6 +15,7 @@ import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
+import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -81,10 +82,10 @@ public class TestSimulationPipeline {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
-        if(inputPlansFile != null) {
+        if (inputPlansFile != null) {
             config.plans().setInputFile(inputPlansFile);
         }
-        if(lastIteration != null) {
+        if (lastIteration != null) {
             config.controller().setLastIteration(lastIteration);
         }
         eqasimConfigurator.addOptionalConfigGroups(config);
@@ -200,15 +201,22 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/persons.csv"
         });
     }
-    
+
     private void runCutter() throws Exception {
-    	RunScenarioCutter.main(new String[] {
-    		"--config-path", "melun_test/input/config.xml",
-    		"--events-path", "melun_test/output/output_events.xml.gz",
-            "--output-path", "melun_test/cutter",
-            "--prefix", "center_",
-            "--extent-path", "melun_test/input/center.shp"
-    	});
+        RunScenarioCutter.main(new String[]{
+                "--config-path", "melun_test/input/config.xml",
+                "--events-path", "melun_test/output/output_events.xml.gz",
+                "--output-path", "melun_test/cutter",
+                "--prefix", "center_",
+                "--extent-path", "melun_test/input/center.shp"
+        });
+        RunScenarioCutterV2.main(new String[]{
+                "--config-path", "melun_test/input/config.xml",
+                "--events-path", "melun_test/output/output_events.xml.gz",
+                "--output-path", "melun_test/cutter_v2",
+                "--prefix", "center_",
+                "--extent-path", "melun_test/input/center.shp"
+        });
     }
 
     @Test
@@ -329,7 +337,7 @@ public class TestSimulationPipeline {
 
     @Test
     public void testVDF() throws CommandLine.ConfigurationException, MalformedURLException {
-        AdaptConfigForVDF.main(new String[] {
+        AdaptConfigForVDF.main(new String[]{
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_vdf.xml",
                 "--engine", "true",
@@ -364,7 +372,7 @@ public class TestSimulationPipeline {
 
 
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
-        RunStandaloneModeChoice.main(new String[] {
+        RunStandaloneModeChoice.main(new String[]{
                 "--config-path", "melun_test/input/config.xml",
                 "--recorded-travel-times-path", "melun_test/output/eqasim_travel_times.bin",
                 "--write-input-csv-trips", "true",
