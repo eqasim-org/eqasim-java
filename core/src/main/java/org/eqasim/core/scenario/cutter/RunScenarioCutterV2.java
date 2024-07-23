@@ -27,6 +27,7 @@ public class RunScenarioCutterV2 {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path", "extent-path") //
 				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
+				.allowOptions("skip-routing")
 				.build();
 
 		RunScenarioCutter.main(args);
