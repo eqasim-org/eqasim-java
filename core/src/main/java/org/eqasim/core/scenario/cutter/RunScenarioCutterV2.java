@@ -54,7 +54,9 @@ public class RunScenarioCutterV2 {
 		Optional<String> extentValue = cmd.getOption("extent-value");
 		ScenarioExtent extent = new ShapeScenarioExtent.Builder(extentPath, extentAttribute, extentValue).build();
 
-		new MatsimNetworkReader(scenario.getNetwork()).readFile(Paths.get(cmd.getOptionStrict("config-path"), "..", scenario.getConfig().network().getInputFile()).toString());
+		String networkPath = Paths.get(cmd.getOptionStrict("config-path"), "..", scenario.getConfig().network().getInputFile()).toAbsolutePath().normalize().toString();
+
+		new MatsimNetworkReader(scenario.getNetwork()).readFile(networkPath);
 		scenario.getNetwork().getLinks().values()
 				.stream().filter(link -> extent.isInside(link.getFromNode().getCoord()) && extent.isInside(link.getFromNode().getCoord()))
 				.forEach(link -> {
