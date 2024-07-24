@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.eqasim.ile_de_france.PolicyParameters;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
@@ -72,10 +73,12 @@ public class IDFPtCostModel implements CostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		// 0) If agent works too far away, PT cost is subsidized
-		double homeWorkDistance_km = homeWorkDistances.get(person);
-		if (homeWorkDistance_km > 3000) {
-			return 0;
+		if (PolicyParameters.usePtDiscount){
+			// 0) If agent works too far away, PT cost is subsidized
+			double homeWorkDistance_km = homeWorkDistances.get(person);
+			if (homeWorkDistance_km > 3000) {
+				return 0;
+			}
 		}
 
 		// I) If the person has a subscription, the price is zero!
