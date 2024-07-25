@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List;
+import java.util.Arrays;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.population.trips.ModeAwareTripProcessor;
@@ -136,7 +138,10 @@ public class PopulationCutterModule extends AbstractModule {
 
 		if (transitConfig.isUseTransit()) {
 			// TODO: This may not only be "pt"!
-			tripProcessor.setProcessor(TransportMode.pt, transitTripProcessor);
+			List<String> transitModes = Arrays.asList("pt", "bus", "rail", "subway", "ferry", "taxi", "tram");
+			for (String mode : transitModes) {
+				tripProcessor.setProcessor(mode, transitTripProcessor);
+			}
 		}
 
 		return tripProcessor;
