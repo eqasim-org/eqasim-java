@@ -1,8 +1,13 @@
 package org.eqasim.core.simulation.vdf;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.vdf.handlers.VDFHorizonHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFInterpolationHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
@@ -64,9 +69,10 @@ public class VDFModule extends AbstractModule {
 	@Provides
 	@Singleton
 	public VDFTravelTime provideVDFTravelTime(VDFConfigGroup config, VDFScope scope, Network network,
-			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig) {
+			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig) throws IOException {
+		ScenarioExtent updateExtent = config.getUpdateExtentFile() == null ? null : new ShapeScenarioExtent.Builder(new File(ConfigGroup.getInputFileURL(getConfig().getContext(), config.getUpdateExtentFile()).getPath()), Optional.empty(), Optional.empty()).build();
 		return new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
-				eqasimConfig.getSampleSize(), network, vdf, eqasimConfig.getCrossingPenalty());
+				eqasimConfig.getSampleSize(), network, vdf, eqasimConfig.getCrossingPenalty(), updateExtent);
 	}
 
 	@Provides
