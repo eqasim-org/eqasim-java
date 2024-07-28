@@ -2,12 +2,14 @@ package org.eqasim.core.scenario.cutter;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.network.io.NetworkWriter;
@@ -33,13 +35,16 @@ public class RunScenarioCutterV2 {
 		RunScenarioCutter.main(args);
 
 		String prefix = cmd.getOption("prefix").orElse("");
-
+		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
 		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+		eqasimConfigurator.configureScenario(scenario);
 		new PopulationReader(scenario).readFile(Paths.get(cmd.getOptionStrict("output-path"), prefix+"population.xml.gz").toString());
 		IdSet<Person> personIds = new IdSet<>(Person.class);
 		scenario.getPopulation().getPersons().values().stream().map(Person::getId).forEach(personIds::add);
 
-		scenario = ScenarioUtils.createScenario(ConfigUtils.loadConfig(cmd.getOptionStrict("config-path")));
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), eqasimConfigurator.getConfigGroups());
+		cmd.applyConfiguration(config);
+		scenario = ScenarioUtils.createScenario(config);
 		new PopulationReader(scenario).readFile(scenario.getConfig().plans().getInputFileURL(scenario.getConfig().getContext()).getPath());
 
 		IdSet<Person> personsToRemove = new IdSet<>(Person.class);
