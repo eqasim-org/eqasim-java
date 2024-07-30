@@ -44,19 +44,19 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("counts-path", "use-epsilon", "use-vdf", "use-vdf-engine", "vdf-generate-network-events",
-						"line-switch-utility", "cost-model", "superblocks-path", "use-pt-discount") //
+						"line-switch-utility", "cost-model", "superblocks-path", "use-pt-discount", "car-pt-utility-offset") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX, "raptor") //
 				.build();
 
 		boolean useVdf = cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false);
 		boolean usePtDiscount = cmd.getOption("use-pt-discount").map(Boolean::parseBoolean).orElse(false);
+		double carPtUtilityOffset = cmd.getOption("car-pt-utility-offset").map(Double::parseDouble).orElse(0.0);
 
 		IDFConfigurator configurator = new IDFConfigurator();
 
-		if (usePtDiscount){
-			PolicyParameters.usePtDiscount = usePtDiscount;
-		}
+		PolicyParameters.usePtDiscount = usePtDiscount;
+		PolicyParameters.carPtUtilityOffset = carPtUtilityOffset;
 
 		if (useVdf) {
 			configurator.getQSimModules().removeIf(m -> m instanceof EqasimTrafficQSimModule);

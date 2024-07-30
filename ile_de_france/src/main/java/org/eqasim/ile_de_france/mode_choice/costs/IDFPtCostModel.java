@@ -75,8 +75,8 @@ public class IDFPtCostModel implements CostModel {
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		if (PolicyParameters.usePtDiscount){
 			// 0) If agent works too far away, PT cost is subsidized
-			double homeWorkDistance_km = homeWorkDistances.get(person);
-			if (homeWorkDistance_km > 3000) {
+			double homeWorkDistance_m = homeWorkDistances.get(person);
+			if (homeWorkDistance_m > 3000) {
 				return 0;
 			}
 		}

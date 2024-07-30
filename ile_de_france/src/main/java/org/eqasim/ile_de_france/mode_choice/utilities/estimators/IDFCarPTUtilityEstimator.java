@@ -5,6 +5,7 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
+import org.eqasim.ile_de_france.PolicyParameters;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -27,6 +28,7 @@ public class IDFCarPTUtilityEstimator extends CarUtilityEstimator{
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         double utility = 0.0;
+        utility += PolicyParameters.carPtUtilityOffset;
 
         final String direction = trip.getTripAttributes().getAttribute("car_pt").toString();
 
