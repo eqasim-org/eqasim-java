@@ -11,6 +11,7 @@ import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.PassengerConstraint;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
+import org.eqasim.core.simulation.mode_choice.filters.FullOutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
 import org.eqasim.core.simulation.mode_choice.utilities.ModalUtilityEstimator;
@@ -51,6 +52,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String DRT_SERVICE_AREA_CONSTRAINT = "DrtServiceAreaConstraint";
 	public static final String TOUR_LENGTH_FILTER_NAME = "TourLengthFilter";
 	public static final String OUTSIDE_FILTER_NAME = "OutsideFilter";
+	public static final String FULL_OUTSIDE_FILTER_NAME = "FullOutsideFilter";
 
 	public static final String UTILITY_ESTIMATOR_NAME = "EqasimUtilityEstimator";
 
@@ -75,6 +77,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
+		bindTourFilter(FULL_OUTSIDE_FILTER_NAME).to(FullOutsideFilter.class);
 
 		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModalUtilityEstimator.class);
 

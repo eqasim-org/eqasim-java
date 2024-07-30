@@ -2,6 +2,7 @@ package org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_selecto
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
@@ -24,6 +25,10 @@ public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelecto
     private final Pattern skippedFacilitiesIdPattern;
 
     public ClosestAccessEgressStopSelector(ClosestAccessEgressStopSelectorParameterSet config, Network drtNetwork, TransitSchedule schedule) {
+        this(config, drtNetwork, schedule, null);
+    }
+
+    public ClosestAccessEgressStopSelector(ClosestAccessEgressStopSelectorParameterSet config, Network drtNetwork, TransitSchedule schedule, ScenarioExtent serviceAreaExtent) {
         logger.info("Starting initialization");
         if(config.skipAccessAndEgressAtFacilities.length() > 0) {
             this.skippedFacilitiesIdPattern = Pattern.compile(config.skipAccessAndEgressAtFacilities);
@@ -44,6 +49,10 @@ public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelecto
                 if (accessEgressTransitStopModes.size() == 0 || accessEgressTransitStopModes.contains(transitRoute.getTransportMode())) {
                     for (TransitRouteStop transitRouteStop : transitRoute.getStops()) {
                         TransitStopFacility transitStopFacility = transitRouteStop.getStopFacility();
+                        if(serviceAreaExtent != null && !serviceAreaExtent.isInside(transitStopFacility.getCoord())) {
+                            logger.warn("skipping this stop because it's outside of the service area: " + transitStopFacility.getName());
+                            continue;
+                        }
                         if (!processedFacilities.contains(transitStopFacility.getId())) {
                             processedFacilities.add(transitStopFacility.getId());
                             Facility interactionFacility = FacilitiesUtils.wrapLink(NetworkUtils.getNearestLink(drtNetwork, transitStopFacility.getCoord()));
@@ -68,7 +77,7 @@ public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelecto
     }
 
     private boolean skipFacility(Facility facility) {
-        if(facility instanceof ActivityFacilityImpl activityFacility) {
+        if(skippedFacilitiesIdPattern != null && facility instanceof ActivityFacilityImpl activityFacility) {
             return skippedFacilitiesIdPattern.matcher(activityFacility.getId().toString()).matches();
         }
         return false;
