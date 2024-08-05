@@ -8,6 +8,7 @@ included in the (note yet determined) next version number.
 
 - Emissions tools have been moved to core package (from ile_de_france)
 - Switched to MATSim 2025 (PR)
+- In switzerland one can now switch off vehicles waiting to enter traffic
 
 **1.5.0**
 
