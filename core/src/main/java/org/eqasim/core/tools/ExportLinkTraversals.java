@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.eqasim.core.analysis.legs.LegListenerItem;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.matsim.api.core.v01.Coord;
@@ -45,7 +47,7 @@ public class ExportLinkTraversals {
 	static public void main(String[] args) throws ConfigurationException, MalformedURLException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("events-path", "output-path") //
-				.allowOptions("network-path", "extent-path") //
+				.allowOptions("network-path", "extent-path", "modes") //
 				.build();
 
 		ScenarioExtent extent = null;
@@ -61,10 +63,16 @@ public class ExportLinkTraversals {
 					Optional.empty()).build();
 		}
 
+		Set<String> modes = new HashSet<>();
+		if (cmd.hasOption("modes")) {
+			modes = Arrays.asList(cmd.getOptionStrict("modes").split(",")).stream().map(String::trim)
+					.collect(Collectors.toSet());
+		}
+
 		BufferedWriter writer = IOUtils.getBufferedWriter(cmd.getOptionStrict("output-path"));
 
 		EventsManager eventsManager = EventsUtils.createEventsManager();
-		eventsManager.addHandler(new TraversalExporter(writer, extent, network));
+		eventsManager.addHandler(new TraversalExporter(writer, extent, network, modes));
 		new MatsimEventsReader(eventsManager).readFile(cmd.getOptionStrict("events-path"));
 
 		writer.close();
@@ -80,15 +88,18 @@ public class ExportLinkTraversals {
 		private final IdMap<Person, LinkEnterEvent> enterEvents = new IdMap<>(Person.class);
 		private final Map<Id<Person>, Integer> tripIndex = new HashMap<>();
 		private final Map<Id<Person>, Integer> legIndex = new HashMap<>();
+		private final Set<String> modes;
 
-		TraversalExporter(BufferedWriter writer, ScenarioExtent extent, Network network) {
+		TraversalExporter(BufferedWriter writer, ScenarioExtent extent, Network network, Set<String> modes) {
 			this.writer = writer;
 			this.extent = extent;
 			this.network = network;
+			this.modes = modes;
 
 			try {
 				writer.write(String.join(";", Arrays.asList( //
-						"person_id", "vehicle_id", "link_id", "enter_time", "leave_time", "trip_index", "leg_index")) + "\n");
+						"person_id", "vehicle_id", "link_id", "enter_time", "leave_time", "trip_index", "leg_index"))
+						+ "\n");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -96,7 +107,7 @@ public class ExportLinkTraversals {
 
 		@Override
 		public void handleEvent(VehicleEntersTrafficEvent event) {
-			if (event.getNetworkMode().equals("car")) {
+			if (checkMode(event.getNetworkMode())) {
 				drivers.put(event.getVehicleId(), event.getPersonId());
 			}
 		}
@@ -127,7 +138,7 @@ public class ExportLinkTraversals {
 			}
 		}
 
-		private void writeTraversal(Id<Person> personId,  LinkEnterEvent enterEvent, LinkLeaveEvent leaveEvent) {
+		private void writeTraversal(Id<Person> personId, LinkEnterEvent enterEvent, LinkLeaveEvent leaveEvent) {
 			final Id<Vehicle> vehicleId;
 			final Id<Link> linkId;
 
@@ -153,7 +164,7 @@ public class ExportLinkTraversals {
 					return; // ignore this one as it doesn't touch the requested extent
 				}
 			}
-			
+
 			int localTripIndex = tripIndex.getOrDefault(personId, 0);
 			int localLegIndex = legIndex.getOrDefault(personId, 0);
 
@@ -194,6 +205,10 @@ public class ExportLinkTraversals {
 
 			tripIndex.put(event.getPersonId(), personTripIndex);
 			legIndex.put(event.getPersonId(), localLegIndex);
+		}
+
+		private boolean checkMode(String mode) {
+			return modes.isEmpty() || modes.contains(mode);
 		}
 	}
 }
