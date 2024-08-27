@@ -1,7 +1,7 @@
-package org.eqasim.vdf;
+package org.eqasim.core.simulation.vdf;
 
-import org.eqasim.vdf.travel_time.VDFLinkSpeedCalculator;
-import org.eqasim.vdf.travel_time.VDFTravelTime;
+import org.eqasim.core.simulation.vdf.travel_time.VDFLinkSpeedCalculator;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.api.experimental.events.EventsManager;

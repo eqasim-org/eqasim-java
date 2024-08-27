@@ -24,6 +24,11 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.Def
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.termination.mode_share.ModeShareModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFModule;
+import org.eqasim.core.simulation.vdf.VDFQSimModule;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -95,6 +100,13 @@ public class EqasimConfigurator {
                         new TransitWithAbstractAccessModeChoiceModule()),
                 List.of(new TransitWithAbstractAccessQSimModule()),
                 Collections.singletonList((controller, components) -> TransitWithAbstractAccessQSimModule.configure(components, controller.getConfig())));
+        this.registerOptionalConfigGroup(new VDFConfigGroup(),
+                List.of(new VDFModule()),
+                List.of(new VDFQSimModule()));
+        this.registerOptionalConfigGroup(new VDFEngineConfigGroup(),
+                List.of(new VDFEngineModule()),
+                Collections.emptyList(),
+                Collections.singletonList((controller, components) -> components.addNamedComponent(VDFEngineModule.COMPONENT_NAME)));
     }
 
     public ConfigGroup[] getConfigGroups() {

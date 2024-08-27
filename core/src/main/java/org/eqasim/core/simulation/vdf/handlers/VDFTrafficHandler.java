@@ -1,9 +1,9 @@
-package org.eqasim.vdf.handlers;
+package org.eqasim.core.simulation.vdf.handlers;
 
 import java.util.List;
 
-import org.eqasim.vdf.io.VDFReaderInterface;
-import org.eqasim.vdf.io.VDFWriterInterface;
+import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
+import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;

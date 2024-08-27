@@ -1,6 +1,7 @@
-package org.eqasim.vdf.engine;
+package org.eqasim.core.simulation.vdf.engine;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.matsim.api.core.v01.TransportMode;
@@ -13,7 +14,7 @@ public class VDFEngineConfigGroup extends ReflectiveConfigGroup {
 	static private final String MODES = "modes";
 	static private final String GENERATE_NETWORK_EVENTS = "generateNetworkEvents";
 
-	private Set<String> modes = Set.of(TransportMode.car);
+	private Set<String> modes = new HashSet<>(Set.of(TransportMode.car));
 
 	private boolean generateNetworkEvents = true;
 

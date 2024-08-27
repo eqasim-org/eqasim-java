@@ -1,7 +1,7 @@
-package org.eqasim.vdf.engine;
+package org.eqasim.core.simulation.vdf.engine;
 
-import org.eqasim.vdf.handlers.VDFTrafficHandler;
-import org.eqasim.vdf.travel_time.VDFTravelTime;
+import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;

@@ -1,4 +1,4 @@
-package org.eqasim.vdf;
+package org.eqasim.core.simulation.vdf;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,9 +7,9 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eqasim.vdf.analysis.FlowWriter;
-import org.eqasim.vdf.handlers.VDFTrafficHandler;
-import org.eqasim.vdf.travel_time.VDFTravelTime;
+import org.eqasim.core.simulation.vdf.analysis.FlowWriter;
+import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;

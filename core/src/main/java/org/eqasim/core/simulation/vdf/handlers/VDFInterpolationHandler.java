@@ -1,4 +1,4 @@
-package org.eqasim.vdf.handlers;
+package org.eqasim.core.simulation.vdf.handlers;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.eqasim.vdf.VDFScope;
-import org.eqasim.vdf.io.VDFReaderInterface;
-import org.eqasim.vdf.io.VDFWriterInterface;
+import org.eqasim.core.simulation.vdf.VDFScope;
+import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
+import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
