@@ -11,6 +11,8 @@ import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
+import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.modes.feeder_drt.MultiModeFeederDrtModule;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
@@ -107,6 +109,7 @@ public class EqasimConfigurator {
                 List.of(new VDFEngineModule()),
                 Collections.emptyList(),
                 Collections.singletonList((controller, components) -> components.addNamedComponent(VDFEngineModule.COMPONENT_NAME)));
+        this.registerOptionalConfigGroup(new LegTimeConstraintConfigGroup(), Collections.singleton(new LegTimeConstraintModule()));
     }
 
     public ConfigGroup[] getConfigGroups() {
