@@ -2,7 +2,6 @@ package org.eqasim;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
@@ -331,7 +330,7 @@ public class TestSimulationPipeline {
     }
 
     @Test
-    public void testVDF() throws CommandLine.ConfigurationException, MalformedURLException {
+    public void testVDF() throws CommandLine.ConfigurationException, IOException {
         AdaptConfigForVDF.main(new String[] {
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_vdf.xml",
