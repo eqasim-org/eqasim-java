@@ -41,7 +41,7 @@ import com.google.inject.Injector;
 
 public class RunScenarioCutter {
 	static public void main(String[] args)
-			throws ConfigurationException, MalformedURLException, IOException, InterruptedException {
+			throws ConfigurationException, IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path", "extent-path") //
 				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
