@@ -45,6 +45,7 @@ public class RunScenarioCutter {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path", "extent-path") //
 				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
+				.allowOptions("skip-routing") //
 				.build();
 
 		// Load some configuration
@@ -160,11 +161,14 @@ public class RunScenarioCutter {
 				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
 
-		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);
-		router.run(scenario.getPopulation());
+		boolean skipRouting = Boolean.parseBoolean(cmd.getOption("skip-routing").orElse("false"));
 
-		// Check validity after cutting
-		scenarioValidator.checkScenario(scenario);
+		if(!skipRouting) {
+			PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);
+			router.run(scenario.getPopulation());
+			// Check validity after cutting
+			scenarioValidator.checkScenario(scenario);
+		}
 
 		// Write scenario
 		ScenarioWriter scenarioWriter = new ScenarioWriter(config, scenario, prefix);
