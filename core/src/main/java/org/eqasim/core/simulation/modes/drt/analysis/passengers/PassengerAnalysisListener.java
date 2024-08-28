@@ -35,6 +35,7 @@ public class PassengerAnalysisListener implements PersonDepartureEventHandler, P
 
 				ride.personId = event.getPersonId();
 				ride.mode = event.getLegMode();
+				ride.mainMode = event.getRoutingMode();
 
 				ride.departureTime = event.getTime();
 				ride.originLink = linkFinder.getLink(event.getLinkId());
