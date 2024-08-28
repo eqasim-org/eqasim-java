@@ -77,7 +77,7 @@ public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelecto
     }
 
     private boolean skipFacility(Facility facility) {
-        if(facility instanceof ActivityFacilityImpl activityFacility) {
+        if(this.skippedFacilitiesIdPattern != null && facility instanceof ActivityFacilityImpl activityFacility) {
             return skippedFacilitiesIdPattern.matcher(activityFacility.getId().toString()).matches();
         }
         return false;
