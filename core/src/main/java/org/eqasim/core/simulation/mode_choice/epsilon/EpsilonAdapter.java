@@ -24,4 +24,8 @@ public class EpsilonAdapter implements UtilityEstimator {
 		utility += epsilonProvider.getEpsilon(person.getId(), trip.getIndex(), mode);
 		return utility;
 	}
+
+	public UtilityEstimator getDelegate() {
+		return this.delegate;
+	}
 }
