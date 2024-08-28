@@ -26,6 +26,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 
 	static private final String HANDLER = "handler";
 	static private final String INPUT_FILE = "inputFile";
+	static private final String UPDATE_AREA_SHAPEFILE = "updateAreaShapefile";
 	static private final String WRITE_INTERVAL = "writeInterval";
 	static private final String WRITE_FLOW_INTERVAL = "writeFlowInterval";
 
@@ -43,6 +44,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private double capacityFactor = 1.0;
 
 	private String inputFile = null;
+	private String updateAreaShapefile = null;
 	private int writeInterval = 0;
 	private int writeFlowInterval = 0;
 
@@ -198,6 +200,16 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(INPUT_FILE)
 	public void setInputFile(String inputFile) {
 		this.inputFile = inputFile;
+	}
+
+	@StringGetter(UPDATE_AREA_SHAPEFILE)
+	public String getUpdateAreaShapefile() {
+		return updateAreaShapefile;
+	}
+
+	@StringSetter(UPDATE_AREA_SHAPEFILE)
+	public void setUpdateAreaShapefile(String updateAreaShapefile) {
+		this.updateAreaShapefile = updateAreaShapefile;
 	}
 
 	@StringGetter(WRITE_INTERVAL)
