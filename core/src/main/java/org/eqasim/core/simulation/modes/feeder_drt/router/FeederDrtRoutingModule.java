@@ -84,7 +84,7 @@ public class FeederDrtRoutingModule implements RoutingModule {
 
         // Compute the PT part of the route towards the egress (or to) facility
         List<PlanElement> ptRoute = new LinkedList<>(transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, egressFacility, accessTime, person)));
-
+        ptRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN));
 
         // It's ok to compare reference here, we want to check if we assigned toFacility to egressFacility above
         if(egressFacility != toFacility) {
@@ -103,8 +103,8 @@ public class FeederDrtRoutingModule implements RoutingModule {
             if(egressFacility != toFacility) {
                 // In this case, the egressDrtRoute is null because the attempt to compute one wasn't successful, so we need to compute a pt route from the access (or from facility) to the to facility
                 ptRoute = new LinkedList<>(transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, toFacility, accessTime, person)));
+                ptRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN));
             }
-            ptRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN));
             intermodalRoute.addAll(ptRoute);
         } else {
             // Here we have a pt route and an egress drt route, we need to propriately concatenate them in the overall route
