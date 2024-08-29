@@ -7,6 +7,7 @@ import org.matsim.vehicles.Vehicle;
 
 public class PassengerRideItem {
     public String mode;
+    public String mainMode;
 
     public Id<Person> personId;
     public Id<Vehicle> vehicleId;

@@ -73,7 +73,7 @@ public class AdaptConfigForFeederDrt {
 
             ClosestAccessEgressStopSelectorParameterSet closestAccessEgressStopSelectorParameterSet = new ClosestAccessEgressStopSelectorParameterSet();
             closestAccessEgressStopSelectorParameterSet.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
-            closestAccessEgressStopSelectorParameterSet.skipAccessAndEgressAtFacilities = "outside";
+            closestAccessEgressStopSelectorParameterSet.skipAccessAndEgressAtFacilities = "^outside*+";
 
             AccessEgressStopSelectorParams accessEgressStopSelectorParams = new AccessEgressStopSelectorParams();
             accessEgressStopSelectorParams.addParameterSet(closestAccessEgressStopSelectorParameterSet);

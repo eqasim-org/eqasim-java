@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.modes.feeder_drt.router;
 
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_selector.AccessEgressStopsSelector;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.router.DefaultRoutingRequest;
@@ -12,9 +13,9 @@ import java.util.*;
 
 public class FeederDrtRoutingModule implements RoutingModule {
 
-    public enum FeederDrtTripSegmentType {MAIN, DRT};
+    public enum FeederDrtTripSegmentType {MAIN, DRT}
 
-    public static final String STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR = "previousSegmentType";
+    public static final String CURRENT_SEGMENT_TYPE_ATTR = "currentSegmentType";
 
     private final RoutingModule drtRoutingModule;
     private final RoutingModule transitRoutingModule;
@@ -23,14 +24,17 @@ public class FeederDrtRoutingModule implements RoutingModule {
 
     private final String mode;
     private final AccessEgressStopsSelector accessEgressStopsSelector;
+    private final ScenarioExtent drtServiceAreaExtent;
 
     public FeederDrtRoutingModule(String mode,RoutingModule feederRoutingModule, RoutingModule transitRoutingModule,
-                                  PopulationFactory populationFactory, AccessEgressStopsSelector accessEgressStopsSelector) {
+                                  PopulationFactory populationFactory, AccessEgressStopsSelector accessEgressStopsSelector,
+                                  ScenarioExtent drtServiceAreaExtent) {
         this.mode = mode;
         this.drtRoutingModule = feederRoutingModule;
         this.transitRoutingModule = transitRoutingModule;
         this.populationFactory = populationFactory;
         this.accessEgressStopsSelector = accessEgressStopsSelector;
+        this.drtServiceAreaExtent = drtServiceAreaExtent;
     }
 
     @Override
@@ -46,59 +50,70 @@ public class FeederDrtRoutingModule implements RoutingModule {
         Facility egressFacility = this.accessEgressStopsSelector.getEgressFacility(routingRequest);
 
         List<PlanElement> intermodalRoute = new LinkedList<>();
-        // Computing the access DRT route
-        List<? extends PlanElement> drtRoute = null;
+        List<? extends PlanElement> accessDrtRoute = null;
+        List<? extends PlanElement> egressDrtRoute = null;
 
-        if (accessFacility != null) {
-            drtRoute = drtRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(fromFacility, accessFacility, departureTime, person));
+        // Computing the access DRT route if it's possible
+        if (accessFacility != null && (drtServiceAreaExtent == null || drtServiceAreaExtent.isInside(fromFacility.getCoord()))) {
+            accessDrtRoute = drtRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(fromFacility, accessFacility, departureTime, person));
         }
         double accessTime = departureTime;
-        if (drtRoute == null) {
+        if (accessDrtRoute == null) {
             // if no DRT route, next part of the trip starts from the origin
             accessFacility = fromFacility;
         } else {
             //Otherwise we have already a first part of the trip
-            intermodalRoute.addAll(drtRoute);
+            intermodalRoute.addAll(accessDrtRoute);
             for (PlanElement element : intermodalRoute) {
                 if (element instanceof Leg leg) {
                     accessTime = Math.max(accessTime, leg.getDepartureTime().seconds());
                     accessTime += leg.getTravelTime().seconds();
+                    leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.DRT);
                 }
             }
             Activity accessInteractionActivity = populationFactory.createActivityFromLinkId(this.mode + " interaction", accessFacility.getLinkId());
             accessInteractionActivity.setMaximumDuration(0);
-            accessInteractionActivity.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.DRT);
             intermodalRoute.add(accessInteractionActivity);
         }
 
-        // Compute the PT part of the route
+
+        // We have to check the existence of the egress facility here, the pt router will not support a null value
+        if (egressFacility == null || (drtServiceAreaExtent != null && !drtServiceAreaExtent.isInside(toFacility.getCoord()))) {
+            egressFacility = toFacility;
+        }
+
+        // Compute the PT part of the route towards the egress (or to) facility
         List<PlanElement> ptRoute = new LinkedList<>(transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, egressFacility, accessTime, person)));
-        double egressTime = accessTime;
+        ptRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN));
 
-        for (PlanElement element : ptRoute) {
-            if (element instanceof Leg leg) {
-                egressTime = Math.max(egressTime, leg.getDepartureTime().seconds());
-                egressTime += leg.getTravelTime().seconds();
+        // It's ok to compare reference here, we want to check if we assigned toFacility to egressFacility above
+        if(egressFacility != toFacility) {
+            double egressTime = accessTime;
+            for (PlanElement element : ptRoute) {
+                if (element instanceof Leg leg) {
+                    egressTime = Math.max(egressTime, leg.getDepartureTime().seconds());
+                    egressTime += leg.getTravelTime().seconds();
+                }
             }
+            egressDrtRoute = drtRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(egressFacility, toFacility, egressTime, person));
         }
 
-        if (egressFacility != null) {
-            drtRoute = drtRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(egressFacility, toFacility, egressTime, person));
+        // egressDrtRoute is assigned only in the above if, but it can be null without entering the if block, so we need to do this here, If no valid DRT route is found, we recompute a PT route from the access facility to the trip destination
+        if (egressDrtRoute == null) {
+            if(egressFacility != toFacility) {
+                // In this case, the egressDrtRoute is null because the attempt to compute one wasn't successful, so we need to compute a pt route from the access (or from facility) to the to facility
+                ptRoute = new LinkedList<>(transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, toFacility, accessTime, person)));
+                ptRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN));
+            }
+            intermodalRoute.addAll(ptRoute);
         } else {
-            drtRoute = null;
-        }
-
-        // If no valid DRT route is found, we recompute a PT route from the access facility to the trip destination
-        if (drtRoute == null) {
-            intermodalRoute.addAll(transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessFacility, toFacility, accessTime, person)));
-        } else {
-            // Otherwise we add it as an egress to the whole route
+            // Here we have a pt route and an egress drt route, we need to propriately concatenate them in the overall route
             intermodalRoute.addAll(ptRoute);
             Activity egressInteractionActivity = populationFactory.createActivityFromLinkId(this.mode + " interaction", egressFacility.getLinkId());
             egressInteractionActivity.setMaximumDuration(0);
-            egressInteractionActivity.getAttributes().putAttribute(STAGE_ACTIVITY_PREVIOUS_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.MAIN);
+            egressDrtRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.DRT));
             intermodalRoute.add(egressInteractionActivity);
-            intermodalRoute.addAll(drtRoute);
+            intermodalRoute.addAll(egressDrtRoute);
         }
         return intermodalRoute;
     }
