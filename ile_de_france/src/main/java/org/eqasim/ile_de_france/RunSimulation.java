@@ -117,6 +117,8 @@ public class RunSimulation {
 
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setEstimator("car_pt", IDFModeChoiceModule.CAR_PT_ESTIMATOR_NAME);
+		DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup = DiscreteModeChoiceConfigGroup.getOrCreate(config);
+		discreteModeChoiceConfigGroup.setCachedModesAsString(discreteModeChoiceConfigGroup.getCachedModesAsString()+", car_pt");
 
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(true)) {
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
