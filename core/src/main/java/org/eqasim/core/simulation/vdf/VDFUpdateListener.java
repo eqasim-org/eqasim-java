@@ -85,7 +85,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 
 			IdMap<Link, List<Double>> data = handler.aggregate();
 			scope.verify(data, "Wrong flow format");
-			travelTime.update(data);
+			travelTime.update(data, true);
 
 			logger.info("  Done");
 		}
