@@ -10,6 +10,8 @@ import java.util.Set;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
+import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
 import org.eqasim.core.simulation.modes.feeder_drt.config.AccessEgressStopSelectorParams;
 import org.eqasim.core.simulation.modes.feeder_drt.config.FeederDrtConfigGroup;
@@ -41,6 +43,11 @@ public class AdaptConfigForFeederDrt {
         TransitConfigGroup transitConfigGroup = (TransitConfigGroup) config.getModules().get(TransitConfigGroup.GROUP_NAME);
         DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
         EqasimConfigGroup eqasimConfigGroup = EqasimConfigGroup.get(config);
+        LegTimeConstraintConfigGroup legTimeConstraintConfigGroup = (LegTimeConstraintConfigGroup) config.getModules().get(LegTimeConstraintConfigGroup.GROUP_NAME);
+        Map<String, Map<String, LegTimeConstraintSingleLegConfigGroup>> singleLegParameterSetByMainModeByLegMode = null;
+        if(legTimeConstraintConfigGroup != null) {
+            singleLegParameterSetByMainModeByLegMode = legTimeConstraintConfigGroup.getSingleLegParameterSetByMainModeByLegMode();
+        }
 
         // Add DRT to the available modes
         if(modeAvailability != null) {
@@ -66,6 +73,19 @@ public class AdaptConfigForFeederDrt {
                 throw new IllegalStateException(String.format("PT mode '%s' supplied for '%s' is not registered as a transit mode in the '%s' config group", feederDrtConfigGroup.ptModeName, feederDrtMode, TransitConfigGroup.GROUP_NAME));
             }
             feederDrtConfigGroup.accessEgressModeName = baseDrtModes.get(feederDrtMode);
+            for(String mode: new String[]{feederDrtConfigGroup.ptModeName, feederDrtConfigGroup.accessEgressModeName}) {
+                // In this for block, we check if any of the underlying modes are set in the LegTime constraint.
+                // We check for both PT and DRT even though it is highly unlikely for PT, this is so that it already works when we go towards a more generic implementation of intermodality between any modes.
+                if(singleLegParameterSetByMainModeByLegMode != null && singleLegParameterSetByMainModeByLegMode.containsKey(mode) && singleLegParameterSetByMainModeByLegMode.get(mode).containsKey(mode)) {
+                    LegTimeConstraintSingleLegConfigGroup originalLegTimeConstraintSingleLegConfigGroup = singleLegParameterSetByMainModeByLegMode.get(mode).get(mode);
+                    LegTimeConstraintSingleLegConfigGroup legTimeConstraintSingleLegConfigGroup = new LegTimeConstraintSingleLegConfigGroup();
+                    legTimeConstraintSingleLegConfigGroup.mainMode = feederDrtMode;
+                    legTimeConstraintSingleLegConfigGroup.legMode = mode;
+                    legTimeConstraintSingleLegConfigGroup.checkBothDepartureAndArrivalTimes = originalLegTimeConstraintSingleLegConfigGroup.checkBothDepartureAndArrivalTimes;
+                    originalLegTimeConstraintSingleLegConfigGroup.getTimeSlotsParameterSets().forEach(legTimeConstraintSingleLegConfigGroup::addParameterSet);
+                    legTimeConstraintConfigGroup.addParameterSet(legTimeConstraintSingleLegConfigGroup);
+                }
+            }
             if(!drtModes.contains(feederDrtConfigGroup.accessEgressModeName)) {
                 throw new IllegalStateException(String.format("DRT mode '%s' supplied for '%s' is not registered in the '%s' config group. You can use '%s' to configure it", feederDrtConfigGroup.accessEgressModeName, feederDrtMode, MultiModeDrtConfigGroup.GROUP_NAME, AdaptConfigForDrt.class.getCanonicalName()));
             }
