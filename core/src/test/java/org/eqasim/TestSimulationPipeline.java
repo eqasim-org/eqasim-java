@@ -226,14 +226,17 @@ public class TestSimulationPipeline {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--output-vehicles-path", "melun_test/input/drt_vehicles_b.xml.gz",
                 "--vehicles-number", "50",
-                "--vehicle-id-prefix", "vehicle_drt_b_"
+                "--vehicle-id-prefix", "vehicle_drt_b_",
+                "--service-begin-time", "36000",
+                "--service-end-time", "50400"
         });
 
         AdaptConfigForDrt.main(new String[]{
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_drt.xml",
                 "--mode-names", "drt_a,drt_b",
-                "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz"
+                "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz",
+                "--add-leg-time-constraint", "false,true"
         });
 
         runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt");
@@ -266,14 +269,17 @@ public class TestSimulationPipeline {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_b.xml.gz",
                 "--vehicles-number", "50",
-                "--vehicle-id-prefix", "vehicle_drt_feeder_b_"
+                "--vehicle-id-prefix", "vehicle_drt_feeder_b_",
+                "--service-begin-time", "36000",
+                "--service-end-time", "50400"
         });
 
         AdaptConfigForDrt.main(new String[]{
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_feeder.xml",
                 "--mode-names", "drt_for_feeder_a,drt_for_feeder_b",
-                "--vehicles-paths", "melun_test/input/feeder_drt_vehicles_a.xml.gz,melun_test/input/feeder_drt_vehicles_b.xml.gz"
+                "--vehicles-paths", "melun_test/input/feeder_drt_vehicles_a.xml.gz,melun_test/input/feeder_drt_vehicles_b.xml.gz",
+                "--add-leg-time-constraint", "false,true"
         });
 
 
