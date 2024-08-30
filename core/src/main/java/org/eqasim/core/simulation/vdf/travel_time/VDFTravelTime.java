@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.simulation.vdf.VDFScope;
 import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.Id;
@@ -27,18 +28,25 @@ public class VDFTravelTime implements TravelTime {
 
 	private final Network network;
 	private final VolumeDelayFunction vdf;
+	private final ScenarioExtent updateAreaExtent;
 
 	private final IdMap<Link, List<Double>> travelTimes = new IdMap<>(Link.class);
 
 	private final Logger logger = LogManager.getLogger(VDFTravelTime.class);
 
-	public VDFTravelTime(VDFScope scope, double minimumSpeed, double capacityFacotor, double samplingRate,
-			Network network, VolumeDelayFunction vdf, double crossingPenalty) {
+	public VDFTravelTime(VDFScope scope, double minimumSpeed, double capacityFactor, double samplingRate,
+						 Network network, VolumeDelayFunction vdf, double crossingPenalty) {
+		this(scope, minimumSpeed, capacityFactor, samplingRate, network, vdf, crossingPenalty, null);
+	}
+
+	public VDFTravelTime(VDFScope scope, double minimumSpeed, double capacityFactor, double samplingRate,
+			Network network, VolumeDelayFunction vdf, double crossingPenalty, ScenarioExtent updateAreaExtent) {
 		this.scope = scope;
 		this.network = network;
 		this.vdf = vdf;
+		this.updateAreaExtent = updateAreaExtent;
 		this.minimumSpeed = minimumSpeed;
-		this.capacityFactor = capacityFacotor;
+		this.capacityFactor = capacityFactor;
 		this.samplingRate = samplingRate;
 		this.crossingPenalty = crossingPenalty;
 
@@ -57,13 +65,32 @@ public class VDFTravelTime implements TravelTime {
 	}
 
 	public void update(IdMap<Link, List<Double>> counts) {
-		logger.info(String.format("Updating VDFTravelTime ..."));
+		update(counts, false);
+	}
+
+	public void update(IdMap<Link, List<Double>> counts, boolean forceUpdateAllLinks) {
+		String logMessage = "Updating VDFTravelTime ";
+		if(updateAreaExtent != null && !forceUpdateAllLinks) {
+			logMessage += " using update extent ...";
+		} else {
+			logMessage += " ...";
+		}
+		logger.info(logMessage);
 
 		long totalCount = counts.size() * scope.getIntervals();
 		long nonFreespeedCount = 0;
 
 		for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
 			Link link = network.getLinks().get(entry.getKey());
+			if(link == null) {
+				continue;
+			}
+
+			if(updateAreaExtent != null && !forceUpdateAllLinks) {
+				if(!updateAreaExtent.isInside(link.getFromNode().getCoord()) || !updateAreaExtent.isInside(link.getToNode().getCoord())) {
+					continue;
+				}
+			}
 
 			List<Double> linkCounts = entry.getValue();
 			List<Double> linkTravelTimes = travelTimes.get(entry.getKey());
