@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.math3.ml.neuralnet.Network;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
@@ -36,6 +35,7 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
@@ -80,6 +80,11 @@ public class RunSimulation {
 		{
 			config.scoring().setMarginalUtlOfWaiting_utils_hr(-1.0);
 			IDFRaptorUtils.updateScoring(config);
+
+			ScoringConfigGroup.ActivityParams activityParams = new ScoringConfigGroup.ActivityParams("car-pt interaction");
+			config.scoring().addActivityParams(activityParams);
+			activityParams.setTypicalDuration(1);
+			activityParams.setScoringThisActivityAtAll(false);
 		}
 
 		new OsmNetworkAdjustment(cmd).apply(config, scenario.getNetwork());
