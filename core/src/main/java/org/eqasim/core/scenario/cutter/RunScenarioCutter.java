@@ -2,8 +2,9 @@ package org.eqasim.core.scenario.cutter;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.InjectorBuilder;
@@ -40,12 +41,15 @@ import org.matsim.core.utils.timing.TimeInterpretationModule;
 import com.google.inject.Injector;
 
 public class RunScenarioCutter {
+
+	public static final Collection<String> REQUIRED_ARGS = Set.of("config-path", "output-path", "extent-path");
+	public static final Collection<String> OPTIONAL_ARGS = Set.of("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path", "skip-routing");
+
 	static public void main(String[] args)
 			throws ConfigurationException, IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "output-path", "extent-path") //
-				.allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
-				.allowOptions("skip-routing") //
+				.requireOptions(REQUIRED_ARGS) //
+				.allowOptions(OPTIONAL_ARGS) //
 				.build();
 
 		// Load some configuration
