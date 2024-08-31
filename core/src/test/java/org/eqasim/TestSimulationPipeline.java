@@ -222,7 +222,26 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/cutter_v2",
                 "--prefix", "center_",
                 "--extent-path", "melun_test/input/center.shp",
+                "--flag-area-link-modes", "true"
         });
+
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/cutter_v2/center_network.xml.gz",
+                "--output-vehicles-path", "melun_test/cutter_v2/drt_vehicles.xml",
+                "--vehicles-number", "25",
+                "--network-modes", "inside_car"
+        });
+
+        AdaptConfigForDrt.main(new String[]{
+                "--input-config-path", "melun_test/cutter_v2/center_config.xml",
+                "--output-config-path", "melun_test/cutter_v2/center_config_drt.xml",
+                "--vehicles-paths", "melun_test/cutter_v2/drt_vehicles.xml",
+                "--operational-schemes", "serviceAreaBased",
+                "--config:multiModeDrt.drt[mode=drt].drtServiceAreaShapeFile", "extent/center.shp",
+                "--config:dvrp.networkModes", "inside_car"
+        });
+
+        runMelunSimulation("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_cutter_v2_drt");
     }
 
     @Test
@@ -382,6 +401,7 @@ public class TestSimulationPipeline {
         runAnalyses();
         runExports();
         runCutter();
+        runCutterV2();
     }
 
 
