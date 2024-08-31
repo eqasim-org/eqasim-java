@@ -90,14 +90,23 @@ public class RunScenarioCutterV2 {
         Optional<String> extentValue = cmd.getOption("extent-value");
         ScenarioExtent extent = new ShapeScenarioExtent.Builder(extentPath, extentAttribute, extentValue).build();
 
+        Set<String> insideModes = new HashSet<>();
         if(Boolean.parseBoolean(cmd.getOption("flag-area-link-modes").orElse("false"))) {
             scenario.getNetwork().getLinks().values()
                     .stream().filter(link -> extent.isInside(link.getFromNode().getCoord()) && extent.isInside(link.getFromNode().getCoord()))
                     .forEach(link -> {
                         Set<String> linkModes = new HashSet<>(link.getAllowedModes());
-                        link.getAllowedModes().stream().toList().stream().map(mode -> "inside_"+mode).forEach(linkModes::add);
+                        for(String mode: link.getAllowedModes()) {
+                            String insideMode = "inside_"+mode;
+                            insideModes.add(insideMode);
+                            linkModes.add(insideMode);
+                        }
                         link.setAllowedModes(linkModes);
                     });
+
+            for(String mode: insideModes) {
+                findLargestFullyConnectedSubnetwork(scenario.getNetwork(), mode);
+            }
         }
 
         // Before writing the config, we make sure we configure VDF to update the travel times only in the study area
@@ -121,6 +130,21 @@ public class RunScenarioCutterV2 {
         new ScenarioWriter(config, scenario, prefix).run(new File(outputPath).getAbsoluteFile());
 
         FileUtils.copyFile(new File(cmd.getOptionStrict("vdf-travel-times-path")), new File(outputPath, "vdf.bin"));
+    }
+
+    public static void findLargestFullyConnectedSubnetwork(Network network, String mode) {
+        Network subNetwork = NetworkUtils.createNetwork();
+        new TransportModeNetworkFilter(network).filter(subNetwork, Set.of(mode));
+
+        NetworkUtils.runNetworkCleaner(subNetwork);
+
+        for(Link link: network.getLinks().values()) {
+            if(link.getAllowedModes().contains(mode) && !subNetwork.getLinks().containsKey(link.getId())) {
+                Set<String> modes = new HashSet<>(link.getAllowedModes());
+                modes.remove(mode);
+                link.setAllowedModes(modes);
+            }
+        }
     }
 
     private static void copyExtentFiles(String sourcePath, String destPath) throws IOException {
