@@ -8,11 +8,15 @@ import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
 
@@ -105,6 +109,14 @@ public class RunScenarioCutterV2 {
         vdfConfigGroup.setUpdateAreaShapefile("extent/" + extentPath.getName());
         // We also set the VDF config to use the vdf.bin file for initial travel times
         vdfConfigGroup.setInputFile("vdf.bin");
+
+        // "Cut" config
+        // (we need to reload it, because it has become locked at this point)
+        config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), eqasimConfigurator.getConfigGroups());
+        cmd.applyConfiguration(config);
+        eqasimConfigurator.addOptionalConfigGroups(config);
+        ConfigCutter configCutter = new ConfigCutter(prefix);
+        configCutter.run(config);
 
         new ScenarioWriter(config, scenario, prefix).run(new File(outputPath).getAbsoluteFile());
 
