@@ -109,6 +109,14 @@ public class RunScenarioCutterV2 {
             }
         }
 
+        // "Cut" config
+        // (we need to reload it, because it has become locked at this point)
+        config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), eqasimConfigurator.getConfigGroups());
+        cmd.applyConfiguration(config);
+        eqasimConfigurator.addOptionalConfigGroups(config);
+        ConfigCutter configCutter = new ConfigCutter(prefix);
+        configCutter.run(config);
+
         // Before writing the config, we make sure we configure VDF to update the travel times only in the study area
         String extentBasePath = Paths.get(outputPath, "extent").toAbsolutePath().toString();
         String copiedExtentPath = Paths.get(extentBasePath, extentPath.getName()).toString();
@@ -118,14 +126,6 @@ public class RunScenarioCutterV2 {
         vdfConfigGroup.setUpdateAreaShapefile("extent/" + extentPath.getName());
         // We also set the VDF config to use the vdf.bin file for initial travel times
         vdfConfigGroup.setInputFile("vdf.bin");
-
-        // "Cut" config
-        // (we need to reload it, because it has become locked at this point)
-        config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), eqasimConfigurator.getConfigGroups());
-        cmd.applyConfiguration(config);
-        eqasimConfigurator.addOptionalConfigGroups(config);
-        ConfigCutter configCutter = new ConfigCutter(prefix);
-        configCutter.run(config);
 
         new ScenarioWriter(config, scenario, prefix).run(new File(outputPath).getAbsoluteFile());
 
