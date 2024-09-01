@@ -130,10 +130,10 @@ public class RoadRouterService {
 				response.egressDistance_km = CoordUtils.calcEuclideanDistance(toNode.getCoord(), toCoord) * 1e-3;
 
 				response.accessTime_min = walkParameters.beelineWalkFactor * response.accessDistance_km
-						/ walkParameters.beelineWalkSpeed_m_s / 60.0;
+						/ (walkParameters.beelineWalkSpeed_m_s * 3.6) * 60.0;
 
 				response.egressTime_min = walkParameters.beelineWalkFactor * response.egressDistance_km
-						/ walkParameters.beelineWalkSpeed_m_s / 60.0;
+						/ (walkParameters.beelineWalkSpeed_m_s * 3.6) * 60.0;
 
 				double departureTime = request.departureTime_s + response.accessTime_min * 60.0;
 
@@ -145,7 +145,7 @@ public class RoadRouterService {
 				response.inVehicleTime_min = path.travelTime / 60.0;
 				response.inVehicleDistance_km = RouteUtils.calcDistance(path) * 1e-3;
 				response.arrivalTime_s = departureTime + path.travelTime;
-				response.totalTravelTime_min = (response.arrivalTime_s - request.departureTime_s) / 60.0;
+				response.totalTravelTime_min = response.accessTime_min + response.egressTime_min + response.inVehicleTime_min;
 
 				if (request.provideLinks) {
 					response.links = new LinkedList<>();
