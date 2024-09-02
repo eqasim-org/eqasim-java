@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -71,7 +72,7 @@ public class RunPopulationRouting {
 		}
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules()) //
+				.addOverridingModules(configurator.getModules().stream().filter(module -> !(module instanceof AbstractEqasimExtension)).toList()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
 				.addOverridingModule(new TimeInterpretationModule())
 				.addOverridingModule(new ParkingAvailabilityModule())

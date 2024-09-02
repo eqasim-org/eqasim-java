@@ -1,4 +1,4 @@
-package org.eqasim.ile_de_france.standalone_mode_choice;
+package org.eqasim.core.standalone_mode_choice;
 
 
 import java.io.BufferedReader;
@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +15,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.pt.PublicTransportLegItem;
@@ -23,14 +24,11 @@ import org.eqasim.core.analysis.trips.TripItem;
 import org.eqasim.core.analysis.trips.TripReaderFromPopulation;
 import org.eqasim.core.analysis.trips.TripWriter;
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
+import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.core.simulation.termination.EqasimTerminationModule;
-import org.eqasim.ile_de_france.IDFConfigurator;
-import org.eqasim.ile_de_france.RunSimulation;
-import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
@@ -44,7 +42,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
-import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
@@ -58,7 +55,7 @@ import com.google.inject.name.Names;
  * The class requires one parameter:
  * - config-path: a path to a MATSim config file
  * The mode choice is performed via a StandaloneModeChoice module which is configurable via a config group.
- * The StandaloneModeChoiceConfigGroup can be included in the supplied config file, if not one with the default settings is added and these settings can be set via the commandline using the config: prefix. Below the list of supported parameters:
+ * The StandaloneModeChoiceConfigGroup can be included in the supplied config file. If it is not provided, one with the default settings is added and these settings can be set via the commandline using the config: prefix. Below the list of supported parameters:
  * - outputDirectory: The directory in which the resulting plans will as well as the logfiles be written
  * - removePersonsWithNoValidAlternatives: if set to true, persons with no valid alternative for at least one tour or trip will be removed in the resulting population
  * More parameters can be supplied via the command line
@@ -66,7 +63,14 @@ import com.google.inject.name.Names;
  * - write-output-csv-trips: writes out the trips resulting from the mode choice, as well as pt legs, into csv files called output_trips.csv and output_pt_legs.csv in addition to the plans file
  * - travel-times-factors-path: if provided, should point out to a csv file specifying the congestion levels on the network during the day as factors by which the free speed is divided. The file in question is a csv With a header timeUpperBound;travelTimeFactor in which the timeUpperBound should be ordered incrementally.
  * - recorded-travel-times-path: mutually exclusive with the travel-times-factors-path. Points to a RecordedTravelTime file.
- * - simulate-after: if set, a single-iteration simulation using the resulting population will be performed, allowing to generate the regular MATSim output files.
+ * - eqasim-configurator-class: The full name of a class extending the {@link org.eqasim.core.simulation.EqasimConfigurator} class, the provided configurator class will be instantiated and used to:
+ *   - Detect optional config groups using the {@link org.eqasim.core.simulation.EqasimConfigurator#addOptionalConfigGroups(Config)} method
+ *   - Configure the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#configureScenario(Scenario)} before loading
+ *   - Adjust the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#adjustScenario(Scenario)} after loading
+ * - mode-choice-configurator-class: The full name of a class the extending the {@link org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator} class.
+ *     Since the EqasimConfigurator objects are usually used to configure the controller with all modules necessary for a full simulation, some of these modules might cause problems during a standalone mode choice.
+ *     This is why you should implement a StandaloneModeChoice configurator and override the {@link StandaloneModeChoiceConfigurator#getSpecificModeChoiceModules()} to return only the modules necessary for mode choice.
+ * - simulate-after: the full name of a class that can be used to run a one-iteration simulation after the mode choice. The provided class should be be runnable (having a static main(String[] args) that expect a config-path argument as well as arguments prefixed with 'config:' that can be used to override configuration elements.
  */
 public class RunStandaloneModeChoice {
     public static class TravelTimeFactors implements TravelTime {
@@ -133,7 +137,8 @@ public class RunStandaloneModeChoice {
     public static final String CMD_TRAVEL_TIMES_FACTORS_PATH = "travel-times-factors-path";
     public static final String CMD_RECORDED_TRAVEL_TIMES_PATH = "recorded-travel-times-path";
     public static final String CMD_SKIP_SCENARIO_CHECK = "skip-scenario-check";
-
+    public static final String EQASIM_CONFIGURATOR_CLASS = "eqasim-configurator-class";
+    public static final String MODE_CHOICE_CONFIGURATOR_CLASS = "mode-choice-configurator-class";
 
     public static void main(String[] args) throws CommandLine.ConfigurationException, InterruptedException, IOException {
         CommandLine cmd = new CommandLine.Builder(args) //
@@ -142,10 +147,11 @@ public class RunStandaloneModeChoice {
                 .allowOptions(CMD_TRAVEL_TIMES_FACTORS_PATH, CMD_RECORDED_TRAVEL_TIMES_PATH)
                 .allowOptions(CMD_SIMULATE_AFTER)
                 .allowOptions(CMD_SKIP_SCENARIO_CHECK)
+                .allowOptions(EQASIM_CONFIGURATOR_CLASS, MODE_CHOICE_CONFIGURATOR_CLASS)
                 .build();
 
         // Loading the config
-        IDFConfigurator configurator = new IDFConfigurator();
+        EqasimConfigurator configurator = cmd.hasOption(EQASIM_CONFIGURATOR_CLASS) ? ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict(EQASIM_CONFIGURATOR_CLASS), EqasimConfigurator.class) : new EqasimConfigurator();
         ConfigGroup[] configGroups = new ConfigGroup[configurator.getConfigGroups().length+1];
         int i=0;
         for(ConfigGroup configGroup: configurator.getConfigGroups()) {
@@ -173,6 +179,7 @@ public class RunStandaloneModeChoice {
         }
 
         Scenario scenario = ScenarioUtils.createScenario(config);
+        configurator.configureScenario(scenario);
         ScenarioUtils.loadScenario(scenario);
 
         if(!cmd.hasOption(CMD_SKIP_SCENARIO_CHECK) || !Boolean.parseBoolean(cmd.getOptionStrict(CMD_SKIP_SCENARIO_CHECK))) {
@@ -183,19 +190,11 @@ public class RunStandaloneModeChoice {
         //The line below has to be done here right after scenario loading and not in the StandaloneModeChoicePerformer
         RunPopulationRouting.insertVehicles(config, scenario);
 
-        InjectorBuilder injectorBuilder = new InjectorBuilder(scenario)
-                // We add a module that just binds the PersonAnalysisFilter without having to add the whole EqasimAnalysisModule
-                // This bind is required for building the TripReaderFromPopulation object
-                .addOverridingModule(new AbstractModule() {
-                    @Override
-                    public void install() {
-                        bind(PersonAnalysisFilter.class).to(DefaultPersonAnalysisFilter.class);
-                    }
-                })
-                .addOverridingModule(new TimeInterpretationModule())
-                .addOverridingModule(new EqasimModeChoiceModule())
-                .addOverridingModule(new IDFModeChoiceModule(cmd))
-                .addOverridingModule(new StandaloneModeChoiceModule(config));
+        StandaloneModeChoiceConfigurator standaloneModeChoiceConfigurator = cmd.hasOption(MODE_CHOICE_CONFIGURATOR_CLASS) ? StandaloneModeChoiceConfigurator.getSubclassInstance(cmd.getOptionStrict(MODE_CHOICE_CONFIGURATOR_CLASS), config, cmd) : new StandaloneModeChoiceConfigurator(config, cmd);
+
+        InjectorBuilder injectorBuilder = new InjectorBuilder(scenario);
+
+        standaloneModeChoiceConfigurator.getModeChoiceModules(config).forEach(injectorBuilder::addOverridingModule);
 
 
         travelTimesFactorsPath.ifPresent(path -> injectorBuilder.addOverridingModule(new AbstractModule() {
@@ -225,14 +224,6 @@ public class RunStandaloneModeChoice {
             }
         }));
 
-        for(AbstractModule module: configurator.getModules()) {
-        	if (module instanceof EqasimTerminationModule) {
-        		continue;
-        	}
-        	
-            injectorBuilder.addOverridingModule(module);
-        }
-
         com.google.inject.Injector injector = injectorBuilder.build();
 
 
@@ -240,7 +231,7 @@ public class RunStandaloneModeChoice {
         // We initialize the TripReaderFromPopulation here as we might need it just below
         TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         PublicTransportLegReaderFromPopulation ptLegReader = new PublicTransportLegReaderFromPopulation(injector.getInstance(TransitSchedule.class), injector.getInstance(PersonAnalysisFilter.class));
-        OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(Key.get(OutputDirectoryHierarchy.class, Names.named("StandaloneModeChoice")));
+        OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(OutputDirectoryHierarchy.class);
 
         cmd.getOption(CMD_WRITE_INPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
@@ -259,12 +250,28 @@ public class RunStandaloneModeChoice {
                 writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_pt_legs.csv"), ptLegReader);
             }
         });
-        if(cmd.getOption(CMD_SIMULATE_AFTER).isPresent()) {
-            RunSimulation.main(new String[]{
-                    "--config-path", cmd.getOptionStrict(CMD_CONFIG_PATH),
-                    "--config:plans.inputPlansFile", Paths.get(outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz")).toAbsolutePath().toString(),
-                    "--config:controler.outputDirectory", outputDirectoryHierarchy.getOutputFilename("sim"),
-                    "--config:controler.lastIteration", "0"});
+        if(cmd.hasOption(CMD_SIMULATE_AFTER)) {
+            try {
+                Class<?> runClass = Class.forName(cmd.getOptionStrict(CMD_SIMULATE_AFTER));
+                Method method = runClass.getMethod("main", String[].class);
+                method.invoke(null, new Object[]{
+                        new String[]{
+                                "--config-path", cmd.getOptionStrict(CMD_CONFIG_PATH),
+                                "--config:plans.inputPlansFile", Paths.get(outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz")).toAbsolutePath().toString(),
+                                "--config:controler.outputDirectory", outputDirectoryHierarchy.getOutputFilename("sim"),
+                                "--config:controler.lastIteration", "0"
+                        }
+                });
+
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
