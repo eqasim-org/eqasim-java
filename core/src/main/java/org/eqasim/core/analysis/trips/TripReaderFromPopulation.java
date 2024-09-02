@@ -1,9 +1,6 @@
 package org.eqasim.core.analysis.trips;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.matsim.api.core.v01.Coord;
@@ -100,7 +97,15 @@ public class TripReaderFromPopulation {
 					double departureTime = originEndTime.orElse(Double.NaN);
 					double duration = Double.NaN;
 
-					if (originEndTime.isDefined() && destinationStartTime.isDefined()) {
+					DoubleSummaryStatistics legTravelTimesStats = trip.getLegsOnly().stream()
+							.map(Leg::getTravelTime)
+							.filter(OptionalTime::isDefined)
+							.mapToDouble(OptionalTime::seconds)
+							.summaryStatistics();
+
+					if(legTravelTimesStats.getCount() > 0) {
+						duration = legTravelTimesStats.getSum();
+					} else if (originEndTime.isDefined() && destinationStartTime.isDefined()) {
 						duration = destinationStartTime.seconds() - originEndTime.seconds();
 					}
 

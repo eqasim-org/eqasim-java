@@ -14,6 +14,7 @@ import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
+import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -30,13 +31,10 @@ import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
+import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.ExportActivitiesToShapefile;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
-import org.eqasim.core.tools.ExportPopulationToCSV;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -197,6 +195,13 @@ public class TestSimulationPipeline {
                 "--plans-path", "melun_test/input/population.xml.gz",
                 "--output-path", "melun_test/exports/persons.csv"
         });
+
+        ExportNetworkRoutesToGeopackage.main(new String[]{
+                "--plans-path", "melun_test/output/output_plans.xml.gz",
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-path", "melun_test/exports/network_routes.gpkg",
+                "--crs", "EPSG:2154"
+        });
     }
     
     private void runCutter() throws Exception {
@@ -207,6 +212,36 @@ public class TestSimulationPipeline {
             "--prefix", "center_",
             "--extent-path", "melun_test/input/center.shp"
     	});
+    }
+
+    public void runCutterV2() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+        RunScenarioCutterV2.main(new String[] {
+                "--config-path", "melun_test/input/config_vdf.xml",
+                "--events-path", "melun_test/output_vdf/output_events.xml.gz",
+                "--vdf-travel-times-path", "melun_test/output_vdf/vdf.bin",
+                "--output-path", "melun_test/cutter_v2",
+                "--prefix", "center_",
+                "--extent-path", "melun_test/input/center.shp",
+                "--flag-area-link-modes", "true"
+        });
+
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/cutter_v2/center_network.xml.gz",
+                "--output-vehicles-path", "melun_test/cutter_v2/drt_vehicles.xml",
+                "--vehicles-number", "25",
+                "--network-modes", "inside_car"
+        });
+
+        AdaptConfigForDrt.main(new String[]{
+                "--input-config-path", "melun_test/cutter_v2/center_config.xml",
+                "--output-config-path", "melun_test/cutter_v2/center_config_drt.xml",
+                "--vehicles-paths", "melun_test/cutter_v2/drt_vehicles.xml",
+                "--operational-schemes", "serviceAreaBased",
+                "--config:multiModeDrt.drt[mode=drt].drtServiceAreaShapeFile", "extent/center.shp",
+                "--config:dvrp.networkModes", "inside_car"
+        });
+
+        runMelunSimulation("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_cutter_v2_drt");
     }
 
     @Test
@@ -222,14 +257,17 @@ public class TestSimulationPipeline {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--output-vehicles-path", "melun_test/input/drt_vehicles_b.xml.gz",
                 "--vehicles-number", "50",
-                "--vehicle-id-prefix", "vehicle_drt_b_"
+                "--vehicle-id-prefix", "vehicle_drt_b_",
+                "--service-begin-time", "36000",
+                "--service-end-time", "50400"
         });
 
         AdaptConfigForDrt.main(new String[]{
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_drt.xml",
                 "--mode-names", "drt_a,drt_b",
-                "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz"
+                "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz",
+                "--add-leg-time-constraint", "false,true"
         });
 
         runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt");
@@ -262,14 +300,17 @@ public class TestSimulationPipeline {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_b.xml.gz",
                 "--vehicles-number", "50",
-                "--vehicle-id-prefix", "vehicle_drt_feeder_b_"
+                "--vehicle-id-prefix", "vehicle_drt_feeder_b_",
+                "--service-begin-time", "36000",
+                "--service-end-time", "50400"
         });
 
         AdaptConfigForDrt.main(new String[]{
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_feeder.xml",
                 "--mode-names", "drt_for_feeder_a,drt_for_feeder_b",
-                "--vehicles-paths", "melun_test/input/feeder_drt_vehicles_a.xml.gz,melun_test/input/feeder_drt_vehicles_b.xml.gz"
+                "--vehicles-paths", "melun_test/input/feeder_drt_vehicles_a.xml.gz,melun_test/input/feeder_drt_vehicles_b.xml.gz",
+                "--add-leg-time-constraint", "false,true"
         });
 
 
@@ -325,13 +366,42 @@ public class TestSimulationPipeline {
         runMelunSimulation("melun_test/input/config_abstract_access.xml", "melun_test/output_abstract_access");
     }
 
+    public void runVdf() throws CommandLine.ConfigurationException, IOException {
+        AdaptConfigForVDF.main(new String[] {
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_vdf.xml",
+                "--engine", "true",
+                // We need to do this for DRT as DRT drivers are not PlanAgents
+                "--config:eqasim:vdf_engine.generateNetworkEvents", "true"
+        });
+
+        runMelunSimulation("melun_test/input/config_vdf.xml", "melun_test/output_vdf");
+
+        CreateDrtVehicles.main(new String[]{
+                "--network-path", "melun_test/input/network.xml.gz",
+                "--output-vehicles-path", "melun_test/input/drt_vehicles.xml.gz",
+                "--vehicles-number", "50",
+                "--vehicle-id-prefix", "vehicle_drt_"
+        });
+
+        AdaptConfigForDrt.main(new String[]{
+                "--input-config-path", "melun_test/input/config_vdf.xml",
+                "--output-config-path", "melun_test/input/config_vdf_drt.xml",
+                "--vehicles-paths", "melun_test/input/drt_vehicles.xml.gz"
+        });
+
+        runMelunSimulation("melun_test/input/config_vdf_drt.xml", "melun_test/output_vdf_drt");
+    }
+
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
         runStandaloneModeChoice();
+        runVdf();
         runAnalyses();
         runExports();
         runCutter();
+        runCutterV2();
     }
 
 

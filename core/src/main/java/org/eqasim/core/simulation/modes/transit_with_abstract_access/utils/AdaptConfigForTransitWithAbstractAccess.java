@@ -12,6 +12,8 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ScoringConfigGroup;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AdaptConfigForTransitWithAbstractAccess {
 
@@ -28,6 +30,10 @@ public class AdaptConfigForTransitWithAbstractAccess {
 
         DiscreteModeChoiceConfigGroup dmcConfigGroup = (DiscreteModeChoiceConfigGroup) config.getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
         dmcConfigGroup.getTripConstraints().add(TransitWithAbstractAccessConstraint.NAME);
+
+        Set<String> cachedModes = new HashSet<>(dmcConfigGroup.getCachedModes());
+        cachedModes.add(mode);
+        dmcConfigGroup.setCachedModes(cachedModes);
 
         EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
         eqasimConfigGroup.setEstimator(mode, TransitWithAbstractAccessModeChoiceModule.TRANSIT_WITH_ABSTRACT_ACCESS_UTILITY_ESTIMATOR_NAME);
