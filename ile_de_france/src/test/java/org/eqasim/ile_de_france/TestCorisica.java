@@ -10,7 +10,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
-import org.eqasim.ile_de_france.scenario.RunInsertVehicles;
+import org.eqasim.core.scenario.RunInsertVehicles;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

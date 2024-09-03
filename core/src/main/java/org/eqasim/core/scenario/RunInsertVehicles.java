@@ -1,4 +1,4 @@
-package org.eqasim.ile_de_france.scenario;
+package org.eqasim.core.scenario;
 
 import java.io.UncheckedIOException;
 import java.util.HashMap;
@@ -21,21 +21,12 @@ import org.matsim.vehicles.Vehicles;
 import org.matsim.vehicles.VehiclesFactory;
 
 public class RunInsertVehicles {
-	static public void main(String[] args) throws UncheckedIOException, ConfigurationException {
-		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "input-population-path", "output-vehicles-path",
-						"output-population-path") //
-				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
-		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-		new PopulationReader(scenario).readFile(cmd.getOptionStrict("input-population-path"));
-
+	static public void insertVehicles(Config config, Scenario scenario) {
 		Vehicles vehicles = scenario.getVehicles();
 		VehiclesFactory factory = vehicles.getFactory();
 
 		vehicles.addVehicleType(VehicleUtils.getDefaultVehicleType());
-
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			Map<String, Id<Vehicle>> personVehicles = new HashMap<>();
 
@@ -49,8 +40,21 @@ public class RunInsertVehicles {
 
 			VehicleUtils.insertVehicleIdsIntoAttributes(person, personVehicles);
 		}
+	}
 
-		new MatsimVehicleWriter(vehicles).writeFile(cmd.getOptionStrict("output-vehicles-path"));
+	static public void main(String[] args) throws UncheckedIOException, ConfigurationException {
+		CommandLine cmd = new CommandLine.Builder(args) //
+				.requireOptions("config-path", "input-population-path", "output-vehicles-path",
+						"output-population-path") //
+				.build();
+
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+		new PopulationReader(scenario).readFile(cmd.getOptionStrict("input-population-path"));
+
+		insertVehicles(config, scenario);
+
+		new MatsimVehicleWriter(scenario.getVehicles()).writeFile(cmd.getOptionStrict("output-vehicles-path"));
 		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-population-path"));
 	}
 }
