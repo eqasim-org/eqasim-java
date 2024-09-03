@@ -212,6 +212,8 @@ public class TestSimulationPipeline {
             "--prefix", "center_",
             "--extent-path", "melun_test/input/center.shp"
     	});
+
+        runMelunSimulation("melun_test/input/config.xml", "melun_test/output_cutter");
     }
 
     public void runCutterV2() throws CommandLine.ConfigurationException, IOException, InterruptedException {
