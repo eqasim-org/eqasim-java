@@ -1,6 +1,7 @@
 package org.eqasim.core.scenario.cutter;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.scenario.RunInsertVehicles;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -78,6 +79,10 @@ public class RunScenarioCutterV2 {
         eqasimConfigurator.configureScenario(scenario);
         ScenarioUtils.loadScenario(scenario);
         eqasimConfigurator.adjustScenario(scenario);
+
+        if(scenario.getVehicles().getVehicles().size() == 0) {
+            RunInsertVehicles.insertVehicles(config, scenario);
+        }
 
         // We remove from the original population, the persons that do not appear in the one resulting from the legacy cutter
         IdSet<Person> personsToRemove = new IdSet<>(Person.class);

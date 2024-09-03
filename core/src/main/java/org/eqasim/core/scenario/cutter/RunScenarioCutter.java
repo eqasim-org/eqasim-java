@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.InjectorBuilder;
+import org.eqasim.core.scenario.RunInsertVehicles;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.cutter.facilities.CleanHomeFacilities;
@@ -89,6 +90,10 @@ public class RunScenarioCutter {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
+
+		if(scenario.getVehicles().getVehicles().size() == 0) {
+			RunInsertVehicles.insertVehicles(config, scenario);
+		}
 
 		// Check validity before cutting
 		ScenarioValidator scenarioValidator = new ScenarioValidator();
