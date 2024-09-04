@@ -1,7 +1,15 @@
 package org.eqasim.core.scenario.cutter;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.apache.commons.io.FileUtils;
-import org.eqasim.core.scenario.RunInsertVehicles;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -20,11 +28,6 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.*;
 
 public class RunScenarioCutterV2 {
 
@@ -79,10 +82,6 @@ public class RunScenarioCutterV2 {
         eqasimConfigurator.configureScenario(scenario);
         ScenarioUtils.loadScenario(scenario);
         eqasimConfigurator.adjustScenario(scenario);
-
-        if(scenario.getVehicles().getVehicles().size() == 0) {
-            RunInsertVehicles.insertVehicles(config, scenario);
-        }
 
         // We remove from the original population, the persons that do not appear in the one resulting from the legacy cutter
         IdSet<Person> personsToRemove = new IdSet<>(Person.class);

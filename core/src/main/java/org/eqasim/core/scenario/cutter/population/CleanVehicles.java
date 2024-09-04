@@ -19,7 +19,7 @@ public class CleanVehicles {
 	public void run(Vehicles vehicles) {
 		IdSet<Vehicle> removeIds = new IdSet<>(Vehicle.class);
 		removeIds.addAll(vehicles.getVehicles().keySet());
-		removeIds.retainAll(retainedIds);
+		removeIds.removeAll(retainedIds);
 
 		removeIds.forEach(vehicles::removeVehicle);
 	}
