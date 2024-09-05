@@ -16,6 +16,9 @@ public class ConfigCutter {
 		config.households().setInputFile(prefix + "households.xml.gz");
 		config.transit().setTransitScheduleFile(prefix + "transit_schedule.xml.gz");
 		config.transit().setVehiclesFile(prefix + "transit_vehicles.xml.gz");
-		config.vehicles().setVehiclesFile(prefix + "vehicles.xml.gz");
+		
+		if (config.vehicles().getVehiclesFile() != null) {
+			config.vehicles().setVehiclesFile(prefix + "vehicles.xml.gz");
+		}
 	}
 }
