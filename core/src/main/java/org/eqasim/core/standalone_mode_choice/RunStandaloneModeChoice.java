@@ -28,6 +28,7 @@ import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
+import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -164,6 +165,7 @@ public class RunStandaloneModeChoice {
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_CONFIG_PATH), configGroups);
         configurator.addOptionalConfigGroups(config);
         cmd.applyConfiguration(config);
+        VehiclesValidator.validate(config);
 
         Optional<String> travelTimesFactorsPath = cmd.getOption(CMD_TRAVEL_TIMES_FACTORS_PATH);
         Optional<String> recordedTravelTimesPath = cmd.getOption(CMD_RECORDED_TRAVEL_TIMES_PATH);
