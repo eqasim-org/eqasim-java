@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eqasim.core.misc.InjectorBuilder;
+import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
@@ -32,6 +33,7 @@ public class RunPopulationRouting {
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
 		config.replanning().clearStrategySettings();
+		VehiclesValidator.validate(config);
 
 		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
