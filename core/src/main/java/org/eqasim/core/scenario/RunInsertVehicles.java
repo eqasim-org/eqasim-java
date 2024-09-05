@@ -38,7 +38,7 @@ public class RunInsertVehicles {
 				personVehicles.put(mode, vehicle.getId());
 			}
 
-			VehicleUtils.insertVehicleIdsIntoAttributes(person, personVehicles);
+			VehicleUtils.insertVehicleIdsIntoPersonAttributes(person, personVehicles);
 		}
 	}
 
