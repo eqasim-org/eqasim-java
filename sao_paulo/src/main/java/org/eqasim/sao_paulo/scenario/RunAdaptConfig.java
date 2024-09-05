@@ -21,7 +21,7 @@ public class RunAdaptConfig {
 		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
 	}
 
-	static public void adaptConfiguration(Config config) {
+	static public void adaptConfiguration(Config config, String prefix) {
 		// Ignore some input files
 		// config.transit().setVehiclesFile(null);
 		// config.households().setInputFile(null);
