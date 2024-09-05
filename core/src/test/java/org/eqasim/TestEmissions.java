@@ -63,6 +63,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.examples.ExamplesUtils;
 import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.matsim.vehicles.MatsimVehicleReader;
 import org.matsim.vehicles.MatsimVehicleWriter;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
@@ -129,38 +130,21 @@ public class TestEmissions {
 		controller.run();
 	}
 
-	private void runCreateVehicles() {
-		VehicleType testCarType = VehicleUtils.createVehicleType(Id.create("test_car", VehicleType.class));
-		testCarType.setLength(7.5);
-		testCarType.setWidth(1.);
-		testCarType.setNetworkMode("car");
-		Attributes hbefa_attributes = testCarType.getEngineInformation().getAttributes();
-		hbefa_attributes.putAttribute("HbefaVehicleCategory", "PASSENGER_CAR");
-		hbefa_attributes.putAttribute("HbefaTechnology", "diesel");
-		hbefa_attributes.putAttribute("HbefaSizeClass", "&lt;1,4L");
-		hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC diesel Euro-3 (DPF)");
-
+	private void runAddHbefa() {
 		Vehicles vehicles = VehicleUtils.createVehiclesContainer();
-		vehicles.addVehicleType(testCarType);
-
-		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml", eqasimConfigurator.getConfigGroups());
-		Scenario scenario = ScenarioUtils.loadScenario(config);
-		for (Person person : scenario.getPopulation().getPersons().values()) {
-			Vehicle vehicle = VehicleUtils.createVehicle(Id.createVehicleId(person.getId().toString()), testCarType);
-			vehicles.addVehicle(vehicle);
+		new MatsimVehicleReader(vehicles).readFile("melun_test/input/vehicles.xml.gz");
+		
+		for (VehicleType vehicleType : vehicles.getVehicleTypes().values()) {
+			Attributes hbefa_attributes = vehicleType.getEngineInformation().getAttributes();
+			hbefa_attributes.putAttribute("HbefaVehicleCategory", "PASSENGER_CAR");
+			hbefa_attributes.putAttribute("HbefaTechnology", "diesel");
+			hbefa_attributes.putAttribute("HbefaSizeClass", "&lt;1,4L");
+			hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC diesel Euro-3 (DPF)");
 		}
 
 		MatsimVehicleWriter writer = new MatsimVehicleWriter(vehicles);
 		writer.writeFile("melun_test/input/vehicles.xml");
-	}
-
-	private void runModifyConfig() {
-		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
-		config.controller().setOutputDirectory("melun_test/output");
-		config.qsim().setVehiclesSource(QSimConfigGroup.VehiclesSource.fromVehiclesData);
-		config.vehicles().setVehiclesFile("vehicles.xml");
-		ConfigUtils.writeConfig(config, "melun_test/input/config_emissions.xml");
+		
 	}
 
 	private void runModifyNetwork() {
@@ -222,8 +206,7 @@ public class TestEmissions {
 
 	@Test
 	public void runTestEmissions() throws CommandLine.ConfigurationException, IOException {
-		runCreateVehicles();
-		runModifyConfig();
+		runAddHbefa();
 		runModifyNetwork();
 		runMelunSimulation();
 		runMelunEmissions();
