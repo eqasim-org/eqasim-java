@@ -94,7 +94,7 @@ public class TestEmissions {
 
 	private void runMelunSimulation() {
 		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig("melun_test/input/config_emissions.xml",
+		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml",
 				eqasimConfigurator.getConfigGroups());
 		((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME))
 				.setOutputDirectory("melun_test/output");
@@ -143,8 +143,14 @@ public class TestEmissions {
 		}
 
 		MatsimVehicleWriter writer = new MatsimVehicleWriter(vehicles);
-		writer.writeFile("melun_test/input/vehicles.xml");
+		writer.writeFile("melun_test/input/vehicles.xml.gz");
 		
+	}
+	
+	private void runModifyConfig() {
+		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+		config.controller().setOutputDirectory("melun_test/output");
+		ConfigUtils.writeConfig(config, "melun_test/input/config.xml");
 	}
 
 	private void runModifyNetwork() {
@@ -168,7 +174,7 @@ public class TestEmissions {
 		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
 		Assert.assertEquals(2108, (long) counts.get("pt"));
 
-		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config_emissions.xml",
+		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv", "--hbefa-hot-avg",
 				"sample_41_EFA_HOT_vehcat_2020average.csv", "--hbefa-cold-detailed",
 				"sample_41_EFA_ColdStart_SubSegm_2020detailed.csv", "--hbefa-hot-detailed",
@@ -176,7 +182,7 @@ public class TestEmissions {
 
 		assertEquals(355977, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
-		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config_emissions.xml",
+		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600" });
 
 		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
@@ -207,6 +213,7 @@ public class TestEmissions {
 	@Test
 	public void runTestEmissions() throws CommandLine.ConfigurationException, IOException {
 		runAddHbefa();
+		runModifyConfig();
 		runModifyNetwork();
 		runMelunSimulation();
 		runMelunEmissions();
