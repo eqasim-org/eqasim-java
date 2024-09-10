@@ -1,6 +1,8 @@
 package org.eqasim.ile_de_france.policies.limited_traffic_zone;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,11 +14,13 @@ import org.eqasim.ile_de_france.policies.PolicyPersonFilter;
 import org.eqasim.ile_de_france.policies.routing.FixedRoutingPenalty;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder.Predicate;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.utils.io.IOUtils;
 
 public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 	private static final Logger logger = LogManager.getLogger(LimitedTrafficZonePolicyFactory.class);
@@ -50,14 +54,58 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 	private Policy createPolicy(LimitedTrafficZoneConfigGroup ltzConfig, PolicyPersonFilter personFilter) {
 		logger.info(
 				"Creating policy " + ltzConfig.policyName + " of type " + LimitedTrafficZonePolicyFactory.POLICY_NAME);
-		logger.info("  Perimeters: " + ltzConfig.perimetersPath);
 
-		IdSet<Link> linkIds = PolicyLinkFinder
-				.create(new File(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
-				.findLinks(network, Predicate.Entering);
+		if (!ltzConfig.perimetersPath.isEmpty() && !ltzConfig.linkListPath.isEmpty()) {
+			throw new IllegalStateException(
+					"Only one of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
+		}
 
-		logger.info("  Affected entering links: " + linkIds.size());
+		final IdSet<Link> linkIds;
+		if (!ltzConfig.perimetersPath.isEmpty()) {
+			logger.info("  Perimeters: " + ltzConfig.perimetersPath);
+
+			linkIds = PolicyLinkFinder
+					.create(new File(
+							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
+					.findLinks(network, Predicate.Inside);
+
+			logger.info("  Affected entering links: " + linkIds.size());
+		} else if (!ltzConfig.linkListPath.isEmpty()) {
+			linkIds = loadLinkList(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath(),
+					network, ltzConfig.policyName);
+		} else {
+			throw new IllegalStateException(
+					"One of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
+		}
 
 		return new DefaultPolicy(new FixedRoutingPenalty(linkIds, enterPenalty, personFilter), null);
+	}
+
+	private static IdSet<Link> loadLinkList(String path, Network network, String policy) {
+		IdSet<Link> linkList = new IdSet<>(Link.class);
+
+		try {
+			BufferedReader reader = IOUtils.getBufferedReader(path);
+
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+
+				if (!line.isEmpty()) {
+					Link link = network.getLinks().get(Id.createLinkId(line));
+
+					if (link == null) {
+						throw new IllegalStateException("Link list of policy " + policy + " contains link " + line
+								+ " which is not included in network");
+					}
+				}
+			}
+
+			reader.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		return linkList;
 	}
 }

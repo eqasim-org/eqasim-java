@@ -28,7 +28,7 @@ public class PolicyLinkFinder {
 	}
 
 	public enum Predicate {
-		Entering, Exiting, Crossing
+		Entering, Exiting, Crossing, Inside
 	}
 
 	public IdSet<Link> findLinks(Network network, Predicate predicate) {
@@ -49,6 +49,7 @@ public class PolicyLinkFinder {
 				case Exiting -> fromInside && !toInside;
 				case Entering -> !fromInside && toInside;
 				case Crossing -> fromInside || toInside;
+				case Inside -> fromInside && toInside;
 				};
 
 				if (isRelvant) {
