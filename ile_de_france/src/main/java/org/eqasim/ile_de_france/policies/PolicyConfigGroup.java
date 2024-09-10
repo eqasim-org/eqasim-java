@@ -12,4 +12,7 @@ public abstract class PolicyConfigGroup extends ReflectiveConfigGroup {
 
 	@Parameter
 	public boolean active = true;
+
+	@Parameter
+	public String personFilter;
 }

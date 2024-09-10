@@ -8,6 +8,7 @@ import org.eqasim.ile_de_france.policies.DefaultPolicy;
 import org.eqasim.ile_de_france.policies.PoliciesConfigGroup;
 import org.eqasim.ile_de_france.policies.Policy;
 import org.eqasim.ile_de_france.policies.PolicyFactory;
+import org.eqasim.ile_de_france.policies.PolicyPersonFilter;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 
@@ -27,13 +28,13 @@ public class TransitDiscountPolicyFactory implements PolicyFactory {
 	}
 
 	@Override
-	public Policy createPolicy(String name) {
+	public Policy createPolicy(String name, PolicyPersonFilter personFilter) {
 		for (ConfigGroup item : PoliciesConfigGroup.get(config)
 				.getParameterSets(TransitDiscountPolicyFactory.POLICY_NAME)) {
 			TransitDiscountConfigGroup policyItem = (TransitDiscountConfigGroup) item;
 
 			if (policyItem.policyName.equals(name)) {
-				return createPolicy(policyItem);
+				return createPolicy(policyItem, personFilter);
 			}
 		}
 
@@ -41,12 +42,12 @@ public class TransitDiscountPolicyFactory implements PolicyFactory {
 				"Configuration not found for policy " + name + " of type " + TransitDiscountPolicyFactory.POLICY_NAME);
 	}
 
-	private Policy createPolicy(TransitDiscountConfigGroup discountConfig) {
+	private Policy createPolicy(TransitDiscountConfigGroup discountConfig, PolicyPersonFilter personFilter) {
 		logger.info("Creating policy " + discountConfig.policyName + " of type "
 				+ TransitDiscountPolicyFactory.POLICY_NAME);
 		logger.info("  Price factor: " + discountConfig.priceFactor);
 
 		return new DefaultPolicy(null,
-				new TransitDiscountUtilityPenalty(costModel, modeParameters, discountConfig.priceFactor));
+				new TransitDiscountUtilityPenalty(costModel, modeParameters, discountConfig.priceFactor, personFilter));
 	}
 }

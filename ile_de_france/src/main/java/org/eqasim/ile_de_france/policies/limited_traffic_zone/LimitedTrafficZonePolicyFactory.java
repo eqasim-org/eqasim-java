@@ -8,6 +8,7 @@ import org.eqasim.ile_de_france.policies.DefaultPolicy;
 import org.eqasim.ile_de_france.policies.PoliciesConfigGroup;
 import org.eqasim.ile_de_france.policies.Policy;
 import org.eqasim.ile_de_france.policies.PolicyFactory;
+import org.eqasim.ile_de_france.policies.PolicyPersonFilter;
 import org.eqasim.ile_de_france.policies.routing.FixedRoutingPenalty;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder.Predicate;
@@ -32,13 +33,13 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 	}
 
 	@Override
-	public Policy createPolicy(String name) {
+	public Policy createPolicy(String name, PolicyPersonFilter personFilter) {
 		for (ConfigGroup item : PoliciesConfigGroup.get(config)
 				.getParameterSets(LimitedTrafficZonePolicyFactory.POLICY_NAME)) {
 			LimitedTrafficZoneConfigGroup policyItem = (LimitedTrafficZoneConfigGroup) item;
 
 			if (policyItem.policyName.equals(name)) {
-				return createPolicy(policyItem);
+				return createPolicy(policyItem, personFilter);
 			}
 		}
 
@@ -46,7 +47,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 				+ LimitedTrafficZonePolicyFactory.POLICY_NAME);
 	}
 
-	private Policy createPolicy(LimitedTrafficZoneConfigGroup ltzConfig) {
+	private Policy createPolicy(LimitedTrafficZoneConfigGroup ltzConfig, PolicyPersonFilter personFilter) {
 		logger.info(
 				"Creating policy " + ltzConfig.policyName + " of type " + LimitedTrafficZonePolicyFactory.POLICY_NAME);
 		logger.info("  Perimeters: " + ltzConfig.perimetersPath);
@@ -57,6 +58,6 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 
 		logger.info("  Affected entering links: " + linkIds.size());
 
-		return new DefaultPolicy(new FixedRoutingPenalty(linkIds, enterPenalty), null);
+		return new DefaultPolicy(new FixedRoutingPenalty(linkIds, enterPenalty, personFilter), null);
 	}
 }

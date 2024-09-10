@@ -9,6 +9,7 @@ import org.eqasim.ile_de_france.policies.DefaultPolicy;
 import org.eqasim.ile_de_france.policies.PoliciesConfigGroup;
 import org.eqasim.ile_de_france.policies.Policy;
 import org.eqasim.ile_de_france.policies.PolicyFactory;
+import org.eqasim.ile_de_france.policies.PolicyPersonFilter;
 import org.eqasim.ile_de_france.policies.routing.FixedRoutingPenalty;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder.Predicate;
@@ -34,12 +35,12 @@ public class CityTaxPolicyFactory implements PolicyFactory {
 	}
 
 	@Override
-	public Policy createPolicy(String name) {
+	public Policy createPolicy(String name, PolicyPersonFilter personFilter) {
 		for (ConfigGroup item : PoliciesConfigGroup.get(config).getParameterSets(CityTaxPolicyFactory.POLICY_NAME)) {
 			CityTaxConfigGroup policyItem = (CityTaxConfigGroup) item;
 
 			if (policyItem.policyName.equals(name)) {
-				return createPolicy(policyItem);
+				return createPolicy(policyItem, personFilter);
 			}
 		}
 
@@ -47,7 +48,7 @@ public class CityTaxPolicyFactory implements PolicyFactory {
 				"Configuration not found for policy " + name + " of type " + CityTaxPolicyFactory.POLICY_NAME);
 	}
 
-	private Policy createPolicy(CityTaxConfigGroup enterConfig) {
+	private Policy createPolicy(CityTaxConfigGroup enterConfig, PolicyPersonFilter personFilter) {
 		logger.info("Creating policy " + enterConfig.policyName + " of type " + CityTaxPolicyFactory.POLICY_NAME);
 		logger.info("  Perimeters: " + enterConfig.perimetersPath);
 		logger.info("  Tax level: " + enterConfig.tax_EUR + " EUR");
@@ -60,8 +61,8 @@ public class CityTaxPolicyFactory implements PolicyFactory {
 		logger.info("  Affected entering links: " + linkIds.size());
 
 		return new DefaultPolicy(
-				new FixedRoutingPenalty(linkIds, calculateEnterTaxPenalty(enterConfig.tax_EUR, modeParameters)),
-				new CityTaxUtilityPenalty(linkIds, modeParameters, enterConfig.tax_EUR));
+				new FixedRoutingPenalty(linkIds, calculateEnterTaxPenalty(enterConfig.tax_EUR, modeParameters), personFilter),
+				new CityTaxUtilityPenalty(linkIds, modeParameters, enterConfig.tax_EUR, personFilter));
 	}
 
 	private double calculateEnterTaxPenalty(double enterTax_EUR, IDFModeParameters parameters) {

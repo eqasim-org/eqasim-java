@@ -23,6 +23,7 @@ import org.eqasim.ile_de_france.policies.routing.SumRoutingPenalty;
 import org.eqasim.ile_de_france.policies.transit_discount.TransitDiscountPolicyExtension;
 import org.eqasim.ile_de_france.policies.transit_discount.TransitDiscountPolicyFactory;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.Config;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutilityFactory;
 
@@ -81,7 +82,7 @@ public class PolicyExtension extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	Map<String, Policy> providePolicies(Map<String, PolicyFactory> factories) {
+	Map<String, Policy> providePolicies(Map<String, PolicyFactory> factories, Population population) {
 		PoliciesConfigGroup policyConfig = PoliciesConfigGroup.get(getConfig());
 		Map<String, Policy> policies = new HashMap<>();
 
@@ -100,8 +101,10 @@ public class PolicyExtension extends AbstractEqasimExtension {
 							throw new IllegalStateException("Duplicate policy name: " + policy.policyName);
 						}
 
+						PolicyPersonFilter filter = PolicyPersonFilter.create(population, policy);
+
 						policies.put(policy.policyName,
-								factories.get(policy.getName()).createPolicy(policy.policyName));
+								factories.get(policy.getName()).createPolicy(policy.policyName, filter));
 					}
 				}
 			}
@@ -133,7 +136,6 @@ public class PolicyExtension extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	@Singleton
 	UtilityPenalty provideUtilityPenalty(Map<String, Policy> policies) {
 		List<UtilityPenalty> penalties = new LinkedList<>();
 
@@ -149,7 +151,6 @@ public class PolicyExtension extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	@Singleton
 	RoutingPenalty provideRoutingPenalty(Map<String, Policy> policies) {
 		List<RoutingPenalty> penalties = new LinkedList<>();
 
