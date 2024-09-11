@@ -44,11 +44,11 @@ public class CityTaxUtilityPenalty implements UtilityPenalty {
 
 		for (PlanElement element : elements) {
 			if (element instanceof Leg leg) {
-				NetworkRoute route = (NetworkRoute) leg.getRoute();
-
-				for (Id<Link> linkId : route.getLinkIds()) {
-					if (taxedLinkIds.contains(linkId)) {
-						routeTax_EUR += enterTax_EUR;
+				if (leg.getRoute() instanceof NetworkRoute route) {
+					for (Id<Link> linkId : route.getLinkIds()) {
+						if (taxedLinkIds.contains(linkId)) {
+							routeTax_EUR += enterTax_EUR;
+						}
 					}
 				}
 			}
