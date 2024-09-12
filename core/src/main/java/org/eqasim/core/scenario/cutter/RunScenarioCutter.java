@@ -36,7 +36,6 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
 
 import com.google.inject.Injector;
@@ -160,7 +159,6 @@ public class RunScenarioCutter {
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.addOverridingModule(new TimeInterpretationModule()) //
-				.addOverridingModule(new SwissRailRaptorModule()) //
 				.build();
 
 		PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);
