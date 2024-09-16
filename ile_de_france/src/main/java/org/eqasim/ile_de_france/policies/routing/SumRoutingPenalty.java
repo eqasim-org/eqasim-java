@@ -14,11 +14,11 @@ public class SumRoutingPenalty implements RoutingPenalty {
 	}
 
 	@Override
-	public double getLinkPenalty(Link link, Person person, double time) {
+	public double getLinkPenalty(Link link, Person person, double time, double baseDisutility) {
 		double penalty = 0.0;
 
 		for (RoutingPenalty item : items) {
-			penalty += item.getLinkPenalty(link, person, time);
+			penalty += item.getLinkPenalty(link, person, time, baseDisutility);
 		}
 
 		return penalty;

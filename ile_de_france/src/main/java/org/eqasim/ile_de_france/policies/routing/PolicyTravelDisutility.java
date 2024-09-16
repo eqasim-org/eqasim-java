@@ -17,7 +17,7 @@ public class PolicyTravelDisutility implements TravelDisutility {
 	@Override
 	public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
 		double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle);
-		disutility += penalty.getLinkPenalty(link, person, time);
+		disutility += penalty.getLinkPenalty(link, person, time, disutility);
 		return disutility;
 	}
 

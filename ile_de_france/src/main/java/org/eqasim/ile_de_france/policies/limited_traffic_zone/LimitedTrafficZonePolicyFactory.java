@@ -11,7 +11,7 @@ import org.eqasim.ile_de_france.policies.PoliciesConfigGroup;
 import org.eqasim.ile_de_france.policies.Policy;
 import org.eqasim.ile_de_france.policies.PolicyFactory;
 import org.eqasim.ile_de_france.policies.PolicyPersonFilter;
-import org.eqasim.ile_de_france.policies.routing.FixedRoutingPenalty;
+import org.eqasim.ile_de_france.policies.routing.FactorRoutingPenalty;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder;
 import org.eqasim.ile_de_france.policies.routing.PolicyLinkFinder.Predicate;
 import org.matsim.api.core.v01.Id;
@@ -26,7 +26,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 	private static final Logger logger = LogManager.getLogger(LimitedTrafficZonePolicyFactory.class);
 
 	static public final String POLICY_NAME = "limitedTrafficZone";
-	private final double enterPenalty = 24.0 * 3600.0;
+	private final double insideFactor = 3600.0;
 
 	private final Config config;
 	private final Network network;
@@ -78,7 +78,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 					"One of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
 		}
 
-		return new DefaultPolicy(new FixedRoutingPenalty(linkIds, enterPenalty, personFilter), null);
+		return new DefaultPolicy(new FactorRoutingPenalty(linkIds, insideFactor, personFilter), null);
 	}
 
 	private static IdSet<Link> loadLinkList(String path, Network network, String policy) {
