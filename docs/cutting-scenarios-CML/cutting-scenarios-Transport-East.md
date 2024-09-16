@@ -143,7 +143,7 @@ bitsim batch run matsim \
 ```
 After rerunning the simulation, the `output_facilities.xml` will be updated accordingly. This file will be used as an input for the cutter.
 
- For 10% simulations, the matsim config file path for generating the facilities file:
+For 10% simulations, the matsim config file path for generating the facilities file can be found [here](https://github.com/arup-group/eqasim-java/docs/cutting-scenarios-CML/matsim_configs_example/matsim_config_generate_facilities.xml) or on TE AWS account at:
 ```
 /mnt/efs/simulations_refresh/10pc/2019_freight_update_baseline_20240726/0/matsim_config_generate_facilities.xml
 ```
@@ -279,6 +279,10 @@ java -Xmx12G -cp "core-1.5.0.jar:libs/matsim-2024.0/matsim-2024.0.jar:libs/matsi
 ```
 
 For cutting the 10% sims:
+
+The example of the matsim config for cutter can be found [here](https://github.com/arup-group/eqasim-java/docs/cutting-scenarios-CML/matsim_configs_example/matsim_config_cutter_no_intermodal_bike.xml)
+
+Command to run the cutter:
 ```sh
 java -Xmx12G -cp "core-1.5.0.jar:libs/matsim-2024.0/matsim-2024.0.jar:libs/matsim-2024.0/libs/*" \
  org.eqasim.core.scenario.cutter.RunScenarioCutter \
@@ -335,8 +339,8 @@ For rerun the 10%, when repeating the same process, it threw another errors sayi
 
 There is python script using to remove the freight population in the population xml at `/eqasim-java/docs/cutting-scenarios-CML/python_scripts/remove_freight_subpop.py`.
 
-The updated config for 10% simulation can be found at `/mnt/efs/analysis/ys/matsim_cutter/output_no_intermodal_20240909_10pct/matsim_config_TE_cutting_validation_no_intermodal.xml`.
-
+The updated config for 10% simulation can be found at [here](https://github.com/arup-group/eqasim-java/docs/cutting-scenarios-CML/matsim_configs_example/matsim_config_TE_cutting_validation_no_intermodal_no_freight.xml) or TE AWS account at:
+`/mnt/efs/analysis/ys/matsim_cutter/output_no_intermodal_20240909_10pct/matsim_config_TE_cutting_validation_no_intermodal.xml`.
 
 For 10% simulations, the command to rerun the simulation is as follows:
 ```

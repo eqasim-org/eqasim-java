@@ -2,11 +2,11 @@ MATSim cutter debug notes
 ===================================
 This is the notes for recording of the debug process with matsim cutter for cutting tranpost east simulations.
 
-Remainning bugs when dealing with the TE cutting process:
+Remainning bugs when testing with the cutting process for 10% TE siulations:
 1. `NullPointerException` error during the cutting process:
-This the bug that the cutter routed the post-cutting population More details are listed from [here]()
+This the bug that the cutter routed the post-cutting population and more details are described below
+
 2. Missing `walk` parameters when validated the TE 10% post-cutting simulation.
-More details are listed from [here]()
 
 
 ### Progress of debugging the `NullPointerException` when processing the cutter. 
