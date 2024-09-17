@@ -16,6 +16,7 @@ import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.selective.SelectiveInsertionSearchParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
@@ -75,13 +76,15 @@ public class RunCorsicaDrtSimulation {
 			drtConfig.mode = "drt";
 			drtConfig.operationalScheme = OperationalScheme.door2door;
 			drtConfig.stopDuration = 15.0;
-			drtConfig.maxWaitTime = 3600.0;
-			drtConfig.maxTravelTimeAlpha = 3.0;
-			drtConfig.maxTravelTimeBeta = 3600.0;
+			DefaultDrtOptimizationConstraintsSet defaultDrtOptimizationConstraintsSet = new DefaultDrtOptimizationConstraintsSet();
+			defaultDrtOptimizationConstraintsSet.maxWaitTime = 3600;
+			defaultDrtOptimizationConstraintsSet.maxTravelTimeAlpha = 3;
+			defaultDrtOptimizationConstraintsSet.maxTravelTimeBeta = 3600;
+			drtConfig.addOrGetDrtOptimizationConstraintsParams().addParameterSet(defaultDrtOptimizationConstraintsSet);
 			drtConfig.vehiclesFile = Resources.getResource("corsica_drt/drt_vehicles.xml").toString();
 
 			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
-			drtConfig.addDrtInsertionSearchParams(searchParams);
+			drtConfig.setDrtInsertionSearchParams(searchParams);
 
 			multiModeDrtConfig.addParameterSet(drtConfig);
 			DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfig, config.scoring(), config.routing());
