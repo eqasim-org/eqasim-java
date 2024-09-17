@@ -17,7 +17,12 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
-import org.matsim.contrib.drt.analysis.zonal.DrtZonalSystemParams;
+import org.matsim.contrib.common.zones.ZoneSystem;
+import org.matsim.contrib.common.zones.ZoneSystemParams;
+import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystem;
+import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
+import org.matsim.contrib.drt.analysis.zonal.DrtZoneSystemParams;
+import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.extensive.ExtensiveInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.rebalancing.RebalancingParams;
@@ -29,6 +34,7 @@ import org.matsim.contrib.dvrp.fleet.FleetReader;
 import org.matsim.contrib.dvrp.fleet.FleetSpecification;
 import org.matsim.contrib.dvrp.fleet.FleetSpecificationImpl;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
+import org.matsim.contrib.zone.ZonalSystemParams;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
@@ -42,6 +48,11 @@ public class AdaptConfigForDrt {
 
     public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime, String modeAvailability) throws MalformedURLException {
         if(!config.getModules().containsKey(DvrpConfigGroup.GROUP_NAME)) {
+            //DvrpConfigGroup dvrpConfigGroup = new DvrpConfigGroup();
+            //SquareGridZoneSystemParams squareGridZoneSystemParams = new SquareGridZoneSystemParams();
+            //squareGridZoneSystemParams.cellSize = 200;
+            //dvrpConfigGroup.getTravelTimeMatrixParams().addParameterSet(squareGridZoneSystemParams);
+
             config.addModule(new DvrpConfigGroup());
         }
         if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
@@ -69,9 +80,10 @@ public class AdaptConfigForDrt {
             drtConfigGroup.mode = drtMode;
             drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode));
             drtConfigGroup.stopDuration = 15.0;
-            drtConfigGroup.maxWaitTime = 600;
-            drtConfigGroup.maxTravelTimeAlpha = 1.5;
-            drtConfigGroup.maxTravelTimeBeta = 300.0;
+            DefaultDrtOptimizationConstraintsSet defaultDrtOptimizationConstraintsSet = (DefaultDrtOptimizationConstraintsSet) drtConfigGroup.addOrGetDrtOptimizationConstraintsParams().addOrGetDefaultDrtOptimizationConstraintsSet();
+            defaultDrtOptimizationConstraintsSet.maxWaitTime = 600;
+            defaultDrtOptimizationConstraintsSet.maxTravelTimeAlpha= 1.5;
+            defaultDrtOptimizationConstraintsSet.maxTravelTimeBeta = 300.0;
             drtConfigGroup.vehiclesFile  = vehiclesPathByDrtMode.get(drtMode);
 
             DrtInsertionSearchParams searchParams = new ExtensiveInsertionSearchParams();
@@ -82,12 +94,13 @@ public class AdaptConfigForDrt {
             rebalancingParams.addParameterSet(new PlusOneRebalancingStrategyParams());
             drtConfigGroup.addParameterSet(rebalancingParams);
 
-            DrtZonalSystemParams drtZonalSystemParams = new DrtZonalSystemParams();
-            drtZonalSystemParams.zonesGeneration  = DrtZonalSystemParams.ZoneGeneration.GridFromNetwork;
-            drtZonalSystemParams.cellSize = 500.0;
-            drtZonalSystemParams.targetLinkSelection = DrtZonalSystemParams.TargetLinkSelection.mostCentral;
-            drtConfigGroup.addParameterSet(drtZonalSystemParams);
+            DrtZoneSystemParams drtZonalSystemParams = new DrtZoneSystemParams();
+            drtZonalSystemParams.targetLinkSelection = DrtZoneSystemParams.TargetLinkSelection.mostCentral;
+            SquareGridZoneSystemParams squareGridZoneSystemParams = new SquareGridZoneSystemParams();
+            squareGridZoneSystemParams.cellSize = 500;
 
+            drtZonalSystemParams.addParameterSet(squareGridZoneSystemParams);
+            drtConfigGroup.addParameterSet(drtZonalSystemParams);
             multiModeDrtConfigGroup.addParameterSet(drtConfigGroup);
 
             // Set up choice model
