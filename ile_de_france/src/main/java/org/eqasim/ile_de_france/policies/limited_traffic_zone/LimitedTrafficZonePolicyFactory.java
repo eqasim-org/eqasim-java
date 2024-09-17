@@ -71,7 +71,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 
 			logger.info("  Affected entering links: " + linkIds.size());
 		} else if (!ltzConfig.linkListPath.isEmpty()) {
-			linkIds = loadLinkList(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath(),
+			linkIds = loadLinkList(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.linkListPath).getPath(),
 					network, ltzConfig.policyName);
 		} else {
 			throw new IllegalStateException(
