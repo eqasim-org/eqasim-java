@@ -3,6 +3,8 @@ package org.eqasim.mode_choice;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +15,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.misc.InjectorBuilder;
@@ -21,6 +24,7 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
+import org.junit.After;
 import org.junit.Test;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -42,6 +46,8 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.RoutingRequest;
@@ -54,6 +60,11 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
 public class TestSpecialModeChoiceCases {
+	@After
+	public void tearDown() throws IOException {
+		FileUtils.deleteDirectory(new File("simulation_output"));
+	}
+
 	@Test
 	public void testOrdinaryTour() throws ConfigurationException, NoFeasibleChoiceException {
 		List<DiscreteModeChoiceTrip> trips = new LinkedList<>();
@@ -171,6 +182,12 @@ public class TestSpecialModeChoiceCases {
 				.addOverridingModule(new EqasimModeChoiceModule()) //
 				.addOverridingModule(new StaticModeAvailabilityModule()) //
 				.addOverridingModule(new TimeInterpretationModule()) //
+				.addOverridingModule(new AbstractModule() {
+					@Override
+					public void install() {
+						bind(OutputDirectoryHierarchy.class).toInstance(new OutputDirectoryHierarchy(scenario.getConfig()));
+					}
+				})
 				.build();
 
 		DiscreteModeChoiceModel model = injector.getInstance(DiscreteModeChoiceModel.class);
