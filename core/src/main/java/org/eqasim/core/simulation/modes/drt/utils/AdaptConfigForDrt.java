@@ -1,14 +1,11 @@
 package org.eqasim.core.simulation.modes.drt.utils;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.misc.ClassUtils;
@@ -17,9 +14,6 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
-import org.matsim.contrib.common.zones.ZoneSystem;
-import org.matsim.contrib.common.zones.ZoneSystemParams;
-import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystem;
 import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
 import org.matsim.contrib.drt.analysis.zonal.DrtZoneSystemParams;
 import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
@@ -34,7 +28,6 @@ import org.matsim.contrib.dvrp.fleet.FleetReader;
 import org.matsim.contrib.dvrp.fleet.FleetSpecification;
 import org.matsim.contrib.dvrp.fleet.FleetSpecificationImpl;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
-import org.matsim.contrib.zone.ZonalSystemParams;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
@@ -46,13 +39,8 @@ import org.matsim.core.utils.misc.Time;
 
 public class AdaptConfigForDrt {
 
-    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime, String modeAvailability) throws MalformedURLException {
+    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime, String modeAvailability) {
         if(!config.getModules().containsKey(DvrpConfigGroup.GROUP_NAME)) {
-            //DvrpConfigGroup dvrpConfigGroup = new DvrpConfigGroup();
-            //SquareGridZoneSystemParams squareGridZoneSystemParams = new SquareGridZoneSystemParams();
-            //squareGridZoneSystemParams.cellSize = 200;
-            //dvrpConfigGroup.getTravelTimeMatrixParams().addParameterSet(squareGridZoneSystemParams);
-
             config.addModule(new DvrpConfigGroup());
         }
         if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
@@ -87,7 +75,7 @@ public class AdaptConfigForDrt {
             drtConfigGroup.vehiclesFile  = vehiclesPathByDrtMode.get(drtMode);
 
             DrtInsertionSearchParams searchParams = new ExtensiveInsertionSearchParams();
-            drtConfigGroup.addDrtInsertionSearchParams(searchParams);
+            drtConfigGroup.setDrtInsertionSearchParams(searchParams);
 
             RebalancingParams rebalancingParams = new RebalancingParams();
             rebalancingParams.interval  =1800;
@@ -159,7 +147,7 @@ public class AdaptConfigForDrt {
             Map<String, String> resultingMap;
 
             if(drtModeNames.length == currentElements.length) {
-                resultingMap = IntStream.range(0, drtModeNames.length).boxed().collect(Collectors.toMap(integer -> drtModeNames[integer], (Function<Integer, String>) integer -> currentElements[integer]));
+                resultingMap = IntStream.range(0, drtModeNames.length).boxed().collect(Collectors.toMap(integer -> drtModeNames[integer], integer -> currentElements[integer]));
             } else {
                 if(currentElements.length != 1) {
                     throw new IllegalStateException(String.format("When the number of provided drt mode names is not equal to the number of provided %s," +
