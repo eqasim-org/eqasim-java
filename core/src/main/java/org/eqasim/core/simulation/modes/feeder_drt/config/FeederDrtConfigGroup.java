@@ -2,8 +2,8 @@ package org.eqasim.core.simulation.modes.feeder_drt.config;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.matsim.contrib.common.util.ReflectiveConfigGroupWithConfigurableParameterSets;
 import org.matsim.contrib.dvrp.run.Modal;
-import org.matsim.contrib.util.ReflectiveConfigGroupWithConfigurableParameterSets;
 
 public class FeederDrtConfigGroup extends ReflectiveConfigGroupWithConfigurableParameterSets implements Modal {
     public static final String GROUP_NAME = "feederDrt";

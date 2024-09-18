@@ -33,6 +33,7 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -111,7 +112,7 @@ public class RunScenarioCutter {
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules().stream()
-						.filter(module -> !(module instanceof AbstractEqasimExtension)).toList()) //
+						.filter(module -> !(module instanceof AbstractEqasimExtension) && !(module instanceof DiscreteModeChoiceModule)).toList()) //
 				.addOverridingModule(
 						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
@@ -169,7 +170,7 @@ public class RunScenarioCutter {
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules().stream()
-						.filter(module -> !(module instanceof AbstractEqasimExtension)).toList()) //
+						.filter(module -> !(module instanceof AbstractEqasimExtension) && !(module instanceof DiscreteModeChoiceModule)).toList()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.addOverridingModule(new TimeInterpretationModule()) //

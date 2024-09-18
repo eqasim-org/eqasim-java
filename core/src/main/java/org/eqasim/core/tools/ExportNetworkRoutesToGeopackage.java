@@ -2,6 +2,7 @@ package org.eqasim.core.tools;
 
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -25,9 +26,8 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 import java.io.File;
 import java.io.IOException;

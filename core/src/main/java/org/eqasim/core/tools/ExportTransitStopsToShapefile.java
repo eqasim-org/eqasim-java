@@ -3,6 +3,7 @@ package org.eqasim.core.tools;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -14,8 +15,7 @@ import org.matsim.core.utils.gis.PointFeatureFactory;
 import org.matsim.core.utils.gis.ShapeFileWriter;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 public class ExportTransitStopsToShapefile {
 	public static void main(String[] args) throws Exception {

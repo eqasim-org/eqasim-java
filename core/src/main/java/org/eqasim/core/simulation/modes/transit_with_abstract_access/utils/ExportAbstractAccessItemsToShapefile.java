@@ -3,6 +3,7 @@ package org.eqasim.core.simulation.modes.transit_with_abstract_access.utils;
 
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessItem;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessesFileReader;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
@@ -12,8 +13,7 @@ import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.PointFeatureFactory;
 import org.matsim.core.utils.gis.ShapeFileWriter;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import java.util.Collection;
 import java.util.LinkedList;

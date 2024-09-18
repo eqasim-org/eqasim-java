@@ -2,7 +2,7 @@ package org.eqasim.core.simulation.modes.feeder_drt.config;
 
 import jakarta.validation.constraints.NotNull;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_selector.ClosestAccessEgressStopSelectorParameterSet;
-import org.matsim.contrib.util.ReflectiveConfigGroupWithConfigurableParameterSets;
+import org.matsim.contrib.common.util.ReflectiveConfigGroupWithConfigurableParameterSets;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
 public class AccessEgressStopSelectorParams extends ReflectiveConfigGroupWithConfigurableParameterSets {

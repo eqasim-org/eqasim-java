@@ -14,11 +14,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.vehicles.MatsimVehicleWriter;
-import org.matsim.vehicles.Vehicle;
-import org.matsim.vehicles.VehicleUtils;
-import org.matsim.vehicles.Vehicles;
-import org.matsim.vehicles.VehiclesFactory;
+import org.matsim.vehicles.*;
 
 public class RunInsertVehicles {
 
@@ -26,13 +22,14 @@ public class RunInsertVehicles {
 		Vehicles vehicles = scenario.getVehicles();
 		VehiclesFactory factory = vehicles.getFactory();
 
-		vehicles.addVehicleType(VehicleUtils.getDefaultVehicleType());
+		VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("defaultVehicleType", VehicleType.class));
+		vehicles.addVehicleType(vehicleType);
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			Map<String, Id<Vehicle>> personVehicles = new HashMap<>();
 
 			for (String mode : config.routing().getNetworkModes()) {
 				Vehicle vehicle = factory.createVehicle(Id.createVehicleId(person.getId().toString() + ":" + mode),
-						VehicleUtils.getDefaultVehicleType());
+						vehicleType);
 				vehicles.addVehicle(vehicle);
 
 				personVehicles.put(mode, vehicle.getId());
