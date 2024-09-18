@@ -18,7 +18,6 @@ public class FactorRoutingPenalty implements RoutingPenalty {
 
 	@Override
 	public double getLinkPenalty(Link link, Person person, double time, double baseDisutility) {
-		return linkIds.contains(link.getId()) && personFilter.applies(person.getId()) ? baseDisutility * (factor - 1.0)
-				: 0.0;
+		return linkIds.contains(link.getId()) && personFilter.applies(person.getId()) ? baseDisutility * factor : 0.0;
 	}
 }
