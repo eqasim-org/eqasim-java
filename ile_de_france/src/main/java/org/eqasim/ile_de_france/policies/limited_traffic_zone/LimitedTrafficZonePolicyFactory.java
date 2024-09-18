@@ -69,13 +69,17 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
 					.findLinks(network, Predicate.Inside);
 
-			logger.info("  Affected entering links: " + linkIds.size());
+			logger.info("  Affected inside links: " + linkIds.size());
 		} else if (!ltzConfig.linkListPath.isEmpty()) {
+			logger.info("  Link list: " + ltzConfig.linkListPath);
+
 			linkIds = loadLinkList(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.linkListPath).getPath(),
 					network, ltzConfig.policyName);
+
+			logger.info("  Affected links: " + linkIds.size());
 		} else {
 			throw new IllegalStateException(
-					"One of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
+					"One of perimetersPath and linkListPath must be set for policy " + ltzConfig.policyName);
 		}
 
 		return new DefaultPolicy(new FactorRoutingPenalty(linkIds, insideFactor, personFilter), null);
