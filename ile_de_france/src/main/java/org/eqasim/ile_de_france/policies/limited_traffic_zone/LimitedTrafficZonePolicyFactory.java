@@ -102,6 +102,8 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 						throw new IllegalStateException("Link list of policy " + policy + " contains link " + line
 								+ " which is not included in network");
 					}
+
+					linkList.add(link.getId());
 				}
 			}
 
