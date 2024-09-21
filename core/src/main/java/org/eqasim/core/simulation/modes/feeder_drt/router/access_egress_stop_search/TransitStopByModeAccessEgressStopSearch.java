@@ -58,12 +58,12 @@ public class TransitStopByModeAccessEgressStopSearch implements AccessEgressStop
     }
 
     @Override
-    public QuadTree<Facility> getAccessFacilities(RoutingRequest routingRequest) {
+    public QuadTree<Facility> getAccessFacilities() {
         return quadTree;
     }
 
     @Override
-    public QuadTree<Facility> getEgressFacilities(RoutingRequest routingRequest) {
+    public QuadTree<Facility> getEgressFacilities() {
         return quadTree;
     }
 }

@@ -59,11 +59,11 @@ public class FeederDrtRoutingModule implements RoutingModule {
         // Identify closest stations from the origin and destination of the trip (if they are not skipped)
         Facility accessFacility = null;
         if(!skipFacility(routingRequest.getFromFacility())) {
-            accessFacility = this.accessEgressStopsSelector.getAccessFacility(routingRequest, this.accessEgressStopSearch.getAccessFacilities(routingRequest));
+            accessFacility = this.accessEgressStopsSelector.getAccessFacility(routingRequest, this.accessEgressStopSearch.getAccessFacilities());
         }
         Facility egressFacility = null;
         if(!skipFacility(routingRequest.getToFacility())) {
-            egressFacility = this.accessEgressStopsSelector.getEgressFacility(routingRequest, this.accessEgressStopSearch.getEgressFacilities(routingRequest));
+            egressFacility = this.accessEgressStopsSelector.getEgressFacility(routingRequest, this.accessEgressStopSearch.getEgressFacilities());
         }
 
         List<PlanElement> intermodalRoute = new LinkedList<>();
