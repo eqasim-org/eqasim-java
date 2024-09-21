@@ -13,12 +13,11 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
-import org.eqasim.core.simulation.modes.feeder_drt.config.AccessEgressStopSelectorParams;
 import org.eqasim.core.simulation.modes.feeder_drt.config.FeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.EqasimFeederDrtModeChoiceModule;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.constraints.FeederDrtConstraint;
-import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_selector.ClosestAccessEgressStopSelectorParameterSet;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByModeAccessEgressStopSearchParameterSet;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -91,14 +90,12 @@ public class AdaptConfigForFeederDrt {
             }
 
 
-            ClosestAccessEgressStopSelectorParameterSet closestAccessEgressStopSelectorParameterSet = new ClosestAccessEgressStopSelectorParameterSet();
-            closestAccessEgressStopSelectorParameterSet.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
-            closestAccessEgressStopSelectorParameterSet.skipAccessAndEgressAtFacilities = "^outside*+";
+            TransitStopByModeAccessEgressStopSearchParameterSet transitStopByModeAccessEgressStopSearchParameterSet = new TransitStopByModeAccessEgressStopSearchParameterSet();
+            transitStopByModeAccessEgressStopSearchParameterSet.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
 
-            AccessEgressStopSelectorParams accessEgressStopSelectorParams = new AccessEgressStopSelectorParams();
-            accessEgressStopSelectorParams.addParameterSet(closestAccessEgressStopSelectorParameterSet);
+            feederDrtConfigGroup.addParameterSet(transitStopByModeAccessEgressStopSearchParameterSet);
 
-            feederDrtConfigGroup.addParameterSet(accessEgressStopSelectorParams);
+            feederDrtConfigGroup.skipAccessAndEgressAtFacilities = "^outside*+";
 
             multiModeFeederDrtConfigGroup.addParameterSet(feederDrtConfigGroup);
 
