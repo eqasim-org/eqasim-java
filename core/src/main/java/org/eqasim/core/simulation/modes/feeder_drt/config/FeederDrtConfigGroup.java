@@ -2,6 +2,9 @@ package org.eqasim.core.simulation.modes.feeder_drt.config;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.CompositeAccessEgressStopSearchParameterSet;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByIdAccessEgressStopSearch;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByIdAccessEgressStopSearchParameterSet;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByModeAccessEgressStopSearchParameterSet;
 import org.matsim.contrib.common.util.ReflectiveConfigGroupWithConfigurableParameterSets;
 import org.matsim.contrib.dvrp.run.Modal;
@@ -14,6 +17,12 @@ public class FeederDrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
         //AccessEgressStopSearch
         this.addDefinition(TransitStopByModeAccessEgressStopSearchParameterSet.NAME, TransitStopByModeAccessEgressStopSearchParameterSet::new, () -> this.accessEgressStopSearchParams,
                 params -> this.accessEgressStopSearchParams = (TransitStopByModeAccessEgressStopSearchParameterSet) params);
+
+        this.addDefinition(TransitStopByIdAccessEgressStopSearchParameterSet.NAME, TransitStopByIdAccessEgressStopSearchParameterSet::new, () -> this.accessEgressStopSearchParams,
+                params -> this.accessEgressStopSearchParams = (TransitStopByIdAccessEgressStopSearchParameterSet) params);
+
+        this.addDefinition(CompositeAccessEgressStopSearchParameterSet.NAME, CompositeAccessEgressStopSearchParameterSet::new, () -> this.accessEgressStopSearchParams,
+                params -> this.accessEgressStopSearchParams = (CompositeAccessEgressStopSearchParameterSet) params);
     }
 
     @Parameter
@@ -38,7 +47,7 @@ public class FeederDrtConfigGroup extends ReflectiveConfigGroupWithConfigurableP
     @NotNull
     public AccessEgressStopSearchParams accessEgressStopSearchParams;
 
-    public enum AccessEgressStopSelection {CLOSEST};
+    public enum AccessEgressStopSelection {CLOSEST}
 
     @Parameter
     @NotNull

@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 
 public class AccessEgressStopSearchModule extends AbstractDvrpModeModule {
@@ -37,42 +38,49 @@ public class AccessEgressStopSearchModule extends AbstractDvrpModeModule {
 
     @Override
     public void install() {
-        if(config instanceof TransitStopByModeAccessEgressStopSearchParameterSet transitStopByModeAccessEgressStopSearchParameterSet) {
-            bindModal(AccessEgressStopSearch.class).toProvider(getTransitStopByModeAccessEgressStopGeneratorProvider(transitStopByModeAccessEgressStopSearchParameterSet));
+        bindModal(AccessEgressStopSearch.class).toProvider(getAccessEgressStopSearchProvider(config)).asEagerSingleton();
+    }
+
+    private AccessEgressStopSearch getAccessEgressStopSearch(AccessEgressStopSearchParams accessEgressStopSearchParams, Injector injector) {
+        ModalAnnotationCreator<DvrpMode> modalAnnotationCreator = DvrpModes::mode;
+        Provider<Network> networkProvider = injector.getProvider(modalAnnotationCreator.key(Network.class, feederDrtConfigGroup.accessEgressModeName));
+        TransitSchedule transitSchedule = injector.getInstance(TransitSchedule.class);
+
+        if(accessEgressStopSearchParams instanceof TransitStopByModeAccessEgressStopSearchParameterSet transitStopByModeAccessEgressStopSearchParameterSet) {
+            ScenarioExtent serviceAreaExtent = null;
+            if (coveredDrtConfigGroup.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
+                URI extentPath;
+                try {
+                    extentPath = ConfigGroup.getInputFileURL(getConfig().getContext(), coveredDrtConfigGroup.drtServiceAreaShapeFile).toURI();
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
+                try {
+                    serviceAreaExtent = new ShapeScenarioExtent.Builder(new File(extentPath), Optional.empty(), Optional.empty()).build();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return new TransitStopByModeAccessEgressStopSearch(transitStopByModeAccessEgressStopSearchParameterSet, networkProvider.get(), transitSchedule, serviceAreaExtent);
+        } else if(accessEgressStopSearchParams instanceof TransitStopByIdAccessEgressStopSearchParameterSet transitStopByIdAccessEgressStopSearchParameterSet) {
+            return new TransitStopByIdAccessEgressStopSearch(transitStopByIdAccessEgressStopSearchParameterSet, transitSchedule, networkProvider.get());
+        } else if(accessEgressStopSearchParams instanceof CompositeAccessEgressStopSearchParameterSet compositeAccessEgressStopSearchParameterSet) {
+            List<AccessEgressStopSearch> delegates = compositeAccessEgressStopSearchParameterSet.getDelegateAccessEgressStopSearchParamSets().stream().map(params -> getAccessEgressStopSearch(params, injector)).toList();
+            return new CompositeAccessEgressStopSearch(delegates, networkProvider.get());
+        } else {
+            throw new IllegalStateException(String.format("Unhandled subclass of AccessEgressStopSearchParams '%s'", accessEgressStopSearchParams.getClass().toString()));
         }
     }
 
-    private Provider<AccessEgressStopSearch> getTransitStopByModeAccessEgressStopGeneratorProvider(TransitStopByModeAccessEgressStopSearchParameterSet generatorConfig) {
-
-        ScenarioExtent serviceAreaExtent = null;
-        if(coveredDrtConfigGroup.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
-            URI extentPath;
-            try {
-                extentPath = ConfigGroup.getInputFileURL(getConfig().getContext(), coveredDrtConfigGroup.drtServiceAreaShapeFile).toURI();
-            } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
-            }
-            try {
-                serviceAreaExtent = new ShapeScenarioExtent.Builder(new File(extentPath), Optional.empty(), Optional.empty()).build();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        ScenarioExtent finalServiceAreaExtent = serviceAreaExtent;
-
+    private Provider<AccessEgressStopSearch> getAccessEgressStopSearchProvider(AccessEgressStopSearchParams accessEgressStopSearchParams) {
         return new Provider<>() {
 
             @Inject
             private Injector injector;
 
-            @Inject
-            private TransitSchedule transitSchedule;
-
             @Override
-            public TransitStopByModeAccessEgressStopSearch get() {
-                ModalAnnotationCreator<DvrpMode> modalAnnotationCreator = DvrpModes::mode;
-                Provider<Network> networkProvider = injector.getProvider(modalAnnotationCreator.key(Network.class, feederDrtConfigGroup.accessEgressModeName));
-                return new TransitStopByModeAccessEgressStopSearch(generatorConfig, networkProvider.get(), transitSchedule, finalServiceAreaExtent);
+            public AccessEgressStopSearch get() {
+                return getAccessEgressStopSearch(accessEgressStopSearchParams, injector);
             }
         };
     }
