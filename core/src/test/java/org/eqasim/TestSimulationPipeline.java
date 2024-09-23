@@ -321,7 +321,8 @@ public class TestSimulationPipeline {
                 "--output-config-path", "melun_test/input/config_feeder.xml",
                 "--mode-names", "feeder_a,feeder_b",
                 "--base-drt-modes", "drt_for_feeder_a,drt_for_feeder_b",
-                "--access-egress-transit-stop-modes", "rail|tram|subway"
+                "--access-egress-transit-stop-modes", "rail|tram|subway",
+                "--access-egress-transit-stop-ids", "IDFM:482345.link:305887|IDFM:31170.link:618272|IDFM:462597.link:511974"
         });
 
         runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output_feeder");
