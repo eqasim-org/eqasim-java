@@ -2,7 +2,7 @@ package org.eqasim.core.simulation.modes.feeder_drt.router;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.AccessEgressStopSearch;
-import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_selection.AccessEgressStopsSelector;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_selection.AccessEgressStopSelector;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.RoutingModule;
@@ -26,20 +26,20 @@ public class FeederDrtRoutingModule implements RoutingModule {
     private final PopulationFactory populationFactory;
 
     private final String mode;
-    private final AccessEgressStopsSelector accessEgressStopsSelector;
+    private final AccessEgressStopSelector accessEgressStopSelector;
     private final ScenarioExtent drtServiceAreaExtent;
     private final AccessEgressStopSearch accessEgressStopSearch;
     private final Pattern skippedFacilitiesIdPattern;
 
     public FeederDrtRoutingModule(String mode, RoutingModule feederRoutingModule, RoutingModule transitRoutingModule,
-                                  PopulationFactory populationFactory, AccessEgressStopSearch accessEgressStopSearch, AccessEgressStopsSelector accessEgressStopsSelector,
+                                  PopulationFactory populationFactory, AccessEgressStopSearch accessEgressStopSearch, AccessEgressStopSelector accessEgressStopSelector,
                                   ScenarioExtent drtServiceAreaExtent, String skipAccessAndEgressAtFacilities) {
         this.mode = mode;
         this.drtRoutingModule = feederRoutingModule;
         this.transitRoutingModule = transitRoutingModule;
         this.populationFactory = populationFactory;
         this.accessEgressStopSearch = accessEgressStopSearch;
-        this.accessEgressStopsSelector = accessEgressStopsSelector;
+        this.accessEgressStopSelector = accessEgressStopSelector;
         this.drtServiceAreaExtent = drtServiceAreaExtent;
         if(skipAccessAndEgressAtFacilities.length() > 0) {
             this.skippedFacilitiesIdPattern = Pattern.compile(skipAccessAndEgressAtFacilities);
@@ -59,11 +59,11 @@ public class FeederDrtRoutingModule implements RoutingModule {
         // Identify closest stations from the origin and destination of the trip (if they are not skipped)
         Facility accessFacility = null;
         if(!skipFacility(routingRequest.getFromFacility())) {
-            accessFacility = this.accessEgressStopsSelector.getAccessFacility(routingRequest, this.accessEgressStopSearch.getAccessFacilitiesQuadTree());
+            accessFacility = this.accessEgressStopSelector.getAccessFacility(routingRequest, this.accessEgressStopSearch.getAccessFacilitiesQuadTree());
         }
         Facility egressFacility = null;
         if(!skipFacility(routingRequest.getToFacility())) {
-            egressFacility = this.accessEgressStopsSelector.getEgressFacility(routingRequest, this.accessEgressStopSearch.getEgressFacilitiesQuadTree());
+            egressFacility = this.accessEgressStopSelector.getEgressFacility(routingRequest, this.accessEgressStopSearch.getEgressFacilitiesQuadTree());
         }
 
         List<PlanElement> intermodalRoute = new LinkedList<>();

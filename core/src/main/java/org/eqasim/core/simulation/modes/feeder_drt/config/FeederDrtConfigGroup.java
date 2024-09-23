@@ -3,7 +3,6 @@ package org.eqasim.core.simulation.modes.feeder_drt.config;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.CompositeAccessEgressStopSearchParameterSet;
-import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByIdAccessEgressStopSearch;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByIdAccessEgressStopSearchParameterSet;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByModeAccessEgressStopSearchParameterSet;
 import org.matsim.contrib.common.util.ReflectiveConfigGroupWithConfigurableParameterSets;

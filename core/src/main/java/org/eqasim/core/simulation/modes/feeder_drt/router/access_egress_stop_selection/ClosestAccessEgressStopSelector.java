@@ -6,7 +6,7 @@ import org.matsim.facilities.Facility;
 
 
 
-public class ClosestAccessEgressStopSelector implements AccessEgressStopsSelector {
+public class ClosestAccessEgressStopSelector implements AccessEgressStopSelector {
 
     @Override
     public Facility getAccessFacility(RoutingRequest request, QuadTree<Facility> candidateFacilities) {

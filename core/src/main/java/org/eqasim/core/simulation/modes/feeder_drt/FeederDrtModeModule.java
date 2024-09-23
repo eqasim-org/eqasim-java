@@ -9,7 +9,7 @@ import org.eqasim.core.simulation.modes.feeder_drt.config.FeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.router.FeederDrtRoutingModule;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.AccessEgressStopSearch;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.AccessEgressStopSearchModule;
-import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_selection.AccessEgressStopsSelector;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_selection.AccessEgressStopSelector;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_selection.ClosestAccessEgressStopSelector;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
@@ -64,7 +64,8 @@ public class FeederDrtModeModule extends AbstractDvrpModeModule {
 		install(new AccessEgressStopSearchModule(feederDrtConfigGroup.accessEgressStopSearchParams, feederDrtConfigGroup, coveredDrtConfig));
 
 		switch (this.config.accessEgressStopSelection) {
-			case CLOSEST -> bindModal(AccessEgressStopsSelector.class).to(ClosestAccessEgressStopSelector.class);
+			case CLOSEST -> bindModal(AccessEgressStopSelector.class).to(ClosestAccessEgressStopSelector.class);
+			// Extend here when more selectors are introduced
 		}
 
 		addRoutingModuleBinding(this.config.mode).toProvider(new Provider<>() {
@@ -82,7 +83,7 @@ public class FeederDrtModeModule extends AbstractDvrpModeModule {
 				RoutingModule ptRoutingModule = routingModuleProviders.get(feederDrtConfigGroup.ptModeName).get();
 				RoutingModule drtRoutingModule = routingModuleProviders.get(feederDrtConfigGroup.accessEgressModeName).get();
 				ModalAnnotationCreator<DvrpMode> modalAnnotationCreator = DvrpModes::mode;
-				Provider<AccessEgressStopsSelector> accessEgressStopsSelectorProvider = injector.getProvider(modalAnnotationCreator.key(AccessEgressStopsSelector.class, feederDrtConfigGroup.mode));
+				Provider<AccessEgressStopSelector> accessEgressStopsSelectorProvider = injector.getProvider(modalAnnotationCreator.key(AccessEgressStopSelector.class, feederDrtConfigGroup.mode));
 				Provider<AccessEgressStopSearch> accessEgressStopGeneratorProvider = injector.getProvider(modalAnnotationCreator.key(AccessEgressStopSearch.class, feederDrtConfigGroup.mode));
 				return new FeederDrtRoutingModule(feederDrtConfigGroup.mode, drtRoutingModule, ptRoutingModule, population.getFactory(), accessEgressStopGeneratorProvider.get(), accessEgressStopsSelectorProvider.get(), finalServiceAreaExtent, feederDrtConfigGroup.skipAccessAndEgressAtFacilities);
 			}

@@ -4,7 +4,7 @@ import org.matsim.core.router.RoutingRequest;
 import org.matsim.facilities.Facility;
 import org.matsim.core.utils.collections.QuadTree;
 
-public interface AccessEgressStopsSelector {
+public interface AccessEgressStopSelector {
     Facility getAccessFacility(RoutingRequest request, QuadTree<Facility> candidateFacilities);
     Facility getEgressFacility(RoutingRequest request, QuadTree<Facility> candidateFacilities);
 }
