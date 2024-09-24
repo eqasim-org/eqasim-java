@@ -9,9 +9,13 @@ import java.util.concurrent.Executors;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.server.api.RoadIsochroneEndpoint;
 import org.eqasim.server.api.RoadRouterEndpoint;
+import org.eqasim.server.api.TransitIsochroneEndpoint;
+import org.eqasim.server.api.TransitRouterEndpoint;
 import org.eqasim.server.services.ServiceConfiguration;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneService;
+import org.eqasim.server.services.isochrone.transit.TransitIsochroneService;
 import org.eqasim.server.services.router.road.RoadRouterService;
+import org.eqasim.server.services.router.transit.TransitRouterService;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
@@ -85,20 +89,16 @@ public class RunServer {
 		RoadIsochroneEndpoint roadIsochroneEndpoint = new RoadIsochroneEndpoint(executor, roadIsochroneService);
 		app.post("/isochrone/road", roadIsochroneEndpoint::post);
 
-		// TransitRouterService transitRouterService =
-		// TransitRouterService.create(config, scenario.getNetwork(),
-		// scenario.getTransitSchedule(), configuration.transit, configuration.walk);
-		// TransitRouterEndpoint transitRouterEndpoint = new
-		// TransitRouterEndpoint(executor, transitRouterService);
-		// app.post("/router/transit", transitRouterEndpoint::post);
+		TransitRouterService transitRouterService = TransitRouterService.create(config, scenario.getNetwork(),
+				scenario.getTransitSchedule(), configuration.transit, configuration.walk);
+		TransitRouterEndpoint transitRouterEndpoint = new TransitRouterEndpoint(executor, transitRouterService);
+		app.post("/router/transit", transitRouterEndpoint::post);
 
-		// TransitIsochroneService transitIsochroneService =
-		// TransitIsochroneService.create(config,
-		// scenario.getTransitSchedule(), configuration.transit, configuration.walk);
-		// TransitIsochroneEndpoint transitIsochroneEndpoint = new
-		// TransitIsochroneEndpoint(executor,
-		// transitIsochroneService);
-		// app.post("/isochrone/transit", transitIsochroneEndpoint::post);
+		TransitIsochroneService transitIsochroneService = TransitIsochroneService.create(config,
+				scenario.getTransitSchedule(), configuration.transit, configuration.walk);
+		TransitIsochroneEndpoint transitIsochroneEndpoint = new TransitIsochroneEndpoint(executor,
+				transitIsochroneService);
+		app.post("/isochrone/transit", transitIsochroneEndpoint::post);
 
 		// Run API
 		int port = Integer.parseInt(cmd.getOptionStrict("port"));
