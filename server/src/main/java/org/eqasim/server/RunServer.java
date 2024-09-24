@@ -28,6 +28,7 @@ import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -40,7 +41,7 @@ public class RunServer {
 			throws ConfigurationException, JsonParseException, JsonMappingException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "port") //
-				.allowOptions("threads", "configuration-path") //
+				.allowOptions("threads", "configuration-path", "no-transit") //
 				.build();
 
 		int threads = cmd.getOption("threads").map(Integer::parseInt)
@@ -69,9 +70,10 @@ public class RunServer {
 		new MatsimNetworkReader(scenario.getNetwork())
 				.readURL(ConfigGroup.getInputFileURL(config.getContext(), config.network().getInputFile()));
 
-		// new TransitScheduleReader(scenario)
-		// .readURL(ConfigGroup.getInputFileURL(config.getContext(),
-		// config.transit().getTransitScheduleFile()));
+		if (!cmd.hasOption("no-transit")) {
+			new TransitScheduleReader(scenario).readURL(
+					ConfigGroup.getInputFileURL(config.getContext(), config.transit().getTransitScheduleFile()));
+		}
 
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
 
@@ -89,16 +91,18 @@ public class RunServer {
 		RoadIsochroneEndpoint roadIsochroneEndpoint = new RoadIsochroneEndpoint(executor, roadIsochroneService);
 		app.post("/isochrone/road", roadIsochroneEndpoint::post);
 
-		TransitRouterService transitRouterService = TransitRouterService.create(config, scenario.getNetwork(),
-				scenario.getTransitSchedule(), configuration.transit, configuration.walk);
-		TransitRouterEndpoint transitRouterEndpoint = new TransitRouterEndpoint(executor, transitRouterService);
-		app.post("/router/transit", transitRouterEndpoint::post);
+		if (!cmd.hasOption("no-transit")) {
+			TransitRouterService transitRouterService = TransitRouterService.create(config, scenario.getNetwork(),
+					scenario.getTransitSchedule(), configuration.transit, configuration.walk);
+			TransitRouterEndpoint transitRouterEndpoint = new TransitRouterEndpoint(executor, transitRouterService);
+			app.post("/router/transit", transitRouterEndpoint::post);
 
-		TransitIsochroneService transitIsochroneService = TransitIsochroneService.create(config,
-				scenario.getTransitSchedule(), configuration.transit, configuration.walk);
-		TransitIsochroneEndpoint transitIsochroneEndpoint = new TransitIsochroneEndpoint(executor,
-				transitIsochroneService);
-		app.post("/isochrone/transit", transitIsochroneEndpoint::post);
+			TransitIsochroneService transitIsochroneService = TransitIsochroneService.create(config,
+					scenario.getTransitSchedule(), configuration.transit, configuration.walk);
+			TransitIsochroneEndpoint transitIsochroneEndpoint = new TransitIsochroneEndpoint(executor,
+					transitIsochroneService);
+			app.post("/isochrone/transit", transitIsochroneEndpoint::post);
+		}
 
 		// Run API
 		int port = Integer.parseInt(cmd.getOptionStrict("port"));
