@@ -7,9 +7,7 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
-import org.eqasim.vdf.VDFConfigGroup;
-import org.eqasim.vdf.VDFModule;
-import org.eqasim.vdf.VDFQSimModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -58,10 +56,6 @@ public class RunCorsicaVDFSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
-
-		// VDF: Add modules
-		controller.addOverridingModule(new VDFModule());
-		controller.addOverridingQSimModule(new VDFQSimModule());
 
 		controller.run();
 	}

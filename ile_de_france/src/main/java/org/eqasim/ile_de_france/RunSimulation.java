@@ -1,5 +1,6 @@
 package org.eqasim.ile_de_france;
 
+import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
@@ -22,6 +23,7 @@ public class RunSimulation {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
+		VehiclesValidator.validate(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);

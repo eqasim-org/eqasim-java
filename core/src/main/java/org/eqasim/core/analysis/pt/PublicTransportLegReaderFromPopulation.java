@@ -49,23 +49,21 @@ public class PublicTransportLegReaderFromPopulation {
         Plan plan = person.getSelectedPlan();
         int tripIndex = -1;
         int legIndex = -1;
-        for(PlanElement planElement: plan.getPlanElements()) {
-            if(planElement instanceof Activity) {
-                Activity activity = (Activity) planElement;
-                if(!TripStructureUtils.isStageActivityType(activity.getType())) {
-                    tripIndex +=1;
+        for (PlanElement planElement : plan.getPlanElements()) {
+            if (planElement instanceof Activity activity) {
+                if (!TripStructureUtils.isStageActivityType(activity.getType())) {
+                    tripIndex += 1;
                 }
                 continue;
             }
             Leg leg = (Leg) planElement;
-            legIndex=+1;
-            if(!leg.getMode().equals(TransportMode.pt)) {
+            legIndex += 1;
+            if (!leg.getMode().equals(TransportMode.pt)) {
                 continue;
             }
-            if(! (leg.getRoute() instanceof DefaultTransitPassengerRoute)) {
+            if (!(leg.getRoute() instanceof DefaultTransitPassengerRoute transitPassengerRoute)) {
                 throw new IllegalStateException("PT leg has invalid route type");
             }
-            DefaultTransitPassengerRoute transitPassengerRoute = (DefaultTransitPassengerRoute) leg.getRoute();
 
             Id<TransitStopArea> accessStopAreaId = this.transitSchedule.getFacilities().get(transitPassengerRoute.getAccessStopId()).getStopAreaId();
             Id<TransitStopArea> egressStopAreaId = this.transitSchedule.getFacilities().get(transitPassengerRoute.getEgressStopId()).getStopAreaId();

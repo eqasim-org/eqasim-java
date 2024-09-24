@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "eqasim-java"
+version: 1.5.0
+url: "https://github.com/eqasim-org/eqasim-java"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Hörl"
+    given-names: "Sebastian"
+    orcid: "https://orcid.org/0000-0002-9018-432X"
+  - family-names: "Balac"
+    given-names: "Milos"
+    orcid: "https://orcid.org/0000-0002-6099-7442"
+  doi: "10.1016/j.procs.2021.03.089"
+  journal: "Procedia Computer Science"
+  month: 9
+  start: 712
+  end: 719
+  title: "Introducing the eqasim pipeline: From raw data to agent-based transport simulation"
+  volume: 184
+  year: 2021

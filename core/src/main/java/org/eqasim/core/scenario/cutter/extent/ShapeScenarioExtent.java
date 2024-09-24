@@ -9,11 +9,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.geopkg.FeatureEntry;
+import org.geotools.geopkg.GeoPackage;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -22,7 +26,6 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.matsim.api.core.v01.Coord;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class ShapeScenarioExtent implements ScenarioExtent {
 	private final GeometryFactory factory = new GeometryFactory();
@@ -78,7 +81,7 @@ public class ShapeScenarioExtent implements ScenarioExtent {
 			this.value = value;
 		}
 
-		public ShapeScenarioExtent build() throws MalformedURLException, IOException {
+		private ShapeScenarioExtent buildFromShapefile() throws MalformedURLException, IOException {
 			DataStore dataStore = DataStoreFinder.getDataStore(Collections.singletonMap("url", path.toURI().toURL()));
 			SimpleFeatureSource featureSource = dataStore.getFeatureSource(dataStore.getTypeNames()[0]);
 			SimpleFeatureCollection featureCollection = featureSource.getFeatures();
@@ -119,6 +122,57 @@ public class ShapeScenarioExtent implements ScenarioExtent {
 			}
 
 			return new ShapeScenarioExtent(polygons.get(0));
+		}
+
+		private ShapeScenarioExtent buildFromGeopackage() throws IOException {
+			List<Polygon> polygons = new LinkedList<>();
+
+			try (GeoPackage source = new GeoPackage(path)) {
+				source.init();
+
+				for (FeatureEntry featureEntry : source.features()) {
+					try (SimpleFeatureReader reader = source.reader(featureEntry, null, null)) {
+						while (reader.hasNext()) {
+							SimpleFeature feature = reader.next();
+							Geometry geometry = (Geometry) feature.getDefaultGeometry();
+
+							if (!attribute.isPresent() || value.get().equals(feature.getAttribute(attribute.get()))) {
+								if (geometry instanceof MultiPolygon) {
+									MultiPolygon multiPolygon = (MultiPolygon) geometry;
+
+									if (multiPolygon.getNumGeometries() != 1) {
+										throw new IllegalStateException("Extent shape is non-connected.");
+									}
+
+									polygons.add((Polygon) multiPolygon.getGeometryN(0));
+								} else if (geometry instanceof Polygon) {
+									polygons.add((Polygon) geometry);
+								} else {
+									throw new IllegalStateException("Expecting polygon geometry!");
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if (polygons.size() > 1) {
+				throw new IllegalStateException("Found more than one polygon that match to the filter.");
+			}
+
+			if (polygons.size() == 0) {
+				throw new IllegalStateException("Did not find scenario polygon.");
+			}
+
+			return new ShapeScenarioExtent(polygons.get(0));
+		}
+
+		public ShapeScenarioExtent build() throws IOException {
+			if (path.getAbsolutePath().endsWith("gpkg")) {
+				return buildFromGeopackage();
+			} else {
+				return buildFromShapefile();
+			}
 		}
 	}
 }
