@@ -38,6 +38,7 @@ public class ActivityWriter {
 		return String.join(delimiter, new String[] { //
 				"person_id", //
 				"activity_index", //
+				"purpose", //
 				"start_time", //
 				"end_time", //
 				"x", //
@@ -49,6 +50,7 @@ public class ActivityWriter {
 		return String.join(delimiter, new String[] { //
 				activity.personId.toString(), //
 				String.valueOf(activity.activityIndex), //
+				activity.purpose, //
 				String.valueOf(activity.startTime), //
 				String.valueOf(activity.endTime), //
 				String.valueOf(activity.x), //
