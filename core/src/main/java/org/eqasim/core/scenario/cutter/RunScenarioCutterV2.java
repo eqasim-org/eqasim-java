@@ -78,6 +78,17 @@ public class RunScenarioCutterV2 {
         scenario.getPopulation().getPersons().values().stream().map(Person::getId).forEach(personIds::add);
 
         // We now read the data from the original scenario
+        // Before we need to check if we are reading a file other than what's in the config
+        if (cmd.hasOption("plans-path")) {
+            File plansFile = new File(cmd.getOptionStrict("plans-path"));
+
+            if (!plansFile.exists()) {
+                throw new IllegalStateException("Plans file does not exist: " + plansFile.getPath());
+            } else {
+                config.plans().setInputFile(plansFile.getAbsolutePath());
+            }
+        }
+
         scenario = ScenarioUtils.createScenario(config);
         eqasimConfigurator.configureScenario(scenario);
         ScenarioUtils.loadScenario(scenario);
