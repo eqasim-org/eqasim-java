@@ -2,6 +2,7 @@ package org.eqasim.core.simulation.analysis;
 
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.activities.ActivityListener;
 import org.eqasim.core.analysis.legs.LegListener;
 import org.eqasim.core.analysis.pt.PublicTransportLegListener;
 import org.eqasim.core.analysis.trips.TripListener;
@@ -57,6 +58,12 @@ public class EqasimAnalysisModule extends AbstractModule {
 	public PublicTransportLegListener providePublicTransportListener(Network network, TransitSchedule schedule,
 			PersonAnalysisFilter personFilter) {
 		return new PublicTransportLegListener(schedule);
+	}
+	
+	@Provides
+	@Singleton
+	public ActivityListener provideActivityListener(PersonAnalysisFilter personFilter) {
+		return new ActivityListener(personFilter);
 	}
 
 	@Provides
