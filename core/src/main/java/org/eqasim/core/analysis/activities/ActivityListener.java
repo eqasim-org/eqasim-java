@@ -63,6 +63,11 @@ public class ActivityListener implements ActivityStartEventHandler, ActivityEndE
 				ActivityItem activity = ongoing.remove(event.getPersonId());
 
 				if (activity == null) {
+					if (event.getCoord() == null) {
+						// can happen for BeforeVrpSchedule activities of DRT vehicles
+						return;
+					}
+					
 					// this is the first one
 					activity = new ActivityItem(event.getPersonId(), 0, event.getActType(), Double.NEGATIVE_INFINITY,
 							event.getTime(), event.getCoord().getX(), event.getCoord().getY());
