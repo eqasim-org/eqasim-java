@@ -4,6 +4,8 @@ import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -27,6 +29,8 @@ public class StandaloneModeChoiceConfigurator {
         this.config = config;
         this.commandLine = commandLine;
         this.optionalModules = new LinkedHashMap<>();
+
+        this.registerOptionalModule(new VDFConfigGroup(), new VDFModule());
     }
 
     public Config getConfig() {
