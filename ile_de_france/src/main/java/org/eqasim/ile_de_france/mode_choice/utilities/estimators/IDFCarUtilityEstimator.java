@@ -4,9 +4,8 @@ import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
-import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
-import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -15,39 +14,30 @@ import com.google.inject.Inject;
 
 public class IDFCarUtilityEstimator extends CarUtilityEstimator {
 	private final IDFModeParameters parameters;
-	private final IDFSpatialPredictor spatialPredictor;
+	private final CarPredictor predictor;
 
 	@Inject
-	public IDFCarUtilityEstimator(IDFModeParameters parameters, IDFSpatialPredictor spatialPredictor,
-			CarPredictor carPredictor) {
-		super(parameters, carPredictor);
+	public IDFCarUtilityEstimator(IDFModeParameters parameters, CarPredictor predictor) {
+		super(parameters, predictor);
 
 		this.parameters = parameters;
-		this.spatialPredictor = spatialPredictor;
+		this.predictor = predictor;
 	}
 
-	protected double estimateUrbanUtility(IDFSpatialVariables variables) {
-		double utility = 0.0;
-
-		if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
-			utility += parameters.idfCar.betaInsideUrbanArea;
-		}
-
-		if (variables.hasUrbanOrigin || variables.hasUrbanDestination) {
-			utility += parameters.idfCar.betaCrossingUrbanArea;
-		}
-
-		return utility;
+	protected double estimateAccessEgressTimeUtility(CarVariables variables) {
+		return parameters.betaAccessTime_u_min * variables.accessEgressTime_min;
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		IDFSpatialVariables variables = spatialPredictor.predictVariables(person, trip, elements);
+		CarVariables variables = predictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 
-		utility += super.estimateUtility(person, trip, elements);
-		utility += estimateUrbanUtility(variables);
+		utility += estimateConstantUtility();
+		utility += estimateTravelTimeUtility(variables);
+		utility += estimateAccessEgressTimeUtility(variables);
+		utility += estimateMonetaryCostUtility(variables);
 
 		return utility;
 	}
