@@ -34,16 +34,11 @@ public class RunAdaptConfig {
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
 		
+		// Major crossing penalty from calibration
+		eqasimConfig.setCrossingPenalty(4.2);
+		
 		// Epsilon
 		AdaptConfigForEpsilon.run(config);
-
-		// Calibration results for 5%
-
-		if (eqasimConfig.getSampleSize() == 0.05) {
-			// Adjust flow and storage capacity
-			config.qsim().setFlowCapFactor(0.045);
-			config.qsim().setStorageCapFactor(0.045);
-		}
 		
 		// Vehicles
 		QSimConfigGroup qsimConfig = config.qsim();

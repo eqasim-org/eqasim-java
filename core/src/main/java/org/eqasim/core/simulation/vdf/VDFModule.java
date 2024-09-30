@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.Optional;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.vdf.handlers.VDFHorizonHandler;
@@ -69,10 +70,10 @@ public class VDFModule extends AbstractModule {
 	@Provides
 	@Singleton
 	public VDFTravelTime provideVDFTravelTime(VDFConfigGroup config, VDFScope scope, Network network,
-			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig) throws IOException {
+			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig, CrossingPenalty crossingPenalty) throws IOException {
 		ScenarioExtent updateExtent = config.getUpdateAreaShapefile() == null ? null : new ShapeScenarioExtent.Builder(new File(ConfigGroup.getInputFileURL(getConfig().getContext(), config.getUpdateAreaShapefile()).getPath()), Optional.empty(), Optional.empty()).build();
 		return new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
-				eqasimConfig.getSampleSize(), network, vdf, eqasimConfig.getCrossingPenalty(), updateExtent);
+				eqasimConfig.getSampleSize(), network, vdf, crossingPenalty, updateExtent);
 	}
 
 	@Provides

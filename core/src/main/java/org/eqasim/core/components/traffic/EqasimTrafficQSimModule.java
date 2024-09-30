@@ -1,6 +1,5 @@
 package org.eqasim.core.components.traffic;
 
-import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.qnetsimengine.linkspeedcalculator.LinkSpeedCalculator;
 
@@ -15,7 +14,7 @@ public class EqasimTrafficQSimModule extends AbstractQSimModule {
 
 	@Provides
 	@Singleton
-	public EqasimLinkSpeedCalculator provideBaselineLinkSpeedCalculator(EqasimConfigGroup eqasimConfig) {
-		return new EqasimLinkSpeedCalculator(eqasimConfig.getCrossingPenalty());
+	public EqasimLinkSpeedCalculator provideBaselineLinkSpeedCalculator(CrossingPenalty crossigPenalty) {
+		return new EqasimLinkSpeedCalculator(crossigPenalty);
 	}
 }
