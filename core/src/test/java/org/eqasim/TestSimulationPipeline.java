@@ -369,7 +369,7 @@ public class TestSimulationPipeline {
         runMelunSimulation("melun_test/input/config_abstract_access.xml", "melun_test/output_abstract_access");
     }
 
-    public void runVdf() throws CommandLine.ConfigurationException, IOException {
+    public void runVdf() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         AdaptConfigForVDF.main(new String[] {
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_vdf.xml",
@@ -379,6 +379,14 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/input/config_vdf.xml", "melun_test/output_vdf");
+
+        RunStandaloneModeChoice.main(new String[]{
+                "--config-path", "melun_test/input/config_vdf.xml",
+                "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_vdf",
+                "--config:eqasim:vdf.inputFile", "../output_vdf/vdf.bin", // Relative to the config file
+                "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
+                "--simulate-after", TestRunSimulation.class.getName()
+        });
 
         CreateDrtVehicles.main(new String[]{
                 "--network-path", "melun_test/input/network.xml.gz",
