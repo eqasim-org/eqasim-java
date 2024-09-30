@@ -41,7 +41,7 @@ public class RunServer {
 			throws ConfigurationException, JsonParseException, JsonMappingException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "port") //
-				.allowOptions("threads", "configuration-path", "no-transit") //
+				.allowOptions("threads", "configuration-path", "use-transit") //
 				.build();
 
 		int threads = cmd.getOption("threads").map(Integer::parseInt)
@@ -70,7 +70,8 @@ public class RunServer {
 		new MatsimNetworkReader(scenario.getNetwork())
 				.readURL(ConfigGroup.getInputFileURL(config.getContext(), config.network().getInputFile()));
 
-		if (!cmd.hasOption("no-transit")) {
+		boolean useTransit = cmd.getOption("use-transit").map(Boolean::parseBoolean).orElse(true);
+		if (useTransit) {
 			new TransitScheduleReader(scenario).readURL(
 					ConfigGroup.getInputFileURL(config.getContext(), config.transit().getTransitScheduleFile()));
 		}
@@ -91,7 +92,7 @@ public class RunServer {
 		RoadIsochroneEndpoint roadIsochroneEndpoint = new RoadIsochroneEndpoint(executor, roadIsochroneService);
 		app.post("/isochrone/road", roadIsochroneEndpoint::post);
 
-		if (!cmd.hasOption("no-transit")) {
+		if (useTransit) {
 			TransitRouterService transitRouterService = TransitRouterService.create(config, scenario.getNetwork(),
 					scenario.getTransitSchedule(), configuration.transit, configuration.walk);
 			TransitRouterEndpoint transitRouterEndpoint = new TransitRouterEndpoint(executor, transitRouterService);
