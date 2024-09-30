@@ -42,12 +42,8 @@ public class ScenarioWriter {
 				.writeFile(new File(outputDirectory, prefix + "transit_schedule.xml.gz").toString());
 		new MatsimVehicleWriter(scenario.getTransitVehicles())
 				.writeFile(new File(outputDirectory, prefix + "transit_vehicles.xml.gz").toString());
-				
-		if (config.vehicles().getVehiclesFile() != null) {
-			new MatsimVehicleWriter(scenario.getVehicles())
-					.writeFile(new File(outputDirectory, prefix + "vehicles.xml.gz").toString());
-		}
-
+		new MatsimVehicleWriter(scenario.getVehicles())
+				.writeFile(new File(outputDirectory, prefix + "vehicles.xml.gz").toString());
 	}
 
 	static public void checkOutputDirectory(File outputDirectory) {

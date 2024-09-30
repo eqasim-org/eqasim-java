@@ -23,6 +23,7 @@ Additional topics:
 - How to [cut out smaller parts of existing simulations](docs/cutting.md).
 - How to [run a simulation with on-demand mobility services](docs/on_demand_mobility.md) (as a main mode and as a transit feeder).
 - How to [run the discrete mode choice model as a standalone](docs/standalone_mode_choice.md)
+- How to [use Volume Delay Functions for the network simulation](docs/vdf.md)
 
 ## Main reference
 

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.scenario.RunInsertVehicles;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.junit.After;
@@ -19,7 +20,10 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.ConfigWriter;
+import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.population.io.PopulationReader;
@@ -37,6 +41,14 @@ public class TestCorisica {
 		FileUtils.deleteDirectory(new File("corsica_test"));
 	}
 
+	private void adjustConfig() {
+		IDFConfigurator configurator = new IDFConfigurator();
+		Config config = ConfigUtils.loadConfig("corsica_test/corsica_config.xml", configurator.getConfigGroups());
+		config.vehicles().setVehiclesFile("corsica_vehicles.xml.gz");
+		config.qsim().setVehiclesSource(VehiclesSource.fromVehiclesData);
+		new ConfigWriter(config).write("corsica_test/corsica_config.xml");
+	}
+
 	@Test
 	@Ignore
 	public void testCorsicaPipeline()
@@ -46,6 +58,15 @@ public class TestCorisica {
 
 		// Run the simulation
 		{
+			adjustConfig();
+			
+			RunInsertVehicles.main(new String[] { //
+					"--config-path", "corsica_test/corsica_config.xml", //
+					"--input-population-path", "corsica_test/corsica_population.xml.gz", //
+					"--output-population-path", "corsica_test/corsica_population.xml.gz", //
+					"--output-vehicles-path", "corsica_test/corsica_vehicles.xml.gz", //
+			});
+			
 			RunSimulation.main(new String[] { //
 					"--config-path", "corsica_test/corsica_config.xml", //
 					"--config:controler.lastIteration", "2", // ,
@@ -77,10 +98,9 @@ public class TestCorisica {
 		}
 
 		// Cut the scenario based on output plans
-		{
+		{			
 			RunScenarioCutter.main(new String[] { //
 					"--config-path", "corsica_test/corsica_config.xml", //
-					"--config:plans.inputPlansFile", "simulation_output/output_plans.xml.gz", //
 					"--extent-path", "corsica_test/extent.shp", //
 					"--threads", "4", //
 					"--prefix", "cut_", //
@@ -91,7 +111,7 @@ public class TestCorisica {
 		}
 
 		// Run the cut simulation
-		{
+		{			
 			RunSimulation.main(new String[] { //
 					"--config-path", "corsica_test/cut_config.xml", //
 					"--config:controler.lastIteration", "2", // ,
@@ -99,9 +119,9 @@ public class TestCorisica {
 			});
 
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
-			Assert.assertEquals(420, (long) counts.get("car"));
+			Assert.assertEquals(422, (long) counts.get("car"));
 			Assert.assertEquals(53, (long) counts.get("car_passenger"));
-			Assert.assertEquals(103, (long) counts.get("walk"));
+			Assert.assertEquals(101, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
 			Assert.assertEquals(0, (long) counts.getOrDefault("pt", 0L));
 			Assert.assertEquals(6, (long) counts.get("outside"));

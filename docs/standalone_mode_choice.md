@@ -27,4 +27,9 @@ More parameters can be supplied via the command line:
 In order to fully use it in your own use case, you need to implement a class extending the `StandaloneModeChoiceModule` class, your extension must have a constructor that matches the signature of the constructor present in the base class (taking a `Config` and a `CommandLine` as parameters). 
 Then, override the `getSpecificModeChoiceModules` to return the modules necessary to configure the mode choice model only.
 
+**Note: Using travel times recorded by the VDFModule**
+
+If your scenario has been simulated before using the VDF functionality and want to use the travel times recorded by the VDFModule (usually in a vdf.bin file), you need to call the `RunStandaloneModeCHoice` with a config file where the `eqasim:vdf` module is configured with the `inputFile` pointing to the file you want to use. Moreover, you must not pass `travel-times-factors-path` or `recorded-travel-times-path` arguments.
+
+
 For more details, you can check how this functionality is used in `org.eqasim.TestSimulationPipeline#TestPipeline()` and in `org.eqasim.ile_de_france.TestCorisica#testCorsicaPipeline()`.

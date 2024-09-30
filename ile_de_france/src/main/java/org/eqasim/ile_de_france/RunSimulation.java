@@ -8,13 +8,18 @@ import java.util.Set;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
+import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFModule;
+import org.eqasim.core.simulation.vdf.VDFQSimModule;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineModule;
 import org.eqasim.ile_de_france.analysis.counts.CountsModule;
 import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
-import org.eqasim.ile_de_france.super_blocks.SuperBlocksModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
 import org.eqasim.ile_de_france.policies.CarPTRouterModule;
 import org.eqasim.ile_de_france.policies.HomeWorkDistanceModule;
@@ -23,11 +28,7 @@ import org.eqasim.ile_de_france.policies.ParkingAvailabilityModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorModule;
 import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
-import org.eqasim.vdf.VDFConfigGroup;
-import org.eqasim.vdf.VDFModule;
-import org.eqasim.vdf.VDFQSimModule;
-import org.eqasim.vdf.engine.VDFEngineConfigGroup;
-import org.eqasim.vdf.engine.VDFEngineModule;
+import org.eqasim.ile_de_france.super_blocks.SuperBlocksModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -66,6 +67,7 @@ public class RunSimulation {
 		config.addModule(new VDFConfigGroup());
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
+		VehiclesValidator.validate(config);
 
 		{
 			// Avoid logging errors when using TripsAndLegsCSV

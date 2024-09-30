@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -14,8 +15,7 @@ import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.PolylineFeatureFactory;
 import org.matsim.core.utils.gis.ShapeFileWriter;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 public class ExportNetworkToShapefile {
 	public static void main(String[] args) throws Exception {

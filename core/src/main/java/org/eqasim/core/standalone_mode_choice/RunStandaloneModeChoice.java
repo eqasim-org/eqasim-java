@@ -15,6 +15,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.pt.PublicTransportLegItem;
@@ -26,9 +28,11 @@ import org.eqasim.core.analysis.trips.TripWriter;
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.misc.InjectorBuilder;
-import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
+import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFUpdateListener;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
@@ -45,10 +49,8 @@ import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
-import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 
 /**
  * This class offers the functionality of running the discrete mode choice model on the whole population without having to go through the whole iterative MATSim process. It is also possible to filter-out the persons that do not have a valid alternative.
@@ -130,6 +132,8 @@ public class RunStandaloneModeChoice {
     }
 
 
+    private static final Logger logger = LogManager.getLogger(RunStandaloneModeChoice.class);
+
     public static final String CMD_WRITE_INPUT_CSV = "write-input-csv-trips";
     public static final String CMD_WRITE_OUTPUT_CSV = "write-output-csv-trips";
     public static final String CMD_SIMULATE_AFTER = "simulate-after";
@@ -164,6 +168,7 @@ public class RunStandaloneModeChoice {
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_CONFIG_PATH), configGroups);
         configurator.addOptionalConfigGroups(config);
         cmd.applyConfiguration(config);
+        VehiclesValidator.validate(config);
 
         Optional<String> travelTimesFactorsPath = cmd.getOption(CMD_TRAVEL_TIMES_FACTORS_PATH);
         Optional<String> recordedTravelTimesPath = cmd.getOption(CMD_RECORDED_TRAVEL_TIMES_PATH);
@@ -187,8 +192,6 @@ public class RunStandaloneModeChoice {
             scenarioValidator.checkScenario(scenario);
         }
         configurator.adjustScenario(scenario);
-        //The line below has to be done here right after scenario loading and not in the StandaloneModeChoicePerformer
-        RunPopulationRouting.insertVehicles(config, scenario);
 
         StandaloneModeChoiceConfigurator standaloneModeChoiceConfigurator = cmd.hasOption(MODE_CHOICE_CONFIGURATOR_CLASS) ? StandaloneModeChoiceConfigurator.getSubclassInstance(cmd.getOptionStrict(MODE_CHOICE_CONFIGURATOR_CLASS), config, cmd) : new StandaloneModeChoiceConfigurator(config, cmd);
 
@@ -224,6 +227,16 @@ public class RunStandaloneModeChoice {
             }
         }));
 
+        boolean usingVdfTravelTime = false;
+        if(config.getModules().containsKey(VDFConfigGroup.GROUP_NAME) && VDFConfigGroup.getOrCreate(config).getInputFile() != null) {
+            String usedTravelTimeArg = recordedTravelTimesPath.isPresent() ? CMD_RECORDED_TRAVEL_TIMES_PATH : travelTimesFactorsPath.isPresent() ? CMD_TRAVEL_TIMES_FACTORS_PATH : null;
+            if(usedTravelTimeArg == null) {
+                usingVdfTravelTime = true;
+            } else {
+                logger.warn(String.format("Using '%s', the input file for the '%s' config group will not be considered", usedTravelTimeArg, VDFConfigGroup.GROUP_NAME));
+            }
+        }
+
         com.google.inject.Injector injector = injectorBuilder.build();
 
 
@@ -239,6 +252,11 @@ public class RunStandaloneModeChoice {
                 writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_pt_legs.csv"), ptLegReader);
             }
         });
+
+        if(usingVdfTravelTime) {
+            VDFUpdateListener vdfUpdateListener = injector.getInstance(VDFUpdateListener.class);
+            vdfUpdateListener.notifyStartup(null);
+        }
 
         StandaloneModeChoicePerformer modeChoicePerformer = injector.getInstance(StandaloneModeChoicePerformer.class);
 
