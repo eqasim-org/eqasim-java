@@ -3,7 +3,6 @@ package org.eqasim.ile_de_france.mode_choice.constraints;
 import java.util.Collection;
 import java.util.List;
 
-import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -34,10 +33,8 @@ public class InitialWaitingTimeConstraint extends AbstractTripConstraint {
 					if (element instanceof Leg) {
 						Leg leg = (Leg) element;
 
-						if (leg.getMode().startsWith(IDFRaptorUtils.PT_MODE_PREFIX)) {
+						if (leg.getRoute() instanceof TransitPassengerRoute route) {
 							// We check the first PT leg and make a decision
-							TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
-
 							double departureTime = leg.getDepartureTime().seconds();
 							double waitingTime_min = (route.getBoardingTime().seconds() - departureTime) / 60.0;
 

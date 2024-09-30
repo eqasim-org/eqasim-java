@@ -2,7 +2,6 @@ package org.eqasim.ile_de_france;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
@@ -21,14 +20,7 @@ import org.eqasim.ile_de_france.analysis.delay.DelayAnalysisModule;
 import org.eqasim.ile_de_france.analysis.urban.UrbanAnalysisModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.parking.ParkingModule;
-import org.eqasim.ile_de_france.policies.CarPTRouterModule;
-import org.eqasim.ile_de_france.policies.HomeWorkDistanceModule;
-import org.eqasim.ile_de_france.policies.MyMultiModalLinkChooserModule;
-import org.eqasim.ile_de_france.policies.ParkingAvailabilityModule;
-import org.eqasim.ile_de_france.routing.IDFRaptorModule;
-import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.eqasim.ile_de_france.scenario.RunAdaptConfig;
-import org.eqasim.ile_de_france.super_blocks.SuperBlocksModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -45,7 +37,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("counts-path", "use-epsilon", "use-vdf", "use-vdf-engine", "vdf-generate-network-events",
-						"line-switch-utility", "cost-model", "superblocks-path", "use-pt-discount", "car-pt-utility-offset") //
+						"line-switch-utility", "cost-model") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", OsmNetworkAdjustment.CAPACITY_PREFIX,
 						OsmNetworkAdjustment.SPEED_PREFIX, "raptor") //
 				.build();
@@ -81,9 +73,9 @@ public class RunSimulation {
 
 		{
 			config.scoring().setMarginalUtlOfWaiting_utils_hr(-1.0);
-			IDFRaptorUtils.updateScoring(config);
 
-			ScoringConfigGroup.ActivityParams activityParams = new ScoringConfigGroup.ActivityParams("car-pt interaction");
+			ScoringConfigGroup.ActivityParams activityParams = new ScoringConfigGroup.ActivityParams(
+					"car-pt interaction");
 			config.scoring().addActivityParams(activityParams);
 			activityParams.setTypicalDuration(1);
 			activityParams.setScoringThisActivityAtAll(false);
@@ -99,12 +91,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
-		
-		Optional<String> superblocksPath = cmd.getOption("superblocks-path");
-		if (superblocksPath.isPresent()) {
-			controller.addOverridingModule(new SuperBlocksModule(superblocksPath.get()));
-		}
-		
+
 		controller.addOverridingModule(new UrbanAnalysisModule());
 		controller.addOverridingModule(new DelayAnalysisModule());
 
@@ -120,7 +107,8 @@ public class RunSimulation {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 		eqasimConfig.setEstimator("car_pt", IDFModeChoiceModule.CAR_PT_ESTIMATOR_NAME);
 		DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup = DiscreteModeChoiceConfigGroup.getOrCreate(config);
-		discreteModeChoiceConfigGroup.setCachedModesAsString(discreteModeChoiceConfigGroup.getCachedModesAsString()+", car_pt");
+		discreteModeChoiceConfigGroup
+				.setCachedModesAsString(discreteModeChoiceConfigGroup.getCachedModesAsString() + ", car_pt");
 
 		if (cmd.getOption("use-epsilon").map(Boolean::parseBoolean).orElse(true)) {
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
@@ -164,12 +152,6 @@ public class RunSimulation {
 		}
 
 		controller.addOverridingModule(new ParkingModule(3.0));
-		controller.addOverridingModule(new IDFRaptorModule(cmd));
-		controller.addOverridingModule(new MyMultiModalLinkChooserModule());
-		controller.addOverridingModule(new ParkingAvailabilityModule());
-		controller.addOverridingModule(new CarPTRouterModule());
-		controller.addOverridingModule(new HomeWorkDistanceModule());
-		
 
 		controller.run();
 	}

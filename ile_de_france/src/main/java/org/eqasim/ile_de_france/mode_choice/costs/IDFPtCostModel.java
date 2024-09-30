@@ -9,7 +9,6 @@ import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredic
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
-import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -49,9 +48,7 @@ public class IDFPtCostModel implements CostModel {
 			if (element instanceof Leg) {
 				Leg leg = (Leg) element;
 
-				if (leg.getMode().startsWith(IDFRaptorUtils.PT_MODE_PREFIX)) {
-					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
-
+				if (leg.getRoute() instanceof TransitPassengerRoute route) {
 					String transportMode = transitSchedule.getTransitLines().get(route.getLineId()).getRoutes()
 							.get(route.getRouteId()).getTransportMode();
 
@@ -73,7 +70,7 @@ public class IDFPtCostModel implements CostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		if (PolicyParameters.usePtDiscount){
+		if (PolicyParameters.usePtDiscount) {
 			// 0) If agent works too far away, PT cost is subsidized
 			double homeWorkDistance_m = homeWorkDistances.get(person);
 			if (homeWorkDistance_m > 3000) {

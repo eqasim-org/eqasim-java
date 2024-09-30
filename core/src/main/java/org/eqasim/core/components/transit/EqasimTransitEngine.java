@@ -42,13 +42,11 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 		final public MobsimAgent agent;
 		final public double departureTime;
 		final public Id<Link> departureLinkId;
-		final public String mode;
 
-		public AgentDeparture(MobsimAgent agent, double departureTime, Id<Link> departureLinkId, String mode) {
+		public AgentDeparture(MobsimAgent agent, double departureTime, Id<Link> departureLinkId) {
 			this.agent = agent;
 			this.departureTime = departureTime;
 			this.departureLinkId = departureLinkId;
-			this.mode = mode;
 		}
 
 		@Override
@@ -62,14 +60,12 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 		final public double arrivalTime;
 		final public Id<Link> arrivalLinkId;
 		final public PublicTransitEvent event;
-		final public String mode;
 
-		public AgentArrival(MobsimAgent agent, double arrivalTime, Id<Link> arrivalLinkId, PublicTransitEvent event, String mode) {
+		public AgentArrival(MobsimAgent agent, double arrivalTime, Id<Link> arrivalLinkId, PublicTransitEvent event) {
 			this.agent = agent;
 			this.arrivalTime = arrivalTime;
 			this.arrivalLinkId = arrivalLinkId;
 			this.event = event;
-			this.mode = mode;
 		}
 
 		@Override
@@ -88,7 +84,7 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 
 	@Override
 	public boolean handleDeparture(double now, MobsimAgent agent, Id<Link> departureLinkId) {
-		if (agent.getMode().equals("pt") || agent.getMode().startsWith("pt:")) {
+		if (agent.getMode().equals("pt")) {
 			Leg leg = (Leg) ((PlanAgent) agent).getCurrentPlanElement();
 			TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
@@ -118,10 +114,10 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 						vehicleDepartureTime, route.getDistance());
 
 				internalInterface.registerAdditionalAgentOnLink(agent);
-				departures.add(new AgentDeparture(agent, vehicleDepartureTime, departureLinkId, agent.getMode()));
-				arrivals.add(new AgentArrival(agent, arrivalTime, arrivalLinkId, transitEvent, agent.getMode()));
+				departures.add(new AgentDeparture(agent, vehicleDepartureTime, departureLinkId));
+				arrivals.add(new AgentArrival(agent, arrivalTime, arrivalLinkId, transitEvent));
 			} catch (NoDepartureFoundException e) {
-				eventsManager.processEvent(new PersonStuckEvent(now, agent.getId(), agent.getCurrentLinkId(), agent.getMode()));
+				eventsManager.processEvent(new PersonStuckEvent(now, agent.getId(), agent.getCurrentLinkId(), "pt"));
 				agentCounter.decLiving();
 			}
 
@@ -143,7 +139,7 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 			arrival.agent.notifyArrivalOnLinkByNonNetworkMode(arrival.arrivalLinkId);
 			eventsManager.processEvent(new PublicTransitEvent(time, arrival.event));
 			eventsManager.processEvent(new TeleportationArrivalEvent(time, arrival.agent.getId(),
-					arrival.event.getTravelDistance(), arrival.mode));
+					arrival.event.getTravelDistance(), "pt"));
 			arrival.agent.endLegAndComputeNextState(time);
 			internalInterface.arrangeNextAgentState(arrival.agent);
 		}
@@ -162,7 +158,7 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 
 		for (AgentDeparture departure : departures) {
 			eventsManager
-					.processEvent(new PersonStuckEvent(time, departure.agent.getId(), departure.departureLinkId, departure.mode));
+					.processEvent(new PersonStuckEvent(time, departure.agent.getId(), departure.departureLinkId, "pt"));
 			agentCounter.decLiving();
 			processedAgents.add(departure.agent);
 		}
@@ -170,7 +166,7 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 		for (AgentArrival arrival : arrivals) {
 			if (!processedAgents.contains(arrival.agent)) {
 				eventsManager
-						.processEvent(new PersonStuckEvent(time, arrival.agent.getId(), arrival.arrivalLinkId, arrival.mode));
+						.processEvent(new PersonStuckEvent(time, arrival.agent.getId(), arrival.arrivalLinkId, "pt"));
 				agentCounter.decLiving();
 			}
 		}

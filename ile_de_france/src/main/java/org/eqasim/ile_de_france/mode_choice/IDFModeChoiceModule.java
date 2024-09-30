@@ -27,25 +27,19 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEst
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
-import org.eqasim.ile_de_france.policies.CarContinuityTourConstraint;
-import org.eqasim.ile_de_france.policies.CarPTTourConstraint;
 import org.matsim.contribs.discrete_mode_choice.components.tour_finder.ActivityTourFinder;
-import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.ActivityTourFinderConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
-import org.matsim.core.router.MultimodalLinkChooser;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
-
 /**
- * Added CarPTTourConstraint and CarContinuityTourConstraint and CarPTUtilityEstimator
+ * Added CarPTTourConstraint and CarContinuityTourConstraint and
+ * CarPTUtilityEstimator
  * 
  * @author akramelb
  */
@@ -94,9 +88,6 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(INITIAL_WAITING_TIME_CONSTRAINT).to(InitialWaitingTimeConstraint.Factory.class);
 		bindTripConstraintFactory(SAME_LOCATION_WALK_CONSTRAINT).to(SameLocationWalkConstraint.Factory.class);
 
-		bindTourConstraintFactory(CAR_PT_CONSTRAINT).to(CarPTTourConstraint.Factory.class);
-		bindTourConstraintFactory(CAR_CONTINUITY_CONSTRAINT).to(CarContinuityTourConstraint.Factory.class);
-
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 
 		String costModel = commandLine.getOption("cost-model").orElse("idf");
@@ -111,25 +102,36 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		default:
 			throw new IllegalStateException();
 		}
-		
+
 		bindTourFinder(ISOLATED_OUTSIDE_TOUR_FINDER_NAME).to(ActivityTourFinderWithExcludedActivities.class);
 	}
 
 	@Provides
 	@Singleton
-	public IDFCarPTUtilityEstimator provideIDFCarPTUtilityEstimator(ModeParameters parameters, CarPredictor predictor, EqasimConfigGroup eqasimConfigGroup, Map<String, Provider<UtilityEstimator>> utilityEstimatorProviders) {
-		UtilityEstimator carEstimator = utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get("car")).get();
+	public IDFCarPTUtilityEstimator provideIDFCarPTUtilityEstimator(ModeParameters parameters, CarPredictor predictor,
+			EqasimConfigGroup eqasimConfigGroup, Map<String, Provider<UtilityEstimator>> utilityEstimatorProviders) {
+		UtilityEstimator carEstimator = utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get("car"))
+				.get();
 		UtilityEstimator ptEstimator = utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get("pt")).get();
 
 		return new IDFCarPTUtilityEstimator(parameters, predictor, carEstimator, ptEstimator);
 	}
 
 	// @Provides
-    // public DefaultFeederDrtUtilityEstimator provideDefaultFeederDrtUtilityEstimator(EqasimConfigGroup eqasimConfigGroup, MultiModeFeederDrtConfigGroup multiModeFeederDrtConfigGroup, Map<String, Provider<UtilityEstimator>> utilityEstimatorProviders) {
-    //     Map<String, UtilityEstimator> ptEstimators = multiModeFeederDrtConfigGroup.getModalElements().stream().collect(Collectors.toMap(cfg -> cfg.mode, cfg -> utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get(cfg.ptModeName)).get()));
-    //     Map<String, UtilityEstimator> drtEstimators = multiModeFeederDrtConfigGroup.getModalElements().stream().collect(Collectors.toMap(cfg -> cfg.mode, cfg -> utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get(cfg.accessEgressModeName)).get()));
-    //     return new DefaultFeederDrtUtilityEstimator(ptEstimators, drtEstimators);
-    // }
+	// public DefaultFeederDrtUtilityEstimator
+	// provideDefaultFeederDrtUtilityEstimator(EqasimConfigGroup eqasimConfigGroup,
+	// MultiModeFeederDrtConfigGroup multiModeFeederDrtConfigGroup, Map<String,
+	// Provider<UtilityEstimator>> utilityEstimatorProviders) {
+	// Map<String, UtilityEstimator> ptEstimators =
+	// multiModeFeederDrtConfigGroup.getModalElements().stream().collect(Collectors.toMap(cfg
+	// -> cfg.mode, cfg ->
+	// utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get(cfg.ptModeName)).get()));
+	// Map<String, UtilityEstimator> drtEstimators =
+	// multiModeFeederDrtConfigGroup.getModalElements().stream().collect(Collectors.toMap(cfg
+	// -> cfg.mode, cfg ->
+	// utilityEstimatorProviders.get(eqasimConfigGroup.getEstimators().get(cfg.accessEgressModeName)).get()));
+	// return new DefaultFeederDrtUtilityEstimator(ptEstimators, drtEstimators);
+	// }
 
 	@Provides
 	@Singleton
@@ -160,20 +162,6 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public CarPTTourConstraint.Factory provideCarPtTourConstraintFactory(
-		HomeFinder homeFinder, MultimodalLinkChooser linkChooser, SwissRailRaptor raptor) {
-		return new CarPTTourConstraint.Factory(homeFinder, linkChooser, raptor.getUnderlyingData());
-	}
-
-	@Provides
-	@Singleton
-	public CarContinuityTourConstraint.Factory provideCarContinuityTourConstraintFactory(
-		HomeFinder homeFinder, MultimodalLinkChooser linkChooser, TransitSchedule schedule) {
-		return new CarContinuityTourConstraint.Factory(homeFinder, linkChooser, schedule);
-	}
-
-	@Provides
-	@Singleton
 	public InitialWaitingTimeConstraint.Factory provideInitialWaitingTimeConstraintFactory() {
 		double maximumInitialWaitingTime_min = 15.0;
 		return new InitialWaitingTimeConstraint.Factory(maximumInitialWaitingTime_min);
@@ -181,8 +169,10 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public ActivityTourFinderWithExcludedActivities provideActivityTourFinderWithExcludedActivities(DiscreteModeChoiceConfigGroup dmcConfig) {
+	public ActivityTourFinderWithExcludedActivities provideActivityTourFinderWithExcludedActivities(
+			DiscreteModeChoiceConfigGroup dmcConfig) {
 		ActivityTourFinderConfigGroup config = dmcConfig.getActivityTourFinderConfigGroup();
-		return new ActivityTourFinderWithExcludedActivities(List.of("outside"), new ActivityTourFinder(config.getActivityTypes()));
+		return new ActivityTourFinderWithExcludedActivities(List.of("outside"),
+				new ActivityTourFinder(config.getActivityTypes()));
 	}
 }
