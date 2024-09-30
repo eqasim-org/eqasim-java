@@ -46,7 +46,7 @@ public class ScenarioWriter {
 				.writeFile(new File(outputDirectory, prefix + "vehicles.xml.gz").toString());
 	}
 
-	static public void checkOutputDirectory(File outputDirectory) {
+	static void checkOutputDirectory(File outputDirectory) {
 		File parentDirectory = outputDirectory.getParentFile();
 
 		if (!parentDirectory.exists()) {
