@@ -1,5 +1,9 @@
 package org.eqasim.ile_de_france.super_blocks.defs;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eqasim.ile_de_france.super_blocks.permissions.SuperBlockPermission;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
@@ -8,10 +12,6 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SuperBlocksLogic {
     private final IdMap<Person, IdSet<SuperBlock>> superBlocksByPerson = new IdMap<>(Person.class);

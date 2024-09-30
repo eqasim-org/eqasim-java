@@ -1,12 +1,17 @@
 package org.eqasim.ile_de_france.super_blocks.handlers;
 
-import com.google.inject.Inject;
-import com.opencsv.CSVWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.ile_de_france.super_blocks.defs.SuperBlock;
 import org.eqasim.ile_de_france.super_blocks.defs.SuperBlocksLogic;
-import org.jfree.data.io.CSV;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.IdSet;
@@ -20,13 +25,8 @@ import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.ShutdownListener;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.google.inject.Inject;
+import com.opencsv.CSVWriter;
 
 public class SuperblockViolationHandler implements LinkEnterEventHandler, ShutdownListener, IterationEndsListener {
 

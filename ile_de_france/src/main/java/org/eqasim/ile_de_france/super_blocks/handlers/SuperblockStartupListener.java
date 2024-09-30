@@ -1,12 +1,11 @@
 package org.eqasim.ile_de_france.super_blocks.handlers;
 
-import com.google.inject.Inject;
 import org.eqasim.core.scenario.routing.PopulationRouter;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.controler.events.IterationStartsEvent;
-import org.matsim.core.controler.events.StartupEvent;
 import org.matsim.core.controler.listener.IterationStartsListener;
-import org.matsim.core.controler.listener.StartupListener;
+
+import com.google.inject.Inject;
 
 
 public class SuperblockStartupListener implements IterationStartsListener {

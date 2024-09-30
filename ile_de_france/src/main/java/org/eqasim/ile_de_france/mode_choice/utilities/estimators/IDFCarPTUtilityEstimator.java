@@ -1,6 +1,7 @@
 package org.eqasim.ile_de_france.mode_choice.utilities.estimators;
 
 import java.util.List;
+
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;

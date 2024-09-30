@@ -6,6 +6,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.facilities.Facility;
+
 import com.google.inject.Inject;
 /**
  * MultimodalLinkChooser implementation that takes

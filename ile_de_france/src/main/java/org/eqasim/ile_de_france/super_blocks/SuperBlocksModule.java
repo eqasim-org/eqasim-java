@@ -1,7 +1,9 @@
 package org.eqasim.ile_de_france.super_blocks;
 
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+
 import org.eqasim.core.scenario.routing.PopulationRouterModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.ile_de_france.super_blocks.defs.SuperBlocksLogic;
@@ -15,9 +17,8 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.Config;
 import org.matsim.core.router.costcalculators.RandomizingTimeDistanceTravelDisutilityFactory;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Set;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 
 public class SuperBlocksModule extends AbstractEqasimExtension {
 	private final String superblocksPath;

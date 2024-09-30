@@ -1,6 +1,5 @@
 package org.eqasim.ile_de_france.super_blocks.routing;
 
-import com.google.inject.Inject;
 import org.eqasim.ile_de_france.super_blocks.defs.SuperBlock;
 import org.eqasim.ile_de_france.super_blocks.defs.SuperBlocksLogic;
 import org.matsim.api.core.v01.Id;
@@ -12,6 +11,8 @@ import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.vehicles.Vehicle;
+
+import com.google.inject.Inject;
 
 public class SuperBlocksTravelDisutility implements TravelDisutility {
     public static final double WITHIN_SUPERBLOCK_DISUTILITY_FACTOR = 10e6;

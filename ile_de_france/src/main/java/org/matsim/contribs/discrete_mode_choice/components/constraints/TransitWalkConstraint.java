@@ -3,7 +3,6 @@ package org.matsim.contribs.discrete_mode_choice.components.constraints;
 import java.util.Collection;
 import java.util.List;
 
-import org.eqasim.ile_de_france.routing.IDFRaptorUtils;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;

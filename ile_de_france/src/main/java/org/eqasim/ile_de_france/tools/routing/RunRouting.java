@@ -27,6 +27,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;
 import org.matsim.vehicles.VehiclesFactory;
@@ -87,14 +88,15 @@ public class RunRouting {
 			Vehicles vehicles = scenario.getVehicles();
 			VehiclesFactory factory = vehicles.getFactory();
 
-			vehicles.addVehicleType(VehicleUtils.getDefaultVehicleType());
+			VehicleType defaultVehicleType = VehicleUtils.createDefaultVehicleType();
+			vehicles.addVehicleType(defaultVehicleType);
 
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Map<String, Id<Vehicle>> personVehicles = new HashMap<>();
 
 				for (String mode : config.routing().getNetworkModes()) {
 					Vehicle vehicle = factory.createVehicle(Id.createVehicleId(person.getId().toString() + ":" + mode),
-							VehicleUtils.getDefaultVehicleType());
+							defaultVehicleType);
 					vehicles.addVehicle(vehicle);
 
 					personVehicles.put(mode, vehicle.getId());
