@@ -15,6 +15,7 @@ import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
+import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -407,6 +408,7 @@ public class TestSimulationPipeline {
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
+        runPopulationRouting();
         runStandaloneModeChoice();
         runVdf();
         runAnalyses();
@@ -414,8 +416,14 @@ public class TestSimulationPipeline {
         runCutter();
         runCutterV2();
     }
-
-
+    
+    public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+        RunPopulationRouting.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--output-path", "melun_test/output/routed_population.xml.gz"
+        });
+    }
+    
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunStandaloneModeChoice.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
