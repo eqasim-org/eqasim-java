@@ -12,10 +12,13 @@ import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.google.inject.Inject;
 
 public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
+	static public final String PARIS_ATTRIBUTE = "isParis";
+
 	private final TransitSchedule schedule;
 
 	@Inject
@@ -29,6 +32,9 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 		int subwayCount = 0;
 		int otherCount = 0;
 
+		TransitPassengerRoute firstRoute = null;
+		TransitPassengerRoute lastRoute = null;
+
 		for (PlanElement element : elements) {
 			if (element instanceof Leg leg) {
 				if (leg instanceof TransitPassengerRoute route) {
@@ -41,6 +47,12 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 					} else if (transportMode.equals("subway")) {
 						subwayCount++;
 					}
+
+					if (firstRoute == null) {
+						firstRoute = route;
+					}
+
+					lastRoute = route;
 				}
 			}
 		}
@@ -48,6 +60,18 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 		boolean isOnlyBus = busCount > 0 && subwayCount == 0 && otherCount == 0;
 		boolean hasOnlySubwayAndBus = (busCount > 0 || subwayCount > 0) && otherCount == 0;
 
-		return new IDFPtVariables(isOnlyBus, hasOnlySubwayAndBus);
+		boolean isWithinParis = false;
+
+		if (firstRoute != null) {
+			TransitStopFacility startFacility = schedule.getFacilities().get(firstRoute.getAccessStopId());
+			TransitStopFacility endFacility = schedule.getFacilities().get(lastRoute.getEgressStopId());
+
+			Boolean startParis = (Boolean) startFacility.getAttributes().getAttribute(PARIS_ATTRIBUTE);
+			Boolean endParis = (Boolean) endFacility.getAttributes().getAttribute(PARIS_ATTRIBUTE);
+
+			isWithinParis = startParis != null && endParis != null && startParis && endParis;
+		}
+
+		return new IDFPtVariables(isOnlyBus, hasOnlySubwayAndBus, isWithinParis);
 	}
 }

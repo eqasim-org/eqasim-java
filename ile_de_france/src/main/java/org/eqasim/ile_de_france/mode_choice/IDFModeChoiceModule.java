@@ -3,10 +3,12 @@ package org.eqasim.ile_de_france.mode_choice;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.tour_finder.ActivityTourFinderWithExcludedActivities;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
@@ -19,15 +21,20 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEs
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFMotorbikeUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPassengerUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFMotorbikePredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPassengerPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.matsim.contribs.discrete_mode_choice.components.tour_finder.ActivityTourFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.ActivityTourFinderConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -61,6 +68,9 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(IDFModeAvailability.class);
 
 		bind(IDFPersonPredictor.class);
+		bind(IDFMotorbikePredictor.class);
+		bind(IDFPassengerPredictor.class);
+		bind(IDFPtPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(IDFCarCostModel.class);
 		bindCostModel(MOTORBIKE_COST_MODEL_NAME).to(IDFMotorbikeCostModel.class);
@@ -111,5 +121,11 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		ActivityTourFinderConfigGroup config = dmcConfig.getActivityTourFinderConfigGroup();
 		return new ActivityTourFinderWithExcludedActivities(List.of("outside"),
 				new ActivityTourFinder(config.getActivityTypes()));
+	}
+	
+	@Provides
+	@Named("motorbike")
+	public CostModel providePtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "motorbike");
 	}
 }

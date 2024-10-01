@@ -43,13 +43,8 @@ public class IDFPtCostModel implements CostModel {
 
 		// II) Special case: Within Paris or only metro and bus
 		IDFPtVariables ptVariables = ptPredictor.predictVariables(person, trip, elements);
-		boolean isWithinParis = false;
 
-		if (true) {
-			throw new IllegalStateException("find out if this is in paris");
-		}
-
-		if (ptVariables.hasOnlySubwayAndBus || isWithinParis) {
+		if (ptVariables.hasOnlySubwayAndBus || ptVariables.isWithinParis) {
 			return 1.8;
 		}
 
