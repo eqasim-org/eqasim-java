@@ -8,6 +8,7 @@ import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
@@ -88,5 +89,9 @@ public class RunAdaptConfig {
 		
 		VehiclesConfigGroup vehiclesConfig = config.vehicles();
 		vehiclesConfig.setVehiclesFile(prefix + "vehicles.xml.gz");
+		
+		// Convergence
+		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+		terminationConfig.setModes(Arrays.asList("car", "passenger", "motorbike", "pt", "bicycle", "walk"));
 	}
 }
