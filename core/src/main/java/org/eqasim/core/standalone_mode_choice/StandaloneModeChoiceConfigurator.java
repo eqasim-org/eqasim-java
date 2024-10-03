@@ -3,6 +3,9 @@ package org.eqasim.core.standalone_mode_choice;
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAbstractAccessModuleConfigGroup;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessModule;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeChoiceModule;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.VDFModule;
@@ -31,6 +34,8 @@ public class StandaloneModeChoiceConfigurator {
         this.optionalModules = new LinkedHashMap<>();
 
         this.registerOptionalModule(new VDFConfigGroup(), new VDFModule());
+        this.registerOptionalModule(TransitWithAbstractAbstractAccessModuleConfigGroup.GROUP_NAME, new TransitWithAbstractAccessModeChoiceModule());
+        this.registerOptionalModule(TransitWithAbstractAbstractAccessModuleConfigGroup.GROUP_NAME, new TransitWithAbstractAccessModule());
     }
 
     public Config getConfig() {

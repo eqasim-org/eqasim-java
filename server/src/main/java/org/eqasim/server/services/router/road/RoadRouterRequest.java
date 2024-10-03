@@ -26,7 +26,13 @@ public class RoadRouterRequest {
 
 	@JsonProperty("provide_geometry")
 	public boolean provideGeometry = false;
-	
+
 	@JsonProperty("access_egress_radius_km")
 	public Double accessEgressRadius_km = null;
+	
+	@JsonProperty("consider_parallel_links")
+	public boolean considerParallelLinks = false;
+
+	@JsonProperty("freespeed")
+	public FreespeedSettings freespeed = null;
 }

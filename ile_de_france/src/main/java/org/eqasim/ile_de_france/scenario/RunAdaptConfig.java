@@ -25,8 +25,7 @@ import org.matsim.core.config.groups.VehiclesConfigGroup;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		IDFConfigurator configurator = new IDFConfigurator();
-		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		ConfigAdapter.run(args, new IDFConfigurator(), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config, String prefix) {

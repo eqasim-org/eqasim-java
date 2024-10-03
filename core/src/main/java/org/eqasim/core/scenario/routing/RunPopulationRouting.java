@@ -12,7 +12,6 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationWriter;
@@ -62,8 +61,7 @@ public class RunPopulationRouting {
 		Injector injector = new InjectorBuilder(scenario) //
 				.addOverridingModules(configurator.getModules().stream()
 						.filter(module -> !(module instanceof AbstractEqasimExtension)) //
-						.filter(module -> !(module instanceof DiscreteModeChoiceModule)) //
-						.toList()) //
+						.filter(module -> !(module instanceof DiscreteModeChoiceModule)).toList()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
 				.addOverridingModule(new TimeInterpretationModule()).build();
 
