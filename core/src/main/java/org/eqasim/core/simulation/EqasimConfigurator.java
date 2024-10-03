@@ -70,8 +70,7 @@ public class EqasimConfigurator {
                 new SwissRailRaptorConfigGroup(), //
                 new EqasimConfigGroup(), //
                 new DiscreteModeChoiceConfigGroup(), //
-                new EqasimRaptorConfigGroup(), //
-                new EqasimTerminationConfigGroup() //
+                new EqasimRaptorConfigGroup() //
         ));
 
         modules.addAll(Arrays.asList( //
@@ -81,10 +80,7 @@ public class EqasimConfigurator {
                 new EqasimComponentsModule(), //
                 new EpsilonModule(), //
                 new EqasimRaptorModule(),
-                new EqasimModeChoiceModule(), //
-                new EqasimTrafficModule(), //
-                new EqasimTerminationModule(), //
-                new ModeShareModule() //
+                new EqasimModeChoiceModule() //
         ));
 
         qsimModules.addAll(Arrays.asList( //
@@ -99,6 +95,7 @@ public class EqasimConfigurator {
                         DvrpQSimComponents.activateAllModes((MultiModal<?>) controller.getConfig().getModules().get(MultiModeDrtConfigGroup.GROUP_NAME)).configure(components)));
 
         this.registerOptionalConfigGroup(new DvrpConfigGroup(), Collections.singleton(new DvrpModule()));
+        this.registerOptionalConfigGroup(new EqasimTerminationConfigGroup(), List.of(new EqasimTerminationModule(), new ModeShareModule()));
         this.registerOptionalConfigGroup(new MultiModeFeederDrtConfigGroup(), List.of(new MultiModeFeederDrtModule(), new EqasimFeederDrtModeChoiceModule()));
         this.registerOptionalConfigGroup(
                 new TransitWithAbstractAbstractAccessModuleConfigGroup(),
