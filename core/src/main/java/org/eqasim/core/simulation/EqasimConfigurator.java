@@ -79,8 +79,9 @@ public class EqasimConfigurator {
                 new DiscreteModeChoiceModule(), //
                 new EqasimComponentsModule(), //
                 new EpsilonModule(), //
-                new EqasimRaptorModule(),
-                new EqasimModeChoiceModule() //
+                new EqasimRaptorModule(), //
+                new EqasimModeChoiceModule(), //
+                new EqasimTrafficModule() //
         ));
 
         qsimModules.addAll(Arrays.asList( //
