@@ -35,7 +35,6 @@ public class RunAdaptConfig {
 
 		Set<String> networkModes = new HashSet<>(config.routing().getNetworkModes());
 		networkModes.add("passenger");
-		networkModes.add("motorbike");
 		config.routing().setNetworkModes(networkModes);
 
 		// MATSim: scoring
@@ -45,7 +44,7 @@ public class RunAdaptConfig {
 		bicycleRouteParams.setBeelineDistanceFactor(1.3);
 		config.routing().addTeleportedModeParams(bicycleRouteParams);
 
-		for (String mode : Arrays.asList("motorbike", "bicycle", "passenger")) {
+		for (String mode : Arrays.asList("bicycle", "passenger")) {
 			ModeParams modeScoringParams = new ModeParams(mode);
 			modeScoringParams.setMarginalUtilityOfTraveling(-1.0);
 			config.scoring().addModeParams(modeScoringParams);
@@ -73,7 +72,7 @@ public class RunAdaptConfig {
 		dmcConfig.setTripConstraints(tripConstraints);
 
 		VehicleTourConstraintConfigGroup vehicleTourConstraint = dmcConfig.getVehicleTourConstraintConfig();
-		vehicleTourConstraint.setRestrictedModes(Arrays.asList("car", "bicycle", "motorbike"));
+		vehicleTourConstraint.setRestrictedModes(Arrays.asList("car", "bicycle"));
 
 		// Major crossing penalty from calibration
 		eqasimConfig.setCrossingPenalty(4.2);
@@ -90,6 +89,6 @@ public class RunAdaptConfig {
 
 		// Convergence
 		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
-		terminationConfig.setModes(Arrays.asList("car", "passenger", "motorbike", "pt", "bicycle", "walk"));
+		terminationConfig.setModes(Arrays.asList("car", "passenger", "pt", "bicycle", "walk"));
 	}
 }

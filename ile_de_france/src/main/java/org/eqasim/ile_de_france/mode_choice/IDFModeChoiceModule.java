@@ -111,10 +111,4 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		return new ActivityTourFinderWithExcludedActivities(List.of("outside"),
 				new ActivityTourFinder(config.getActivityTypes()));
 	}
-
-	@Provides
-	@Named("motorbike")
-	public CostModel providePtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
-		return getCostModel(factory, config, "motorbike");
-	}
 }

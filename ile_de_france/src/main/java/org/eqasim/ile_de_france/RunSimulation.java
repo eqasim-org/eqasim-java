@@ -65,7 +65,7 @@ public class RunSimulation {
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Map<String, Id<Vehicle>> personVehicles = new HashMap<>();
 
-				for (String mode : Arrays.asList("motorbike", "passenger")) {
+				for (String mode : Arrays.asList("passenger")) {
 					Vehicle vehicle = factory.createVehicle(Id.createVehicleId(person.getId().toString() + ":" + mode),
 							vehicleType);
 					vehicles.addVehicle(vehicle);
@@ -78,8 +78,6 @@ public class RunSimulation {
 
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				person.getAttributes().putAttribute("bicycleAvailability",
-						person.getAttributes().getAttribute("bikeAvailability")); // ok done in pipeline
-				person.getAttributes().putAttribute("motorbikeAvailability",
 						person.getAttributes().getAttribute("bikeAvailability")); // ok done in pipeline
 
 				// ok mode changes in pipeline
@@ -99,7 +97,6 @@ public class RunSimulation {
 
 				if (allowedModes.contains("car")) {
 					allowedModes.add("passenger");
-					allowedModes.add("motorbike");
 				}
 
 				link.setAllowedModes(allowedModes);
