@@ -14,7 +14,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.DistanceUnit;
@@ -152,6 +154,7 @@ public class RunStandaloneModeChoice {
                 .allowOptions(CMD_SIMULATE_AFTER)
                 .allowOptions(CMD_SKIP_SCENARIO_CHECK)
                 .allowOptions(EQASIM_CONFIGURATOR_CLASS, MODE_CHOICE_CONFIGURATOR_CLASS)
+                .allowAnyOption(true)
                 .build();
 
         // Loading the config
@@ -272,22 +275,28 @@ public class RunStandaloneModeChoice {
             try {
                 Class<?> runClass = Class.forName(cmd.getOptionStrict(CMD_SIMULATE_AFTER));
                 Method method = runClass.getMethod("main", String[].class);
+
+                String[] extraArgs = cmd.getAvailableOptions().stream()
+                        .filter(argName -> argName.startsWith("config:"))
+                        .filter(argName -> !argName.startsWith("config:standaloneModeChoice"))
+                        .filter(argName -> !argName.equals("config:plans.inputPlansFile"))
+                        .flatMap(argName -> Stream.of("--"+argName, cmd.getOption(argName).get()))
+                        .toArray(String[]::new);
+
+                String[] baseArgs = new String[]{
+                        "--config-path", cmd.getOptionStrict(CMD_CONFIG_PATH),
+                        "--config:plans.inputPlansFile", Paths.get(outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz")).toAbsolutePath().toString(),
+                        "--config:controler.outputDirectory", outputDirectoryHierarchy.getOutputFilename("sim"),
+                        "--config:controler.lastIteration", "0"
+                };
+                String[] allArgs = ArrayUtils.addAll(baseArgs, extraArgs);
+
                 method.invoke(null, new Object[]{
-                        new String[]{
-                                "--config-path", cmd.getOptionStrict(CMD_CONFIG_PATH),
-                                "--config:plans.inputPlansFile", Paths.get(outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz")).toAbsolutePath().toString(),
-                                "--config:controler.outputDirectory", outputDirectoryHierarchy.getOutputFilename("sim"),
-                                "--config:controler.lastIteration", "0"
-                        }
+                        allArgs
                 });
 
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            } catch (NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
+            } catch (ClassNotFoundException | InvocationTargetException | NoSuchMethodException |
+                     IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }
