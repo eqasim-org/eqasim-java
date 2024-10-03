@@ -70,8 +70,7 @@ public class EqasimConfigurator {
                 new SwissRailRaptorConfigGroup(), //
                 new EqasimConfigGroup(), //
                 new DiscreteModeChoiceConfigGroup(), //
-                new EqasimRaptorConfigGroup(), //
-                new EqasimTerminationConfigGroup()
+                new EqasimRaptorConfigGroup() //
         ));
 
         modules.addAll(Arrays.asList( //
