@@ -15,6 +15,7 @@ import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
+import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -34,7 +35,12 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.Creat
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.*;
+import org.eqasim.core.tools.ExportActivitiesToShapefile;
+import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
+import org.eqasim.core.tools.ExportNetworkToShapefile;
+import org.eqasim.core.tools.ExportPopulationToCSV;
+import org.eqasim.core.tools.ExportTransitLinesToShapefile;
+import org.eqasim.core.tools.ExportTransitStopsToShapefile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -407,6 +413,7 @@ public class TestSimulationPipeline {
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
+        runPopulationRouting();
         runStandaloneModeChoice();
         runVdf();
         runAnalyses();
@@ -415,6 +422,12 @@ public class TestSimulationPipeline {
         runCutterV2();
     }
 
+    public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+        RunPopulationRouting.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--output-path", "melun_test/output/routed_population.xml.gz"
+        });
+    }
 
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunStandaloneModeChoice.main(new String[] {
