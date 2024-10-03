@@ -3,12 +3,6 @@ package org.eqasim.ile_de_france.mode_choice.parameters;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
 public class IDFModeParameters extends ModeParameters {
-	public class IDFCarParameters {
-		public double betaInVehicleTravelTime_u_min;
-	}
-
-	public final IDFCarParameters idfCar = new IDFCarParameters();
-
 	public class IDFCarPassengerParameters {
 		public double alpha_u;
 		public double betaInVehicleTravelTime_u_min;
@@ -30,40 +24,38 @@ public class IDFModeParameters extends ModeParameters {
 		IDFModeParameters parameters = new IDFModeParameters();
 
 		// Access
-		parameters.betaAccessTime_u_min = -0.0313;
+		parameters.betaAccessTime_u_min = -0.0318;
 
 		// Cost
-		parameters.betaCost_u_MU = -0.474;
-		parameters.lambdaCostEuclideanDistance = -0.274;
+		parameters.betaCost_u_MU = -0.425;
+		parameters.lambdaCostEuclideanDistance = -0.268;
 		parameters.referenceEuclideanDistance_km = 4.4;
 
 		// Car
-		parameters.car.alpha_u = -0.662;
-		parameters.car.betaTravelTime_u_min = -0.0262;
-
-		parameters.idfCar.betaInVehicleTravelTime_u_min = -0.0262;
+		parameters.car.alpha_u = -0.613;
+		parameters.car.betaTravelTime_u_min = -0.0285;
 
 		// Car passenger
-		parameters.idfCarPassenger.alpha_u = -2.08;
-		parameters.idfCarPassenger.betaDrivingPermit_u = -1.17;
-		parameters.idfCarPassenger.betaInVehicleTravelTime_u_min = -0.0608;
+		parameters.idfCarPassenger.alpha_u = -2.04;
+		parameters.idfCarPassenger.betaDrivingPermit_u = -1.16;
+		parameters.idfCarPassenger.betaInVehicleTravelTime_u_min = -0.0605;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
-		parameters.pt.betaLineSwitch_u = -0.452;
-		parameters.pt.betaInVehicleTime_u_min = -0.0201;
-		parameters.pt.betaWaitingTime_u_min = -0.0191;
+		parameters.pt.betaLineSwitch_u = -0.457;
+		parameters.pt.betaInVehicleTime_u_min = -0.0195;
+		parameters.pt.betaWaitingTime_u_min = -0.0195;
 		parameters.pt.betaAccessEgressTime_u_min = parameters.betaAccessTime_u_min;
 
-		parameters.idfPt.betaDrivingPermit_u = -0.712;
-		parameters.idfPt.onlyBus_u = -1.42;
+		parameters.idfPt.betaDrivingPermit_u = -0.722;
+		parameters.idfPt.onlyBus_u = -1.43;
 
 		// Bike
-		parameters.bike.alpha_u = -3.42;
-		parameters.bike.betaTravelTime_u_min = -0.0824;
+		parameters.bike.alpha_u = -3.39;
+		parameters.bike.betaTravelTime_u_min = -0.0823;
 
 		// Walk
-		parameters.walk.alpha_u = 1.2;
+		parameters.walk.alpha_u = 1.24;
 		parameters.walk.betaTravelTime_u_min = -0.158;
 
 		return parameters;
