@@ -25,8 +25,4 @@ public class IDFPredictorUtils {
 	static public boolean hasBicycleAvailability(Person person) {
 		return !"none".equals((String) person.getAttributes().getAttribute("bicycleAvailability"));
 	}
-
-	static public boolean hasMotorbikeAvailability(Person person) {
-		return !"none".equals((String) person.getAttributes().getAttribute("motorbikeAvailability"));
-	}
 }

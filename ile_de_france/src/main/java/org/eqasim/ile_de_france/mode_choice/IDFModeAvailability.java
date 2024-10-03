@@ -25,11 +25,6 @@ public class IDFModeAvailability implements ModeAvailability {
 			modes.add(TransportMode.car);
 		}
 
-		// Check motorbike availability
-		if (IDFPredictorUtils.hasMotorbikeAvailability(person)) {
-			modes.add(IDFModeChoiceModule.MOTORBIKE);
-		}
-
 		// Check bicycle availability
 		if (IDFPredictorUtils.hasBicycleAvailability(person)) {
 			modes.add(IDFModeChoiceModule.BICYCLE);
