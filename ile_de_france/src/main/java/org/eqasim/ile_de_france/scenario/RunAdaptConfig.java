@@ -58,7 +58,7 @@ public class RunAdaptConfig {
 
 		eqasimConfig.setEstimator(TransportMode.car, IDFModeChoiceModule.CAR_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(IDFModeChoiceModule.BICYCLE, IDFModeChoiceModule.BICYCLE_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(IDFModeChoiceModule.PASSENGER, IDFModeChoiceModule.PASSENGER_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(IDFModeChoiceModule.CAR_PASSENGER, IDFModeChoiceModule.CAR_PASSENGER_ESTIMATOR_NAME);
 		eqasimConfig.removeEstimator(TransportMode.bike);
 
 		// Discrete mode choice
@@ -89,6 +89,6 @@ public class RunAdaptConfig {
 
 		// Convergence
 		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
-		terminationConfig.setModes(Arrays.asList("car", "passenger", "pt", "bicycle", "walk"));
+		terminationConfig.setModes(Arrays.asList("car", "car_passenger", "pt", "bicycle", "walk"));
 	}
 }

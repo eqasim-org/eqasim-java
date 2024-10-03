@@ -9,13 +9,13 @@ public class IDFModeParameters extends ModeParameters {
 
 	public final IDFCarParameters idfCar = new IDFCarParameters();
 
-	public class IDFPassengerParameters {
+	public class IDFCarPassengerParameters {
 		public double alpha_u;
 		public double betaInVehicleTravelTime_u_min;
 		public double betaDrivingPermit_u;
 	}
 
-	public final IDFPassengerParameters idfPassenger = new IDFPassengerParameters();
+	public final IDFCarPassengerParameters idfCarPassenger = new IDFCarPassengerParameters();
 
 	public class IDFPtParameters {
 		public double betaDrivingPermit_u;
@@ -44,9 +44,9 @@ public class IDFModeParameters extends ModeParameters {
 		parameters.idfCar.betaInVehicleTravelTime_u_min = -0.0262;
 
 		// Car passenger
-		parameters.idfPassenger.alpha_u = -2.08;
-		parameters.idfPassenger.betaDrivingPermit_u = -1.17;
-		parameters.idfPassenger.betaInVehicleTravelTime_u_min = -0.0608;
+		parameters.idfCarPassenger.alpha_u = -2.08;
+		parameters.idfCarPassenger.betaDrivingPermit_u = -1.17;
+		parameters.idfCarPassenger.betaInVehicleTravelTime_u_min = -0.0608;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;
