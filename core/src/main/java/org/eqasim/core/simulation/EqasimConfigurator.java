@@ -172,7 +172,9 @@ public class EqasimConfigurator {
 
     public void addOptionalConfigGroups(Config config) {
         for (ConfigGroup configGroup : optionalConfigGroups.values()) {
-            if (config.getModules().get(configGroup.getName()) != null) {
+            ConfigGroup existingConfigGroup = config.getModules().get(configGroup.getName());
+            // if a config group with the same name exist and is still a generic ConfigGroup instance, we replace it by the optional config group instance
+            if (existingConfigGroup != null && existingConfigGroup.getClass().equals(ConfigGroup.class)) {
                 config.addModule(configGroup);
             }
         }
