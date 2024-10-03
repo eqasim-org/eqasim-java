@@ -6,9 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.groups.ControllerConfigGroup;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.TerminationCriterion;
 
@@ -18,12 +18,12 @@ import com.google.inject.Singleton;
 import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.MapBinder;
 
-public class EqasimTerminationModule extends AbstractModule {
+public class EqasimTerminationModule extends AbstractEqasimExtension {
 	private static final String TERMINATION_CSV_FILE = "eqasim_termination.csv";
 	private static final String TERMINATION_HTML_FILE = "eqasim_termination.html";
 
 	@Override
-	public void install() {
+	protected void installEqasimExtension() {
 		bind(TerminationCriterion.class).to(EqasimTerminationCriterion.class);
 	}
 
