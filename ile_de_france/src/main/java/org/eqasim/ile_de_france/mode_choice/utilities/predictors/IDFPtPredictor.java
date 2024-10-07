@@ -92,6 +92,8 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 						busCount++;
 					} else if (transportMode.equals("subway")) {
 						subwayCount++;
+					} else {
+						otherCount++;
 					}
 
 					if (firstRoute == null) {
