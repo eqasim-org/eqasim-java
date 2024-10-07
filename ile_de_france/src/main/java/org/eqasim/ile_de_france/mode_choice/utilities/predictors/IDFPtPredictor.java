@@ -18,22 +18,19 @@ import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 
 public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 	static public final String PARIS_ATTRIBUTE = "isParis";
 
 	private final TransitSchedule schedule;
-	private final CostModel costModel;
 
 	@Inject
-	public IDFPtPredictor(TransitSchedule schedule, @Named("pt") CostModel costModel) {
+	public IDFPtPredictor(TransitSchedule schedule) {
 		this.schedule = schedule;
-		this.costModel = costModel;
 	}
 
 	protected CostModel getCostModel() {
-		return this.costModel;
+		return null;
 	}
 
 	@Override
@@ -108,9 +105,6 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 
 		int numberOfLineSwitches = Math.max(0, numberOfVehicularTrips - 1);
 
-		// Calculate cost
-		double cost_CHF = costModel.calculateCost_MU(person, trip, elements);
-
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
 
 		boolean isOnlyBus = busCount > 0 && subwayCount == 0 && otherCount == 0;
@@ -129,6 +123,6 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 		}
 
 		return new IDFPtVariables(inVehicleTime_min, waitingTime_min, accessEgressTime_min, numberOfLineSwitches,
-				cost_CHF, euclideanDistance_km, isOnlyBus, hasOnlySubwayAndBus, isWithinParis);
+				euclideanDistance_km, isOnlyBus, hasOnlySubwayAndBus, isWithinParis);
 	}
 }

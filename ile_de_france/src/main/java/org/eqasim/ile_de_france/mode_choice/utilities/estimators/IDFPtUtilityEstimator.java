@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
@@ -14,18 +15,21 @@ import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 public class IDFPtUtilityEstimator implements UtilityEstimator {
 	private final IDFModeParameters parameters;
 	private final IDFPersonPredictor personPredictor;
 	private final IDFPtPredictor idfPtPredictor;
+	private final CostModel costModel;
 
 	@Inject
 	public IDFPtUtilityEstimator(IDFModeParameters parameters, IDFPtPredictor idfPtPredictor,
-			IDFPersonPredictor personPredictor) {
+			IDFPersonPredictor personPredictor, @Named("pt") CostModel costModel) {
 		this.personPredictor = personPredictor;
 		this.idfPtPredictor = idfPtPredictor;
 		this.parameters = parameters;
+		this.costModel = costModel;
 	}
 
 	protected double estimateConstantUtility() {
@@ -48,9 +52,9 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		return parameters.pt.betaLineSwitch_u * variables.numberOfLineSwitches;
 	}
 
-	protected double estimateMonetaryCostUtility(IDFPtVariables variables) {
+	protected double estimateMonetaryCostUtility(IDFPtVariables variables, double cost_EUR) {
 		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables.euclideanDistance_km,
-				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * variables.cost_MU;
+				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * cost_EUR;
 	}
 
 	protected double estimateDrivingPermitUtility(IDFPersonVariables variables) {
@@ -66,6 +70,8 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 		IDFPtVariables ptVariables = idfPtPredictor.predictVariables(person, trip, elements);
 
+		double cost_EUR = costModel.calculateCost_MU(person, trip, elements);
+
 		double utility = 0.0;
 
 		utility += estimateConstantUtility();
@@ -73,7 +79,7 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		utility += estimateInVehicleTimeUtility(ptVariables);
 		utility += estimateWaitingTimeUtility(ptVariables);
 		utility += estimateLineSwitchUtility(ptVariables);
-		utility += estimateMonetaryCostUtility(ptVariables);
+		utility += estimateMonetaryCostUtility(ptVariables, cost_EUR);
 
 		utility += estimateDrivingPermitUtility(personVariables);
 		utility += estimateOnlyBus(ptVariables);
