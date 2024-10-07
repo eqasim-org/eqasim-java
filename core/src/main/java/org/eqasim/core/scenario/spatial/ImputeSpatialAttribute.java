@@ -39,6 +39,10 @@ public class ImputeSpatialAttribute {
 
 					if (geometry.contains(point)) {
 						activity.getAttributes().putAttribute(attribute, true);
+
+						if (activity.getType().equals("home")) {
+							person.getAttributes().putAttribute(attribute, true);
+						}
 					}
 				}
 			}
