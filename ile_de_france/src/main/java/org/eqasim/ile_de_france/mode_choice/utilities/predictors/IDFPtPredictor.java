@@ -2,8 +2,11 @@ package org.eqasim.ile_de_france.mode_choice.utilities.predictors;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPtVariables;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -15,19 +18,35 @@ import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 	static public final String PARIS_ATTRIBUTE = "isParis";
 
 	private final TransitSchedule schedule;
+	private final CostModel costModel;
 
 	@Inject
-	public IDFPtPredictor(TransitSchedule schedule) {
+	public IDFPtPredictor(TransitSchedule schedule, @Named("pt") CostModel costModel) {
 		this.schedule = schedule;
+		this.costModel = costModel;
+	}
+
+	protected CostModel getCostModel() {
+		return this.costModel;
 	}
 
 	@Override
 	public IDFPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+		int numberOfVehicularTrips = 0;
+		boolean isFirstWaitingTime = false; // different from standard estimator
+
+		// Track relevant variables (from standard estimator)
+		double inVehicleTime_min = 0.0;
+		double waitingTime_min = 0.0;
+		double accessEgressTime_min = 0.0;
+
+		// Track IDF variables
 		int busCount = 0;
 		int subwayCount = 0;
 		int otherCount = 0;
@@ -37,6 +56,36 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 
 		for (PlanElement element : elements) {
 			if (element instanceof Leg leg) {
+				switch (leg.getMode()) {
+				case TransportMode.walk:
+				case TransportMode.non_network_walk:
+					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
+					break;
+				case TransportMode.transit_walk:
+					// different than standard estimator
+					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
+					break;
+				case TransportMode.pt:
+					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+
+					double departureTime = leg.getDepartureTime().seconds();
+					double waitingTime = route.getBoardingTime().seconds() - departureTime;
+					double inVehicleTime = leg.getTravelTime().seconds() - waitingTime;
+
+					inVehicleTime_min += inVehicleTime / 60.0;
+
+					if (!isFirstWaitingTime) {
+						waitingTime_min += waitingTime / 60.0;
+					} else {
+						isFirstWaitingTime = false;
+					}
+
+					numberOfVehicularTrips++;
+					break;
+				default:
+					throw new IllegalStateException("Unknown mode in PT trip: " + leg.getMode());
+				}
+
 				if (leg instanceof TransitPassengerRoute route) {
 					TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
 					TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
@@ -57,6 +106,13 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 			}
 		}
 
+		int numberOfLineSwitches = Math.max(0, numberOfVehicularTrips - 1);
+
+		// Calculate cost
+		double cost_CHF = costModel.calculateCost_MU(person, trip, elements);
+
+		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+
 		boolean isOnlyBus = busCount > 0 && subwayCount == 0 && otherCount == 0;
 		boolean hasOnlySubwayAndBus = (busCount > 0 || subwayCount > 0) && otherCount == 0;
 
@@ -72,6 +128,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 			isWithinParis = startParis != null && endParis != null && startParis && endParis;
 		}
 
-		return new IDFPtVariables(isOnlyBus, hasOnlySubwayAndBus, isWithinParis);
+		return new IDFPtVariables(inVehicleTime_min, waitingTime_min, accessEgressTime_min, numberOfLineSwitches,
+				cost_CHF, euclideanDistance_km, isOnlyBus, hasOnlySubwayAndBus, isWithinParis);
 	}
 }
