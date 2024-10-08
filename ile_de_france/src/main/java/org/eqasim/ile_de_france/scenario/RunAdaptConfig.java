@@ -66,6 +66,7 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
+		dmcConfig.setCachedModes(Arrays.asList("car", "bicycle", "pt", "walk", "car_passenger", "truck"));
 
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 		tripConstraints.remove(EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME);
