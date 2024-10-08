@@ -56,6 +56,7 @@ public class RunAdaptConfig {
 		eqasimConfig.setCostModel(TransportMode.pt, IDFModeChoiceModule.PT_COST_MODEL_NAME);
 
 		eqasimConfig.setEstimator(TransportMode.car, IDFModeChoiceModule.CAR_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.pt, IDFModeChoiceModule.PT_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(IDFModeChoiceModule.BICYCLE, IDFModeChoiceModule.BICYCLE_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(IDFModeChoiceModule.CAR_PASSENGER, IDFModeChoiceModule.CAR_PASSENGER_ESTIMATOR_NAME);
 		eqasimConfig.removeEstimator(TransportMode.bike);
