@@ -31,6 +31,7 @@ public class IDFPtCostModel implements CostModel {
 	private final static double regressionB = 0.006;
 	private final static double regressionC = 0.006;
 	private final static double regressionD = -0.77;
+	private final static double basePrice = 5.5;
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -45,7 +46,7 @@ public class IDFPtCostModel implements CostModel {
 		IDFPtVariables ptVariables = ptPredictor.predictVariables(person, trip, elements);
 
 		if (ptVariables.hasOnlySubwayAndBus || ptVariables.isWithinParis) {
-			return 1.8;
+			return 1.9;
 		}
 
 		// III) Otherwise, use regression by Abdelkader DIB
@@ -58,7 +59,7 @@ public class IDFPtCostModel implements CostModel {
 		double destinationCenterDistance_km = 1e-3
 				* CoordUtils.calcEuclideanDistance(CENTER, trip.getDestinationActivity().getCoord());
 
-		return Math.max(1.9, sigmoid(regressionA * directDistance_km + regressionB * originCenterDistance_km
+		return Math.max(1.9, basePrice * sigmoid(regressionA * directDistance_km + regressionB * originCenterDistance_km
 				+ regressionC * destinationCenterDistance_km + regressionD));
 	}
 
