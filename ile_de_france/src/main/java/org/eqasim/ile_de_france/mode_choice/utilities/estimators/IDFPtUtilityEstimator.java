@@ -37,7 +37,7 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateAccessEgressTimeUtility(IDFPtVariables variables) {
-		return parameters.pt.betaAccessEgressTime_u_min * variables.accessEgressTime_min;
+		return parameters.betaAccessTime_u_min * variables.accessEgressTime_min;
 	}
 
 	protected double estimateInVehicleTimeUtility(IDFPtVariables variables) {
