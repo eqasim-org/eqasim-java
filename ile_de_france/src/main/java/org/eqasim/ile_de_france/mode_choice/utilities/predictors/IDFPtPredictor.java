@@ -11,8 +11,6 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
-import org.matsim.core.utils.timing.TimeInterpretation;
-import org.matsim.core.utils.timing.TimeTracker;
 import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
@@ -25,12 +23,10 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 	static public final String PARIS_ATTRIBUTE = "isParis";
 
 	private final TransitSchedule schedule;
-	private final TimeInterpretation timeInterpretation;
 
 	@Inject
-	public IDFPtPredictor(TransitSchedule schedule, TimeInterpretation timeInterpretation) {
+	public IDFPtPredictor(TransitSchedule schedule) {
 		this.schedule = schedule;
-		this.timeInterpretation = timeInterpretation;
 	}
 
 	protected CostModel getCostModel() {
@@ -40,7 +36,6 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 	@Override
 	public IDFPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		int numberOfVehicularTrips = 0;
-		boolean isFirstTransitLeg = true;
 
 		// Track relevant variables (from standard estimator)
 		double inVehicleTime_min = 0.0;
@@ -55,13 +50,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 		TransitPassengerRoute firstRoute = null;
 		TransitPassengerRoute lastRoute = null;
 
-		TimeTracker tracker = new TimeTracker(timeInterpretation);
-		tracker.setTime(trip.getDepartureTime());
-
 		for (PlanElement element : elements) {
-			double elementStartTime = tracker.getTime().seconds();
-			tracker.addElement(element);
-
 			if (element instanceof Leg leg) {
 				switch (leg.getMode()) {
 				case TransportMode.walk:
@@ -78,14 +67,6 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 					double departureTime = leg.getDepartureTime().seconds();
 					double waitingTime = route.getBoardingTime().seconds() - departureTime;
 					double inVehicleTime = leg.getTravelTime().seconds() - waitingTime;
-
-					assert waitingTime >= 0.0;
-
-					if (isFirstTransitLeg) {
-						// if departure is in the future, offset here
-						waitingTime += Math.max(0.0, leg.getDepartureTime().seconds() - elementStartTime);
-						isFirstTransitLeg = false;
-					}
 
 					inVehicleTime_min += inVehicleTime / 60.0;
 					waitingTime_min += waitingTime / 60.0;
