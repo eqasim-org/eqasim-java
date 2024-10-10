@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.geotools.data.simple.SimpleFeatureReader;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.geopkg.FeatureEntry;
 import org.geotools.geopkg.GeoPackage;
 import org.locationtech.jts.geom.Coordinate;
@@ -16,7 +17,6 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class PolicyLinkFinder {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
