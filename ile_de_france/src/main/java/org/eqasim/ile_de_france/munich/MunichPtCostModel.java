@@ -103,6 +103,10 @@ public class MunichPtCostModel implements CostModel {
 			}
 		}
 
+		if (firstFacilityId == null) {
+			return 0.0; // this will turn out to not be a real PT leg
+		}
+		
 		TransitStopFacility firstFacility = schedule.getFacilities().get(firstFacilityId);
 		TransitStopFacility lastFacility = schedule.getFacilities().get(lastFacilityId);
 
