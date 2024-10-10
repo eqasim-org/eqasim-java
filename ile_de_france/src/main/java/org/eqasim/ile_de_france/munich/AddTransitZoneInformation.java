@@ -1,5 +1,6 @@
 package org.eqasim.ile_de_france.munich;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -21,9 +22,9 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.collections.Tuple;
+import org.matsim.core.utils.misc.Counter;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
-import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.opengis.feature.simple.SimpleFeature;
 
 public class AddTransitZoneInformation {
@@ -34,9 +35,10 @@ public class AddTransitZoneInformation {
 				.requireOptions("input-path", "zones-path", "output-path") //
 				.build();
 
+		File zonesPath = new File(cmd.getOptionStrict("zones-path"));
+
 		// Load zones
-		DataStore dataStore = DataStoreFinder
-				.getDataStore(Collections.singletonMap("url", cmd.getOptionStrict("zones-path")));
+		DataStore dataStore = DataStoreFinder.getDataStore(Collections.singletonMap("url", zonesPath.toURI().toURL()));
 		SimpleFeatureSource featureSource = dataStore.getFeatureSource(dataStore.getTypeNames()[0]);
 		SimpleFeatureCollection featureCollection = featureSource.getFeatures();
 		SimpleFeatureIterator featureIterator = featureCollection.features();
@@ -60,7 +62,10 @@ public class AddTransitZoneInformation {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		new TransitScheduleReader(scenario).readFile(cmd.getOptionStrict("input-path"));
 
-		for (TransitStopFacility facility : scenario.getTransitSchedule().getFacilities().values()) {
+		Counter counter = new Counter("processing stop facilities ",
+				" of " + scenario.getTransitSchedule().getFacilities().size());
+
+		scenario.getTransitSchedule().getFacilities().values().parallelStream().forEach(facility -> {
 			Coordinate coordinate = new Coordinate(facility.getCoord().getX(), facility.getCoord().getY());
 			Point point = geometryFactory.createPoint(coordinate);
 
@@ -68,7 +73,7 @@ public class AddTransitZoneInformation {
 			Integer maximumZone = null;
 
 			for (var zone : zones) {
-				int integerZone = zone.getFirst().equals("M") ? 0 : Integer.parseInt(zone.getFirst());
+				int integerZone = zone.getFirst().equals("m") ? 0 : Integer.parseInt(zone.getFirst());
 
 				if (zone.getSecond().contains(point)) {
 					if (minimumZone == null) {
@@ -85,7 +90,11 @@ public class AddTransitZoneInformation {
 				facility.getAttributes().putAttribute("minimumZone", minimumZone);
 				facility.getAttributes().putAttribute("maximumZone", maximumZone);
 			}
-		}
+
+			synchronized (counter) {
+				counter.incCounter();
+			}
+		});
 
 		new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(cmd.getOptionStrict("output-path"));
 	}
