@@ -3,6 +3,7 @@ package org.eqasim.core.components.emissions;
 import org.apache.commons.lang3.ArrayUtils;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.analysis.EmissionGridAnalyzer;
@@ -14,7 +15,6 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.utils.gis.ShapeFileReader;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class RunComputeEmissionsGrid {
 

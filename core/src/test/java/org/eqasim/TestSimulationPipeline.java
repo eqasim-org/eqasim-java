@@ -15,6 +15,7 @@ import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
+import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -34,7 +35,12 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.Creat
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.*;
+import org.eqasim.core.tools.ExportActivitiesToShapefile;
+import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
+import org.eqasim.core.tools.ExportNetworkToShapefile;
+import org.eqasim.core.tools.ExportPopulationToCSV;
+import org.eqasim.core.tools.ExportTransitLinesToShapefile;
+import org.eqasim.core.tools.ExportTransitStopsToShapefile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -321,7 +327,8 @@ public class TestSimulationPipeline {
                 "--output-config-path", "melun_test/input/config_feeder.xml",
                 "--mode-names", "feeder_a,feeder_b",
                 "--base-drt-modes", "drt_for_feeder_a,drt_for_feeder_b",
-                "--access-egress-transit-stop-modes", "rail|tram|subway"
+                "--access-egress-transit-stop-modes", "rail|tram|subway",
+                "--access-egress-transit-stop-ids", "IDFM:482345.link:305887|IDFM:31170.link:618272|IDFM:462597.link:511974"
         });
 
         runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output_feeder");
@@ -368,7 +375,7 @@ public class TestSimulationPipeline {
         runMelunSimulation("melun_test/input/config_abstract_access.xml", "melun_test/output_abstract_access");
     }
 
-    public void runVdf() throws CommandLine.ConfigurationException, IOException {
+    public void runVdf() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         AdaptConfigForVDF.main(new String[] {
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_vdf.xml",
@@ -378,6 +385,14 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/input/config_vdf.xml", "melun_test/output_vdf");
+
+        RunStandaloneModeChoice.main(new String[]{
+                "--config-path", "melun_test/input/config_vdf.xml",
+                "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_vdf",
+                "--config:eqasim:vdf.inputFile", "../output_vdf/vdf.bin", // Relative to the config file
+                "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
+                "--simulate-after", TestRunSimulation.class.getName()
+        });
 
         CreateDrtVehicles.main(new String[]{
                 "--network-path", "melun_test/input/network.xml.gz",
@@ -398,6 +413,7 @@ public class TestSimulationPipeline {
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
+        runPopulationRouting();
         runStandaloneModeChoice();
         runVdf();
         runAnalyses();
@@ -406,6 +422,12 @@ public class TestSimulationPipeline {
         runCutterV2();
     }
 
+    public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+        RunPopulationRouting.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--output-path", "melun_test/output/routed_population.xml.gz"
+        });
+    }
 
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunStandaloneModeChoice.main(new String[] {

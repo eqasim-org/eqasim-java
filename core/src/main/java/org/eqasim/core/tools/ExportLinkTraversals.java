@@ -88,6 +88,7 @@ public class ExportLinkTraversals {
 		private final IdMap<Person, LinkEnterEvent> enterEvents = new IdMap<>(Person.class);
 		private final Map<Id<Person>, Integer> tripIndex = new HashMap<>();
 		private final Map<Id<Person>, Integer> legIndex = new HashMap<>();
+		private final Map<Id<Vehicle>, String> legMode = new HashMap<>();
 		private final Set<String> modes;
 
 		TraversalExporter(BufferedWriter writer, ScenarioExtent extent, Network network, Set<String> modes) {
@@ -98,7 +99,7 @@ public class ExportLinkTraversals {
 
 			try {
 				writer.write(String.join(";", Arrays.asList( //
-						"person_id", "vehicle_id", "link_id", "enter_time", "leave_time", "trip_index", "leg_index"))
+						"person_id", "vehicle_id", "link_id", "enter_time", "leave_time", "trip_index", "leg_index", "leg_mode"))
 						+ "\n");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -108,6 +109,7 @@ public class ExportLinkTraversals {
 		@Override
 		public void handleEvent(VehicleEntersTrafficEvent event) {
 			if (checkMode(event.getNetworkMode())) {
+				legMode.put(event.getVehicleId(), event.getNetworkMode());
 				drivers.put(event.getVehicleId(), event.getPersonId());
 			}
 		}
@@ -115,6 +117,7 @@ public class ExportLinkTraversals {
 		@Override
 		public void handleEvent(VehicleLeavesTrafficEvent event) {
 			if (drivers.remove(event.getVehicleId()) != null) {
+				legMode.remove(event.getVehicleId());
 				writeTraversal(event.getPersonId(), enterEvents.remove(event.getPersonId()), null);
 			}
 		}
@@ -167,6 +170,7 @@ public class ExportLinkTraversals {
 
 			int localTripIndex = tripIndex.getOrDefault(personId, 0);
 			int localLegIndex = legIndex.getOrDefault(personId, 0);
+			String localLegMode = legMode.get(personId);
 
 			try {
 				writer.write(String.join(";", new String[] { //
@@ -176,7 +180,8 @@ public class ExportLinkTraversals {
 						String.valueOf(enterTime), //
 						String.valueOf(leaveTime), //
 						String.valueOf(localTripIndex), //
-						String.valueOf(localLegIndex) //
+						String.valueOf(localLegIndex), //
+						String.valueOf(localLegMode) //
 				}) + "\n");
 			} catch (IOException e) {
 				throw new RuntimeException(e);

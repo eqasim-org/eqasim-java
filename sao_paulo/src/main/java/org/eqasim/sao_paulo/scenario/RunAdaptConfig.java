@@ -17,8 +17,7 @@ import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		EqasimConfigurator configurator = new EqasimConfigurator();
-		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		ConfigAdapter.run(args, new EqasimConfigurator(), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config, String prefix) {

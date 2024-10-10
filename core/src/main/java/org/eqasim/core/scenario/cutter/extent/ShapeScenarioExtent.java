@@ -9,12 +9,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureReader;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geopkg.FeatureEntry;
 import org.geotools.geopkg.GeoPackage;
 import org.locationtech.jts.geom.Coordinate;
@@ -25,7 +26,6 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.matsim.api.core.v01.Coord;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class ShapeScenarioExtent implements ScenarioExtent {
 	private final GeometryFactory factory = new GeometryFactory();

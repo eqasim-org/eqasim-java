@@ -13,12 +13,13 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
-import org.eqasim.core.simulation.modes.feeder_drt.config.AccessEgressStopSelectorParams;
 import org.eqasim.core.simulation.modes.feeder_drt.config.FeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.EqasimFeederDrtModeChoiceModule;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.constraints.FeederDrtConstraint;
-import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_selector.ClosestAccessEgressStopSelectorParameterSet;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.CompositeAccessEgressStopSearchParameterSet;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByIdAccessEgressStopSearchParameterSet;
+import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByModeAccessEgressStopSearchParameterSet;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -29,7 +30,7 @@ import org.matsim.pt.config.TransitConfigGroup;
 
 public class AdaptConfigForFeederDrt {
 
-    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, Map<String, String> accessEgressTransitStopModes, String modeAvailability) {
+    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, Map<String, String> accessEgressTransitStopModes, Map<String, String> accessEgressTransitStopIds, String modeAvailability) {
         if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
             throw new IllegalStateException(String.format("Cannot add module '%s' if module '%s' is not present already. You can use '%s' to configure it.", MultiModeFeederDrtConfigGroup.GROUP_NAME, MultiModeDrtConfigGroup.GROUP_NAME, AdaptConfigForDrt.class.getCanonicalName()));
         }
@@ -91,14 +92,26 @@ public class AdaptConfigForFeederDrt {
             }
 
 
-            ClosestAccessEgressStopSelectorParameterSet closestAccessEgressStopSelectorParameterSet = new ClosestAccessEgressStopSelectorParameterSet();
-            closestAccessEgressStopSelectorParameterSet.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
-            closestAccessEgressStopSelectorParameterSet.skipAccessAndEgressAtFacilities = "^outside*+";
+            TransitStopByModeAccessEgressStopSearchParameterSet transitStopByModeAccessEgressStopSearchParameterSet = new TransitStopByModeAccessEgressStopSearchParameterSet();
+            transitStopByModeAccessEgressStopSearchParameterSet.accessEgressTransitStopModes = accessEgressTransitStopModes.get(feederDrtMode).replace("|", ",");
 
-            AccessEgressStopSelectorParams accessEgressStopSelectorParams = new AccessEgressStopSelectorParams();
-            accessEgressStopSelectorParams.addParameterSet(closestAccessEgressStopSelectorParameterSet);
+            TransitStopByIdAccessEgressStopSearchParameterSet transitStopByIdAccessEgressStopSearchParameterSet = null;
+            if(accessEgressTransitStopIds.get(feederDrtMode).length() > 0) {
+                transitStopByIdAccessEgressStopSearchParameterSet = new TransitStopByIdAccessEgressStopSearchParameterSet();
+                transitStopByIdAccessEgressStopSearchParameterSet.ids = accessEgressTransitStopIds.get(feederDrtMode).replace("|", ",");
+            }
 
-            feederDrtConfigGroup.addParameterSet(accessEgressStopSelectorParams);
+            if(transitStopByIdAccessEgressStopSearchParameterSet != null) {
+                CompositeAccessEgressStopSearchParameterSet compositeAccessEgressStopSearchParameterSet = new CompositeAccessEgressStopSearchParameterSet();
+                compositeAccessEgressStopSearchParameterSet.addParameterSet(transitStopByModeAccessEgressStopSearchParameterSet);
+                compositeAccessEgressStopSearchParameterSet.addParameterSet(transitStopByIdAccessEgressStopSearchParameterSet);
+                feederDrtConfigGroup.addParameterSet(compositeAccessEgressStopSearchParameterSet);
+            } else {
+                feederDrtConfigGroup.addParameterSet(transitStopByModeAccessEgressStopSearchParameterSet);
+            }
+
+
+            feederDrtConfigGroup.skipAccessAndEgressAtFacilities = "^outside*+";
 
             multiModeFeederDrtConfigGroup.addParameterSet(feederDrtConfigGroup);
 
@@ -119,6 +132,7 @@ public class AdaptConfigForFeederDrt {
                 .allowOptions("base-pt-modes")
                 .allowOptions("estimators")
                 .allowOptions("access-egress-transit-stop-modes")
+                .allowOptions("access-egress-transit-stop-ids")
                 .allowOptions("mode-availability")
                 .allowOptions("configurator-class")
                 .build();
@@ -130,13 +144,14 @@ public class AdaptConfigForFeederDrt {
         String[] basePtModes = cmd.getOption("base-pt-modes").orElse("pt").split(",");
         String[] estimators = cmd.getOption("estimators").orElse(EqasimFeederDrtModeChoiceModule.FEEDER_DRT_ESTIMATOR_NAME).split(",");
         String[] accessEgressTransitStopModes = cmd.getOption("access-egress-transit-stop-modes").orElse("").split(",");
-
+        String[] accessEgressTransitStopIds = cmd.getOption("access-egress-transit-stop-ids").orElse("").split(",");
 
         Map<String, String[]> toExtract = new HashMap<>();
         toExtract.put("base-drt-modes", baseDrtModes);
         toExtract.put("base-pt-modes", basePtModes);
         toExtract.put("estimators", estimators);
         toExtract.put("access-egress-transit-stop-modes", accessEgressTransitStopModes);
+        toExtract.put("access-egress-transit-stop-ids", accessEgressTransitStopIds);
 
         Map<String, Map<String, String>> info = AdaptConfigForDrt.extractDrtInfo(modeNames, toExtract);
 
@@ -150,7 +165,7 @@ public class AdaptConfigForFeederDrt {
         Config config = ConfigUtils.loadConfig(inputConfigPath, configurator.getConfigGroups());
         configurator.addOptionalConfigGroups(config);
 
-        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), cmd.getOption("mode-availability").orElse(null));
+        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), info.get("access-egress-transit-stop-ids"), cmd.getOption("mode-availability").orElse(null));
 
         ConfigUtils.writeConfig(config, outputConfigPath);
     }
