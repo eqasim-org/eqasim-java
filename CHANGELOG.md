@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- add configurable policies for IDF
 - Add eqasim_activities.csv for analysis
 - The cutters now take a GeoPackage file as an alterative to a ShapeFile
 - Emissions tools have been moved to core package (from ile_de_france)
