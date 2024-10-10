@@ -5,12 +5,11 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.geotools.api.data.DataStore;
-import org.geotools.api.data.DataStoreFinder;
-import org.geotools.api.data.SimpleFeatureSource;
-import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.data.simple.SimpleFeatureSource;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -25,6 +24,7 @@ import org.matsim.core.utils.collections.Tuple;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.opengis.feature.simple.SimpleFeature;
 
 public class AddTransitZoneInformation {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
