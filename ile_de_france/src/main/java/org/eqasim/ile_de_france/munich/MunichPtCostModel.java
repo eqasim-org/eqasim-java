@@ -106,7 +106,7 @@ public class MunichPtCostModel implements CostModel {
 		if (firstFacilityId == null) {
 			return 0.0; // this will turn out to not be a real PT leg
 		}
-		
+
 		TransitStopFacility firstFacility = schedule.getFacilities().get(firstFacilityId);
 		TransitStopFacility lastFacility = schedule.getFacilities().get(lastFacilityId);
 
@@ -129,7 +129,7 @@ public class MunichPtCostModel implements CostModel {
 	private final static double basePrice_h = 8.0;
 
 	private final static double[] prices = new double[] { //
-			3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 25.5 //
+			3.9, 3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 25.5 //
 	};
 
 	private double getZonalPrice(int firstMinimumZone, int firstMaximumZone, int lastMinimumZone, int lastMaximumZone) {
@@ -146,9 +146,9 @@ public class MunichPtCostModel implements CostModel {
 		includesM |= lastMaximumZone == 0;
 
 		if (includesM) {
-			return prices[difference];
+			return prices[difference + 1];
 		} else {
-			return prices[Math.max(0, difference - 1)];
+			return prices[difference];
 		}
 	}
 }
