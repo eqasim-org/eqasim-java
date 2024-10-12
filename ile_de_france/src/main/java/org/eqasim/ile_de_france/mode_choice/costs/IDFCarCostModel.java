@@ -33,7 +33,6 @@ public class IDFCarCostModel extends AbstractCostModel {
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		double parkingCost_EUR = calculateParkingCost_EUR(person, trip, elements);
-		System.err.println("Car: " + parkingCost_EUR + " + " + costParameters.carCost_EUR_km * getInVehicleDistance_km(elements));
 		return costParameters.carCost_EUR_km * getInVehicleDistance_km(elements) + parkingCost_EUR;
 	}
 
