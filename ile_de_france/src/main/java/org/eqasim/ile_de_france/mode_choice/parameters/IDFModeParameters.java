@@ -50,7 +50,7 @@ public class IDFModeParameters extends ModeParameters {
 		parameters.idfPt.onlyBus_u = -1.416309;
 
 		// Bike
-		parameters.bike.alpha_u = -2.927596	;
+		parameters.bike.alpha_u = -2.927596;
 		parameters.bike.betaTravelTime_u_min = -0.093485;
 
 		// Walk
