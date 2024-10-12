@@ -39,6 +39,7 @@ public class IDFPtCostModel implements CostModel {
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 
 		if (personVariables.hasSubscription) {
+			System.err.println("PT Cost: Subscription");
 			return 0.0;
 		}
 
@@ -46,6 +47,7 @@ public class IDFPtCostModel implements CostModel {
 		IDFPtVariables ptVariables = ptPredictor.predictVariables(person, trip, elements);
 
 		if (ptVariables.hasOnlySubwayAndBus || ptVariables.isWithinParis) {
+			System.err.println("PT Cost: Single");
 			return 1.9;
 		}
 
@@ -59,6 +61,8 @@ public class IDFPtCostModel implements CostModel {
 		double destinationCenterDistance_km = 1e-3
 				* CoordUtils.calcEuclideanDistance(CENTER, trip.getDestinationActivity().getCoord());
 
+		System.err.println("PT Cost: IDF " + Math.max(1.9, basePrice * sigmoid(regressionA * directDistance_km + regressionB * originCenterDistance_km
+				+ regressionC * destinationCenterDistance_km + regressionD)));
 		return Math.max(1.9, basePrice * sigmoid(regressionA * directDistance_km + regressionB * originCenterDistance_km
 				+ regressionC * destinationCenterDistance_km + regressionD));
 	}
