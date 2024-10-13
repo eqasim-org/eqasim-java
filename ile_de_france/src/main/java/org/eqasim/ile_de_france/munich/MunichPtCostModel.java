@@ -129,7 +129,11 @@ public class MunichPtCostModel implements CostModel {
 	private final static double basePrice_h = 8.0;
 
 	private final static double[] prices = new double[] { //
-			3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 25.5 //
+			3.9, 3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2 //
+	};
+	
+	private final static double[] pricesM = new double[] { //
+			3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 23.9, 25.5 //
 	};
 
 	private double getZonalPrice(int firstMinimumZone, int firstMaximumZone, int lastMinimumZone, int lastMaximumZone) {
@@ -145,10 +149,10 @@ public class MunichPtCostModel implements CostModel {
 		includesM |= lastMinimumZone == 0;
 		includesM |= lastMaximumZone == 0;
 
-		if (!includesM) {
-			difference -= 1;
+		if (includesM) {
+			return pricesM[difference];
+		} else {
+			return prices[difference];
 		}
-
-		return prices[Math.max(0, difference)];
 	}
 }
