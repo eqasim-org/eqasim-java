@@ -139,7 +139,7 @@ public class MunichPtCostModel implements CostModel {
 		difference = Math.min(difference, Math.abs(firstMaximumZone - lastMinimumZone));
 		difference = Math.min(difference, Math.abs(firstMaximumZone - lastMaximumZone));
 
-		boolean includesM = false;
+		boolean includesM = false; // M = 0
 		includesM |= firstMinimumZone == 0;
 		includesM |= firstMaximumZone == 0;
 		includesM |= lastMinimumZone == 0;

@@ -30,6 +30,8 @@ import org.opengis.feature.simple.SimpleFeature;
 public class AddTransitZoneInformation {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
 
+	private final static int stictMaximumZone = 12;
+
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("input-path", "zones-path", "output-path") //
@@ -87,8 +89,8 @@ public class AddTransitZoneInformation {
 			}
 
 			if (minimumZone != null) {
-				facility.getAttributes().putAttribute("minimumZone", minimumZone);
-				facility.getAttributes().putAttribute("maximumZone", maximumZone);
+				facility.getAttributes().putAttribute("minimumZone", Math.min(minimumZone, stictMaximumZone));
+				facility.getAttributes().putAttribute("maximumZone", Math.min(maximumZone, stictMaximumZone));
 			}
 
 			synchronized (counter) {
