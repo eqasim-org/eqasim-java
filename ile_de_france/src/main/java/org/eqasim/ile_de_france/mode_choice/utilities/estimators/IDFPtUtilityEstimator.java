@@ -40,21 +40,21 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		return parameters.betaAccessTime_u_min * variables.accessEgressTime_min;
 	}
 
-	protected double estimateInVehicleTimeUtility(IDFPtVariables variables) {
-		return parameters.pt.betaInVehicleTime_u_min * variables.inVehicleTime_min;
+	protected double estimateLineSwitchUtility(IDFPtVariables variables) {
+		return parameters.pt.betaLineSwitch_u * variables.numberOfLineSwitches;
 	}
 
 	protected double estimateWaitingTimeUtility(IDFPtVariables variables) {
 		return parameters.pt.betaWaitingTime_u_min * variables.waitingTime_min;
 	}
 
-	protected double estimateLineSwitchUtility(IDFPtVariables variables) {
-		return parameters.pt.betaLineSwitch_u * variables.numberOfLineSwitches;
-	}
-
 	protected double estimateMonetaryCostUtility(IDFPtVariables variables, double cost_EUR) {
 		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables.euclideanDistance_km,
 				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * cost_EUR;
+	}
+
+	protected double estimateInVehicleTimeUtility(IDFPtVariables variables) {
+		return parameters.pt.betaInVehicleTime_u_min * variables.inVehicleTime_min;
 	}
 
 	protected double estimateDrivingPermitUtility(IDFPersonVariables variables) {
@@ -76,13 +76,13 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 
 		utility += estimateConstantUtility();
 		utility += estimateAccessEgressTimeUtility(ptVariables);
-		utility += estimateInVehicleTimeUtility(ptVariables);
-		utility += estimateWaitingTimeUtility(ptVariables);
 		utility += estimateLineSwitchUtility(ptVariables);
+		utility += estimateWaitingTimeUtility(ptVariables);
 		utility += estimateMonetaryCostUtility(ptVariables, cost_EUR);
+		utility += estimateInVehicleTimeUtility(ptVariables);
 
-		utility += estimateDrivingPermitUtility(personVariables);
 		utility += estimateOnlyBus(ptVariables);
+		utility += estimateDrivingPermitUtility(personVariables);
 
 		return utility;
 	}

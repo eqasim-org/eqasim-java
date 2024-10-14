@@ -35,7 +35,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 
 	@Override
 	public IDFPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		int numberOfVehicularTrips = 0;
+		int numberOfVehicularLegs = 0;
 
 		// Track relevant variables (from standard estimator)
 		double inVehicleTime_min = 0.0;
@@ -71,7 +71,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 					inVehicleTime_min += inVehicleTime / 60.0;
 					waitingTime_min += waitingTime / 60.0;
 
-					numberOfVehicularTrips++;
+					numberOfVehicularLegs++;
 					break;
 				default:
 					throw new IllegalStateException("Unknown mode in PT trip: " + leg.getMode());
@@ -99,7 +99,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 			}
 		}
 
-		int numberOfLineSwitches = Math.max(0, numberOfVehicularTrips - 1);
+		int numberOfLineSwitches = Math.max(0, numberOfVehicularLegs - 1);
 
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
 
