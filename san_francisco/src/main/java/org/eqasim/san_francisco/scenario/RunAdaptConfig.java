@@ -21,11 +21,10 @@ public class RunAdaptConfig {
 	protected final static List<String> ACTIVITY_TYPES = Arrays.asList("business");
 
 	static public void main(String[] args) throws ConfigurationException {
-		EqasimConfigurator configurator = new EqasimConfigurator();
-		ConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		ConfigAdapter.run(args, new EqasimConfigurator(), RunAdaptConfig::adaptConfiguration);
 	}
 
-	static public void adaptConfiguration(Config config) {
+	static public void adaptConfiguration(Config config, String prefix) {
 
 		// Set up mode choice
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);

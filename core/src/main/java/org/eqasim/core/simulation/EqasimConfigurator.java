@@ -7,10 +7,13 @@ import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorModule;
+import org.eqasim.core.components.traffic.EqasimTrafficModule;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
+import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.modes.feeder_drt.MultiModeFeederDrtModule;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
@@ -24,6 +27,11 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.Def
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.termination.mode_share.ModeShareModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFModule;
+import org.eqasim.core.simulation.vdf.VDFQSimModule;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -71,8 +79,9 @@ public class EqasimConfigurator {
                 new DiscreteModeChoiceModule(), //
                 new EqasimComponentsModule(), //
                 new EpsilonModule(), //
-                new EqasimRaptorModule(),
-                new EqasimModeChoiceModule()//
+                new EqasimRaptorModule(), //
+                new EqasimModeChoiceModule(), //
+                new EqasimTrafficModule() //
         ));
 
         qsimModules.addAll(Arrays.asList( //
@@ -95,6 +104,14 @@ public class EqasimConfigurator {
                         new TransitWithAbstractAccessModeChoiceModule()),
                 List.of(new TransitWithAbstractAccessQSimModule()),
                 Collections.singletonList((controller, components) -> TransitWithAbstractAccessQSimModule.configure(components, controller.getConfig())));
+        this.registerOptionalConfigGroup(new VDFConfigGroup(),
+                List.of(new VDFModule()),
+                List.of(new VDFQSimModule()));
+        this.registerOptionalConfigGroup(new VDFEngineConfigGroup(),
+                List.of(new VDFEngineModule()),
+                Collections.emptyList(),
+                Collections.singletonList((controller, components) -> components.addNamedComponent(VDFEngineModule.COMPONENT_NAME)));
+        this.registerOptionalConfigGroup(new LegTimeConstraintConfigGroup(), Collections.singleton(new LegTimeConstraintModule()));
     }
 
     public ConfigGroup[] getConfigGroups() {

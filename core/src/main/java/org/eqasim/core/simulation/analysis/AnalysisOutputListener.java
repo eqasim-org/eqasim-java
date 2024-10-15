@@ -1,11 +1,12 @@
 package org.eqasim.core.simulation.analysis;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 
 import org.eqasim.core.analysis.DistanceUnit;
+import org.eqasim.core.analysis.activities.ActivityListener;
+import org.eqasim.core.analysis.activities.ActivityWriter;
 import org.eqasim.core.analysis.legs.LegListener;
 import org.eqasim.core.analysis.legs.LegWriter;
 import org.eqasim.core.analysis.pt.PublicTransportLegListener;
@@ -31,6 +32,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private static final String TRIPS_FILE_NAME = "eqasim_trips.csv";
 	private static final String LEGS_FILE_NAME = "eqasim_legs.csv";
 	private static final String PT_FILE_NAME = "eqasim_pt.csv";
+	private static final String ACTIVITIES_FILE_NAME = "eqasim_activities.csv";
 	private static final String TRAVEL_TIMES_FILE_NAME = "eqasim_travel_times.bin";
 
 	private final OutputDirectoryHierarchy outputDirectory;
@@ -38,6 +40,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private final TripListener tripAnalysisListener;
 	private final LegListener legAnalysisListener;
 	private final PublicTransportLegListener ptAnalysisListener;
+	private final ActivityListener activityAnalysisListener;
 	private final TravelTimeRecorder travelTimeRecorder;
 
 	private final int analysisInterval;
@@ -49,7 +52,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	@Inject
 	public AnalysisOutputListener(EqasimConfigGroup config, OutputDirectoryHierarchy outputDirectory,
 								  TripListener tripListener, LegListener legListener, PublicTransportLegListener ptListener,
-								  TravelTimeRecorder travelTimeRecorder) {
+								  ActivityListener activityAnalysisListener, TravelTimeRecorder travelTimeRecorder) {
 		this.outputDirectory = outputDirectory;
 
 		this.scenarioDistanceUnit = config.getDistanceUnit();
@@ -60,6 +63,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		this.tripAnalysisListener = tripListener;
 		this.legAnalysisListener = legListener;
 		this.ptAnalysisListener = ptListener;
+		this.activityAnalysisListener = activityAnalysisListener;
 		this.travelTimeRecorder = travelTimeRecorder;
 	}
 
@@ -73,6 +77,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				event.getServices().getEvents().addHandler(tripAnalysisListener);
 				event.getServices().getEvents().addHandler(legAnalysisListener);
 				event.getServices().getEvents().addHandler(ptAnalysisListener);
+				event.getServices().getEvents().addHandler(activityAnalysisListener);
 				event.getServices().getEvents().addHandler(travelTimeRecorder);
 			}
 		}
@@ -85,6 +90,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				event.getServices().getEvents().removeHandler(tripAnalysisListener);
 				event.getServices().getEvents().removeHandler(legAnalysisListener);
 				event.getServices().getEvents().removeHandler(ptAnalysisListener);
+				event.getServices().getEvents().removeHandler(activityAnalysisListener);
 				event.getServices().getEvents().removeHandler(travelTimeRecorder);
 
 				new TripWriter(tripAnalysisListener.getTripItems(), scenarioDistanceUnit, analysisDistanceUnit)
@@ -93,6 +99,9 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				new LegWriter(legAnalysisListener.getLegItems(), scenarioDistanceUnit, analysisDistanceUnit)
 						.write(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME));
 
+				new ActivityWriter(activityAnalysisListener.getActivityItems())
+						.write(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME));
+				
 				new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
 						.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
 
@@ -113,6 +122,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 					new File(outputDirectory.getOutputFilename(LEGS_FILE_NAME)).toPath());
 			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
 					new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
+			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME)).toPath(),
+					new File(outputDirectory.getOutputFilename(ACTIVITIES_FILE_NAME)).toPath());
 			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), TRAVEL_TIMES_FILE_NAME)).toPath(),
 					new File(outputDirectory.getOutputFilename(TRAVEL_TIMES_FILE_NAME)).toPath());
 		} catch (IOException e) {

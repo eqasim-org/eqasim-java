@@ -131,8 +131,6 @@ public class StandaloneModeChoicePerformer {
         }
 
         String outputPlansName = outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz");
-        // We do this right here before writing the population file so that following simulations using it work well
-        RunPopulationRouting.clearVehicles(this.scenario.getConfig(), this.scenario);
         new PopulationWriter(population).write(outputPlansName);
         ConfigUtils.writeConfig(scenario.getConfig(), this.outputDirectoryHierarchy.getOutputFilename("output_config.xml"));
     }
