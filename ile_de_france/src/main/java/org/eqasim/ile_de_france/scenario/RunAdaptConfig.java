@@ -34,7 +34,7 @@ public class RunAdaptConfig {
 		config.routing().setAccessEgressType(AccessEgressType.accessEgressModeToLink);
 
 		Set<String> networkModes = new HashSet<>(config.routing().getNetworkModes());
-		networkModes.add("passenger");
+		networkModes.add(IDFModeChoiceModule.CAR_PASSENGER);
 		config.routing().setNetworkModes(networkModes);
 
 		TeleportedModeParams bicycleRouteParams = new TeleportedModeParams();
@@ -71,7 +71,7 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
-		dmcConfig.setCachedModes(Arrays.asList("car", "bicycle", "pt", "walk", "car_passenger", "truck"));
+		dmcConfig.setCachedModes(Arrays.asList("car", "bicycle", "pt", "walk", IDFModeChoiceModule.CAR_PASSENGER, "truck"));
 
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 		tripConstraints.remove(EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME);

@@ -1,8 +1,14 @@
 package org.eqasim.ile_de_france;
 
+import java.util.Collections;
+import java.util.Set;
+
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.munich.MunichModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
@@ -17,11 +23,29 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf") //
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+
+		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
+			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+
+			VDFConfigGroup vdfConfig = new VDFConfigGroup();
+			config.addModule(vdfConfig);
+
+			vdfConfig.setCapacityFactor(eqasimConfig.getSampleSize());
+			vdfConfig.setModes(Set.of("car", "car_passenger"));
+
+			VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
+			engineConfig.setModes(Set.of("car", "car_passenger"));
+			engineConfig.setGenerateNetworkEvents(false);
+			config.addModule(engineConfig);
+
+			config.qsim().setMainModes(Collections.emptySet());
+		}
+
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
@@ -35,29 +59,29 @@ public class RunSimulation {
 			// TODO: Make this static! > OK looks like everything is covered in pipeline
 			Vehicles vehicles = scenario.getVehicles();
 			VehiclesFactory factory = vehicles.getFactory();
-
+		
 			VehicleType vehicleType = vehicles.getVehicleTypes()
 					.get(Id.create("defaultVehicleType", VehicleType.class));
-
+		
 			// ok should be done in pipeline
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				Map<String, Id<Vehicle>> personVehicles = new HashMap<>();
-
+		
 				for (String mode : Arrays.asList("passenger")) {
 					Vehicle vehicle = factory.createVehicle(Id.createVehicleId(person.getId().toString() + ":" + mode),
 							vehicleType);
 					vehicles.addVehicle(vehicle);
-
+		
 					personVehicles.put(mode, vehicle.getId());
 				}
-
+		
 				VehicleUtils.insertVehicleIdsIntoPersonAttributes(person, personVehicles);
 			}
-
+		
 			for (Person person : scenario.getPopulation().getPersons().values()) {
 				person.getAttributes().putAttribute("bicycleAvailability",
 						person.getAttributes().getAttribute("bikeAvailability")); // ok done in pipeline
-
+		
 				// ok mode changes in pipeline
 				for (Plan plan : person.getPlans()) {
 					for (Leg leg : TripStructureUtils.getLegs(plan)) {
@@ -68,15 +92,15 @@ public class RunSimulation {
 					}
 				}
 			}
-
+		
 			// OK done with pt2matsim
 			for (Link link : scenario.getNetwork().getLinks().values()) {
 				Set<String> allowedModes = new HashSet<>(link.getAllowedModes());
-
+		
 				if (allowedModes.contains("car")) {
 					allowedModes.add("passenger");
 				}
-
+		
 				link.setAllowedModes(allowedModes);
 			}
 		}*/

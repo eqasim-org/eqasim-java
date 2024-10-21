@@ -76,8 +76,8 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 				default:
 					throw new IllegalStateException("Unknown mode in PT trip: " + leg.getMode());
 				}
-
-				if (leg instanceof TransitPassengerRoute route) {
+				
+				if (leg.getRoute() instanceof TransitPassengerRoute route) {
 					TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
 					TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
 					String transportMode = transitRoute.getTransportMode();
