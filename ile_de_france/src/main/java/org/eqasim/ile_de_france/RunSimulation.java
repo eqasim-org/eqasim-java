@@ -1,6 +1,7 @@
 package org.eqasim.ile_de_france;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,6 +38,8 @@ import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;
 import org.matsim.vehicles.VehiclesFactory;
 
+import com.google.common.base.Verify;
+
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
@@ -59,7 +62,10 @@ public class RunSimulation {
 			VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
 			engineConfig.setModes(Set.of("car", "car_passenger"));
 			engineConfig.setGenerateNetworkEvents(false);			
-			config.addModule(engineConfig);		}
+			config.addModule(engineConfig);
+			
+			config.qsim().setMainModes(Collections.emptySet());
+		}
 		
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
