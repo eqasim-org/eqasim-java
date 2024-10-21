@@ -421,14 +421,14 @@ public class TestSimulationPipeline {
         runCutter();
         runCutterV2();
     }
-
+    
     public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
                 "--output-path", "melun_test/output/routed_population.xml.gz"
         });
     }
-
+    
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunStandaloneModeChoice.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",

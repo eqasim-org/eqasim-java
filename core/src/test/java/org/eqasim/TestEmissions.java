@@ -168,11 +168,11 @@ public class TestEmissions {
 
 	private void runMelunEmissions() throws CommandLine.ConfigurationException, IOException {
 		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
-		Assert.assertEquals(3297, (long) counts.get("car"));
-		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
-		Assert.assertEquals(9348, (long) counts.get("walk"));
-		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
-		Assert.assertEquals(2108, (long) counts.get("pt"));
+		Assert.assertEquals(2793, (long) counts.get("car"));
+		Assert.assertEquals(1559, (long) counts.get("car_passenger"));
+		Assert.assertEquals(11642, (long) counts.get("walk"));
+		Assert.assertEquals(2861, (long) counts.getOrDefault("bike", 0L));
+		Assert.assertEquals(3347, (long) counts.get("pt"));
 
 		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv", "--hbefa-hot-avg",
@@ -180,7 +180,7 @@ public class TestEmissions {
 				"sample_41_EFA_ColdStart_SubSegm_2020detailed.csv", "--hbefa-hot-detailed",
 				"sample_41_EFA_HOT_SubSegm_2020detailed.csv", });
 
-		assertEquals(355977, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
+		assertEquals(334633, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
 		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600" });
@@ -197,10 +197,12 @@ public class TestEmissions {
 				& f.getAttribute("time").toString().equals("43200")).findFirst().orElse(null);
 		assertNotNull(feature);
 
-		double expectedPm = 0.006847378350421;
-		double expectedCo = 0.456258730331835;
+		double expectedPm = 0.006288836075491;
+		double expectedCo = 0.263774681387141;
 		double expectedNox = 0.477558671071797;
 		double expectedUnknown = Double.NaN;
+		
+		
 
 		assertEquals(expectedPm, feature.getAttribute("PM"));
 		assertEquals(expectedCo, feature.getAttribute("CO"));

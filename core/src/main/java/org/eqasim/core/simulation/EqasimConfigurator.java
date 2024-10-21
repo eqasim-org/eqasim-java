@@ -7,6 +7,7 @@ import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorModule;
+import org.eqasim.core.components.traffic.EqasimTrafficModule;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
@@ -78,8 +79,9 @@ public class EqasimConfigurator {
                 new DiscreteModeChoiceModule(), //
                 new EqasimComponentsModule(), //
                 new EpsilonModule(), //
-                new EqasimRaptorModule(),
-                new EqasimModeChoiceModule()//
+                new EqasimRaptorModule(), //
+                new EqasimModeChoiceModule(), //
+                new EqasimTrafficModule() //
         ));
 
         qsimModules.addAll(Arrays.asList( //

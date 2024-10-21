@@ -17,7 +17,13 @@ public class AdaptConfigForEpsilon {
         Config config = ConfigUtils.loadConfig(commandLine.getOptionStrict("input-config-path"), new EqasimConfigGroup(), new DiscreteModeChoiceConfigGroup());
         commandLine.applyConfiguration(config);
 
-        DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup = (DiscreteModeChoiceConfigGroup) config.getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
+        run(config);
+
+        ConfigUtils.writeConfig(config, commandLine.getOptionStrict("output-config-path"));
+    }
+    
+    static public void run(Config config) {
+    	DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup = (DiscreteModeChoiceConfigGroup) config.getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
         discreteModeChoiceConfigGroup.setSelector(SelectorModule.MAXIMUM);
 
         EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
@@ -29,7 +35,5 @@ public class AdaptConfigForEpsilon {
             }
             eqasimConfigGroup.setEstimator(entry.getKey(), EpsilonModule.EPSILON_UTILITY_PREFIX + entry.getValue());
         }
-
-        ConfigUtils.writeConfig(config, commandLine.getOptionStrict("output-config-path"));
     }
 }
