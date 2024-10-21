@@ -10,6 +10,8 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -39,11 +41,26 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf") //
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator();
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		
+		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
+			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+			
+			VDFConfigGroup vdfConfig = new VDFConfigGroup();
+			config.addModule(vdfConfig);
+			
+			vdfConfig.setCapacityFactor(eqasimConfig.getSampleSize());
+			vdfConfig.setModes(Set.of("car", "car_passenger"));
+			
+			VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
+			engineConfig.setModes(Set.of("car", "car_passenger"));
+			engineConfig.setGenerateNetworkEvents(false);			
+		}
+		
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
