@@ -59,7 +59,7 @@ public class RunSimulation {
 			VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
 			engineConfig.setModes(Set.of("car", "car_passenger"));
 			engineConfig.setGenerateNetworkEvents(false);			
-		}
+			config.addModule(engineConfig);		}
 		
 		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
