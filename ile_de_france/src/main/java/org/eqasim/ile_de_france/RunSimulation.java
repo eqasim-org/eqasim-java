@@ -34,7 +34,7 @@ public class RunSimulation {
 
 			VDFConfigGroup vdfConfig = new VDFConfigGroup();
 			config.addModule(vdfConfig);
-
+			
 			vdfConfig.setCapacityFactor(eqasimConfig.getSampleSize());
 			vdfConfig.setModes(Set.of("car", "car_passenger"));
 
