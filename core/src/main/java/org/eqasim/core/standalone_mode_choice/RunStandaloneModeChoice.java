@@ -21,6 +21,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.legs.LegItem;
+import org.eqasim.core.analysis.legs.LegReaderFromPopulation;
+import org.eqasim.core.analysis.legs.LegWriter;
 import org.eqasim.core.analysis.pt.PublicTransportLegItem;
 import org.eqasim.core.analysis.pt.PublicTransportLegReaderFromPopulation;
 import org.eqasim.core.analysis.pt.PublicTransportLegWriter;
@@ -247,12 +250,14 @@ public class RunStandaloneModeChoice {
         // We initialize the TripReaderFromPopulation here as we might need it just below
         TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         PublicTransportLegReaderFromPopulation ptLegReader = new PublicTransportLegReaderFromPopulation(injector.getInstance(TransitSchedule.class), injector.getInstance(PersonAnalysisFilter.class));
+        LegReaderFromPopulation legReader = new LegReaderFromPopulation(Arrays.asList("car", "pt"), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(OutputDirectoryHierarchy.class);
 
         cmd.getOption(CMD_WRITE_INPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
                 writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_trips.csv"), tripReader);
                 writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_pt_legs.csv"), ptLegReader);
+                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_legs.csv"), legReader);
             }
         });
 
@@ -269,6 +274,7 @@ public class RunStandaloneModeChoice {
             if(Boolean.parseBoolean(s)) {
                 writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv"), tripReader);
                 writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_pt_legs.csv"), ptLegReader);
+                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_legs.csv"), legReader);
             }
         });
         if(cmd.hasOption(CMD_SIMULATE_AFTER)) {
@@ -316,6 +322,15 @@ public class RunStandaloneModeChoice {
         Collection<PublicTransportLegItem> legs = legsReader.readPublicTransportLegs(population);
         try {
             new PublicTransportLegWriter(legs).write(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void writeLegsCsv(Population population, String filePath, LegReaderFromPopulation legsReader) {
+        Collection<LegItem> legs = legsReader.readLegs(population);
+        try {
+            new LegWriter(legs, DistanceUnit.meter, DistanceUnit.meter).write(filePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
