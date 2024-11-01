@@ -19,6 +19,7 @@ public class VDFLinkSpeedCalculator implements LinkSpeedCalculator {
 	public double getMaximumVelocity(QVehicle vehicle, Link link, double time) {
 		Person person = population.getPersons().get(vehicle.getDriver().getId());
 		double calculatedTravelTime = travelTime.getLinkTravelTime(link, time, person, vehicle.getVehicle());
+		System.err.println("TESTING");
 		return Math.min(link.getLength() / calculatedTravelTime, vehicle.getMaximumVelocity());
 	}
 }

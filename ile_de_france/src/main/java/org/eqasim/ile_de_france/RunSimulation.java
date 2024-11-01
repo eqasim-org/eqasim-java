@@ -3,7 +3,6 @@ package org.eqasim.ile_de_france;
 import java.util.Collections;
 import java.util.Set;
 
-import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -23,7 +22,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf", "use-vdf-engine") //
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator();
@@ -32,16 +31,18 @@ public class RunSimulation {
 		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
 			VDFConfigGroup vdfConfig = new VDFConfigGroup();
 			config.addModule(vdfConfig);
-			
+
 			vdfConfig.setCapacityFactor(1.0);
 			vdfConfig.setModes(Set.of("car", "car_passenger"));
 
-			VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
-			engineConfig.setModes(Set.of("car", "car_passenger"));
-			engineConfig.setGenerateNetworkEvents(false);
-			config.addModule(engineConfig);
+			if (cmd.getOption("use-vdf-engine").map(Boolean::parseBoolean).orElse(false)) {
+				VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
+				engineConfig.setModes(Set.of("car", "car_passenger"));
+				engineConfig.setGenerateNetworkEvents(false);
+				config.addModule(engineConfig);
 
-			config.qsim().setMainModes(Collections.emptySet());
+				config.qsim().setMainModes(Collections.emptySet());
+			}
 		}
 
 		configurator.addOptionalConfigGroups(config);
