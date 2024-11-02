@@ -1,5 +1,6 @@
 package org.eqasim.switzerland.scenario;
 
+import org.eqasim.switzerland.SwitzerlandConfigurator;
 import org.matsim.core.config.*;
 
 import java.util.Arrays;
@@ -14,7 +15,7 @@ public class SwissConfigAdapter {
     protected static double downsamplingRate = 1.0;
     protected static double replanningRate = 0.05;
 
-    public static void run(String[] args, ConfigGroup[] modules, Consumer<Config> adapter)
+    public static void run(String[] args, SwitzerlandConfigurator configurator, Consumer<Config> adapter)
             throws CommandLine.ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("input-path", "output-path", "downsamplingRate", "replanningRate") //
@@ -33,7 +34,8 @@ public class SwissConfigAdapter {
 
         downsamplingRate = Double.parseDouble(cmd.getOptionStrict("downsamplingRate"));
 
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"), modules);
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"));
+        configurator.updateConfig(config);
         adapter.accept(config);
 
         new ConfigWriter(config).write(cmd.getOptionStrict("output-path"));

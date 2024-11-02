@@ -28,8 +28,8 @@ public class RunSimulation {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
-		configurator.addOptionalConfigGroups(config);
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
 		EqasimConfigGroup.get(config).setAnalysisInterval(1);
 		cmd.applyConfiguration(config);
 

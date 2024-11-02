@@ -54,7 +54,8 @@ public class AdaptConfigForVDF {
         boolean engine = Boolean.parseBoolean(commandLine.getOption("engine").orElse("false"));
 
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig(inputPath, eqasimConfigurator.getConfigGroups());
+        Config config = ConfigUtils.loadConfig(inputPath);
+        eqasimConfigurator.updateConfig(config);
         adaptConfigForVDF(config, engine);
         commandLine.applyConfiguration(config);
         ConfigUtils.writeConfig(config, outputPath);

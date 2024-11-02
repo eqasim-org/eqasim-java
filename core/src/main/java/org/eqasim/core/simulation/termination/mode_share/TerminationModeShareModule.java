@@ -7,7 +7,7 @@ import org.matsim.core.controler.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
-public class ModeShareModule extends AbstractModule {
+public class TerminationModeShareModule extends AbstractModule {
 	@Override
 	public void install() {
 		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(getConfig());

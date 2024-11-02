@@ -1,16 +1,13 @@
 package org.eqasim.core.components.emissions;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.analysis.EmissionGridAnalyzer;
-import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
@@ -32,9 +29,8 @@ public class RunComputeEmissionsGrid {
             configurator = new EqasimConfigurator();
         }
 
-        ConfigGroup[] configGroups = ArrayUtils.addAll(configurator.getConfigGroups(), new EmissionsConfigGroup());
-
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+        configurator.updateConfig(config);
         cmd.applyConfiguration(config);
         final String outputDirectory = config.controller().getOutputDirectory() + "/";
 

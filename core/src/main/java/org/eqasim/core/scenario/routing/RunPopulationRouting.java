@@ -29,9 +29,9 @@ public class RunPopulationRouting {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
 		config.getModules().remove(EqasimTerminationConfigGroup.GROUP_NAME);
-		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
 		config.replanning().clearStrategySettings();
 		VehiclesValidator.validate(config);
@@ -59,7 +59,7 @@ public class RunPopulationRouting {
 		}
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules().stream()
+				.addOverridingModules(configurator.getModules(config).stream()
 						.filter(module -> !(module instanceof AbstractEqasimExtension)) //
 						.filter(module -> !(module instanceof DiscreteModeChoiceModule)).toList()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //

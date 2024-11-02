@@ -22,6 +22,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private final static String ANALYSIS_INTERVAL = "analysisInterval";
 	private final static String ANALYSIS_DISTANCE_UNIT = "analysisDistanceUnit";
+	
+	private final static String TRAVEL_TIME_RECORDING_INTERVAL = "travelTimeRecordingInterval";
 
 	private final static String USE_SCHEDULE_BASED_TRANSPORT = "useScheduleBasedTransport";
 
@@ -35,6 +37,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private int analysisInterval = 0;
 	private DistanceUnit analysisDistanceUnit = DistanceUnit.meter;
+	
+	private int travelTimeRecordingInterval = 0;
 
 	private boolean useScheduleBasedTransport = true;
 
@@ -206,6 +210,16 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(ANALYSIS_INTERVAL)
 	public void setAnalysisInterval(int analysisInterval) {
 		this.analysisInterval = analysisInterval;
+	}
+
+	@StringGetter(TRAVEL_TIME_RECORDING_INTERVAL)
+	public int getTravelTimeRecordingInterval() {
+		return travelTimeRecordingInterval;
+	}
+
+	@StringSetter(TRAVEL_TIME_RECORDING_INTERVAL)
+	public void setTravelTimeRecordingInterval(int travelTimeRecordingInterval) {
+		this.travelTimeRecordingInterval = travelTimeRecordingInterval;
 	}
 
 	@StringGetter(DISTANCE_UNIT)

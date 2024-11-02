@@ -15,7 +15,8 @@ public class RunGenerateConfig {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.createConfig(configurator.getConfigGroups());
+		Config config = ConfigUtils.createConfig();
+		configurator.updateConfig(config);
 
 		String prefix = cmd.getOptionStrict("prefix");
 		double sampleSize = Double.parseDouble(cmd.getOptionStrict("sample-size"));

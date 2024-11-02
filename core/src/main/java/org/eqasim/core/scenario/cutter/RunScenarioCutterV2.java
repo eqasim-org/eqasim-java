@@ -44,9 +44,9 @@ public class RunScenarioCutterV2 {
         String outputPath = cmd.getOptionStrict("output-path");
 
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), eqasimConfigurator.getConfigGroups());
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+        eqasimConfigurator.updateConfig(config);
         cmd.applyConfiguration(config);
-        eqasimConfigurator.addOptionalConfigGroups(config);
 
         if(!config.getModules().containsKey(VDFConfigGroup.GROUP_NAME) || !config.getModules().containsKey(VDFEngineConfigGroup.GROUP_NAME)) {
             throw new IllegalStateException(String.format("This scenario cutter only works with configs where both '%s' and '%s' modules are used", VDFConfigGroup.GROUP_NAME, VDFEngineConfigGroup.GROUP_NAME));
@@ -126,9 +126,9 @@ public class RunScenarioCutterV2 {
 
         // "Cut" config
         // (we need to reload it, because it has become locked at this point)
-        config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), eqasimConfigurator.getConfigGroups());
+        config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+        eqasimConfigurator.updateConfig(config);
         cmd.applyConfiguration(config);
-        eqasimConfigurator.addOptionalConfigGroups(config);
         ConfigCutter configCutter = new ConfigCutter(prefix);
         configCutter.run(config);
 

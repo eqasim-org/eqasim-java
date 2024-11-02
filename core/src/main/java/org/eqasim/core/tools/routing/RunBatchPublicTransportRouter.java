@@ -66,7 +66,8 @@ public class RunBatchPublicTransportRouter {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
 
 		// No opportunity scoring
@@ -262,7 +263,7 @@ public class RunBatchPublicTransportRouter {
 		Optional<String> outputConfigPath = cmd.getOption("output-config-path");
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules()) //
+				.addOverridingModules(configurator.getModules(config)) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, false, interval)).build();
 
 		Provider<TransitRouter> routerProvider = injector.getProvider(TransitRouter.class);

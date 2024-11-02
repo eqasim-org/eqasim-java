@@ -3,15 +3,11 @@ package org.eqasim.ile_de_france;
 import java.util.Collections;
 import java.util.Set;
 
-import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
-import org.eqasim.core.simulation.vdf.VDFModule;
-import org.eqasim.core.simulation.vdf.VDFQSimModule;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
-import org.eqasim.core.simulation.vdf.engine.VDFEngineModule;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.munich.MunichModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
@@ -30,7 +26,9 @@ public class RunSimulation {
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
 
 		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
 			VDFConfigGroup vdfConfig = new VDFConfigGroup();
@@ -49,7 +47,6 @@ public class RunSimulation {
 			}
 		}
 
-		configurator.addOptionalConfigGroups(config);
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
 
@@ -114,20 +111,6 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new MunichModeChoiceModule());
-
-		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
-			controller.addOverridingModule(new VDFModule());
-			controller.addOverridingQSimModule(new VDFQSimModule());
-
-			if (cmd.getOption("use-vdf-engine").map(Boolean::parseBoolean).orElse(false)) {
-				controller.addOverridingModule(new VDFEngineModule());
-
-				controller.configureQSimComponents(components -> {
-					EqasimTransitQSimModule.configure(components, config);
-					components.addNamedComponent(VDFEngineModule.COMPONENT_NAME);
-				});
-			}
-		}
 
 		controller.run();
 	}

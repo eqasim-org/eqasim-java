@@ -1,6 +1,5 @@
 package org.eqasim.core.components.emissions;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -13,7 +12,6 @@ import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Injector;
@@ -39,9 +37,9 @@ public class RunComputeEmissionsEvents {
             configurator = new EqasimConfigurator();
         }
 
-        ConfigGroup[] configGroups = ArrayUtils.addAll(configurator.getConfigGroups(), new EmissionsConfigGroup());
-
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+        configurator.registerConfigGroup(new EmissionsConfigGroup(), false);
+        configurator.updateConfig(config);
         cmd.applyConfiguration(config);
 
         EmissionsConfigGroup emissionsConfig = (EmissionsConfigGroup) config.getModules().get("emissions");
