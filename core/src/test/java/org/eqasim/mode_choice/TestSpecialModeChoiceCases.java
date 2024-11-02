@@ -23,6 +23,7 @@ import org.eqasim.core.scenario.config.GenerateConfig;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.junit.After;
 import org.junit.Test;
@@ -158,6 +159,7 @@ public class TestSpecialModeChoiceCases {
 
 		new GenerateConfig(cmd, "", 1.0, 1, 1).run(config);
 		config.addModule(new EqasimRaptorConfigGroup());
+		config.removeModule(EqasimTerminationConfigGroup.GROUP_NAME);
 
 		// Make sure the two relevant options (walk vs. bike) both get zero utility
 		DiscreteModeChoiceConfigGroup.getOrCreate(config).setModeAvailability("static");
@@ -166,7 +168,6 @@ public class TestSpecialModeChoiceCases {
 
 		// Now create the model
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		configurator.getModules().removeIf(m -> m instanceof EqasimTerminationModule);
 		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		
@@ -178,7 +179,7 @@ public class TestSpecialModeChoiceCases {
 		scenario.getNetwork().addLink(link);
 		
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules()) //
+				.addOverridingModules(configurator.getModules(config)) //
 				.addOverridingModule(new EqasimModeChoiceModule()) //
 				.addOverridingModule(new StaticModeAvailabilityModule()) //
 				.addOverridingModule(new TimeInterpretationModule()) //

@@ -14,8 +14,8 @@ public class ConfigAdapter {
 				.requireOptions("input-path", "output-path", "prefix") //
 				.build();
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"), configurator.getConfigGroups());
-		configurator.addOptionalConfigGroups(config);
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"));
+		configurator.updateConfig(config);
 		adapter.accept(config, cmd.getOptionStrict("prefix"));
 
 		new ConfigWriter(config).write(cmd.getOptionStrict("output-path"));

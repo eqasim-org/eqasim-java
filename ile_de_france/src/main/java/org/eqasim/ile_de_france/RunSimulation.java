@@ -20,8 +20,8 @@ public class RunSimulation {
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
-		configurator.addOptionalConfigGroups(config);
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
 

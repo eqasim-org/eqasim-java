@@ -162,8 +162,8 @@ public class AdaptConfigForFeederDrt {
             configurator = new EqasimConfigurator();
         }
 
-        Config config = ConfigUtils.loadConfig(inputConfigPath, configurator.getConfigGroups());
-        configurator.addOptionalConfigGroups(config);
+        Config config = ConfigUtils.loadConfig(inputConfigPath);
+        configurator.updateConfig(config);
 
         adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), info.get("access-egress-transit-stop-ids"), cmd.getOption("mode-availability").orElse(null));
 
