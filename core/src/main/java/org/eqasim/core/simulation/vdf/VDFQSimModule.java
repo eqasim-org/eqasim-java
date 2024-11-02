@@ -12,7 +12,6 @@ import com.google.inject.Singleton;
 public class VDFQSimModule extends AbstractQSimModule {
 	@Override
 	protected void configureQSim() {
-		addLinkSpeedCalculator().to(VDFLinkSpeedCalculator.class);
 		bind(EqasimLinkSpeedCalculator.class).to(VDFLinkSpeedCalculator.class);
 	}
 
