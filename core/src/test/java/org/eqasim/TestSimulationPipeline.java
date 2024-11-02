@@ -13,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
@@ -89,6 +90,7 @@ public class TestSimulationPipeline {
         if(lastIteration != null) {
             config.controller().setLastIteration(lastIteration);
         }
+        EqasimConfigGroup.get(config).setTravelTimeRecordingInterval(1000);
         eqasimConfigurator.addOptionalConfigGroups(config);
 
         Scenario scenario = ScenarioUtils.createScenario(config);
