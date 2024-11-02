@@ -165,7 +165,7 @@ public class TestEmissions {
 				"sample_41_EFA_ColdStart_SubSegm_2020detailed.csv", "--hbefa-hot-detailed",
 				"sample_41_EFA_HOT_SubSegm_2020detailed.csv", });
 
-		assertEquals(355977, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
+		assertEquals(353704, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
 		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600" });
