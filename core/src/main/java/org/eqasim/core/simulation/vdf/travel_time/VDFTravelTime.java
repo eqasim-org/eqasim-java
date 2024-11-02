@@ -109,7 +109,7 @@ public class VDFTravelTime implements TravelTime {
 
 				double travelTime = Math.max(1.0,
 						Math.min(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));
-				linkTravelTimes.set(i, travelTime + crossingPenalty.calculateCrossingPenalty(link));
+				// linkTravelTimes.set(i, travelTime + crossingPenalty.calculateCrossingPenalty(link));
 
 				if (travelTime > link.getLength() / link.getFreespeed()) {
 					nonFreespeedCount += 1;
