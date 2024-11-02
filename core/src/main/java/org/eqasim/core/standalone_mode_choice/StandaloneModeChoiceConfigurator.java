@@ -56,7 +56,7 @@ public class StandaloneModeChoiceConfigurator {
 
     public final List<AbstractModule> getModeChoiceModules(Config config) {
         List<AbstractModule> modules = new ArrayList<>();
-        new EqasimConfigurator().getModules().stream().filter(module -> !(module instanceof EqasimTerminationModule)).forEach(modules::add);
+        new EqasimConfigurator().getModules(config).stream().filter(module -> !(module instanceof EqasimTerminationModule)).forEach(modules::add);
         modules.add(new TimeInterpretationModule());
         modules.add(new StandaloneModeChoiceModule(getConfig()));
         // We add a module that just binds the PersonAnalysisFilter without having to add the whole EqasimAnalysisModule

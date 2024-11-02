@@ -42,7 +42,8 @@ public class TestCorisica {
 
 	private void adjustConfig() {
 		IDFConfigurator configurator = new IDFConfigurator();
-		Config config = ConfigUtils.loadConfig("corsica_test/corsica_config.xml", configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig("corsica_test/corsica_config.xml");
+		configurator.updateConfig(config);
 		config.vehicles().setVehiclesFile("corsica_vehicles.xml.gz");
 		config.qsim().setVehiclesSource(VehiclesSource.fromVehiclesData);
 		new ConfigWriter(config).write("corsica_test/corsica_config.xml");

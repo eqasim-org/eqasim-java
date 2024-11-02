@@ -81,7 +81,8 @@ public class TestSimulationPipeline {
 
     private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
+        Config config = ConfigUtils.loadConfig(configPath);
+        eqasimConfigurator.updateConfig(config);
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
         if(inputPlansFile != null) {
             config.plans().setInputFile(inputPlansFile);
@@ -89,7 +90,6 @@ public class TestSimulationPipeline {
         if(lastIteration != null) {
             config.controller().setLastIteration(lastIteration);
         }
-        eqasimConfigurator.addOptionalConfigGroups(config);
 
         Scenario scenario = ScenarioUtils.createScenario(config);
         eqasimConfigurator.configureScenario(scenario);

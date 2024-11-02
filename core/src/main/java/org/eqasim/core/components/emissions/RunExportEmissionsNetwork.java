@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.geotools.api.feature.simple.SimpleFeature;
@@ -19,11 +18,9 @@ import org.matsim.contrib.emissions.Pollutant;
 import org.matsim.contrib.emissions.analysis.EmissionsByPollutant;
 import org.matsim.contrib.emissions.analysis.EmissionsOnLinkEventHandler;
 import org.matsim.contrib.emissions.events.EmissionEventsReader;
-import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.network.NetworkUtils;
@@ -49,9 +46,8 @@ public class RunExportEmissionsNetwork {
             configurator = new EqasimConfigurator();
         }
         
-        ConfigGroup[] configGroups = ArrayUtils.addAll(configurator.getConfigGroups(), new EmissionsConfigGroup());
-
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configGroups);
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+        configurator.updateConfig(config);
         cmd.applyConfiguration(config);
         final String outputDirectory = config.controller().getOutputDirectory() + "/";
 

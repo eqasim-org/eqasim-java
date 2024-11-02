@@ -20,7 +20,7 @@ public class RunAdaptConfig {
 
 	static public void main(String[] args) throws ConfigurationException {
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator();
-		SwissConfigAdapter.run(args, configurator.getConfigGroups(), RunAdaptConfig::adaptConfiguration);
+		SwissConfigAdapter.run(args, configurator, RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config) {

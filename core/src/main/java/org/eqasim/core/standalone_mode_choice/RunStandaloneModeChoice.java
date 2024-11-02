@@ -44,7 +44,6 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -162,17 +161,10 @@ public class RunStandaloneModeChoice {
 
         // Loading the config
         EqasimConfigurator configurator = cmd.hasOption(EQASIM_CONFIGURATOR_CLASS) ? ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict(EQASIM_CONFIGURATOR_CLASS), EqasimConfigurator.class) : new EqasimConfigurator();
-        ConfigGroup[] configGroups = new ConfigGroup[configurator.getConfigGroups().length+1];
-        int i=0;
-        for(ConfigGroup configGroup: configurator.getConfigGroups()) {
-            configGroups[i] = configGroup;
-            i++;
-        }
-        // We should add this module now so that parameters can be overridden by the commandline
-        configGroups[i] = new StandaloneModeChoiceConfigGroup();
+        configurator.registerConfigGroup(new StandaloneModeChoiceConfigGroup(), false);
 
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_CONFIG_PATH), configGroups);
-        configurator.addOptionalConfigGroups(config);
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_CONFIG_PATH));
+        configurator.updateConfig(config);
         cmd.applyConfiguration(config);
         VehiclesValidator.validate(config);
 

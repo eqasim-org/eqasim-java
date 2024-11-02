@@ -1,20 +1,21 @@
 package org.eqasim.core.simulation.vdf.engine;
 
+import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
+import org.matsim.core.mobsim.qsim.components.QSimComponentsConfig;
 
 import com.google.common.base.Verify;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
-public class VDFEngineModule extends AbstractModule {
+public class VDFEngineModule extends AbstractEqasimExtension {
 	public static final String COMPONENT_NAME = "VDFEngine";
 
 	@Override
-	public void install() {
+	public void installEqasimExtension() {
 		VDFEngineConfigGroup engineConfig = VDFEngineConfigGroup.getOrCreate(getConfig());
 
 		for (String mode : engineConfig.getModes()) {
@@ -35,5 +36,9 @@ public class VDFEngineModule extends AbstractModule {
 						engineConfig.getGenerateNetworkEvents());
 			}
 		});
+	}
+
+	static public void configureQSim(QSimComponentsConfig components) {
+		components.addNamedComponent(COMPONENT_NAME);
 	}
 }
