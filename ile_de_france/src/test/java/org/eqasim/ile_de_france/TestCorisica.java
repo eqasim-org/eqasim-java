@@ -116,6 +116,7 @@ public class TestCorisica {
 					"--config-path", "corsica_test/cut_config.xml", //
 					"--config:controler.lastIteration", "2", // ,
 					"--config:controler.outputDirectory", "corsica_test/cut_output", //
+					"--config:eqasim.travelTimeRecordingInterval", "1000", //
 			});
 
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
