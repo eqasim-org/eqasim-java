@@ -3,6 +3,7 @@ package org.eqasim.core.standalone_mode_choice;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -219,6 +220,8 @@ public class RunStandaloneModeChoice {
                     RecordedTravelTime recordedTravelTime = RecordedTravelTime.readBinary(inputStream);
                     inputStream.close();
                     return recordedTravelTime;
+                } catch (FileNotFoundException e) {
+                	throw new IllegalStateException("Travel time input file not found: " + path);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
