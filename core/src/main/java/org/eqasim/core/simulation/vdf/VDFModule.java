@@ -17,6 +17,7 @@ import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
@@ -52,12 +53,12 @@ public class VDFModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public VDFUpdateListener provideVDFUpdateListener(VDFScope scope, VDFTrafficHandler handler,
-			VDFTravelTime travelTime, VDFConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
-			Network network) {
+			VDFTravelTime travelTime, VDFConfigGroup config, OutputDirectoryHierarchy outputHierarchy, Network network,
+			ControllerConfigGroup controllerConfig) {
 		URL inputFile = config.getInputFile() == null ? null
 				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFile());
 		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
-				config.getWriteFlowInterval(), inputFile);
+				config.getWriteFlowInterval(), controllerConfig.getFirstIteration(), inputFile);
 	}
 
 	@Provides

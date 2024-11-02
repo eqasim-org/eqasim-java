@@ -63,7 +63,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 	}
 
 	@Override
-	public IdMap<Link, List<Double>> aggregate() {
+	public IdMap<Link, List<Double>> aggregate(boolean ignoreIteration) {
 		while (state.size() > horizon) {
 			state.remove(0);
 		}
@@ -71,14 +71,15 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 		logger.info(String.format("Starting aggregation of %d slices", state.size()));
 
 		// Make a copy to add to the history
+		if (!ignoreIteration) {
+			IdMap<Link, List<Double>> copy = new IdMap<>(Link.class);
 
-		IdMap<Link, List<Double>> copy = new IdMap<>(Link.class);
+			for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
+				copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+			}
 
-		for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
-			copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+			state.add(copy);
 		}
-
-		state.add(copy);
 
 		IdMap<Link, List<Double>> aggregated = new IdMap<>(Link.class);
 
