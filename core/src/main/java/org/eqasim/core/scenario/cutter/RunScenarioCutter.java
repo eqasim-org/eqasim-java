@@ -31,7 +31,7 @@ import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
-import org.eqasim.core.simulation.termination.EqasimTerminationModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.core.config.CommandLine;
@@ -71,9 +71,9 @@ public class RunScenarioCutter {
 
 		// Load scenario
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		configurator.getModules().removeIf(m -> m instanceof EqasimTerminationModule);
-
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
+		config.removeModule(EqasimTerminationConfigGroup.GROUP_NAME);
 		cmd.applyConfiguration(config);
 
 		VehiclesValidator.validate(config);
@@ -111,7 +111,7 @@ public class RunScenarioCutter {
 
 		// Cut population
 		Injector populationCutterInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules().stream()
+				.addOverridingModules(configurator.getModules(config).stream()
 						.filter(module -> !(module instanceof AbstractEqasimExtension) && !(module instanceof DiscreteModeChoiceModule)).toList()) //
 				.addOverridingModule(
 						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
@@ -162,14 +162,15 @@ public class RunScenarioCutter {
 
 		// "Cut" config
 		// (we need to reload it, because it has become locked at this point)
-		config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
 		ConfigCutter configCutter = new ConfigCutter(prefix);
 		configCutter.run(config);
 
 		// Final routing
 		Injector routingInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules().stream()
+				.addOverridingModules(configurator.getModules(config).stream()
 						.filter(module -> !(module instanceof AbstractEqasimExtension) && !(module instanceof DiscreteModeChoiceModule)).toList()) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //

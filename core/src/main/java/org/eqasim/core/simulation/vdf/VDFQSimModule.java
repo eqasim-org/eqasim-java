@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.vdf;
 
+import org.eqasim.core.components.traffic.EqasimLinkSpeedCalculator;
 import org.eqasim.core.simulation.vdf.travel_time.VDFLinkSpeedCalculator;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.population.Population;
@@ -11,7 +12,7 @@ import com.google.inject.Singleton;
 public class VDFQSimModule extends AbstractQSimModule {
 	@Override
 	protected void configureQSim() {
-		addLinkSpeedCalculator().to(VDFLinkSpeedCalculator.class);
+		bind(EqasimLinkSpeedCalculator.class).to(VDFLinkSpeedCalculator.class);
 	}
 
 	@Provides

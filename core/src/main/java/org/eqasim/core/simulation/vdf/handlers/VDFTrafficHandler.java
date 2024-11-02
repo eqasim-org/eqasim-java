@@ -11,7 +11,7 @@ import org.matsim.api.core.v01.network.Link;
 public interface VDFTrafficHandler {
 	void processEnterLink(double time, Id<Link> linkId);
 
-	IdMap<Link, List<Double>> aggregate();
+	IdMap<Link, List<Double>> aggregate(boolean ignoreIteration);
 
 	VDFReaderInterface getReader();
 

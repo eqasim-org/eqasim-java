@@ -47,7 +47,8 @@ public class RunBatchRoadRouter {
 				.build();
 
 		EqasimConfigurator configurator = new EqasimConfigurator();
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -66,7 +67,7 @@ public class RunBatchRoadRouter {
 		}
 
 		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules()) //
+				.addOverridingModules(configurator.getModules(config)) //
 				.addOverridingModule(new AbstractModule() {
 					@Override
 					public void install() {

@@ -1,5 +1,9 @@
 package org.eqasim.core.simulation.modes.feeder_drt.analysis.run;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.modes.drt.analysis.utils.VehicleRegistry;
 import org.eqasim.core.simulation.modes.feeder_drt.analysis.passengers.FeederTripSequenceListener;
@@ -15,10 +19,6 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
 
 
 public class RunFeederDrtPassengerAnalysis {
@@ -53,8 +53,8 @@ public class RunFeederDrtPassengerAnalysis {
         String outputPath = cmd.getOptionStrict("output-path");
 
         EqasimConfigurator configurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig(configPath, configurator.getConfigGroups());
-        configurator.addOptionalConfigGroups(config);
+        Config config = ConfigUtils.loadConfig(configPath);
+        configurator.updateConfig(config);
 
         Network network = NetworkUtils.createNetwork();
         new MatsimNetworkReader(network).readFile(networkPath);

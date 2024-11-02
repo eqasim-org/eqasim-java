@@ -37,11 +37,14 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 	private final int writeFlowInterval;
 	private final URL inputFile;
 
+	private final int firstIteration;
+
 	private final OutputDirectoryHierarchy outputHierarchy;
 	private final Network network;
 
 	public VDFUpdateListener(Network network, VDFScope scope, VDFTrafficHandler handler, VDFTravelTime travelTime,
-			OutputDirectoryHierarchy outputHierarchy, int writeInterval, int writeFlowInterval, URL inputFile) {
+			OutputDirectoryHierarchy outputHierarchy, int writeInterval, int writeFlowInterval, int firstIteration,
+			URL inputFile) {
 		this.network = network;
 		this.scope = scope;
 		this.handler = handler;
@@ -50,11 +53,17 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		this.writeFlowInterval = writeFlowInterval;
 		this.outputHierarchy = outputHierarchy;
 		this.inputFile = inputFile;
+		this.firstIteration = firstIteration;
 	}
 
 	@Override
 	public void notifyIterationEnds(IterationEndsEvent event) {
-		IdMap<Link, List<Double>> data = handler.aggregate();
+		// ignore when restarting simulation as "first iteration" will produce
+		// information that is already in the cache, hence the call to aggregate is just
+		// to obtain historical flows
+		boolean ignoreIteration = event.getIteration() == firstIteration && inputFile != null;
+
+		IdMap<Link, List<Double>> data = handler.aggregate(ignoreIteration);
 		scope.verify(data, "Wrong flow format");
 		travelTime.update(data);
 
@@ -83,7 +92,9 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 
 			handler.getReader().readFile(inputFile);
 
-			IdMap<Link, List<Double>> data = handler.aggregate();
+			// ignore "current iteration" because it does not exist at startup, we just
+			// aggregate to have consistent travel times
+			IdMap<Link, List<Double>> data = handler.aggregate(true);
 			scope.verify(data, "Wrong flow format");
 			travelTime.update(data, true);
 

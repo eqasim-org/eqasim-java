@@ -9,11 +9,12 @@ public class EqasimTrafficQSimModule extends AbstractQSimModule {
 	@Override
 	protected void configureQSim() {
 		addLinkSpeedCalculator().to(EqasimLinkSpeedCalculator.class);
+		bind(EqasimLinkSpeedCalculator.class).to(DefaultEqasimLinkSpeedCalculator.class);
 	}
 
 	@Provides
 	@Singleton
-	public EqasimLinkSpeedCalculator provideBaselineLinkSpeedCalculator(CrossingPenalty crossigPenalty) {
-		return new EqasimLinkSpeedCalculator(crossigPenalty);
+	public DefaultEqasimLinkSpeedCalculator provideDefaultEqasimLinkSpeedCalculator(CrossingPenalty crossigPenalty) {
+		return new DefaultEqasimLinkSpeedCalculator(crossigPenalty);
 	}
 }
