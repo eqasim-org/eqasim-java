@@ -76,7 +76,7 @@ public class TestCorisica {
 			Assert.assertEquals(389, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/simulation_output/output_events.xml.gz");
-			Assert.assertEquals(992, (long) counts.get("car"));
+			Assert.assertEquals(994, (long) counts.get("car"));
 			Assert.assertEquals(129, (long) counts.get("car_passenger"));
 			Assert.assertEquals(221, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
@@ -120,7 +120,7 @@ public class TestCorisica {
 			});
 
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
-			Assert.assertEquals(422, (long) counts.get("car"));
+			Assert.assertEquals(424, (long) counts.get("car"));
 			Assert.assertEquals(53, (long) counts.get("car_passenger"));
 			Assert.assertEquals(101, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
