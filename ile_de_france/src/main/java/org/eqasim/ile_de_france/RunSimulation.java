@@ -41,9 +41,9 @@ public class RunSimulation {
 				engineConfig.setModes(Set.of("car", "car_passenger"));
 				engineConfig.setGenerateNetworkEvents(false);
 				config.addModule(engineConfig);
-			}
 
-			config.qsim().setMainModes(Collections.emptySet());
+				config.qsim().setMainModes(Collections.emptySet());
+			}
 		}
 
 		cmd.applyConfiguration(config);
