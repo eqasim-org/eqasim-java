@@ -31,12 +31,14 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.routes.TransitPassengerRoute;
+import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 
 public class ExportStopTraversals {
@@ -67,7 +69,7 @@ public class ExportStopTraversals {
 				for (Leg leg : TripStructureUtils.getLegs(person.getSelectedPlan())) {
 					if (leg.getRoute() instanceof TransitPassengerRoute route) {
 						routes.add(new IndividualRoute(route.getLineId(), route.getRouteId(), route.getAccessStopId(),
-								route.getEgressStopId(), person.getId()));
+								route.getEgressStopId(), person.getId(), route.getBoardingTime().seconds()));
 					}
 				}
 			}
@@ -79,7 +81,8 @@ public class ExportStopTraversals {
 				public void handleEvent(GenericEvent event) {
 					if (event instanceof PublicTransitEvent pt) {
 						routes.add(new IndividualRoute(pt.getTransitLineId(), pt.getTransitRouteId(),
-								pt.getAccessStopId(), pt.getEgressStopId(), pt.getPersonId()));
+								pt.getAccessStopId(), pt.getEgressStopId(), pt.getPersonId(),
+								pt.getVehicleDepartureTime()));
 					}
 				}
 			});
@@ -93,7 +96,8 @@ public class ExportStopTraversals {
 		int routeIndex = 0;
 
 		writer.write(String.join(";", Arrays.asList( //
-				"route_index", "person_id", "stop_id", "area_id", "is_access", "is_egress", "transit_mode")) + "\n");
+				"route_index", "person_id", "stop_id", "area_id", "is_access", "is_egress", "transit_mode",
+				"arrival_time", "departure_time")) + "\n");
 
 		for (IndividualRoute route : routes) {
 			TransitLine transitLine = scenario.getTransitSchedule().getTransitLines().get(route.transitLineId);
@@ -107,9 +111,31 @@ public class ExportStopTraversals {
 			TransitRouteStop egresssStop = transitRoute.getStop(egressFacility);
 			int egressIndex = transitRoute.getStops().indexOf(egresssStop);
 
+			double accessOffset = accessStop.getDepartureOffset().seconds();
+			double minimumDelta = Double.POSITIVE_INFINITY;
+			Departure bestDeparture = null;
+
+			for (Departure departure : transitRoute.getDepartures().values()) {
+				double vehicleDepartureTime = departure.getDepartureTime() + accessOffset;
+
+				if (vehicleDepartureTime >= route.referenceTime) {
+					double delta = vehicleDepartureTime - route.referenceTime;
+
+					if (delta < minimumDelta) {
+						minimumDelta = delta;
+						bestDeparture = departure;
+					}
+				}
+			}
+
+			Preconditions.checkState(bestDeparture != null);
+
 			for (int index = accessIndex; index <= egressIndex; index++) {
 				TransitRouteStop stop = transitRoute.getStops().get(index);
 				TransitStopFacility stopFacility = stop.getStopFacility();
+
+				double stopArrivalTime = bestDeparture.getDepartureTime() + stop.getArrivalOffset().seconds();
+				double stopDepartureTime = bestDeparture.getDepartureTime() + stop.getDepartureOffset().seconds();
 
 				if (extent == null || extent.isInside(stopFacility.getCoord())) {
 					writer.write(String.join(";", Arrays.asList( //
@@ -119,7 +145,9 @@ public class ExportStopTraversals {
 							stop.getStopFacility().getStopAreaId().toString(), //
 							String.valueOf(index == accessIndex), //
 							String.valueOf(index == egressIndex), //
-							transitRoute.getTransportMode() //
+							transitRoute.getTransportMode(), //
+							String.valueOf(stopArrivalTime),
+							String.valueOf(stopDepartureTime) //
 					)) + "\n");
 				}
 			}
@@ -131,6 +159,7 @@ public class ExportStopTraversals {
 	}
 
 	private record IndividualRoute(Id<TransitLine> transitLineId, Id<TransitRoute> transitRouteId,
-			Id<TransitStopFacility> accessStopId, Id<TransitStopFacility> egressStopId, Id<Person> personId) {
+			Id<TransitStopFacility> accessStopId, Id<TransitStopFacility> egressStopId, Id<Person> personId,
+			double referenceTime) {
 	}
 }
