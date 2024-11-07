@@ -49,7 +49,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private int writeFlowInterval = 0;
 
 	public enum HandlerType {
-		Horizon, Interpolation
+		Horizon, Interpolation, SparseHorizon
 	}
 
 	private HandlerType handler = HandlerType.Horizon;

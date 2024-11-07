@@ -11,6 +11,7 @@ import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.vdf.handlers.VDFHorizonHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFInterpolationHandler;
+import org.eqasim.core.simulation.vdf.handlers.VDFSparseHorizonHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
@@ -40,6 +41,10 @@ public class VDFModule extends AbstractEqasimExtension {
 		case Horizon:
 			bind(VDFTrafficHandler.class).to(VDFHorizonHandler.class);
 			addEventHandlerBinding().to(VDFHorizonHandler.class);
+			break;
+		case SparseHorizon:
+			bind(VDFTrafficHandler.class).to(VDFSparseHorizonHandler.class);
+			addEventHandlerBinding().to(VDFSparseHorizonHandler.class);
 			break;
 		case Interpolation:
 			bind(VDFTrafficHandler.class).to(VDFInterpolationHandler.class);
@@ -83,6 +88,12 @@ public class VDFModule extends AbstractEqasimExtension {
 	@Singleton
 	public VDFHorizonHandler provideVDFHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope) {
 		return new VDFHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads());
+	}
+
+	@Provides
+	@Singleton
+	public VDFSparseHorizonHandler provideVDFSparseHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope) {
+		return new VDFSparseHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads());
 	}
 
 	@Provides
