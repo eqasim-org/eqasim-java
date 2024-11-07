@@ -37,7 +37,7 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 
 	private final IdMap<Link, List<Double>> counts = new IdMap<>(Link.class);
 
-	private final static Logger logger = LogManager.getLogger(VDFHorizonHandler.class);
+	private final static Logger logger = LogManager.getLogger(VDFSparseHorizonHandler.class);
 
 	private record LinkState(List<Integer> time, List<Double> count) {
 	}
