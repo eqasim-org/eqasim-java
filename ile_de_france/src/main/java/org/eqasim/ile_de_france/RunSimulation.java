@@ -10,6 +10,7 @@ import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.munich.MunichModeChoiceModule;
+import org.eqasim.ile_de_france.policies.PolicyExtension;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -33,7 +34,7 @@ public class RunSimulation {
 		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
 			config.qsim().setFlowCapFactor(1e9);
 			config.qsim().setStorageCapFactor(1e9);
-			
+
 			VDFConfigGroup vdfConfig = new VDFConfigGroup();
 			config.addModule(vdfConfig);
 
@@ -52,6 +53,9 @@ public class RunSimulation {
 
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
+
+		PolicyExtension policies = new PolicyExtension();
+		policies.adaptConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
@@ -114,6 +118,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new MunichModeChoiceModule());
+		controller.addOverridingModule(policies);
 
 		controller.run();
 	}
