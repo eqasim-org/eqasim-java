@@ -31,10 +31,13 @@ public class RunSimulation {
 		configurator.updateConfig(config);
 
 		if (cmd.getOption("use-vdf").map(Boolean::parseBoolean).orElse(false)) {
+			config.qsim().setFlowCapFactor(1e9);
+			config.qsim().setStorageCapFactor(1e9);
+			
 			VDFConfigGroup vdfConfig = new VDFConfigGroup();
 			config.addModule(vdfConfig);
 
-			vdfConfig.setCapacityFactor(1.0);
+			vdfConfig.setCapacityFactor(0.5);
 			vdfConfig.setModes(Set.of("car", "car_passenger"));
 
 			if (cmd.getOption("use-vdf-engine").map(Boolean::parseBoolean).orElse(false)) {
