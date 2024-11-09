@@ -1,11 +1,13 @@
 package org.eqasim.core.tools;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.locationtech.jts.geom.Coordinate;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.Scenario;
@@ -20,9 +22,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.PolylineFeatureFactory;
 import org.matsim.core.utils.gis.ShapeFileWriter;
-import org.matsim.pt.transitSchedule.api.TransitLine;
-import org.matsim.pt.transitSchedule.api.TransitRoute;
-import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
+import org.matsim.pt.transitSchedule.api.*;
 import org.geotools.api.feature.simple.SimpleFeature;
 
 public class ExportTransitLinesToShapefile {
@@ -84,25 +84,34 @@ public class ExportTransitLinesToShapefile {
 					continue;
 				}
 				NetworkRoute networkRoute = transitRoute.getRoute();
-				List<Link> links = new ArrayList<>(networkRoute.getLinkIds().size() + 2);
-				links.add(network.getLinks().get(networkRoute.getStartLinkId()));
-				networkRoute.getLinkIds().forEach(id -> links.add(network.getLinks().get(id)));
-				links.add(network.getLinks().get(networkRoute.getEndLinkId()));
+				Coordinate[] coordinates;
+				if(networkRoute == null) {
+					Function<Coord, Coordinate> coordToCoordinate = coord -> new Coordinate(coord.getX(), coord.getY());
+					coordinates = transitRoute.getStops().stream()
+							.map(TransitRouteStop::getStopFacility)
+							.map(TransitStopFacility::getCoord)
+							.map(coordToCoordinate)
+							.toArray(Coordinate[]::new);
+				} else {
+					List<Link> links = new ArrayList<>(networkRoute.getLinkIds().size() + 2);
+					links.add(network.getLinks().get(networkRoute.getStartLinkId()));
+					networkRoute.getLinkIds().forEach(id -> links.add(network.getLinks().get(id)));
+					links.add(network.getLinks().get(networkRoute.getEndLinkId()));
 
-				Coordinate[] coordinates = new Coordinate[links.size() + 1];
+					coordinates = new Coordinate[links.size() + 1];
 
-				for (int i = 0; i < links.size(); i++) {
-					Link link = links.get(i);
+					for (int i = 0; i < links.size(); i++) {
+						Link link = links.get(i);
 
-					if (i == 0) {
-						coordinates[i] = new Coordinate(link.getFromNode().getCoord().getX(),
-								link.getFromNode().getCoord().getY());
+						if (i == 0) {
+							coordinates[i] = new Coordinate(link.getFromNode().getCoord().getX(),
+									link.getFromNode().getCoord().getY());
+						}
+
+						coordinates[i + 1] = new Coordinate(link.getToNode().getCoord().getX(),
+								link.getToNode().getCoord().getY());
 					}
-
-					coordinates[i + 1] = new Coordinate(link.getToNode().getCoord().getX(),
-							link.getToNode().getCoord().getY());
 				}
-
 				SimpleFeature feature = linkFactory.createPolyline( //
 						coordinates, //
 						new Object[] { //
@@ -112,7 +121,6 @@ public class ExportTransitLinesToShapefile {
 								transitRoute.getTransportMode(), //
 								transitRoute.getDescription() //
 						}, null);
-
 				features.add(feature);
 			}
 		}
