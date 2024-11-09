@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
+import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.vdf.handlers.VDFHorizonHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFInterpolationHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
@@ -16,16 +17,16 @@ import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
-public class VDFModule extends AbstractModule {
+public class VDFModule extends AbstractEqasimExtension {
 	@Override
-	public void install() {
+	protected void installEqasimExtension() {
 		VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(getConfig());
 
 		for (String mode : vdfConfig.getModes()) {
@@ -52,12 +53,12 @@ public class VDFModule extends AbstractModule {
 	@Provides
 	@Singleton
 	public VDFUpdateListener provideVDFUpdateListener(VDFScope scope, VDFTrafficHandler handler,
-			VDFTravelTime travelTime, VDFConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
-			Network network) {
+			VDFTravelTime travelTime, VDFConfigGroup config, OutputDirectoryHierarchy outputHierarchy, Network network,
+			ControllerConfigGroup controllerConfig) {
 		URL inputFile = config.getInputFile() == null ? null
 				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFile());
 		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
-				config.getWriteFlowInterval(), inputFile);
+				config.getWriteFlowInterval(), controllerConfig.getFirstIteration(), inputFile);
 	}
 
 	@Provides
@@ -70,7 +71,10 @@ public class VDFModule extends AbstractModule {
 	@Singleton
 	public VDFTravelTime provideVDFTravelTime(VDFConfigGroup config, VDFScope scope, Network network,
 			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig) throws IOException {
-		ScenarioExtent updateExtent = config.getUpdateAreaShapefile() == null ? null : new ShapeScenarioExtent.Builder(new File(ConfigGroup.getInputFileURL(getConfig().getContext(), config.getUpdateAreaShapefile()).getPath()), Optional.empty(), Optional.empty()).build();
+		ScenarioExtent updateExtent = config.getUpdateAreaShapefile() == null ? null
+				: new ShapeScenarioExtent.Builder(new File(ConfigGroup
+						.getInputFileURL(getConfig().getContext(), config.getUpdateAreaShapefile()).getPath()),
+						Optional.empty(), Optional.empty()).build();
 		return new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
 				eqasimConfig.getSampleSize(), network, vdf, eqasimConfig.getCrossingPenalty(), updateExtent);
 	}

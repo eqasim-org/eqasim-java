@@ -13,6 +13,7 @@ import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
@@ -81,7 +82,8 @@ public class TestSimulationPipeline {
 
     private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
         EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
-        Config config = ConfigUtils.loadConfig(configPath, eqasimConfigurator.getConfigGroups());
+        Config config = ConfigUtils.loadConfig(configPath);
+        eqasimConfigurator.updateConfig(config);
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
         if(inputPlansFile != null) {
             config.plans().setInputFile(inputPlansFile);
@@ -89,7 +91,7 @@ public class TestSimulationPipeline {
         if(lastIteration != null) {
             config.controller().setLastIteration(lastIteration);
         }
-        eqasimConfigurator.addOptionalConfigGroups(config);
+        EqasimConfigGroup.get(config).setTravelTimeRecordingInterval(1000);
 
         Scenario scenario = ScenarioUtils.createScenario(config);
         eqasimConfigurator.configureScenario(scenario);

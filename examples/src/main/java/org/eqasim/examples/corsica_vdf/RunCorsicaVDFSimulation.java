@@ -2,12 +2,11 @@ package org.eqasim.examples.corsica_vdf;
 
 import java.net.URL;
 
-import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
-import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -29,10 +28,10 @@ public class RunCorsicaVDFSimulation {
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator();
-		configurator.getQSimModules().removeIf(m -> m instanceof EqasimTrafficQSimModule);
 
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
-		Config config = ConfigUtils.loadConfig(configUrl, configurator.getConfigGroups());
+		Config config = ConfigUtils.loadConfig(configUrl);
+		configurator.updateConfig(config);
 
 		config.controller().setLastIteration(2);
 

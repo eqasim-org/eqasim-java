@@ -2,7 +2,14 @@ package org.eqasim.core.simulation.modes.drt.utils;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.DoubleSummaryStatistics;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -200,8 +207,9 @@ public class AdaptConfigForDrt {
             configurator = new EqasimConfigurator();
         }
 
-        Config config = ConfigUtils.loadConfig(inputConfigPath, configurator.getConfigGroups());
-
+        Config config = ConfigUtils.loadConfig(inputConfigPath);
+        configurator.updateConfig(config);
+        
         adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), info.get("add-leg-time-constraint"), qsimEndtime, cmd.getOption("mode-availability").orElse(null));
 
         cmd.applyConfiguration(config);

@@ -3,6 +3,7 @@ package org.eqasim.core.standalone_mode_choice;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +22,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
+import org.eqasim.core.analysis.legs.LegItem;
+import org.eqasim.core.analysis.legs.LegReaderFromPopulation;
+import org.eqasim.core.analysis.legs.LegWriter;
 import org.eqasim.core.analysis.pt.PublicTransportLegItem;
 import org.eqasim.core.analysis.pt.PublicTransportLegReaderFromPopulation;
 import org.eqasim.core.analysis.pt.PublicTransportLegWriter;
@@ -41,7 +45,6 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -159,17 +162,10 @@ public class RunStandaloneModeChoice {
 
         // Loading the config
         EqasimConfigurator configurator = cmd.hasOption(EQASIM_CONFIGURATOR_CLASS) ? ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict(EQASIM_CONFIGURATOR_CLASS), EqasimConfigurator.class) : new EqasimConfigurator();
-        ConfigGroup[] configGroups = new ConfigGroup[configurator.getConfigGroups().length+1];
-        int i=0;
-        for(ConfigGroup configGroup: configurator.getConfigGroups()) {
-            configGroups[i] = configGroup;
-            i++;
-        }
-        // We should add this module now so that parameters can be overridden by the commandline
-        configGroups[i] = new StandaloneModeChoiceConfigGroup();
+        configurator.registerConfigGroup(new StandaloneModeChoiceConfigGroup(), false);
 
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_CONFIG_PATH), configGroups);
-        configurator.addOptionalConfigGroups(config);
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_CONFIG_PATH));
+        configurator.updateConfig(config);
         cmd.applyConfiguration(config);
         VehiclesValidator.validate(config);
 
@@ -224,6 +220,8 @@ public class RunStandaloneModeChoice {
                     RecordedTravelTime recordedTravelTime = RecordedTravelTime.readBinary(inputStream);
                     inputStream.close();
                     return recordedTravelTime;
+                } catch (FileNotFoundException e) {
+                	throw new IllegalStateException("Travel time input file not found: " + path);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -247,12 +245,14 @@ public class RunStandaloneModeChoice {
         // We initialize the TripReaderFromPopulation here as we might need it just below
         TripReaderFromPopulation tripReader = new TripReaderFromPopulation(Arrays.asList("car,pt".split(",")), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         PublicTransportLegReaderFromPopulation ptLegReader = new PublicTransportLegReaderFromPopulation(injector.getInstance(TransitSchedule.class), injector.getInstance(PersonAnalysisFilter.class));
+        LegReaderFromPopulation legReader = new LegReaderFromPopulation(Arrays.asList("car", "pt"), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(OutputDirectoryHierarchy.class);
 
         cmd.getOption(CMD_WRITE_INPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
                 writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_trips.csv"), tripReader);
                 writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_pt_legs.csv"), ptLegReader);
+                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_legs.csv"), legReader);
             }
         });
 
@@ -269,6 +269,7 @@ public class RunStandaloneModeChoice {
             if(Boolean.parseBoolean(s)) {
                 writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv"), tripReader);
                 writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_pt_legs.csv"), ptLegReader);
+                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_legs.csv"), legReader);
             }
         });
         if(cmd.hasOption(CMD_SIMULATE_AFTER)) {
@@ -316,6 +317,15 @@ public class RunStandaloneModeChoice {
         Collection<PublicTransportLegItem> legs = legsReader.readPublicTransportLegs(population);
         try {
             new PublicTransportLegWriter(legs).write(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void writeLegsCsv(Population population, String filePath, LegReaderFromPopulation legsReader) {
+        Collection<LegItem> legs = legsReader.readLegs(population);
+        try {
+            new LegWriter(legs, DistanceUnit.meter, DistanceUnit.meter).write(filePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
