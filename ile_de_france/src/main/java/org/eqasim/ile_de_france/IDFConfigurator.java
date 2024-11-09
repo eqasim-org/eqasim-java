@@ -7,6 +7,6 @@ public class IDFConfigurator extends EqasimConfigurator {
 	public IDFConfigurator() {
 		super();
 
-		registerOptionalConfigGroup(new PoliciesConfigGroup());
+		registerConfigGroup(new PoliciesConfigGroup(), true);
 	}
 }
