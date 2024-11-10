@@ -34,6 +34,10 @@ public class EpsilonModule extends AbstractEqasimExtension {
 		for(Map.Entry<String, String > entry: eqasimConfigGroup.getEstimators().entrySet()) {
 			String mode = entry.getKey();
 			String utilityEstimator = entry.getValue();
+			
+			// bugfix for when using with policies
+			utilityEstimator = utilityEstimator.replace("policy:", "");
+
 			if(utilityEstimator.startsWith(EPSILON_UTILITY_PREFIX)) {
 				if(processed.contains(utilityEstimator)) {
 					logger.warn(String.format("The epsilon utility estimator '%s' is used for more than one mode. The seed of the epsilon generator will rely on the first mode", utilityEstimator));
