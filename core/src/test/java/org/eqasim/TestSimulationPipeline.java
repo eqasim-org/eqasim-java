@@ -61,6 +61,8 @@ import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.matsim.utils.eventsfilecomparison.ComparisonResult;
+import org.matsim.utils.eventsfilecomparison.EventsFileComparator;
 
 public class TestSimulationPipeline {
 
@@ -401,7 +403,7 @@ public class TestSimulationPipeline {
 
         runMelunSimulation("melun_test/input/config_vdf_horizon.xml", "melun_test/output_vdf_horizon");
 
-        //assert CRCChecksum.getCRCFromFile("melun_test/output_vdf_horizon/output_events.xml.gz") == CRCChecksum.getCRCFromFile("melun_test/output_vdf/output_events.xml.gz");
+        assert EventsFileComparator.compare("melun_test/output_vdf_horizon/output_events.xml.gz", "melun_test/output_vdf/output_events.xml.gz").equals(ComparisonResult.FILES_ARE_EQUAL);
 
         RunStandaloneModeChoice.main(new String[]{
                 "--config-path", "melun_test/input/config_vdf.xml",
