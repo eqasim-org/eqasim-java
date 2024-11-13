@@ -6,6 +6,7 @@ import java.util.Set;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
+import org.eqasim.core.simulation.modes.drt.mode_choice.rejections.RejectionTrackerModule;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
@@ -119,6 +120,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.addOverridingModule(new MunichModeChoiceModule());
 		controller.addOverridingModule(policies);
+		controller.addOverridingModule(new RejectionTrackerModule());
 
 		controller.run();
 	}

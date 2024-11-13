@@ -35,6 +35,7 @@ public class ModeParameters implements ParameterDefinition {
 		public double betaTravelTime_u_min = 0.0;
 		public double betaWaitingTime_u_min = 0.0;
 		public double betaAccessEgressTime_u_min = 0.0;
+		public double rejections_u = 0.0;
 	}
 
 

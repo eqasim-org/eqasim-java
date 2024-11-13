@@ -5,6 +5,7 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DrtPredictor;
+import org.eqasim.core.simulation.modes.drt.mode_choice.rejections.RejectionTracker;
 import org.eqasim.core.simulation.modes.drt.mode_choice.variables.DrtVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -16,11 +17,13 @@ public class DrtUtilityEstimator implements UtilityEstimator {
 
     private final ModeParameters modeParameters;
     private final DrtPredictor drtPredictor;
+    private final RejectionTracker rejectionTracker;
 
     @Inject
-    public DrtUtilityEstimator(ModeParameters modeParameters, DrtPredictor drtPredictor) {
+    public DrtUtilityEstimator(ModeParameters modeParameters, DrtPredictor drtPredictor, RejectionTracker rejectionTracker) {
         this.modeParameters = modeParameters;
         this.drtPredictor = drtPredictor;
+        this.rejectionTracker = rejectionTracker;
     }
 
     protected double estimateConstantUtility() {
@@ -56,6 +59,9 @@ public class DrtUtilityEstimator implements UtilityEstimator {
         utility += estimateWaitingTimeUtility(variables);
         utility += estimateMonetaryCostUtility(variables);
         utility += estimateAccessEgressTimeUtility(variables);
+
+        utility += modeParameters.drt.rejections_u * rejectionTracker.getRejections(person.getId());
+
         return utility;
     }
 }
