@@ -69,7 +69,8 @@ public class PublicTransportLegReaderFromPopulation {
             Id<TransitStopArea> egressStopAreaId = this.transitSchedule.getFacilities().get(transitPassengerRoute.getEgressStopId()).getStopAreaId();
             String mode = this.transitSchedule.getTransitLines().get(transitPassengerRoute.getLineId()).getRoutes().get(transitPassengerRoute.getRouteId()).getTransportMode();
 
-            PublicTransportLegItem item = new PublicTransportLegItem(person.getId(), tripIndex, legIndex, transitPassengerRoute.getAccessStopId(), transitPassengerRoute.getEgressStopId(), transitPassengerRoute.getLineId(), transitPassengerRoute.getRouteId(), accessStopAreaId, egressStopAreaId, mode);
+            //Cannot read a departure ID from a population, as it is determined during MOBSim. We put a null value here.
+            PublicTransportLegItem item = new PublicTransportLegItem(person.getId(), tripIndex, legIndex, transitPassengerRoute.getAccessStopId(), transitPassengerRoute.getEgressStopId(), transitPassengerRoute.getLineId(), transitPassengerRoute.getRouteId(), accessStopAreaId, egressStopAreaId, null, mode);
             legItems.add(item);
         }
         return legItems;

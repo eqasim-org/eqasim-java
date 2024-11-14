@@ -4,6 +4,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.GenericEvent;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.events.MatsimEventsReader.CustomEventMapper;
+import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
@@ -19,10 +20,11 @@ public class PublicTransitEventMapper implements CustomEventMapper {
 				TransitStopFacility.class);
 		Id<TransitStopFacility> egressStopId = Id.create(event.getAttributes().get("egressStop"),
 				TransitStopFacility.class);
+		Id<Departure> departureId = Id.create(event.getAttributes().get("departure"), Departure.class);
 		double vehicleDepartureTime = Double.parseDouble(event.getAttributes().get("vehicleDepartureTime"));
 		double travelDistance = Double.parseDouble(event.getAttributes().get("travelDistance"));
 
-		return new PublicTransitEvent(arrivalTime, personId, transitLineId, transitRouteId, accessStopId, egressStopId,
+		return new PublicTransitEvent(arrivalTime, personId, transitLineId, transitRouteId, accessStopId, egressStopId, departureId,
 				vehicleDepartureTime, travelDistance);
 	}
 }
