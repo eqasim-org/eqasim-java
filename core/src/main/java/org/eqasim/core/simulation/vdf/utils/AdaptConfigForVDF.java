@@ -1,6 +1,5 @@
 package org.eqasim.core.simulation.vdf.utils;
 
-import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
@@ -25,9 +24,8 @@ public class AdaptConfigForVDF {
         VDFConfigGroup.getOrCreate(config).setWriteInterval(1);
         VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(1);
 
-        // VDF: Set capacity factor instead (We retrieve it form the Eqasim config group)
-        EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-        VDFConfigGroup.getOrCreate(config).setCapacityFactor(eqasimConfigGroup.getSampleSize());
+        VDFConfigGroup vdfConfigGroup = VDFConfigGroup.getOrCreate(config);
+        vdfConfigGroup.setHandler(VDFConfigGroup.HandlerType.SparseHorizon);
 
         if(engine) {
             // VDF Engine: Add config group

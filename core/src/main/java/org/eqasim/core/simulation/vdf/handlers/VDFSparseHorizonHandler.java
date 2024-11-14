@@ -87,7 +87,7 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 				}
 
 				if (total > 0.0) {
-					LinkState linkState = newState.get(entry.getKey());
+					LinkState linkState = new LinkState(new ArrayList<>(), new ArrayList<>());
 					newState.put(entry.getKey(), linkState);
 
 					int timeIndex = 0;
@@ -211,6 +211,9 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 					state.add(slice);
 
 					int sliceLinkCount = inputStream.readInt();
+
+					logger.info(String.format("Slice %d/%d, Reading %d link states", sliceIndex+1, slices, sliceLinkCount));
+
 					for (int sliceLinkIndex = 0; sliceLinkIndex < sliceLinkCount; sliceLinkIndex++) {
 						int linkIndex = inputStream.readInt();
 						int linkStateSize = inputStream.readInt();
@@ -256,12 +259,18 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 					outputStream.writeUTF(linkIds.get(linkIndex).toString());
 				}
 
+				logger.info(String.format("About to write %d slices", state.size()));
+
 				for (int sliceIndex = 0; sliceIndex < state.size(); sliceIndex++) {
 					IdMap<Link, LinkState> slice = state.get(sliceIndex);
 					outputStream.writeInt(slice.size());
 
+					int sliceLinkIndex = 0;
 					for (Id<Link> linkId : linkIds) {
 						LinkState linkState = slice.get(linkId);
+						if(linkState == null) {
+							continue;
+						}
 						outputStream.writeInt(linkIds.indexOf(linkId));
 						outputStream.writeInt(linkState.count.size());
 
@@ -269,7 +278,9 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 							outputStream.writeInt(linkState.time.get(i));
 							outputStream.writeDouble(linkState.count.get(i));
 						}
+						sliceLinkIndex += 1;
 					}
+					assert sliceLinkIndex == slice.size();
 				}
 
 				outputStream.close();
