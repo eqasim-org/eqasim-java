@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 import org.eqasim.core.scenario.validation.VehiclesValidator;
@@ -9,6 +10,7 @@ import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.modes.drt.mode_choice.DrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.drt.mode_choice.rejections.RejectionTrackerModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.ile_de_france.mode_choice.IDFModeAvailability;
@@ -84,6 +86,11 @@ public class RunSimulationDrt {
 		Set<String> constraints = new HashSet<>(dmcConfig.getTripConstraints());
 		constraints.add(ConstraintModule.SHAPE_FILE);
 		dmcConfig.setTripConstraints(constraints);
+
+		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+		Set<String> modes = new HashSet<>(terminationConfig.getModes());
+		modes.add("drt");
+		terminationConfig.setModes(new LinkedList<>(modes));
 
 		/*-{
 			// TODO: Make this static! > OK looks like everything is covered in pipeline
