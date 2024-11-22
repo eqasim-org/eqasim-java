@@ -1,15 +1,10 @@
 package org.eqasim;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
-import ch.sbb.matsim.routing.pt.raptor.*;
-import com.google.common.base.Verify;
-import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
