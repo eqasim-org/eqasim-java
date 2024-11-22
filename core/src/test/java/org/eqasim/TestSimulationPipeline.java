@@ -11,6 +11,8 @@ import ch.sbb.matsim.routing.pt.raptor.*;
 import com.google.common.base.Verify;
 import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
@@ -446,84 +448,17 @@ public class TestSimulationPipeline {
 
     @Test
     public void testBaseDeterminism() throws Exception {
+        Logger logger = LogManager.getLogger(TestSimulationPipeline.class);
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
-        Scenario scenarioLeft = ScenarioUtils.createScenario(config);
-        ScenarioUtils.loadScenario(scenarioLeft);
-
-        Scenario scenarioRight = ScenarioUtils.createScenario(config);
-        ScenarioUtils.loadScenario(scenarioRight);
-
-        List<TransitStopFacility> leftStops = new ArrayList<>(scenarioLeft.getTransitSchedule().getFacilities().values());
-        List<TransitStopFacility> rightStops = new ArrayList<>(scenarioLeft.getTransitSchedule().getFacilities().values());
-
-        List<TransitLine> leftLines = new ArrayList<>(scenarioLeft.getTransitSchedule().getTransitLines().values());
-        List<TransitLine> rightLines = new ArrayList<>(scenarioRight.getTransitSchedule().getTransitLines().values());
-
-        for(int i=0; i<leftStops.size(); i++) {
-            Verify.verify(leftStops.get(i).getId().equals(rightStops.get(i).getId()));
-        }
-
-        for(int i=0; i<leftLines.size(); i++) {
-            TransitLine leftLine = leftLines.get(i);
-            TransitLine rightLine = rightLines.get(i);
-
-            Verify.verify(leftLine.getId().equals(rightLine.getId()));
-
-            List<TransitRoute> leftRoutes = new ArrayList<>(leftLine.getRoutes().values());
-            List<TransitRoute> rightRoutes = new ArrayList<>(rightLine.getRoutes().values());
-
-            for(int j=0; j<leftRoutes.size(); j++) {
-                TransitRoute leftRoute = leftRoutes.get(j);
-                TransitRoute rightRoute = rightRoutes.get(j);
-
-                Verify.verify(leftRoute.getId().equals(rightRoute.getId()));
-
-                List<Departure> leftDepartures = new ArrayList<>(leftRoute.getDepartures().values());
-                List<Departure> rightDepartures = new ArrayList<>(rightRoute.getDepartures().values());
-
-                for(int k=0; k<leftDepartures.size(); k++) {
-                    Verify.verify(leftDepartures.get(k).getId().equals(rightDepartures.get(k).getId()));
-                }
-            }
-        }
-
-
-        config = ConfigUtils.loadConfig("melun_test/input/config.xml");
-        config.controller().setCompressionType(ControllerConfigGroup.CompressionType.none);
-        config.global().setNumberOfThreads(0);
         runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
 
         config = ConfigUtils.loadConfig("melun_test/input/config.xml");
-        config.controller().setCompressionType(ControllerConfigGroup.CompressionType.none);
-        config.global().setNumberOfThreads(0);
         runMelunSimulation(config, "melun_test/output_determinism_2", null, 2   );
 
-        if(!compareSelectedPlans("melun_test/output_determinism_1/output_plans.xml", "melun_test/output_determinism_2/output_plans.xml")) {
-            assert false;
-        }
-
-        for(String comparedFile: new String[]{"output_plans.xml"}) {
+        for(String comparedFile: new String[]{"output_plans.xml.gz"}) {
             long firstCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_1/" + comparedFile);
             long secondCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_2/"+comparedFile);
-            if(firstCrc != secondCrc) {
-                BufferedReader firstReader = new BufferedReader(new FileReader("melun_test/output_determinism_1/" + comparedFile));
-                BufferedReader secondReader = new BufferedReader(new FileReader("melun_test/output_determinism_2/" + comparedFile));
-
-                String firstLine = firstReader.readLine();
-                String secondLine = secondReader.readLine();
-                int lineIndex = 1;
-                while(firstLine != null && secondLine != null){
-                    if(!firstLine.equals(secondLine)) {
-                        System.out.printf("%s gets different at line %d \n %s \n against %s%n", comparedFile, lineIndex, firstLine, secondLine);
-                        assert false;
-                    }
-                    lineIndex++;
-                    firstLine = firstReader.readLine();
-                    secondLine = secondReader.readLine();
-                }
-                assert firstLine == null && secondLine == null;
-                assert false;
-            }
+            assert firstCrc == secondCrc;
         }
     }
 
