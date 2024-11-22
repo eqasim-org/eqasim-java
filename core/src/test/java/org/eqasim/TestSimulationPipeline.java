@@ -1,14 +1,15 @@
 package org.eqasim;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
+import ch.sbb.matsim.routing.pt.raptor.*;
+import com.google.common.base.Verify;
+import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
@@ -36,31 +37,45 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.Creat
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.ExportActivitiesToShapefile;
-import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
-import org.eqasim.core.tools.ExportPopulationToCSV;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.events.EventsManagerModule;
+import org.matsim.core.population.io.PopulationReader;
+import org.matsim.core.router.TripRouter;
+import org.matsim.core.router.TripRouterModule;
+import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.costcalculators.TravelDisutilityModule;
+import org.matsim.core.scenario.ScenarioByInstanceModule;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.trafficmonitoring.TravelTimeCalculatorModule;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import org.matsim.core.utils.timing.TimeInterpretationModule;
+import org.matsim.examples.ExamplesUtils;
+import org.matsim.facilities.ActivityFacilities;
+import org.matsim.facilities.FacilitiesUtils;
+import org.matsim.facilities.Facility;
+import org.matsim.pt.routes.DefaultTransitPassengerRoute;
+import org.matsim.pt.transitSchedule.api.*;
 
 public class TestSimulationPipeline {
 
@@ -73,7 +88,7 @@ public class TestSimulationPipeline {
 
     @After
     public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(new File("melun_test"));
+        //FileUtils.deleteDirectory(new File("melun_test"));
     }
 
     private void runMelunSimulation(String configPath, String outputPath) {
@@ -81,8 +96,13 @@ public class TestSimulationPipeline {
     }
 
     private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig(configPath);
+        runMelunSimulation(config, outputPath, inputPlansFile, lastIteration);
+    }
+
+    private void runMelunSimulation(Config config, String outputPath, String inputPlansFile, Integer lastIteration) {
+        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+
         eqasimConfigurator.updateConfig(config);
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
         if(inputPlansFile != null) {
@@ -424,11 +444,206 @@ public class TestSimulationPipeline {
         runCutterV2();
     }
 
+    @Test
+    public void testBaseDeterminism() throws Exception {
+        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        Scenario scenarioLeft = ScenarioUtils.createScenario(config);
+        ScenarioUtils.loadScenario(scenarioLeft);
+
+        Scenario scenarioRight = ScenarioUtils.createScenario(config);
+        ScenarioUtils.loadScenario(scenarioRight);
+
+        List<TransitStopFacility> leftStops = new ArrayList<>(scenarioLeft.getTransitSchedule().getFacilities().values());
+        List<TransitStopFacility> rightStops = new ArrayList<>(scenarioLeft.getTransitSchedule().getFacilities().values());
+
+        List<TransitLine> leftLines = new ArrayList<>(scenarioLeft.getTransitSchedule().getTransitLines().values());
+        List<TransitLine> rightLines = new ArrayList<>(scenarioRight.getTransitSchedule().getTransitLines().values());
+
+        for(int i=0; i<leftStops.size(); i++) {
+            Verify.verify(leftStops.get(i).getId().equals(rightStops.get(i).getId()));
+        }
+
+        for(int i=0; i<leftLines.size(); i++) {
+            TransitLine leftLine = leftLines.get(i);
+            TransitLine rightLine = rightLines.get(i);
+
+            Verify.verify(leftLine.getId().equals(rightLine.getId()));
+
+            List<TransitRoute> leftRoutes = new ArrayList<>(leftLine.getRoutes().values());
+            List<TransitRoute> rightRoutes = new ArrayList<>(rightLine.getRoutes().values());
+
+            for(int j=0; j<leftRoutes.size(); j++) {
+                TransitRoute leftRoute = leftRoutes.get(j);
+                TransitRoute rightRoute = rightRoutes.get(j);
+
+                Verify.verify(leftRoute.getId().equals(rightRoute.getId()));
+
+                List<Departure> leftDepartures = new ArrayList<>(leftRoute.getDepartures().values());
+                List<Departure> rightDepartures = new ArrayList<>(rightRoute.getDepartures().values());
+
+                for(int k=0; k<leftDepartures.size(); k++) {
+                    Verify.verify(leftDepartures.get(k).getId().equals(rightDepartures.get(k).getId()));
+                }
+            }
+        }
+
+
+        config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        config.controller().setCompressionType(ControllerConfigGroup.CompressionType.none);
+        config.global().setNumberOfThreads(0);
+        runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
+
+        config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        config.controller().setCompressionType(ControllerConfigGroup.CompressionType.none);
+        config.global().setNumberOfThreads(0);
+        runMelunSimulation(config, "melun_test/output_determinism_2", null, 2   );
+
+        if(!compareSelectedPlans("melun_test/output_determinism_1/output_plans.xml", "melun_test/output_determinism_2/output_plans.xml")) {
+            assert false;
+        }
+
+        for(String comparedFile: new String[]{"output_plans.xml"}) {
+            long firstCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_1/" + comparedFile);
+            long secondCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_2/"+comparedFile);
+            if(firstCrc != secondCrc) {
+                BufferedReader firstReader = new BufferedReader(new FileReader("melun_test/output_determinism_1/" + comparedFile));
+                BufferedReader secondReader = new BufferedReader(new FileReader("melun_test/output_determinism_2/" + comparedFile));
+
+                String firstLine = firstReader.readLine();
+                String secondLine = secondReader.readLine();
+                int lineIndex = 1;
+                while(firstLine != null && secondLine != null){
+                    if(!firstLine.equals(secondLine)) {
+                        System.out.printf("%s gets different at line %d \n %s \n against %s%n", comparedFile, lineIndex, firstLine, secondLine);
+                        assert false;
+                    }
+                    lineIndex++;
+                    firstLine = firstReader.readLine();
+                    secondLine = secondReader.readLine();
+                }
+                assert firstLine == null && secondLine == null;
+                assert false;
+            }
+        }
+    }
+
+
+    public static boolean compareSelectedPlans(String leftPath, String rightPath) {
+        Scenario leftScenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+        Scenario rightScenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+
+        new PopulationReader(leftScenario).readFile(leftPath);
+        new PopulationReader(rightScenario).readFile(rightPath);
+
+
+        for(Person person: leftScenario.getPopulation().getPersons().values()) {
+            if(!rightScenario.getPopulation().getPersons().containsKey(person.getId())) {
+                return false;
+            }
+            if(!comparePlan(person.getSelectedPlan().getPlanElements(), rightScenario.getPopulation().getPersons().get(person.getId()).getSelectedPlan().getPlanElements())) {
+                System.out.println(String.format("Plan for person %s is different", person.getId()));
+                try {
+                    RunIsolateAgent.main(new String[]{
+                            "--input-path", leftPath,
+                            "--agent-id", person.getId().toString(),
+                            "--output-path", leftPath + "_different.xml"
+                    });
+                    RunIsolateAgent.main(new String[]{
+                            "--input-path", rightPath,
+                            "--agent-id", person.getId().toString(),
+                            "--output-path", rightPath + "_different.xml"
+                    });
+                } catch (CommandLine.ConfigurationException e) {
+                    throw new RuntimeException(e);
+                }
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static boolean comparePlan(List<? extends PlanElement> left, List<? extends PlanElement> right) {
+        if(left.size() != right.size()) {
+            return false;
+        }
+        for(int i=0; i<left.size(); i++) {
+            PlanElement leftElement = left.get(i);
+            PlanElement rightElement = right.get(i);
+            if(!leftElement.getClass().equals(rightElement.getClass())) {
+                return false;
+            }
+            if(leftElement instanceof Activity leftActivity && rightElement instanceof Activity rightActivity) {
+                if(!leftActivity.getEndTime().equals(rightActivity.getEndTime())) {
+                    return false;
+                }
+                if(!leftActivity.getType().equals(rightActivity.getType())) {
+                    return false;
+                }
+                if(!leftActivity.getLinkId().equals(rightActivity.getLinkId())) {
+                    return false;
+                }
+                if(!leftActivity.getStartTime().equals(rightActivity.getStartTime())) {
+                    return false;
+                }
+                if(!leftActivity.getMaximumDuration().equals(rightActivity.getMaximumDuration())) {
+                    return false;
+                }
+            } else if (leftElement instanceof Leg leftLeg && rightElement instanceof Leg rightLeg) {
+                if(!leftLeg.getMode().equals(rightLeg.getMode())) {
+                    return false;
+                }
+                if(!leftLeg.getTravelTime().equals(rightLeg.getTravelTime())) {
+                    return false;
+                }
+                if(!leftLeg.getMode().equals("pt")) {
+                    continue;
+                }
+                Route leftRoute = leftLeg.getRoute();
+                Route rightRoute = leftLeg.getRoute();
+                if(leftRoute instanceof DefaultTransitPassengerRoute leftTransitPassengerRoute && rightRoute instanceof DefaultTransitPassengerRoute rightTransitPassengerRoute) {
+                    if(!leftTransitPassengerRoute.toString().equals(rightTransitPassengerRoute.toString())) {
+                        return false;
+                    }
+                    if(!leftTransitPassengerRoute.getRouteId().equals(rightTransitPassengerRoute.getRouteId())) {
+                        return false;
+                    }
+                    if(!leftTransitPassengerRoute.getAccessStopId().equals(rightTransitPassengerRoute.getAccessStopId())) {
+                        return false;
+                    }
+                    if(!leftTransitPassengerRoute.getEgressStopId().equals(rightTransitPassengerRoute.getEgressStopId())) {
+                        return false;
+                    }
+                } else {
+                    throw new IllegalStateException();
+                }
+            }
+        }
+        return true;
+    }
+
+    private static Departure getEarliestDeparture(TransitRoute route) {
+        Departure earliest = null;
+        for (Departure dep : route.getDepartures().values()) {
+            if (earliest == null || dep.getDepartureTime() < earliest.getDepartureTime()) {
+                earliest = dep;
+            }
+        }
+        return earliest;
+    }
+
+    @Test
     public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--output-path", "melun_test/output/routed_population.xml.gz"
+                "--output-path", "melun_test/output/routed_population.xml"
         });
+        RunPopulationRouting.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--output-path", "melun_test/output/routed_population_again.xml"
+        });
+        assert compareSelectedPlans("melun_test/output/routed_population.xml", "melun_test/output/routed_population_again.xml");
+        assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
 
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
