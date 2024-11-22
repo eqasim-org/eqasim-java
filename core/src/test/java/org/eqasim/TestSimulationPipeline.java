@@ -38,41 +38,23 @@ import org.eqasim.core.tools.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
-import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
-import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.events.EventsManagerModule;
-import org.matsim.core.population.io.PopulationReader;
-import org.matsim.core.router.TripRouter;
-import org.matsim.core.router.TripRouterModule;
-import org.matsim.core.router.TripStructureUtils;
-import org.matsim.core.router.costcalculators.TravelDisutilityModule;
-import org.matsim.core.scenario.ScenarioByInstanceModule;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.trafficmonitoring.TravelTimeCalculatorModule;
-import org.matsim.core.utils.io.IOUtils;
+
 import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.matsim.core.utils.timing.TimeInterpretationModule;
-import org.matsim.examples.ExamplesUtils;
-import org.matsim.facilities.ActivityFacilities;
-import org.matsim.facilities.FacilitiesUtils;
-import org.matsim.facilities.Facility;
-import org.matsim.pt.routes.DefaultTransitPassengerRoute;
-import org.matsim.pt.transitSchedule.api.*;
 
 public class TestSimulationPipeline {
 
