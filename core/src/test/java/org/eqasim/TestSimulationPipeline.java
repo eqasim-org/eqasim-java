@@ -462,16 +462,6 @@ public class TestSimulationPipeline {
         }
     }
 
-    private static Departure getEarliestDeparture(TransitRoute route) {
-        Departure earliest = null;
-        for (Departure dep : route.getDepartures().values()) {
-            if (earliest == null || dep.getDepartureTime() < earliest.getDepartureTime()) {
-                earliest = dep;
-            }
-        }
-        return earliest;
-    }
-
     public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
