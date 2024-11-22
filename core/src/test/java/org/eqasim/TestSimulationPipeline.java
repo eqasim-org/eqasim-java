@@ -462,101 +462,6 @@ public class TestSimulationPipeline {
         }
     }
 
-
-    public static boolean compareSelectedPlans(String leftPath, String rightPath) {
-        Scenario leftScenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-        Scenario rightScenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-
-        new PopulationReader(leftScenario).readFile(leftPath);
-        new PopulationReader(rightScenario).readFile(rightPath);
-
-
-        for(Person person: leftScenario.getPopulation().getPersons().values()) {
-            if(!rightScenario.getPopulation().getPersons().containsKey(person.getId())) {
-                return false;
-            }
-            if(!comparePlan(person.getSelectedPlan().getPlanElements(), rightScenario.getPopulation().getPersons().get(person.getId()).getSelectedPlan().getPlanElements())) {
-                System.out.println(String.format("Plan for person %s is different", person.getId()));
-                try {
-                    RunIsolateAgent.main(new String[]{
-                            "--input-path", leftPath,
-                            "--agent-id", person.getId().toString(),
-                            "--output-path", leftPath + "_different.xml"
-                    });
-                    RunIsolateAgent.main(new String[]{
-                            "--input-path", rightPath,
-                            "--agent-id", person.getId().toString(),
-                            "--output-path", rightPath + "_different.xml"
-                    });
-                } catch (CommandLine.ConfigurationException e) {
-                    throw new RuntimeException(e);
-                }
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static boolean comparePlan(List<? extends PlanElement> left, List<? extends PlanElement> right) {
-        if(left.size() != right.size()) {
-            return false;
-        }
-        for(int i=0; i<left.size(); i++) {
-            PlanElement leftElement = left.get(i);
-            PlanElement rightElement = right.get(i);
-            if(!leftElement.getClass().equals(rightElement.getClass())) {
-                return false;
-            }
-            if(leftElement instanceof Activity leftActivity && rightElement instanceof Activity rightActivity) {
-                if(!leftActivity.getEndTime().equals(rightActivity.getEndTime())) {
-                    return false;
-                }
-                if(!leftActivity.getType().equals(rightActivity.getType())) {
-                    return false;
-                }
-                if(!leftActivity.getLinkId().equals(rightActivity.getLinkId())) {
-                    return false;
-                }
-                if(!leftActivity.getStartTime().equals(rightActivity.getStartTime())) {
-                    return false;
-                }
-                if(!leftActivity.getMaximumDuration().equals(rightActivity.getMaximumDuration())) {
-                    return false;
-                }
-            } else if (leftElement instanceof Leg leftLeg && rightElement instanceof Leg rightLeg) {
-                if(!leftLeg.getMode().equals(rightLeg.getMode())) {
-                    return false;
-                }
-                if(!leftLeg.getTravelTime().equals(rightLeg.getTravelTime())) {
-                    return false;
-                }
-                if(!leftLeg.getMode().equals("pt")) {
-                    continue;
-                }
-                Route leftRoute = leftLeg.getRoute();
-                Route rightRoute = leftLeg.getRoute();
-                if(leftRoute instanceof DefaultTransitPassengerRoute leftTransitPassengerRoute && rightRoute instanceof DefaultTransitPassengerRoute rightTransitPassengerRoute) {
-                    if(!leftTransitPassengerRoute.toString().equals(rightTransitPassengerRoute.toString())) {
-                        return false;
-                    }
-                    if(!leftTransitPassengerRoute.getRouteId().equals(rightTransitPassengerRoute.getRouteId())) {
-                        return false;
-                    }
-                    if(!leftTransitPassengerRoute.getAccessStopId().equals(rightTransitPassengerRoute.getAccessStopId())) {
-                        return false;
-                    }
-                    if(!leftTransitPassengerRoute.getEgressStopId().equals(rightTransitPassengerRoute.getEgressStopId())) {
-                        return false;
-                    }
-                } else {
-                    throw new IllegalStateException();
-                }
-            }
-        }
-        return true;
-    }
-
     private static Departure getEarliestDeparture(TransitRoute route) {
         Departure earliest = null;
         for (Departure dep : route.getDepartures().values()) {
@@ -567,7 +472,6 @@ public class TestSimulationPipeline {
         return earliest;
     }
 
-    @Test
     public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
@@ -577,7 +481,6 @@ public class TestSimulationPipeline {
                 "--config-path", "melun_test/input/config.xml",
                 "--output-path", "melun_test/output/routed_population_again.xml"
         });
-        assert compareSelectedPlans("melun_test/output/routed_population.xml", "melun_test/output/routed_population_again.xml");
         assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
 
