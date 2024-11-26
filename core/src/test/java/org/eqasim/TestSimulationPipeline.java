@@ -402,7 +402,7 @@ public class TestSimulationPipeline {
 
         runMelunSimulation("melun_test/input/config_vdf_horizon.xml", "melun_test/output_vdf_horizon");
 
-        assert EventsFileComparator.compare("melun_test/output_vdf_horizon/output_events.xml.gz", "melun_test/output_vdf/output_events.xml.gz").equals(ComparisonResult.FILES_ARE_EQUAL);
+        assert CRCChecksum.getCRCFromFile("melun_test/output_vdf_horizon/output_plans.xml.gz") == CRCChecksum.getCRCFromFile("melun_test/output_vdf/output_plans.xml.gz");
 
         RunStandaloneModeChoice.main(new String[]{
                 "--config-path", "melun_test/input/config_vdf.xml",
@@ -442,7 +442,6 @@ public class TestSimulationPipeline {
 
     @Test
     public void testBaseDeterminism() throws Exception {
-        Logger logger = LogManager.getLogger(TestSimulationPipeline.class);
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
         runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
 
