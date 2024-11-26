@@ -3,13 +3,11 @@ package org.eqasim;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
@@ -36,18 +34,13 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.Creat
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.ExportActivitiesToShapefile;
-import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
-import org.eqasim.core.tools.ExportPopulationToCSV;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
@@ -57,6 +50,7 @@ import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+
 import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
@@ -75,7 +69,7 @@ public class TestSimulationPipeline {
 
     @After
     public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(new File("melun_test"));
+        //FileUtils.deleteDirectory(new File("melun_test"));
     }
 
     private void runMelunSimulation(String configPath, String outputPath) {
@@ -83,8 +77,13 @@ public class TestSimulationPipeline {
     }
 
     private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig(configPath);
+        runMelunSimulation(config, outputPath, inputPlansFile, lastIteration);
+    }
+
+    private void runMelunSimulation(Config config, String outputPath, String inputPlansFile, Integer lastIteration) {
+        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+
         eqasimConfigurator.updateConfig(config);
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
         if(inputPlansFile != null) {
@@ -441,11 +440,32 @@ public class TestSimulationPipeline {
         runCutterV2();
     }
 
+    @Test
+    public void testBaseDeterminism() throws Exception {
+        Logger logger = LogManager.getLogger(TestSimulationPipeline.class);
+        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
+
+        config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        runMelunSimulation(config, "melun_test/output_determinism_2", null, 2   );
+
+        for(String comparedFile: new String[]{"output_plans.xml.gz"}) {
+            long firstCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_1/" + comparedFile);
+            long secondCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_2/"+comparedFile);
+            assert firstCrc == secondCrc;
+        }
+    }
+
     public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--output-path", "melun_test/output/routed_population.xml.gz"
+                "--output-path", "melun_test/output/routed_population.xml"
         });
+        RunPopulationRouting.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--output-path", "melun_test/output/routed_population_again.xml"
+        });
+        assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
 
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {

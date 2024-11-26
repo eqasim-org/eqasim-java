@@ -12,16 +12,13 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.components.emissions.RunComputeEmissionsEvents;
 import org.eqasim.core.components.emissions.RunExportEmissionsNetwork;
+import org.eqasim.core.components.emissions.SafeOsmHbefaMapping;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -143,8 +140,16 @@ public class TestEmissions {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
 		for (Link link : network.getLinks().values()) {
+
 			// this forces the OSM Mapping code to use URB/Local/50 as it the only thing we
 			// have in the sample HBEFA.
+			// We intentionally leave the 'pedestrian' links here to test the SafeOsmHbefaMapping class
+			String linkType = NetworkUtils.getType(link);
+            if (linkType != null) {
+				if (!linkType.equals("pedestrian")) {
+					continue;
+				}
+			}
 			NetworkUtils.setType(link, "tertiary");
 			link.getAttributes().putAttribute(NetworkUtils.ALLOWED_SPEED, 50 / 3.6);
 		}
@@ -158,6 +163,8 @@ public class TestEmissions {
 		Assert.assertEquals(9348, (long) counts.get("walk"));
 		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
 		Assert.assertEquals(2108, (long) counts.get("pt"));
+
+		SafeOsmHbefaMapping.defaultType = "URB/Loca/50";
 
 		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv", "--hbefa-hot-avg",

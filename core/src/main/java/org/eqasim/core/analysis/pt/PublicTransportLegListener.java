@@ -56,7 +56,8 @@ public class PublicTransportLegListener implements PersonDepartureEventHandler, 
 				event.getTransitLineId(), //
 				event.getTransitRouteId(), //
 				accessAreaId, //
-				egressAreaId, //
+				egressAreaId,
+				event.getDepartureId(),//
 				routeMode //
 		));
 	}
