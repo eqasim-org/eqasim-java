@@ -30,7 +30,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	static private final String UPDATE_AREA_SHAPEFILE = "updateAreaShapefile";
 	static private final String WRITE_INTERVAL = "writeInterval";
 	static private final String WRITE_FLOW_INTERVAL = "writeFlowInterval";
-	static private final String WRITE_TRAVEL_TIMES_INTERVAL = "writeTimeInterval";
+	static private final String WRITE_TRAVEL_TIMES_INTERVAL = "writeTravelTimesInterval";
 
 	private double startTime = 0.0 * 3600.0;
 	private double endTime = 24.0 * 3600.0;
