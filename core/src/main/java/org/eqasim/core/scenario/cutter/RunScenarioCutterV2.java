@@ -140,11 +140,11 @@ public class RunScenarioCutterV2 {
         VDFConfigGroup vdfConfigGroup = VDFConfigGroup.getOrCreate(config);
         vdfConfigGroup.setUpdateAreaShapefile("extent/" + extentPath.getName());
         // We also set the VDF config to use the vdf.bin file for initial travel times
-        vdfConfigGroup.setInputFile("vdf.bin");
+        vdfConfigGroup.setInputTravelTimesFile("vdf_travel_times.bin");
 
         new ScenarioWriter(config, scenario, prefix).run(new File(outputPath).getAbsoluteFile());
 
-        FileUtils.copyFile(new File(cmd.getOptionStrict("vdf-travel-times-path")), new File(outputPath, "vdf.bin"));
+        FileUtils.copyFile(new File(cmd.getOptionStrict("vdf-travel-times-path")), new File(outputPath, "vdf_travel_times.bin"));
     }
 
     public static void findLargestFullyConnectedSubnetwork(Network network, String mode) {

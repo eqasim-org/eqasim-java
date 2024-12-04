@@ -6,8 +6,6 @@ import java.net.URL;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
@@ -55,8 +53,6 @@ import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import org.matsim.utils.eventsfilecomparison.ComparisonResult;
-import org.matsim.utils.eventsfilecomparison.EventsFileComparator;
 
 public class TestSimulationPipeline {
 
@@ -69,7 +65,7 @@ public class TestSimulationPipeline {
 
     @After
     public void tearDown() throws IOException {
-        //FileUtils.deleteDirectory(new File("melun_test"));
+        FileUtils.deleteDirectory(new File("melun_test"));
     }
 
     private void runMelunSimulation(String configPath, String outputPath) {
@@ -229,7 +225,7 @@ public class TestSimulationPipeline {
         RunScenarioCutterV2.main(new String[] {
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--events-path", "melun_test/output_vdf/output_events.xml.gz",
-                "--vdf-travel-times-path", "melun_test/output_vdf/vdf.bin",
+                "--vdf-travel-times-path", "melun_test/output_vdf/vdf_travel_times.bin",
                 "--output-path", "melun_test/cutter_v2",
                 "--prefix", "center_",
                 "--extent-path", "melun_test/input/center.shp",
@@ -407,7 +403,7 @@ public class TestSimulationPipeline {
         RunStandaloneModeChoice.main(new String[]{
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_vdf",
-                "--config:eqasim:vdf.inputFile", "../output_vdf/vdf.bin", // Relative to the config file
+                "--config:eqasim:vdf.inputTravelTimesFile", "../output_vdf/vdf_travel_times.bin", // Relative to the config file
                 "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
         });
