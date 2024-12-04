@@ -21,8 +21,9 @@ public class AdaptConfigForVDF {
         config.qsim().setStorageCapFactor(1e9);
 
 
-        VDFConfigGroup.getOrCreate(config).setWriteInterval(1);
-        VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(1);
+        VDFConfigGroup.getOrCreate(config).setWriteInterval(60);
+        VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(60);
+        VDFConfigGroup.getOrCreate(config).setWriteTravelTimesInterval(60);
 
         VDFConfigGroup vdfConfigGroup = VDFConfigGroup.getOrCreate(config);
         vdfConfigGroup.setHandler(VDFConfigGroup.HandlerType.SparseHorizon);

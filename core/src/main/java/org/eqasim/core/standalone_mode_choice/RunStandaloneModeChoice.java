@@ -71,7 +71,7 @@ import com.google.inject.Singleton;
  * - travel-times-factors-path: if provided, should point out to a csv file specifying the congestion levels on the network during the day as factors by which the free speed is divided. The file in question is a csv With a header timeUpperBound;travelTimeFactor in which the timeUpperBound should be ordered incrementally.
  * - recorded-travel-times-path: mutually exclusive with the travel-times-factors-path. Points to a RecordedTravelTime file.
  * - eqasim-configurator-class: The full name of a class extending the {@link org.eqasim.core.simulation.EqasimConfigurator} class, the provided configurator class will be instantiated and used to:
- *   - Detect optional config groups using the {@link org.eqasim.core.simulation.EqasimConfigurator#addOptionalConfigGroups(Config)} method
+ *   - Detect optional config groups using the {@link org.eqasim.core.simulation.EqasimConfigurator#updateConfig(Config)} method
  *   - Configure the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#configureScenario(Scenario)} before loading
  *   - Adjust the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#adjustScenario(Scenario)} after loading
  * - mode-choice-configurator-class: The full name of a class the extending the {@link org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator} class.
@@ -229,7 +229,7 @@ public class RunStandaloneModeChoice {
         }));
 
         boolean usingVdfTravelTime = false;
-        if(config.getModules().containsKey(VDFConfigGroup.GROUP_NAME) && VDFConfigGroup.getOrCreate(config).getInputFile() != null) {
+        if(config.getModules().containsKey(VDFConfigGroup.GROUP_NAME) && (VDFConfigGroup.getOrCreate(config).getInputFlowFile() != null || VDFConfigGroup.getOrCreate(config).getInputTravelTimesFile() != null)) {
             String usedTravelTimeArg = recordedTravelTimesPath.isPresent() ? CMD_RECORDED_TRAVEL_TIMES_PATH : travelTimesFactorsPath.isPresent() ? CMD_TRAVEL_TIMES_FACTORS_PATH : null;
             if(usedTravelTimeArg == null) {
                 usingVdfTravelTime = true;
