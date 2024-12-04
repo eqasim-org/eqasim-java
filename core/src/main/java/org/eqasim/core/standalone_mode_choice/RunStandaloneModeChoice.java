@@ -229,7 +229,7 @@ public class RunStandaloneModeChoice {
         }));
 
         boolean usingVdfTravelTime = false;
-        if(config.getModules().containsKey(VDFConfigGroup.GROUP_NAME) && VDFConfigGroup.getOrCreate(config).getInputFile() != null) {
+        if(config.getModules().containsKey(VDFConfigGroup.GROUP_NAME) && (VDFConfigGroup.getOrCreate(config).getInputFlowFile() != null || VDFConfigGroup.getOrCreate(config).getInputTravelTimesFile() != null)) {
             String usedTravelTimeArg = recordedTravelTimesPath.isPresent() ? CMD_RECORDED_TRAVEL_TIMES_PATH : travelTimesFactorsPath.isPresent() ? CMD_TRAVEL_TIMES_FACTORS_PATH : null;
             if(usedTravelTimeArg == null) {
                 usingVdfTravelTime = true;

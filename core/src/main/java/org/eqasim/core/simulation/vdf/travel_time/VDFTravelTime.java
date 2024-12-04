@@ -1,10 +1,13 @@
 package org.eqasim.core.simulation.vdf.travel_time;
 
+import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Verify;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -16,6 +19,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.router.util.TravelTime;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.vehicles.Vehicle;
 
 public class VDFTravelTime implements TravelTime {
@@ -131,4 +135,40 @@ public class VDFTravelTime implements TravelTime {
 			return baseTravelTime + crossingPenalty;
 		}
 	}
+
+	public void write(File outputFile) {
+        try {
+            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(outputFile.toString()));
+			outputStream.writeInt(travelTimes.size());
+			outputStream.writeInt(scope.getIntervals());
+			for(Map.Entry<Id<Link>, List<Double>> entry : travelTimes.entrySet()) {
+				outputStream.writeUTF(entry.getKey().toString());
+				for(Double d : entry.getValue()) {
+					outputStream.writeDouble(d);
+				}
+			}
+			outputStream.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+	public void readFrom(URL inputFile) {
+        try {
+            DataInputStream dataInputStream = new DataInputStream(IOUtils.getInputStream(inputFile));
+			Verify.verify(dataInputStream.readInt() == travelTimes.size());
+			Verify.verify(dataInputStream.readInt() == scope.getIntervals());
+			for(int i=0; i<travelTimes.size(); i++) {
+				Id<Link> linkId = Id.createLinkId(dataInputStream.readUTF());
+				for(int j=0; j<scope.getIntervals(); j++) {
+					double travelTime = dataInputStream.readDouble();
+					travelTimes.get(linkId).set(j, travelTime);
+				}
+			}
+			Verify.verify(dataInputStream.available() == 0);
+			dataInputStream.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
