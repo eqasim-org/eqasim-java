@@ -12,6 +12,8 @@ import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -29,6 +31,10 @@ import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFScope;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
+import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
@@ -38,6 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
@@ -249,6 +256,39 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_cutter_v2_drt");
+
+        compareVdfTravelTimes("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_vdf/vdf_travel_times.bin", "melun_test/output_cutter_v2_drt/vdf_travel_times.bin", "melun_test/input/center.shp");
+    }
+
+    private void compareVdfTravelTimes(String configPath, String leftTravelTimesPath, String rightTravelTimesPath, String updateExtentPath) throws IOException {
+        Config config = ConfigUtils.loadConfig(configPath);
+        new EqasimConfigurator().updateConfig(config);
+
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+
+        EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
+        VDFConfigGroup vdfConfigGroup = (VDFConfigGroup) config.getModules().get(VDFConfigGroup.GROUP_NAME);
+
+        VDFScope vdfScope = new VDFScope(vdfConfigGroup.getStartTime(), vdfConfigGroup.getEndTime(), vdfConfigGroup.getInterval());
+
+        BPRFunction bprFunction = new BPRFunction(vdfConfigGroup.getBprFactor(), vdfConfigGroup.getBprExponent());
+
+        ScenarioExtent updateExtent = new ShapeScenarioExtent.Builder(new File(updateExtentPath), Optional.empty(), Optional.empty()).build();
+
+        VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, eqasimConfigGroup.getCrossingPenalty(), updateExtent);
+        leftTravelTime.readFrom(new File(leftTravelTimesPath).toURI().toURL());
+
+        VDFTravelTime rightTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, eqasimConfigGroup.getCrossingPenalty(), updateExtent);
+        rightTravelTime.readFrom(new File(rightTravelTimesPath).toURI().toURL());
+
+        for(double time = vdfScope.getStartTime(); time <= vdfScope.getEndTime(); time += vdfScope.getIntervalTime()) {
+            for(Link link: scenario.getNetwork().getLinks().values()) {
+                if(updateExtent.isInside(link.getFromNode().getCoord()) && updateExtent.isInside(link.getToNode().getCoord())) {
+                    continue;
+                }
+                assert leftTravelTime.getLinkTravelTime(link, time, null, null) == rightTravelTime.getLinkTravelTime(link, time, null, null);
+            }
+        }
     }
 
     @Test
@@ -437,7 +477,7 @@ public class TestSimulationPipeline {
     }
 
     @Test
-    public void testBaseDeterminism() throws Exception {
+    public void testBaseDeterminism() {
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
         runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
 
@@ -451,7 +491,7 @@ public class TestSimulationPipeline {
         }
     }
 
-    public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+    public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
                 "--output-path", "melun_test/output/routed_population.xml"
