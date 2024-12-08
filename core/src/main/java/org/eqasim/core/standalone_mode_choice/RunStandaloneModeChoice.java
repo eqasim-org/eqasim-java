@@ -1,12 +1,7 @@
 package org.eqasim.core.standalone_mode_choice;
 
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
@@ -45,12 +40,14 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
@@ -71,7 +68,7 @@ import com.google.inject.Singleton;
  * - travel-times-factors-path: if provided, should point out to a csv file specifying the congestion levels on the network during the day as factors by which the free speed is divided. The file in question is a csv With a header timeUpperBound;travelTimeFactor in which the timeUpperBound should be ordered incrementally.
  * - recorded-travel-times-path: mutually exclusive with the travel-times-factors-path. Points to a RecordedTravelTime file.
  * - eqasim-configurator-class: The full name of a class extending the {@link org.eqasim.core.simulation.EqasimConfigurator} class, the provided configurator class will be instantiated and used to:
- *   - Detect optional config groups using the {@link org.eqasim.core.simulation.EqasimConfigurator#addOptionalConfigGroups(Config)} method
+ *   - Detect optional config groups using the {@link org.eqasim.core.simulation.EqasimConfigurator#registerConfigGroup(ConfigGroup, boolean)} (Config)} method
  *   - Configure the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#configureScenario(Scenario)} before loading
  *   - Adjust the scenario using the {@link org.eqasim.core.simulation.EqasimConfigurator#adjustScenario(Scenario)} after loading
  * - mode-choice-configurator-class: The full name of a class the extending the {@link org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator} class.
@@ -216,7 +213,7 @@ public class RunStandaloneModeChoice {
             @Singleton
             RecordedTravelTime provideRecordedTravelTime() {
                 try {
-                    InputStream inputStream = new FileInputStream(path);
+                    InputStream inputStream = IOUtils.getInputStream(new File(path).toURI().toURL());
                     RecordedTravelTime recordedTravelTime = RecordedTravelTime.readBinary(inputStream);
                     inputStream.close();
                     return recordedTravelTime;
