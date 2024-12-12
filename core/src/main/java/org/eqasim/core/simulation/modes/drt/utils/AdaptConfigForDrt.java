@@ -132,6 +132,7 @@ public class AdaptConfigForDrt {
             legTimeConstraintSingleLegConfigGroups.forEach(legTimeConstraintConfigGroup::addParameterSet);
         }
         tripConstraints.add(EqasimModeChoiceModule.DRT_WALK_CONSTRAINT);
+        tripConstraints.add(EqasimModeChoiceModule.DRT_SERVICE_AREA_CONSTRAINT);
         dmcConfig.setTripConstraints(tripConstraints);
 
         DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.scoring(), config.routing());
