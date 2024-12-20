@@ -4,7 +4,6 @@ import java.io.DataOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.FileOutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,7 +141,7 @@ public class VDFTravelTime implements TravelTime {
 
 	public void write(File outputFile) {
         try {
-            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(outputFile.toString()));
+            DataOutputStream outputStream = new DataOutputStream(IOUtils.getOutputStream(outputFile.toURI().toURL(), false));
 			outputStream.writeInt(travelTimes.size());
 			outputStream.writeInt(scope.getIntervals());
 			for(Map.Entry<Id<Link>, List<Double>> entry : travelTimes.entrySet()) {
@@ -151,6 +150,7 @@ public class VDFTravelTime implements TravelTime {
 					outputStream.writeDouble(d);
 				}
 			}
+			outputStream.flush();
 			outputStream.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
