@@ -3,7 +3,6 @@ package org.eqasim.core.simulation.vdf.handlers;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -220,7 +219,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 		@Override
 		public void writeFile(File outputFile) {
 			try {
-				DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(outputFile.toString()));
+				DataOutputStream outputStream = new DataOutputStream(IOUtils.getOutputStream(outputFile.toURI().toURL(), false));
 
 				outputStream.writeDouble(scope.getStartTime());
 				outputStream.writeDouble(scope.getEndTime());

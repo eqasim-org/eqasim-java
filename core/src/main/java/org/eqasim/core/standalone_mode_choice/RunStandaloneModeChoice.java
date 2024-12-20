@@ -45,12 +45,14 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
@@ -216,7 +218,7 @@ public class RunStandaloneModeChoice {
             @Singleton
             RecordedTravelTime provideRecordedTravelTime() {
                 try {
-                    InputStream inputStream = new FileInputStream(path);
+                    InputStream inputStream = IOUtils.getInputStream(new File(path).toURI().toURL());
                     RecordedTravelTime recordedTravelTime = RecordedTravelTime.readBinary(inputStream);
                     inputStream.close();
                     return recordedTravelTime;
