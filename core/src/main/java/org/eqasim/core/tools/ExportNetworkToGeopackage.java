@@ -1,10 +1,7 @@
 package org.eqasim.core.tools;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.DefaultFeatureCollection;
@@ -29,6 +26,7 @@ public class ExportNetworkToGeopackage {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("network-path", "output-path", "crs") //
 				.allowOptions("modes") //
+				.allowOptions("attributes")
 				.build();
 
 		String networkPath = cmd.getOptionStrict("network-path");
@@ -38,6 +36,8 @@ public class ExportNetworkToGeopackage {
 
 		CoordinateReferenceSystem crs = MGC.getCRS(cmd.getOptionStrict("crs"));
 		Collection<String> modes = new HashSet<>();
+
+		List<String> attributes = cmd.hasOption("attributes") ? Arrays.stream(cmd.getOptionStrict("attributes").split(",")).toList() : new ArrayList<>();
 
 		Arrays.asList(cmd.getOption("modes").orElse("car").split(",")).forEach(mode -> {
 			modes.add(mode.trim());
@@ -57,6 +57,9 @@ public class ExportNetworkToGeopackage {
 		featureTypeBuilder.add("capacity", Double.class);
 		featureTypeBuilder.add("freespeed", Double.class);
 		featureTypeBuilder.add("geometry", LineString.class);
+		for(String attribute : attributes) {
+			featureTypeBuilder.add(attribute, String.class);
+		}
 
 		SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
 
@@ -89,6 +92,10 @@ public class ExportNetworkToGeopackage {
 				featureBuilder.add(link.getFreespeed());
 
 				featureBuilder.add(geometryFactory.createLineString(new Coordinate[] { fromCoordinate, toCoordinate }));
+
+				for(String attribute: attributes) {
+					featureBuilder.add(link.getAttributes().getAttribute(attribute));
+				}
 				features.add(featureBuilder.buildFeature(null));
 			}
 		}
