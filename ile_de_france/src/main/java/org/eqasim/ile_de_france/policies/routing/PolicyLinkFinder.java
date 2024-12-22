@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france.policies.routing;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -64,6 +65,10 @@ public class PolicyLinkFinder {
 	static public PolicyLinkFinder create(File path) {
 		try {
 			List<Geometry> shapes = new LinkedList<>();
+
+			if(!Files.exists(path.toPath())) {
+				throw new IllegalStateException("File does not exist: " + path.toPath());
+			}
 
 			try (GeoPackage source = new GeoPackage(path)) {
 				source.init();
