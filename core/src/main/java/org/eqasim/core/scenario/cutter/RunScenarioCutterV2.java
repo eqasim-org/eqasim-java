@@ -2,6 +2,7 @@ package org.eqasim.core.scenario.cutter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -167,7 +168,9 @@ public class RunScenarioCutterV2 {
             sourcePath = sourcePath.substring(0, sourcePath.length()-4);
             destPath = destPath.substring(0, destPath.length()-4);
             for(String extension: SHAPEFILE_EXTENSIONS) {
-                FileUtils.copyFile(new File(sourcePath + extension), new File(destPath + extension));
+                if(Files.exists(new File(sourcePath + extension).toPath())) {
+                    FileUtils.copyFile(new File(sourcePath + extension), new File(destPath + extension));
+                }
             }
         } else {
             FileUtils.copyFile(new File(sourcePath), new File(destPath));
