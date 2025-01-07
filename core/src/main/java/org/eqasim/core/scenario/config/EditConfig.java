@@ -15,14 +15,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * This script allows to edit a MATSim configuration file exclusively through the command line.
- * While existing modules can be configured in most simulation running scripts using the `config:` prefix, existing modules cannot be removed and non-existing ones cannot be added. This is what this script allows to do.
+ * This script allows to edit a MATSim configuration file exclusively through the command line. <br/>
+ * While existing modules can be configured in most simulation running scripts using the `config:` prefix, existing modules cannot be removed and non-existing ones cannot be added. This is what this script allows to do. <br/>
  * The script can be used with the following command line arguments:
- * - `{@value CMD_INPUT_PATH}`: required
- * - `{@value CMD_OUTPUT_PATH}`: required
- * - optional arguments in the form '{@value CMD_ADD_MODULE_PREFIX}:moduleName' add the given module to the config. Module config groups matching the provided names are searched in the core modules and the optional modules specified by an {@link EqasimConfigurator}
- * - optional arguments in the form `{@value CMD_REMOVE_MODULE_PREFIX}:moduleName` remove the given module from the config
- * - `{@value CMD_EQASIM_CONFIGURATOR}` the full name of a class extending the {@link EqasimConfigurator} class from which optional modules config groups are retrieved
+ * <ul>
+ * <li>`{@value CMD_INPUT_PATH}`: required</li>
+ * <li>`{@value CMD_OUTPUT_PATH}`: required</li>
+ * <li>optional arguments in the form '{@value CMD_ADD_MODULE_PREFIX}:moduleName' add the given module to the config. Module config groups matching the provided names are searched in the core modules and the optional modules specified by an {@link EqasimConfigurator} </li>
+ * <li>optional arguments in the form `{@value CMD_REMOVE_MODULE_PREFIX}:moduleName` remove the given module from the config </li>
+ * <li>`{@value CMD_EQASIM_CONFIGURATOR}` the full name of a class extending the {@link EqasimConfigurator} class from which optional modules config groups are retrieved </li>
+ * </ul>
+ * @author Tarek Chouaki (tkchouaki)
  */
 public class EditConfig {
 
