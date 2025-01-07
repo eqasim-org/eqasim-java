@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
  * <li>optional arguments in the form `{@value CMD_REMOVE_MODULE_PREFIX}:moduleName` remove the given module from the config </li>
  * <li>`{@value CMD_EQASIM_CONFIGURATOR}` the full name of a class extending the {@link EqasimConfigurator} class from which optional modules config groups are retrieved </li>
  * </ul>
+ * After adding and removing modules, configuration elements can still be adapted using the `config:` prefix.
  * @author Tarek Chouaki (tkchouaki)
  */
 public class EditConfig {
