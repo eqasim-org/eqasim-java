@@ -155,6 +155,10 @@ public class EqasimConfigurator {
 		configGroups.add(new ConfigGroupItem(configGroup, isOptional));
 	}
 
+	public List<ConfigGroup> getRegisteredConfigGroups() {
+		return this.configGroups.stream().map(ConfigGroupItem::configGroup).toList();
+	}
+
 	public void registerModule(AbstractModule module) {
 		registerModule(module, null);
 	}
