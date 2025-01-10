@@ -70,10 +70,15 @@ public class AdaptConfigForDrt {
         cachedModes.addAll(vehiclesPathByDrtMode.keySet());
         dmcConfig.setCachedModes(cachedModes);
 
+        boolean serviceAreaDrt = false;
+
         for(String drtMode: vehiclesPathByDrtMode.keySet()) {
             DrtConfigGroup drtConfigGroup = new DrtConfigGroup();
             drtConfigGroup.mode = drtMode;
             drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode));
+            if(drtConfigGroup.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
+                serviceAreaDrt = true;
+            }
             drtConfigGroup.stopDuration = 15.0;
             DefaultDrtOptimizationConstraintsSet defaultDrtOptimizationConstraintsSet = (DefaultDrtOptimizationConstraintsSet) drtConfigGroup.addOrGetDrtOptimizationConstraintsParams().addOrGetDefaultDrtOptimizationConstraintsSet();
             defaultDrtOptimizationConstraintsSet.maxWaitTime = 600;
@@ -132,6 +137,9 @@ public class AdaptConfigForDrt {
             legTimeConstraintSingleLegConfigGroups.forEach(legTimeConstraintConfigGroup::addParameterSet);
         }
         tripConstraints.add(EqasimModeChoiceModule.DRT_WALK_CONSTRAINT);
+        if(serviceAreaDrt) {
+            tripConstraints.add(EqasimModeChoiceModule.DRT_SERVICE_AREA_CONSTRAINT);
+        }
         dmcConfig.setTripConstraints(tripConstraints);
 
         DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.scoring(), config.routing());
