@@ -26,9 +26,11 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 
 	static private final String HANDLER = "handler";
 	static private final String INPUT_FILE = "inputFile";
+	static private final String INPUT_TRAVEL_TIMES_FILE = "inputTravelTimesFile";
 	static private final String UPDATE_AREA_SHAPEFILE = "updateAreaShapefile";
 	static private final String WRITE_INTERVAL = "writeInterval";
 	static private final String WRITE_FLOW_INTERVAL = "writeFlowInterval";
+	static private final String WRITE_TRAVEL_TIMES_INTERVAL = "writeTravelTimesInterval";
 
 	private double startTime = 0.0 * 3600.0;
 	private double endTime = 24.0 * 3600.0;
@@ -43,13 +45,15 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 
 	private double capacityFactor = 1.0;
 
-	private String inputFile = null;
+	private String inputFlowFile = null;
+	private String inputTravelTimesFile = null;
 	private String updateAreaShapefile = null;
 	private int writeInterval = 0;
 	private int writeFlowInterval = 0;
+	private int writeTravelTimesInterval = 0;
 
 	public enum HandlerType {
-		Horizon, Interpolation
+		Horizon, Interpolation, SparseHorizon
 	}
 
 	private HandlerType handler = HandlerType.Horizon;
@@ -179,7 +183,7 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(MODES)
 	public void setModesAsString(String modes) {
 		this.modes.clear();
-		Arrays.asList(modes.split(",")).stream().map(String::trim).forEach(this.modes::add);
+		Arrays.stream(modes.split(",")).map(String::trim).forEach(this.modes::add);
 	}
 
 	@StringGetter(HANDLER)
@@ -193,13 +197,23 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	}
 
 	@StringGetter(INPUT_FILE)
-	public String getInputFile() {
-		return inputFile;
+	public String getInputFlowFile() {
+		return inputFlowFile;
 	}
 
 	@StringSetter(INPUT_FILE)
-	public void setInputFile(String inputFile) {
-		this.inputFile = inputFile;
+	public void setInputFlowFile(String inputFlowFile) {
+		this.inputFlowFile = inputFlowFile;
+	}
+
+	@StringGetter(INPUT_TRAVEL_TIMES_FILE)
+	public String getInputTravelTimesFile() {
+		return inputTravelTimesFile;
+	}
+
+	@StringSetter(INPUT_TRAVEL_TIMES_FILE)
+	public void setInputTravelTimesFile(String inputTravelTimesFile) {
+		this.inputTravelTimesFile = inputTravelTimesFile;
 	}
 
 	@StringGetter(UPDATE_AREA_SHAPEFILE)
@@ -230,6 +244,16 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(WRITE_FLOW_INTERVAL)
 	public void setWriteFlowInterval(int val) {
 		this.writeFlowInterval = val;
+	}
+
+	@StringGetter(WRITE_TRAVEL_TIMES_INTERVAL)
+	public int getWriteTravelTimesInterval() {
+		return writeTravelTimesInterval;
+	}
+
+	@StringSetter(WRITE_TRAVEL_TIMES_INTERVAL)
+	public void setWriteTravelTimesInterval(int val) {
+		this.writeTravelTimesInterval = val;
 	}
 
 	public static VDFConfigGroup getOrCreate(Config config) {

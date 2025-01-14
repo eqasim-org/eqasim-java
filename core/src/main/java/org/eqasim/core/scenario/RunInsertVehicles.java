@@ -23,6 +23,7 @@ public class RunInsertVehicles {
 		VehiclesFactory factory = vehicles.getFactory();
 
 		VehicleType vehicleType = VehicleUtils.createVehicleType(Id.create("defaultVehicleType", VehicleType.class));
+		vehicleType.setNetworkMode("car");
 		vehicles.addVehicleType(vehicleType);
 		for (Person person : scenario.getPopulation().getPersons().values()) {
 			Map<String, Id<Vehicle>> personVehicles = new HashMap<>();

@@ -3,19 +3,19 @@ package org.eqasim;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.CrossingPenalty;
+import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
@@ -33,21 +33,21 @@ import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.VDFScope;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
+import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.ExportActivitiesToShapefile;
-import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
-import org.eqasim.core.tools.ExportPopulationToCSV;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
@@ -57,6 +57,7 @@ import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+
 import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
@@ -81,8 +82,13 @@ public class TestSimulationPipeline {
     }
 
     private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
         Config config = ConfigUtils.loadConfig(configPath);
+        runMelunSimulation(config, outputPath, inputPlansFile, lastIteration);
+    }
+
+    private void runMelunSimulation(Config config, String outputPath, String inputPlansFile, Integer lastIteration) {
+        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+
         eqasimConfigurator.updateConfig(config);
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
         if(inputPlansFile != null) {
@@ -228,7 +234,7 @@ public class TestSimulationPipeline {
         RunScenarioCutterV2.main(new String[] {
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--events-path", "melun_test/output_vdf/output_events.xml.gz",
-                "--vdf-travel-times-path", "melun_test/output_vdf/vdf.bin",
+                "--vdf-travel-times-path", "melun_test/output_vdf/vdf_travel_times.bin",
                 "--output-path", "melun_test/cutter_v2",
                 "--prefix", "center_",
                 "--extent-path", "melun_test/input/center.shp",
@@ -252,6 +258,41 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_cutter_v2_drt");
+
+        compareVdfTravelTimes("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_vdf/vdf_travel_times.bin", "melun_test/output_cutter_v2_drt/vdf_travel_times.bin", "melun_test/input/center.shp");
+    }
+
+    private void compareVdfTravelTimes(String configPath, String leftTravelTimesPath, String rightTravelTimesPath, String updateExtentPath) throws IOException {
+        Config config = ConfigUtils.loadConfig(configPath);
+        new EqasimConfigurator().updateConfig(config);
+
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+
+        EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
+        VDFConfigGroup vdfConfigGroup = (VDFConfigGroup) config.getModules().get(VDFConfigGroup.GROUP_NAME);
+
+        VDFScope vdfScope = new VDFScope(vdfConfigGroup.getStartTime(), vdfConfigGroup.getEndTime(), vdfConfigGroup.getInterval());
+
+        BPRFunction bprFunction = new BPRFunction(vdfConfigGroup.getBprFactor(), vdfConfigGroup.getBprExponent());
+
+        ScenarioExtent updateExtent = new ShapeScenarioExtent.Builder(new File(updateExtentPath), Optional.empty(), Optional.empty()).build();
+
+        CrossingPenalty crossingPenalty = DefaultCrossingPenalty.build(scenario.getNetwork(), eqasimConfigGroup.getCrossingPenalty());
+
+        VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
+        leftTravelTime.readFrom(new File(leftTravelTimesPath).toURI().toURL());
+
+        VDFTravelTime rightTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
+        rightTravelTime.readFrom(new File(rightTravelTimesPath).toURI().toURL());
+
+        for(double time = vdfScope.getStartTime(); time <= vdfScope.getEndTime(); time += vdfScope.getIntervalTime()) {
+            for(Link link: scenario.getNetwork().getLinks().values()) {
+                if(updateExtent.isInside(link.getFromNode().getCoord()) && updateExtent.isInside(link.getToNode().getCoord())) {
+                    continue;
+                }
+                assert leftTravelTime.getLinkTravelTime(link, time, null, null) == rightTravelTime.getLinkTravelTime(link, time, null, null);
+            }
+        }
     }
 
     @Test
@@ -378,6 +419,7 @@ public class TestSimulationPipeline {
     }
 
     public void runVdf() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+        // This one will use the SparseHorizon handler
         AdaptConfigForVDF.main(new String[] {
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_vdf.xml",
@@ -388,10 +430,24 @@ public class TestSimulationPipeline {
 
         runMelunSimulation("melun_test/input/config_vdf.xml", "melun_test/output_vdf");
 
+
+        // We force this one to use the legacy horizon handler
+        AdaptConfigForVDF.main(new String[] {
+                "--input-config-path", "melun_test/input/config.xml",
+                "--output-config-path", "melun_test/input/config_vdf_horizon.xml",
+                "--engine", "true",
+                "--config:eqasim:vdf_engine.generateNetworkEvents", "true",
+                "--config:eqasim:vdf.handler", "Horizon"
+        });
+
+        runMelunSimulation("melun_test/input/config_vdf_horizon.xml", "melun_test/output_vdf_horizon");
+
+        assert CRCChecksum.getCRCFromFile("melun_test/output_vdf_horizon/output_plans.xml.gz") == CRCChecksum.getCRCFromFile("melun_test/output_vdf/output_plans.xml.gz");
+
         RunStandaloneModeChoice.main(new String[]{
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_vdf",
-                "--config:eqasim:vdf.inputFile", "../output_vdf/vdf.bin", // Relative to the config file
+                "--config:eqasim:vdf.inputTravelTimesFile", "../output_vdf/vdf_travel_times.bin", // Relative to the config file
                 "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
         });
@@ -423,12 +479,32 @@ public class TestSimulationPipeline {
         runCutter();
         runCutterV2();
     }
-    
-    public void runPopulationRouting() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+
+    @Test
+    public void testBaseDeterminism() {
+        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
+
+        config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        runMelunSimulation(config, "melun_test/output_determinism_2", null, 2   );
+
+        for(String comparedFile: new String[]{"output_plans.xml.gz"}) {
+            long firstCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_1/" + comparedFile);
+            long secondCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_2/"+comparedFile);
+            assert firstCrc == secondCrc;
+        }
+    }
+
+    public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--output-path", "melun_test/output/routed_population.xml.gz"
+                "--output-path", "melun_test/output/routed_population.xml"
         });
+        RunPopulationRouting.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--output-path", "melun_test/output/routed_population_again.xml"
+        });
+        assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
     
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {

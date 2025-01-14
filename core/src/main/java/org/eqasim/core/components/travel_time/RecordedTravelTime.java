@@ -17,6 +17,7 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.vehicles.Vehicle;
 
 /**
@@ -78,7 +79,7 @@ public class RecordedTravelTime implements TravelTime {
 	}
 
 	static public void writeBinary(String outputPath, RecordedTravelTime travelTime) throws IOException, InterruptedException {
-		OutputStream outputStream = new FileOutputStream(outputPath);
+		OutputStream outputStream = IOUtils.getOutputStream(new File(outputPath).toURI().toURL(), false);
 		RecordedTravelTime.writeBinary(outputStream, travelTime);
 		outputStream.close();
 	}

@@ -27,7 +27,7 @@ import org.matsim.core.utils.io.IOUtils;
 
 import com.google.common.base.Verify;
 
-public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandler {
+public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandler {
 	private final VDFScope scope;
 
 	private final Network network;
@@ -35,11 +35,15 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 	private final int numberOfThreads;
 
 	private final IdMap<Link, List<Double>> counts = new IdMap<>(Link.class);
-	private final List<IdMap<Link, List<Double>>> state = new LinkedList<>();
 
-	private final static Logger logger = LogManager.getLogger(VDFHorizonHandler.class);
+	private final static Logger logger = LogManager.getLogger(VDFSparseHorizonHandler.class);
 
-	public VDFHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads) {
+	private record LinkState(List<Integer> time, List<Double> count) {
+	}
+
+	private List<IdMap<Link, LinkState>> state = new LinkedList<>();
+
+	public VDFSparseHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads) {
 		this.scope = scope;
 		this.network = network;
 		this.horizon = horizon;
@@ -69,15 +73,33 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 		logger.info(String.format("Starting aggregation of %d slices", state.size()));
 
-		// Make a copy to add to the history
+		// Transform counts into state object
 		if (!ignoreIteration) {
-			IdMap<Link, List<Double>> copy = new IdMap<>(Link.class);
+			IdMap<Link, LinkState> newState = new IdMap<>(Link.class);
+			state.add(newState);
 
 			for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
-				copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-			}
+				double total = 0.0;
 
-			state.add(copy);
+				for (double value : entry.getValue()) {
+					total += value;
+				}
+
+				if (total > 0.0) {
+					LinkState linkState = new LinkState(new ArrayList<>(), new ArrayList<>());
+					newState.put(entry.getKey(), linkState);
+
+					int timeIndex = 0;
+					for (double count : entry.getValue()) {
+						if (count > 0.0) {
+							linkState.time.add(timeIndex);
+							linkState.count.add(count);
+						}
+
+						timeIndex++;
+					}
+				}
+			}
 		}
 
 		IdMap<Link, List<Double>> aggregated = new IdMap<>(Link.class);
@@ -108,13 +130,15 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 				// Go through history for this link and aggregate by time slot
 				for (int k = 0; k < state.size(); k++) {
-					IdMap<Link, List<Double>> historyItem = state.get(k);
-					List<Double> linkValues = historyItem.get(currentLinkId);
+					LinkState historyItem = state.get(k).get(currentLinkId);
 					List<Double> linkAggregator = aggregated.get(currentLinkId);
 
-					for (int i = 0; i < linkValues.size(); i++) {
-						linkAggregator.set(i,
-								linkAggregator.get(i) + (double) linkValues.get(i) / (double) state.size());
+					if (historyItem != null) {
+						for (int i = 0; i < historyItem.count.size(); i++) {
+							int timeIndex = historyItem.time.get(i);
+							linkAggregator.set(timeIndex,
+									linkAggregator.get(timeIndex) + historyItem.count.get(i) / (double) state.size());
+						}
 					}
 				}
 			}
@@ -182,29 +206,29 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 				logger.info(String.format("Loading %d slices with %d links", slices, links));
 
 				for (int sliceIndex = 0; sliceIndex < slices; sliceIndex++) {
-					IdMap<Link, List<Double>> slice = new IdMap<>(Link.class);
+					IdMap<Link, LinkState> slice = new IdMap<>(Link.class);
 					state.add(slice);
 
-					double totalLinkValue = 0.0;
-					double maximumLinkValue = 0.0;
+					int sliceLinkCount = inputStream.readInt();
 
-					for (int linkIndex = 0; linkIndex < links; linkIndex++) {
-						List<Double> linkValues = new LinkedList<>();
+					logger.info(String.format("Slice %d/%d, Reading %d link states", sliceIndex+1, slices, sliceLinkCount));
 
-						Id<Link> linkId = linkIds.get(linkIndex);
-						slice.put(linkId, linkValues);
+					for (int sliceLinkIndex = 0; sliceLinkIndex < sliceLinkCount; sliceLinkIndex++) {
+						int linkIndex = inputStream.readInt();
+						int linkStateSize = inputStream.readInt();
 
-						for (int valueIndex = 0; valueIndex < scope.getIntervals(); valueIndex++) {
-							double linkValue = inputStream.readDouble();
+						LinkState linkState = new LinkState(new ArrayList<>(linkStateSize),
+								new ArrayList<>(linkStateSize));
+						slice.put(linkIds.get(linkIndex), linkState);
 
-							linkValues.add(linkValue);
-							totalLinkValue += linkValue;
-							maximumLinkValue = Math.max(maximumLinkValue, linkValue);
+						for (int i = 0; i < linkStateSize; i++) {
+							linkState.time.add(inputStream.readInt());
+							linkState.count.add(inputStream.readDouble());
 						}
 					}
 
-					logger.info(String.format("  Slice %d: avg. value %f; max. value %f", sliceIndex,
-							totalLinkValue / links, maximumLinkValue));
+					logger.info(String.format("  Slice %d: %d obs", sliceIndex,
+							sliceLinkCount));
 				}
 
 				Verify.verify(inputStream.available() == 0);
@@ -234,16 +258,28 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 					outputStream.writeUTF(linkIds.get(linkIndex).toString());
 				}
 
+				logger.info(String.format("About to write %d slices", state.size()));
+
 				for (int sliceIndex = 0; sliceIndex < state.size(); sliceIndex++) {
-					IdMap<Link, List<Double>> slice = state.get(sliceIndex);
+					IdMap<Link, LinkState> slice = state.get(sliceIndex);
+					outputStream.writeInt(slice.size());
 
+					int sliceLinkIndex = 0;
 					for (Id<Link> linkId : linkIds) {
-						List<Double> linkValues = slice.get(linkId);
-
-						for (int valueIndex = 0; valueIndex < scope.getIntervals(); valueIndex++) {
-							outputStream.writeDouble(linkValues.get(valueIndex));
+						LinkState linkState = slice.get(linkId);
+						if(linkState == null) {
+							continue;
 						}
+						outputStream.writeInt(linkIds.indexOf(linkId));
+						outputStream.writeInt(linkState.count.size());
+
+						for (int i = 0; i < linkState.count.size(); i++) {
+							outputStream.writeInt(linkState.time.get(i));
+							outputStream.writeDouble(linkState.count.get(i));
+						}
+						sliceLinkIndex += 1;
 					}
+					assert sliceLinkIndex == slice.size();
 				}
 
 				outputStream.close();

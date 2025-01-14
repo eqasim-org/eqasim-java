@@ -6,6 +6,7 @@ included in the (note yet determined) next version number.
 
 **Development version**
 
+- Improve Emissions tools in order to handle unknown Osm highway tag values when mapping HBEFA road types
 - add configurable policies for IDF
 - Introduce `travelTimeRecordingInterval` config option that decouples travel time writing from general analysis
 - Add eqasim_activities.csv for analysis
