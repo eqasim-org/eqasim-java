@@ -50,8 +50,8 @@ public class RunSimulation {
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
 
-		PolicyExtension policies = new PolicyExtension();
-		policies.adaptConfiguration(config);
+		// PolicyExtension policies = new PolicyExtension();
+		// policies.adaptConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
@@ -113,7 +113,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new EqasimModeChoiceModule());
 		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
-		controller.addOverridingModule(policies);
+		// controller.addOverridingModule(policies);
 		controller.run();
 	}
 }
