@@ -79,7 +79,7 @@ public class EqasimConfigurator {
 		registerComponents(EqasimTransitQSimModule::configure);
 
 		// Termination
-		registerConfigGroup(new EqasimTerminationConfigGroup(), false);
+		registerConfigGroup(new EqasimTerminationConfigGroup(), true);
 		registerModule(new EqasimTerminationModule(), EqasimTerminationConfigGroup.GROUP_NAME);
 		registerModule(new TerminationModeShareModule(), EqasimTerminationConfigGroup.GROUP_NAME);
 
