@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.policies.config.PolicyConfigGroup;
@@ -21,9 +20,7 @@ import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.eqasim.core.simulation.policies.routing.SumRoutingPenalty;
 import org.eqasim.core.simulation.policies.utility.SumPenalty;
 import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutilityFactory;
 
 import com.google.common.base.Verify;
 import com.google.inject.Provides;
@@ -48,6 +45,10 @@ public class PolicyExtension extends AbstractEqasimExtension {
 	Map<String, Policy> providePolicies(Map<String, PolicyFactory> factories, Population population) {
 		PoliciesConfigGroup policyConfig = PoliciesConfigGroup.get(getConfig());
 		Map<String, Policy> policies = new HashMap<>();
+
+		if (policyConfig == null) {
+			return policies;
+		}
 
 		Set<String> names = new HashSet<>();
 
