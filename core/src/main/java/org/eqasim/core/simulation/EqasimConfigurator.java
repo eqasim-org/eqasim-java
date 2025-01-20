@@ -25,7 +25,7 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWith
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeChoiceModule;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.AbstractAccessRouteFactory;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.DefaultAbstractAccessRoute;
-import org.eqasim.core.simulation.policies.PolicyExtension;
+import org.eqasim.core.simulation.policies.PolicyModule;
 import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
@@ -135,10 +135,9 @@ public class EqasimConfigurator {
 		// Emissions
 		registerConfigGroup(new EmissionsConfigGroup(), true);
 
-
 		// Policies
 		registerConfigGroup(new PoliciesConfigGroup(), true);
-		registerModule(new PolicyExtension());
+		registerModule(new PolicyModule());
 	}
 
 	private record ConfigGroupItem(ConfigGroup configGroup, boolean isOptional) {

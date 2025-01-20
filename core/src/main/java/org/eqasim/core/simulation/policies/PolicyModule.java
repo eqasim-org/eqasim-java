@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.policies.config.PolicyConfigGroup;
 import org.eqasim.core.simulation.policies.impl.city_tax.CityTaxPolicyExtension;
@@ -21,15 +20,16 @@ import org.eqasim.core.simulation.policies.routing.SumRoutingPenalty;
 import org.eqasim.core.simulation.policies.utility.SumPenalty;
 import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.core.controler.AbstractModule;
 
 import com.google.common.base.Verify;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 
-public class PolicyExtension extends AbstractEqasimExtension {
+public class PolicyModule extends AbstractModule {
 	@Override
-	protected void installEqasimExtension() {
+	public void install() {
 		install(new CityTaxPolicyExtension());
 		install(new LimitedTrafficZonePolicyExtension());
 		install(new TransitDiscountPolicyExtension());
