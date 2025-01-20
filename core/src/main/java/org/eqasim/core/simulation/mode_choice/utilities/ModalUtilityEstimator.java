@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator;
@@ -15,12 +16,14 @@ import org.matsim.facilities.ActivityFacilities;
 
 public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
 	private final Map<String, UtilityEstimator> estimators;
+	private final UtilityPenalty utilityPenalty;
 
 	public ModalUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, UtilityEstimator> estimators, TimeInterpretation timeInterpretation,
-			Collection<String> preroutedModes) {
+			Collection<String> preroutedModes, UtilityPenalty utilityPenalty) {
 		super(tripRouter, facilities, timeInterpretation, preroutedModes);
 		this.estimators = estimators;
+		this.utilityPenalty = utilityPenalty;
 	}
 
 	@Override
@@ -31,7 +34,9 @@ public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
 		if (estimator == null) {
 			throw new IllegalStateException(String.format("No estimator registered for mode '%s'", mode));
 		} else {
-			return estimator.estimateUtility(person, trip, elements);
+			double utility = estimator.estimateUtility(person, trip, elements);
+			utility += utilityPenalty.calculatePenalty(mode, person, trip, elements);
+			return utility;
 		}
 	}
 }

@@ -30,6 +30,7 @@ import org.eqasim.core.simulation.modes.drt.mode_choice.constraints.DrtWalkConst
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DefaultDrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.utilities.estimators.DrtUtilityEstimator;
+import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -101,7 +102,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	public ModalUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config,
-			TimeInterpretation timeInterpretation, DiscreteModeChoiceConfigGroup dmcConfig) {
+			TimeInterpretation timeInterpretation, DiscreteModeChoiceConfigGroup dmcConfig, UtilityPenalty utilityPenalty) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
 
 		for (Map.Entry<String, String> entry : config.getEstimators().entrySet()) {
@@ -116,7 +117,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		}
 
 		return new ModalUtilityEstimator(tripRouter, facilities, estimators, timeInterpretation,
-				Collections.emptySet()); // Here we may add "pt" etc. as pre-routed modes.
+				Collections.emptySet(), utilityPenalty); // Here we may add "pt" etc. as pre-routed modes.
 	}
 
 	@Provides
