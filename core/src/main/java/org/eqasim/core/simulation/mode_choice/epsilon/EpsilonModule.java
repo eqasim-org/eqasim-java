@@ -14,7 +14,8 @@ public class EpsilonModule extends AbstractEqasimExtension {
 
 	public static final Logger logger = LogManager.getLogger(EpsilonModule.class);
 
-	public static final String EPSILON_UTILITY_PREFIX = "epsilon_";
+	// made private to avoid use
+	private static final String EPSILON_UTILITY_PREFIX = "epsilon_";
 
 	@Provides
 	public GumbelEpsilonProvider provideGumbelEpsilonProvider(GlobalConfigGroup config) {
