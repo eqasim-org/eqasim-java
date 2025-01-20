@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.components.estimators.AbstractTripRouterEstimator;
@@ -13,14 +14,16 @@ import org.matsim.core.router.TripRouter;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.facilities.ActivityFacilities;
 
-public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
+public class EqasimUtilityEstimator extends AbstractTripRouterEstimator {
 	private final Map<String, UtilityEstimator> estimators;
+	private final EpsilonProvider epsilonProvider;
 
-	public ModalUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
+	public EqasimUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, UtilityEstimator> estimators, TimeInterpretation timeInterpretation,
-			Collection<String> preroutedModes) {
+			Collection<String> preroutedModes, EpsilonProvider epsilonProvider) {
 		super(tripRouter, facilities, timeInterpretation, preroutedModes);
 		this.estimators = estimators;
+		this.epsilonProvider = epsilonProvider;
 	}
 
 	@Override
@@ -31,7 +34,9 @@ public class ModalUtilityEstimator extends AbstractTripRouterEstimator {
 		if (estimator == null) {
 			throw new IllegalStateException(String.format("No estimator registered for mode '%s'", mode));
 		} else {
-			return estimator.estimateUtility(person, trip, elements);
+			double utility = estimator.estimateUtility(person, trip, elements);
+			utility += epsilonProvider.getEpsilon(person.getId(), trip.getIndex(), mode);
+			return utility;
 		}
 	}
 }
