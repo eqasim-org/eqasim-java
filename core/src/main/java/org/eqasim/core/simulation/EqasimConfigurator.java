@@ -50,6 +50,7 @@ import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -61,7 +62,7 @@ import org.matsim.households.Household;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
-public class EqasimConfigurator {
+public abstract class EqasimConfigurator {
 	public EqasimConfigurator(CommandLine cmd) {
 		// Standard eqasim configuration
 		registerConfigGroup(new SwissRailRaptorConfigGroup(), false);
@@ -285,10 +286,9 @@ public class EqasimConfigurator {
 	}
 
 	static public final String CONFIGURATOR = "eqasim-configurator";
-	static public final String DEFAULT_CONFIGURATOR = "org.eqasim.core.simulation.EqasimConfigurator";
 
-	static public EqasimConfigurator getInstance(CommandLine commandLine) {
-		String configurator = commandLine.getOption(CONFIGURATOR).orElse(DEFAULT_CONFIGURATOR);
+	static public EqasimConfigurator getInstance(CommandLine commandLine) throws ConfigurationException {
+		String configurator = commandLine.getOptionStrict(CONFIGURATOR);
 		
 		try {
 			Class<?> clazz = Class.forName(configurator);

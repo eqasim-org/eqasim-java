@@ -110,8 +110,7 @@ public class ExportNetworkRoutesToGeopackage {
         Set<String> mainModes = commandLine.hasOption("main-modes") ? Arrays.stream(commandLine.getOptionStrict("main-modes").split(",")).map(String::trim).collect(Collectors.toSet()) : new HashSet<>();
         Set<String> legModes = commandLine.hasOption("leg-modes") ? Arrays.stream(commandLine.getOptionStrict("leg-modes").split(",")).map(String::trim).collect(Collectors.toSet()) : new HashSet<>();
 
-        CommandLine cmd = new CommandLine.Builder(new String[0]).build();
-        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(commandLine);
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         configurator.configureScenario(scenario);

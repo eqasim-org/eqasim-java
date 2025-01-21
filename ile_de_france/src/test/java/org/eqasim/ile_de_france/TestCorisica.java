@@ -106,6 +106,7 @@ public class TestCorisica {
 					"--threads", "4", //
 					"--prefix", "cut_", //
 					"--output-path", "corsica_test", //
+					"--eqasim-configurator", IDFConfigurator.class.getName()
 			});
 
 			Assert.assertEquals(171, countPersons("corsica_test/cut_population.xml.gz"));

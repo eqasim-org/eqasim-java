@@ -43,10 +43,10 @@ public class RunBatchRoadRouter {
 			IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "batch-size", "modes", "write-paths") //
+				.allowOptions("threads", "batch-size", "modes", "write-paths", EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
+		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);

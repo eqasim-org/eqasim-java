@@ -45,6 +45,7 @@ public class RunFeederDrtPassengerAnalysis {
     static public void main(String[] args) throws CommandLine.ConfigurationException, IOException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "events-path", "network-path", "output-path") //
+                .allowOptions(EqasimConfigurator.CONFIGURATOR) //
                 .build();
 
         String configPath = cmd.getOptionStrict("config-path");
@@ -52,7 +53,7 @@ public class RunFeederDrtPassengerAnalysis {
         String networkPath = cmd.getOptionStrict("network-path");
         String outputPath = cmd.getOptionStrict("output-path");
 
-        EqasimConfigurator configurator = new EqasimConfigurator(cmd);
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
         Config config = ConfigUtils.loadConfig(configPath);
         configurator.updateConfig(config);
 

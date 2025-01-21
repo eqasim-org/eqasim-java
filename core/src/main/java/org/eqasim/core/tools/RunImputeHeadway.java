@@ -18,10 +18,10 @@ public class RunImputeHeadway {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
-				.allowOptions("threads", "batch-size", "interval") //
+				.allowOptions("threads", "batch-size", "interval", EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
+		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);

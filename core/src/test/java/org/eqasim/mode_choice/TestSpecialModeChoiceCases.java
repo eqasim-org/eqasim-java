@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.TestConfigurator;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.misc.InjectorBuilder;
@@ -167,7 +168,7 @@ public class TestSpecialModeChoiceCases {
 		EqasimConfigGroup.get(config).setEstimator("bike", EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
 
 		// Now create the model
-		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
+		EqasimConfigurator configurator = new TestConfigurator();
 		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		

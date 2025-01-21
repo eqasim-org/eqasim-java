@@ -38,12 +38,12 @@ public class RunScenarioCutterV2 {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "output-path", "extent-path", "vdf-travel-times-path") //
                 .allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
-                .allowOptions("flag-area-link-modes") //
+                .allowOptions("flag-area-link-modes", EqasimConfigurator.CONFIGURATOR) //
                 .build();
 
         String outputPath = cmd.getOptionStrict("output-path");
 
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator(cmd);
+        EqasimConfigurator eqasimConfigurator = EqasimConfigurator.getInstance(cmd);
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         eqasimConfigurator.updateConfig(config);
         cmd.applyConfiguration(config);
