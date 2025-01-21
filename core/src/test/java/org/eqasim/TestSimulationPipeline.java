@@ -56,6 +56,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
@@ -81,17 +82,18 @@ public class TestSimulationPipeline {
         FileUtils.deleteDirectory(new File("melun_test"));
     }
 
-    private void runMelunSimulation(String configPath, String outputPath) {
+    private void runMelunSimulation(String configPath, String outputPath) throws ConfigurationException {
         runMelunSimulation(configPath, outputPath, null, null);
     }
 
-    private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
+    private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) throws ConfigurationException {
         Config config = ConfigUtils.loadConfig(configPath);
         runMelunSimulation(config, outputPath, inputPlansFile, lastIteration);
     }
 
-    private void runMelunSimulation(Config config, String outputPath, String inputPlansFile, Integer lastIteration) {
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+    private void runMelunSimulation(Config config, String outputPath, String inputPlansFile, Integer lastIteration) throws ConfigurationException {
+        CommandLine cmd = new CommandLine.Builder(new String[0]).build();
+        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator(cmd);
 
         eqasimConfigurator.updateConfig(config);
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
@@ -221,13 +223,13 @@ public class TestSimulationPipeline {
     }
     
     private void runCutter() throws Exception {
-    	RunScenarioCutter.main(new String[] {
-    		"--config-path", "melun_test/input/config.xml",
-    		"--events-path", "melun_test/output/output_events.xml.gz",
+        RunScenarioCutter.main(new String[] {
+            "--config-path", "melun_test/input/config.xml",
+            "--events-path", "melun_test/output/output_events.xml.gz",
             "--output-path", "melun_test/cutter",
             "--prefix", "center_",
             "--extent-path", "melun_test/input/center.shp"
-    	});
+        });
 
         runMelunSimulation("melun_test/cutter/center_config.xml", "melun_test/output_cutter");
     }
@@ -264,9 +266,11 @@ public class TestSimulationPipeline {
         compareVdfTravelTimes("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_vdf/vdf_travel_times.bin", "melun_test/output_cutter_v2_drt/vdf_travel_times.bin", "melun_test/input/center.shp");
     }
 
-    private void compareVdfTravelTimes(String configPath, String leftTravelTimesPath, String rightTravelTimesPath, String updateExtentPath) throws IOException {
+    private void compareVdfTravelTimes(String configPath, String leftTravelTimesPath, String rightTravelTimesPath, String updateExtentPath) throws IOException, ConfigurationException {
         Config config = ConfigUtils.loadConfig(configPath);
-        new EqasimConfigurator().updateConfig(config);
+        
+		CommandLine cmd = new CommandLine.Builder(new String[0]).build();
+        new EqasimConfigurator(cmd).updateConfig(config);
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
@@ -481,7 +485,7 @@ public class TestSimulationPipeline {
     }
 
     @Test
-    public void testBaseDeterminism() {
+    public void testBaseDeterminism() throws ConfigurationException {
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
         runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
 

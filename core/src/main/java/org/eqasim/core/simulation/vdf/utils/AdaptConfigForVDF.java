@@ -52,7 +52,7 @@ public class AdaptConfigForVDF {
         String outputPath = commandLine.getOptionStrict("output-config-path");
         boolean engine = Boolean.parseBoolean(commandLine.getOption("engine").orElse("false"));
 
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator(commandLine);
         Config config = ConfigUtils.loadConfig(inputPath);
         eqasimConfigurator.updateConfig(config);
         adaptConfigForVDF(config, engine);

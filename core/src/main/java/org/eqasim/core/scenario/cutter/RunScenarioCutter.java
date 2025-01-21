@@ -70,7 +70,7 @@ public class RunScenarioCutter {
 		ScenarioExtent extent = new ShapeScenarioExtent.Builder(extentPath, extentAttribute, extentValue).build();
 
 		// Load scenario
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		config.removeModule(EqasimTerminationConfigGroup.GROUP_NAME);
@@ -110,9 +110,8 @@ public class RunScenarioCutter {
 		}
 
 		// Cut population
-		Injector populationCutterInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules(config).stream()
-						.filter(module -> !(module instanceof AbstractEqasimExtension) && !(module instanceof DiscreteModeChoiceModule)).toList()) //
+		// TODO Check if we can remove stuff
+		Injector populationCutterInjector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(
 						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
@@ -169,9 +168,8 @@ public class RunScenarioCutter {
 		configCutter.run(config);
 
 		// Final routing
-		Injector routingInjector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules(config).stream()
-						.filter(module -> !(module instanceof AbstractEqasimExtension) && !(module instanceof DiscreteModeChoiceModule)).toList()) //
+		// TODO: Check if we can remove stuff
+		Injector routingInjector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.addOverridingModule(new TimeInterpretationModule()) //

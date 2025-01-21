@@ -6,18 +6,20 @@ import java.util.List;
 
 import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.sao_paulo.SaoPauloConfigurator;
 import org.eqasim.sao_paulo.mode_choice.SaoPauloModeChoiceModule;
 import org.eqasim.sao_paulo.mode_choice.parameters.SaoPauloModeParameters;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		ConfigAdapter.run(args, new EqasimConfigurator(), RunAdaptConfig::adaptConfiguration);
+		CommandLine cmd = new CommandLine.Builder(args).build();
+		ConfigAdapter.run(args, new SaoPauloConfigurator(cmd), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config, String prefix) {

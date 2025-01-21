@@ -149,7 +149,6 @@ public class RunStandaloneModeChoice {
     public static final String CMD_TRAVEL_TIMES_FACTORS_PATH = "travel-times-factors-path";
     public static final String CMD_RECORDED_TRAVEL_TIMES_PATH = "recorded-travel-times-path";
     public static final String CMD_SKIP_SCENARIO_CHECK = "skip-scenario-check";
-    public static final String EQASIM_CONFIGURATOR_CLASS = "eqasim-configurator-class";
     public static final String MODE_CHOICE_CONFIGURATOR_CLASS = "mode-choice-configurator-class";
 
     public static void main(String[] args) throws CommandLine.ConfigurationException, InterruptedException, IOException {
@@ -159,12 +158,12 @@ public class RunStandaloneModeChoice {
                 .allowOptions(CMD_TRAVEL_TIMES_FACTORS_PATH, CMD_RECORDED_TRAVEL_TIMES_PATH)
                 .allowOptions(CMD_SIMULATE_AFTER)
                 .allowOptions(CMD_SKIP_SCENARIO_CHECK)
-                .allowOptions(EQASIM_CONFIGURATOR_CLASS, MODE_CHOICE_CONFIGURATOR_CLASS)
+                .allowOptions(EqasimConfigurator.CONFIGURATOR, MODE_CHOICE_CONFIGURATOR_CLASS)
                 .allowAnyOption(true)
                 .build();
 
         // Loading the config
-        EqasimConfigurator configurator = cmd.hasOption(EQASIM_CONFIGURATOR_CLASS) ? ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict(EQASIM_CONFIGURATOR_CLASS), EqasimConfigurator.class) : new EqasimConfigurator();
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
         configurator.registerConfigGroup(new StandaloneModeChoiceConfigGroup(), false);
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_CONFIG_PATH));
@@ -197,8 +196,9 @@ public class RunStandaloneModeChoice {
 
         StandaloneModeChoiceConfigurator standaloneModeChoiceConfigurator = cmd.hasOption(MODE_CHOICE_CONFIGURATOR_CLASS) ? StandaloneModeChoiceConfigurator.getSubclassInstance(cmd.getOptionStrict(MODE_CHOICE_CONFIGURATOR_CLASS), config, cmd) : new StandaloneModeChoiceConfigurator(config, cmd);
 
-        InjectorBuilder injectorBuilder = new InjectorBuilder(scenario);
+        InjectorBuilder injectorBuilder = new InjectorBuilder(scenario, configurator);
 
+        // TODO: Delete this??
         standaloneModeChoiceConfigurator.getModeChoiceModules(config).forEach(injectorBuilder::addOverridingModule);
 
 

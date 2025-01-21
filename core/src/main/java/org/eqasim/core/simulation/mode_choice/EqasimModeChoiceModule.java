@@ -15,6 +15,7 @@ import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
+import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.EqasimUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
@@ -100,6 +101,9 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
 
 		install(new EpsilonModule());
+
+		// default binding that should be overridden
+		bind(ModeParameters.class).toInstance(new ModeParameters());
 	}
 
 	@Provides

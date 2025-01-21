@@ -10,7 +10,7 @@ import org.matsim.households.Household;
 
 public class SwitzerlandConfigurator extends EqasimConfigurator {
 	public SwitzerlandConfigurator(CommandLine cmd) {
-		super();
+		super(cmd);
 
 		registerModule(new SwissModeChoiceModule(cmd));
 	}

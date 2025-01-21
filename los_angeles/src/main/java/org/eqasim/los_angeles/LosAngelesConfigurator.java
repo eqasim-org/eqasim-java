@@ -6,7 +6,7 @@ import org.matsim.core.config.CommandLine;
 
 public class LosAngelesConfigurator extends EqasimConfigurator {
     public LosAngelesConfigurator(CommandLine cmd) {
-        super();
+        super(cmd);
 
         registerModule(new LosAngelesModeChoiceModule(cmd));
     }

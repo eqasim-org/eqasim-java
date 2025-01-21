@@ -14,7 +14,7 @@ public class RunGenerateConfig {
 				.allowOptions("random-seed") //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
 		Config config = ConfigUtils.createConfig();
 		configurator.updateConfig(config);
 

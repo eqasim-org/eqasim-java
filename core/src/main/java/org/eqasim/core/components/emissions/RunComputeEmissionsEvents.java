@@ -26,15 +26,10 @@ public class RunComputeEmissionsEvents {
 
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "hbefa-cold-avg", "hbefa-hot-avg") //
-                .allowOptions("hbefa-cold-detailed", "hbefa-hot-detailed", "configurator-class")
+                .allowOptions("hbefa-cold-detailed", "hbefa-hot-detailed", EqasimConfigurator.CONFIGURATOR)
                 .build();
         
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         configurator.registerConfigGroup(new EmissionsConfigGroup(), false);

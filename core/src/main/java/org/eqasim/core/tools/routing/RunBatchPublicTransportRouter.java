@@ -65,7 +65,7 @@ public class RunBatchPublicTransportRouter {
 				.allowPrefixes("travel-utility") //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
@@ -262,8 +262,7 @@ public class RunBatchPublicTransportRouter {
 		Optional<String> outputTripsPath = cmd.getOption("output-trips-path");
 		Optional<String> outputConfigPath = cmd.getOption("output-config-path");
 
-		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules(config)) //
+		Injector injector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, false, interval)).build();
 
 		Provider<TransitRouter> routerProvider = injector.getProvider(TransitRouter.class);

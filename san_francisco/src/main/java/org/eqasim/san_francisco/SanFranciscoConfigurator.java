@@ -6,7 +6,7 @@ import org.matsim.core.config.CommandLine;
 
 public class SanFranciscoConfigurator extends EqasimConfigurator {
     public SanFranciscoConfigurator(CommandLine cmd) {
-        super();
+        super(cmd);
 
         registerModule(new SanFranciscoModeChoiceModule(cmd));
     }

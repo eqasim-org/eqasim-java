@@ -52,7 +52,7 @@ public class RunFeederDrtPassengerAnalysis {
         String networkPath = cmd.getOptionStrict("network-path");
         String outputPath = cmd.getOptionStrict("output-path");
 
-        EqasimConfigurator configurator = new EqasimConfigurator();
+        EqasimConfigurator configurator = new EqasimConfigurator(cmd);
         Config config = ConfigUtils.loadConfig(configPath);
         configurator.updateConfig(config);
 

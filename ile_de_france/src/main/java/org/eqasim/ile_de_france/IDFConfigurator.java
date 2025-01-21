@@ -7,7 +7,7 @@ import org.matsim.core.config.CommandLine;
 
 public class IDFConfigurator extends EqasimConfigurator {
 	public IDFConfigurator(CommandLine cmd) {
-		super();
+		super(cmd);
 
 		registerConfigGroup(new PoliciesConfigGroup(), true);
 

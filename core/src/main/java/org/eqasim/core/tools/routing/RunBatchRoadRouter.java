@@ -46,7 +46,7 @@ public class RunBatchRoadRouter {
 				.allowOptions("threads", "batch-size", "modes", "write-paths") //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
@@ -66,8 +66,7 @@ public class RunBatchRoadRouter {
 			modes.add(mode);
 		}
 
-		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules(config)) //
+		Injector injector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(new AbstractModule() {
 					@Override
 					public void install() {

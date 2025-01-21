@@ -45,7 +45,7 @@ public class RunImputeSpatialAttribute {
 
 		// Set up imputation
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
 		Config config = ConfigUtils.createConfig();
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);

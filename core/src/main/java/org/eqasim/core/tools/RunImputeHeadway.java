@@ -21,7 +21,7 @@ public class RunImputeHeadway {
 				.allowOptions("threads", "batch-size", "interval") //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new EqasimConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
@@ -35,8 +35,7 @@ public class RunImputeHeadway {
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		ScenarioUtils.loadScenario(scenario);
 
-		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules(config)) //
+		Injector injector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(new HeadwayImputerModule(numberOfThreads, batchSize, true, interval)) //
 				.build();
 

@@ -180,7 +180,7 @@ public class AdaptConfigForDrt {
                 .requireOptions("input-config-path", "output-config-path", "vehicles-paths")
                 .allowOptions("mode-names")
                 .allowOptions("mode-availability")
-                .allowOptions("configurator-class")
+                .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .allowOptions("operational-schemes")
                 .allowOptions("cost-models", "estimators")
                 .allowOptions("qsim-endtime")
@@ -208,12 +208,7 @@ public class AdaptConfigForDrt {
         Map<String, Map<String, String>> info = extractDrtInfo(modeNames, toExtract);
 
 
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);

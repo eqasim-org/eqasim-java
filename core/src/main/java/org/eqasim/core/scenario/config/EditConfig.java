@@ -34,14 +34,13 @@ public class EditConfig {
     public static final String CMD_OUTPUT_PATH = "output-path";
     public static final String CMD_ADD_MODULE_PREFIX = "add-module";
     public static final String CMD_REMOVE_MODULE_PREFIX = "remove-module";
-    public static final String CMD_EQASIM_CONFIGURATOR= "eqasim-configurator";
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args)
                 .requireOptions(CMD_INPUT_PATH, CMD_OUTPUT_PATH)
                 .allowPrefixes(CMD_ADD_MODULE_PREFIX)
                 .allowPrefixes(CMD_REMOVE_MODULE_PREFIX)
-                .allowOptions(CMD_EQASIM_CONFIGURATOR)
+                .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .build();
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict(CMD_INPUT_PATH));
@@ -67,7 +66,7 @@ public class EditConfig {
             config.removeModule(module);
         }
 
-        EqasimConfigurator eqasimConfigurator = cmd.hasOption(CMD_EQASIM_CONFIGURATOR) ? ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict(CMD_EQASIM_CONFIGURATOR), EqasimConfigurator.class) : new EqasimConfigurator();
+        EqasimConfigurator eqasimConfigurator = EqasimConfigurator.getInstance(cmd);
 
         Map<String, ConfigGroup> availableModules = new HashMap<>(ConfigUtils.createConfig().getModules());
         availableModules.putAll(eqasimConfigurator.getRegisteredConfigGroups().stream().collect(Collectors.toMap(ConfigGroup::getName, configGroup -> configGroup)));

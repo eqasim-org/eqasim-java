@@ -1,5 +1,7 @@
 package org.eqasim.core.simulation;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,6 +49,7 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -59,7 +62,7 @@ import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
 public class EqasimConfigurator {
-	public EqasimConfigurator() {
+	public EqasimConfigurator(CommandLine cmd) {
 		// Standard eqasim configuration
 		registerConfigGroup(new SwissRailRaptorConfigGroup(), false);
 		registerConfigGroup(new EqasimConfigGroup(), false);
@@ -278,6 +281,36 @@ public class EqasimConfigurator {
 	static protected void copyAttribute(Household household, Person person, String attribute) {
 		if (household.getAttributes().getAsMap().containsKey(attribute)) {
 			person.getAttributes().putAttribute(attribute, household.getAttributes().getAttribute(attribute));
+		}
+	}
+
+	static public final String CONFIGURATOR = "configurator-class";
+	static public final String DEFAULT_CONFIGURATOR = "org.eqasim.core.simulation.EqasimConfigurator";
+
+	static public EqasimConfigurator getInstance(CommandLine commandLine) {
+		String configurator = commandLine.getOption(CONFIGURATOR).orElse(DEFAULT_CONFIGURATOR);
+		
+		try {
+			Class<?> clazz = Class.forName(configurator);
+
+			if (EqasimConfigurator.class.isAssignableFrom(clazz)) {
+				try {
+					Constructor<?> constructor = clazz.getConstructor(CommandLine.class);
+					
+					try {
+						return (EqasimConfigurator) constructor.newInstance(commandLine);
+					} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException e) {
+						throw new RuntimeException(e);
+					}
+				} catch (NoSuchMethodException e) {
+					throw new RuntimeException("Configurator class does not have proper constructor: " + configurator);
+				}
+			} else {
+				throw new RuntimeException("Configurator class is not a EqasimConfigurator: " + configurator);
+			}
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("Configurator class does not exist: " + configurator);
 		}
 	}
 }

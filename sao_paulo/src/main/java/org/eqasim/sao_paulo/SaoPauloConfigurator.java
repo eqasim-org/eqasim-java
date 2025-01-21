@@ -6,7 +6,7 @@ import org.matsim.core.config.CommandLine;
 
 public class SaoPauloConfigurator extends EqasimConfigurator {
     public SaoPauloConfigurator(CommandLine cmd) {
-        super();
+        super(cmd);
 
         registerModule(new SaoPauloModeChoiceModule(cmd));
     }

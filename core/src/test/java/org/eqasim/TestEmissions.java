@@ -38,6 +38,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
@@ -76,8 +77,9 @@ public class TestEmissions {
 		FileUtils.deleteDirectory(new File("melun_test"));
 	}
 
-	private void runMelunSimulation() {
-		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+	private void runMelunSimulation() throws ConfigurationException {
+		CommandLine cmd = new CommandLine.Builder(new String[0]).build();
+		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
 		eqasimConfigurator.updateConfig(config);
 		((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME))

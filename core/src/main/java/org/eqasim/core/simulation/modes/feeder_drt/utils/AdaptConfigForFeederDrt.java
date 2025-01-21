@@ -134,7 +134,7 @@ public class AdaptConfigForFeederDrt {
                 .allowOptions("access-egress-transit-stop-modes")
                 .allowOptions("access-egress-transit-stop-ids")
                 .allowOptions("mode-availability")
-                .allowOptions("configurator-class")
+                .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .build();
 
         String inputConfigPath = cmd.getOptionStrict("input-config-path");
@@ -155,12 +155,7 @@ public class AdaptConfigForFeederDrt {
 
         Map<String, Map<String, String>> info = AdaptConfigForDrt.extractDrtInfo(modeNames, toExtract);
 
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);

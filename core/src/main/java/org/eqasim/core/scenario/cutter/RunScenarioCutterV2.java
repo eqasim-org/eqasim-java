@@ -43,7 +43,7 @@ public class RunScenarioCutterV2 {
 
         String outputPath = cmd.getOptionStrict("output-path");
 
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator(cmd);
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         eqasimConfigurator.updateConfig(config);
         cmd.applyConfiguration(config);

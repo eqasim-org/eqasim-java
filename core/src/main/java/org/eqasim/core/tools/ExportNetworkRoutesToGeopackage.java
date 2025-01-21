@@ -95,7 +95,7 @@ public class ExportNetworkRoutesToGeopackage {
     public static void main(String[] args) throws CommandLine.ConfigurationException, IOException {
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("network-path", "plans-path", "output-path", "crs")
-                .allowOptions("configurator-class")
+                .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .allowOptions("main-modes", "leg-modes")
                 .build();
 
@@ -106,7 +106,8 @@ public class ExportNetworkRoutesToGeopackage {
         Set<String> mainModes = commandLine.hasOption("main-modes") ? Arrays.stream(commandLine.getOptionStrict("main-modes").split(",")).map(String::trim).collect(Collectors.toSet()) : new HashSet<>();
         Set<String> legModes = commandLine.hasOption("leg-modes") ? Arrays.stream(commandLine.getOptionStrict("leg-modes").split(",")).map(String::trim).collect(Collectors.toSet()) : new HashSet<>();
 
-        EqasimConfigurator configurator = commandLine.hasOption("configurator-class") ? ClassUtils.getInstanceOfClassExtendingOtherClass(commandLine.getOptionStrict("configurator"), EqasimConfigurator.class) : new EqasimConfigurator();
+        CommandLine cmd = new CommandLine.Builder(new String[0]).build();
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         configurator.configureScenario(scenario);
