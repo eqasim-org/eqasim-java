@@ -1,18 +1,18 @@
 package org.eqasim.core.scenario.config;
 
-import com.google.common.base.Verify;
-import org.eqasim.core.misc.ClassUtils;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.Config;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.google.common.base.Verify;
 
 /**
  * This script allows to edit a MATSim configuration file exclusively through the command line. <br/>

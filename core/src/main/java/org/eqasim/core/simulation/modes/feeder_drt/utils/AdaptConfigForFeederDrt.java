@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;

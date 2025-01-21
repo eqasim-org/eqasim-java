@@ -39,7 +39,6 @@ import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
-import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
 import org.eqasim.core.tools.ExportActivitiesToShapefile;
 import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
 import org.eqasim.core.tools.ExportNetworkToShapefile;
@@ -60,7 +59,6 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
@@ -452,7 +450,7 @@ public class TestSimulationPipeline {
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_vdf",
                 "--config:eqasim:vdf.inputTravelTimesFile", "../output_vdf/vdf_travel_times.bin", // Relative to the config file
-                "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
+                "--eqasim-configurator", TestConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
         });
 
@@ -502,11 +500,13 @@ public class TestSimulationPipeline {
     public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--output-path", "melun_test/output/routed_population.xml"
+                "--output-path", "melun_test/output/routed_population.xml",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--output-path", "melun_test/output/routed_population_again.xml"
+                "--output-path", "melun_test/output/routed_population_again.xml",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
         assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
@@ -518,7 +518,7 @@ public class TestSimulationPipeline {
                 "--write-input-csv-trips", "true",
                 "--write-output-csv-trips", "true",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice",
-                "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
+                "--eqasim-configurator", TestConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
         });
     }
@@ -555,14 +555,11 @@ public class TestSimulationPipeline {
         }
     }
 
-    public static class TestModeChoiceConfigurator extends StandaloneModeChoiceConfigurator {
+    public static class TestConfigurator extends EqasimConfigurator {
+        public TestConfigurator(CommandLine commandLine) {
+            super(commandLine);
 
-        public TestModeChoiceConfigurator(Config config, CommandLine commandLine) {
-            super(config, commandLine);
-        }
-
-        public List<AbstractModule> getSpecificModeChoiceModules() {
-            return List.of(new AbstractEqasimExtension() {
+            registerModule(new AbstractEqasimExtension() {
                 @Override
                 public void installEqasimExtension() {
                     bind(ModeParameters.class);

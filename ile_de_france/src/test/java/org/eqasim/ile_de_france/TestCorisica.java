@@ -18,8 +18,8 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.ConfigWriter;
@@ -93,8 +93,7 @@ public class TestCorisica {
 					"--write-input-csv-trips", "true",
 					"--write-output-csv-trips", "true",
 					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output",
-					"--eqasim-configurator-class", IDFConfigurator.class.getName(),
-					"--mode-choice-configurator-class", IDFStandaloneModeChoiceConfigurator.class.getName(),
+					"--eqasim-configurator", IDFConfigurator.class.getName(),
 					"--simulate-after", RunSimulation.class.getName()
 			});
 		}
@@ -139,8 +138,7 @@ public class TestCorisica {
 					"--config:standaloneModeChoice.removePersonsWithNoValidAlternatives", "true",
 					"--write-input-csv-trips", "true",
 					"--write-output-csv-trips", "true",
-					"--eqasim-configurator-class", IDFConfigurator.class.getCanonicalName(),
-					"--mode-choice-configurator-class", IDFStandaloneModeChoiceConfigurator.class.getCanonicalName(),
+					"--eqasim-configurator", IDFConfigurator.class.getCanonicalName(),
 					"--simulate-after", RunSimulation.class.getName()
 			});
 		}

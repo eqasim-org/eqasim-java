@@ -284,7 +284,7 @@ public class EqasimConfigurator {
 		}
 	}
 
-	static public final String CONFIGURATOR = "configurator-class";
+	static public final String CONFIGURATOR = "eqasim-configurator";
 	static public final String DEFAULT_CONFIGURATOR = "org.eqasim.core.simulation.EqasimConfigurator";
 
 	static public EqasimConfigurator getInstance(CommandLine commandLine) {

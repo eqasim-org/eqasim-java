@@ -15,7 +15,6 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;

@@ -1,7 +1,6 @@
 package org.eqasim.core.components.emissions;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
