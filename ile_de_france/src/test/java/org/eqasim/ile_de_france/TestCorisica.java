@@ -19,6 +19,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.ConfigWriter;
@@ -40,8 +41,9 @@ public class TestCorisica {
 		FileUtils.deleteDirectory(new File("corsica_test"));
 	}
 
-	private void adjustConfig() {
-		IDFConfigurator configurator = new IDFConfigurator();
+	private void adjustConfig() throws ConfigurationException {
+		CommandLine cmd = new CommandLine.Builder(new String[0]).build();
+		IDFConfigurator configurator = new IDFConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig("corsica_test/corsica_config.xml");
 		configurator.updateConfig(config);
 		config.vehicles().setVehiclesFile("corsica_vehicles.xml.gz");

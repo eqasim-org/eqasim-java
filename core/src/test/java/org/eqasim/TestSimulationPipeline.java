@@ -3,7 +3,11 @@ package org.eqasim;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
@@ -16,9 +20,7 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtPassengerAnalysis;
@@ -38,14 +40,19 @@ import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
 import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.*;
+import org.eqasim.core.tools.ExportActivitiesToShapefile;
+import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
+import org.eqasim.core.tools.ExportNetworkToShapefile;
+import org.eqasim.core.tools.ExportPopulationToCSV;
+import org.eqasim.core.tools.ExportTransitLinesToShapefile;
+import org.eqasim.core.tools.ExportTransitStopsToShapefile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.population.*;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
@@ -55,7 +62,6 @@ import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-
 import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
@@ -105,8 +111,6 @@ public class TestSimulationPipeline {
 
         Controler controller = new Controler(scenario);
         eqasimConfigurator.configureController(controller);
-        controller.addOverridingModule(new EqasimModeChoiceModule());
-        controller.addOverridingModule(new EqasimAnalysisModule());
         controller.addOverridingModule(new AbstractEqasimExtension() {
             @Override
             protected void installEqasimExtension() {

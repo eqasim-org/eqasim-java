@@ -12,7 +12,11 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
@@ -20,9 +24,7 @@ import org.eqasim.core.components.emissions.RunComputeEmissionsEvents;
 import org.eqasim.core.components.emissions.RunExportEmissionsNetwork;
 import org.eqasim.core.components.emissions.SafeOsmHbefaMapping;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.junit.After;
@@ -88,8 +90,6 @@ public class TestEmissions {
 
 		Controler controller = new Controler(scenario);
 		eqasimConfigurator.configureController(controller);
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new AbstractEqasimExtension() {
 			@Override
 			protected void installEqasimExtension() {
