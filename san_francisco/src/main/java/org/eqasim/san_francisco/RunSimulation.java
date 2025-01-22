@@ -3,9 +3,6 @@ package org.eqasim.san_francisco;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.san_francisco.mode_choice.SanFranciscoModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -21,7 +18,7 @@ public class RunSimulation {
 				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new SanFranciscoConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		EqasimConfigGroup.get(config).setAnalysisInterval(5);
@@ -41,10 +38,6 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new SanFranciscoModeChoiceModule(cmd));
-		controller.addOverridingModule(new EqasimAnalysisModule());
-		// controller.addOverridingModule(new CalibrationModule());
 		controller.run();
 	}
 }

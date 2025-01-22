@@ -3,9 +3,10 @@ package org.eqasim;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.TestConfigurator.TestModeAvailability;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
@@ -16,9 +17,7 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtPassengerAnalysis;
@@ -37,25 +36,25 @@ import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
-import org.eqasim.core.standalone_mode_choice.StandaloneModeChoiceConfigurator;
-import org.eqasim.core.tools.*;
+import org.eqasim.core.tools.ExportActivitiesToShapefile;
+import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
+import org.eqasim.core.tools.ExportNetworkToShapefile;
+import org.eqasim.core.tools.ExportPopulationToCSV;
+import org.eqasim.core.tools.ExportTransitLinesToShapefile;
+import org.eqasim.core.tools.ExportTransitStopsToShapefile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.population.*;
-import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
-import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-
 import org.matsim.core.utils.misc.CRCChecksum;
 
 import com.google.inject.Inject;
@@ -75,17 +74,17 @@ public class TestSimulationPipeline {
         FileUtils.deleteDirectory(new File("melun_test"));
     }
 
-    private void runMelunSimulation(String configPath, String outputPath) {
+    private void runMelunSimulation(String configPath, String outputPath) throws ConfigurationException {
         runMelunSimulation(configPath, outputPath, null, null);
     }
 
-    private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) {
+    private void runMelunSimulation(String configPath, String outputPath, String inputPlansFile, Integer lastIteration) throws ConfigurationException {
         Config config = ConfigUtils.loadConfig(configPath);
         runMelunSimulation(config, outputPath, inputPlansFile, lastIteration);
     }
 
-    private void runMelunSimulation(Config config, String outputPath, String inputPlansFile, Integer lastIteration) {
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+    private void runMelunSimulation(Config config, String outputPath, String inputPlansFile, Integer lastIteration) throws ConfigurationException {
+        EqasimConfigurator eqasimConfigurator = new TestConfigurator();
 
         eqasimConfigurator.updateConfig(config);
         ((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME)).setOutputDirectory(outputPath);
@@ -105,8 +104,6 @@ public class TestSimulationPipeline {
 
         Controler controller = new Controler(scenario);
         eqasimConfigurator.configureController(controller);
-        controller.addOverridingModule(new EqasimModeChoiceModule());
-        controller.addOverridingModule(new EqasimAnalysisModule());
         controller.addOverridingModule(new AbstractEqasimExtension() {
             @Override
             protected void installEqasimExtension() {
@@ -212,18 +209,20 @@ public class TestSimulationPipeline {
                 "--plans-path", "melun_test/output/output_plans.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--output-path", "melun_test/exports/network_routes.gpkg",
-                "--crs", "EPSG:2154"
+                "--crs", "EPSG:2154",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
     }
     
     private void runCutter() throws Exception {
-    	RunScenarioCutter.main(new String[] {
-    		"--config-path", "melun_test/input/config.xml",
-    		"--events-path", "melun_test/output/output_events.xml.gz",
+        RunScenarioCutter.main(new String[] {
+            "--config-path", "melun_test/input/config.xml",
+            "--events-path", "melun_test/output/output_events.xml.gz",
             "--output-path", "melun_test/cutter",
             "--prefix", "center_",
-            "--extent-path", "melun_test/input/center.shp"
-    	});
+            "--extent-path", "melun_test/input/center.shp",
+            "--eqasim-configurator", TestConfigurator.class.getName()
+        });
 
         runMelunSimulation("melun_test/cutter/center_config.xml", "melun_test/output_cutter");
     }
@@ -236,7 +235,8 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/cutter_v2",
                 "--prefix", "center_",
                 "--extent-path", "melun_test/input/center.shp",
-                "--flag-area-link-modes", "true"
+                "--flag-area-link-modes", "true",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
         CreateDrtVehicles.main(new String[]{
@@ -252,7 +252,8 @@ public class TestSimulationPipeline {
                 "--vehicles-paths", "melun_test/cutter_v2/drt_vehicles.xml",
                 "--operational-schemes", "serviceAreaBased",
                 "--config:multiModeDrt.drt[mode=drt].drtServiceAreaShapeFile", "extent/center.shp",
-                "--config:dvrp.networkModes", "inside_car"
+                "--config:dvrp.networkModes", "inside_car",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
         runMelunSimulation("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_cutter_v2_drt");
@@ -260,9 +261,9 @@ public class TestSimulationPipeline {
         compareVdfTravelTimes("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_vdf/vdf_travel_times.bin", "melun_test/output_cutter_v2_drt/vdf_travel_times.bin", "melun_test/input/center.shp");
     }
 
-    private void compareVdfTravelTimes(String configPath, String leftTravelTimesPath, String rightTravelTimesPath, String updateExtentPath) throws IOException {
+    private void compareVdfTravelTimes(String configPath, String leftTravelTimesPath, String rightTravelTimesPath, String updateExtentPath) throws IOException, ConfigurationException {
         Config config = ConfigUtils.loadConfig(configPath);
-        new EqasimConfigurator().updateConfig(config);
+        new TestConfigurator().updateConfig(config);
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
@@ -314,7 +315,8 @@ public class TestSimulationPipeline {
                 "--output-config-path", "melun_test/input/config_drt.xml",
                 "--mode-names", "drt_a,drt_b",
                 "--vehicles-paths", "melun_test/input/drt_vehicles_a.xml.gz,melun_test/input/drt_vehicles_b.xml.gz",
-                "--add-leg-time-constraint", "false,true"
+                "--add-leg-time-constraint", "false,true",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
         runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt");
@@ -357,7 +359,8 @@ public class TestSimulationPipeline {
                 "--output-config-path", "melun_test/input/config_feeder.xml",
                 "--mode-names", "drt_for_feeder_a,drt_for_feeder_b",
                 "--vehicles-paths", "melun_test/input/feeder_drt_vehicles_a.xml.gz,melun_test/input/feeder_drt_vehicles_b.xml.gz",
-                "--add-leg-time-constraint", "false,true"
+                "--add-leg-time-constraint", "false,true",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
 
@@ -367,7 +370,8 @@ public class TestSimulationPipeline {
                 "--mode-names", "feeder_a,feeder_b",
                 "--base-drt-modes", "drt_for_feeder_a,drt_for_feeder_b",
                 "--access-egress-transit-stop-modes", "rail|tram|subway",
-                "--access-egress-transit-stop-ids", "IDFM:482345.link:305887|IDFM:31170.link:618272|IDFM:462597.link:511974"
+                "--access-egress-transit-stop-ids", "IDFM:482345.link:305887|IDFM:31170.link:618272|IDFM:462597.link:511974",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
         runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output_feeder");
@@ -376,7 +380,8 @@ public class TestSimulationPipeline {
                 "--config-path", "melun_test/input/config_feeder.xml",
                 "--events-path", "melun_test/output_feeder/output_events.xml.gz",
                 "--network-path", "melun_test/output_feeder/output_network.xml.gz",
-                "--output-path", "melun_test/output_feeder/eqasim_feeder_drt_trips_standalone.csv"
+                "--output-path", "melun_test/output_feeder/eqasim_feeder_drt_trips_standalone.csv",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
     }
 
@@ -421,7 +426,8 @@ public class TestSimulationPipeline {
                 "--output-config-path", "melun_test/input/config_vdf.xml",
                 "--engine", "true",
                 // We need to do this for DRT as DRT drivers are not PlanAgents
-                "--config:eqasim:vdf_engine.generateNetworkEvents", "true"
+                "--config:eqasim:vdf_engine.generateNetworkEvents", "true",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
         runMelunSimulation("melun_test/input/config_vdf.xml", "melun_test/output_vdf");
@@ -433,7 +439,8 @@ public class TestSimulationPipeline {
                 "--output-config-path", "melun_test/input/config_vdf_horizon.xml",
                 "--engine", "true",
                 "--config:eqasim:vdf_engine.generateNetworkEvents", "true",
-                "--config:eqasim:vdf.handler", "Horizon"
+                "--config:eqasim:vdf.handler", "Horizon",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
         runMelunSimulation("melun_test/input/config_vdf_horizon.xml", "melun_test/output_vdf_horizon");
@@ -444,7 +451,7 @@ public class TestSimulationPipeline {
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_vdf",
                 "--config:eqasim:vdf.inputTravelTimesFile", "../output_vdf/vdf_travel_times.bin", // Relative to the config file
-                "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
+                "--eqasim-configurator", TestConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
         });
 
@@ -458,7 +465,8 @@ public class TestSimulationPipeline {
         AdaptConfigForDrt.main(new String[]{
                 "--input-config-path", "melun_test/input/config_vdf.xml",
                 "--output-config-path", "melun_test/input/config_vdf_drt.xml",
-                "--vehicles-paths", "melun_test/input/drt_vehicles.xml.gz"
+                "--vehicles-paths", "melun_test/input/drt_vehicles.xml.gz",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
         runMelunSimulation("melun_test/input/config_vdf_drt.xml", "melun_test/output_vdf_drt");
@@ -477,7 +485,7 @@ public class TestSimulationPipeline {
     }
 
     @Test
-    public void testBaseDeterminism() {
+    public void testBaseDeterminism() throws ConfigurationException {
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
         runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);
 
@@ -494,11 +502,13 @@ public class TestSimulationPipeline {
     public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--output-path", "melun_test/output/routed_population.xml"
+                "--output-path", "melun_test/output/routed_population.xml",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--output-path", "melun_test/output/routed_population_again.xml"
+                "--output-path", "melun_test/output/routed_population_again.xml",
+                "--eqasim-configurator", TestConfigurator.class.getName()
         });
         assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
@@ -510,7 +520,7 @@ public class TestSimulationPipeline {
                 "--write-input-csv-trips", "true",
                 "--write-output-csv-trips", "true",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice",
-                "--mode-choice-configurator-class", TestModeChoiceConfigurator.class.getName(),
+                "--eqasim-configurator", TestConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
         });
     }
@@ -527,40 +537,6 @@ public class TestSimulationPipeline {
             Integer lastIteration = lastIterationOption.isPresent() ? Integer.parseInt(lastIterationOption.get()) : null;
             String inputPlansFile = commandLine.getOption("config:plans.inputPlansFile").orElse(null);
             new TestSimulationPipeline().runMelunSimulation(configPath, outputDirectory, inputPlansFile, lastIteration);
-        }
-    }
-
-    private static class TestModeAvailability implements ModeAvailability {
-        @Override
-        public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
-            Set<String> modes = new HashSet<>();
-            modes.add(TransportMode.walk);
-            modes.add(TransportMode.pt);
-            modes.add(TransportMode.car);
-            modes.add(TransportMode.bike);
-            // Add special mode "car_passenger" if applicable
-            Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-            if (isCarPassenger) {
-                modes.add("car_passenger");
-            }
-            return modes;
-        }
-    }
-
-    public static class TestModeChoiceConfigurator extends StandaloneModeChoiceConfigurator {
-
-        public TestModeChoiceConfigurator(Config config, CommandLine commandLine) {
-            super(config, commandLine);
-        }
-
-        public List<AbstractModule> getSpecificModeChoiceModules() {
-            return List.of(new AbstractEqasimExtension() {
-                @Override
-                public void installEqasimExtension() {
-                    bind(ModeParameters.class);
-                    bindModeAvailability("DefaultModeAvailability").to(TestModeAvailability.class);
-                }
-            });
         }
     }
 }

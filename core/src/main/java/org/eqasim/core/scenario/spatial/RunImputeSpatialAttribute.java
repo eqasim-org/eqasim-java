@@ -25,7 +25,7 @@ public class RunImputeSpatialAttribute {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.allowOptions("input-population-path", "input-network-path", "output-population-path",
 						"output-network-path") //
-				.requireOptions("shape-path", "shape-attribute", "shape-value", "attribute") //
+				.requireOptions("shape-path", "shape-attribute", "shape-value", "attribute", EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
 		if (cmd.hasOption("input-population-path") ^ cmd.hasOption("output-population-path")) {
@@ -45,7 +45,7 @@ public class RunImputeSpatialAttribute {
 
 		// Set up imputation
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 		Config config = ConfigUtils.createConfig();
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
