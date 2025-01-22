@@ -82,13 +82,14 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				event.getServices().getEvents().addHandler(tripAnalysisListener);
 				event.getServices().getEvents().addHandler(legAnalysisListener);
 				event.getServices().getEvents().addHandler(ptAnalysisListener);
+				event.getServices().getEvents().addHandler(activityAnalysisListener);
 			}
 		}
 
 		if (travelTimeInterval > 0) {
 			if (event.getIteration() % travelTimeInterval == 0 || event.isLastIteration()) {
 				isTravelTimeActive = true;
-				event.getServices().getEvents().addHandler(activityAnalysisListener);
+				event.getServices().getEvents().addHandler(travelTimeRecorder);
 			}
 		}
 	}
