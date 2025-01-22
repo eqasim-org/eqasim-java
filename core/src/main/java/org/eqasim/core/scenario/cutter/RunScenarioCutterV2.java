@@ -108,7 +108,7 @@ public class RunScenarioCutterV2 {
         Set<String> insideModes = new HashSet<>();
         if(Boolean.parseBoolean(cmd.getOption("flag-area-link-modes").orElse("false"))) {
             scenario.getNetwork().getLinks().values()
-                    .stream().filter(link -> extent.isInside(link.getFromNode().getCoord()) && extent.isInside(link.getFromNode().getCoord()))
+                    .stream().filter(link -> extent.isInside(link.getFromNode().getCoord()) && extent.isInside(link.getToNode().getCoord()))
                     .forEach(link -> {
                         Set<String> linkModes = new HashSet<>(link.getAllowedModes());
                         for(String mode: link.getAllowedModes()) {
