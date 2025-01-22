@@ -294,7 +294,8 @@ public abstract class EqasimConfigurator {
 	static public final String ENVIONRMENT_VARIABLE = "eqasim_configurator";
 	static public final String CONFIGURATOR = "eqasim-configurator";
 
-	static public final String PROPERTY = "eqasim.configurator";
+	static public final String PROPERTY = "configurator";
+	static public final String PROPERTIES_FILE = "eqasim.properties";
 
 	static public EqasimConfigurator getInstance(CommandLine commandLine) throws ConfigurationException {
 		String configurator = null;
@@ -311,16 +312,20 @@ public abstract class EqasimConfigurator {
 			} else {
 				try {
 					Properties properties = new Properties();
-					properties.load(EqasimConfigurator.class.getClassLoader().getResourceAsStream("eqasim.properties"));
-					configurator = properties.getProperty("configurator");
+					properties.load(EqasimConfigurator.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE));
+					configurator = properties.getProperty(PROPERTY);
 				} catch (IOException | NullPointerException e) {
 				}
 
 				if (configurator != null) {
 					logger.info("  Found as property: " + configurator);
 				} else {
-					logger.info("  Don't know which eqasim configurator to use.");
-					throw new IllegalStateException("Don't know which eqasim configurator to use.");
+					logger.error("  The script you have called requires to configure an EqasimConfigurator.");
+					logger.error("  However, it has not been found in your configuration. You can:");
+					logger.error("  - Pass a configurator via the command line using --" + CONFIGURATOR);
+					logger.error("  - Pass a configurator via the environment variable " + ENVIONRMENT_VARIABLE);
+					logger.error("  - Define a default configurator in the " + PROPERTIES_FILE + " file in your JAR");
+					throw new IllegalStateException("Missing eqasim configurator");
 				}
 			}
 		}
