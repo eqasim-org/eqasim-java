@@ -1,12 +1,16 @@
 package org.eqasim.core.simulation;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.function.BiConsumer;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
@@ -285,18 +289,49 @@ public abstract class EqasimConfigurator {
 		}
 	}
 
+	private static final Logger logger = LogManager.getLogger(EqasimConfigurator.class);
+
+	static public final String ENVIONRMENT_VARIABLE = "eqasim_configurator";
 	static public final String CONFIGURATOR = "eqasim-configurator";
 
+	static public final String PROPERTY = "eqasim.configurator";
+
 	static public EqasimConfigurator getInstance(CommandLine commandLine) throws ConfigurationException {
-		String configurator = commandLine.getOptionStrict(CONFIGURATOR);
-		
+		String configurator = null;
+
+		logger.info("Identifying eqasim configurator ...");
+		if (commandLine.hasOption(CONFIGURATOR)) {
+			configurator = commandLine.getOptionStrict(CONFIGURATOR);
+			logger.info("  Found on command line: " + configurator);
+		} else {
+			configurator = System.getenv(ENVIONRMENT_VARIABLE);
+
+			if (configurator != null) {
+				logger.info("  Found on environment: " + configurator);
+			} else {
+				try {
+					Properties properties = new Properties();
+					properties.load(EqasimConfigurator.class.getClassLoader().getResourceAsStream("eqasim.properties"));
+					configurator = properties.getProperty("configurator");
+				} catch (IOException | NullPointerException e) {
+				}
+
+				if (configurator != null) {
+					logger.info("  Found as property: " + configurator);
+				} else {
+					logger.info("  Don't know which eqasim configurator to use.");
+					throw new IllegalStateException("Don't know which eqasim configurator to use.");
+				}
+			}
+		}
+
 		try {
 			Class<?> clazz = Class.forName(configurator);
 
 			if (EqasimConfigurator.class.isAssignableFrom(clazz)) {
 				try {
 					Constructor<?> constructor = clazz.getConstructor(CommandLine.class);
-					
+
 					try {
 						return (EqasimConfigurator) constructor.newInstance(commandLine);
 					} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
