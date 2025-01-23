@@ -99,7 +99,8 @@ public class ExportLinkTraversals {
 
 			try {
 				writer.write(String.join(";", Arrays.asList( //
-						"person_id", "vehicle_id", "link_id", "enter_time", "leave_time", "trip_index", "leg_index", "leg_mode"))
+						"person_id", "vehicle_id", "link_id", "enter_time", "leave_time", "trip_index", "leg_index",
+						"leg_mode"))
 						+ "\n");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
@@ -170,7 +171,7 @@ public class ExportLinkTraversals {
 
 			int localTripIndex = tripIndex.getOrDefault(personId, 0);
 			int localLegIndex = legIndex.getOrDefault(personId, 0);
-			String localLegMode = legMode.get(personId);
+			String localLegMode = legMode.get(vehicleId);
 
 			try {
 				writer.write(String.join(";", new String[] { //
