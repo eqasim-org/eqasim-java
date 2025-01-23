@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.locationtech.jts.geom.Coordinate;
@@ -36,15 +35,10 @@ public class RunExportEmissionsNetwork {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path") //
                 .allowOptions("time-bin-size")
-                .allowOptions("pollutants", "configurator-class")
+                .allowOptions("pollutants", EqasimConfigurator.CONFIGURATOR)
                 .build();
 
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
         
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         configurator.updateConfig(config);

@@ -1,7 +1,18 @@
 package org.eqasim.core.tools;
 
-import org.eqasim.core.misc.ClassUtils;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -26,13 +37,6 @@ import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.geotools.api.feature.simple.SimpleFeature;
-import org.geotools.api.feature.simple.SimpleFeatureType;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class ExportNetworkRoutesToGeopackage {
 
@@ -95,7 +99,7 @@ public class ExportNetworkRoutesToGeopackage {
     public static void main(String[] args) throws CommandLine.ConfigurationException, IOException {
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("network-path", "plans-path", "output-path", "crs")
-                .allowOptions("configurator-class")
+                .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .allowOptions("main-modes", "leg-modes")
                 .build();
 
@@ -106,7 +110,7 @@ public class ExportNetworkRoutesToGeopackage {
         Set<String> mainModes = commandLine.hasOption("main-modes") ? Arrays.stream(commandLine.getOptionStrict("main-modes").split(",")).map(String::trim).collect(Collectors.toSet()) : new HashSet<>();
         Set<String> legModes = commandLine.hasOption("leg-modes") ? Arrays.stream(commandLine.getOptionStrict("leg-modes").split(",")).map(String::trim).collect(Collectors.toSet()) : new HashSet<>();
 
-        EqasimConfigurator configurator = commandLine.hasOption("configurator-class") ? ClassUtils.getInstanceOfClassExtendingOtherClass(commandLine.getOptionStrict("configurator"), EqasimConfigurator.class) : new EqasimConfigurator();
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(commandLine);
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         configurator.configureScenario(scenario);

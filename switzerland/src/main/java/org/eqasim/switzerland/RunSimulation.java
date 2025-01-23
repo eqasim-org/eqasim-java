@@ -1,8 +1,5 @@
 package org.eqasim.switzerland;
 
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.switzerland.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -21,7 +18,7 @@ public class RunSimulation {
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic") //
 				.build();
 
-		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator();
+		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		cmd.applyConfiguration(config);
@@ -41,10 +38,6 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-		controller.addOverridingModule(new EqasimAnalysisModule());
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new SwissModeChoiceModule(cmd));
-
 		controller.run();
 	}
 }

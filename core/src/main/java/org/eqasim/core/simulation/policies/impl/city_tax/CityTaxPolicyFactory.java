@@ -56,7 +56,7 @@ public class CityTaxPolicyFactory implements PolicyFactory {
 		IdSet<Link> linkIds = PolicyLinkFinder
 				.create(new File(
 						ConfigGroup.getInputFileURL(config.getContext(), enterConfig.perimetersPath).getPath()))
-				.findLinks(network, Predicate.Entering);
+				.findLinks(network, Predicate.Entering, false);
 
 		logger.info("  Affected entering links: " + linkIds.size());
 

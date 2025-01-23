@@ -4,12 +4,9 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.ile_de_france.IDFConfigurator;
-import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -30,7 +27,7 @@ public class RunCorsicaVDFEngineSimulation {
 				.allowPrefixes("mode-parameter", "cost-parameter") //
 				.build();
 
-		IDFConfigurator configurator = new IDFConfigurator();
+		IDFConfigurator configurator = new IDFConfigurator(cmd);
 
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
 		Config config = ConfigUtils.loadConfig(configUrl);
@@ -69,9 +66,6 @@ public class RunCorsicaVDFEngineSimulation {
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-		controller.addOverridingModule(new EqasimAnalysisModule());
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 
 		controller.run();
 	}

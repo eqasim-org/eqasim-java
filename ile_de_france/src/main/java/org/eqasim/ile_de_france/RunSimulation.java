@@ -1,9 +1,6 @@
 package org.eqasim.ile_de_france;
 
 import org.eqasim.core.scenario.validation.VehiclesValidator;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -19,9 +16,10 @@ public class RunSimulation {
 				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
 				.build();
 
-		IDFConfigurator configurator = new IDFConfigurator();
+		IDFConfigurator configurator = new IDFConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
+
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
 
@@ -32,9 +30,6 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-		controller.addOverridingModule(new EqasimAnalysisModule());
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 		controller.run();
 	}
 }
