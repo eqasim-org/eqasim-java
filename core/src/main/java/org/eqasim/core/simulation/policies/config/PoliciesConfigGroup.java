@@ -2,10 +2,10 @@ package org.eqasim.core.simulation.policies.config;
 
 import org.eqasim.core.simulation.policies.impl.city_tax.CityTaxConfigGroup;
 import org.eqasim.core.simulation.policies.impl.city_tax.CityTaxPolicyFactory;
+import org.eqasim.core.simulation.policies.impl.discount.DiscountConfigGroup;
+import org.eqasim.core.simulation.policies.impl.discount.DiscountPolicyFactory;
 import org.eqasim.core.simulation.policies.impl.limited_traffic_zone.LimitedTrafficZoneConfigGroup;
 import org.eqasim.core.simulation.policies.impl.limited_traffic_zone.LimitedTrafficZonePolicyFactory;
-import org.eqasim.core.simulation.policies.impl.transit_discount.TransitDiscountConfigGroup;
-import org.eqasim.core.simulation.policies.impl.transit_discount.TransitDiscountPolicyFactory;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
@@ -24,8 +24,8 @@ public class PoliciesConfigGroup extends ReflectiveConfigGroup {
 			return new CityTaxConfigGroup();
 		case LimitedTrafficZonePolicyFactory.POLICY_NAME:
 			return new LimitedTrafficZoneConfigGroup();
-		case TransitDiscountPolicyFactory.POLICY_NAME:
-			return new TransitDiscountConfigGroup();
+		case DiscountPolicyFactory.POLICY_NAME:
+			return new DiscountConfigGroup();
 		default:
 			throw new IllegalStateException();
 		}

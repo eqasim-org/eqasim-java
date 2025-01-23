@@ -11,10 +11,10 @@ import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.policies.config.PolicyConfigGroup;
 import org.eqasim.core.simulation.policies.impl.city_tax.CityTaxPolicyExtension;
 import org.eqasim.core.simulation.policies.impl.city_tax.CityTaxPolicyFactory;
+import org.eqasim.core.simulation.policies.impl.discount.DiscountPolicyExtension;
+import org.eqasim.core.simulation.policies.impl.discount.DiscountPolicyFactory;
 import org.eqasim.core.simulation.policies.impl.limited_traffic_zone.LimitedTrafficZonePolicyExtension;
 import org.eqasim.core.simulation.policies.impl.limited_traffic_zone.LimitedTrafficZonePolicyFactory;
-import org.eqasim.core.simulation.policies.impl.transit_discount.TransitDiscountPolicyExtension;
-import org.eqasim.core.simulation.policies.impl.transit_discount.TransitDiscountPolicyFactory;
 import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.eqasim.core.simulation.policies.routing.SumRoutingPenalty;
 import org.eqasim.core.simulation.policies.utility.SumPenalty;
@@ -32,12 +32,12 @@ public class PolicyModule extends AbstractModule {
 	public void install() {
 		install(new CityTaxPolicyExtension());
 		install(new LimitedTrafficZonePolicyExtension());
-		install(new TransitDiscountPolicyExtension());
+		install(new DiscountPolicyExtension());
 
 		var policyBinder = MapBinder.newMapBinder(binder(), String.class, PolicyFactory.class);
 		policyBinder.addBinding(CityTaxPolicyFactory.POLICY_NAME).to(CityTaxPolicyFactory.class);
 		policyBinder.addBinding(LimitedTrafficZonePolicyFactory.POLICY_NAME).to(LimitedTrafficZonePolicyFactory.class);
-		policyBinder.addBinding(TransitDiscountPolicyFactory.POLICY_NAME).to(TransitDiscountPolicyFactory.class);
+		policyBinder.addBinding(DiscountPolicyFactory.POLICY_NAME).to(DiscountPolicyFactory.class);
 	}
 
 	@Provides
