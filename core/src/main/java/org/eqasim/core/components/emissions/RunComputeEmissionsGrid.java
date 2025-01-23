@@ -1,6 +1,5 @@
 package org.eqasim.core.components.emissions;
 
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.locationtech.jts.geom.Geometry;
@@ -19,15 +18,10 @@ public class RunComputeEmissionsGrid {
 
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "domain-shp-path") //
-                .allowOptions("scale-factor", "grid-size", "smooth-radius", "time-bin-size", "configurator-class")
+                .allowOptions("scale-factor", "grid-size", "smooth-radius", "time-bin-size", EqasimConfigurator.CONFIGURATOR)
                 .build();
         
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         configurator.updateConfig(config);

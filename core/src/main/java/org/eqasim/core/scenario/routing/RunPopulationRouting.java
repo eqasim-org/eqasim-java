@@ -25,10 +25,10 @@ public class RunPopulationRouting {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
-				.allowOptions("threads", "batch-size", "modes") //
+				.allowOptions("threads", "batch-size", "modes", EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		config.getModules().remove(EqasimTerminationConfigGroup.GROUP_NAME);
@@ -58,10 +58,8 @@ public class RunPopulationRouting {
 			}
 		}
 
-		Injector injector = new InjectorBuilder(scenario) //
-				.addOverridingModules(configurator.getModules(config).stream()
-						.filter(module -> !(module instanceof AbstractEqasimExtension)) //
-						.filter(module -> !(module instanceof DiscreteModeChoiceModule)).toList()) //
+		// TODO: Check what we can remove here
+		Injector injector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
 				.addOverridingModule(new TimeInterpretationModule()).build();
 

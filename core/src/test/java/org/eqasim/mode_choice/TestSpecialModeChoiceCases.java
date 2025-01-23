@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.TestConfigurator;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.misc.InjectorBuilder;
@@ -167,7 +168,7 @@ public class TestSpecialModeChoiceCases {
 		EqasimConfigGroup.get(config).setEstimator("bike", EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
 
 		// Now create the model
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new TestConfigurator();
 		
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		
@@ -178,17 +179,11 @@ public class TestSpecialModeChoiceCases {
 		scenario.getNetwork().addNode(node);
 		scenario.getNetwork().addLink(link);
 		
-		Injector injector = new InjectorBuilder(scenario) //
+		// TODO: Check if we can remove stuff
+		Injector injector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModules(configurator.getModules(config)) //
-				.addOverridingModule(new EqasimModeChoiceModule()) //
 				.addOverridingModule(new StaticModeAvailabilityModule()) //
 				.addOverridingModule(new TimeInterpretationModule()) //
-				.addOverridingModule(new AbstractModule() {
-					@Override
-					public void install() {
-						bind(OutputDirectoryHierarchy.class).toInstance(new OutputDirectoryHierarchy(scenario.getConfig()));
-					}
-				})
 				.build();
 
 		DiscreteModeChoiceModel model = injector.getInstance(DiscreteModeChoiceModel.class);
