@@ -67,7 +67,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 			linkIds = PolicyLinkFinder
 					.create(new File(
 							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
-					.findLinks(network, Predicate.Inside);
+					.findLinks(network, Predicate.Inside, true);
 
 			logger.info("  Affected inside links: " + linkIds.size());
 		} else if (!ltzConfig.linkListPath.isEmpty()) {
