@@ -125,15 +125,13 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 			Set<Id<Link>> incoming = new HashSet<>(currentLink.getFromNode().getInLinks().keySet());
 			Set<Id<Link>> outgoing = new HashSet<>(currentLink.getToNode().getOutLinks().keySet());
 
-			int totalIncoming = incoming.size();
-			int totalOutgoing = outgoing.size();
-
 			incoming.removeIf(area::contains);
 			outgoing.removeIf(area::contains);
 
-			// this link can only be reached and only leads to the policy area, hence, it is
-			// not an edge
-			boolean isInternal = incoming.size() == totalIncoming && outgoing.size() == totalOutgoing;
+			// this link can only be reached from within the area (as there are no external
+			// inlinks)
+			// this links only leads to within the area (as there are not external outlinks)
+			boolean isInternal = incoming.size() == 0 && outgoing.size() == 0;
 
 			if (!isInternal) {
 				active.add(currentId);
