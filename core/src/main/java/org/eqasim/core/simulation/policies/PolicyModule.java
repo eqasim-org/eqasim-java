@@ -65,7 +65,7 @@ public class PolicyModule extends AbstractModule {
 							throw new IllegalStateException("Duplicate policy name: " + policy.policyName);
 						}
 
-						PolicyPersonFilter filter = PolicyPersonFilter.create(population, policy);
+						PolicyPersonFilter filter = AttributePersonFilter.create(population, policy);
 
 						policies.put(policy.policyName,
 								factories.get(policy.getName()).createPolicy(policy.policyName, filter));

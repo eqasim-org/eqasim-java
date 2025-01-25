@@ -21,9 +21,14 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.TripStructureUtils.StageActivityHandling;
 import org.matsim.core.utils.io.IOUtils;
 
 public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
@@ -35,11 +40,14 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 
 	private final Config config;
 	private final Network network;
+	private final Population population;
 	private final OutputDirectoryHierarchy outputHierarchy;
 
-	public LimitedTrafficZonePolicyFactory(Config config, Network network, OutputDirectoryHierarchy outputHierarchy) {
+	public LimitedTrafficZonePolicyFactory(Config config, Network network, Population population,
+			OutputDirectoryHierarchy outputHierarchy) {
 		this.config = config;
 		this.network = network;
+		this.population = population;
 		this.outputHierarchy = outputHierarchy;
 	}
 
@@ -67,32 +75,68 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 					"Only one of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
 		}
 
-		IdSet<Link> links;
+		IdSet<Link> policyLinks;
+		IdSet<Link> residencyLinks;
+
 		if (!ltzConfig.perimetersPath.isEmpty()) {
 			logger.info("  Perimeters: " + ltzConfig.perimetersPath);
 
-			links = PolicyLinkFinder
+			residencyLinks = PolicyLinkFinder
+					.create(new File(
+							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
+					.findLinks(network, Predicate.Inside);
+
+			policyLinks = PolicyLinkFinder
 					.create(new File(
 							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
 					.findLinks(network, Predicate.Crossing);
 		} else if (!ltzConfig.linkListPath.isEmpty()) {
 			logger.info("  Link list: " + ltzConfig.linkListPath);
 
-			links = loadLinkList(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.linkListPath).getPath(),
+			var links = loadLinkList(
+					ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.linkListPath).getPath(),
 					network, ltzConfig.policyName);
+
+			policyLinks = links.active();
+			residencyLinks = links.area();
 		} else {
 			throw new IllegalStateException(
 					"One of perimetersPath and linkListPath must be set for policy " + ltzConfig.policyName);
 		}
 
-		logger.info("  Affected active links (penalized): " + links.size());
-		new PolicyLinkWriter(outputHierarchy).write(ltzConfig.policyName, links);
+		logger.info("  Affected active links (penalized): " + policyLinks.size());
+		new PolicyLinkWriter(outputHierarchy).write(ltzConfig.policyName, policyLinks);
 
-		return new DefaultPolicy(new FixedRoutingPenalty(links, routingPenalty, personFilter),
-				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, links, personFilter));
+		IdSet<Person> residentIds = new IdSet<>(Person.class);
+		if (ltzConfig.considerResidency) {
+			for (Person person : population.getPersons().values()) {
+				for (Activity activity : TripStructureUtils.getActivities(person.getSelectedPlan(),
+						StageActivityHandling.ExcludeStageActivities)) {
+					if (activity.getType().equals("home")) {
+						residentIds.add(person.getId());
+						break;
+					}
+				}
+			}
+
+			logger.info("  Found " + residentIds.size() + " residents in the area");
+		} else {
+			logger.info("  Not cosnidering residency of agents");
+		}
+
+		PolicyPersonFilter delegateFilter = personId -> {
+			if (residentIds.contains(personId)) {
+				return false;
+			} else {
+				return personFilter.applies(personId);
+			}
+		};
+
+		return new DefaultPolicy(new FixedRoutingPenalty(policyLinks, routingPenalty, delegateFilter),
+				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, policyLinks, delegateFilter));
 	}
 
-	private static IdSet<Link> loadLinkList(String path, Network network, String policy) {
+	private static ZoneLinks loadLinkList(String path, Network network, String policy) {
 		IdSet<Link> area = new IdSet<>(Link.class);
 
 		try {
@@ -141,6 +185,9 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 			}
 		}
 
-		return active;
+		return new ZoneLinks(active, area);
+	}
+
+	private record ZoneLinks(IdSet<Link> active, IdSet<Link> area) {
 	}
 }

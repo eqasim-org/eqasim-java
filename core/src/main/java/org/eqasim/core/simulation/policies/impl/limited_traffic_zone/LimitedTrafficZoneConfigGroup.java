@@ -14,4 +14,8 @@ public class LimitedTrafficZoneConfigGroup extends PolicyConfigGroup {
 	@Parameter
 	@Comment("Alternative: Path to a file containing one link id per line. Those links are tagged as being inside of the zone.")
 	public String linkListPath = "";
+
+	@Parameter
+	@Comment("If true, the LTZ penalties are not applied to agents with a home activity in the area.")
+	public boolean considerResidency = true;
 }
