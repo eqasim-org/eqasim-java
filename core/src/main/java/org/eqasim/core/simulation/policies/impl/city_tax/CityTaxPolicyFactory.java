@@ -12,11 +12,14 @@ import org.eqasim.core.simulation.policies.PolicyPersonFilter;
 import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.policies.routing.FixedRoutingPenalty;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder;
-import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.PolicyLinks;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.Predicate;
+import org.eqasim.core.simulation.policies.routing.PolicyLinkWriter;
+import org.matsim.api.core.v01.IdSet;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 public class CityTaxPolicyFactory implements PolicyFactory {
 	private static final Logger logger = LogManager.getLogger(CityTaxPolicyFactory.class);
@@ -25,12 +28,15 @@ public class CityTaxPolicyFactory implements PolicyFactory {
 
 	private final Config config;
 	private final Network network;
+	private final OutputDirectoryHierarchy outputHierarchy;
 	private final ModeParameters modeParameters;
 
-	public CityTaxPolicyFactory(Config config, Network network, ModeParameters modeParameters) {
+	public CityTaxPolicyFactory(Config config, Network network, OutputDirectoryHierarchy outputHierarchy,
+			ModeParameters modeParameters) {
 		this.config = config;
 		this.network = network;
 		this.modeParameters = modeParameters;
+		this.outputHierarchy = outputHierarchy;
 	}
 
 	@Override
@@ -52,17 +58,18 @@ public class CityTaxPolicyFactory implements PolicyFactory {
 		logger.info("  Perimeters: " + enterConfig.perimetersPath);
 		logger.info("  Tax level: " + enterConfig.tax_EUR + " EUR");
 
-		PolicyLinks links = PolicyLinkFinder
+		IdSet<Link> links = PolicyLinkFinder
 				.create(new File(
 						ConfigGroup.getInputFileURL(config.getContext(), enterConfig.perimetersPath).getPath()))
 				.findLinks(network, Predicate.Entering);
 
-		logger.info("  Affected entering links: " + links.active().size());
+		logger.info("  Affected entering links: " + links.size());
+		new PolicyLinkWriter(outputHierarchy).write(enterConfig.policyName, links);
 
 		return new DefaultPolicy(
-				new FixedRoutingPenalty(links.active(), calculateEnterTaxPenalty(enterConfig.tax_EUR, modeParameters),
+				new FixedRoutingPenalty(links, calculateEnterTaxPenalty(enterConfig.tax_EUR, modeParameters),
 						personFilter),
-				new CityTaxUtilityPenalty(links.active(), modeParameters, enterConfig.tax_EUR, personFilter));
+				new CityTaxUtilityPenalty(links, modeParameters, enterConfig.tax_EUR, personFilter));
 	}
 
 	private double calculateEnterTaxPenalty(double enterTax_EUR, ModeParameters parameters) {

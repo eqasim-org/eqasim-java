@@ -15,14 +15,15 @@ import org.eqasim.core.simulation.policies.PolicyPersonFilter;
 import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.policies.routing.FixedRoutingPenalty;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder;
-import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.PolicyLinks;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.Predicate;
+import org.eqasim.core.simulation.policies.routing.PolicyLinkWriter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.utils.io.IOUtils;
 
 public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
@@ -34,10 +35,12 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 
 	private final Config config;
 	private final Network network;
+	private final OutputDirectoryHierarchy outputHierarchy;
 
-	public LimitedTrafficZonePolicyFactory(Config config, Network network) {
+	public LimitedTrafficZonePolicyFactory(Config config, Network network, OutputDirectoryHierarchy outputHierarchy) {
 		this.config = config;
 		this.network = network;
+		this.outputHierarchy = outputHierarchy;
 	}
 
 	@Override
@@ -64,7 +67,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 					"Only one of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
 		}
 
-		PolicyLinks links;
+		IdSet<Link> links;
 		if (!ltzConfig.perimetersPath.isEmpty()) {
 			logger.info("  Perimeters: " + ltzConfig.perimetersPath);
 
@@ -82,14 +85,14 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 					"One of perimetersPath and linkListPath must be set for policy " + ltzConfig.policyName);
 		}
 
-		logger.info("  Affected active links (penalized): " + links.active().size());
-		logger.info("  Affected connecting links (forbidden as origin/destination): " + links.connecting().size());
+		logger.info("  Affected active links (penalized): " + links.size());
+		new PolicyLinkWriter(outputHierarchy).write(ltzConfig.policyName, links);
 
-		return new DefaultPolicy(new FixedRoutingPenalty(links.active(), routingPenalty, personFilter),
-				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, links.connecting(), personFilter));
+		return new DefaultPolicy(new FixedRoutingPenalty(links, routingPenalty, personFilter),
+				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, links, personFilter));
 	}
 
-	private static PolicyLinks loadLinkList(String path, Network network, String policy) {
+	private static IdSet<Link> loadLinkList(String path, Network network, String policy) {
 		IdSet<Link> area = new IdSet<>(Link.class);
 
 		try {
@@ -138,6 +141,6 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 			}
 		}
 
-		return new PolicyLinks(active, PolicyLinkFinder.findConnectingLinks(active, network));
+		return active;
 	}
 }

@@ -14,11 +14,9 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.network.Node;
 
 public class PolicyLinkFinder {
 	private final static GeometryFactory geometryFactory = new GeometryFactory();
@@ -33,7 +31,7 @@ public class PolicyLinkFinder {
 		Entering, Exiting, Crossing, Inside
 	}
 
-	public PolicyLinks findLinks(Network network, Predicate predicate) {
+	public IdSet<Link> findLinks(Network network, Predicate predicate) {
 		IdSet<Link> active = new IdSet<>(Link.class);
 
 		for (Link link : network.getLinks().values()) {
@@ -60,44 +58,7 @@ public class PolicyLinkFinder {
 			}
 		}
 
-		return new PolicyLinks(active, findConnectingLinks(active, network));
-	}
-
-	static public IdSet<Link> findConnectingLinks(IdSet<Link> active, Network network) {
-		IdSet<Link> connecting = new IdSet<>(Link.class);
-		connecting.addAll(active);
-
-		boolean continueNextRound = true;
-		while (continueNextRound) {
-			continueNextRound = false;
-
-			for (Link link : network.getLinks().values()) {
-				if (connecting.contains(link.getId())) {
-					continue; // skip tagged links
-				}
-
-				Node toNode = link.getToNode();
-
-				boolean allConnectionsTagged = true;
-				for (Id<Link> outlinkId : toNode.getOutLinks().keySet()) {
-					if (outlinkId.equals(link.getId())) {
-						continue; // skip self loops
-					}
-
-					if (!connecting.contains(outlinkId)) {
-						allConnectionsTagged = false;
-						break;
-					}
-				}
-
-				if (allConnectionsTagged) {
-					continueNextRound = true;
-					connecting.add(link.getId());
-				}
-			}
-		}
-
-		return connecting;
+		return active;
 	}
 
 	static public PolicyLinkFinder create(File path) {

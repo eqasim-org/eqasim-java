@@ -2,6 +2,7 @@ package org.eqasim.core.simulation.policies.impl.limited_traffic_zone;
 
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -13,7 +14,8 @@ public class LimitedTrafficZonePolicyExtension extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	LimitedTrafficZonePolicyFactory provideLimitedTrafficZonePolicyFactory(Network network) {
-		return new LimitedTrafficZonePolicyFactory(getConfig(), network);
+	LimitedTrafficZonePolicyFactory provideLimitedTrafficZonePolicyFactory(Network network,
+			OutputDirectoryHierarchy outputHierarchy) {
+		return new LimitedTrafficZonePolicyFactory(getConfig(), network, outputHierarchy);
 	}
 }
