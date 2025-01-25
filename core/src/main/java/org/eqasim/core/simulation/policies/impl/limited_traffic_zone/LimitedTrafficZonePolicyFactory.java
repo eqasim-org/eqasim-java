@@ -112,7 +112,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 			for (Person person : population.getPersons().values()) {
 				for (Activity activity : TripStructureUtils.getActivities(person.getSelectedPlan(),
 						StageActivityHandling.ExcludeStageActivities)) {
-					if (activity.getType().equals("home")) {
+					if (activity.getType().equals("home") && residencyLinks.contains(activity.getLinkId())) {
 						residentIds.add(person.getId());
 						break;
 					}
