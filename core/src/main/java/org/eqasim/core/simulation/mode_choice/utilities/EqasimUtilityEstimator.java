@@ -39,7 +39,7 @@ public class EqasimUtilityEstimator extends AbstractTripRouterEstimator {
 		} else {
 			double utility = estimator.estimateUtility(person, trip, elements);
 			utility += epsilonProvider.getEpsilon(person.getId(), trip.getIndex(), mode);
-			utility += utilityPenalty.calculatePenalty(mode, person, trip, elements);
+			utility -= utilityPenalty.calculatePenalty(mode, person, trip, elements);
 			return utility;
 		}
 	}

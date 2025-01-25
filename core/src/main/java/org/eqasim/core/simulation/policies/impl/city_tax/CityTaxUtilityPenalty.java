@@ -33,7 +33,7 @@ public class CityTaxUtilityPenalty implements UtilityPenalty {
 	public double calculatePenalty(String mode, Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
 		if (mode.equals(TransportMode.car) && personFilter.applies(person.getId())) {
-			return parameters.betaCost_u_MU * estimateTax_EUR(elements);
+			return -parameters.betaCost_u_MU * estimateTax_EUR(elements);
 		} else {
 			return 0.0;
 		}

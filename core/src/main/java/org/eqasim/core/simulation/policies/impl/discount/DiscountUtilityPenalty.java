@@ -33,7 +33,7 @@ public class DiscountUtilityPenalty implements UtilityPenalty {
 		if (mode.equals(this.mode) && personFilter.applies(person.getId())) {
 			double initialCost = costModel.calculateCost_MU(person, trip, elements);
 			double updatedCost = initialCost * costFactor;
-			return modeParameters.betaCost_u_MU * (updatedCost - initialCost);
+			return -modeParameters.betaCost_u_MU * (updatedCost - initialCost);
 		} else {
 			return 0.0;
 		}
