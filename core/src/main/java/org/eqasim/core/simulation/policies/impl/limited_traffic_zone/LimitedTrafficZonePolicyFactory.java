@@ -3,6 +3,8 @@ package org.eqasim.core.simulation.policies.impl.limited_traffic_zone;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,8 +13,9 @@ import org.eqasim.core.simulation.policies.Policy;
 import org.eqasim.core.simulation.policies.PolicyFactory;
 import org.eqasim.core.simulation.policies.PolicyPersonFilter;
 import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
-import org.eqasim.core.simulation.policies.routing.FactorRoutingPenalty;
+import org.eqasim.core.simulation.policies.routing.FixedRoutingPenalty;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder;
+import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.PolicyLinks;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.Predicate;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
@@ -26,7 +29,8 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 	private static final Logger logger = LogManager.getLogger(LimitedTrafficZonePolicyFactory.class);
 
 	static public final String POLICY_NAME = "limitedTrafficZone";
-	private final double insideFactor = 3600.0;
+	private final double routingPenalty = 7200.0;
+	private final double utilityPenalty = 1000.0;
 
 	private final Config config;
 	private final Network network;
@@ -60,33 +64,33 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 					"Only one of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
 		}
 
-		final IdSet<Link> linkIds;
+		PolicyLinks links;
 		if (!ltzConfig.perimetersPath.isEmpty()) {
 			logger.info("  Perimeters: " + ltzConfig.perimetersPath);
 
-			linkIds = PolicyLinkFinder
+			links = PolicyLinkFinder
 					.create(new File(
 							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
-					.findLinks(network, Predicate.Inside, true);
-
-			logger.info("  Affected inside links: " + linkIds.size());
+					.findLinks(network, Predicate.Crossing);
 		} else if (!ltzConfig.linkListPath.isEmpty()) {
 			logger.info("  Link list: " + ltzConfig.linkListPath);
 
-			linkIds = loadLinkList(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.linkListPath).getPath(),
+			links = loadLinkList(ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.linkListPath).getPath(),
 					network, ltzConfig.policyName);
-
-			logger.info("  Affected links: " + linkIds.size());
 		} else {
 			throw new IllegalStateException(
 					"One of perimetersPath and linkListPath must be set for policy " + ltzConfig.policyName);
 		}
 
-		return new DefaultPolicy(new FactorRoutingPenalty(linkIds, insideFactor, personFilter), null);
+		logger.info("  Affected active links (penalized): " + links.active().size());
+		logger.info("  Affected connecting links (forbidden as origin/destination): " + links.connecting().size());
+
+		return new DefaultPolicy(new FixedRoutingPenalty(links.active(), routingPenalty, personFilter),
+				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, links.connecting(), personFilter));
 	}
 
-	private static IdSet<Link> loadLinkList(String path, Network network, String policy) {
-		IdSet<Link> linkList = new IdSet<>(Link.class);
+	private static PolicyLinks loadLinkList(String path, Network network, String policy) {
+		IdSet<Link> area = new IdSet<>(Link.class);
 
 		try {
 			BufferedReader reader = IOUtils.getBufferedReader(path);
@@ -103,7 +107,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 								+ " which is not included in network");
 					}
 
-					linkList.add(link.getId());
+					area.add(link.getId());
 				}
 			}
 
@@ -112,6 +116,30 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 			throw new RuntimeException(e);
 		}
 
-		return linkList;
+		// Now find all links that consitute the edge
+		IdSet<Link> active = new IdSet<>(Link.class);
+
+		for (Id<Link> currentId : area) {
+			Link currentLink = network.getLinks().get(currentId);
+
+			Set<Id<Link>> incoming = new HashSet<>(currentLink.getFromNode().getInLinks().keySet());
+			Set<Id<Link>> outgoing = new HashSet<>(currentLink.getToNode().getOutLinks().keySet());
+
+			int totalIncoming = incoming.size();
+			int totalOutgoing = outgoing.size();
+
+			incoming.removeIf(area::contains);
+			outgoing.removeIf(area::contains);
+
+			// this link can only be reached and only leads to the policy area, hence, it is
+			// not an edge
+			boolean isInternal = incoming.size() == totalIncoming && outgoing.size() == totalOutgoing;
+
+			if (!isInternal) {
+				active.add(currentId);
+			}
+		}
+
+		return new PolicyLinks(active, PolicyLinkFinder.findConnectingLinks(active, network));
 	}
 }

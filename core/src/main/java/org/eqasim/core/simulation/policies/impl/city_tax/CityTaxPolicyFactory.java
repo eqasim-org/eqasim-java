@@ -12,9 +12,8 @@ import org.eqasim.core.simulation.policies.PolicyPersonFilter;
 import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.policies.routing.FixedRoutingPenalty;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder;
+import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.PolicyLinks;
 import org.eqasim.core.simulation.policies.routing.PolicyLinkFinder.Predicate;
-import org.matsim.api.core.v01.IdSet;
-import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
@@ -53,17 +52,17 @@ public class CityTaxPolicyFactory implements PolicyFactory {
 		logger.info("  Perimeters: " + enterConfig.perimetersPath);
 		logger.info("  Tax level: " + enterConfig.tax_EUR + " EUR");
 
-		IdSet<Link> linkIds = PolicyLinkFinder
+		PolicyLinks links = PolicyLinkFinder
 				.create(new File(
 						ConfigGroup.getInputFileURL(config.getContext(), enterConfig.perimetersPath).getPath()))
-				.findLinks(network, Predicate.Entering, false);
+				.findLinks(network, Predicate.Entering);
 
-		logger.info("  Affected entering links: " + linkIds.size());
+		logger.info("  Affected entering links: " + links.active().size());
 
 		return new DefaultPolicy(
-				new FixedRoutingPenalty(linkIds, calculateEnterTaxPenalty(enterConfig.tax_EUR, modeParameters),
+				new FixedRoutingPenalty(links.active(), calculateEnterTaxPenalty(enterConfig.tax_EUR, modeParameters),
 						personFilter),
-				new CityTaxUtilityPenalty(linkIds, modeParameters, enterConfig.tax_EUR, personFilter));
+				new CityTaxUtilityPenalty(links.active(), modeParameters, enterConfig.tax_EUR, personFilter));
 	}
 
 	private double calculateEnterTaxPenalty(double enterTax_EUR, ModeParameters parameters) {

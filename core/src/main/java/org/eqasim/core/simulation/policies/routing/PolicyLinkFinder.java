@@ -33,8 +33,8 @@ public class PolicyLinkFinder {
 		Entering, Exiting, Crossing, Inside
 	}
 
-	public IdSet<Link> findLinks(Network network, Predicate predicate, boolean includeConnecting) {
-		IdSet<Link> linkIds = new IdSet<>(Link.class);
+	public PolicyLinks findLinks(Network network, Predicate predicate) {
+		IdSet<Link> active = new IdSet<>(Link.class);
 
 		for (Link link : network.getLinks().values()) {
 			for (Geometry shape : shapes) {
@@ -48,51 +48,56 @@ public class PolicyLinkFinder {
 				boolean toInside = shape.contains(toPoint);
 
 				boolean isRelvant = switch (predicate) {
-				case Exiting -> fromInside && !toInside;
-				case Entering -> !fromInside && toInside;
-				case Crossing -> fromInside || toInside;
-				case Inside -> fromInside && toInside;
+					case Exiting -> fromInside && !toInside;
+					case Entering -> !fromInside && toInside;
+					case Crossing -> fromInside || toInside;
+					case Inside -> fromInside && toInside;
 				};
 
 				if (isRelvant) {
-					linkIds.add(link.getId());
+					active.add(link.getId());
 				}
 			}
 		}
 
-		if (includeConnecting) {
-			boolean continueNextRound = true;
-			while (continueNextRound) {
-				continueNextRound = false;
+		return new PolicyLinks(active, findConnectingLinks(active, network));
+	}
 
-				for (Link link : network.getLinks().values()) {
-					if (linkIds.contains(link.getId())) {
-						continue; // skip tagged links
+	static public IdSet<Link> findConnectingLinks(IdSet<Link> active, Network network) {
+		IdSet<Link> connecting = new IdSet<>(Link.class);
+		connecting.addAll(active);
+
+		boolean continueNextRound = true;
+		while (continueNextRound) {
+			continueNextRound = false;
+
+			for (Link link : network.getLinks().values()) {
+				if (connecting.contains(link.getId())) {
+					continue; // skip tagged links
+				}
+
+				Node toNode = link.getToNode();
+
+				boolean allConnectionsTagged = true;
+				for (Id<Link> outlinkId : toNode.getOutLinks().keySet()) {
+					if (outlinkId.equals(link.getId())) {
+						continue; // skip self loops
 					}
 
-					Node toNode = link.getToNode();
-
-					boolean allConnectionsTagged = true;
-					for (Id<Link> outlinkId : toNode.getOutLinks().keySet()) {
-						if (outlinkId.equals(link.getId())) {
-							continue; // skip self loops
-						}
-
-						if (!linkIds.contains(outlinkId)) {
-							allConnectionsTagged = false;
-							break;
-						}
+					if (!connecting.contains(outlinkId)) {
+						allConnectionsTagged = false;
+						break;
 					}
+				}
 
-					if (allConnectionsTagged) {
-						continueNextRound = true;
-						linkIds.add(link.getId());
-					}
+				if (allConnectionsTagged) {
+					continueNextRound = true;
+					connecting.add(link.getId());
 				}
 			}
 		}
 
-		return linkIds;
+		return connecting;
 	}
 
 	static public PolicyLinkFinder create(File path) {
@@ -116,5 +121,8 @@ public class PolicyLinkFinder {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static record PolicyLinks(IdSet<Link> active, IdSet<Link> connecting) {
 	}
 }
