@@ -3,6 +3,7 @@ package org.eqasim.core.simulation.policies.impl.limited_traffic_zone;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,6 +28,8 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.TripStructureUtils.StageActivityHandling;
 import org.matsim.core.utils.io.IOUtils;
@@ -139,6 +142,9 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 	private static ZoneLinks loadLinkList(String path, Network network, String policy) {
 		IdSet<Link> area = new IdSet<>(Link.class);
 
+		Network carNetwork = NetworkUtils.createNetwork();
+		new TransportModeNetworkFilter(network).filter(carNetwork, Collections.singleton("car"));
+
 		try {
 			BufferedReader reader = IOUtils.getBufferedReader(path);
 
@@ -147,7 +153,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 				line = line.trim();
 
 				if (!line.isEmpty()) {
-					Link link = network.getLinks().get(Id.createLinkId(line));
+					Link link = carNetwork.getLinks().get(Id.createLinkId(line));
 
 					if (link == null) {
 						throw new IllegalStateException("Link list of policy " + policy + " contains link " + line
