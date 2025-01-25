@@ -173,7 +173,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 		IdSet<Link> active = new IdSet<>(Link.class);
 
 		for (Id<Link> currentId : area) {
-			Link currentLink = network.getLinks().get(currentId);
+			Link currentLink = carNetwork.getLinks().get(currentId);
 
 			Set<Id<Link>> incoming = new HashSet<>(currentLink.getFromNode().getInLinks().keySet());
 			Set<Id<Link>> outgoing = new HashSet<>(currentLink.getToNode().getOutLinks().keySet());
