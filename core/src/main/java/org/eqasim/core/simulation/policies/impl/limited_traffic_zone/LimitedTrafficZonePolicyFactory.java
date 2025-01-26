@@ -78,21 +78,21 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 					"Only one of perimetersPath and linkListPath can be set for policy " + ltzConfig.policyName);
 		}
 
-		IdSet<Link> policyLinks;
-		IdSet<Link> residencyLinks;
+		IdSet<Link> crossingLinkIds = new IdSet<>(Link.class);
+		IdSet<Link> insideLinkIds = new IdSet<>(Link.class);
 
 		if (!ltzConfig.perimetersPath.isEmpty()) {
 			logger.info("  Perimeters: " + ltzConfig.perimetersPath);
 
-			residencyLinks = PolicyLinkFinder
+			insideLinkIds.addAll(PolicyLinkFinder
 					.create(new File(
 							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
-					.findLinks(network, Predicate.Inside);
+					.findLinks(network, Predicate.Inside));
 
-			policyLinks = PolicyLinkFinder
+			crossingLinkIds.addAll(PolicyLinkFinder
 					.create(new File(
 							ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.perimetersPath).getPath()))
-					.findLinks(network, Predicate.Crossing);
+					.findLinks(network, Predicate.Crossing));
 		} else if (!ltzConfig.linkListPath.isEmpty()) {
 			logger.info("  Link list: " + ltzConfig.linkListPath);
 
@@ -100,22 +100,24 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 					ConfigGroup.getInputFileURL(config.getContext(), ltzConfig.linkListPath).getPath(),
 					network, ltzConfig.policyName);
 
-			policyLinks = links.active();
-			residencyLinks = links.area();
+			crossingLinkIds.addAll(links.active());
+			insideLinkIds.addAll(links.area());
 		} else {
 			throw new IllegalStateException(
 					"One of perimetersPath and linkListPath must be set for policy " + ltzConfig.policyName);
 		}
 
-		logger.info("  Affected active links (penalized): " + policyLinks.size());
-		new PolicyLinkWriter(outputHierarchy).write(ltzConfig.policyName, policyLinks);
+		insideLinkIds.addAll(crossingLinkIds);
+
+		logger.info("  Affected active links (penalized): " + crossingLinkIds.size());
+		new PolicyLinkWriter(outputHierarchy).write(ltzConfig.policyName, crossingLinkIds);
 
 		IdSet<Person> residentIds = new IdSet<>(Person.class);
 		if (ltzConfig.considerResidency) {
 			for (Person person : population.getPersons().values()) {
 				for (Activity activity : TripStructureUtils.getActivities(person.getSelectedPlan(),
 						StageActivityHandling.ExcludeStageActivities)) {
-					if (activity.getType().equals("home") && residencyLinks.contains(activity.getLinkId())) {
+					if (activity.getType().equals("home") && insideLinkIds.contains(activity.getLinkId())) {
 						residentIds.add(person.getId());
 						break;
 					}
@@ -124,7 +126,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 
 			logger.info("  Found " + residentIds.size() + " residents in the area");
 		} else {
-			logger.info("  Not cosnidering residency of agents");
+			logger.info("  Not considering residency of agents");
 		}
 
 		PolicyPersonFilter delegateFilter = personId -> {
@@ -135,8 +137,8 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 			}
 		};
 
-		return new DefaultPolicy(new FixedRoutingPenalty(policyLinks, routingPenalty, delegateFilter),
-				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, policyLinks, delegateFilter));
+		return new DefaultPolicy(new FixedRoutingPenalty(crossingLinkIds, routingPenalty, delegateFilter),
+				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, crossingLinkIds, insideLinkIds, delegateFilter));
 	}
 
 	private static ZoneLinks loadLinkList(String path, Network network, String policy) {

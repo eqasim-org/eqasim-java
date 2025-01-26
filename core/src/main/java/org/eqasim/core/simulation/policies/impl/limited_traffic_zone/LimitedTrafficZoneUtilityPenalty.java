@@ -14,13 +14,17 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.core.population.routes.NetworkRoute;
 
 public class LimitedTrafficZoneUtilityPenalty implements UtilityPenalty {
-    private final IdSet<Link> links;
+    private final IdSet<Link> insideLinkIds;
+    private final IdSet<Link> crossingLinkIds;
+
     private final PolicyPersonFilter personFilter;
     private final double penalty;
 
-    public LimitedTrafficZoneUtilityPenalty(double penalty, IdSet<Link> links, PolicyPersonFilter personFilter) {
+    public LimitedTrafficZoneUtilityPenalty(double penalty, IdSet<Link> insideLinkIds, IdSet<Link> crossingLinkIds,
+            PolicyPersonFilter personFilter) {
         this.personFilter = personFilter;
-        this.links = links;
+        this.insideLinkIds = insideLinkIds;
+        this.crossingLinkIds = crossingLinkIds;
         this.penalty = penalty;
     }
 
@@ -28,8 +32,8 @@ public class LimitedTrafficZoneUtilityPenalty implements UtilityPenalty {
     public double calculatePenalty(String mode, Person person, DiscreteModeChoiceTrip trip,
             List<? extends PlanElement> elements) {
         if (personFilter.applies(person.getId())) {
-            boolean originInside = links.contains(trip.getOriginActivity().getLinkId());
-            boolean destinationInside = links.contains(trip.getDestinationActivity().getLinkId());
+            boolean originInside = insideLinkIds.contains(trip.getOriginActivity().getLinkId());
+            boolean destinationInside = insideLinkIds.contains(trip.getDestinationActivity().getLinkId());
 
             if (!originInside && !destinationInside) {
                 // not a stopping trip, so if we still find a crossing after routing, we will
@@ -40,14 +44,14 @@ public class LimitedTrafficZoneUtilityPenalty implements UtilityPenalty {
                     if (element instanceof Leg leg) {
                         if (leg.getRoute() instanceof NetworkRoute route) {
                             for (Id<Link> linkId : route.getLinkIds()) {
-                                if (links.contains(linkId)) {
+                                if (crossingLinkIds.contains(linkId)) {
                                     isCrossing = true;
                                     break;
                                 }
                             }
 
-                            isCrossing |= links.contains(route.getStartLinkId());
-                            isCrossing |= links.contains(route.getEndLinkId());
+                            isCrossing |= crossingLinkIds.contains(route.getStartLinkId());
+                            isCrossing |= crossingLinkIds.contains(route.getEndLinkId());
                         }
                     }
 
