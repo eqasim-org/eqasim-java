@@ -28,30 +28,36 @@ public class LimitedTrafficZoneUtilityPenalty implements UtilityPenalty {
     public double calculatePenalty(String mode, Person person, DiscreteModeChoiceTrip trip,
             List<? extends PlanElement> elements) {
         if (personFilter.applies(person.getId())) {
-            if (!links.contains(trip.getOriginActivity().getLinkId())) {
-                if (!links.contains(trip.getDestinationActivity().getLinkId())) {
-                    // not a stopping trip
-                    boolean isCrossing = false;
+            boolean originInside = links.contains(trip.getOriginActivity().getLinkId());
+            boolean destinationInside = links.contains(trip.getDestinationActivity().getLinkId());
 
-                    for (PlanElement element : elements) {
-                        if (element instanceof Leg leg) {
-                            if (leg.getRoute() instanceof NetworkRoute route) {
-                                for (Id<Link> linkId : route.getLinkIds()) {
-                                    if (links.contains(linkId)) {
-                                        isCrossing = true;
-                                        break;
-                                    }
+            if (!originInside && !destinationInside) {
+                // not a stopping trip, so if we still find a crossing after routing, we will
+                // penalize it
+                boolean isCrossing = false;
+
+                for (PlanElement element : elements) {
+                    if (element instanceof Leg leg) {
+                        if (leg.getRoute() instanceof NetworkRoute route) {
+                            for (Id<Link> linkId : route.getLinkIds()) {
+                                if (links.contains(linkId)) {
+                                    isCrossing = true;
+                                    break;
                                 }
                             }
-                        }
 
-                        if (isCrossing)
-                            break;
+                            isCrossing |= links.contains(route.getStartLinkId());
+                            isCrossing |= links.contains(route.getEndLinkId());
+                        }
                     }
 
                     if (isCrossing) {
-                        return penalty;
+                        break;
                     }
+                }
+
+                if (isCrossing) {
+                    return penalty;
                 }
             }
         }
