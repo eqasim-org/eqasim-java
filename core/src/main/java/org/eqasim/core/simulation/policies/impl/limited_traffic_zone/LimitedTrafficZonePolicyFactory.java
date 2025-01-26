@@ -138,7 +138,7 @@ public class LimitedTrafficZonePolicyFactory implements PolicyFactory {
 		};
 
 		return new DefaultPolicy(new FixedRoutingPenalty(crossingLinkIds, routingPenalty, delegateFilter),
-				new LimitedTrafficZoneUtilityPenalty(utilityPenalty, crossingLinkIds, insideLinkIds, delegateFilter));
+				null); // new LimitedTrafficZoneUtilityPenalty(utilityPenalty, crossingLinkIds, insideLinkIds, delegateFilter));
 	}
 
 	private static ZoneLinks loadLinkList(String path, Network network, String policy) {
