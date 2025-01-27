@@ -109,11 +109,15 @@ public class TripReaderFromPopulation {
 						duration = destinationStartTime.seconds() - originEndTime.seconds();
 					}
 
+					Id<Link> originLinkId = trip.getOriginActivity().getLinkId();
+					Id<Link> destinationLinkId = trip.getDestinationActivity().getLinkId();
+
 					tripItems.add(new TripItem(person.getId(), personTripIndex, originCoord, destinationCoord,
 							departureTime, duration, getVehicleDistance(trip), getRoutedDistance(trip),
 							TripStructureUtils.getRoutingMode(trip.getLegsOnly().get(0)),
 							trip.getOriginActivity().getType(), trip.getDestinationActivity().getType(), isHomeTrip,
-							CoordUtils.calcEuclideanDistance(originCoord, destinationCoord)));
+							CoordUtils.calcEuclideanDistance(originCoord, destinationCoord),
+							originLinkId, destinationLinkId));
 
 					personTripIndex++;
 				}

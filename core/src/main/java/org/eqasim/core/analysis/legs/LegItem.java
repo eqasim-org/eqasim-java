@@ -2,6 +2,7 @@ package org.eqasim.core.analysis.legs;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 
 public class LegItem {
@@ -16,10 +17,12 @@ public class LegItem {
 	public double routedDistance;
 	public String mode;
 	public double euclideanDistance;
+	public Id<Link> originLinkId;
+	public Id<Link> destinationLinkId;
 
 	public LegItem(Id<Person> personId, int personTripId, int legIndex, Coord origin, Coord destination,
 			double startTime, double travelTime, double vehicleDistance, double routedDistance, String mode,
-			double euclideanDistance) {
+			double euclideanDistance, Id<Link> originLinkId, Id<Link> destinationLinkId) {
 		this.personId = personId;
 		this.personTripId = personTripId;
 		this.legIndex = legIndex;
@@ -31,5 +34,7 @@ public class LegItem {
 		this.routedDistance = routedDistance;
 		this.mode = mode;
 		this.euclideanDistance = euclideanDistance;
+		this.originLinkId = originLinkId;
+		this.destinationLinkId = destinationLinkId;
 	}
 }
