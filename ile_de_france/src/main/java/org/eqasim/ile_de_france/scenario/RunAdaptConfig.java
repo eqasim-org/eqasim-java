@@ -15,7 +15,7 @@ import org.matsim.core.config.groups.VehiclesConfigGroup;
 
 public class RunAdaptConfig {
 	static public void main(String[] args) throws ConfigurationException {
-		CommandLine cmd = new CommandLine.Builder(args).build();
+		CommandLine cmd = new CommandLine.Builder(args).allowAnyOption(true).build();
 		ConfigAdapter.run(args, new IDFConfigurator(cmd), RunAdaptConfig::adaptConfiguration);
 	}
 
