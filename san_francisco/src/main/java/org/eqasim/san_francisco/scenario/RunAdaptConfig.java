@@ -22,7 +22,7 @@ public class RunAdaptConfig {
 	protected final static List<String> ACTIVITY_TYPES = Arrays.asList("business");
 
 	static public void main(String[] args) throws ConfigurationException {
-		CommandLine cmd = new CommandLine.Builder(args).build();
+		CommandLine cmd = new CommandLine.Builder(args).allowAnyOption(true).build();
 		ConfigAdapter.run(args, new SanFranciscoConfigurator(cmd), RunAdaptConfig::adaptConfiguration);
 	}
 
