@@ -70,8 +70,14 @@ public class RunServer {
 			});
 		});
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new EqasimRaptorConfigGroup());
+		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
+
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
+		cmd.applyConfiguration(config);
+		
 		Scenario scenario = ScenarioUtils.createScenario(config);
+		configurator.configureScenario(scenario);
 
 		new MatsimNetworkReader(scenario.getNetwork())
 				.readURL(ConfigGroup.getInputFileURL(config.getContext(), config.network().getInputFile()));
@@ -90,8 +96,6 @@ public class RunServer {
 
 		TravelTime travelTime = new FreeSpeedTravelTime();
 		if (cmd.hasOption("vdf-path")) {
-			EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
-
 			VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(config);
 			vdfConfig.setInputTravelTimesFile(cmd.getOptionStrict("vdf-path"));
 			
