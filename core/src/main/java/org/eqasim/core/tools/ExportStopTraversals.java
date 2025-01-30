@@ -100,10 +100,9 @@ public class ExportStopTraversals {
 		}
 
 		BufferedWriter writer = IOUtils.getBufferedWriter(cmd.getOptionStrict("output-path"));
-		int routeIndex = 0;
 
 		writer.write(String.join(";", Arrays.asList( //
-				"route_index", "person_id", "stop_id", "area_id", "is_access", "is_egress", "transit_mode",
+				"person_id", "trip_index", "leg_index", "stop_id", "area_id", "is_access", "is_egress", "transit_mode",
 				"arrival_time", "departure_time")) + "\n");
 
 		for (IndividualRoute route : routes) {
@@ -146,8 +145,9 @@ public class ExportStopTraversals {
 
 				if (extent == null || extent.isInside(stopFacility.getCoord())) {
 					writer.write(String.join(";", Arrays.asList( //
-							String.valueOf(routeIndex), //
 							route.personId.toString(), //
+							String.valueOf(route.tripIndex), //
+							String.valueOf(route.legIndex), //
 							stop.getStopFacility().getId().toString(), //
 							stop.getStopFacility().getStopAreaId().toString(), //
 							String.valueOf(index == accessIndex), //
@@ -158,8 +158,6 @@ public class ExportStopTraversals {
 					)) + "\n");
 				}
 			}
-
-			routeIndex++;
 		}
 
 		writer.close();
