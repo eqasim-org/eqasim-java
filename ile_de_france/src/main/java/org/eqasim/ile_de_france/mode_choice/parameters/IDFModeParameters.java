@@ -3,6 +3,13 @@ package org.eqasim.ile_de_france.mode_choice.parameters;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
 public class IDFModeParameters extends ModeParameters {
+	public class IDFParisParameters {
+		public double car_u;
+		public double carPassenger_u;
+	}
+
+	public final IDFParisParameters idfParis = new IDFParisParameters();
+
 	public class IDFCarPassengerParameters {
 		public double alpha_u;
 		public double betaInVehicleTravelTime_u_min;
