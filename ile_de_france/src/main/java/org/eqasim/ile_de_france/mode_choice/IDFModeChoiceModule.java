@@ -14,6 +14,7 @@ import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBicycleUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarPassengerUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
@@ -63,7 +64,7 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindCostModel(PT_COST_MODEL_NAME).to(IDFPtCostModel.class);
 
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(IDFCarUtilityEstimator.class);
-		bindUtilityEstimator(BICYCLE_ESTIMATOR_NAME).to(BikeUtilityEstimator.class);
+		bindUtilityEstimator(BICYCLE_ESTIMATOR_NAME).to(IDFBicycleUtilityEstimator.class);
 		bindUtilityEstimator(CAR_PASSENGER_ESTIMATOR_NAME).to(IDFCarPassengerUtilityEstimator.class);
 		bindUtilityEstimator(PT_ESTIMATOR_NAME).to(IDFPtUtilityEstimator.class);
 

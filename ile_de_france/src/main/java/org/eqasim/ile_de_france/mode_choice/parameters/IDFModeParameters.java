@@ -6,6 +6,7 @@ public class IDFModeParameters extends ModeParameters {
 	public class IDFParisParameters {
 		public double car_u;
 		public double carPassenger_u;
+		public double bicycle_u;
 	}
 
 	public final IDFParisParameters idfParis = new IDFParisParameters();
