@@ -121,7 +121,7 @@ public class ExportStopTraversals {
 				if (vehicleDepartureTime >= route.referenceTime || bestDeparture == null) {
 					double delta = vehicleDepartureTime - route.referenceTime;
 
-					if (delta < minimumDelta || minimumDelta < 0.0) {
+					if (delta < minimumDelta || (minimumDelta < 0.0 && delta >= 0.0)) {
 						minimumDelta = delta;
 						bestDeparture = departure;
 					}
