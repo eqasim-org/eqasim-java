@@ -11,6 +11,8 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.TripStructureUtils.Trip;
 
 public class MobilityCoinsMarket implements IterationEndsListener {
+    static public final String WALLET_ATTRIBUTE = "wallet";
+
     private final MobilityCoinsParameters parameters;
     private final MobilityCoinsCalculator calculator;
     private final MobilityCoinsWriter writer;
@@ -32,30 +34,42 @@ public class MobilityCoinsMarket implements IterationEndsListener {
         this.calculator = calculator;
         this.writer = writer;
         this.marketPrice_EUR_per_coin = parameters.initialMarketPrice_EUR_per_coin;
+
+        for (Person person : population.getPersons().values()) {
+            person.getAttributes().putAttribute(WALLET_ATTRIBUTE, parameters.initialCoins_per_person);
+        }
     }
 
     private double calculateBalance() {
         // calculate a balance of coins in the system
-        double coinsBalance = 0.0;
+        double globalBalance = 0.0;
 
         // the idea is that we go through the current configuration of the population
         // and reconstruct the coins lost / gained
         for (Person person : population.getPersons().values()) {
+            double personBalance = getInitialCoins(person);
+
             for (Trip trip : TripStructureUtils.getTrips(person.getSelectedPlan())) {
                 MobilityCoinsDistances distances = MobilityCoinsDistances.calculate(trip.getTripElements());
                 double coinsDelta = calculator.calculateCoinDelta(distances);
-
-                // add to balance
-                coinsBalance += coinsDelta;
+                personBalance += coinsDelta;
             }
+
+            globalBalance += Math.max(0.0, personBalance);
+
+            if (personBalance < 0.0) {
+                // agent needed to buy extra coins
+                globalBalance -= personBalance;
+            }
+
         }
 
-        return coinsBalance;
+        return globalBalance;
     }
 
-    private double calculateMarketPrice(double coinsBalance) {
+    private double calculateMarketPrice(double globalBalance) {
         // update rule
-        if (coinsBalance > parameters.targetCoins) {
+        if (globalBalance > parameters.targetCoins) {
             // too many coins used, make more expensive
             return marketPrice_EUR_per_coin + parameters.marketPriceUpdate;
         } else {
@@ -67,10 +81,10 @@ public class MobilityCoinsMarket implements IterationEndsListener {
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
         // calculate a balance of coins in the system
-        double coinsBalance = calculateBalance();
+        double globalBalance = calculateBalance();
 
         // at the end of the iteration, we update the market price
-        double updatedMarketPrice = calculateMarketPrice(coinsBalance);
+        double updatedMarketPrice = calculateMarketPrice(globalBalance);
 
         // perform the update
         marketPrice_EUR_per_coin = //
@@ -78,6 +92,11 @@ public class MobilityCoinsMarket implements IterationEndsListener {
                         updatedMarketPrice * parameters.marketPriceSmoothing;
 
         // track prices
-        writer.writeMarketPrice(new Entry(event.getIteration(), coinsBalance, updatedMarketPrice, marketPrice_EUR_per_coin));
+        writer.writeMarketPrice(
+                new Entry(event.getIteration(), globalBalance, updatedMarketPrice, marketPrice_EUR_per_coin));
+    }
+
+    static public double getInitialCoins(Person person) {
+        return (Double) person.getAttributes().getAttribute(WALLET_ATTRIBUTE);
     }
 }

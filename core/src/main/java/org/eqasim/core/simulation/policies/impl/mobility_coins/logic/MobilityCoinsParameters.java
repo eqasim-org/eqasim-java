@@ -33,4 +33,7 @@ public class MobilityCoinsParameters {
 
     // update coins delta
     public final double marketPriceUpdate = 0.1;
+
+    // initial coins per person
+    public final double initialCoins_per_person = 20.0;
 }
