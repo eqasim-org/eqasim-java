@@ -35,7 +35,8 @@ public class MobilityCoinsMarket implements IterationEndsListener {
     }
 
     public double calculateMarketPrice() {
-        // TODO: Add here the logic that calculates a new market price
+        // calculate a balance of coins in the system
+        double coinsBalance = 0.0;
 
         // the idea is that we go through the current configuration of the population
         // and reconstruct the coins lost / gained
@@ -44,18 +45,19 @@ public class MobilityCoinsMarket implements IterationEndsListener {
                 MobilityCoinsDistances distances = MobilityCoinsDistances.calculate(trip.getTripElements());
                 double coinsDelta = calculator.calculateCoinDelta(distances);
 
-                if (coinsDelta < 0.0) {
-                    // there were losses on that trip for that person
-                    // do something with that
-                } else {
-                    // there were gains on that trip for that person
-                    // do something with that
-                }
+                // add to balance
+                coinsBalance += coinsDelta;
             }
         }
 
-        // return something meaningful, now we just return the current value
-        return marketPrice_EUR_per_coin;
+        // update rule
+        if (coinsBalance > parameters.targetCoins) {
+            // too many coins used, make more expensive
+            return marketPrice_EUR_per_coin + parameters.marketPriceUpdate;
+        } else {
+            // not enough coins used, make less expensive
+            return marketPrice_EUR_per_coin - parameters.marketPriceUpdate;
+        }
     }
 
     @Override
