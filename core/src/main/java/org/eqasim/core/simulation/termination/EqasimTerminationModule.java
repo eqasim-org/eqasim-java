@@ -42,7 +42,10 @@ public class EqasimTerminationModule extends AbstractEqasimExtension {
 			new TerminationReader(indicators.keySet(), criteria.keySet()).read(historyURL);
 		}
 
-		return new EqasimTerminationCriterion(firstIteration, lastIteration, indicators, criteria, writer);
+		int minimumIteration = firstIteration + terminationConfig.getMinimumIterations();
+
+		return new EqasimTerminationCriterion(firstIteration, lastIteration, minimumIteration, indicators, criteria,
+				writer);
 	}
 
 	@Provides
