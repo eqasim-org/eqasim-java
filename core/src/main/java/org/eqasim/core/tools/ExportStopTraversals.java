@@ -118,10 +118,10 @@ public class ExportStopTraversals {
 			for (Departure departure : transitRoute.getDepartures().values()) {
 				double vehicleDepartureTime = departure.getDepartureTime() + accessOffset;
 
-				if (vehicleDepartureTime >= route.referenceTime) {
+				if (vehicleDepartureTime >= route.referenceTime || bestDeparture == null) {
 					double delta = vehicleDepartureTime - route.referenceTime;
 
-					if (delta < minimumDelta) {
+					if (delta < minimumDelta || minimumDelta < 0.0) {
 						minimumDelta = delta;
 						bestDeparture = departure;
 					}
