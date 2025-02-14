@@ -102,10 +102,13 @@ public class LegReaderFromPopulation {
 						double departureTime = leg.getDepartureTime().orElse(Double.NaN);
 						double duration = leg.getTravelTime().orElse(Double.NaN);
 
+						Id<Link> originLinkId = precedingActivity.getLinkId();
+						Id<Link> destinationLinkId = followingActivity.getLinkId();
+
 						legItems.add(new LegItem(person.getId(), personTripIndex, legIndex, originCoord,
 								destinationCoord, departureTime, duration, getVehicleDistance(leg),
 								getRoutedDistance(leg), leg.getMode(),
-								CoordUtils.calcEuclideanDistance(originCoord, destinationCoord)));
+								CoordUtils.calcEuclideanDistance(originCoord, destinationCoord), originLinkId, destinationLinkId));
 
 						legIndex++;
 					}

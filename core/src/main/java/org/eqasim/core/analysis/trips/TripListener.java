@@ -74,7 +74,7 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 				}
 
 				ongoing.put(event.getPersonId(), new TripListenerItem(event.getPersonId(), personTripIndex,
-						network.getLinks().get(event.getLinkId()).getCoord(), event.getTime(), event.getActType()));
+						network.getLinks().get(event.getLinkId()).getCoord(), event.getTime(), event.getActType(), event.getLinkId()));
 
 				tripIndex.put(event.getPersonId(), personTripIndex);
 			}
@@ -99,11 +99,13 @@ public class TripListener implements ActivityStartEventHandler, ActivityEndEvent
 					trip.followingPurpose = event.getActType();
 					trip.travelTime = event.getTime() - trip.departureTime;
 					trip.destination = network.getLinks().get(event.getLinkId()).getCoord();
+					trip.destinationLinkId = event.getLinkId();
 					trip.euclideanDistance = CoordUtils.calcEuclideanDistance(trip.origin, trip.destination);
 
 					trips.add(new TripItem(trip.personId, trip.personTripId, trip.origin, trip.destination,
 							trip.departureTime, trip.travelTime, trip.vehicleDistance, trip.routedDistance, trip.mode,
-							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.euclideanDistance));
+							trip.precedingPurpose, trip.followingPurpose, trip.returning, trip.euclideanDistance,
+							trip.originLinkId, trip.destinationLinkId));
 				}
 			}
 		}
