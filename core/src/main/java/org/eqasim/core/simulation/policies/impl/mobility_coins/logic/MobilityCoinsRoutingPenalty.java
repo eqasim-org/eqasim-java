@@ -6,6 +6,8 @@ import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 
+import com.google.common.base.Preconditions;
+
 public class MobilityCoinsRoutingPenalty implements RoutingPenalty {
     private final ModeParameters modeParameters;
     private final MobilityCoinsCalculator calculator;
@@ -30,7 +32,7 @@ public class MobilityCoinsRoutingPenalty implements RoutingPenalty {
         double deltaCoins = calculator.calculateCoinDelta(distances);
 
         // calculate penalty in EUR
-        double penalty_EUR = market.getMarketPrice_EUR_per_coin() * deltaCoins;
+        double penalty_EUR = -market.getMarketPrice_EUR_per_coin() * deltaCoins;
 
         // we need to give the penalty in seconds, so convert to utilities using
         // marginal utility of cost
@@ -38,6 +40,8 @@ public class MobilityCoinsRoutingPenalty implements RoutingPenalty {
 
         // convert to minutes using marginal utility of travel time in car
         double penalty_min = penalty_u / modeParameters.car.betaTravelTime_u_min;
+
+        Preconditions.checkState(penalty_min >= 0.0);
 
         // return penalty in seconds
         return penalty_min * 60.0;
