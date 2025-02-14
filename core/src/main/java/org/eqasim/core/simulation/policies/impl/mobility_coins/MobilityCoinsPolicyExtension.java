@@ -17,6 +17,8 @@ public class MobilityCoinsPolicyExtension extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 		bind(MobilityCoinsParameters.class).toInstance(new MobilityCoinsParameters());
+
+		addControlerListenerBinding().to(MobilityCoinsMarket.class);
 	}
 
 	@Provides
