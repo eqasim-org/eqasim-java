@@ -34,7 +34,7 @@ public class MobilityCoinsMarket implements IterationEndsListener {
         this.marketPrice_EUR_per_coin = parameters.initialMarketPrice_EUR_per_coin;
     }
 
-    public double calculateMarketPrice() {
+    private double calculateBalance() {
         // calculate a balance of coins in the system
         double coinsBalance = 0.0;
 
@@ -50,6 +50,10 @@ public class MobilityCoinsMarket implements IterationEndsListener {
             }
         }
 
+        return coinsBalance;
+    }
+
+    private double calculateMarketPrice(double coinsBalance) {
         // update rule
         if (coinsBalance > parameters.targetCoins) {
             // too many coins used, make more expensive
@@ -62,8 +66,11 @@ public class MobilityCoinsMarket implements IterationEndsListener {
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
+        // calculate a balance of coins in the system
+        double coinsBalance = calculateBalance();
+
         // at the end of the iteration, we update the market price
-        double updatedMarketPrice = calculateMarketPrice();
+        double updatedMarketPrice = calculateMarketPrice(coinsBalance);
 
         // perform the update
         marketPrice_EUR_per_coin = //
@@ -71,6 +78,6 @@ public class MobilityCoinsMarket implements IterationEndsListener {
                         updatedMarketPrice * parameters.marketPriceSmoothing;
 
         // track prices
-        writer.write(new Entry(event.getIteration(), updatedMarketPrice, marketPrice_EUR_per_coin));
+        writer.writeMarketPrice(new Entry(event.getIteration(), coinsBalance, updatedMarketPrice, marketPrice_EUR_per_coin));
     }
 }

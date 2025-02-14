@@ -16,23 +16,22 @@ public class MobilityCoinsWriter {
         this.outputPath = outputPath;
     }
 
-    public void write(Entry entry) {
+    public void writeMarketPrice(Entry entry) {
         try {
             BufferedWriter writer = IOUtils.getBufferedWriter(outputPath.toString());
 
-            if (entries.size() == 0) {
-                writer.write(String.join(";", new String[] {
-                        "iteration", //
-                        "calculated_market_price", //
-                        "smoothed_market_price"
-                }) + "\n");
-            }
-
+            writer.write(String.join(";", new String[] {
+                    "iteration", //
+                    "coins_balance", //
+                    "calculated_market_price", //
+                    "smoothed_market_price"
+            }) + "\n");
             entries.add(entry);
 
             for (Entry e : entries) {
                 writer.write(String.join(";", new String[] {
                         String.valueOf(e.iteration), //
+                        String.valueOf(e.coinsBalance), //
                         String.valueOf(e.calculatedMarketPrice), //
                         String.valueOf(e.smoothedMarketPrice), //
                 }) + "\n");
@@ -44,6 +43,6 @@ public class MobilityCoinsWriter {
         }
     }
 
-    public record Entry(int iteration, double calculatedMarketPrice, double smoothedMarketPrice) {
+    public record Entry(int iteration, double coinsBalance, double calculatedMarketPrice, double smoothedMarketPrice) {
     }
 }
