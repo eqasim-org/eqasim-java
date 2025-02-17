@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.eqasim.core.components.transit.events.PublicTransitEvent;
@@ -15,7 +17,9 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.GenericEvent;
+import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.GenericEventHandler;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -28,6 +32,7 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.router.TripStructureUtils.Trip;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.pt.routes.TransitPassengerRoute;
@@ -66,26 +71,28 @@ public class ExportStopTraversals {
 			new PopulationReader(scenario).readFile(cmd.getOptionStrict("population-path"));
 
 			for (Person person : scenario.getPopulation().getPersons().values()) {
-				for (Leg leg : TripStructureUtils.getLegs(person.getSelectedPlan())) {
-					if (leg.getRoute() instanceof TransitPassengerRoute route) {
-						routes.add(new IndividualRoute(route.getLineId(), route.getRouteId(), route.getAccessStopId(),
-								route.getEgressStopId(), person.getId(), route.getBoardingTime().seconds()));
+				int tripIndex = 0;
+
+				for (Trip trip : TripStructureUtils.getTrips(person.getSelectedPlan())) {
+					int legIndex = 0;
+
+					for (Leg leg : trip.getLegsOnly()) {
+						if (leg.getRoute() instanceof TransitPassengerRoute route) {
+							routes.add(new IndividualRoute(route.getLineId(), route.getRouteId(),
+									route.getAccessStopId(),
+									route.getEgressStopId(), person.getId(), tripIndex, legIndex,
+									route.getBoardingTime().seconds()));
+						}
 					}
+
+					tripIndex++;
 				}
 			}
 		} else {
 			EventsManager eventsManager = EventsUtils.createEventsManager();
 
-			eventsManager.addHandler(new GenericEventHandler() {
-				@Override
-				public void handleEvent(GenericEvent event) {
-					if (event instanceof PublicTransitEvent pt) {
-						routes.add(new IndividualRoute(pt.getTransitLineId(), pt.getTransitRouteId(),
-								pt.getAccessStopId(), pt.getEgressStopId(), pt.getPersonId(),
-								pt.getVehicleDepartureTime()));
-					}
-				}
-			});
+			Handler handler = new Handler(routes);
+			eventsManager.addHandler(handler);
 
 			MatsimEventsReader reader = new MatsimEventsReader(eventsManager);
 			reader.addCustomEventMapper(PublicTransitEvent.TYPE, new PublicTransitEventMapper());
@@ -93,10 +100,9 @@ public class ExportStopTraversals {
 		}
 
 		BufferedWriter writer = IOUtils.getBufferedWriter(cmd.getOptionStrict("output-path"));
-		int routeIndex = 0;
 
 		writer.write(String.join(";", Arrays.asList( //
-				"route_index", "person_id", "stop_id", "area_id", "is_access", "is_egress", "transit_mode",
+				"person_id", "trip_index", "leg_index", "stop_id", "area_id", "is_access", "is_egress", "transit_mode",
 				"arrival_time", "departure_time")) + "\n");
 
 		for (IndividualRoute route : routes) {
@@ -139,8 +145,9 @@ public class ExportStopTraversals {
 
 				if (extent == null || extent.isInside(stopFacility.getCoord())) {
 					writer.write(String.join(";", Arrays.asList( //
-							String.valueOf(routeIndex), //
 							route.personId.toString(), //
+							String.valueOf(route.tripIndex), //
+							String.valueOf(route.legIndex), //
 							stop.getStopFacility().getId().toString(), //
 							stop.getStopFacility().getStopAreaId().toString(), //
 							String.valueOf(index == accessIndex), //
@@ -151,8 +158,6 @@ public class ExportStopTraversals {
 					)) + "\n");
 				}
 			}
-
-			routeIndex++;
 		}
 
 		writer.close();
@@ -160,6 +165,54 @@ public class ExportStopTraversals {
 
 	private record IndividualRoute(Id<TransitLine> transitLineId, Id<TransitRoute> transitRouteId,
 			Id<TransitStopFacility> accessStopId, Id<TransitStopFacility> egressStopId, Id<Person> personId,
-			double referenceTime) {
+			int tripIndex, int legIndex, double referenceTime) {
+	}
+
+	private static class Handler implements GenericEventHandler, ActivityEndEventHandler {
+		private final Map<Id<Person>, Integer> tripIndex = new HashMap<>();
+		private final Map<Id<Person>, Integer> legIndex = new HashMap<>();
+
+		List<IndividualRoute> routes;
+
+		Handler(List<IndividualRoute> routes) {
+			this.routes = routes;
+		}
+
+		@Override
+		public void handleEvent(ActivityEndEvent event) {
+			Integer localLegIndex = legIndex.get(event.getPersonId());
+
+			if (localLegIndex == null) {
+				localLegIndex = 0;
+			} else {
+				localLegIndex = localLegIndex + 1;
+			}
+
+			Integer personTripIndex = tripIndex.get(event.getPersonId());
+
+			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
+				if (personTripIndex == null) {
+					personTripIndex = 0;
+				} else {
+					personTripIndex = personTripIndex + 1;
+				}
+			}
+
+			tripIndex.put(event.getPersonId(), personTripIndex);
+			legIndex.put(event.getPersonId(), localLegIndex);
+		}
+
+		@Override
+		public void handleEvent(GenericEvent event) {
+			if (event instanceof PublicTransitEvent pt) {
+				int localTripIndex = tripIndex.getOrDefault(pt.getPersonId(), 0);
+				int localLegIndex = legIndex.getOrDefault(pt.getPersonId(), 0);
+
+				routes.add(new IndividualRoute(pt.getTransitLineId(), pt.getTransitRouteId(),
+						pt.getAccessStopId(), pt.getEgressStopId(), pt.getPersonId(), localTripIndex,
+						localLegIndex,
+						pt.getVehicleDepartureTime()));
+			}
+		}
 	}
 }
