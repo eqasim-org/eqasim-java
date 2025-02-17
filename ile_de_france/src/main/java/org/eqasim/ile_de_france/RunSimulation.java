@@ -1,7 +1,6 @@
 package org.eqasim.ile_de_france;
 
 import org.eqasim.core.scenario.validation.VehiclesValidator;
-import org.eqasim.ile_de_france.policies.PolicyExtension;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -20,12 +19,9 @@ public class RunSimulation {
 		IDFConfigurator configurator = new IDFConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
-		
+
 		cmd.applyConfiguration(config);
 		VehiclesValidator.validate(config);
-
-		PolicyExtension policies = new PolicyExtension();
-		policies.adaptConfiguration(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		configurator.configureScenario(scenario);
@@ -34,7 +30,6 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-		controller.addOverridingModule(policies);
 		controller.run();
 	}
 }
