@@ -1,10 +1,16 @@
 package org.eqasim.core.simulation;
 
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.function.BiConsumer;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
@@ -13,6 +19,7 @@ import org.eqasim.core.components.traffic.EqasimTrafficModule;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
+import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
@@ -26,6 +33,8 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWith
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeChoiceModule;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.AbstractAccessRouteFactory;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.DefaultAbstractAccessRoute;
+import org.eqasim.core.simulation.policies.PolicyModule;
+import org.eqasim.core.simulation.policies.config.PoliciesConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.termination.mode_share.TerminationModeShareModule;
@@ -47,6 +56,8 @@ import org.matsim.contrib.dvrp.run.DvrpQSimComponents;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -58,8 +69,8 @@ import org.matsim.households.Household;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 
-public class EqasimConfigurator {
-	public EqasimConfigurator() {
+public abstract class EqasimConfigurator {
+	public EqasimConfigurator(CommandLine cmd) {
 		// Standard eqasim configuration
 		registerConfigGroup(new SwissRailRaptorConfigGroup(), false);
 		registerConfigGroup(new EqasimConfigGroup(), false);
@@ -74,6 +85,7 @@ public class EqasimConfigurator {
 		registerModule(new EqasimRaptorModule());
 		registerModule(new EqasimModeChoiceModule());
 		registerModule(new EqasimTrafficModule());
+		registerModule(new EqasimAnalysisModule());
 
 		registerQSimModule(new EqasimTransitQSimModule());
 		registerQSimModule(new EqasimTrafficQSimModule());
@@ -81,9 +93,11 @@ public class EqasimConfigurator {
 		registerComponents(EqasimTransitQSimModule::configure);
 
 		// Termination
-		registerConfigGroup(new EqasimTerminationConfigGroup(), false);
+		registerConfigGroup(new EqasimTerminationConfigGroup(), true);
 		registerModule(new EqasimTerminationModule(), EqasimTerminationConfigGroup.GROUP_NAME);
 		registerModule(new TerminationModeShareModule(), EqasimTerminationConfigGroup.GROUP_NAME);
+
+		// Analysis
 
 		// DRT functionality
 		registerConfigGroup(new DvrpConfigGroup(), true);
@@ -134,6 +148,10 @@ public class EqasimConfigurator {
 
 		// Emissions
 		registerConfigGroup(new EmissionsConfigGroup(), true);
+
+		// Policies
+		registerConfigGroup(new PoliciesConfigGroup(), true);
+		registerModule(new PolicyModule());
 	}
 
 	private record ConfigGroupItem(ConfigGroup configGroup, boolean isOptional) {
@@ -276,6 +294,71 @@ public class EqasimConfigurator {
 	static protected void copyAttribute(Household household, Person person, String attribute) {
 		if (household.getAttributes().getAsMap().containsKey(attribute)) {
 			person.getAttributes().putAttribute(attribute, household.getAttributes().getAttribute(attribute));
+		}
+	}
+
+	private static final Logger logger = LogManager.getLogger(EqasimConfigurator.class);
+
+	static public final String ENVIONRMENT_VARIABLE = "eqasim_configurator";
+	static public final String CONFIGURATOR = "eqasim-configurator";
+
+	static public final String PROPERTY = "configurator";
+	static public final String PROPERTIES_FILE = "eqasim.properties";
+
+	static public EqasimConfigurator getInstance(CommandLine commandLine) throws ConfigurationException {
+		String configurator = null;
+
+		logger.info("Identifying eqasim configurator ...");
+		if (commandLine.hasOption(CONFIGURATOR)) {
+			configurator = commandLine.getOptionStrict(CONFIGURATOR);
+			logger.info("  Found on command line: " + configurator);
+		} else {
+			configurator = System.getenv(ENVIONRMENT_VARIABLE);
+
+			if (configurator != null) {
+				logger.info("  Found on environment: " + configurator);
+			} else {
+				try {
+					Properties properties = new Properties();
+					properties.load(EqasimConfigurator.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE));
+					configurator = properties.getProperty(PROPERTY);
+				} catch (IOException | NullPointerException e) {
+				}
+
+				if (configurator != null) {
+					logger.info("  Found as property: " + configurator);
+				} else {
+					logger.error("  The script you have called requires to configure an EqasimConfigurator.");
+					logger.error("  However, it has not been found in your configuration. You can:");
+					logger.error("  - Pass a configurator via the command line using --" + CONFIGURATOR);
+					logger.error("  - Pass a configurator via the environment variable " + ENVIONRMENT_VARIABLE);
+					logger.error("  - Define a default configurator in the " + PROPERTIES_FILE + " file in your JAR");
+					throw new IllegalStateException("Missing eqasim configurator");
+				}
+			}
+		}
+
+		try {
+			Class<?> clazz = Class.forName(configurator);
+
+			if (EqasimConfigurator.class.isAssignableFrom(clazz)) {
+				try {
+					Constructor<?> constructor = clazz.getConstructor(CommandLine.class);
+
+					try {
+						return (EqasimConfigurator) constructor.newInstance(commandLine);
+					} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException e) {
+						throw new RuntimeException(e);
+					}
+				} catch (NoSuchMethodException e) {
+					throw new RuntimeException("Configurator class does not have proper constructor: " + configurator);
+				}
+			} else {
+				throw new RuntimeException("Configurator class is not a EqasimConfigurator: " + configurator);
+			}
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("Configurator class does not exist: " + configurator);
 		}
 	}
 }

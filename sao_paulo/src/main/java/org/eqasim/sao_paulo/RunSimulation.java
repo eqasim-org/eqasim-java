@@ -4,9 +4,6 @@ import java.util.Random;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
-import org.eqasim.sao_paulo.mode_choice.SaoPauloModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -27,7 +24,7 @@ public class RunSimulation {
 				.allowPrefixes("mode-parameter", "cost-parameter", "already-equilibrium") //
 				.build();
 
-		EqasimConfigurator configurator = new EqasimConfigurator();
+		EqasimConfigurator configurator = new SaoPauloConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 		EqasimConfigGroup.get(config).setAnalysisInterval(1);
@@ -67,10 +64,6 @@ public class RunSimulation {
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-		controller.addOverridingModule(new EqasimAnalysisModule());
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new SaoPauloModeChoiceModule(cmd));
-		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.run();
 	}
 }

@@ -11,9 +11,12 @@ import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.PassengerConstraint;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
+import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
+import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
-import org.eqasim.core.simulation.mode_choice.utilities.ModalUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.core.simulation.mode_choice.utilities.EqasimUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
@@ -30,6 +33,7 @@ import org.eqasim.core.simulation.modes.drt.mode_choice.constraints.DrtWalkConst
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DefaultDrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.utilities.estimators.DrtUtilityEstimator;
+import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -76,7 +80,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
 
-		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(ModalUtilityEstimator.class);
+		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(EqasimUtilityEstimator.class);
 
 		bind(CarPredictor.class);
 		bind(PtPredictor.class);
@@ -96,12 +100,18 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTourConstraintFactory(VEHICLE_TOUR_CONSTRAINT).to(EqasimVehicleTourConstraint.Factory.class);
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
+
+		install(new EpsilonModule());
+
+		// default binding that should be overridden
+		bind(ModeParameters.class).toInstance(new ModeParameters());
 	}
 
 	@Provides
-	public ModalUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
+	public EqasimUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config,
-			TimeInterpretation timeInterpretation, DiscreteModeChoiceConfigGroup dmcConfig) {
+			TimeInterpretation timeInterpretation, DiscreteModeChoiceConfigGroup dmcConfig,
+			EpsilonProvider epsilonProvider, UtilityPenalty utilityPenalty) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
 
 		for (Map.Entry<String, String> entry : config.getEstimators().entrySet()) {
@@ -115,8 +125,9 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			}
 		}
 
-		return new ModalUtilityEstimator(tripRouter, facilities, estimators, timeInterpretation,
-				Collections.emptySet()); // Here we may add "pt" etc. as pre-routed modes.
+		return new EqasimUtilityEstimator(tripRouter, facilities, estimators, timeInterpretation,
+				Collections.emptySet(), epsilonProvider, utilityPenalty); // Here we may add "pt" etc. as pre-routed
+																			// modes.
 	}
 
 	@Provides
@@ -141,11 +152,13 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	public DefaultDrtPredictor provideDefaultDrtPredictor(Config config, Map<String, Provider<CostModel>> factory) {
-		if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
+		if (!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
 			throw new IllegalStateException(String.format("%s module not found", MultiModeDrtConfigGroup.GROUP_NAME));
 		}
 		EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-		MultiModeDrtConfigGroup multiModeDrtConfigGroup = (MultiModeDrtConfigGroup) config.getModules().get(MultiModeDrtConfigGroup.GROUP_NAME);
-		return new DefaultDrtPredictor(multiModeDrtConfigGroup.modes().collect(Collectors.toMap(mode -> mode, mode -> getCostModel(factory, eqasimConfigGroup, mode))));
+		MultiModeDrtConfigGroup multiModeDrtConfigGroup = (MultiModeDrtConfigGroup) config.getModules()
+				.get(MultiModeDrtConfigGroup.GROUP_NAME);
+		return new DefaultDrtPredictor(multiModeDrtConfigGroup.modes()
+				.collect(Collectors.toMap(mode -> mode, mode -> getCostModel(factory, eqasimConfigGroup, mode))));
 	}
 }

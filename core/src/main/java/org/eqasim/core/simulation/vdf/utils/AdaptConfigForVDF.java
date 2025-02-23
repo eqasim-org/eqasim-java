@@ -45,14 +45,14 @@ public class AdaptConfigForVDF {
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("input-config-path", "output-config-path")
-                .allowOptions("engine")
+                .allowOptions("engine", EqasimConfigurator.CONFIGURATOR)
                 .build();
 
         String inputPath = commandLine.getOptionStrict("input-config-path");
         String outputPath = commandLine.getOptionStrict("output-config-path");
         boolean engine = Boolean.parseBoolean(commandLine.getOption("engine").orElse("false"));
 
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+        EqasimConfigurator eqasimConfigurator = EqasimConfigurator.getInstance(commandLine);
         Config config = ConfigUtils.loadConfig(inputPath);
         eqasimConfigurator.updateConfig(config);
         adaptConfigForVDF(config, engine);
