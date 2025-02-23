@@ -84,7 +84,7 @@ public class MobilityCoinsMarket implements IterationEndsListener {
         double globalBalance = calculateBalance();
 
         // at the end of the iteration, we update the market price
-        double updatedMarketPrice = calculateMarketPrice(globalBalance);
+        double updatedMarketPrice = Math.max(0.0, calculateMarketPrice(globalBalance));
 
         // perform the update
         marketPrice_EUR_per_coin = //
