@@ -6,6 +6,8 @@ import org.eqasim.core.simulation.policies.impl.discount.DiscountConfigGroup;
 import org.eqasim.core.simulation.policies.impl.discount.DiscountPolicyFactory;
 import org.eqasim.core.simulation.policies.impl.limited_traffic_zone.LimitedTrafficZoneConfigGroup;
 import org.eqasim.core.simulation.policies.impl.limited_traffic_zone.LimitedTrafficZonePolicyFactory;
+import org.eqasim.core.simulation.policies.impl.mobility_coins.MobilityCoinsConfigGroup;
+import org.eqasim.core.simulation.policies.impl.mobility_coins.MobilityCoinsPolicyFactory;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
@@ -20,14 +22,16 @@ public class PoliciesConfigGroup extends ReflectiveConfigGroup {
 	@Override
 	public ConfigGroup createParameterSet(String type) {
 		switch (type) {
-		case CityTaxPolicyFactory.POLICY_NAME:
-			return new CityTaxConfigGroup();
-		case LimitedTrafficZonePolicyFactory.POLICY_NAME:
-			return new LimitedTrafficZoneConfigGroup();
-		case DiscountPolicyFactory.POLICY_NAME:
-			return new DiscountConfigGroup();
-		default:
-			throw new IllegalStateException();
+			case CityTaxPolicyFactory.POLICY_NAME:
+				return new CityTaxConfigGroup();
+			case LimitedTrafficZonePolicyFactory.POLICY_NAME:
+				return new LimitedTrafficZoneConfigGroup();
+			case DiscountPolicyFactory.POLICY_NAME:
+				return new DiscountConfigGroup();
+			case MobilityCoinsPolicyFactory.POLICY_NAME:
+				return new MobilityCoinsConfigGroup();
+			default:
+				throw new IllegalStateException();
 		}
 	}
 

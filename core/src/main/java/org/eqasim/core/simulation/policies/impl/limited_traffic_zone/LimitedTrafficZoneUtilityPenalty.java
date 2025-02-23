@@ -11,6 +11,7 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 import org.matsim.core.population.routes.NetworkRoute;
 
 public class LimitedTrafficZoneUtilityPenalty implements UtilityPenalty {
@@ -30,7 +31,7 @@ public class LimitedTrafficZoneUtilityPenalty implements UtilityPenalty {
 
     @Override
     public double calculatePenalty(String mode, Person person, DiscreteModeChoiceTrip trip,
-            List<? extends PlanElement> elements) {
+            List<TripCandidate> previousTrips, List<? extends PlanElement> elements) {
         if (personFilter.applies(person.getId())) {
             boolean originInside = insideLinkIds.contains(trip.getOriginActivity().getLinkId());
             boolean destinationInside = insideLinkIds.contains(trip.getDestinationActivity().getLinkId());

@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 
 public class DiscountUtilityPenalty implements UtilityPenalty {
 	private final CostModel costModel;
@@ -29,7 +30,7 @@ public class DiscountUtilityPenalty implements UtilityPenalty {
 
 	@Override
 	public double calculatePenalty(String mode, Person person, DiscreteModeChoiceTrip trip,
-			List<? extends PlanElement> elements) {
+			List<TripCandidate> previousTrips, List<? extends PlanElement> elements) {
 		if (mode.equals(this.mode) && personFilter.applies(person.getId())) {
 			double initialCost = costModel.calculateCost_MU(person, trip, elements);
 			double updatedCost = initialCost * costFactor;

@@ -13,6 +13,7 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 import org.matsim.core.population.routes.NetworkRoute;
 
 public class CityTaxUtilityPenalty implements UtilityPenalty {
@@ -31,7 +32,7 @@ public class CityTaxUtilityPenalty implements UtilityPenalty {
 
 	@Override
 	public double calculatePenalty(String mode, Person person, DiscreteModeChoiceTrip trip,
-			List<? extends PlanElement> elements) {
+			List<TripCandidate> previousTrips, List<? extends PlanElement> elements) {
 		if (mode.equals(TransportMode.car) && personFilter.applies(person.getId())) {
 			return -parameters.betaCost_u_MU * estimateTax_EUR(elements);
 		} else {
