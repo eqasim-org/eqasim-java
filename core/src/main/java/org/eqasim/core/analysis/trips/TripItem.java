@@ -2,6 +2,7 @@ package org.eqasim.core.analysis.trips;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 
 public class TripItem {
@@ -18,10 +19,12 @@ public class TripItem {
 	public String precedingPurpose;
 	public boolean returning;
 	public double euclideanDistance;
+	public Id<Link> originLinkId;
+	public Id<Link> destinationLinkId;
 
 	public TripItem(Id<Person> personId, int personTripId, Coord origin, Coord destination, double startTime,
 			double travelTime, double vehicleDistance, double routedDistance, String mode, String precedingPurpose,
-			String followingPurpose, boolean returning, double euclideanDistance) {
+			String followingPurpose, boolean returning, double euclideanDistance, Id<Link> originLinkId, Id<Link> destinationLinkId) {
 		this.personId = personId;
 		this.personTripId = personTripId;
 		this.origin = origin;
@@ -35,5 +38,7 @@ public class TripItem {
 		this.precedingPurpose = precedingPurpose;
 		this.returning = returning;
 		this.euclideanDistance = euclideanDistance;
+		this.originLinkId = originLinkId;
+		this.destinationLinkId = destinationLinkId;
 	}
 }

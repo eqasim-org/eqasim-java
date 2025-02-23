@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
@@ -134,7 +133,7 @@ public class AdaptConfigForFeederDrt {
                 .allowOptions("access-egress-transit-stop-modes")
                 .allowOptions("access-egress-transit-stop-ids")
                 .allowOptions("mode-availability")
-                .allowOptions("configurator-class")
+                .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .build();
 
         String inputConfigPath = cmd.getOptionStrict("input-config-path");
@@ -155,12 +154,7 @@ public class AdaptConfigForFeederDrt {
 
         Map<String, Map<String, String>> info = AdaptConfigForDrt.extractDrtInfo(modeNames, toExtract);
 
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);

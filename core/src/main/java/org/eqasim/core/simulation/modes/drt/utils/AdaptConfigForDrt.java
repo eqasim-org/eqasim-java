@@ -15,7 +15,6 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
@@ -70,10 +69,15 @@ public class AdaptConfigForDrt {
         cachedModes.addAll(vehiclesPathByDrtMode.keySet());
         dmcConfig.setCachedModes(cachedModes);
 
+        boolean serviceAreaDrt = false;
+
         for(String drtMode: vehiclesPathByDrtMode.keySet()) {
             DrtConfigGroup drtConfigGroup = new DrtConfigGroup();
             drtConfigGroup.mode = drtMode;
             drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode));
+            if(drtConfigGroup.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
+                serviceAreaDrt = true;
+            }
             drtConfigGroup.stopDuration = 15.0;
             DefaultDrtOptimizationConstraintsSet defaultDrtOptimizationConstraintsSet = (DefaultDrtOptimizationConstraintsSet) drtConfigGroup.addOrGetDrtOptimizationConstraintsParams().addOrGetDefaultDrtOptimizationConstraintsSet();
             defaultDrtOptimizationConstraintsSet.maxWaitTime = 600;
@@ -132,6 +136,9 @@ public class AdaptConfigForDrt {
             legTimeConstraintSingleLegConfigGroups.forEach(legTimeConstraintConfigGroup::addParameterSet);
         }
         tripConstraints.add(EqasimModeChoiceModule.DRT_WALK_CONSTRAINT);
+        if(serviceAreaDrt) {
+            tripConstraints.add(EqasimModeChoiceModule.DRT_SERVICE_AREA_CONSTRAINT);
+        }
         dmcConfig.setTripConstraints(tripConstraints);
 
         DrtConfigs.adjustMultiModeDrtConfig(multiModeDrtConfigGroup, config.scoring(), config.routing());
@@ -172,7 +179,7 @@ public class AdaptConfigForDrt {
                 .requireOptions("input-config-path", "output-config-path", "vehicles-paths")
                 .allowOptions("mode-names")
                 .allowOptions("mode-availability")
-                .allowOptions("configurator-class")
+                .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .allowOptions("operational-schemes")
                 .allowOptions("cost-models", "estimators")
                 .allowOptions("qsim-endtime")
@@ -200,12 +207,7 @@ public class AdaptConfigForDrt {
         Map<String, Map<String, String>> info = extractDrtInfo(modeNames, toExtract);
 
 
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);

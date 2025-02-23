@@ -27,6 +27,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private final static String USE_SCHEDULE_BASED_TRANSPORT = "useScheduleBasedTransport";
 
+	private final static String USE_PSEUDO_RANDOM_ERRORS = "usePseudoRandomErrors";
+
 	private double sampleSize = 1.0;
 	private DistanceUnit distanceUnit = DistanceUnit.meter;
 
@@ -41,6 +43,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private int travelTimeRecordingInterval = 0;
 
 	private boolean useScheduleBasedTransport = true;
+
+	private boolean usePseudoRandomErrors = false;
 
 	public EqasimConfigGroup() {
 		super(GROUP_NAME);
@@ -64,6 +68,16 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(SAMPLE_SIZE)
 	public void setSampleSize(double sampleSize) {
 		this.sampleSize = sampleSize;
+	}
+
+	@StringGetter(USE_PSEUDO_RANDOM_ERRORS)
+	public boolean getUsePseudoRandomErrors() {
+		return usePseudoRandomErrors;
+	}
+
+	@StringSetter(USE_PSEUDO_RANDOM_ERRORS)
+	public void setUsePseudoRandomErrors(boolean usePseudoRandomErrors) {
+		this.usePseudoRandomErrors = usePseudoRandomErrors;
 	}
 
 	@Override

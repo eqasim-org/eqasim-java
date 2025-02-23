@@ -22,10 +22,9 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.components.emissions.RunComputeEmissionsEvents;
 import org.eqasim.core.components.emissions.RunExportEmissionsNetwork;
+import org.eqasim.core.components.emissions.SafeOsmHbefaMapping;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.junit.After;
@@ -39,6 +38,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
+import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
@@ -77,8 +77,8 @@ public class TestEmissions {
 		FileUtils.deleteDirectory(new File("melun_test"));
 	}
 
-	private void runMelunSimulation() {
-		EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+	private void runMelunSimulation() throws ConfigurationException {
+		EqasimConfigurator eqasimConfigurator = new TestConfigurator();
 		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
 		eqasimConfigurator.updateConfig(config);
 		((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME))
@@ -91,8 +91,6 @@ public class TestEmissions {
 
 		Controler controller = new Controler(scenario);
 		eqasimConfigurator.configureController(controller);
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new EqasimAnalysisModule());
 		controller.addOverridingModule(new AbstractEqasimExtension() {
 			@Override
 			protected void installEqasimExtension() {
@@ -143,8 +141,16 @@ public class TestEmissions {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
 		for (Link link : network.getLinks().values()) {
+
 			// this forces the OSM Mapping code to use URB/Local/50 as it the only thing we
 			// have in the sample HBEFA.
+			// We intentionally leave the 'pedestrian' links here to test the SafeOsmHbefaMapping class
+			String linkType = NetworkUtils.getType(link);
+            if (linkType != null) {
+				if (!linkType.equals("pedestrian")) {
+					continue;
+				}
+			}
 			NetworkUtils.setType(link, "tertiary");
 			link.getAttributes().putAttribute(NetworkUtils.ALLOWED_SPEED, 50 / 3.6);
 		}
@@ -159,16 +165,20 @@ public class TestEmissions {
 		Assert.assertEquals(2861, (long) counts.getOrDefault("bike", 0L));
 		Assert.assertEquals(3347, (long) counts.get("pt"));
 
+		SafeOsmHbefaMapping.defaultType = "URB/Loca/50";
+
 		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv", "--hbefa-hot-avg",
 				"sample_41_EFA_HOT_vehcat_2020average.csv", "--hbefa-cold-detailed",
 				"sample_41_EFA_ColdStart_SubSegm_2020detailed.csv", "--hbefa-hot-detailed",
-				"sample_41_EFA_HOT_SubSegm_2020detailed.csv", });
+				"sample_41_EFA_HOT_SubSegm_2020detailed.csv",
+				"--eqasim-configurator", TestConfigurator.class.getName() });
 
-		assertEquals(353704, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
+		assertEquals(353707, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
 		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
-				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600" });
+				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600",
+				"--eqasim-configurator", TestConfigurator.class.getName() });
 
 		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
 		

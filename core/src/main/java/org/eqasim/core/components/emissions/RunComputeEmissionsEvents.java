@@ -1,13 +1,11 @@
 package org.eqasim.core.components.emissions;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.emissions.EmissionModule;
-import org.matsim.contrib.emissions.OsmHbefaMapping;
 import org.matsim.contrib.emissions.utils.EmissionsConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
@@ -27,15 +25,10 @@ public class RunComputeEmissionsEvents {
 
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "hbefa-cold-avg", "hbefa-hot-avg") //
-                .allowOptions("hbefa-cold-detailed", "hbefa-hot-detailed", "configurator-class")
+                .allowOptions("hbefa-cold-detailed", "hbefa-hot-detailed", EqasimConfigurator.CONFIGURATOR)
                 .build();
         
-        EqasimConfigurator configurator;
-        if(cmd.hasOption("configurator-class")) {
-            configurator = ClassUtils.getInstanceOfClassExtendingOtherClass(cmd.getOptionStrict("configurator-class"), EqasimConfigurator.class);
-        } else {
-            configurator = new EqasimConfigurator();
-        }
+        EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         configurator.registerConfigGroup(new EmissionsConfigGroup(), false);
@@ -60,7 +53,10 @@ public class RunComputeEmissionsEvents {
         Scenario scenario = ScenarioUtils.createScenario(config);
         ScenarioUtils.loadScenario(scenario);
 
-        OsmHbefaMapping osmHbefaMapping = OsmHbefaMapping.build();
+        // the default hbefa type is URB/Acess/30 but can be changed like this
+        // SafeOsmHbefaMapping.defaultType = "URB/Local/50";
+        SafeOsmHbefaMapping osmHbefaMapping = new SafeOsmHbefaMapping();
+
         Network network = scenario.getNetwork();
         // if the network is from pt2matsim it might not have "type" but "osm:way:highway" attribute instead
         for (Link link: network.getLinks().values()) {

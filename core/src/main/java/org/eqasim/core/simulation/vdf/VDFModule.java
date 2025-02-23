@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -12,6 +14,7 @@ import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.vdf.handlers.VDFHorizonHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFInterpolationHandler;
+import org.eqasim.core.simulation.vdf.handlers.VDFSparseHorizonHandler;
 import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
@@ -26,6 +29,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class VDFModule extends AbstractEqasimExtension {
+
+	private static final Logger LOGGER = LogManager.getLogger(VDFModule.class);
+
 	@Override
 	protected void installEqasimExtension() {
 		VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(getConfig());
@@ -42,6 +48,10 @@ public class VDFModule extends AbstractEqasimExtension {
 			bind(VDFTrafficHandler.class).to(VDFHorizonHandler.class);
 			addEventHandlerBinding().to(VDFHorizonHandler.class);
 			break;
+		case SparseHorizon:
+			bind(VDFTrafficHandler.class).to(VDFSparseHorizonHandler.class);
+			addEventHandlerBinding().to(VDFSparseHorizonHandler.class);
+			break;
 		case Interpolation:
 			bind(VDFTrafficHandler.class).to(VDFInterpolationHandler.class);
 			addEventHandlerBinding().to(VDFInterpolationHandler.class);
@@ -56,10 +66,10 @@ public class VDFModule extends AbstractEqasimExtension {
 	public VDFUpdateListener provideVDFUpdateListener(VDFScope scope, VDFTrafficHandler handler,
 			VDFTravelTime travelTime, VDFConfigGroup config, OutputDirectoryHierarchy outputHierarchy, Network network,
 			ControllerConfigGroup controllerConfig) {
-		URL inputFile = config.getInputFile() == null ? null
-				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFile());
+		URL inputFile = config.getInputFlowFile() == null ? null
+				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFlowFile());
 		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
-				config.getWriteFlowInterval(), controllerConfig.getFirstIteration(), inputFile);
+				config.getWriteFlowInterval(), config.getWriteTravelTimesInterval(), controllerConfig.getFirstIteration(), inputFile);
 	}
 
 	@Provides
@@ -78,14 +88,27 @@ public class VDFModule extends AbstractEqasimExtension {
 						.getInputFileURL(getConfig().getContext(), config.getUpdateAreaShapefile()).getPath()),
 						Optional.empty(), Optional.empty()).build();
 
-		return new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
+		VDFTravelTime vdfTravelTime = new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
 				eqasimConfig.getSampleSize(), network, vdf, crossingPenalty, updateExtent);
+		if(config.getInputTravelTimesFile() != null) {
+			LOGGER.info("Reading VDF travel times");
+			URL inputTimeFile = ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputTravelTimesFile());
+			vdfTravelTime.readFrom(inputTimeFile);
+			LOGGER.info("  Done");
+		}
+		return vdfTravelTime;
 	}
 
 	@Provides
 	@Singleton
 	public VDFHorizonHandler provideVDFHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope) {
 		return new VDFHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads());
+	}
+
+	@Provides
+	@Singleton
+	public VDFSparseHorizonHandler provideVDFSparseHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope) {
+		return new VDFSparseHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads());
 	}
 
 	@Provides

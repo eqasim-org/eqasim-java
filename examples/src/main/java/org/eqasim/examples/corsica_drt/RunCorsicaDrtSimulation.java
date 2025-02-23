@@ -7,14 +7,11 @@ import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
-import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
 import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
 import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
-import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
@@ -55,7 +52,7 @@ public class RunCorsicaDrtSimulation {
 				.build();
 		URL configUrl = Resources.getResource("corsica/corsica_config.xml");
 
-		IDFConfigurator configurator = new IDFConfigurator();
+		IDFConfigurator configurator = new IDFConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(configUrl);
 		configurator.updateConfig(config);
 
@@ -142,9 +139,6 @@ public class RunCorsicaDrtSimulation {
 
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-		controller.addOverridingModule(new EqasimAnalysisModule());
-		controller.addOverridingModule(new EqasimModeChoiceModule());
-		controller.addOverridingModule(new IDFModeChoiceModule(cmd));
 
 		{ // Configure controller for DRT
 			controller.configureQSimComponents(components -> {

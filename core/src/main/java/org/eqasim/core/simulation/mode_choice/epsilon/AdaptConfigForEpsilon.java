@@ -7,8 +7,6 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 
-import java.util.Map;
-
 public class AdaptConfigForEpsilon {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
@@ -18,22 +16,15 @@ public class AdaptConfigForEpsilon {
         commandLine.applyConfiguration(config);
 
         run(config);
-
+        
         ConfigUtils.writeConfig(config, commandLine.getOptionStrict("output-config-path"));
     }
-    
+
     static public void run(Config config) {
-    	DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup = (DiscreteModeChoiceConfigGroup) config.getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
+        DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup = (DiscreteModeChoiceConfigGroup) config.getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
         discreteModeChoiceConfigGroup.setSelector(SelectorModule.MAXIMUM);
 
         EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-
-
-        for(Map.Entry<String, String> entry: eqasimConfigGroup.getEstimators().entrySet()) {
-            if(entry.getValue().startsWith(EpsilonModule.EPSILON_UTILITY_PREFIX)) {
-                continue;
-            }
-            eqasimConfigGroup.setEstimator(entry.getKey(), EpsilonModule.EPSILON_UTILITY_PREFIX + entry.getValue());
-        }
+        eqasimConfigGroup.setUsePseudoRandomErrors(true);
     }
 }

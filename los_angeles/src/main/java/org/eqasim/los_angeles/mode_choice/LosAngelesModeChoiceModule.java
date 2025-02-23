@@ -59,7 +59,7 @@ public class LosAngelesModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public LosAngelesModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
+	public LosAngelesModeParameters provideModeChoiceParameters(EqasimConfigGroup config, CommandLine commandLine)
 			throws IOException, ConfigurationException {
 		LosAngelesModeParameters parameters = LosAngelesModeParameters.buildDefault();
 

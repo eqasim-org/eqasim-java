@@ -6,11 +6,12 @@ import java.util.List;
 
 import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.los_angeles.LosAngelesConfigurator;
 import org.eqasim.los_angeles.mode_choice.LosAngelesModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel.FallbackBehaviour;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ScoringConfigGroup;
@@ -20,7 +21,8 @@ public class RunAdaptConfig {
 	protected final static List<String> ACTIVITY_TYPES = Arrays.asList("business");
 
 	static public void main(String[] args) throws ConfigurationException {
-		ConfigAdapter.run(args, new EqasimConfigurator(), RunAdaptConfig::adaptConfiguration);
+		CommandLine cmd = new CommandLine.Builder(args).allowAnyOption(true).build();
+		ConfigAdapter.run(args, new LosAngelesConfigurator(cmd), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config, String prefix) {

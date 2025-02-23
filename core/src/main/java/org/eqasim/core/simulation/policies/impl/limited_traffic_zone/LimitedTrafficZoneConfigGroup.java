@@ -1,0 +1,21 @@
+package org.eqasim.core.simulation.policies.impl.limited_traffic_zone;
+
+import org.eqasim.core.simulation.policies.config.PolicyConfigGroup;
+
+public class LimitedTrafficZoneConfigGroup extends PolicyConfigGroup {
+	public LimitedTrafficZoneConfigGroup() {
+		super(LimitedTrafficZonePolicyFactory.POLICY_NAME);
+	}
+
+	@Parameter
+	@Comment("Path to a GeoPackage file containing polygons that cover (from and to node) the links that are part of the limited traffic zone")
+	public String perimetersPath = "";
+
+	@Parameter
+	@Comment("Alternative: Path to a file containing one link id per line. Those links are tagged as being inside of the zone.")
+	public String linkListPath = "";
+
+	@Parameter
+	@Comment("If true, the LTZ penalties are not applied to agents with a home activity in the area.")
+	public boolean considerResidency = true;
+}

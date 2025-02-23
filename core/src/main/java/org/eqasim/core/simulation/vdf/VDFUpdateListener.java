@@ -28,6 +28,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 
 	private final String VDF_FILE = "vdf.bin";
 	private final String FLOW_FILE = "vdf_flow.csv";
+	private final String TRAVEL_TIMES_FILE = "vdf_travel_times.bin";
 
 	private final VDFScope scope;
 	private final VDFTrafficHandler handler;
@@ -35,6 +36,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 
 	private final int writeInterval;
 	private final int writeFlowInterval;
+	private final int writeTravelTimesInterval;
 	private final URL inputFile;
 
 	private final int firstIteration;
@@ -43,8 +45,8 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 	private final Network network;
 
 	public VDFUpdateListener(Network network, VDFScope scope, VDFTrafficHandler handler, VDFTravelTime travelTime,
-			OutputDirectoryHierarchy outputHierarchy, int writeInterval, int writeFlowInterval, int firstIteration,
-			URL inputFile) {
+							 OutputDirectoryHierarchy outputHierarchy, int writeInterval, int writeFlowInterval, int writeTravelTimesInterval, int firstIteration,
+							 URL inputFile) {
 		this.network = network;
 		this.scope = scope;
 		this.handler = handler;
@@ -54,6 +56,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		this.outputHierarchy = outputHierarchy;
 		this.inputFile = inputFile;
 		this.firstIteration = firstIteration;
+		this.writeTravelTimesInterval = writeTravelTimesInterval;
 	}
 
 	@Override
@@ -83,6 +86,13 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 			new FlowWriter(data, network, scope).write(flowFile);
 			logger.info("  Done");
 		}
+
+		if (writeTravelTimesInterval > 0 && (event.getIteration() % writeTravelTimesInterval == 0 || event.isLastIteration())) {
+			File travelTimesFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), TRAVEL_TIMES_FILE));
+			logger.info("Writing travel time information to " + travelTimesFile + "...");
+			travelTime.write(travelTimesFile);
+			logger.info("  Done");
+		}
 	}
 
 	@Override
@@ -96,7 +106,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 			// aggregate to have consistent travel times
 			IdMap<Link, List<Double>> data = handler.aggregate(true);
 			scope.verify(data, "Wrong flow format");
-			travelTime.update(data, true);
+			travelTime.update(data);
 
 			logger.info("  Done");
 		}
@@ -117,6 +127,13 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 
 			if (fromFlowFile.exists()) {
 				Files.copy(fromFlowFile, toFlowFile);
+			}
+
+			File fromTravelTimesFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), TRAVEL_TIMES_FILE));
+			File toTravelTimesFile = new File(outputHierarchy.getOutputFilename(TRAVEL_TIMES_FILE));
+
+			if(fromTravelTimesFile.exists()) {
+				Files.copy(fromTravelTimesFile, toTravelTimesFile);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);

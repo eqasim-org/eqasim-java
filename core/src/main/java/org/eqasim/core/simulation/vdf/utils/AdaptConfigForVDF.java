@@ -1,6 +1,5 @@
 package org.eqasim.core.simulation.vdf.utils;
 
-import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
@@ -22,12 +21,12 @@ public class AdaptConfigForVDF {
         config.qsim().setStorageCapFactor(1e9);
 
 
-        VDFConfigGroup.getOrCreate(config).setWriteInterval(1);
-        VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(1);
+        VDFConfigGroup.getOrCreate(config).setWriteInterval(60);
+        VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(60);
+        VDFConfigGroup.getOrCreate(config).setWriteTravelTimesInterval(60);
 
-        // VDF: Set capacity factor instead (We retrieve it form the Eqasim config group)
-        EqasimConfigGroup eqasimConfigGroup = (EqasimConfigGroup) config.getModules().get(EqasimConfigGroup.GROUP_NAME);
-        VDFConfigGroup.getOrCreate(config).setCapacityFactor(eqasimConfigGroup.getSampleSize());
+        VDFConfigGroup vdfConfigGroup = VDFConfigGroup.getOrCreate(config);
+        vdfConfigGroup.setHandler(VDFConfigGroup.HandlerType.SparseHorizon);
 
         if(engine) {
             // VDF Engine: Add config group
@@ -46,14 +45,14 @@ public class AdaptConfigForVDF {
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("input-config-path", "output-config-path")
-                .allowOptions("engine")
+                .allowOptions("engine", EqasimConfigurator.CONFIGURATOR)
                 .build();
 
         String inputPath = commandLine.getOptionStrict("input-config-path");
         String outputPath = commandLine.getOptionStrict("output-config-path");
         boolean engine = Boolean.parseBoolean(commandLine.getOption("engine").orElse("false"));
 
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+        EqasimConfigurator eqasimConfigurator = EqasimConfigurator.getInstance(commandLine);
         Config config = ConfigUtils.loadConfig(inputPath);
         eqasimConfigurator.updateConfig(config);
         adaptConfigForVDF(config, engine);

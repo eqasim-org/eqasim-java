@@ -38,12 +38,12 @@ public class RunScenarioCutterV2 {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "output-path", "extent-path", "vdf-travel-times-path") //
                 .allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
-                .allowOptions("flag-area-link-modes") //
+                .allowOptions("flag-area-link-modes", EqasimConfigurator.CONFIGURATOR) //
                 .build();
 
         String outputPath = cmd.getOptionStrict("output-path");
 
-        EqasimConfigurator eqasimConfigurator = new EqasimConfigurator();
+        EqasimConfigurator eqasimConfigurator = EqasimConfigurator.getInstance(cmd);
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         eqasimConfigurator.updateConfig(config);
         cmd.applyConfiguration(config);
@@ -108,7 +108,7 @@ public class RunScenarioCutterV2 {
         Set<String> insideModes = new HashSet<>();
         if(Boolean.parseBoolean(cmd.getOption("flag-area-link-modes").orElse("false"))) {
             scenario.getNetwork().getLinks().values()
-                    .stream().filter(link -> extent.isInside(link.getFromNode().getCoord()) && extent.isInside(link.getFromNode().getCoord()))
+                    .stream().filter(link -> extent.isInside(link.getFromNode().getCoord()) && extent.isInside(link.getToNode().getCoord()))
                     .forEach(link -> {
                         Set<String> linkModes = new HashSet<>(link.getAllowedModes());
                         for(String mode: link.getAllowedModes()) {
@@ -140,11 +140,11 @@ public class RunScenarioCutterV2 {
         VDFConfigGroup vdfConfigGroup = VDFConfigGroup.getOrCreate(config);
         vdfConfigGroup.setUpdateAreaShapefile("extent/" + extentPath.getName());
         // We also set the VDF config to use the vdf.bin file for initial travel times
-        vdfConfigGroup.setInputFile("vdf.bin");
+        vdfConfigGroup.setInputTravelTimesFile("vdf_travel_times.bin");
 
         new ScenarioWriter(config, scenario, prefix).run(new File(outputPath).getAbsoluteFile());
 
-        FileUtils.copyFile(new File(cmd.getOptionStrict("vdf-travel-times-path")), new File(outputPath, "vdf.bin"));
+        FileUtils.copyFile(new File(cmd.getOptionStrict("vdf-travel-times-path")), new File(outputPath, "vdf_travel_times.bin"));
     }
 
     public static void findLargestFullyConnectedSubnetwork(Network network, String mode) {

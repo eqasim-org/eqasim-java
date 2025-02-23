@@ -8,6 +8,7 @@ import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFCarPassenger
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFCarPassengerVariables;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -55,6 +56,19 @@ public class IDFCarPassengerUtilityEstimator implements UtilityEstimator {
 		utility += estimateAccessEgressTimeUtility(variables);
 		utility += estimateDrivingPermit(personVariables);
 
+		if (isParis(trip)) {
+			utility += parameters.idfParis.carPassenger_u;
+		}
+
 		return utility;
+	}
+
+	static private boolean isParis(DiscreteModeChoiceTrip trip) {
+		return isParis(trip.getOriginActivity()) || isParis(trip.getDestinationActivity());
+	}
+
+	static private boolean isParis(Activity activity) {
+		Boolean isParis = (Boolean) activity.getAttributes().getAttribute("isParis");
+		return isParis != null && isParis;
 	}
 }

@@ -1,8 +1,10 @@
 .classpath
 .project
 .settings
+.vscode
 target
 dependency-reduced-pom.xml
 *.iml
 *.idea
 simulation_output
+.vscode

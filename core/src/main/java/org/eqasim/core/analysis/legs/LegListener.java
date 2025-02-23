@@ -38,7 +38,6 @@ public class LegListener implements ActivityStartEventHandler, ActivityEndEventH
 		PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, LinkEnterEventHandler,
 		TeleportationArrivalEventHandler, GenericEventHandler {
 	final private Network network;
-	final private PopulationFactory factory;
 
 	final private Collection<LegItem> trips = new LinkedList<>();
 	final private Map<Id<Person>, LegListenerItem> ongoing = new HashMap<>();
@@ -50,7 +49,6 @@ public class LegListener implements ActivityStartEventHandler, ActivityEndEventH
 
 	public LegListener(Network network, PersonAnalysisFilter personFilter) {
 		this.network = network;
-		this.factory = ScenarioUtils.createScenario(ConfigUtils.createConfig()).getPopulation().getFactory();
 		this.personFilter = personFilter;
 	}
 
@@ -89,7 +87,7 @@ public class LegListener implements ActivityStartEventHandler, ActivityEndEventH
 			}
 
 			ongoing.put(event.getPersonId(), new LegListenerItem(event.getPersonId(), personTripIndex, localLegIndex,
-					network.getLinks().get(event.getLinkId()).getCoord()));
+					network.getLinks().get(event.getLinkId()).getCoord(), event.getLinkId()));
 
 			tripIndex.put(event.getPersonId(), personTripIndex);
 			legIndex.put(event.getPersonId(), localLegIndex);
@@ -112,11 +110,12 @@ public class LegListener implements ActivityStartEventHandler, ActivityEndEventH
 			if (leg != null) {
 				leg.travelTime = event.getTime() - leg.departureTime;
 				leg.destination = network.getLinks().get(event.getLinkId()).getCoord();
+				leg.destinationLinkId = event.getLinkId();
 				leg.euclideanDistance = CoordUtils.calcEuclideanDistance(leg.origin, leg.destination);
 
 				trips.add(new LegItem(leg.personId, leg.personTripId, leg.legIndex, leg.origin, leg.destination,
 						leg.departureTime, leg.travelTime, leg.vehicleDistance, leg.routedDistance, leg.mode,
-						leg.euclideanDistance));
+						leg.euclideanDistance, leg.originLinkId, leg.destinationLinkId));
 			}
 		}
 	}
