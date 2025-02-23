@@ -8,7 +8,7 @@ public class MobilityCoinsParameters {
     public final double emissions_gco2_per_km_transit = 30.0;
 
     // Equivalent of one coin in CO2eq
-    public final double cost_coins_per_gco2 = 1.0;
+    public final double cost_coins_per_gco2 = 0.001;
 
     // incentive in coins for riding one km the bicycle
     public final double incentive_coins_per_km_bicycle = 10.0;
@@ -29,7 +29,7 @@ public class MobilityCoinsParameters {
     public final double initialMarketPrice_EUR_per_coin = 1.0;
 
     // target coins volume
-    public final double targetCoins = 100000000.0;
+    public final double targetCoins = 100000000.0 * 0.001;
 
     // update coins delta
     public final double marketPriceUpdate = 0.1;
