@@ -31,6 +31,10 @@ public class AdaptConfigForTransitWithAbstractAccess {
         DiscreteModeChoiceConfigGroup dmcConfigGroup = (DiscreteModeChoiceConfigGroup) config.getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
         dmcConfigGroup.getTripConstraints().add(TransitWithAbstractAccessConstraint.NAME);
 
+        if(!dmcConfigGroup.getModeAvailability().contains(TransitWithAbstractAccessModeChoiceModule.TRANSIT_WITH_ABSTRACT_ACCESS_MODE_AVAILABILITY_WRAPPER_NAME)) {
+            dmcConfigGroup.setModeAvailability(TransitWithAbstractAccessModeChoiceModule.TRANSIT_WITH_ABSTRACT_ACCESS_MODE_AVAILABILITY_WRAPPER_NAME + ":" + dmcConfigGroup.getModeAvailability());
+        }
+
         Set<String> cachedModes = new HashSet<>(dmcConfigGroup.getCachedModes());
         cachedModes.add(mode);
         dmcConfigGroup.setCachedModes(cachedModes);

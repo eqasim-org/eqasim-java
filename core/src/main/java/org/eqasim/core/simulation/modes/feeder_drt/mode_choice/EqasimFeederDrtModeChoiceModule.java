@@ -16,11 +16,13 @@ import com.google.inject.Provides;
 public class EqasimFeederDrtModeChoiceModule extends AbstractEqasimExtension {
 
     public static final String FEEDER_DRT_ESTIMATOR_NAME = "DefaultFeederDrtUtilityEstimator";
+    public static final String FEEDER_DRT_MODE_AVAILABILITY_WRAPPER_NAME = "feederDrt";
 
     @Override
     protected void installEqasimExtension() {
         bindUtilityEstimator(FEEDER_DRT_ESTIMATOR_NAME).to(DefaultFeederDrtUtilityEstimator.class);
         bindTripConstraintFactory(FeederDrtConstraint.NAME).to(FeederDrtConstraint.Factory.class).asEagerSingleton();
+        bindModeAvailabilityWrapperFactory(FEEDER_DRT_MODE_AVAILABILITY_WRAPPER_NAME).toInstance(modeAvailability -> new FeederDrtModeAvailabilityWrapper(getConfig(), modeAvailability));
     }
 
     @Provides

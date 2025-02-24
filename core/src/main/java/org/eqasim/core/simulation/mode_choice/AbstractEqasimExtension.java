@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.eqasim.core.simulation.mode_choice.mode_availability_wrapper.ModeAvailabilityWrapperFactory;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.matsim.contribs.discrete_mode_choice.modules.AbstractDiscreteModeChoiceExtension;
 
@@ -14,11 +15,13 @@ import com.google.inject.multibindings.MapBinder;
 public abstract class AbstractEqasimExtension extends AbstractDiscreteModeChoiceExtension {
 	private MapBinder<String, UtilityEstimator> estimatorBinder;
 	private MapBinder<String, CostModel> costModelBinder;
+	private MapBinder<String, ModeAvailabilityWrapperFactory> modeAvailabilityWrapperFactoryBinder;
 
 	@Override
 	protected void installExtension() {
 		this.estimatorBinder = MapBinder.newMapBinder(binder(), String.class, UtilityEstimator.class);
 		this.costModelBinder = MapBinder.newMapBinder(binder(), String.class, CostModel.class);
+		this.modeAvailabilityWrapperFactoryBinder = MapBinder.newMapBinder(binder(), String.class, ModeAvailabilityWrapperFactory.class);
 
 		installEqasimExtension();
 	}
@@ -29,6 +32,10 @@ public abstract class AbstractEqasimExtension extends AbstractDiscreteModeChoice
 
 	protected LinkedBindingBuilder<CostModel> bindCostModel(String name) {
 		return costModelBinder.addBinding(name);
+	}
+
+	protected LinkedBindingBuilder<ModeAvailabilityWrapperFactory> bindModeAvailabilityWrapperFactory(String name) {
+		return modeAvailabilityWrapperFactoryBinder.addBinding(name);
 	}
 
 	abstract protected void installEqasimExtension();

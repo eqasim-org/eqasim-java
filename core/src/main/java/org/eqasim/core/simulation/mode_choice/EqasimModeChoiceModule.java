@@ -15,6 +15,7 @@ import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
 import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
+import org.eqasim.core.simulation.mode_choice.mode_availability_wrapper.ModeAvailabilityWrappersModule;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.EqasimUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
@@ -28,6 +29,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
+import org.eqasim.core.simulation.modes.drt.mode_choice.DrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.drt.mode_choice.constraints.DrtServiceAreaConstraint;
 import org.eqasim.core.simulation.modes.drt.mode_choice.constraints.DrtWalkConstraint;
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DefaultDrtPredictor;
@@ -49,6 +51,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 public class EqasimModeChoiceModule extends AbstractEqasimExtension {
+	public static final String DRT_MODE_AVAILABILITY_WRAPPER_NAME = "drt";
+
 	public static final String PASSENGER_CONSTRAINT_NAME = "PassengerConstraint";
 	public static final String OUTSIDE_CONSTRAINT_NAME = "OutsideConstraint";
 	public static final String DRT_WALK_CONSTRAINT = "DrtWalkConstraint";
@@ -72,6 +76,8 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 	@Override
 	protected void installEqasimExtension() {
+		bindModeAvailabilityWrapperFactory(DRT_MODE_AVAILABILITY_WRAPPER_NAME).toInstance(modeAvailability -> new DrtModeAvailabilityWrapper(getConfig(), modeAvailability));
+
 		bindTripConstraintFactory(PASSENGER_CONSTRAINT_NAME).to(PassengerConstraint.Factory.class);
 		bindTripConstraintFactory(OUTSIDE_CONSTRAINT_NAME).to(OutsideConstraint.Factory.class);
 		bindTripConstraintFactory(DRT_WALK_CONSTRAINT).to(DrtWalkConstraint.Factory.class);
@@ -102,6 +108,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
 
 		install(new EpsilonModule());
+		install(new ModeAvailabilityWrappersModule());
 
 		// default binding that should be overridden
 		bind(ModeParameters.class).toInstance(new ModeParameters());
@@ -110,7 +117,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	public EqasimUtilityEstimator provideModularUtilityEstimator(TripRouter tripRouter, ActivityFacilities facilities,
 			Map<String, Provider<UtilityEstimator>> factory, EqasimConfigGroup config,
-			TimeInterpretation timeInterpretation, DiscreteModeChoiceConfigGroup dmcConfig,
+			TimeInterpretation timeInterpretation,
 			EpsilonProvider epsilonProvider, UtilityPenalty utilityPenalty) {
 		Map<String, UtilityEstimator> estimators = new HashMap<>();
 

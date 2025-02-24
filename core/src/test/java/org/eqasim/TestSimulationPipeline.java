@@ -25,9 +25,7 @@ import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtVehicleAnalysis;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
 import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.eqasim.core.simulation.modes.feeder_drt.analysis.run.RunFeederDrtPassengerAnalysis;
-import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
@@ -47,7 +45,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -57,8 +54,6 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class TestSimulationPipeline {
 
@@ -108,16 +103,7 @@ public class TestSimulationPipeline {
             @Override
             protected void installEqasimExtension() {
                 bind(ModeParameters.class);
-                bindModeAvailability("DefaultModeAvailability").toProvider(new Provider<>() {
-                    @Inject
-                    private Config config;
-
-                    @Override
-                    public ModeAvailability get() {
-                        FeederDrtModeAvailabilityWrapper feederDrtModeAvailabilityWrapper = new FeederDrtModeAvailabilityWrapper(config, new TestModeAvailability());
-                        return new TransitWithAbstractAccessModeAvailabilityWrapper(config, feederDrtModeAvailabilityWrapper);
-                    }
-                }).asEagerSingleton();
+                bindModeAvailability("DefaultModeAvailability").to(TestModeAvailability.class).asEagerSingleton();
             }
         });
         controller.run();

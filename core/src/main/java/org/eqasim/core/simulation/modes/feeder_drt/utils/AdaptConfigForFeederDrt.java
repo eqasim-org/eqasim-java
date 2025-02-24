@@ -29,7 +29,7 @@ import org.matsim.pt.config.TransitConfigGroup;
 
 public class AdaptConfigForFeederDrt {
 
-    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, Map<String, String> accessEgressTransitStopModes, Map<String, String> accessEgressTransitStopIds, String modeAvailability) {
+    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, Map<String, String> accessEgressTransitStopModes, Map<String, String> accessEgressTransitStopIds) {
         if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
             throw new IllegalStateException(String.format("Cannot add module '%s' if module '%s' is not present already. You can use '%s' to configure it.", MultiModeFeederDrtConfigGroup.GROUP_NAME, MultiModeDrtConfigGroup.GROUP_NAME, AdaptConfigForDrt.class.getCanonicalName()));
         }
@@ -50,8 +50,8 @@ public class AdaptConfigForFeederDrt {
         }
 
         // Add DRT to the available modes
-        if(modeAvailability != null) {
-            dmcConfig.setModeAvailability(modeAvailability);
+        if(!dmcConfig.getModeAvailability().contains(EqasimFeederDrtModeChoiceModule.FEEDER_DRT_MODE_AVAILABILITY_WRAPPER_NAME)) {
+            dmcConfig.setModeAvailability(EqasimFeederDrtModeChoiceModule.FEEDER_DRT_MODE_AVAILABILITY_WRAPPER_NAME + ":" + dmcConfig.getModeAvailability());
         }
 
 
@@ -132,7 +132,6 @@ public class AdaptConfigForFeederDrt {
                 .allowOptions("estimators")
                 .allowOptions("access-egress-transit-stop-modes")
                 .allowOptions("access-egress-transit-stop-ids")
-                .allowOptions("mode-availability")
                 .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .build();
 
@@ -159,7 +158,7 @@ public class AdaptConfigForFeederDrt {
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);
 
-        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), info.get("access-egress-transit-stop-ids"), cmd.getOption("mode-availability").orElse(null));
+        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), info.get("access-egress-transit-stop-ids"));
 
         ConfigUtils.writeConfig(config, outputConfigPath);
     }
