@@ -29,11 +29,11 @@ public class MobilityCoinsParameters {
     public final double initialMarketPrice_EUR_per_coin = 1.0;
 
     // target coins volume
-    public final double targetCoins = 100000.0;
+    public final double targetCoins = 500000.0;
 
     // update coins delta
     public final double marketPriceUpdate = 0.1;
 
     // initial coins per person
-    public final double initialCoins_per_person = 2.0;
+    public final double initialCoins_per_person = 10.0;
 }
