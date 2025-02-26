@@ -11,10 +11,10 @@ public class MobilityCoinsParameters {
     public final double cost_coins_per_gco2 = 1e-3;
 
     // incentive in coins for riding one km the bicycle
-    public final double incentive_coins_per_km_bicycle = 1.0;
+    public final double incentive_coins_per_km_bicycle = 0.1;
 
     // incentive in coins for walking one km
-    public final double incentive_coins_per_km_walking = 1.0;
+    public final double incentive_coins_per_km_walking = 0.1;
 
     // marginal utility for coin losses
     public final double beta_loss_u_per_coin = 0.310998; // from beta_cost
@@ -29,7 +29,7 @@ public class MobilityCoinsParameters {
     public final double initialMarketPrice_EUR_per_coin = 1.0;
 
     // target coins volume
-    public final double targetCoins = 150000.0;
+    public final double targetCoins = 500000.0;
 
     // update coins delta
     public final double marketPriceUpdate = 0.1;
