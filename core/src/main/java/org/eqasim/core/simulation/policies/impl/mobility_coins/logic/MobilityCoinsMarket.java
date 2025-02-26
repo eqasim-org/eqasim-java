@@ -85,6 +85,9 @@ public class MobilityCoinsMarket implements IterationEndsListener {
                 marketPrice_EUR_per_coin * (1.0 - parameters.marketPriceSmoothing) + //
                         updatedMarketPrice * parameters.marketPriceSmoothing;
 
+        // make sure it is not negative
+        marketPrice_EUR_per_coin = Math.max(0.0, marketPrice_EUR_per_coin);
+
         // track prices
         writer.writeMarketPrice(
                 new Entry(event.getIteration(), globalBalance, updatedMarketPrice, marketPrice_EUR_per_coin));
