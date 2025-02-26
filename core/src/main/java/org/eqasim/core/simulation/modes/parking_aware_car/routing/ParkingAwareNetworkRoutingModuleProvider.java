@@ -1,7 +1,8 @@
-package org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment;
+package org.eqasim.core.simulation.modes.parking_aware_car.routing;
 
 
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
+import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
 import jakarta.inject.Provider;

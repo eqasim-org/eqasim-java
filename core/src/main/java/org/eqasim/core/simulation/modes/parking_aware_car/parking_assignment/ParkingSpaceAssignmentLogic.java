@@ -8,5 +8,5 @@ import org.matsim.api.core.v01.population.Person;
 
 public interface ParkingSpaceAssignmentLogic {
 
-    ParkingSpace getUsedParkingSpace(NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Person person, Id<Link> linkId);
+    ParkingSpace getUsedParkingSpace(NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Id<Person> person, Id<Link> linkId);
 }

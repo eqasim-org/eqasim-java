@@ -26,6 +26,8 @@ import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.modes.feeder_drt.MultiModeFeederDrtModule;
 import org.eqasim.core.simulation.modes.feeder_drt.config.MultiModeFeederDrtConfigGroup;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.EqasimFeederDrtModeChoiceModule;
+import org.eqasim.core.simulation.modes.parking_aware_car.ParkingAwareNetworkModeModule;
+import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAbstractAccessModuleConfigGroup;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessModule;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWithAbstractAccessQSimModule;
@@ -144,6 +146,10 @@ public abstract class EqasimConfigurator {
 
 		// Emissions
 		registerConfigGroup(new EmissionsConfigGroup(), true);
+
+		// Parking
+		registerConfigGroup(new ParkingAwareNetworkModeConfigGroup(), true);
+		registerModule(new ParkingAwareNetworkModeModule(), ParkingAwareNetworkModeConfigGroup.GROUP_NAME);
 	}
 
 	private record ConfigGroupItem(ConfigGroup configGroup, boolean isOptional) {

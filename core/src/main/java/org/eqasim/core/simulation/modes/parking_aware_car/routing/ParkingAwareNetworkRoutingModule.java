@@ -1,8 +1,9 @@
-package org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment;
+package org.eqasim.core.simulation.modes.parking_aware_car.routing;
 
 import com.google.common.base.Verify;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingSpace;
+import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.router.RoutingModule;
@@ -32,8 +33,7 @@ public class ParkingAwareNetworkRoutingModule implements RoutingModule {
         for(int i = elements.size()-1; i>=0; i--) {
             PlanElement element = elements.get(i);
             if((element instanceof Leg leg) && leg.getMode().equals(this.mode)) {
-                Verify.verify(this.mode.equals(leg.getRoutingMode()));
-                ParkingSpace parkingSpace = parkingSpaceAssignmentLogic.getUsedParkingSpace(networkWideParkingSpaceStore, request.getPerson(), request.getToFacility().getLinkId());
+                ParkingSpace parkingSpace = parkingSpaceAssignmentLogic.getUsedParkingSpace(networkWideParkingSpaceStore, request.getPerson().getId(), leg.getRoute().getEndLinkId());
                 Verify.verify(parkingSpace != null, String.format("Parking space not found for person %s at link %s", request.getPerson().getId().toString(), request.getToFacility().getLinkId().toString()));
                 leg.getAttributes().putAttribute(PARKING_TYPE_ATTR, parkingSpace.parkingType().id());
             }

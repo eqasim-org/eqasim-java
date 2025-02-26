@@ -3,7 +3,7 @@ package org.eqasim;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.TestConfigurator.TestModeAvailability;
@@ -11,6 +11,7 @@ import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.scenario.config.EditConfig;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -27,6 +28,10 @@ import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.eqasim.core.simulation.modes.feeder_drt.analysis.run.RunFeederDrtPassengerAnalysis;
 import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
+import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
+import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
+import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
+import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
@@ -45,15 +50,19 @@ import org.eqasim.core.tools.ExportTransitStopsToShapefile;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
 
@@ -71,7 +80,7 @@ public class TestSimulationPipeline {
 
     @After
     public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(new File("melun_test"));
+        //FileUtils.deleteDirectory(new File("melun_test"));
     }
 
     private void runMelunSimulation(String configPath, String outputPath) throws ConfigurationException {
@@ -482,6 +491,42 @@ public class TestSimulationPipeline {
         runExports();
         runCutter();
         runCutterV2();
+    }
+
+    @Test
+    public void testParking() throws Exception {
+
+        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        EqasimConfigurator eqasimConfigurator = new TestConfigurator();
+        eqasimConfigurator.updateConfig(config);
+
+        PersonAttributeBasedParkingAssignmentConfigGroup personAttributeBasedParkingAssignmentConfigGroup = new PersonAttributeBasedParkingAssignmentConfigGroup();
+        personAttributeBasedParkingAssignmentConfigGroup.orderedParkingTypes = List.of("roadSide");
+        personAttributeBasedParkingAssignmentConfigGroup.parkingTypesAvailableForEveryone = Set.of("roadSide");
+
+        ParkingSpaceAssignmentLogicParameterSet parkingSpaceAssignmentLogicParameterSet = new ParkingSpaceAssignmentLogicParameterSet();
+        parkingSpaceAssignmentLogicParameterSet.addParameterSet(personAttributeBasedParkingAssignmentConfigGroup);
+
+        ParkingAwareNetworkModeConfigGroup parkingAwareNetworkModeConfigGroup = new ParkingAwareNetworkModeConfigGroup();
+        parkingAwareNetworkModeConfigGroup.addParameterSet(parkingSpaceAssignmentLogicParameterSet);
+
+        config.addModule(parkingAwareNetworkModeConfigGroup);
+
+        config.network().setInputFile("network_parking.xml");
+
+        ConfigUtils.writeConfig(config, "melun_test/input/config_parking.xml");
+
+        Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+        new MatsimNetworkReader(scenario.getNetwork()).readFile("melun_test/input/network.xml.gz");
+
+        Map<String, Double> parkingSpace = new HashMap<>();
+        parkingSpace.put("roadSide", 10.0);
+        for(Link link: scenario.getNetwork().getLinks().values()) {
+            link.getAttributes().putAttribute("parking:roadSide", 10);
+        }
+        NetworkUtils.writeNetwork(scenario.getNetwork(), "melun_test/input/network_parking.xml");
+
+        runMelunSimulation("melun_test/input/config_parking.xml", "melun_test/output_parking");
     }
 
     @Test

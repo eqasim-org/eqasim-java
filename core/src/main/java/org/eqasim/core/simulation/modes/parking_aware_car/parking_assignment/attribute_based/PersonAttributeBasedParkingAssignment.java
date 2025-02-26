@@ -1,9 +1,10 @@
-package org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment;
+package org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based;
 
 import com.google.common.base.Verify;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingSpace;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
+import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.IdSet;
@@ -21,23 +22,17 @@ public class PersonAttributeBasedParkingAssignment implements ParkingSpaceAssign
 
     public static final String PARKING_ATTR = "parking";
 
-    private final IdSet<ParkingType> parkingTypesAvailableForEveryone;
-    private final List<Id<ParkingType>> orderedParkingTypes;
-
-    private final Population population;
-    private final NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
-    private final IdMap<Person, IdMap<Link, Set<ParkingSpace>>> parkingsPerPersonPerLink;
     private final IdMap<Person, IdMap<Link, ParkingSpace>> parkingPerLinkPerPerson;
 
     public PersonAttributeBasedParkingAssignment(List<Id<ParkingType>> orderedParkingTypes, IdSet<ParkingType> parkingTypesAvailableForEveryone, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Population population, Network network) {
-        this.parkingTypesAvailableForEveryone = parkingTypesAvailableForEveryone;
-        this.population = population;
-        this.networkWideParkingSpaceStore = networkWideParkingSpaceStore;
-        this.orderedParkingTypes = orderedParkingTypes;
 
-        this.parkingsPerPersonPerLink = new IdMap<>(Person.class);
+        IdMap<Person, IdMap<Link, Set<ParkingSpace>>> potentialParkingsPerLinkPerPerson = new IdMap<>(Person.class);
         for(Person person: population.getPersons().values()) {
+            //noinspection unchecked
             Map<String, String> linksPerParkingType = (Map<String, String>) person.getAttributes().getAttribute(PARKING_ATTR);
+            if(linksPerParkingType == null) {
+                continue;
+            }
             IdMap<Link, Set<ParkingSpace>> personMap = new IdMap<>(Link.class);
             for(Map.Entry<String, String> entry: linksPerParkingType.entrySet()) {
                 Id<ParkingType> parkingTypeId = Id.create(entry.getKey(), ParkingType.class);
@@ -48,7 +43,7 @@ public class PersonAttributeBasedParkingAssignment implements ParkingSpaceAssign
                     personMap.computeIfAbsent(linkId, id -> new HashSet<>()).add(parkingSpace);
                 }
             }
-            this.parkingsPerPersonPerLink.put(person.getId(), personMap);
+            potentialParkingsPerLinkPerPerson.put(person.getId(), personMap);
         }
 
         parkingPerLinkPerPerson = new IdMap<>(Person.class);
@@ -57,18 +52,23 @@ public class PersonAttributeBasedParkingAssignment implements ParkingSpaceAssign
             IdMap<Link, ParkingSpace> personMap = new IdMap<>(Link.class);
             for(Id<Link> linkId: network.getLinks().keySet()) {
                 for(Id<ParkingType> parkingTypeId: orderedParkingTypes) {
-                    if(parkingTypesAvailableForEveryone.contains(parkingTypeId)) {
-
-                    } else {
-
+                    ParkingSpace parkingSpace = networkWideParkingSpaceStore.getLinkParkingSpaces(linkId).get(parkingTypeId);
+                    if(parkingSpace == null) {
+                        continue;
+                    }
+                    IdMap<Link, Set<ParkingSpace>> potentialParkingsPerLink = potentialParkingsPerLinkPerPerson.get(person.getId());
+                    if(parkingTypesAvailableForEveryone.contains(parkingTypeId) || (potentialParkingsPerLink != null && potentialParkingsPerLink.get(linkId).contains(parkingSpace))) {
+                        personMap.put(linkId, parkingSpace);
+                        break;
                     }
                 }
             }
+            parkingPerLinkPerPerson.put(person.getId(), personMap);
         }
     }
 
     @Override
-    public ParkingSpace getUsedParkingSpace(NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Person person, Id<Link> linkId) {
-        return null;
+    public ParkingSpace getUsedParkingSpace(NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Id<Person> personId, Id<Link> linkId) {
+        return this.parkingPerLinkPerPerson.get(personId).get(linkId);
     }
 }
