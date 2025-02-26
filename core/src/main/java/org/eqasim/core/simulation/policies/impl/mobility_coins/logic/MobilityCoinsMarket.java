@@ -55,13 +55,7 @@ public class MobilityCoinsMarket implements IterationEndsListener {
                 personBalance += coinsDelta;
             }
 
-            globalBalance += Math.max(0.0, personBalance);
-
-            if (personBalance < 0.0) {
-                // agent needed to buy extra coins
-                globalBalance -= personBalance;
-            }
-
+            globalBalance += personBalance;
         }
 
         return globalBalance;

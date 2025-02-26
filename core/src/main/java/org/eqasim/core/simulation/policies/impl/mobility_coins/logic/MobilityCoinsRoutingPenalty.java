@@ -29,10 +29,10 @@ public class MobilityCoinsRoutingPenalty implements RoutingPenalty {
         MobilityCoinsDistances distances = new MobilityCoinsDistances(length_km, 0.0, 0.0, 0.0, 0.0);
 
         // calculate coins for going through the link
-        double deltaCoins = calculator.calculateCoinDelta(distances);
+        double coins = calculator.calculateCoinDelta(distances);
 
         // calculate penalty in EUR
-        double penalty_EUR = -market.getMarketPrice_EUR_per_coin() * deltaCoins;
+        double penalty_EUR = -market.getMarketPrice_EUR_per_coin() * coins;
 
         // we need to give the penalty in seconds, so convert to utilities using
         // marginal utility of cost
