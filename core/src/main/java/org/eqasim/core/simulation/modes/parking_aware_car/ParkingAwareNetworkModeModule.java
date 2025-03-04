@@ -3,7 +3,6 @@ package org.eqasim.core.simulation.modes.parking_aware_car;
 import com.google.inject.*;
 import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
-import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageControlerListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageEventListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
@@ -11,8 +10,6 @@ import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.att
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareNetworkRoutingModule;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignment;
-import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.controler.AbstractModule;
@@ -20,7 +17,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
 
-import java.util.List;
 
 public class ParkingAwareNetworkModeModule extends AbstractModule {
 
