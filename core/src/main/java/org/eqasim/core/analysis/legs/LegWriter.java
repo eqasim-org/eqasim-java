@@ -54,7 +54,9 @@ public class LegWriter {
 				"vehicle_distance", //
 				"routed_distance", //
 				"mode", //
-				"euclidean_distance" //
+				"euclidean_distance", //
+				"origin_link_id", //
+				"destination_link_id" //
 		});
 	}
 
@@ -101,7 +103,9 @@ public class LegWriter {
 				String.valueOf(leg.vehicleDistance * inputFactor * outputFactor), //
 				String.valueOf(leg.routedDistance * inputFactor * outputFactor), //
 				String.valueOf(leg.mode), //
-				String.valueOf(leg.euclideanDistance * inputFactor * outputFactor) //
+				String.valueOf(leg.euclideanDistance * inputFactor * outputFactor), //
+				String.valueOf(leg.originLinkId), //
+				String.valueOf(leg.destinationLinkId) //
 		});
 	}
 }

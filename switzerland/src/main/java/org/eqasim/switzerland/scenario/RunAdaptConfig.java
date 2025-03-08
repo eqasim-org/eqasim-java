@@ -20,9 +20,8 @@ public class RunAdaptConfig {
 	private static double storageCapExponent = 0.75;
 
 	static public void main(String[] args) throws ConfigurationException {
-		CommandLine cmd = new CommandLine.Builder(args).build();
-		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
-		SwissConfigAdapter.run(args, configurator, RunAdaptConfig::adaptConfiguration);
+		CommandLine cmd = new CommandLine.Builder(args).allowAnyOption(true).build();
+		SwissConfigAdapter.run(args, new SwitzerlandConfigurator(cmd), RunAdaptConfig::adaptConfiguration);
 	}
 
 	static public void adaptConfiguration(Config config) {

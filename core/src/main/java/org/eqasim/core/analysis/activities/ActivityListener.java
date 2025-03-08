@@ -48,7 +48,8 @@ public class ActivityListener implements ActivityStartEventHandler, ActivityEndE
 
 				// this is not the first one
 				ActivityItem activity = new ActivityItem(event.getPersonId(), personActivityIndex, event.getActType(),
-						event.getTime(), Double.POSITIVE_INFINITY, event.getCoord().getX(), event.getCoord().getY());
+						event.getTime(), Double.POSITIVE_INFINITY, event.getCoord().getX(), event.getCoord().getY(),
+						event.getFacilityId(), event.getLinkId());
 
 				activities.add(activity);
 				ongoing.put(event.getPersonId(), activity);
@@ -67,10 +68,11 @@ public class ActivityListener implements ActivityStartEventHandler, ActivityEndE
 						// can happen for BeforeVrpSchedule activities of DRT vehicles
 						return;
 					}
-					
+
 					// this is the first one
 					activity = new ActivityItem(event.getPersonId(), 0, event.getActType(), Double.NEGATIVE_INFINITY,
-							event.getTime(), event.getCoord().getX(), event.getCoord().getY());
+							event.getTime(), event.getCoord().getX(), event.getCoord().getY(), event.getFacilityId(),
+							event.getLinkId());
 
 					Verify.verify(activityIndex.put(event.getPersonId(), 0) == null);
 

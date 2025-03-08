@@ -1,0 +1,12 @@
+{
+    "road_router": [
+        { "origin_x": 673335, "origin_y": 6826738, "destination_x": 676489, "destination_y": 6825926, "departure_time_s": 28800.0 },
+        { "origin_x": 673692, "origin_y": 6827989, "destination_x": 674379, "destination_y": 6827303, "departure_time_s": 28800.0 },
+        { "origin_x": 674668, "origin_y": 6826155, "destination_x": 676489, "destination_y": 6822978, "departure_time_s": 28800.0, "provide_geometry": true }
+    ],
+    "transit_router": [
+        { "origin_x": 673335, "origin_y": 6826738, "destination_x": 676489, "destination_y": 6825926, "departure_time_s": 28800.0 },
+        { "origin_x": 673692, "origin_y": 6827989, "destination_x": 674379, "destination_y": 6827303, "departure_time_s": 28800.0 },
+        { "origin_x": 674668, "origin_y": 6826155, "destination_x": 676489, "destination_y": 6822978, "departure_time_s": 28800.0, "provide_itinerary": true }
+    ]
+}
