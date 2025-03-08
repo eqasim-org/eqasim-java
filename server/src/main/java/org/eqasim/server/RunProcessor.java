@@ -37,7 +37,8 @@ public class RunProcessor {
 			ExecutionException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "configuration-path", "use-transit", "indent-response", "vdf-path", EqasimConfigurator.CONFIGURATOR) //
+				.allowOptions("threads", "configuration-path", "use-transit", "indent-response", "vdf-path",
+						EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
 		Services services = new ServiceBuilder().build(cmd);
@@ -63,12 +64,14 @@ public class RunProcessor {
 		process(input.roadIsochrone, output.roadIsochrone, services.roadIsochroneService()::processRequest,
 				"road_isochrone", executor);
 
-		process(input.transitRouter, output.transitRouter,
-				request -> services.transitRouterService().processRequest(request, input.transitUtilities),
-				"transit_router", executor);
+		if (services.transitRouterService() != null) {
+			process(input.transitRouter, output.transitRouter,
+					request -> services.transitRouterService().processRequest(request, input.transitUtilities),
+					"transit_router", executor);
 
-		process(input.transitIsochrone, output.transitIsochrone, services.transitIsochroneService()::processRequest,
-				"transit_isochrone", executor);
+			process(input.transitIsochrone, output.transitIsochrone, services.transitIsochroneService()::processRequest,
+					"transit_isochrone", executor);
+		}
 
 		objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(cmd.getOptionStrict("output-path")), output);
 	}
