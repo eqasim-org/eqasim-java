@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.server.ServiceBuilder.Services;
 import org.eqasim.server.api.RoadIsochroneEndpoint;
 import org.eqasim.server.api.RoadRouterEndpoint;
@@ -22,7 +23,8 @@ public class RunServer {
 			throws ConfigurationException, JsonParseException, JsonMappingException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "port") //
-				.allowOptions("threads", "configuration-path", "use-transit") //
+				.allowOptions("threads", "configuration-path", "use-transit", "vdf-path",
+						EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
 		Services services = new ServiceBuilder().build(cmd);

@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
-import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
+import org.eqasim.core.misc.InjectorBuilder;
+import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
+import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.server.services.ServiceConfiguration;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneService;
 import org.eqasim.server.services.isochrone.transit.TransitIsochroneService;
@@ -21,7 +24,9 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -49,9 +54,14 @@ public class ServiceBuilder {
 					ServiceConfiguration.class);
 		}
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"),
-				new EqasimRaptorConfigGroup());
+		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
+
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		configurator.updateConfig(config);
+		cmd.applyConfiguration(config);
+
 		Scenario scenario = ScenarioUtils.createScenario(config);
+		configurator.configureScenario(scenario);
 
 		new MatsimNetworkReader(scenario.getNetwork())
 				.readURL(ConfigGroup.getInputFileURL(config.getContext(),
@@ -64,9 +74,19 @@ public class ServiceBuilder {
 							config.transit().getTransitScheduleFile()));
 		}
 
+		configurator.adjustScenario(scenario);
+
 		Network roadNetwork = NetworkUtils.createNetwork();
 		new TransportModeNetworkFilter(scenario.getNetwork()).filter(roadNetwork, Collections.singleton("car"));
 		new NetworkCleaner().run(roadNetwork);
+
+		TravelTime travelTime = new FreeSpeedTravelTime();
+		if (cmd.hasOption("vdf-path")) {
+			VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(config);
+			vdfConfig.setInputTravelTimesFile(cmd.getOptionStrict("vdf-path"));
+
+			travelTime = new InjectorBuilder(scenario, configurator).build().getInstance(VDFTravelTime.class);
+		}
 
 		final RoadRouterService roadRouterService;
 		final RoadIsochroneService roadIsochroneService;
@@ -74,7 +94,7 @@ public class ServiceBuilder {
 		final TransitIsochroneService transitIsochroneService;
 
 		roadRouterService = RoadRouterService.create(config, roadNetwork, configuration.walk,
-				threads);
+				threads, travelTime);
 
 		roadIsochroneService = RoadIsochroneService.create(config, roadNetwork,
 				configuration.walk);
