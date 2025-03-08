@@ -46,7 +46,8 @@ public class TestProcessor {
                 "--config-path", configPath,
                 "--input-path", inputPath,
                 "--output-path", outputPath,
-                "--threads", "4"
+                "--threads", "4",
+                "--eqasim-configurator", "org.eqasim.server.ServerTestConfigurator"
         });
 
         assertTrue(FileUtils.contentEquals(new File(expectedOutputPath), new File(outputPath)));

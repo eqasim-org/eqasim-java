@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import org.eqasim.core.misc.ParallelProgress;
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.server.ServiceBuilder.Services;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneRequest;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneResponse;
@@ -36,7 +37,7 @@ public class RunProcessor {
 			ExecutionException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path", "output-path") //
-				.allowOptions("threads", "configuration-path", "use-transit", "indent-response") //
+				.allowOptions("threads", "configuration-path", "use-transit", "indent-response", "vdf-path", EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
 		Services services = new ServiceBuilder().build(cmd);
