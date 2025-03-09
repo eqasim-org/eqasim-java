@@ -74,6 +74,8 @@ public class RunProcessor {
 		}
 
 		objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(cmd.getOptionStrict("output-path")), output);
+	
+		executor.shutdown();
 	}
 
 	private static class ProcessorInput {
