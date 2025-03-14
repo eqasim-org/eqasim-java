@@ -61,7 +61,7 @@ public class BavariaModeChoiceModule extends AbstractEqasimExtension {
 		bind(BavariaPtPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(BavariaCarCostModel.class);
-		bindCostModel(PT_COST_MODEL_NAME).to(MunichPtCostModel.class);
+		bindCostModel(PT_COST_MODEL_NAME).to(BavariaPtCostModel.class);
 
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(BavariaCarUtilityEstimator.class);
 		bindUtilityEstimator(BICYCLE_ESTIMATOR_NAME).to(BavariaBicycleUtilityEstimator.class);

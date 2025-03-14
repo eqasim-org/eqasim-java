@@ -4,14 +4,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eqasim.bavaria.BavariaConfigurator;
+import org.eqasim.bavaria.mode_choice.BavariaModeChoiceModule;
 import org.eqasim.core.components.config.ConfigAdapter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
-import org.eqasim.bavaria.BavariaConfigurator;
-import org.eqasim.bavaria.mode_choice.BavariaModeChoiceModule;
-import org.eqasim.bavaria.munich.MunichModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
@@ -60,7 +59,7 @@ public class RunAdaptConfig {
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
 		eqasimConfig.setCostModel(TransportMode.car, BavariaModeChoiceModule.CAR_COST_MODEL_NAME);
-		eqasimConfig.setCostModel(TransportMode.pt, MunichModeChoiceModule.PT_COST_MODEL_NAME);
+		eqasimConfig.setCostModel(TransportMode.pt, BavariaModeChoiceModule.PT_COST_MODEL_NAME);
 
 		eqasimConfig.setEstimator(TransportMode.car, BavariaModeChoiceModule.CAR_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.pt, BavariaModeChoiceModule.PT_ESTIMATOR_NAME);

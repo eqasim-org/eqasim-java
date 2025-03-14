@@ -35,7 +35,7 @@ public class BavariaBicycleUtilityEstimator extends BikeUtilityEstimator {
 		utility += super.estimateUtility(person, trip, elements);
 
 		if (isParis(trip)) {
-			utility += parameters.BavariaParis.bicycle_u;
+			utility += parameters.munich.bicycle_u;
 		}
 
 		return utility;

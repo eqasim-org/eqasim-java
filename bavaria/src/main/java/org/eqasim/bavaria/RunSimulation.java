@@ -4,10 +4,8 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.eqasim.core.scenario.validation.VehiclesValidator;
-import org.eqasim.core.simulation.modes.drt.mode_choice.rejections.RejectionTrackerModule;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
-import org.eqasim.bavaria.bavaria.BavariaModeChoiceModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -23,7 +21,7 @@ public class RunSimulation {
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf", "use-vdf-engine") //
 				.build();
 
-		IDFConfigurator configurator = new IDFConfigurator(cmd);
+		BavariaConfigurator configurator = new BavariaConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 

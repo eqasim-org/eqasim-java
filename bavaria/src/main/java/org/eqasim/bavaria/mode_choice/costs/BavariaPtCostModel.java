@@ -1,10 +1,10 @@
-package org.eqasim.bavaria.costs;
+package org.eqasim.bavaria.mode_choice.costs;
 
 import java.util.List;
 
+import org.eqasim.bavaria.mode_choice.utilities.predictors.BavariaPersonPredictor;
+import org.eqasim.bavaria.mode_choice.utilities.variables.BavariaPersonVariables;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
-import org.eqasim.bavaria.mode_choice.utilities.predictors.IDFPersonPredictor;
-import org.eqasim.bavaria.mode_choice.utilities.variables.IDFPersonVariables;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -25,11 +25,11 @@ import com.google.inject.Inject;
 public class BavariaPtCostModel implements CostModel {
 	private final TransitSchedule schedule;
 	private final TimeInterpretation timeInterpretation;
-	private final IDFPersonPredictor personPredictor;
+	private final BavariaPersonPredictor personPredictor;
 
 	@Inject
 	public BavariaPtCostModel(TransitSchedule schedule, TimeInterpretation timeInterpretation,
-			IDFPersonPredictor personPredictor) {
+			BavariaPersonPredictor personPredictor) {
 		this.schedule = schedule;
 		this.timeInterpretation = timeInterpretation;
 		this.personPredictor = personPredictor;
@@ -37,7 +37,7 @@ public class BavariaPtCostModel implements CostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
+		BavariaPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 
 		if (personVariables.hasSubscription) {
 			return 0.0;
@@ -131,7 +131,7 @@ public class BavariaPtCostModel implements CostModel {
 	private final static double[] prices = new double[] { //
 			3.9, 3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2 //
 	};
-	
+
 	private final static double[] pricesM = new double[] { //
 			3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 23.9, 25.5 //
 	};

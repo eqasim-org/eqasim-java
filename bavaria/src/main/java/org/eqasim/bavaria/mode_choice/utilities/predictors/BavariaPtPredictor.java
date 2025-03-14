@@ -5,7 +5,7 @@ import java.util.List;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
-import org.eqasim.bavaria.mode_choice.utilities.variables.IDFPtVariables;
+import org.eqasim.bavaria.mode_choice.utilities.variables.BavariaPtVariables;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -19,13 +19,13 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.google.inject.Inject;
 
-public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
-	static public final String PARIS_ATTRIBUTE = "isParis";
+public class BavariaPtPredictor extends CachedVariablePredictor<BavariaPtVariables> {
+	static public final String MUNICH_ATTRIBUTE = "isMunich";
 
 	private final TransitSchedule schedule;
 
 	@Inject
-	public IDFPtPredictor(TransitSchedule schedule) {
+	public BavariaPtPredictor(TransitSchedule schedule) {
 		this.schedule = schedule;
 	}
 
@@ -34,7 +34,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 	}
 
 	@Override
-	public IDFPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	public BavariaPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		int numberOfVehicularLegs = 0;
 
 		// Track relevant variables (from standard estimator)
@@ -42,7 +42,7 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 		double waitingTime_min = 0.0;
 		double accessEgressTime_min = 0.0;
 
-		// Track IDF variables
+		// Track Bavaria variables
 		int busCount = 0;
 		int subwayCount = 0;
 		int otherCount = 0;
@@ -112,13 +112,13 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 			TransitStopFacility startFacility = schedule.getFacilities().get(firstRoute.getAccessStopId());
 			TransitStopFacility endFacility = schedule.getFacilities().get(lastRoute.getEgressStopId());
 
-			Boolean startParis = (Boolean) startFacility.getAttributes().getAttribute(PARIS_ATTRIBUTE);
-			Boolean endParis = (Boolean) endFacility.getAttributes().getAttribute(PARIS_ATTRIBUTE);
+			Boolean startParis = (Boolean) startFacility.getAttributes().getAttribute(MUNICH_ATTRIBUTE);
+			Boolean endParis = (Boolean) endFacility.getAttributes().getAttribute(MUNICH_ATTRIBUTE);
 
 			isWithinParis = startParis != null && endParis != null && startParis && endParis;
 		}
 
-		return new IDFPtVariables(inVehicleTime_min, waitingTime_min, accessEgressTime_min, numberOfLineSwitches,
+		return new BavariaPtVariables(inVehicleTime_min, waitingTime_min, accessEgressTime_min, numberOfLineSwitches,
 				euclideanDistance_km, isOnlyBus, hasOnlySubwayAndBus, isWithinParis);
 	}
 }

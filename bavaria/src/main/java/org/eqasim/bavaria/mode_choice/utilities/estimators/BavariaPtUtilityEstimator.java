@@ -2,14 +2,14 @@ package org.eqasim.bavaria.mode_choice.utilities.estimators;
 
 import java.util.List;
 
-import org.eqasim.core.simulation.mode_choice.cost.CostModel;
-import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.bavaria.mode_choice.parameters.BavariaModeParameters;
 import org.eqasim.bavaria.mode_choice.utilities.predictors.BavariaPersonPredictor;
 import org.eqasim.bavaria.mode_choice.utilities.predictors.BavariaPtPredictor;
 import org.eqasim.bavaria.mode_choice.utilities.variables.BavariaPersonVariables;
 import org.eqasim.bavaria.mode_choice.utilities.variables.BavariaPtVariables;
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -20,14 +20,14 @@ import com.google.inject.name.Named;
 public class BavariaPtUtilityEstimator implements UtilityEstimator {
 	private final BavariaModeParameters parameters;
 	private final BavariaPersonPredictor personPredictor;
-	private final BavariaPtPredictor BavariaPtPredictor;
+	private final BavariaPtPredictor ptPredictor;
 	private final CostModel costModel;
 
 	@Inject
-	public BavariaPtUtilityEstimator(BavariaModeParameters parameters, BavariaPtPredictor BavariaPtPredictor,
+	public BavariaPtUtilityEstimator(BavariaModeParameters parameters, BavariaPtPredictor ptPredictor,
 			BavariaPersonPredictor personPredictor, @Named("pt") CostModel costModel) {
 		this.personPredictor = personPredictor;
-		this.BavariaPtPredictor = BavariaPtPredictor;
+		this.ptPredictor = ptPredictor;
 		this.parameters = parameters;
 		this.costModel = costModel;
 	}
@@ -58,17 +58,17 @@ public class BavariaPtUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateDrivingPermitUtility(BavariaPersonVariables variables) {
-		return variables.hasDrivingPermit ? parameters.BavariaPt.betaDrivingPermit_u : 0.0;
+		return variables.hasDrivingPermit ? parameters.bavariaPt.betaDrivingPermit_u : 0.0;
 	}
 
 	protected double estimateOnlyBus(BavariaPtVariables variables) {
-		return variables.isOnlyBus ? parameters.BavariaPt.onlyBus_u : 0.0;
+		return variables.isOnlyBus ? parameters.bavariaPt.onlyBus_u : 0.0;
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		BavariaPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
-		BavariaPtVariables ptVariables = BavariaPtPredictor.predictVariables(person, trip, elements);
+		BavariaPtVariables ptVariables = ptPredictor.predictVariables(person, trip, elements);
 
 		double cost_EUR = costModel.calculateCost_MU(person, trip, elements);
 

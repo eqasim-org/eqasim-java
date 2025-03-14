@@ -29,11 +29,11 @@ public class BavariaCarPassengerUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateConstantUtility() {
-		return parameters.BavariaCarPassenger.alpha_u;
+		return parameters.carPassenger.alpha_u;
 	}
 
 	protected double estimateTravelTimeUtility(BavariaCarPassengerVariables variables) {
-		return parameters.BavariaCarPassenger.betaInVehicleTravelTime_u_min * variables.travelTime_min;
+		return parameters.carPassenger.betaInVehicleTravelTime_u_min * variables.travelTime_min;
 	}
 
 	protected double estimateAccessEgressTimeUtility(BavariaCarPassengerVariables variables) {
@@ -41,7 +41,7 @@ public class BavariaCarPassengerUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateDrivingPermit(BavariaPersonVariables variables) {
-		return variables.hasDrivingPermit ? parameters.BavariaCarPassenger.betaDrivingPermit_u : 0.0;
+		return variables.hasDrivingPermit ? parameters.carPassenger.betaDrivingPermit_u : 0.0;
 	}
 
 	@Override
@@ -57,7 +57,7 @@ public class BavariaCarPassengerUtilityEstimator implements UtilityEstimator {
 		utility += estimateDrivingPermit(personVariables);
 
 		if (isParis(trip)) {
-			utility += parameters.BavariaParis.carPassenger_u;
+			utility += parameters.munich.carPassenger_u;
 		}
 
 		return utility;

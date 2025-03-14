@@ -1,4 +1,4 @@
-package org.eqasim.bavaria.munich;
+package org.eqasim.bavaria.scenario;
 
 import java.io.File;
 import java.io.IOException;
