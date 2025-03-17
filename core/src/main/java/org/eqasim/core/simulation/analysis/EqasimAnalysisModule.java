@@ -1,21 +1,30 @@
 package org.eqasim.core.simulation.analysis;
 
+import java.util.HashSet;
+
 import org.eqasim.core.analysis.DefaultPersonAnalysisFilter;
 import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.eqasim.core.analysis.activities.ActivityListener;
 import org.eqasim.core.analysis.legs.LegListener;
 import org.eqasim.core.analysis.pt.PublicTransportLegListener;
 import org.eqasim.core.analysis.trips.TripListener;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.travel_time.TravelTimeRecorder;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.analysis.stuck.StuckAnalysisModule;
+import org.eqasim.core.simulation.analysis.travel_time.TravelTimeComparisionListener;
 import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
+import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.router.RoutingModeMainModeIdentifier;
+import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.google.inject.Provides;
@@ -37,8 +46,9 @@ public class EqasimAnalysisModule extends AbstractModule {
 		}
 
 		install(new StuckAnalysisModule());
-		
+
 		bind(AnalysisMainModeIdentifier.class).toInstance(new RoutingModeMainModeIdentifier());
+		addControlerListenerBinding().to(TravelTimeComparisionListener.class);
 	}
 
 	@Provides
@@ -59,7 +69,7 @@ public class EqasimAnalysisModule extends AbstractModule {
 			PersonAnalysisFilter personFilter) {
 		return new PublicTransportLegListener(schedule);
 	}
-	
+
 	@Provides
 	@Singleton
 	public ActivityListener provideActivityListener(PersonAnalysisFilter personFilter) {
@@ -76,5 +86,16 @@ public class EqasimAnalysisModule extends AbstractModule {
 			stopTime = Double.MAX_VALUE;
 		}
 		return new TravelTimeRecorder(new RoadNetwork(network), startTime, stopTime, 600);
+	}
+
+	@Provides
+	@Singleton
+	public TravelTimeComparisionListener provideTravelTimeComparisionListener(Population population,
+			TimeInterpretation timeInterpretation,
+			OutputDirectoryHierarchy outputDirectoryHierarchy, EventsManager eventsManager,
+			EqasimConfigGroup eqasimConfig,
+			int detailedAnalysisInterval, RoutingConfigGroup routingConfig) {
+		return new TravelTimeComparisionListener(population, timeInterpretation, outputDirectoryHierarchy,
+				eventsManager, eqasimConfig.getAnalysisInterval(), 0, new HashSet<>(routingConfig.getNetworkModes()));
 	}
 }
