@@ -9,8 +9,25 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.population.PersonUtils;
+import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
+import java.util.Collections;
 
 public class IDFModeAvailability implements ModeAvailability {
+	private final Collection<String> drtModes;
+
+	public IDFModeAvailability(MultiModeDrtConfigGroup multiModeDrtConfigGroup) {
+		if(multiModeDrtConfigGroup != null) {
+			this.drtModes = multiModeDrtConfigGroup.modes().toList();
+		} else {
+			this.drtModes = Collections.emptyList();
+		}
+	}
+
+	// Add no-args constructor for backward compatibility
+	public IDFModeAvailability() {
+		this.drtModes = Collections.emptyList();
+	}
+
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = new HashSet<>();
@@ -58,6 +75,9 @@ public class IDFModeAvailability implements ModeAvailability {
 		if (isCarPassenger != null && isCarPassenger) {
 			modes.add("car_passenger");
 		}
+		
+		// Add DRT modes
+		modes.addAll(this.drtModes);
 
 		return modes;
 	}
