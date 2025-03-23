@@ -10,7 +10,6 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
 
@@ -28,7 +27,7 @@ public class PersonAttributeBasedParkingAssignment implements ParkingSpaceAssign
     private final NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
     private final List<Id<ParkingType>> orderedParkingTypes;
 
-    public PersonAttributeBasedParkingAssignment(List<Id<ParkingType>> orderedParkingTypes, IdSet<ParkingType> parkingTypesAvailableForEveryone, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Population population, Network network) {
+    public PersonAttributeBasedParkingAssignment(List<Id<ParkingType>> orderedParkingTypes, IdSet<ParkingType> parkingTypesAvailableForEveryone, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Population population) {
 
         parkingPerLinkPerPerson = new IdMap<>(Person.class, population.getPersons().size());
         this.parkingTypesAvailableForEveryone = parkingTypesAvailableForEveryone;
@@ -40,7 +39,7 @@ public class PersonAttributeBasedParkingAssignment implements ParkingSpaceAssign
 
         for(Person person: population.getPersons().values()) {
             progress.update();
-            //noinspection unchecked
+            //noinspectionl unchecked
             Map<String, String> linksPerParkingType = (Map<String, String>) person.getAttributes().getAttribute(PARKING_ATTR);
             if(linksPerParkingType == null) {
                 continue;

@@ -40,13 +40,11 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
                 @Inject
                 private Population population;
 
-                @Inject
-                private Network network;
 
                 @Override
                 public ParkingSpaceAssignmentLogic get() {
                     return new PersonAttributeBasedParkingAssignment(personAttributeBasedParkingAssignmentConfigGroup.getOrderedParkingTypes(),
-                            personAttributeBasedParkingAssignmentConfigGroup.getParkingTypesAvailableForEveryone(), networkWideParkingSpaceStore, population, network);
+                            personAttributeBasedParkingAssignmentConfigGroup.getParkingTypesAvailableForEveryone(), networkWideParkingSpaceStore, population);
                 }
             });
         } else {
