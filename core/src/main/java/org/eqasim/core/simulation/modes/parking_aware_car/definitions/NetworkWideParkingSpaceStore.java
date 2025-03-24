@@ -29,6 +29,12 @@ public class NetworkWideParkingSpaceStore {
         }
     }
 
+    public IdMap<ParkingType, ParkingType> getParkingTypes() {
+        IdMap<ParkingType, ParkingType> result = new IdMap<>(ParkingType.class);
+        result.putAll(parkingTypes);
+        return result;
+    }
+
 
     public IdMap<ParkingType, ParkingSpace> getLinkParkingSpaces(Id<Link> linkId) {
         IdMap<ParkingType, ParkingSpace> result = this.parkingSpacePerTypePerLinkMap.get(linkId);

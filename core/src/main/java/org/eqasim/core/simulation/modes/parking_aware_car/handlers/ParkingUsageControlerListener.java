@@ -1,9 +1,9 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.handlers;
 
+import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
-import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contrib.common.csv.CSVLineBuilder;
 import org.matsim.contrib.common.csv.CompactCSVWriter;
@@ -16,44 +16,46 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ParkingUsageControlerListener implements IterationEndsListener {
 
     private final ParkingUsageEventListener parkingUsageEventListener;
     private final OutputDirectoryHierarchy outputDirectoryHierarchy;
+    private final NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
 
-    public ParkingUsageControlerListener(ParkingUsageEventListener parkingUsageEventListener, OutputDirectoryHierarchy outputDirectoryHierarchy) {
+    public ParkingUsageControlerListener(ParkingUsageEventListener parkingUsageEventListener, OutputDirectoryHierarchy outputDirectoryHierarchy, NetworkWideParkingSpaceStore networkWideParkingSpaceStore) {
         this.parkingUsageEventListener = parkingUsageEventListener;
         this.outputDirectoryHierarchy = outputDirectoryHierarchy;
+        this.networkWideParkingSpaceStore = networkWideParkingSpaceStore;
     }
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
         IdMap<Link, IdMap<ParkingType, Map<Integer, Integer>>> parkingUsage = this.parkingUsageEventListener.getParkingUsage();
-        IdSet<ParkingType> parkingTypeIdSet = new IdSet<>(ParkingType.class);
-        parkingUsage.values().stream().flatMap(m -> m.keySet().stream()).forEach(parkingTypeIdSet::add);
 
-        List<Id<ParkingType>> parkingTypes = parkingTypeIdSet.stream().toList();
+        List<Id<ParkingType>> parkingTypes = networkWideParkingSpaceStore.getParkingTypes().keySet().stream().toList();
 
-        String fileName = outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking.csv");
+        String fileName = outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand.csv");
         try {
-            String[] header = new String[]{"linkId", "parkingType", "startTime", "endTime", "usage"};
             CompactCSVWriter csvWriter = new CompactCSVWriter(new BufferedWriter(new FileWriter(fileName)), ';');
-            csvWriter.writeNext(new CSVLineBuilder().addAll(header));
+            CSVLineBuilder csvLineBuilder = new CSVLineBuilder();
+            csvLineBuilder.addAll("linkId", "startTime", "endTime");
+            csvLineBuilder.addAll(parkingTypes.stream().map(Id::toString).toList());
+            csvWriter.writeNext(csvLineBuilder.build());
             for(int i=0; i<this.parkingUsageEventListener.getLastRecordedTimeSlotIndex(); i++) {
                 double startTime = this.parkingUsageEventListener.getSlotStartTime(i);
                 double endTime = this.parkingUsageEventListener.getSlotEndTime(i);
                 for(Map.Entry<Id<Link>, IdMap<ParkingType, Map<Integer, Integer>>> linkEntry : parkingUsage.entrySet()) {
                     Id<Link> linkId = linkEntry.getKey();
-                    for(Map.Entry<Id<ParkingType>, Map<Integer, Integer>> parkingTypeEntry: linkEntry.getValue().entrySet()) {
-                        Id<ParkingType> parkingTypeId = parkingTypeEntry.getKey();
-                        Map<Integer, Integer> usageMap = parkingTypeEntry.getValue();
-                        if(!usageMap.containsKey(i)) {
-                            continue;
-                        }
-                        int users = usageMap.get(i);
-                        csvWriter.writeNext(new CSVLineBuilder().addAll(linkId.toString(), parkingTypeId.toString(), String.valueOf(startTime), String.valueOf(endTime), String.valueOf(users)));
+                    csvLineBuilder = new CSVLineBuilder();
+                    csvLineBuilder.addAll(linkId.toString(), String.valueOf(startTime), String.valueOf(endTime));
+                    for(Id<ParkingType> parkingType : parkingTypes) {
+                        Map<Integer, Integer> usagesMap = linkEntry.getValue().get(parkingType);
+                        int finalI = i;
+                        csvLineBuilder.add(Optional.ofNullable(usagesMap).map(map -> map.get(finalI)).map(String::valueOf).orElse(null));
                     }
+                    csvWriter.writeNext(csvLineBuilder.build());
                 }
             }
             csvWriter.close();
