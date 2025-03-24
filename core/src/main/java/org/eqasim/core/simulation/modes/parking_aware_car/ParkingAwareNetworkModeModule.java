@@ -5,6 +5,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNet
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageControlerListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageEventListener;
+import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingsWriterControlerListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareNetworkRoutingModule;
@@ -81,14 +82,35 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             @Inject
             private OutputDirectoryHierarchy outputDirectoryHierarchy;
 
+            @Inject
+            private NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
+
             @Override
             public ParkingUsageControlerListener get() {
-                return new ParkingUsageControlerListener(parkingUsageEventListener, outputDirectoryHierarchy);
+                return new ParkingUsageControlerListener(parkingUsageEventListener, outputDirectoryHierarchy, networkWideParkingSpaceStore);
+            }
+        });
+
+        bind(ParkingsWriterControlerListener.class).toProvider(new Provider<>() {
+
+            @Inject
+            Network network;
+
+            @Inject
+            OutputDirectoryHierarchy outputDirectoryHierarchy;
+
+            @Inject
+            NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
+
+            @Override
+            public ParkingsWriterControlerListener get() {
+                return new ParkingsWriterControlerListener(network, networkWideParkingSpaceStore, outputDirectoryHierarchy);
             }
         });
 
         addEventHandlerBinding().to(ParkingUsageEventListener.class);
         addControlerListenerBinding().to(ParkingUsageControlerListener.class);
+        addControlerListenerBinding().to(ParkingsWriterControlerListener.class).asEagerSingleton();
 
 
         addRoutingModuleBinding(configGroup.mode).toProvider(new Provider<>() {
