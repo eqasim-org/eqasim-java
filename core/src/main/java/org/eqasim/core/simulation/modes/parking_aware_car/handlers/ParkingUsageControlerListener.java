@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.handlers;
 
+import org.apache.commons.io.FileUtils;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
 import org.matsim.api.core.v01.Id;
@@ -9,16 +10,19 @@ import org.matsim.contrib.common.csv.CSVLineBuilder;
 import org.matsim.contrib.common.csv.CompactCSVWriter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
+import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
+import org.matsim.core.controler.listener.ShutdownListener;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class ParkingUsageControlerListener implements IterationEndsListener {
+public class ParkingUsageControlerListener implements IterationEndsListener, ShutdownListener {
 
     private final ParkingUsageEventListener parkingUsageEventListener;
     private final OutputDirectoryHierarchy outputDirectoryHierarchy;
@@ -50,15 +54,33 @@ public class ParkingUsageControlerListener implements IterationEndsListener {
                     Id<Link> linkId = linkEntry.getKey();
                     csvLineBuilder = new CSVLineBuilder();
                     csvLineBuilder.addAll(linkId.toString(), String.valueOf(startTime), String.valueOf(endTime));
+                    boolean oneItemAdded = false;
                     for(Id<ParkingType> parkingType : parkingTypes) {
                         Map<Integer, Integer> usagesMap = linkEntry.getValue().get(parkingType);
                         int finalI = i;
-                        csvLineBuilder.add(Optional.ofNullable(usagesMap).map(map -> map.get(finalI)).map(String::valueOf).orElse(null));
+                        Integer demand = Optional.ofNullable(usagesMap).map(map -> map.get(finalI)).orElse(null);
+                        if (demand != null) {
+                            csvLineBuilder.add(String.valueOf(demand));
+                            oneItemAdded = true;
+                        } else {
+                            csvLineBuilder.add(null);
+                        }
                     }
-                    csvWriter.writeNext(csvLineBuilder.build());
+                    if(oneItemAdded) {
+                        csvWriter.writeNext(csvLineBuilder.build());
+                    }
                 }
             }
             csvWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void notifyShutdown(ShutdownEvent event) {
+        try {
+            FileUtils.copyFile(new File(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand.csv")), new File(outputDirectoryHierarchy.getOutputFilename("parking_demand.csv")));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
