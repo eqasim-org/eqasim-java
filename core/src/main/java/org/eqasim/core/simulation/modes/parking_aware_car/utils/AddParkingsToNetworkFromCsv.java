@@ -12,13 +12,15 @@ import org.matsim.core.scenario.ScenarioUtils;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AddParkingsToNetworkFromCsv {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException, IOException {
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("csv-path", "network-path", "parking-type", "output-network-path")
-                .allowOptions("link-column", "capacity-column", "separator", "init-missing-entries")
+                .allowOptions("link-column", "capacity-columns", "separator", "init-missing-entries")
                 .allowOptions("allow-missing-links")
                 .build();
 
@@ -27,7 +29,7 @@ public class AddParkingsToNetworkFromCsv {
         String parkingType = commandLine.getOptionStrict("parking-type");
 
         String linkColumn = commandLine.getOption("link-column").orElse("link_id");
-        String capacityColumn = commandLine.getOption("capacity-column").orElse("capacity");
+        Set<String> capacityColumns = Arrays.stream(commandLine.getOption("capacity-columns").orElse("capacity").split(",")).collect(Collectors.toSet());
         String separator = commandLine.getOption("separator").orElse(";");
 
         boolean allowMissingLinks = commandLine.hasOption("allow-missing-links");
@@ -38,10 +40,10 @@ public class AddParkingsToNetworkFromCsv {
         List<String> header = Arrays.stream(fileReader.readLine().split(separator)).toList();
 
         int linkIdIndex = header.indexOf(linkColumn);
-        int capacityIndex = header.indexOf(capacityColumn);
+        List<Integer> capacityIndices = capacityColumns.stream().map(header::indexOf).toList();
 
-        if(linkIdIndex < 0 || capacityIndex < 0) {
-            throw new IllegalStateException(String.format("Required columns %s and %s not found in header", linkColumn, capacityColumn));
+        if(linkIdIndex < 0 || capacityIndices.stream().anyMatch(i -> i < 0)) {
+            throw new IllegalStateException(String.format("Required columns %s and %s not found in header", String.join(", ", capacityColumns), linkColumn));
         }
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -50,7 +52,7 @@ public class AddParkingsToNetworkFromCsv {
         fileReader.lines().forEach(line -> {
             List<String> items = Arrays.asList(line.split(separator));
             Id<Link> linkId = Id.createLinkId(items.get(linkIdIndex));
-            int capacity = (int) Double.parseDouble(items.get(capacityIndex));
+            int capacity = (int) capacityIndices.stream().map(items::get).mapToDouble(Double::parseDouble).sum();
             if(capacity == 0 && !initMissingEntries) {
                 return;
             }
