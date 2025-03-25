@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.definitions;
 
+import com.google.common.base.Verify;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -15,6 +16,8 @@ public class NetworkWideParkingSpaceStore {
     private final IdMap<ParkingType, ParkingType> parkingTypes;
     private final Network network;
 
+    private final ParkingType fallBackParkingType;
+
     public NetworkWideParkingSpaceStore(Network network) {
         this.parkingSpacePerTypePerLinkMap = new IdMap<>(Link.class);
         this.parkingTypes = new IdMap<>(ParkingType.class);
@@ -27,6 +30,10 @@ public class NetworkWideParkingSpaceStore {
                 this.parkingSpacePerTypePerLinkMap.computeIfAbsent(link.getId(), linkId -> new IdMap<>(ParkingType.class)).put(parkingTypeId, new ParkingSpace(parkingType, link.getId(), capacity));
             }
         }
+
+        Id<ParkingType> fallBackParkingTypeId = Id.create("no-parking", ParkingType.class);
+        Verify.verify(!parkingTypes.containsKey(fallBackParkingTypeId));
+        this.fallBackParkingType = new ParkingType(fallBackParkingTypeId);
     }
 
     public IdMap<ParkingType, ParkingType> getParkingTypes() {
@@ -35,6 +42,9 @@ public class NetworkWideParkingSpaceStore {
         return result;
     }
 
+    public ParkingType getFallBackParkingType() {
+        return this.fallBackParkingType;
+    }
 
     public IdMap<ParkingType, ParkingSpace> getLinkParkingSpaces(Id<Link> linkId) {
         IdMap<ParkingType, ParkingSpace> result = this.parkingSpacePerTypePerLinkMap.get(linkId);

@@ -18,6 +18,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +39,8 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
     public void notifyIterationEnds(IterationEndsEvent event) {
         IdMap<Link, IdMap<ParkingType, Map<Integer, Integer>>> parkingUsage = this.parkingUsageEventListener.getParkingUsage();
 
-        List<Id<ParkingType>> parkingTypes = networkWideParkingSpaceStore.getParkingTypes().keySet().stream().toList();
+        List<Id<ParkingType>> parkingTypes = new ArrayList<>(networkWideParkingSpaceStore.getParkingTypes().keySet().stream().toList());
+        parkingTypes.add(networkWideParkingSpaceStore.getFallBackParkingType().id());
 
         String fileName = outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand.csv");
         try {
