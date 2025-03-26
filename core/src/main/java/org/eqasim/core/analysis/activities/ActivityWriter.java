@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
 
+import org.matsim.core.utils.io.IOUtils;
+
 public class ActivityWriter {
 	final private Collection<ActivityItem> activities;
 	final private String delimiter;
@@ -20,7 +22,7 @@ public class ActivityWriter {
 	}
 
 	public void write(String outputPath) throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputPath);
 
 		writer.write(formatHeader() + "\n");
 		writer.flush();

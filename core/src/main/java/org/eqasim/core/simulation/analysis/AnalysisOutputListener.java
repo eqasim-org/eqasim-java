@@ -29,11 +29,11 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class AnalysisOutputListener implements IterationStartsListener, IterationEndsListener, ShutdownListener {
-	private static final String TRIPS_FILE_NAME = "eqasim_trips.csv";
-	private static final String LEGS_FILE_NAME = "eqasim_legs.csv";
-	private static final String PT_FILE_NAME = "eqasim_pt.csv";
-	private static final String ACTIVITIES_FILE_NAME = "eqasim_activities.csv";
-	private static final String TRAVEL_TIMES_FILE_NAME = "eqasim_travel_times.bin";
+	private static final String TRIPS_FILE_NAME = "eqasim_trips.csv.gz";
+	private static final String LEGS_FILE_NAME = "eqasim_legs.csv.gz";
+	private static final String PT_FILE_NAME = "eqasim_pt.csv.gz";
+	private static final String ACTIVITIES_FILE_NAME = "eqasim_activities.csv.gz";
+	private static final String TRAVEL_TIMES_FILE_NAME = "eqasim_travel_times.bin.gz";
 
 	private final OutputDirectoryHierarchy outputDirectory;
 

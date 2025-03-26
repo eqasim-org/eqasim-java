@@ -18,7 +18,7 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class StuckAnalysisListener implements StartupListener, IterationStartsListener, IterationEndsListener {
-	static public final String OUTPUT_NAME = "stuck_analysis.csv";
+	static public final String OUTPUT_NAME = "stuck_analysis.csv.gz";
 
 	private final EventsManager eventsManager;
 	private final OutputDirectoryHierarchy outputHierarchy;
