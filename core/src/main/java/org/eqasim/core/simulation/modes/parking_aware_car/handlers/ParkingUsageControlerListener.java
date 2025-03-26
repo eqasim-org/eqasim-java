@@ -18,10 +18,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class ParkingUsageControlerListener implements IterationEndsListener, ShutdownListener {
 
@@ -42,7 +39,7 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
         List<Id<ParkingType>> parkingTypes = new ArrayList<>(networkWideParkingSpaceStore.getParkingTypes().keySet().stream().toList());
         parkingTypes.add(networkWideParkingSpaceStore.getFallBackParkingType().id());
 
-        String fileName = outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand.csv");
+        String fileName = outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand_aggregated.csv");
         try {
             CompactCSVWriter csvWriter = new CompactCSVWriter(new BufferedWriter(new FileWriter(fileName)), ';');
             CSVLineBuilder csvLineBuilder = new CSVLineBuilder();
@@ -77,12 +74,47 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        fileName = outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand.csv");
+
+        try {
+            CompactCSVWriter csvWriter = new CompactCSVWriter(new BufferedWriter(new FileWriter(fileName)), ';');
+            CSVLineBuilder csvLineBuilder = new CSVLineBuilder();
+            csvLineBuilder.addAll("personId", "linkId", "parkingType", "startTime", "endTime");
+
+            csvWriter.writeNext(csvLineBuilder.build());
+            this.parkingUsageEventListener.getParkingUsagesPerPerson().values().stream()
+                    .flatMap(Collection::stream)
+                    .sorted(new Comparator<ParkingUsageEventListener.ParkingUsageRecord>() {
+                        @Override
+                        public int compare(ParkingUsageEventListener.ParkingUsageRecord o1, ParkingUsageEventListener.ParkingUsageRecord o2) {
+                            if(o1.enterTime() == o2.enterTime()) {
+                                return (int) (o1.exitTime() - o2.exitTime());
+                            } else {
+                                return (int) (o1.enterTime() - o2.enterTime());
+                            }
+                        }
+                    })
+                    .forEach(parkingUsageRecord -> {
+                        CSVLineBuilder builder = new CSVLineBuilder();
+                        builder.add(parkingUsageRecord.personId().toString());
+                        builder.add(parkingUsageRecord.parkingSpace().linkId().toString());
+                        builder.add(parkingUsageRecord.parkingSpace().parkingType().toString());
+                        builder.add(String.valueOf(parkingUsageRecord.enterTime()));
+                        builder.add(String.valueOf(parkingUsageRecord.exitTime()));
+                        csvWriter.writeNext(builder.build());
+                    });
+            csvWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void notifyShutdown(ShutdownEvent event) {
         try {
             FileUtils.copyFile(new File(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand.csv")), new File(outputDirectoryHierarchy.getOutputFilename("parking_demand.csv")));
+            FileUtils.copyFile(new File(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "parking_demand_aggregated.csv")), new File(outputDirectoryHierarchy.getOutputFilename("parking_demand_aggregated.csv")));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

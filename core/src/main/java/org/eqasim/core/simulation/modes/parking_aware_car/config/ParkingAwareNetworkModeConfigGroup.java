@@ -1,6 +1,7 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.config;
 
 import jakarta.validation.constraints.NotNull;
+import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.matsim.contrib.common.util.ReflectiveConfigGroupWithConfigurableParameterSets;
 
@@ -19,12 +20,18 @@ public class ParkingAwareNetworkModeConfigGroup extends ReflectiveConfigGroupWit
     @NotNull
     private ParkingSpaceAssignmentLogicParameterSet parkingSpaceAssignmentLogicParameterSet;
 
+    private ParkingAwareNetworkModeChoiceConfigGroup parkingAwareNetworkModeChoiceConfigGroup;
+
     public ParkingAwareNetworkModeConfigGroup() {
         super(GROUP_NAME);
         addDefinition(ParkingSpaceAssignmentLogicParameterSet.GROUP_NAME,
                 ParkingSpaceAssignmentLogicParameterSet::new,
                 () -> parkingSpaceAssignmentLogicParameterSet,
                 configGroup -> this.parkingSpaceAssignmentLogicParameterSet = (ParkingSpaceAssignmentLogicParameterSet) configGroup);
+        addDefinition(ParkingAwareNetworkModeChoiceConfigGroup.GROUP_NAME,
+                ParkingAwareNetworkModeChoiceConfigGroup::new,
+                () -> parkingAwareNetworkModeChoiceConfigGroup,
+                configGroup -> this.parkingAwareNetworkModeChoiceConfigGroup = (ParkingAwareNetworkModeChoiceConfigGroup) configGroup);
     }
 
     public static ParkingAwareNetworkModeConfigGroup buildDefault() {
@@ -35,5 +42,9 @@ public class ParkingAwareNetworkModeConfigGroup extends ReflectiveConfigGroupWit
 
     public ParkingSpaceAssignmentLogicParameterSet.ParkingAssignmentLogicParams getParkingSpaceAssignmentLogicParams() {
         return this.parkingSpaceAssignmentLogicParameterSet.getParkingAssignmentLogicParams();
+    }
+
+    public ParkingAwareNetworkModeChoiceConfigGroup getParkingAwareNetworkModeChoiceConfigGroup() {
+        return this.parkingAwareNetworkModeChoiceConfigGroup;
     }
 }

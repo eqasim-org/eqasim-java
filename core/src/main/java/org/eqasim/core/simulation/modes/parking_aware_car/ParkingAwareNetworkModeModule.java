@@ -6,6 +6,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWid
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageControlerListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageEventListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingsWriterControlerListener;
+import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceModule;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareNetworkRoutingModule;
@@ -13,6 +14,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.Par
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignment;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.NetworkRoutingProvider;
@@ -47,7 +49,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
                     return new PersonAttributeBasedParkingAssignment(personAttributeBasedParkingAssignmentConfigGroup.getOrderedParkingTypes(),
                             personAttributeBasedParkingAssignmentConfigGroup.getParkingTypesAvailableForEveryone(), networkWideParkingSpaceStore, population);
                 }
-            });
+            }).asEagerSingleton();
         } else {
             throw new IllegalStateException("Unknown parkingAssignment strategy");
         }
@@ -67,10 +69,12 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             private NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
             @Inject
             private ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
+            @Inject
+            private QSimConfigGroup qSimConfigGroup;
 
             @Override
             public ParkingUsageEventListener get() {
-                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic);
+                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, qSimConfigGroup.getEndTime().seconds());
             }
         }).asEagerSingleton();
 
@@ -109,6 +113,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
         });
 
         addEventHandlerBinding().to(ParkingUsageEventListener.class);
+        addMobsimListenerBinding().to(ParkingUsageEventListener.class);
         addControlerListenerBinding().to(ParkingUsageControlerListener.class);
         addControlerListenerBinding().to(ParkingsWriterControlerListener.class).asEagerSingleton();
 
@@ -128,6 +133,10 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
                 return new ParkingAwareNetworkRoutingModule(configGroup.mode, networkRoutingProvider.get(), networkWideParkingSpaceStore, parkingSpaceAssignmentLogic);
             }
         });
+
+        if(configGroup.getParkingAwareNetworkModeChoiceConfigGroup() != null) {
+            install(new ParkingAwareNetworkModeChoiceModule(configGroup));
+        }
     }
 
     @Provides

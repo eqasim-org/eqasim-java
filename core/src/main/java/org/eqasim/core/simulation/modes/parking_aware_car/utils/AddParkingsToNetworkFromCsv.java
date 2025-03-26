@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AddParkingsToNetworkFromCsv {
+    public class AddParkingsToNetworkFromCsv {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException, IOException {
         CommandLine commandLine = new CommandLine.Builder(args)
