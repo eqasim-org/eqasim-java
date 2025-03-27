@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingsWrite
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceModule;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
+import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareMultimodalLinkChooser;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareNetworkRoutingModule;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignment;
@@ -17,6 +18,7 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
 
@@ -122,6 +124,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
 
             @Inject
             private NetworkRoutingProvider networkRoutingProvider;
+
             @Inject
             private NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
 
@@ -137,6 +140,27 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
         if(configGroup.getParkingAwareNetworkModeChoiceConfigGroup() != null) {
             install(new ParkingAwareNetworkModeChoiceModule(configGroup));
         }
+
+        bind(MultimodalLinkChooser.class).to(ParkingAwareMultimodalLinkChooser.class);
+        bind(ParkingAwareMultimodalLinkChooser.class).toProvider(new Provider<ParkingAwareMultimodalLinkChooser>() {
+
+            @Inject
+            private NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
+
+            @Inject
+            private ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
+
+            @Inject
+            private ParkingUsageEventListener parkingUsageEventListener;
+
+            @Inject
+            private Network network;
+
+            @Override
+            public ParkingAwareMultimodalLinkChooser get() {
+                return new ParkingAwareMultimodalLinkChooser(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener);
+            }
+        });
     }
 
     @Provides
