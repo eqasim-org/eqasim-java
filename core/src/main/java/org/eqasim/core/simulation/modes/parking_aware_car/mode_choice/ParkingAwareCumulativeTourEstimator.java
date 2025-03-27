@@ -5,6 +5,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingSpa
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.penalty.ParkingAwareCarPenaltyProvider;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
+import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareMultimodalLinkChooser;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareNetworkRoutingModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -51,6 +52,7 @@ public class ParkingAwareCumulativeTourEstimator implements TourEstimator {
 
     @Override
     public TourCandidate estimateTour(Person person, List<String> modes, List<DiscreteModeChoiceTrip> trips, List<TourCandidate> previousTours) {
+        person.getAttributes().removeAttribute(ParkingAwareMultimodalLinkChooser.LAST_CAR_LOCATION_ATTRIBUTE_NAME);
         List<TripCandidate> tripCandidates = new LinkedList<>();
         double utility = 0.0;
 

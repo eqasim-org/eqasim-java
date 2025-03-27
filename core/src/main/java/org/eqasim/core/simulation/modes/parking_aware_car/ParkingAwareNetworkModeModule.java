@@ -1,11 +1,13 @@
 package org.eqasim.core.simulation.modes.parking_aware_car;
 
+import com.google.common.base.Verify;
 import com.google.inject.*;
 import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageControlerListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageEventListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingsWriterControlerListener;
+import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareCumulativeTourEstimator;
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceModule;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
@@ -15,6 +17,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.Par
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignment;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -32,7 +35,10 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
     @Override
     public void install() {
 
+        Verify.verify(((DiscreteModeChoiceConfigGroup) getConfig().getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME)).getTourEstimator().equals(ParkingAwareCumulativeTourEstimator.NAME));
+
         ParkingAwareNetworkModeConfigGroup configGroup = (ParkingAwareNetworkModeConfigGroup) getConfig().getModules().get(ParkingAwareNetworkModeConfigGroup.GROUP_NAME);
+        Verify.verify(!((DiscreteModeChoiceConfigGroup) getConfig().getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME)).getCachedModes().contains(configGroup.mode));
 
         ParkingSpaceAssignmentLogicParameterSet.ParkingAssignmentLogicParams parkingAssignmentLogicParams = configGroup.getParkingSpaceAssignmentLogicParams();
 
@@ -55,8 +61,6 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
         } else {
             throw new IllegalStateException("Unknown parkingAssignment strategy");
         }
-
-
 
         bind(NetworkRoutingProvider.class).toInstance(new NetworkRoutingProvider("car"));
 

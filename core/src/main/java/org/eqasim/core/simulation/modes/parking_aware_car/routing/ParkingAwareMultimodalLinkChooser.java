@@ -10,6 +10,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.common.util.DistanceUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.MultimodalLinkChooser;
@@ -45,6 +46,7 @@ public class ParkingAwareMultimodalLinkChooser implements MultimodalLinkChooser 
     }
 
     public static final String LAST_CAR_LOCATION_ATTRIBUTE_NAME = "lastCarLocation";
+
     @Override
     public Link decideAccessLink(RoutingRequest request, Network network) {
         Id<Link> linkId = (Id<Link>) request.getPerson().getAttributes().getAttribute(LAST_CAR_LOCATION_ATTRIBUTE_NAME);
@@ -58,7 +60,7 @@ public class ParkingAwareMultimodalLinkChooser implements MultimodalLinkChooser 
         int beginIndex = this.parkingUsageEventListener.getTimeSlotIndex(startTime);
         int endIndex = this.parkingUsageEventListener.getTimeSlotIndex(startTime + HORIZON);
         return IntStream.range(beginIndex, endIndex+1)
-                .map(i -> this.parkingUsageEventListener.getParkingUsage().get(parkingSpace.linkId()).get(parkingSpace.parkingType().id()).get(i))
+                .map(i -> Optional.ofNullable(this.parkingUsageEventListener.getParkingUsage().get(parkingSpace.linkId())).map(map -> map.get(parkingSpace.parkingType().id())).map(map -> map.get(i)).orElse(0))
                 .average()
                 .getAsDouble();
     }

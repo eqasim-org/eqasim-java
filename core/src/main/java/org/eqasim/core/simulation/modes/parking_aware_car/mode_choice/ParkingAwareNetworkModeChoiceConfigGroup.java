@@ -6,7 +6,7 @@ import org.matsim.contrib.common.util.ReflectiveConfigGroupWithConfigurableParam
 public class ParkingAwareNetworkModeChoiceConfigGroup extends ReflectiveConfigGroupWithConfigurableParameterSets {
     public static final String GROUP_NAME = "modeChoice";
 
-    public enum PenaltyType {DETAILED}
+    public enum PenaltyType {DETAILED, ZERO}
 
     @Parameter
     @NotNull

@@ -20,6 +20,7 @@ public class ParkingAwareNetworkModeConfigGroup extends ReflectiveConfigGroupWit
     @NotNull
     private ParkingSpaceAssignmentLogicParameterSet parkingSpaceAssignmentLogicParameterSet;
 
+    @NotNull
     private ParkingAwareNetworkModeChoiceConfigGroup parkingAwareNetworkModeChoiceConfigGroup;
 
     public ParkingAwareNetworkModeConfigGroup() {

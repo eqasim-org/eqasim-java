@@ -9,6 +9,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNet
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageEventListener;
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.penalty.DetailedParkingAwareCarPenaltyProvider;
+import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.penalty.NoPenalty;
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.penalty.ParkingAwareCarPenaltyProvider;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
 import org.matsim.api.core.v01.Id;
@@ -37,8 +38,6 @@ public class ParkingAwareNetworkModeChoiceModule extends AbstractEqasimExtension
 
     @Override
     protected void installEqasimExtension() {
-
-        Verify.verify(((DiscreteModeChoiceConfigGroup) getConfig().getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME)).getTourEstimator().equals(ParkingAwareCumulativeTourEstimator.NAME));
 
         bindTourEstimator(ParkingAwareCumulativeTourEstimator.NAME).toProvider(new Provider<TourEstimator>() {
 
@@ -127,6 +126,7 @@ public class ParkingAwareNetworkModeChoiceModule extends AbstractEqasimExtension
 
         bind(ParkingAwareCarPenaltyProvider.class).to(switch (modeChoiceConfigGroup.getPenaltyType()) {
             case DETAILED -> DetailedParkingAwareCarPenaltyProvider.class;
+            case ZERO -> NoPenalty.class;
             default -> throw new IllegalStateException("Unexpected value: " + modeChoiceConfigGroup.getPenaltyType());
         });
     }
