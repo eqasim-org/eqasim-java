@@ -14,7 +14,6 @@ import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
-import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.EqasimUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
@@ -77,7 +76,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(DRT_WALK_CONSTRAINT).to(DrtWalkConstraint.Factory.class);
 		bindTripConstraintFactory(DRT_SERVICE_AREA_CONSTRAINT).to(DrtServiceAreaConstraint.Factory.class);
 
-		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
 
 		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(EqasimUtilityEstimator.class);
