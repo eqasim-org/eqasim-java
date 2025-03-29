@@ -17,7 +17,7 @@ import org.matsim.core.network.io.NetworkWriter;
 public class RunAdjustNetwork {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("input-path", "output-path", "extent-path") //
+				.requireOptions("input-path", "output-path") //
 				.allowOptions("capacity-factor", "speed-factor", "extent-path") //
 				.build();
 
