@@ -15,10 +15,12 @@ public class SwissConfigAdapter {
     protected static double downsamplingRate = 1.0;
     protected static double replanningRate = 0.05;
 
+    protected static String prefix = "";
+
     public static void run(String[] args, SwitzerlandConfigurator configurator, Consumer<Config> adapter)
             throws CommandLine.ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args) //
-                .requireOptions("input-path", "output-path", "downsamplingRate", "replanningRate") //
+                .requireOptions("input-path", "output-path", "downsamplingRate", "replanningRate", "prefix") //
                 .allowOptions("activity-list", "hasFreight") //
                 .build();
 
@@ -33,6 +35,8 @@ public class SwissConfigAdapter {
         replanningRate = Double.parseDouble(cmd.getOptionStrict("replanningRate"));
 
         downsamplingRate = Double.parseDouble(cmd.getOptionStrict("downsamplingRate"));
+
+        prefix = cmd.getOptionStrict("prefix");
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"));
         configurator.updateConfig(config);
