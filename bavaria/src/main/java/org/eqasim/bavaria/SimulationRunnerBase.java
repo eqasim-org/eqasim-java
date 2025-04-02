@@ -86,8 +86,8 @@ public abstract class SimulationRunnerBase {
             System.out.println(argument);
         }
 
-        final File logFile = new File("simulation_" + networkFile.replace(".xml.gz", "") + ".log");
-        final File errorLogFile = new File("simulation_" + networkFile.replace(".xml.gz", "") + ".error.log");
+        final File logFile = new File("simulation_" + networkFile.replace("_network.xml.gz", "") + ".log");
+        final File errorLogFile = new File("simulation_" + networkFile.replace("_network.xml.gz", "") + ".error.log");
         System.out.println("Log file: " + logFile);
         System.out.println("Error log file: " + errorLogFile);
 
