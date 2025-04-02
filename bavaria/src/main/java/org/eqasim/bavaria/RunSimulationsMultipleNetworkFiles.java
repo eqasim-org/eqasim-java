@@ -14,21 +14,16 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * With this class, we can run multiple simulations for a specified city using different random seeds. This class can be used for creating the ''base case''.
+ * With this class, we can run multiple simulations for a specified city using multiple network files: different scenarios. 
  * The class parses command line arguments to determine the city name and the number of seeds to use.
  * It sets up the configuration and working directory for the simulation, and creates a thread pool to run the simulations concurrently.
  * 
  * To call this class, use the following command:
- * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg > output.log 2>&1 &
  * 
- * If you wnat to run multiple seeds, you can do so by adding the --seeds parameter, i.e.:
- * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg --seeds 3 > output.log 2>&1 &
- * 
- * TODO: Consider adding methodology for running all cities in one run. But it could be that we don't need this.
  */
 
-public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
-    private static final Logger LOGGER = Logger.getLogger(RunSimulationsMultipleSeeds.class.getName());
+public class RunSimulationsMultipleNetworkFiles extends SimulationRunnerBase {
+    private static final Logger LOGGER = Logger.getLogger(RunSimulationsMultipleNetworkFiles.class.getName());
 
     static public void main(String[] args) throws Exception {
         // Parse command line arguments

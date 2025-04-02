@@ -16,6 +16,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * This is the base class for running simulations. It contains the common methods for running simulations.
+ */
 public abstract class SimulationRunnerBase {
     protected static final Logger LOGGER = Logger.getLogger(SimulationRunnerBase.class.getName());
 
