@@ -8,3 +8,12 @@ dependency-reduced-pom.xml
 *.idea
 simulation_output
 .vscode
+
+._*
+
+*.log
+*.log.*
+*.log.*.*
+*.log.*.*.*
+*.log.*.*.*.*
+
