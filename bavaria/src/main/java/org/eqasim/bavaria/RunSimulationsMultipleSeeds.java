@@ -13,19 +13,55 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * With this class, we can run multiple simulations for a specified city using different random seeds.
+ * The class parses command line arguments to determine the city name and the number of seeds to use.
+ * It sets up the configuration and working directory for the simulation, and creates a thread pool to run the simulations concurrently.
+ * 
+ * To call this class, use the following command:
+ * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg > output.log 2>&1 &
+ * 
+ * If you wnat to run multiple seeds, you can do so by adding the --seeds parameter, i.e.:
+ * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg --seeds 3 > output.log 2>&1 &
+ * 
+ * TODO: Consider adding methodology for running all cities in one run. But it could be that we don't need this.
+ */
+
 public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
     private static final Logger LOGGER = Logger.getLogger(RunSimulationsMultipleSeeds.class.getName());
 
     static public void main(String[] args) throws Exception {
-        // Check if city parameter is provided
-        if (args.length < 2 || !args[0].equals("--city")) {
+        // Parse command line arguments
+        String city = null;
+        int numSeeds = 1; // Default to 1 seed if not specified
+
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].equals("--city") && i + 1 < args.length) {
+                city = args[i + 1];
+                i++; // Skip the next argument
+            } else if (args[i].equals("--seeds") && i + 1 < args.length) {
+                try {
+                    numSeeds = Integer.parseInt(args[i + 1]);
+                    if (numSeeds < 1) {
+                        throw new NumberFormatException("Number of seeds must be positive");
+                    }
+                    i++; // Skip the next argument
+                } catch (NumberFormatException e) {
+                    LOGGER.severe("Invalid number of seeds. Please provide a positive integer.");
+                    LOGGER.severe("Usage: java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city <city_name> [--seeds <number_of_seeds>]");
+                    System.exit(1);
+                }
+            }
+        }
+
+        // Check if required city parameter is provided
+        if (city == null) {
             LOGGER.severe("Please provide the city name using the --city parameter");
-            LOGGER.severe("Usage: java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city <city_name>");
+            LOGGER.severe("Usage: java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city <city_name> [--seeds <number_of_seeds>]");
             System.exit(1);
         }
 
-        final String city = args[1];
-        LOGGER.info("Running simulation for city: " + city);
+        LOGGER.info("Running simulation for city: " + city + " with " + numSeeds + " random seeds");
 
         // Configuration settings
         String configPath = city + "_config.xml";
@@ -34,6 +70,7 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
         LOGGER.info("Starting simulation with the following settings:");
         LOGGER.info("Configuration file: " + configPath);
         LOGGER.info("Working directory: " + workingDirectory);
+        LOGGER.info("Number of random seeds: " + numSeeds);
 
         // Create a fixed thread pool with 6 threads
         ExecutorService executor = Executors.newFixedThreadPool(6);
@@ -42,43 +79,47 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
         final String networkFile = city + "_network.xml.gz";
         LOGGER.info("Using network file: " + networkFile);
 
-        final String outputDirectory = "bavaria/data/simulation_output/basecases/simulations_for_cities/" + city + "/";
-        LOGGER.info("Output will be written to: " + outputDirectory);   
+        for (int seed = 1; seed <= numSeeds; seed++) {
+            final int currentSeed = seed;
+            final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/simulations_for_cities/" + city + "/" + city + "_seed_" + currentSeed + "/";
+            LOGGER.info("Output for seed " + currentSeed + " will be written to: " + seedOutputDirectory);
 
-        // Check if the output file exists
-        boolean simulationRanSuccessfully = checkIfFileExists(outputDirectory, "output_links.csv.gz");
-        LOGGER.info("Checking if output exists: " + simulationRanSuccessfully);
+            // Check if the output file exists for the current seed
+            boolean seedSimulationRanSuccessfully = checkIfFileExists(seedOutputDirectory, "output_links.csv.gz");
+            LOGGER.info("Checking if output exists for seed " + currentSeed + ": " + seedSimulationRanSuccessfully);
 
-        if (!simulationRanSuccessfully) {
-            try {
-                if (outputDirectoryExists(outputDirectory)) {
-                    createAndEmptyDirectory(outputDirectory);
-                    LOGGER.info("Emptied output directory while preserving log files: " + outputDirectory);
-                } else {
-                    Files.createDirectories(Paths.get(outputDirectory));
-                    LOGGER.info("Created output directory: " + outputDirectory);
-                }
-
-                executor.submit(() -> {
-                    LOGGER.info("Starting simulation task for: " + networkFile);
-                    try {
-                        runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, 1, "8", "8", null);
-                        LOGGER.info("Completed simulation for: " + networkFile);
-                        deleteUnwantedFiles(outputDirectory);
-                        LOGGER.info("Deleted unwanted files for: " + networkFile);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        LOGGER.log(Level.SEVERE, "Simulation interrupted for: " + networkFile, e);
-                    } catch (Exception e) {
-                        LOGGER.log(Level.SEVERE, "Error in simulation for: " + networkFile, e);
+            if (!seedSimulationRanSuccessfully) {
+                try {
+                    if (outputDirectoryExists(seedOutputDirectory)) {
+                        createAndEmptyDirectory(seedOutputDirectory);
+                        LOGGER.info("Emptied output directory while preserving log files: " + seedOutputDirectory);
+                    } else {
+                        Files.createDirectories(Paths.get(seedOutputDirectory));
+                        LOGGER.info("Created output directory: " + seedOutputDirectory);
                     }
-                });
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Failed to setup output directory: " + outputDirectory, e);
-                throw e;
+
+                    // Submit task for the current seed
+                    executor.submit(() -> {
+                        LOGGER.info("Starting simulation task for: " + networkFile + " with seed " + currentSeed);
+                        try {
+                            runSimulation(configPath, networkFile, seedOutputDirectory, workingDirectory, args, currentSeed, "8", "8", null);
+                            LOGGER.info("Completed simulation for: " + networkFile + " with seed " + currentSeed);
+                            deleteUnwantedFiles(seedOutputDirectory);
+                            LOGGER.info("Deleted unwanted files for: " + networkFile + " with seed " + currentSeed);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            LOGGER.log(Level.SEVERE, "Simulation interrupted for: " + networkFile + " with seed " + currentSeed, e);
+                        } catch (Exception e) {
+                            LOGGER.log(Level.SEVERE, "Error in simulation for: " + networkFile + " with seed " + currentSeed, e);
+                        }
+                    });
+                } catch (IOException e) {
+                    LOGGER.log(Level.SEVERE, "Failed to setup output directory: " + seedOutputDirectory, e);
+                    throw e;
+                }
+            } else {
+                LOGGER.info("Skipping simulation for seed " + currentSeed + " - output already exists in: " + seedOutputDirectory);
             }
-        } else {
-            LOGGER.info("Skipping simulation - output already exists in: " + outputDirectory);
         }
 
         // Shutdown the executor
