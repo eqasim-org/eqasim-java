@@ -17,9 +17,19 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
     private static final Logger LOGGER = Logger.getLogger(RunSimulationsMultipleSeeds.class.getName());
 
     static public void main(String[] args) throws Exception {
+        // Check if city parameter is provided
+        if (args.length < 2 || !args[0].equals("--city")) {
+            LOGGER.severe("Please provide the city name using the --city parameter");
+            LOGGER.severe("Usage: java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city <city_name>");
+            System.exit(1);
+        }
+
+        final String city = args[1];
+        LOGGER.info("Running simulation for city: " + city);
+
         // Configuration settings
-        String configPath = "augsburg_config.xml";
-        String workingDirectory = "bavaria/data/simulation_input/simulations_for_cities/augsburg/";
+        String configPath = city + "_config.xml";
+        String workingDirectory = "bavaria/data/simulation_input/simulations_for_cities/" + city + "/";
 
         LOGGER.info("Starting simulation with the following settings:");
         LOGGER.info("Configuration file: " + configPath);
@@ -29,11 +39,11 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
         ExecutorService executor = Executors.newFixedThreadPool(6);
         LOGGER.info("Created thread pool with 6 threads");
 
-        final String networkFile = "augsburg_network.xml.gz";
+        final String networkFile = city + "_network.xml.gz";
         LOGGER.info("Using network file: " + networkFile);
 
-        final String outputDirectory = "bavaria/data/simulation_output/basecases/simulations_for_cities/augsburg/";
-        LOGGER.info("Output will be written to: " + outputDirectory);
+        final String outputDirectory = "bavaria/data/simulation_output/basecases/simulations_for_cities/" + city + "/";
+        LOGGER.info("Output will be written to: " + outputDirectory);   
 
         // Check if the output file exists
         boolean simulationRanSuccessfully = checkIfFileExists(outputDirectory, "output_links.csv.gz");

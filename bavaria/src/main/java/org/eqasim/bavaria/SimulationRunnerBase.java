@@ -88,10 +88,6 @@ public abstract class SimulationRunnerBase {
 
         final File logFile = new File("simulation_" + networkFile.replace(".xml.gz", "") + ".log");
         final File errorLogFile = new File("simulation_" + networkFile.replace(".xml.gz", "") + ".error.log");
-
-        // final File logFile = new File(outputDirectory + ".log");
-        // final File errorLogFile = new File(outputDirectory + ".error.log");
-
         System.out.println("Log file: " + logFile);
         System.out.println("Error log file: " + errorLogFile);
 
@@ -99,7 +95,6 @@ public abstract class SimulationRunnerBase {
                 .redirectOutput(logFile)
                 .redirectError(errorLogFile)
                 .start();
-                
         System.out.println("Started process: " + outputDirectory);
 
         boolean interrupted = false;
