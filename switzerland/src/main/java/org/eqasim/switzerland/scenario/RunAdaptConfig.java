@@ -24,7 +24,7 @@ public class RunAdaptConfig {
 		SwissConfigAdapter.run(args, new SwitzerlandConfigurator(cmd), RunAdaptConfig::adaptConfiguration);
 	}
 
-	static public void adaptConfiguration(Config config) {
+	static public void adaptConfiguration(Config config, String prefix) {
 
 		ReplanningConfigGroup replanningConfigGroup = config.replanning();
 		if (SwissConfigAdapter.hasFreight) {
@@ -79,6 +79,12 @@ public class RunAdaptConfig {
 				activityParams.setScoringThisActivityAtAll(false);
 			}
 		}
+
+		// Vehicles
+		QSimConfigGroup qsimConfig = config.qsim();
+		qsimConfig.setVehiclesSource(VehiclesSource.fromVehiclesData);
+		VehiclesConfigGroup vehiclesConfig = config.vehicles();
+		vehiclesConfig.setVehiclesFile(prefix + "vehicles.xml.gz");
 
 	}
 
