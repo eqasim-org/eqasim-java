@@ -33,7 +33,7 @@ public abstract class SimulationRunnerBase {
     protected static void runSimulation(final String configPath, final String networkFile, final String outputDirectory, 
         final String workingDirectory, final String[] args, 
         final int randomSeed) throws Exception {
-        runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, randomSeed, true, "12", "12", null);
+        runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, randomSeed, "12", "12", null);
     }
 
    /**
@@ -49,7 +49,6 @@ public abstract class SimulationRunnerBase {
     protected static void runSimulation(final String configPath, final String networkFile, final String outputDirectory, 
     final String workingDirectory, final String[] args, 
     final int randomSeed,
-    final boolean is1Perc,
     final String numberOfThreads,
     final String numberOfThreadsQSim,
     final String memoryAllocation) throws Exception {
@@ -87,9 +86,18 @@ public abstract class SimulationRunnerBase {
             System.out.println(argument);
         }
 
+        final File logFile = new File("simulation_" + networkFile.replace(".xml.gz", "") + ".log");
+        final File errorLogFile = new File("simulation_" + networkFile.replace(".xml.gz", "") + ".error.log");
+
+        // final File logFile = new File(outputDirectory + ".log");
+        // final File errorLogFile = new File(outputDirectory + ".error.log");
+
+        System.out.println("Log file: " + logFile);
+        System.out.println("Error log file: " + errorLogFile);
+
         Process process = new ProcessBuilder(arguments)
-                .redirectOutput(new File(outputDirectory + ".log"))
-                .redirectError(new File(outputDirectory + ".error.log"))
+                .redirectOutput(logFile)
+                .redirectError(errorLogFile)
                 .start();
                 
         System.out.println("Started process: " + outputDirectory);
@@ -119,13 +127,16 @@ public abstract class SimulationRunnerBase {
 
     protected static void createAndEmptyDirectory(String directory) throws IOException {
         Path dirPath = Paths.get(directory);
-
         if (!Files.exists(dirPath)) {
             Files.createDirectories(dirPath);
         } else if (Files.isDirectory(dirPath)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath)) {
                 for (Path entry : stream) {
-                    deleteRecursively(entry);
+                    String fileName = entry.getFileName().toString();
+                    // Preserve log files and essential output files
+                    if (!fileName.equals("output_links.csv.gz")) {
+                        deleteRecursively(entry);
+                    }
                 }
             }
         } else {

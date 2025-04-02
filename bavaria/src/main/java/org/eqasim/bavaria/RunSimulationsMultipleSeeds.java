@@ -2,6 +2,8 @@ package org.eqasim.bavaria;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -16,67 +18,74 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
 
     static public void main(String[] args) throws Exception {
         // Configuration settings
-        String configPath = "bavaria_config.xml";
-        String workingDirectory = "bavaria/data/simulation_input/bavaria/";
+        String configPath = "augsburg_config.xml";
+        String workingDirectory = "bavaria/data/simulation_input/simulations_for_cities/augsburg/";
 
-        // List all files in the directory
-        // Map<String, List<String>> networkFilesMap = getNetworkFiles(networkDirectory);
+        LOGGER.info("Starting simulation with the following settings:");
+        LOGGER.info("Configuration file: " + configPath);
+        LOGGER.info("Working directory: " + workingDirectory);
 
-        // Create a fixed thread pool with 5 threads
+        // Create a fixed thread pool with 6 threads
         ExecutorService executor = Executors.newFixedThreadPool(6);
+        LOGGER.info("Created thread pool with 6 threads");
 
-        // Create a fixed thread pool with 2 threads
-        LOGGER.info("Starting simulations");
+        final String networkFile = "augsburg_network.xml.gz";
+        LOGGER.info("Using network file: " + networkFile);
 
-        final String networkFile = "bavaria_network.xml.gz";
-        final String networkName = networkFile.replace(".xml.gz", "");
-        System.out.println("Network name: " + networkName);
+        final String outputDirectory = "bavaria/data/simulation_output/basecases/simulations_for_cities/augsburg/";
+        LOGGER.info("Output will be written to: " + outputDirectory);
 
-        final String outputDirectory = "bavaria/data/simulation_output/bavaria/";
-        boolean fileExists = checkIfFileExists(outputDirectory, "output_links.csv.gz");
+        // Check if the output file exists
+        boolean simulationRanSuccessfully = checkIfFileExists(outputDirectory, "output_links.csv.gz");
+        LOGGER.info("Checking if output exists: " + simulationRanSuccessfully);
 
-        if (!outputDirectoryExists(outputDirectory) || !fileExists) {
+        if (!simulationRanSuccessfully) {
             try {
-                createAndEmptyDirectory(outputDirectory);
-                System.out.println("The directory " + outputDirectory + " has been emptied.");
-            } catch (IOException e) {
-                System.err.println("An error occurred while creating or emptying the directory: " + e.getMessage());
-            }
-
-            executor.submit(() -> {
-                System.out.println("Starting task for: " + networkFile);
-                try {
-                    runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, 1, true, "8", "8", null);
-                    deleteUnwantedFiles(outputDirectory);
-                    System.out.println("Deleted unwanted files for: " + networkFile);
-                    System.out.println("Processed file: " + networkFile);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    LOGGER.log(Level.SEVERE, "Task interrupted for file: " + networkFile, e);
-                } 
-                catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Error processing file: " + networkFile, e);
+                if (outputDirectoryExists(outputDirectory)) {
+                    createAndEmptyDirectory(outputDirectory);
+                    LOGGER.info("Emptied output directory while preserving log files: " + outputDirectory);
+                } else {
+                    Files.createDirectories(Paths.get(outputDirectory));
+                    LOGGER.info("Created output directory: " + outputDirectory);
                 }
-            });
+
+                executor.submit(() -> {
+                    LOGGER.info("Starting simulation task for: " + networkFile);
+                    try {
+                        runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, 1, "8", "8", null);
+                        LOGGER.info("Completed simulation for: " + networkFile);
+                        deleteUnwantedFiles(outputDirectory);
+                        LOGGER.info("Deleted unwanted files for: " + networkFile);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        LOGGER.log(Level.SEVERE, "Simulation interrupted for: " + networkFile, e);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Error in simulation for: " + networkFile, e);
+                    }
+                });
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Failed to setup output directory: " + outputDirectory, e);
+                throw e;
+            }
         } else {
-            LOGGER.info("Skipping simulation for existing output directory: " + outputDirectory);
+            LOGGER.info("Skipping simulation - output already exists in: " + outputDirectory);
         }
-        
+
         // Shutdown the executor
         executor.shutdown();
         try {
-            // Increase the wait time for all tasks to complete
             if (!executor.awaitTermination(300, TimeUnit.HOURS)) {
                 executor.shutdownNow();
                 if (!executor.awaitTermination(360, TimeUnit.SECONDS)) {
-                    LOGGER.severe("Executor did not terminate");
+                    LOGGER.severe("Executor did not terminate properly");
                 }
             }
         } catch (InterruptedException ie) {
             executor.shutdownNow();
             Thread.currentThread().interrupt();
+            LOGGER.log(Level.SEVERE, "Executor was interrupted", ie);
         }
-        LOGGER.info("Simulations completed");
+        LOGGER.info("All simulations completed");
     }
 }
 
