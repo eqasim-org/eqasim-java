@@ -17,3 +17,9 @@ simulation_output
 *.log.*.*.*
 *.log.*.*.*.*
 
+.DS_Store
+.history
+
+bavaria/data/*
+
+
