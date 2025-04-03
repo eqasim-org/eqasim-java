@@ -36,7 +36,7 @@ public abstract class SimulationRunnerBase {
     protected static void runSimulation(final String configPath, final String networkFile, final String outputDirectory, 
         final String workingDirectory, final String[] args, 
         final int randomSeed) throws Exception {
-        runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, randomSeed, "12", "12", null);
+        runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, randomSeed, 12, 12, 40);
     }
 
    /**
@@ -52,37 +52,25 @@ public abstract class SimulationRunnerBase {
     protected static void runSimulation(final String configPath, final String networkFile, final String outputDirectory, 
     final String workingDirectory, final String[] args, 
     final int randomSeed,
-    final String numberOfThreads,
-    final String numberOfThreadsQSim,
-    final String memoryAllocation) throws Exception {
+    final int numberOfThreads,
+    final int numberOfThreadsQSim,
+    final int memoryAllocation) throws Exception {
 
         String fullConfigPath = Paths.get(workingDirectory, configPath).toString();
 
-        final String memoryAllocationString;
         final List<String> arguments;
-        if (memoryAllocation != null && !memoryAllocation.isEmpty()) {
-            memoryAllocationString = "-Xms" + memoryAllocation + "g -Xmx" + memoryAllocation + "g";
-            arguments = Arrays.asList("java", memoryAllocationString, "-cp",
+        arguments = Arrays.asList("java", 
+            "-Xms" + String.valueOf(memoryAllocation) + "g", 
+            "-Xmx" + String.valueOf(memoryAllocation) + "g", 
+            "-cp",
             "bavaria/target/bavaria-1.5.0.jar",
             "org.eqasim.bavaria.RunSimulation10pct",
-            "--config:global.numberOfThreads", numberOfThreads,
-            "--config:qsim.numberOfThreads", numberOfThreadsQSim,
+            "--config:global.numberOfThreads", String.valueOf(numberOfThreads),
+            "--config:qsim.numberOfThreads", String.valueOf(numberOfThreadsQSim),
             "--config:global.randomSeed", String.valueOf(randomSeed),
             "--config:network.inputNetworkFile", networkFile,
             "--config:controler.outputDirectory", outputDirectory,
             "--config-path", fullConfigPath);
-
-        } else {
-            arguments = Arrays.asList("java", "-cp",
-                "bavaria/target/bavaria-1.5.0.jar",
-                "org.eqasim.bavaria.RunSimulation10pct",
-                "--config:global.numberOfThreads", numberOfThreads,
-                "--config:qsim.numberOfThreads", numberOfThreadsQSim,
-                "--config:global.randomSeed", String.valueOf(randomSeed),
-                "--config:network.inputNetworkFile", networkFile,
-                "--config:controler.outputDirectory", outputDirectory,
-                "--config-path", fullConfigPath);
-        }
 
         System.out.println("Arguments for simulation:");
         for (String argument : arguments) {
