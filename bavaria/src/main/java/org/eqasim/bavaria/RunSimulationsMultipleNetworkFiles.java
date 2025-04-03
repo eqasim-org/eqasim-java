@@ -20,7 +20,13 @@ import java.util.stream.Collectors;
  * 
  * The script automatically resumes from where it left off by checking which scenarios have been completed.
  * 
- * To run: mvn clean package -Pstandalone --projects bavaria --also-make -DskipTests=true
+ * Call it like this: Process all network sizes (1000-10000)
+ * java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleNetworkFiles --city augsburg
+ * 
+ * Process only specific sizes
+ * java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleNetworkFiles --city augsburg --network-sizes 1000,2000
+ * 
+ * To compile (if made changes to the code, run this first): mvn clean package -Pstandalone --projects bavaria --also-make -DskipTests=true
  */
 public class RunSimulationsMultipleNetworkFiles extends SimulationRunnerBase {
     private static final Logger LOGGER = Logger.getLogger(RunSimulationsMultipleNetworkFiles.class.getName());
