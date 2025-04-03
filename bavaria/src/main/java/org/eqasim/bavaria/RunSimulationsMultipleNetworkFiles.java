@@ -14,28 +14,136 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * With this class, we can run multiple simulations for a specified city using different random seeds. This class can be used for creating the ''base case''.
- * The class parses command line arguments to determine the city name and the number of seeds to use.
- * It sets up the configuration and working directory for the simulation, and creates a thread pool to run the simulations concurrently.
+ * This class runs simulations for multiple network files organized in a specific folder structure.
+ * For each city, there are multiple network size folders (e.g., networks_1000, networks_2000),
+ * and each folder contains 1000 network files representing different scenarios.
  * 
- * To call this class, use the following command:
- * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg > output.log 2>&1 &
+ * The script automatically resumes from where it left off by checking which scenarios have been completed.
  * 
- * If you want to run multiple seeds, you can do so by adding the --seeds parameter, i.e.:
- * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg --seeds 3 > output.log 2>&1 &
- * 
- * You can also specify the number of threads and memory allocation:
- * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg --seeds 3 --threads 12 --memory 60 > output.log 2>&1 &
- * Note that for the run on the SuperMUC NG login node, for testing purposes, we used 12 threads and 60GB of memory.
- * For the actual runs in the batch script, we used: ...
- * 
- * Remind that when making a change, we need to recompile the project first: mvn clean package -Pstandalone --projects bavaria --also-make -DskipTests=true 
- * 
- * TODO: Consider adding methodology for running all cities in one run. But it could be that we don't need this.
+ * To run: mvn clean package -Pstandalone --projects bavaria --also-make -DskipTests=true
  */
-
 public class RunSimulationsMultipleNetworkFiles extends SimulationRunnerBase {
     private static final Logger LOGGER = Logger.getLogger(RunSimulationsMultipleNetworkFiles.class.getName());
+
+    /**
+     * Configuration class to hold all simulation parameters
+     */
+    private static class Config {
+        String city = null;
+        int threads = 12;   // Default to 12 threads
+        int memory = 60;   // Default to 60GB
+        // Default to all network sizes from 1000 to 10000
+        List<Integer> networkSizes = Arrays.asList(1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000);
+        int startScenario = 1;  // Default start from first scenario
+        int endScenario = 1000; // Default end at last scenario
+
+        @Override
+        public String toString() {
+            return String.format("Config{city='%s', threads=%d, memory=%dGB, networkSizes=%s, scenarios=%d-%d}", 
+                city, threads, memory, networkSizes, startScenario, endScenario);
+        }
+    }
+
+    /**
+     * Parse and validate command line arguments
+     */
+    private static Config parseConfig(String[] args) {
+        Config config = new Config();
+
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].equals("--city") && i + 1 < args.length) {
+                config.city = args[i + 1];
+                i++;
+            } else if (args[i].equals("--threads") && i + 1 < args.length) {
+                try {
+                    config.threads = Integer.parseInt(args[i + 1]);
+                    if (config.threads < 1) {
+                        throw new NumberFormatException("Number of threads must be positive");
+                    }
+                    i++;
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid number of threads. Please provide a positive integer.");
+                }
+            } else if (args[i].equals("--memory") && i + 1 < args.length) {
+                try {
+                    config.memory = Integer.parseInt(args[i + 1]);
+                    if (config.memory < 1) {
+                        throw new NumberFormatException("Memory allocation must be positive");
+                    }
+                    i++;
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid memory allocation. Please provide a positive integer.");
+                }
+            } else if (args[i].equals("--network-sizes") && i + 1 < args.length) {
+                try {
+                    String[] sizes = args[i + 1].split(",");
+                    config.networkSizes = new ArrayList<>();
+                    for (String size : sizes) {
+                        int networkSize = Integer.parseInt(size);
+                        if (networkSize < 1) {
+                            throw new NumberFormatException("Network size must be positive");
+                        }
+                        config.networkSizes.add(networkSize);
+                    }
+                    i++;
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid network size. Please provide positive integers separated by commas.");
+                }
+            } else if (args[i].equals("--scenario-range") && i + 1 < args.length) {
+                try {
+                    String[] range = args[i + 1].split("-");
+                    if (range.length != 2) {
+                        throw new IllegalArgumentException("Scenario range must be in format start-end (e.g., 1-1000)");
+                    }
+                    config.startScenario = Integer.parseInt(range[0]);
+                    config.endScenario = Integer.parseInt(range[1]);
+                    if (config.startScenario < 1 || config.endScenario > 1000 || config.startScenario > config.endScenario) {
+                        throw new IllegalArgumentException("Invalid scenario range. Must be between 1 and 1000, and start must be less than end.");
+                    }
+                    i++;
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid scenario range. Please provide integers in format start-end.");
+                }
+            }
+        }
+
+        if (config.city == null) {
+            throw new IllegalArgumentException("Please provide the city name using the --city parameter");
+        }
+
+        return config;
+    }
+
+    /**
+     * Find the next scenario to process in a network size folder
+     */
+    private static synchronized int findNextScenario(String networkDir, String city, int startScenario, int endScenario) {
+        for (int i = startScenario; i <= endScenario; i++) {
+            // Format: augsburg_network_scenario_0001.xml.gz
+            String networkFile = String.format("%s_network_scenario_%04d.xml.gz", city, i);
+            Path networkPath = Paths.get(networkDir, networkFile);
+            
+            // Check if this scenario's output exists
+            String outputDirectory = Paths.get(networkDir.replace("simulation_input", "simulation_output"),
+                "output_networks_" + Paths.get(networkDir).getFileName().toString(),
+                networkFile.replace(".xml.gz", "")).toString();
+            
+            if (!checkIfFileExists(outputDirectory, "output_links.csv.gz")) {
+                return i;
+            }
+        }
+        return -1; // All scenarios in range are completed
+    }
+
+    /**
+     * Print usage instructions
+     */
+    private static void printUsage() {
+        LOGGER.severe("Usage: java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleNetworkFiles " +
+                     "--city <city_name> [--threads <number_of_threads>] [--memory <memory_in_GB>] " +
+                     "[--network-sizes <size1,size2,...>] [--scenario-range <start-end>]\n" +
+                     "Default network sizes: 1000,2000,3000,4000,5000,6000,7000,8000,9000,10000");
+    }
 
     static public void main(String[] args) throws Exception {
         Config config;
@@ -45,68 +153,84 @@ public class RunSimulationsMultipleNetworkFiles extends SimulationRunnerBase {
             LOGGER.severe(e.getMessage());
             printUsage();
             System.exit(1);
-            return; // Never reached, but needed for compiler
+            return;
         }
 
         LOGGER.info("Running simulation with configuration: " + config);
-
-        // Configuration settings
-        String configPath = config.city + "_config.xml";
-        String workingDirectory = "bavaria/data/simulation_input/simulations_for_cities/" + config.city + "/";
-
-        LOGGER.info("Starting simulation with the following settings:");
-        LOGGER.info("Configuration file: " + configPath);
-        LOGGER.info("Working directory: " + workingDirectory);
 
         // Create a fixed thread pool with specified number of threads
         ExecutorService executor = Executors.newFixedThreadPool(config.threads);
         LOGGER.info("Created thread pool with " + config.threads + " threads");
 
-        final String networkFile = config.city + "_network.xml.gz";
-        LOGGER.info("Using network file: " + networkFile);
+        // Process each network size
+        for (int networkSize : config.networkSizes) {
+            String networkFolder = "networks_" + networkSize;
+            String baseWorkingDirectory = "bavaria/data/simulation_input/simulations_for_cities/" + config.city;
+            String networkDir = Paths.get(baseWorkingDirectory, "networks", networkFolder).toString();
+            
+            // Check if network directory exists
+            if (!Files.exists(Paths.get(networkDir))) {
+                LOGGER.warning("Network directory not found: " + networkDir + ". Skipping this network size.");
+                continue;
+            }
 
-        for (int seed = 1; seed <= config.numSeeds; seed++) {
-            final int currentSeed = seed;
-            final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/simulations_for_cities/" + config.city + "/" + config.city + "_seed_" + currentSeed + "/";
-            LOGGER.info("Output for seed " + currentSeed + " will be written to: " + seedOutputDirectory);
+            LOGGER.info("Processing network size " + networkSize + " in directory: " + networkDir);
 
-            // Check if the output file exists for the current seed
-            boolean seedSimulationRanSuccessfully = checkIfFileExists(seedOutputDirectory, "output_links.csv.gz");
-            LOGGER.info("Checking if output exists for seed " + currentSeed + ": " + seedSimulationRanSuccessfully);
+            // Find next scenario to process
+            int nextScenario;
+            while ((nextScenario = findNextScenario(networkDir, config.city, config.startScenario, config.endScenario)) != -1) {
+                final int scenarioNum = nextScenario;
+                String networkFile = String.format("%s_network_scenario_%04d.xml.gz", config.city, scenarioNum);
+                String networkPath = Paths.get(networkDir, networkFile).toString();
 
-            if (!seedSimulationRanSuccessfully) {
+                if (!Files.exists(Paths.get(networkPath))) {
+                    LOGGER.warning("Network file not found: " + networkPath + ". Skipping this scenario.");
+                    continue;
+                }
+
+                // Process with seed 1
+                final int currentSeed = 1;  // Always use seed 1
+                final String outputDirectory = Paths.get(networkDir.replace("simulation_input", "simulation_output"),
+                    "output_networks_" + networkSize,
+                    networkFile.replace(".xml.gz", "") + "_seed_" + currentSeed).toString();
+
+                // Check if output already exists
+                if (checkIfFileExists(outputDirectory, "output_links.csv.gz")) {
+                    LOGGER.info("Skipping scenario " + scenarioNum + " seed " + currentSeed + " - output exists");
+                    continue;
+                }
+
                 try {
-                    if (outputDirectoryExists(seedOutputDirectory)) {
-                        createAndEmptyDirectory(seedOutputDirectory);
-                        LOGGER.info("Emptied output directory while preserving log files: " + seedOutputDirectory);
+                    if (outputDirectoryExists(outputDirectory)) {
+                        createAndEmptyDirectory(outputDirectory);
+                        LOGGER.info("Emptied output directory: " + outputDirectory);
                     } else {
-                        Files.createDirectories(Paths.get(seedOutputDirectory));
-                        LOGGER.info("Created output directory: " + seedOutputDirectory);
+                        Files.createDirectories(Paths.get(outputDirectory));
+                        LOGGER.info("Created output directory: " + outputDirectory);
                     }
 
-                    // Submit task for the current seed
+                    // Submit simulation task
                     executor.submit(() -> {
-                        LOGGER.info("Starting simulation task for: " + networkFile + " with seed " + currentSeed);
+                        LOGGER.info("Starting simulation for scenario " + scenarioNum + " with seed " + currentSeed);
                         try {
-                            runSimulation(configPath, networkFile, seedOutputDirectory, workingDirectory, args, currentSeed, 
-                                config.threads, config.threads, config.memory);
-                            LOGGER.info("Completed simulation for: " + networkFile + " with seed " + currentSeed);
-                            deleteUnwantedFiles(seedOutputDirectory);
-                            LOGGER.info("Deleted unwanted files for: " + networkFile + " with seed " + currentSeed);
+                            String configPath = config.city + "_config.xml";
+                            runSimulation(configPath, networkPath, outputDirectory, baseWorkingDirectory, args, 
+                                currentSeed, config.threads, config.threads, config.memory);
+                            deleteUnwantedFiles(outputDirectory);
+                            LOGGER.info("Completed simulation for scenario " + scenarioNum + " with seed " + currentSeed);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            LOGGER.log(Level.SEVERE, "Simulation interrupted for: " + networkFile + " with seed " + currentSeed, e);
+                            LOGGER.log(Level.SEVERE, "Simulation interrupted for scenario " + scenarioNum + " with seed " + currentSeed, e);
                         } catch (Exception e) {
-                            LOGGER.log(Level.SEVERE, "Error in simulation for: " + networkFile + " with seed " + currentSeed, e);
+                            LOGGER.log(Level.SEVERE, "Error in simulation for scenario " + scenarioNum + " with seed " + currentSeed, e);
                         }
                     });
                 } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, "Failed to setup output directory: " + seedOutputDirectory, e);
-                    throw e;
+                    LOGGER.log(Level.SEVERE, "Failed to setup output directory: " + outputDirectory, e);
+                    continue;
                 }
-            } else {
-                LOGGER.info("Skipping simulation for seed " + currentSeed + " - output already exists in: " + seedOutputDirectory);
             }
+            LOGGER.info("Completed all scenarios in range for network size " + networkSize);
         }
 
         // Shutdown the executor
@@ -124,84 +248,6 @@ public class RunSimulationsMultipleNetworkFiles extends SimulationRunnerBase {
             LOGGER.log(Level.SEVERE, "Executor was interrupted", ie);
         }
         LOGGER.info("All simulations completed");
-    }
-
-    /**
-     * Print usage instructions
-     */
-    private static void printUsage() {
-        LOGGER.severe("Usage: java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds " +
-                     "--city <city_name> [--seeds <number_of_seeds>] [--threads <number_of_threads>] [--memory <memory_in_GB>]");
-    }
-
-    /**
-     * Configuration class to hold all simulation parameters
-     */
-    private static class Config {
-        String city = null;
-        int numSeeds = 1;  // Default to 1 seed
-        int threads = 12;   // Default to 12 threads
-        int memory = 60;   // Default to 60GB
-
-        @Override
-        public String toString() {
-            return String.format("Config{city='%s', numSeeds=%d, threads=%d, memory=%dGB}", 
-                city, numSeeds, threads, memory);
-        }
-    }
-
-    /**
-     * Parse and validate command line arguments
-     * @param args Command line arguments
-     * @return Config object with validated parameters
-     * @throws IllegalArgumentException if required parameters are missing or invalid
-     */
-    private static Config parseConfig(String[] args) {
-        Config config = new Config();
-
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("--city") && i + 1 < args.length) {
-                config.city = args[i + 1];
-                i++; // Skip the next argument
-            } else if (args[i].equals("--seeds") && i + 1 < args.length) {
-                try {
-                    config.numSeeds = Integer.parseInt(args[i + 1]);
-                    if (config.numSeeds < 1) {
-                        throw new NumberFormatException("Number of seeds must be positive");
-                    }
-                    i++; // Skip the next argument
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid number of seeds. Please provide a positive integer.");
-                }
-            } else if (args[i].equals("--threads") && i + 1 < args.length) {
-                try {
-                    config.threads = Integer.parseInt(args[i + 1]);
-                    if (config.threads < 1) {
-                        throw new NumberFormatException("Number of threads must be positive");
-                    }
-                    i++; // Skip the next argument
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid number of threads. Please provide a positive integer.");
-                }
-            } else if (args[i].equals("--memory") && i + 1 < args.length) {
-                try {
-                    config.memory = Integer.parseInt(args[i + 1]);
-                    if (config.memory < 1) {
-                        throw new NumberFormatException("Memory allocation must be positive");
-                    }
-                    i++; // Skip the next argument
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid memory allocation. Please provide a positive integer.");
-                }
-            }
-        }
-
-        // Validate required parameters
-        if (config.city == null) {
-            throw new IllegalArgumentException("Please provide the city name using the --city parameter");
-        }
-
-        return config;
     }
 }
 
