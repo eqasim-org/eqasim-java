@@ -104,7 +104,8 @@ public class ActivityReaderFromPopulation {
 							}
 
 							activityItems.add(new ActivityItem(person.getId(), personActivityIndex, activity.getType(),
-									startTime, endTime, location.getX(), location.getY()));
+									startTime, endTime, location.getX(), location.getY(), activity.getFacilityId(),
+									activity.getLinkId()));
 
 							personActivityIndex++;
 						}

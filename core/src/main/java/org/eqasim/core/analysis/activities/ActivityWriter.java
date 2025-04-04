@@ -43,6 +43,8 @@ public class ActivityWriter {
 				"end_time", //
 				"x", //
 				"y", //
+				"facility_id", //
+				"link_id", //
 		});
 	}
 
@@ -55,6 +57,8 @@ public class ActivityWriter {
 				String.valueOf(activity.endTime), //
 				String.valueOf(activity.x), //
 				String.valueOf(activity.y), //
+				activity.facilityId.toString(), //
+				activity.linkId.toString(), //
 		});
 	}
 }
