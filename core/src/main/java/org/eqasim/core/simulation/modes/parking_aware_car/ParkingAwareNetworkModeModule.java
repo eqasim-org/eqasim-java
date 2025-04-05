@@ -25,6 +25,8 @@ import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
 
+import java.util.Optional;
+
 
 public class ParkingAwareNetworkModeModule extends AbstractModule {
 
@@ -80,7 +82,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
 
             @Override
             public ParkingUsageEventListener get() {
-                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, qSimConfigGroup.getEndTime().seconds());
+                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, Optional.ofNullable(qSimConfigGroup).map(cfg -> cfg.getEndTime().seconds()).orElse(30.0 * 3600));
             }
         }).asEagerSingleton();
 
