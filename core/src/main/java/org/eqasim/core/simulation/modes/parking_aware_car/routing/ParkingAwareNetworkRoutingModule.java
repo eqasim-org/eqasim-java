@@ -36,9 +36,7 @@ public class ParkingAwareNetworkRoutingModule implements RoutingModule {
                 ParkingSpace parkingSpace = parkingSpaceAssignmentLogic.getUsedParkingSpace(networkWideParkingSpaceStore, request.getPerson().getId(), leg.getRoute().getEndLinkId());
                 Verify.verify(parkingSpace != null, String.format("Parking space not found for person %s at link %s", request.getPerson().getId().toString(), request.getToFacility().getLinkId().toString()));
                 leg.getAttributes().putAttribute(PARKING_TYPE_ATTR, parkingSpace.parkingType().id());
-                if(!parkingSpace.parkingType().id().equals(networkWideParkingSpaceStore.getFallBackParkingType().id())) {
-                    request.getPerson().getAttributes().putAttribute(ParkingAwareMultimodalLinkChooser.LAST_CAR_LOCATION_ATTRIBUTE_NAME, leg.getRoute().getEndLinkId());
-                }
+                request.getPerson().getAttributes().putAttribute(ParkingAwareMultimodalLinkChooser.LAST_CAR_LOCATION_ATTRIBUTE_NAME, leg.getRoute().getEndLinkId());
             }
         }
         return elements;
