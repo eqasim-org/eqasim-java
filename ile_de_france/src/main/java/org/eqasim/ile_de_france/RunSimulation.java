@@ -28,6 +28,7 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf", "use-vdf-engine") //
+				.allowOptions("passenger-speed-factor") //
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator(cmd);
@@ -62,6 +63,8 @@ public class RunSimulation {
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
 
+		double passengerSpeedFactor = cmd.getOption("passenger-speed-factor").map(Double::parseDouble).orElse(1.0);
+
 		controller.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
@@ -75,6 +78,7 @@ public class RunSimulation {
 							@Override
 							public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
 								double travelTime = delegate.getLinkTravelTime(link, time, person, vehicle);
+								travelTime *= passengerSpeedFactor;
 								double linkTravelTime = Math.floor(travelTime);
 								return linkTravelTime + 1.0;
 							}							
