@@ -93,7 +93,12 @@ public class ActivityReaderFromPopulation {
 				for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
 					double startTime = tracker.getTime().seconds();
 					tracker.addElement(element);
-					double endTime = tracker.getTime().seconds();
+					double endTime;
+					if(tracker.getTime().isDefined()) {
+						endTime = tracker.getTime().seconds();
+					} else {
+						endTime = Double.MAX_VALUE;
+					}
 
 					if (element instanceof Activity activity) {
 						if (!TripStructureUtils.isStageActivityType(activity.getType())) {
