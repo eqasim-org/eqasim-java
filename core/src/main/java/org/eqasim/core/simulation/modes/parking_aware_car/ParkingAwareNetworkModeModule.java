@@ -79,10 +79,12 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             private ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
             @Inject
             private QSimConfigGroup qSimConfigGroup;
+            @Inject
+            private Population population;
 
             @Override
             public ParkingUsageEventListener get() {
-                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, Optional.ofNullable(qSimConfigGroup).map(cfg -> cfg.getEndTime().seconds()).orElse(30.0 * 3600));
+                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, Optional.ofNullable(qSimConfigGroup).map(cfg -> cfg.getEndTime().seconds()).orElse(30.0 * 3600), population);
             }
         }).asEagerSingleton();
 

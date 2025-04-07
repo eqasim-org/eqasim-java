@@ -12,9 +12,15 @@ import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.mobsim.framework.events.MobsimBeforeCleanupEvent;
+import org.matsim.core.mobsim.framework.events.MobsimInitializedEvent;
 import org.matsim.core.mobsim.framework.listeners.MobsimBeforeCleanupListener;
+import org.matsim.core.mobsim.framework.listeners.MobsimInitializedListener;
+import org.matsim.core.population.PersonUtils;
 import org.matsim.core.utils.collections.Tuple;
 
 import java.util.ArrayList;
@@ -22,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ParkingUsageEventListener implements PersonArrivalEventHandler, PersonDepartureEventHandler, MobsimBeforeCleanupListener {
+public class ParkingUsageEventListener implements PersonArrivalEventHandler, PersonDepartureEventHandler, MobsimBeforeCleanupListener, MobsimInitializedListener {
 
     public record ParkingUsageRecord(Id<Person> personId, ParkingSpace parkingSpace, double enterTime, double exitTime){}
 
@@ -40,7 +46,9 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
     private final IdMap<Person, List<ParkingUsageRecord>> parkingUsagesPerPerson;
     private final double qsimEndTime;
 
-    public ParkingUsageEventListener(String mode, int aggregationInterval, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, double qsimEndTime) {
+    private final Population population;
+
+    public ParkingUsageEventListener(String mode, int aggregationInterval, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, double qsimEndTime, Population population) {
         this.mode = mode;
         this.ongoingParkings = new IdMap<>(Person.class);
         this.parkingSpaceAssignmentLogic = parkingSpaceAssignmentLogic;
@@ -50,6 +58,7 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
         this.parkingUsagesPerPerson = new IdMap<>(Person.class);
         this.lastRecordedTimeSlotIndex = -1;
         this.qsimEndTime = qsimEndTime;
+        this.population = population;
     }
 
     public int getTimeSlotIndex(double time) {
@@ -80,6 +89,26 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
     private void updateLastRecordedTimeSlotIndex(int timeSlotIndex) {
         if(this.lastRecordedTimeSlotIndex < timeSlotIndex) {
             this.lastRecordedTimeSlotIndex = timeSlotIndex;
+        }
+    }
+
+    @Override
+    public void notifyMobsimInitialized(MobsimInitializedEvent e) {
+        for(Person person: this.population.getPersons().values()) {
+            if("none".equals(person.getAttributes().getAttribute("carAvailability"))) {
+                continue;
+            }
+            if("no".equals(PersonUtils.getLicense(person))) {
+                continue;
+            }
+            for(PlanElement planElement: person.getSelectedPlan().getPlanElements()) {
+                if(planElement instanceof Activity activity) {
+                    ParkingSpace parkingSpace = this.parkingSpaceAssignmentLogic.getUsedParkingSpace(this.networkWideParkingSpaceStore, person.getId(), activity.getLinkId());
+                    Verify.verify(parkingSpace != null);
+                    ongoingParkings.put(person.getId(), Tuple.of(parkingSpace, 0.0));
+                    break;
+                }
+            }
         }
     }
 
