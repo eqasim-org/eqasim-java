@@ -78,7 +78,7 @@ public class RunSimulation {
 							@Override
 							public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
 								double travelTime = delegate.getLinkTravelTime(link, time, person, vehicle);
-								travelTime *= passengerSpeedFactor;
+								travelTime /= passengerSpeedFactor;
 								double linkTravelTime = Math.floor(travelTime);
 								return linkTravelTime + 1.0;
 							}							
