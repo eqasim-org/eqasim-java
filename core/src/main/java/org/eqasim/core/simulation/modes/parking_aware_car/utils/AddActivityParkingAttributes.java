@@ -70,7 +70,7 @@ public class AddActivityParkingAttributes {
                 for(Id<ParkingType> parkingTypeId: potentialParkings.keySet()) {
                     if(potentialParkingTypes.isEmpty() || potentialParkingTypes.contains(parkingTypeId)) {
                         found = true;
-                        linksPerParkingType.computeIfAbsent(activity.getType(), type -> new IdSet<>(Link.class)).add(activity.getLinkId());
+                        linksPerParkingType.computeIfAbsent(parkingTypeId.toString(), type -> new IdSet<>(Link.class)).add(activity.getLinkId());
                     }
                 }
                 if(!found) {
