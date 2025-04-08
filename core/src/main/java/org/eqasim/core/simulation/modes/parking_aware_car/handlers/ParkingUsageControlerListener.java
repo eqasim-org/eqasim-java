@@ -99,7 +99,7 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
                         CSVLineBuilder builder = new CSVLineBuilder();
                         builder.add(parkingUsageRecord.personId().toString());
                         builder.add(parkingUsageRecord.parkingSpace().linkId().toString());
-                        builder.add(parkingUsageRecord.parkingSpace().parkingType().toString());
+                        builder.add(parkingUsageRecord.parkingSpace().parkingType().id().toString());
                         builder.add(String.valueOf(parkingUsageRecord.enterTime()));
                         builder.add(String.valueOf(parkingUsageRecord.exitTime()));
                         csvWriter.writeNext(builder.build());
