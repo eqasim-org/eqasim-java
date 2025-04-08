@@ -1,8 +1,10 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.utils;
 
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
+import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingSpace;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -20,19 +22,24 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AddActivityParkingAttributes {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("population-path", "network-path", "output-population-path")
-                .allowOptions("activity-types")
+                .allowOptions("activity-types", "parking-types")
                 .build();
 
         String populationPath = commandLine.getOptionStrict("population-path");
         String networkPath = commandLine.getOptionStrict("network-path");
         String outputPopulationPath = commandLine.getOptionStrict("output-population-path");
         Set<String> activityTypes = commandLine.getOption("activity-types").map(s -> Set.of(s.split(","))).orElse(new HashSet<>());
+        Set<Id<ParkingType>> parkingTypes = commandLine.getOption("parking-types").map(s -> Set.of(s.split(",")))
+                .orElse(activityTypes).stream()
+                .map(s -> Id.create(s, ParkingType.class))
+                .collect(Collectors.toSet());
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 
@@ -54,11 +61,21 @@ public class AddActivityParkingAttributes {
                     continue;
                 }
                 requiredParkings++;
-                if(networkWideParkingSpaceStore.getLinkParkingSpaces(activity.getLinkId()).containsKey(Id.create(activity.getType(), ParkingType.class))) {
-                    linksPerParkingType.computeIfAbsent(activity.getType(), type -> new IdSet<>(Link.class)).add(activity.getLinkId());
-                } else {
+                Set<Id<ParkingType>> potentialParkingTypes = parkingTypes;
+                if(potentialParkingTypes.isEmpty()) {
+                    potentialParkingTypes = Set.of(Id.create(activity.getType(), ParkingType.class));
+                }
+                boolean found = false;
+                IdMap<ParkingType, ParkingSpace> potentialParkings = networkWideParkingSpaceStore.getLinkParkingSpaces(activity.getLinkId());
+                for(Id<ParkingType> parkingTypeId: potentialParkings.keySet()) {
+                    if(potentialParkingTypes.isEmpty() || potentialParkingTypes.contains(parkingTypeId)) {
+                        found = true;
+                        linksPerParkingType.computeIfAbsent(activity.getType(), type -> new IdSet<>(Link.class)).add(activity.getLinkId());
+                    }
+                }
+                if(!found) {
                     missedParkings++;
-                    System.out.println(String.format("Parking type %s not found on link %s", activity.getType(), activity.getLinkId().toString()));
+                    System.out.println(String.format("No parking found on link %s as a %s activity location", activity.getLinkId().toString(), activity.getType()));
                 }
             }
             Map<String, String> linkIdsPerParkingType = new HashMap<>();
