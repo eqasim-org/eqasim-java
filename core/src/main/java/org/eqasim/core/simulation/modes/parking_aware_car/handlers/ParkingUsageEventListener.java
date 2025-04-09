@@ -169,8 +169,9 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
             for(int i=startingIndex; i<=endingIndex; i++) {
                 parkingUsage.put(i, parkingUsage.getOrDefault(i, 0)+1);
             }
-            this.parkingUsagesPerPerson.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(new ParkingUsageRecord(entry.getKey(), ongoingParking.getFirst(), ongoingParking.getSecond(), this.getSlotEndTime(endingIndex)));
-
+            if(!ongoingParking.getFirst().parkingType().id().equals(this.networkWideParkingSpaceStore.getFallBackParkingType().id())) {
+                this.parkingUsagesPerPerson.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(new ParkingUsageRecord(entry.getKey(), ongoingParking.getFirst(), ongoingParking.getSecond(), this.getSlotEndTime(endingIndex)));
+            }
         }
     }
 
