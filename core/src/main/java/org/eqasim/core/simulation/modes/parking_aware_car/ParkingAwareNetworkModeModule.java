@@ -2,6 +2,8 @@ package org.eqasim.core.simulation.modes.parking_aware_car;
 
 import com.google.common.base.Verify;
 import com.google.inject.*;
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingUsageControlerListener;
@@ -25,6 +27,8 @@ import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 
 
@@ -150,7 +154,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
         }
 
         bind(MultimodalLinkChooser.class).to(ParkingAwareMultimodalLinkChooser.class);
-        bind(ParkingAwareMultimodalLinkChooser.class).toProvider(new Provider<ParkingAwareMultimodalLinkChooser>() {
+        bind(ParkingAwareMultimodalLinkChooser.class).toProvider(new Provider<>() {
 
             @Inject
             private NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
@@ -166,9 +170,17 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
 
             @Override
             public ParkingAwareMultimodalLinkChooser get() {
-                return new ParkingAwareMultimodalLinkChooser(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener);
+                ScenarioExtent scenarioExtent = null;
+                if(configGroup.parkingSearchRestrictionArea != null) {
+                    try {
+                        scenarioExtent = new ShapeScenarioExtent.Builder(new File(configGroup.parkingSearchRestrictionArea), Optional.empty(), Optional.empty()).build();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                return new ParkingAwareMultimodalLinkChooser(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener, scenarioExtent);
             }
-        });
+        }).asEagerSingleton();
     }
 
     @Provides

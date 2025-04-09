@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.routing;
 
+import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingSpace;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
@@ -29,8 +30,9 @@ public class ParkingAwareMultimodalLinkChooser implements MultimodalLinkChooser 
     private final QuadTree<Link> linksWithParkingsQuadTree;
     private final ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
     private final ParkingUsageEventListener parkingUsageEventListener;
+    private final ScenarioExtent scenarioExtent;
 
-    public ParkingAwareMultimodalLinkChooser(NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Network network, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, ParkingUsageEventListener parkingUsageEventListener) {
+    public ParkingAwareMultimodalLinkChooser(NetworkWideParkingSpaceStore networkWideParkingSpaceStore, Network network, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, ParkingUsageEventListener parkingUsageEventListener, ScenarioExtent scenarioExtent) {
         this.networkWideParkingSpaceStore = networkWideParkingSpaceStore;
         double[] boundingBox = NetworkUtils.getBoundingBox(network.getNodes().values());
         this.linksWithParkingsQuadTree = new QuadTree<>(boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3]);
@@ -43,6 +45,7 @@ public class ParkingAwareMultimodalLinkChooser implements MultimodalLinkChooser 
         }
         this.parkingSpaceAssignmentLogic = parkingSpaceAssignmentLogic;
         this.parkingUsageEventListener = parkingUsageEventListener;
+        this.scenarioExtent = scenarioExtent;
     }
 
     public static final String LAST_CAR_LOCATION_ATTRIBUTE_NAME = "lastCarLocation";
@@ -67,14 +70,19 @@ public class ParkingAwareMultimodalLinkChooser implements MultimodalLinkChooser 
 
     @Override
     public Link decideEgressLink(RoutingRequest request, Network network) {
-        Coord coord = request.getFromFacility().getCoord();
+        Coord coord = request.getToFacility().getCoord();
         Collection<Link> linksWithParking =  this.linksWithParkingsQuadTree.getDisk(coord.getX(), coord.getY(), 500);
 
+        Optional<ParkingSpace> selectedParkingSpace;
 
-        Optional<ParkingSpace> selectedParkingSpace = linksWithParking.stream().map(l -> this.parkingSpaceAssignmentLogic.getUsedParkingSpace(this.networkWideParkingSpaceStore, request.getPerson().getId(), l.getId()))
-                .filter(parkingSpace -> parkingSpace != null && !parkingSpace.parkingType().id().equals(this.networkWideParkingSpaceStore.getFallBackParkingType().id()))
-                .filter(parkingSpace -> this.averageParkingOccupancy(request.getDepartureTime(), parkingSpace) < parkingSpace.capacity())
-                .min(Comparator.comparingDouble(parkingSpace -> DistanceUtils.calculateDistance(network.getLinks().get(parkingSpace.linkId()).getCoord(), coord)));
+        if(this.scenarioExtent == null || this.scenarioExtent.isInside(request.getToFacility().getCoord())) {
+            selectedParkingSpace = linksWithParking.stream().map(l -> this.parkingSpaceAssignmentLogic.getUsedParkingSpace(this.networkWideParkingSpaceStore, request.getPerson().getId(), l.getId()))
+                    .filter(parkingSpace -> parkingSpace != null && !parkingSpace.parkingType().id().equals(this.networkWideParkingSpaceStore.getFallBackParkingType().id()))
+                    .filter(parkingSpace -> this.averageParkingOccupancy(request.getDepartureTime(), parkingSpace) < parkingSpace.capacity())
+                    .min(Comparator.comparingDouble(parkingSpace -> DistanceUtils.calculateDistance(network.getLinks().get(parkingSpace.linkId()).getCoord(), coord)));
+        } else {
+            selectedParkingSpace = Optional.empty();
+        }
 
         if(selectedParkingSpace.isPresent()) {
             return network.getLinks().get(selectedParkingSpace.get().linkId());

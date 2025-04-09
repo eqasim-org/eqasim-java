@@ -17,6 +17,10 @@ public class ParkingAwareNetworkModeConfigGroup extends ReflectiveConfigGroupWit
     @NotNull
     public String mode = "car";
 
+    @Parameter
+    @Comment("If set to the path to a geopackage file, the parking search within a radius will be allowed only when the trip's destination is in the given area. In outside activities, the parking will be forced into the destination's link")
+    public String parkingSearchRestrictionArea = null;
+
     @NotNull
     private ParkingSpaceAssignmentLogicParameterSet parkingSpaceAssignmentLogicParameterSet;
 
