@@ -3,6 +3,7 @@ package org.eqasim.core.simulation.modes.parking_aware_car.mode_choice;
 import com.google.common.base.Verify;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
@@ -38,28 +39,7 @@ public class ParkingAwareNetworkModeChoiceModule extends AbstractEqasimExtension
     @Override
     protected void installEqasimExtension() {
 
-        bindTourEstimator(ParkingAwareCumulativeTourEstimator.NAME).toProvider(new Provider<>() {
-
-            @Inject
-            TimeInterpretation timeInterpretation;
-
-            @Inject
-            ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
-
-            @Inject
-            TripEstimator tripEstimator;
-
-            @Inject
-            NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
-
-            @Inject
-            ParkingAwareCarPenaltyProvider parkingAwareCarPenaltyProvider;
-
-            @Override
-            public TourEstimator get() {
-                return new ParkingAwareCumulativeTourEstimator(tripEstimator, timeInterpretation, configGroup.mode, parkingSpaceAssignmentLogic, networkWideParkingSpaceStore, parkingAwareCarPenaltyProvider);
-            }
-        });
+        bindTourEstimator(ParkingAwareCumulativeTourEstimator.NAME).to(ParkingAwareCumulativeTourEstimator.class);
 
         ParkingAwareNetworkModeChoiceConfigGroup modeChoiceConfigGroup = this.configGroup.getParkingAwareNetworkModeChoiceConfigGroup();
         Verify.verify(modeChoiceConfigGroup != null);
@@ -129,4 +109,10 @@ public class ParkingAwareNetworkModeChoiceModule extends AbstractEqasimExtension
             default -> throw new IllegalStateException("Unexpected value: " + modeChoiceConfigGroup.getPenaltyType());
         });
     }
+
+    @Provides
+    public ParkingAwareCumulativeTourEstimator provideParkingAwareCumulativeTourEstimator(TimeInterpretation timeInterpretation, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, TripEstimator tripEstimator, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, ParkingAwareCarPenaltyProvider parkingAwareCarPenaltyProvider) {
+        return new ParkingAwareCumulativeTourEstimator(tripEstimator, timeInterpretation, configGroup.mode, parkingSpaceAssignmentLogic, networkWideParkingSpaceStore, parkingAwareCarPenaltyProvider);
+    }
+
 }

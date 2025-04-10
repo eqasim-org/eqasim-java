@@ -131,7 +131,7 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
             if(!drives(person)) {
                 continue;
             }
-            Id<Link> initialVehicleLocation = (Id<Link>) person.getAttributes().getAttribute(InitialParkingAssignment.INITIAL_VEHICLE_LOCATION_ATTRIBUTE);
+            Id<Link> initialVehicleLocation = Id.createLinkId((String)person.getAttributes().getAttribute(InitialParkingAssignment.INITIAL_VEHICLE_LOCATION_ATTRIBUTE));
             ParkingSpace parkingSpace = this.parkingSpaceAssignmentLogic.getUsedParkingSpace(this.networkWideParkingSpaceStore, person.getId(), initialVehicleLocation);
             Verify.verify(parkingSpace != null);
             ongoingParkings.put(person.getId(), Tuple.of(parkingSpace, 0.0));

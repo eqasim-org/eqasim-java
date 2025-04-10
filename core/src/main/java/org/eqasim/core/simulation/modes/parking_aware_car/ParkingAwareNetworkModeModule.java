@@ -196,7 +196,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             }
         });
 
-        addControlerListenerBinding().toProvider(new Provider<>() {
+        bind(InitialParkingAssignment.class).toProvider(new Provider<>() {
 
             @Inject
             private Population population;
@@ -208,10 +208,12 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             private ActivityFacilities activityFacilities;
 
             @Override
-            public ControlerListener get() {
+            public InitialParkingAssignment get() {
                 return new InitialParkingAssignment(population, parkingSpaceFinder, activityFacilities);
             }
         }).asEagerSingleton();
+
+        addControlerListenerBinding().to(InitialParkingAssignment.class);
     }
 
     @Provides

@@ -22,7 +22,7 @@ public class ParkingAwareMultimodalLinkChooser implements MultimodalLinkChooser 
     public Link decideAccessLink(RoutingRequest request, Network network) {
         Id<Link> linkId = (Id<Link>) request.getPerson().getAttributes().getAttribute(LAST_CAR_LOCATION_ATTRIBUTE_NAME);
         if(linkId == null) {
-            linkId = (Id<Link>) request.getPerson().getAttributes().getAttribute(InitialParkingAssignment.INITIAL_VEHICLE_LOCATION_ATTRIBUTE);
+            linkId = Id.createLinkId((String)request.getPerson().getAttributes().getAttribute(InitialParkingAssignment.INITIAL_VEHICLE_LOCATION_ATTRIBUTE));
             if(linkId == null) {
                 throw new IllegalStateException(String.format("Initial vehicle location not set for person %s", request.getPerson().getId().toString()));
             }

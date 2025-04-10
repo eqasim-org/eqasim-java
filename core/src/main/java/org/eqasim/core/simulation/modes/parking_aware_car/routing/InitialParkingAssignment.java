@@ -35,7 +35,7 @@ public class InitialParkingAssignment implements IterationStartsListener {
                         throw new IllegalStateException(String.format("Could not find facility %s for activity %s of person %s", activity.getFacilityId().toString(), activity.getType(), person.getId().toString()));
                     }
                     ParkingSpace parkingSPace = this.parkingSpaceFinder.findParkingSpace(person, facility, 0);
-                    person.getAttributes().putAttribute(INITIAL_VEHICLE_LOCATION_ATTRIBUTE, parkingSPace.linkId());
+                    person.getAttributes().putAttribute(INITIAL_VEHICLE_LOCATION_ATTRIBUTE, parkingSPace.linkId().toString());
                     break;
                 }
             }
