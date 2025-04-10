@@ -52,7 +52,7 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
 
         // Configuration settings
         String configPath = config.city + "_config.xml";
-        String workingDirectory = "bavaria/data/simulation_input/simulations_for_cities/" + config.city + "/";
+        String workingDirectory = "bavaria/data/simulation_input/simulations_for_landkreis/" + config.city + "/";
 
         LOGGER.info("Starting simulation with the following settings:");
         LOGGER.info("Configuration file: " + configPath);
@@ -67,7 +67,7 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
 
         for (int seed = 1; seed <= config.numSeeds; seed++) {
             final int currentSeed = seed;
-            final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/simulations_for_cities/" + config.city + "/" + config.city + "_seed_" + currentSeed + "/";
+            final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/" + config.city + "/" + config.city + "_seed_" + currentSeed + "/";
             LOGGER.info("Output for seed " + currentSeed + " will be written to: " + seedOutputDirectory);
 
             // Check if the output file exists for the current seed

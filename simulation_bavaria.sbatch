@@ -8,16 +8,16 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=12
 #SBATCH --mem=80GB
-#SBATCH --time=20:00:00
+#SBATCH --time=00:30:00
 
 # Account and partition
 #SBATCH --account=pn39mu
-#SBATCH --partition=micro
+#SBATCH --partition=test
 
 # Notification and type
-#SBATCH --mail-type=END
+#SBATCH --mail-type=BEGIN,END
 #SBATCH --mail-user=elena.natterer@tum.de
 #SBATCH --get-user-env
 
@@ -30,4 +30,4 @@ export FONTCONFIG_FILE=$HOME/test_java_font_4u/fonts/fonts.conf
 export FC_FONT_PATH=$HOME/test_java_font_4u/fonts
 
 # Run the Java program with full arguments
-java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bavaria --threads 24 --memory 80
+java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city augsburg_test --seeds 1 --threads 12 --memory 80
