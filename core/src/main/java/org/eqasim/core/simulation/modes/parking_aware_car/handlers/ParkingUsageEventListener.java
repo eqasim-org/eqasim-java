@@ -5,16 +5,16 @@ import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWid
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingSpace;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
+import org.eqasim.core.simulation.modes.parking_aware_car.routing.InitialParkingAssignment;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.mobsim.framework.events.MobsimBeforeCleanupEvent;
 import org.matsim.core.mobsim.framework.events.MobsimInitializedEvent;
@@ -22,15 +22,14 @@ import org.matsim.core.mobsim.framework.listeners.MobsimBeforeCleanupListener;
 import org.matsim.core.mobsim.framework.listeners.MobsimInitializedListener;
 import org.matsim.core.population.PersonUtils;
 import org.matsim.core.utils.collections.Tuple;
+import org.matsim.households.Household;
+import org.matsim.households.Households;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ParkingUsageEventListener implements PersonArrivalEventHandler, PersonDepartureEventHandler, MobsimBeforeCleanupListener, MobsimInitializedListener {
 
-    public record ParkingUsageRecord(Id<Person> personId, ParkingSpace parkingSpace, double enterTime, double exitTime){}
+    public record ParkingUsageRecord(Id<Person> personId, ParkingSpace parkingSpace, double enterTime, double exitTime, double occupancy){}
 
     private final String mode;
 
@@ -40,15 +39,16 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
     private final int aggregationInterval;
     private final NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
     // LinkId -> ParkingType -> timeSlotIndex -> Number of users
-    private final IdMap<Link, IdMap<ParkingType, Map<Integer, Integer>>> parkingUsage;
+    private final IdMap<Link, IdMap<ParkingType, Map<Integer, Double>>> parkingUsage;
     private int lastRecordedTimeSlotIndex;
 
     private final IdMap<Person, List<ParkingUsageRecord>> parkingUsagesPerPerson;
     private final double qsimEndTime;
 
     private final Population population;
+    private final IdMap<Person, Double> parkingOccupancyWeights;
 
-    public ParkingUsageEventListener(String mode, int aggregationInterval, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, double qsimEndTime, Population population) {
+    public ParkingUsageEventListener(String mode, int aggregationInterval, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, double qsimEndTime, Population population, Households households) {
         this.mode = mode;
         this.ongoingParkings = new IdMap<>(Person.class);
         this.parkingSpaceAssignmentLogic = parkingSpaceAssignmentLogic;
@@ -59,6 +59,29 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
         this.lastRecordedTimeSlotIndex = -1;
         this.qsimEndTime = qsimEndTime;
         this.population = population;
+        this.parkingOccupancyWeights = new IdMap<>(Person.class);
+        initializeParkingOccupancyWeights(households, population);
+    }
+
+    private void initializeParkingOccupancyWeights(Households households, Population population) {
+        for(Household household: households.getHouseholds().values()) {
+            int numberOfCars = (int) household.getAttributes().getAttribute("number_of_vehicles");
+            IdSet<Person> drivingPersonIds = new IdSet<>(Person.class);
+            household.getMemberIds().stream().map(population.getPersons()::get)
+                    .filter(Objects::nonNull)
+                    .filter(this::drives).map(Person::getId).forEach(drivingPersonIds::add);
+            for(Id<Person> personId: household.getMemberIds()) {
+                Person person = population.getPersons().get(personId);
+                if(person == null) {
+                    continue;
+                }
+                double weight = 0;
+                if (numberOfCars > 0 && drivingPersonIds.contains(personId)) {
+                    weight = Math.min(1.0, (double) numberOfCars / drivingPersonIds.size());
+                }
+                this.parkingOccupancyWeights.put(personId, weight);
+            }
+        }
     }
 
     public int getTimeSlotIndex(double time) {
@@ -66,7 +89,7 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
     }
 
 
-    public IdMap<Link, IdMap<ParkingType, Map<Integer, Integer>>> getParkingUsage() {
+    public IdMap<Link, IdMap<ParkingType, Map<Integer, Double>>> getParkingUsage() {
         return parkingUsage;
     }
 
@@ -92,23 +115,26 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
         }
     }
 
+    private boolean drives(Person person) {
+        if("none".equals(person.getAttributes().getAttribute("carAvailability"))) {
+            return false;
+        }
+        if("no".equals(PersonUtils.getLicense(person))) {
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void notifyMobsimInitialized(MobsimInitializedEvent e) {
         for(Person person: this.population.getPersons().values()) {
-            if("none".equals(person.getAttributes().getAttribute("carAvailability"))) {
+            if(!drives(person)) {
                 continue;
             }
-            if("no".equals(PersonUtils.getLicense(person))) {
-                continue;
-            }
-            for(PlanElement planElement: person.getSelectedPlan().getPlanElements()) {
-                if(planElement instanceof Activity activity) {
-                    ParkingSpace parkingSpace = this.parkingSpaceAssignmentLogic.getUsedParkingSpace(this.networkWideParkingSpaceStore, person.getId(), activity.getLinkId());
-                    Verify.verify(parkingSpace != null);
-                    ongoingParkings.put(person.getId(), Tuple.of(parkingSpace, 0.0));
-                    break;
-                }
-            }
+            Id<Link> initialVehicleLocation = (Id<Link>) person.getAttributes().getAttribute(InitialParkingAssignment.INITIAL_VEHICLE_LOCATION_ATTRIBUTE);
+            ParkingSpace parkingSpace = this.parkingSpaceAssignmentLogic.getUsedParkingSpace(this.networkWideParkingSpaceStore, person.getId(), initialVehicleLocation);
+            Verify.verify(parkingSpace != null);
+            ongoingParkings.put(person.getId(), Tuple.of(parkingSpace, 0.0));
         }
     }
 
@@ -142,16 +168,18 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
 
         updateLastRecordedTimeSlotIndex(endingIndex);
 
-        Map<Integer, Integer> parkingUsage = this.parkingUsage
+        Map<Integer, Double> parkingUsage = this.parkingUsage
                 .computeIfAbsent(event.getLinkId(), key -> new IdMap<>(ParkingType.class))
                 .computeIfAbsent(ongoingParking.getFirst().parkingType().id(), id -> new HashMap<>());
 
+        double occupancy = this.parkingOccupancyWeights.get(event.getPersonId());
+
         for(int i=startingIndex; i<=endingIndex; i++) {
-            parkingUsage.put(i, parkingUsage.getOrDefault(i, 0)+1);
+            parkingUsage.put(i, parkingUsage.getOrDefault(i, 0.0)+occupancy);
         }
 
         if(!ongoingParking.getFirst().parkingType().id().equals(this.networkWideParkingSpaceStore.getFallBackParkingType().id())) {
-            this.parkingUsagesPerPerson.computeIfAbsent(event.getPersonId(), key -> new ArrayList<>()).add(new ParkingUsageRecord(event.getPersonId(), ongoingParking.getFirst(), ongoingParking.getSecond(), this.getSlotEndTime(endingIndex)));
+            this.parkingUsagesPerPerson.computeIfAbsent(event.getPersonId(), key -> new ArrayList<>()).add(new ParkingUsageRecord(event.getPersonId(), ongoingParking.getFirst(), ongoingParking.getSecond(), this.getSlotEndTime(endingIndex), occupancy));
         }
     }
 
@@ -162,15 +190,16 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
             int startingIndex = getTimeSlotIndex(ongoingParking.getSecond());
             int endingIndex = Math.max(getTimeSlotIndex(qsimEndTime), lastRecordedTimeSlotIndex);
 
-            Map<Integer, Integer> parkingUsage = this.parkingUsage
+            Map<Integer, Double> parkingUsage = this.parkingUsage
                     .computeIfAbsent(ongoingParking.getFirst().linkId(), key -> new IdMap<>(ParkingType.class))
                     .computeIfAbsent(ongoingParking.getFirst().parkingType().id(), id -> new HashMap<>());
 
+            double occupancy = this.parkingOccupancyWeights.get(entry.getKey());
             for(int i=startingIndex; i<=endingIndex; i++) {
-                parkingUsage.put(i, parkingUsage.getOrDefault(i, 0)+1);
+                parkingUsage.put(i, parkingUsage.getOrDefault(i, 0.0)+occupancy);
             }
             if(!ongoingParking.getFirst().parkingType().id().equals(this.networkWideParkingSpaceStore.getFallBackParkingType().id())) {
-                this.parkingUsagesPerPerson.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(new ParkingUsageRecord(entry.getKey(), ongoingParking.getFirst(), ongoingParking.getSecond(), this.getSlotEndTime(endingIndex)));
+                this.parkingUsagesPerPerson.computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(new ParkingUsageRecord(entry.getKey(), ongoingParking.getFirst(), ongoingParking.getSecond(), this.getSlotEndTime(endingIndex), occupancy));
             }
         }
     }

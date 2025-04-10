@@ -13,8 +13,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwa
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceModule;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
-import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareMultimodalLinkChooser;
-import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareNetworkRoutingModule;
+import org.eqasim.core.simulation.modes.parking_aware_car.routing.*;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignment;
 import org.matsim.api.core.v01.network.Network;
@@ -23,9 +22,12 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoic
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.listener.ControlerListener;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
+import org.matsim.facilities.ActivityFacilities;
+import org.matsim.households.Households;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,10 +87,12 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             private QSimConfigGroup qSimConfigGroup;
             @Inject
             private Population population;
+            @Inject
+            private Households households;
 
             @Override
             public ParkingUsageEventListener get() {
-                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, Optional.ofNullable(qSimConfigGroup).map(cfg -> cfg.getEndTime().seconds()).orElse(30.0 * 3600), population);
+                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, Optional.ofNullable(qSimConfigGroup).map(cfg -> cfg.getEndTime().seconds()).orElse(30.0 * 3600), population, households);
             }
         }).asEagerSingleton();
 
@@ -153,8 +157,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             install(new ParkingAwareNetworkModeChoiceModule(configGroup));
         }
 
-        bind(MultimodalLinkChooser.class).to(ParkingAwareMultimodalLinkChooser.class);
-        bind(ParkingAwareMultimodalLinkChooser.class).toProvider(new Provider<>() {
+        bind(ParkingSpaceFinder.class).toProvider(new Provider<>() {
 
             @Inject
             private NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
@@ -169,7 +172,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             private Network network;
 
             @Override
-            public ParkingAwareMultimodalLinkChooser get() {
+            public ParkingSpaceFinder get() {
                 ScenarioExtent scenarioExtent = null;
                 if(configGroup.parkingSearchRestrictionArea != null) {
                     try {
@@ -178,7 +181,35 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
                         throw new RuntimeException(e);
                     }
                 }
-                return new ParkingAwareMultimodalLinkChooser(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener, scenarioExtent);
+                return new DefaultParkingSpaceFinder(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener, scenarioExtent, configGroup.assumedParkingDuration, configGroup.searchRadius);
+            }
+        }).asEagerSingleton();
+
+        bind(MultimodalLinkChooser.class).toProvider(new Provider<>() {
+
+            @Inject
+            private ParkingSpaceFinder parkingSpaceFinder;
+
+            @Override
+            public MultimodalLinkChooser get() {
+                return new ParkingAwareMultimodalLinkChooser(parkingSpaceFinder);
+            }
+        });
+
+        addControlerListenerBinding().toProvider(new Provider<>() {
+
+            @Inject
+            private Population population;
+
+            @Inject
+            private ParkingSpaceFinder parkingSpaceFinder;
+
+            @Inject
+            private ActivityFacilities activityFacilities;
+
+            @Override
+            public ControlerListener get() {
+                return new InitialParkingAssignment(population, parkingSpaceFinder, activityFacilities);
             }
         }).asEagerSingleton();
     }

@@ -20,7 +20,6 @@ import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourEstimator;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripEstimator;
-import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.controler.listener.ControlerListener;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.utils.timing.TimeInterpretation;
@@ -39,22 +38,22 @@ public class ParkingAwareNetworkModeChoiceModule extends AbstractEqasimExtension
     @Override
     protected void installEqasimExtension() {
 
-        bindTourEstimator(ParkingAwareCumulativeTourEstimator.NAME).toProvider(new Provider<TourEstimator>() {
+        bindTourEstimator(ParkingAwareCumulativeTourEstimator.NAME).toProvider(new Provider<>() {
 
             @Inject
             TimeInterpretation timeInterpretation;
 
             @Inject
-            TripEstimator tripEstimator;
+            ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
 
             @Inject
-            ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
+            TripEstimator tripEstimator;
 
             @Inject
             NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
 
             @Inject
-            ParkingAwareCarPenaltyProvider parkingAwareCarPenaltyProvider;;
+            ParkingAwareCarPenaltyProvider parkingAwareCarPenaltyProvider;
 
             @Override
             public TourEstimator get() {

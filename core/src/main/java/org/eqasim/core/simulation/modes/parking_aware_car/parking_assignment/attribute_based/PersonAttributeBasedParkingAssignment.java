@@ -97,7 +97,7 @@ public class PersonAttributeBasedParkingAssignment implements ParkingSpaceAssign
             }
         }
         if(parkingSpace == null) {
-            return new ParkingSpace(this.networkWideParkingSpaceStore.getFallBackParkingType(), linkId, 0);
+            return new ParkingSpace(this.networkWideParkingSpaceStore.getFallBackParkingType(), linkId, -1);
         }
         return parkingSpace;
     }

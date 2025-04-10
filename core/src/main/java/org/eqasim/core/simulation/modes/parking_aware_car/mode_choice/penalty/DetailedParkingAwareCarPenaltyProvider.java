@@ -43,13 +43,13 @@ public class DetailedParkingAwareCarPenaltyProvider implements ParkingAwareCarPe
 
     @Override
     public void update(int iteration) {
-        IdMap<Link, IdMap<ParkingType, Map<Integer, Integer>>> usage = this.parkingUsageEventListener.getParkingUsage();
-        for(Map.Entry<Id<Link>, IdMap<ParkingType, Map<Integer, Integer>>> linkEntry : usage.entrySet()) {
-            for(Map.Entry<Id<ParkingType>, Map<Integer, Integer>> parkingTypeMapEntry: linkEntry.getValue().entrySet()) {
+        IdMap<Link, IdMap<ParkingType, Map<Integer, Double>>> usage = this.parkingUsageEventListener.getParkingUsage();
+        for(Map.Entry<Id<Link>, IdMap<ParkingType, Map<Integer, Double>>> linkEntry : usage.entrySet()) {
+            for(Map.Entry<Id<ParkingType>, Map<Integer, Double>> parkingTypeMapEntry: linkEntry.getValue().entrySet()) {
                 if(parkingTypeMapEntry.getKey().equals(this.networkWideParkingSpaceStore.getFallBackParkingType().id())) {
                     continue;
                 }
-                for(Map.Entry<Integer, Integer> timeSlotEntry: parkingTypeMapEntry.getValue().entrySet()) {
+                for(Map.Entry<Integer, Double> timeSlotEntry: parkingTypeMapEntry.getValue().entrySet()) {
                     ParkingSpace parkingSpace = this.networkWideParkingSpaceStore.getLinkParkingSpaces(linkEntry.getKey()).get(parkingTypeMapEntry.getKey());
                     double unmetDemand = timeSlotEntry.getValue() - parkingSpace.capacity();
                     double currentPenalty = this.getPenalty(linkEntry.getKey(), this.parkingUsageEventListener.getSlotStartTime(timeSlotEntry.getKey()), this.parkingUsageEventListener.getSlotEndTime(timeSlotEntry.getKey()), parkingTypeMapEntry.getKey());

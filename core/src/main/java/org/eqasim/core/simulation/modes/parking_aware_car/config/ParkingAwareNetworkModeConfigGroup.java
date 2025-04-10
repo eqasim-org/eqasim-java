@@ -1,6 +1,7 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.config;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.matsim.contrib.common.util.ReflectiveConfigGroupWithConfigurableParameterSets;
@@ -20,6 +21,14 @@ public class ParkingAwareNetworkModeConfigGroup extends ReflectiveConfigGroupWit
     @Parameter
     @Comment("If set to the path to a geopackage file, the parking search within a radius will be allowed only when the trip's destination is in the given area. In outside activities, the parking will be forced into the destination's link")
     public String parkingSearchRestrictionArea = null;
+
+    @Parameter
+    @Positive
+    public int searchRadius = 500;
+
+    @Parameter
+    @Positive
+    public double assumedParkingDuration = 3 * 3600;
 
     @NotNull
     private ParkingSpaceAssignmentLogicParameterSet parkingSpaceAssignmentLogicParameterSet;

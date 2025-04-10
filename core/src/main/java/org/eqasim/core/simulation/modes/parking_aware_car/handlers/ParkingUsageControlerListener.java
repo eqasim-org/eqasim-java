@@ -34,7 +34,7 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        IdMap<Link, IdMap<ParkingType, Map<Integer, Integer>>> parkingUsage = this.parkingUsageEventListener.getParkingUsage();
+        IdMap<Link, IdMap<ParkingType, Map<Integer, Double>>> parkingUsage = this.parkingUsageEventListener.getParkingUsage();
 
         List<Id<ParkingType>> parkingTypes = new ArrayList<>(networkWideParkingSpaceStore.getParkingTypes().keySet().stream().toList());
         parkingTypes.add(networkWideParkingSpaceStore.getFallBackParkingType().id());
@@ -49,15 +49,15 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
             for(int i=0; i<this.parkingUsageEventListener.getLastRecordedTimeSlotIndex(); i++) {
                 double startTime = this.parkingUsageEventListener.getSlotStartTime(i);
                 double endTime = this.parkingUsageEventListener.getSlotEndTime(i);
-                for(Map.Entry<Id<Link>, IdMap<ParkingType, Map<Integer, Integer>>> linkEntry : parkingUsage.entrySet()) {
+                for(Map.Entry<Id<Link>, IdMap<ParkingType, Map<Integer, Double>>> linkEntry : parkingUsage.entrySet()) {
                     Id<Link> linkId = linkEntry.getKey();
                     csvLineBuilder = new CSVLineBuilder();
                     csvLineBuilder.addAll(linkId.toString(), String.valueOf(startTime), String.valueOf(endTime));
                     boolean oneItemAdded = false;
                     for(Id<ParkingType> parkingType : parkingTypes) {
-                        Map<Integer, Integer> usagesMap = linkEntry.getValue().get(parkingType);
+                        Map<Integer, Double> usagesMap = linkEntry.getValue().get(parkingType);
                         int finalI = i;
-                        Integer demand = Optional.ofNullable(usagesMap).map(map -> map.get(finalI)).orElse(null);
+                        Double demand = Optional.ofNullable(usagesMap).map(map -> map.get(finalI)).orElse(null);
                         if (demand != null) {
                             csvLineBuilder.add(String.valueOf(demand));
                             oneItemAdded = true;
@@ -80,7 +80,7 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
         try {
             CompactCSVWriter csvWriter = new CompactCSVWriter(new BufferedWriter(new FileWriter(fileName)), ';');
             CSVLineBuilder csvLineBuilder = new CSVLineBuilder();
-            csvLineBuilder.addAll("personId", "linkId", "parkingType", "startTime", "endTime");
+            csvLineBuilder.addAll("personId", "linkId", "parkingType", "startTime", "endTime", "occupancy");
 
             csvWriter.writeNext(csvLineBuilder.build());
             this.parkingUsageEventListener.getParkingUsagesPerPerson().values().stream()
@@ -102,6 +102,7 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
                         builder.add(parkingUsageRecord.parkingSpace().parkingType().id().toString());
                         builder.add(String.valueOf(parkingUsageRecord.enterTime()));
                         builder.add(String.valueOf(parkingUsageRecord.exitTime()));
+                        builder.add(String.valueOf(parkingUsageRecord.occupancy()));
                         csvWriter.writeNext(builder.build());
                     });
             csvWriter.close();
