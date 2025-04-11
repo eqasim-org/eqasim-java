@@ -159,7 +159,7 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
             Verify.verify(parkingSpace != null);
             ongoingParking = Tuple.of(parkingSpace, 0.0);
         } else {
-            Verify.verify(ongoingParking.getFirst().linkId().equals(event.getLinkId()), "Person %s is picking the car from a different link where it was previously parked", event.getPersonId().toString());
+            Verify.verify(ongoingParking.getFirst().linkId().equals(event.getLinkId()), "Person %s is picking the (at %d) car from a different link (%s) where it was previously parked (%s)", event.getPersonId().toString(), event.getTime(), event.getLinkId().toString(), ongoingParking.getFirst().linkId().toString());
         }
 
 
