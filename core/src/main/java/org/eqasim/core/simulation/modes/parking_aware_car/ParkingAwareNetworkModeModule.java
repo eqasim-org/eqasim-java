@@ -22,7 +22,6 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoic
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.listener.ControlerListener;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
@@ -212,8 +211,6 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
                 return new InitialParkingAssignment(population, parkingSpaceFinder, activityFacilities);
             }
         }).asEagerSingleton();
-
-        addControlerListenerBinding().to(InitialParkingAssignment.class);
     }
 
     @Provides

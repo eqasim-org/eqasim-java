@@ -5,13 +5,11 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.core.controler.events.IterationStartsEvent;
-import org.matsim.core.controler.listener.IterationStartsListener;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.Facility;
 
-public class InitialParkingAssignment implements IterationStartsListener {
+public class InitialParkingAssignment {
 
     public static final String INITIAL_VEHICLE_LOCATION_ATTRIBUTE = "initialVehicleLocation";
 
@@ -25,20 +23,24 @@ public class InitialParkingAssignment implements IterationStartsListener {
         this.activityFacilities = activityFacilities;
     }
 
-    @Override
-    public void notifyIterationStarts(IterationStartsEvent event) {
-        for(Person person: population.getPersons().values()) {
-            for(PlanElement planElement: person.getSelectedPlan().getPlanElements()) {
-                if(planElement instanceof Activity activity && !TripStructureUtils.isStageActivityType(activity.getType())) {
-                    Facility facility = activityFacilities.getFacilities().get(activity.getFacilityId());
-                    if(facility == null) {
-                        throw new IllegalStateException(String.format("Could not find facility %s for activity %s of person %s", activity.getFacilityId().toString(), activity.getType(), person.getId().toString()));
-                    }
-                    ParkingSpace parkingSPace = this.parkingSpaceFinder.findParkingSpace(person, facility, 0);
-                    person.getAttributes().putAttribute(INITIAL_VEHICLE_LOCATION_ATTRIBUTE, parkingSPace.linkId().toString());
-                    break;
+    public boolean assignInitialParkingForPerson(Person person) {
+        for(PlanElement planElement: person.getSelectedPlan().getPlanElements()) {
+            if(planElement instanceof Activity activity && !TripStructureUtils.isStageActivityType(activity.getType())) {
+                Facility facility = activityFacilities.getFacilities().get(activity.getFacilityId());
+                if(facility == null) {
+                    throw new IllegalStateException(String.format("Could not find facility %s for activity %s of person %s", activity.getFacilityId().toString(), activity.getType(), person.getId().toString()));
                 }
+                ParkingSpace parkingSPace = this.parkingSpaceFinder.findParkingSpace(person, facility, 0);
+                person.getAttributes().putAttribute(INITIAL_VEHICLE_LOCATION_ATTRIBUTE, parkingSPace.linkId().toString());
+                return true;
             }
-         }
+        }
+        return false;
+    }
+
+    public void assignInitialParkingForPopulation() {
+        for(Person person: population.getPersons().values()) {
+            assignInitialParkingForPerson(person);
+        }
     }
 }

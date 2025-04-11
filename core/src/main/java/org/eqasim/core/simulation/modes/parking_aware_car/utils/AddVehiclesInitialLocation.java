@@ -5,14 +5,11 @@ import com.google.inject.Injector;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
-import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.InitialParkingAssignment;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 
@@ -40,7 +37,7 @@ public class AddVehiclesInitialLocation {
 
         Injector injector = new InjectorBuilder(scenario, configurator).build(); //
         InitialParkingAssignment initialParkingAssignment = injector.getInstance(InitialParkingAssignment.class);
-        initialParkingAssignment.notifyIterationStarts(null);
+        initialParkingAssignment.assignInitialParkingForPopulation();
 
         new PopulationWriter(scenario.getPopulation()).write(outputPath);
     }

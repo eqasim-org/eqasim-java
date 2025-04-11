@@ -5,6 +5,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingSpa
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.penalty.ParkingAwareCarPenaltyProvider;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
+import org.eqasim.core.simulation.modes.parking_aware_car.routing.InitialParkingAssignment;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareMultimodalLinkChooser;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.ParkingAwareNetworkRoutingModule;
 import org.matsim.api.core.v01.Id;
@@ -40,19 +41,22 @@ public class ParkingAwareCumulativeTourEstimator implements TourEstimator {
     private final ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic;
     private final NetworkWideParkingSpaceStore networkWideParkingSpaceStore;
     private final ParkingAwareCarPenaltyProvider parkingAwareCarPenaltyProvider;
+    private final InitialParkingAssignment initialParkingAssignment;
 
-    public ParkingAwareCumulativeTourEstimator(TripEstimator delegate, TimeInterpretation timeInterpretation, String mode, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, ParkingAwareCarPenaltyProvider parkingAwareCarPenaltyProvider) {
+    public ParkingAwareCumulativeTourEstimator(TripEstimator delegate, TimeInterpretation timeInterpretation, String mode, ParkingSpaceAssignmentLogic parkingSpaceAssignmentLogic, NetworkWideParkingSpaceStore networkWideParkingSpaceStore, ParkingAwareCarPenaltyProvider parkingAwareCarPenaltyProvider, InitialParkingAssignment initialParkingAssignment) {
         this.delegate = delegate;
         this.timeInterpretation = timeInterpretation;
         this.mode = mode;
         this.parkingSpaceAssignmentLogic = parkingSpaceAssignmentLogic;
         this.networkWideParkingSpaceStore = networkWideParkingSpaceStore;
         this.parkingAwareCarPenaltyProvider = parkingAwareCarPenaltyProvider;
+        this.initialParkingAssignment = initialParkingAssignment;
     }
 
     @Override
     public TourCandidate estimateTour(Person person, List<String> modes, List<DiscreteModeChoiceTrip> trips, List<TourCandidate> previousTours) {
         person.getAttributes().removeAttribute(ParkingAwareMultimodalLinkChooser.LAST_CAR_LOCATION_ATTRIBUTE_NAME);
+        initialParkingAssignment.assignInitialParkingForPerson(person);
         List<TripCandidate> tripCandidates = new LinkedList<>();
         double utility = 0.0;
 
