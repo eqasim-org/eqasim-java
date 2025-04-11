@@ -53,10 +53,37 @@ public class ParkingAwareCumulativeTourEstimator implements TourEstimator {
         this.initialParkingAssignment = initialParkingAssignment;
     }
 
+    private Id<Link> getLastCarLocation(Person person, List<TourCandidate> previousTours) {
+        if(previousTours.isEmpty()) {
+            return Id.createLinkId((String) person.getAttributes().getAttribute(InitialParkingAssignment.INITIAL_VEHICLE_LOCATION_ATTRIBUTE));
+        }
+        for(int i=previousTours.size()-1; i>=0; i--) {
+            List<TripCandidate> tripCandidates = previousTours.get(i).getTripCandidates();
+            for(int j=tripCandidates.size()-1; j>=0; j--) {
+                if(tripCandidates.get(j) instanceof DefaultRoutedTripCandidate defaultRoutedTripCandidate) {
+                    List<? extends PlanElement> planElements = defaultRoutedTripCandidate.getRoutedPlanElements();
+                    for(int k=planElements.size()-1; k>=0; k--) {
+                        if(planElements.get(k) instanceof Leg leg) {
+                            if(leg.getMode().equals(this.mode)) {
+                                return leg.getRoute().getEndLinkId();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return Id.createLinkId((String) person.getAttributes().getAttribute(InitialParkingAssignment.INITIAL_VEHICLE_LOCATION_ATTRIBUTE));
+    }
+
     @Override
     public TourCandidate estimateTour(Person person, List<String> modes, List<DiscreteModeChoiceTrip> trips, List<TourCandidate> previousTours) {
-        person.getAttributes().removeAttribute(ParkingAwareMultimodalLinkChooser.LAST_CAR_LOCATION_ATTRIBUTE_NAME);
-        initialParkingAssignment.assignInitialParkingForPerson(person);
+        if(previousTours.isEmpty()) {
+            initialParkingAssignment.assignInitialParkingForPerson(person);
+        }
+        if(modes.contains(mode)) {
+            person.getAttributes().putAttribute(ParkingAwareMultimodalLinkChooser.LAST_CAR_LOCATION_ATTRIBUTE_NAME, getLastCarLocation(person, previousTours));
+        }
+
         List<TripCandidate> tripCandidates = new LinkedList<>();
         double utility = 0.0;
 
