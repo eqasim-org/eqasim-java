@@ -17,7 +17,7 @@ included in the (note yet determined) next version number.
 - In swiss module: adjusted the adapt config to allow parametrizing capacity factors and freight in config
 - In swiss module: added vehicles to chonfig
 - In swiss module: adding the possibility to run a simulation with VDF 
-
+- Adding Zurich model
 **1.5.0**
 
 - Add terminaton criterion
