@@ -65,48 +65,46 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
         final String networkFile = config.city + "_network.xml.gz";
         LOGGER.info("Using network file: " + networkFile);
 
-        for (int seed = 1; seed <= config.numSeeds; seed++) {
-            final int currentSeed = seed;
-            final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/" + config.city + "/" + config.city + "_seed_" + currentSeed + "/";
-            LOGGER.info("Output for seed " + currentSeed + " will be written to: " + seedOutputDirectory);
+        final int currentSeed = config.numSeeds;
+        final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/" + config.city + "/" + config.city + "_seed_" + currentSeed + "/";
+        LOGGER.info("Output for seed " + currentSeed + " will be written to: " + seedOutputDirectory);
 
-            // Check if the output file exists for the current seed
-            boolean seedSimulationRanSuccessfully = checkIfFileExists(seedOutputDirectory, "output_links.csv.gz");
-            LOGGER.info("Checking if output exists for seed " + currentSeed + ": " + seedSimulationRanSuccessfully);
+        // Check if the output file exists for the current seed
+        boolean seedSimulationRanSuccessfully = checkIfFileExists(seedOutputDirectory, "output_links.csv.gz");
+        LOGGER.info("Checking if output exists for seed " + currentSeed + ": " + seedSimulationRanSuccessfully);
 
-            if (!seedSimulationRanSuccessfully) {
-                try {
-                    if (outputDirectoryExists(seedOutputDirectory)) {
-                        createAndEmptyDirectory(seedOutputDirectory);
-                        LOGGER.info("Emptied output directory while preserving log files: " + seedOutputDirectory);
-                    } else {
-                        Files.createDirectories(Paths.get(seedOutputDirectory));
-                        LOGGER.info("Created output directory: " + seedOutputDirectory);
-                    }
-
-                    // Submit task for the current seed
-                    executor.submit(() -> {
-                        LOGGER.info("Starting simulation task for: " + networkFile + " with seed " + currentSeed);
-                        try {
-                            runSimulation(configPath, networkFile, seedOutputDirectory, workingDirectory, args, currentSeed, 
-                                config.threads, config.threads, config.memory);
-                            LOGGER.info("Completed simulation for: " + networkFile + " with seed " + currentSeed);
-                            deleteUnwantedFiles(seedOutputDirectory);
-                            LOGGER.info("Deleted unwanted files for: " + networkFile + " with seed " + currentSeed);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            LOGGER.log(Level.SEVERE, "Simulation interrupted for: " + networkFile + " with seed " + currentSeed, e);
-                        } catch (Exception e) {
-                            LOGGER.log(Level.SEVERE, "Error in simulation for: " + networkFile + " with seed " + currentSeed, e);
-                        }
-                    });
-                } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, "Failed to setup output directory: " + seedOutputDirectory, e);
-                    throw e;
+        if (!seedSimulationRanSuccessfully) {
+            try {
+                if (outputDirectoryExists(seedOutputDirectory)) {
+                    createAndEmptyDirectory(seedOutputDirectory);
+                    LOGGER.info("Emptied output directory while preserving log files: " + seedOutputDirectory);
+                } else {
+                    Files.createDirectories(Paths.get(seedOutputDirectory));
+                    LOGGER.info("Created output directory: " + seedOutputDirectory);
                 }
-            } else {
-                LOGGER.info("Skipping simulation for seed " + currentSeed + " - output already exists in: " + seedOutputDirectory);
+
+                // Submit task for the current seed
+                executor.submit(() -> {
+                    LOGGER.info("Starting simulation task for: " + networkFile + " with seed " + currentSeed);
+                    try {
+                        runSimulation(configPath, networkFile, seedOutputDirectory, workingDirectory, args, currentSeed, 
+                            config.threads, config.threads, config.memory);
+                        LOGGER.info("Completed simulation for: " + networkFile + " with seed " + currentSeed);
+                        deleteUnwantedFiles(seedOutputDirectory);
+                        LOGGER.info("Deleted unwanted files for: " + networkFile + " with seed " + currentSeed);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        LOGGER.log(Level.SEVERE, "Simulation interrupted for: " + networkFile + " with seed " + currentSeed, e);
+                    } catch (Exception e) {
+                        LOGGER.log(Level.SEVERE, "Error in simulation for: " + networkFile + " with seed " + currentSeed, e);
+                    }
+                });
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Failed to setup output directory: " + seedOutputDirectory, e);
+                throw e;
             }
+        } else {
+            LOGGER.info("Skipping simulation for seed " + currentSeed + " - output already exists in: " + seedOutputDirectory);
         }
 
         // Shutdown the executor
@@ -141,7 +139,7 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
         String city = null;
         int numSeeds = 1;  // Default to 1 seed
         int threads = 12;   // Default to 12 threads
-        int memory = 60;   // Default to 60GB
+        int memory = 100;   // Default to 60GB
 
         @Override
         public String toString() {
