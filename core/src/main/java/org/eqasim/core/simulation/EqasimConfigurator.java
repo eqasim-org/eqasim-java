@@ -15,6 +15,7 @@ import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorModule;
+import org.eqasim.core.components.traffic.EqasimTrafficModule;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
@@ -85,6 +86,7 @@ public abstract class EqasimConfigurator {
 		registerModule(new EpsilonModule());
 		registerModule(new EqasimRaptorModule());
 		registerModule(new EqasimModeChoiceModule());
+		registerModule(new EqasimTrafficModule());
 		registerModule(new EqasimAnalysisModule());
 
 		registerQSimModule(new EqasimTransitQSimModule());
