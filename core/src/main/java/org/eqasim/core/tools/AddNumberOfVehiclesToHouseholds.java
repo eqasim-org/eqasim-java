@@ -23,11 +23,13 @@ public class AddNumberOfVehiclesToHouseholds {
 
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("input-households-path", "output-households-path", "attributes-path")
+                .allowOptions("attribute_column")
                 .build();
 
         String inputPath = commandLine.getOptionStrict("input-households-path");
         String outputPath = commandLine.getOptionStrict("output-households-path");
         String attributesPath = commandLine.getOptionStrict("attributes-path");
+        String attributeColumn = commandLine.getOption("attribute-column").orElse("number_of_vehicles");
 
         String householdIdColumn = "household_id";
 
@@ -47,7 +49,7 @@ public class AddNumberOfVehiclesToHouseholds {
                 header = row;
             } else {
                 String householdId = row.get(header.indexOf(householdIdColumn));
-                int numberOfCars = Integer.parseInt(row.get(header.indexOf("number_of_vehicles")));
+                int numberOfCars = Integer.parseInt(row.get(header.indexOf(attributeColumn)));
                 Household household = households.getHouseholds().get(Id.create(householdId, Household.class));
                 if(household == null) {
                     continue;
