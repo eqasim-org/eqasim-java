@@ -23,7 +23,7 @@ public class AddNumberOfVehiclesToHouseholds {
 
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("input-households-path", "output-households-path", "attributes-path")
-                .allowOptions("attribute_column")
+                .allowOptions("attribute-column")
                 .build();
 
         String inputPath = commandLine.getOptionStrict("input-households-path");
