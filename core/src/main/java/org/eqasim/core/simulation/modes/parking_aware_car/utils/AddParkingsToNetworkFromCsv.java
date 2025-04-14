@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("csv-path", "network-path", "parking-type", "output-network-path")
                 .allowOptions("link-column", "capacity-columns", "separator", "init-missing-entries")
-                .allowOptions("allow-missing-links")
+                .allowOptions("allow-missing-links", "sampling")
                 .build();
 
         String csvPath = commandLine.getOptionStrict("csv-path");
@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
         boolean allowMissingLinks = commandLine.hasOption("allow-missing-links");
 
         boolean initMissingEntries = commandLine.hasOption("init-missing-entries");
+
+        float sampling = commandLine.getOption("sampling").map(Float::parseFloat).orElse(1.0f);
 
         BufferedReader fileReader = new BufferedReader(new FileReader(csvPath));
         List<String> header = Arrays.stream(fileReader.readLine().split(separator)).toList();
@@ -53,6 +55,7 @@ import java.util.stream.Collectors;
             List<String> items = Arrays.asList(line.split(separator));
             Id<Link> linkId = Id.createLinkId(items.get(linkIdIndex));
             int capacity = (int) capacityIndices.stream().map(items::get).mapToDouble(Double::parseDouble).sum();
+            capacity = (int) (capacity * sampling);
             if(capacity == 0 && !initMissingEntries) {
                 return;
             }
