@@ -21,24 +21,6 @@ import java.util.stream.Collectors;
  */
 public abstract class SimulationRunnerBase {
     protected static final Logger LOGGER = Logger.getLogger(SimulationRunnerBase.class.getName());
-
-   /**
-     * Runs the MATSim simulation with the given configuration path and output directory.
-     *
-     * @param configPath      The path to the configuration file.
-     * @param networkFile     The network file to use for the simulation.
-     * @param outputDirectory The directory where output files will be stored.
-     * @param workingDirectory The working directory.
-     * @param args            Command line arguments.
-     * @param randomSeed      The random seed for the simulation.
-     * @throws Exception if an error occurs during the simulation setup or execution.
-     */
-    protected static void runSimulation(final String configPath, final String networkFile, final String outputDirectory, 
-        final String workingDirectory, final String[] args, 
-        final int randomSeed) throws Exception {
-        runSimulation(configPath, networkFile, outputDirectory, workingDirectory, args, randomSeed, 12, 12, 40);
-    }
-
    /**
      * Runs the MATSim simulation with the given configuration path and output directory.
      *
@@ -54,12 +36,13 @@ public abstract class SimulationRunnerBase {
     final int randomSeed,
     final int numberOfThreads,
     final int numberOfThreadsQSim,
-    final int memoryAllocation) throws Exception {
+    final int memoryAllocation, 
+    final String capfactor) throws Exception {
 
         String fullConfigPath = Paths.get(workingDirectory, configPath).toString();
 
-        final List<String> arguments;
-        arguments = Arrays.asList("java", 
+        final List<String> arguments = new ArrayList<>(Arrays.asList(
+            "java", 
             "-Xms" + String.valueOf(memoryAllocation) + "g", 
             "-Xmx" + String.valueOf(memoryAllocation) + "g", 
             "-cp",
@@ -70,14 +53,26 @@ public abstract class SimulationRunnerBase {
             "--config:global.randomSeed", String.valueOf(randomSeed),
             "--config:network.inputNetworkFile", networkFile,
             "--config:controler.outputDirectory", outputDirectory,
-            "--config-path", fullConfigPath);
+            "--config-path", fullConfigPath
+        ));
+    
+        // Add VDF parameters from args
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].startsWith("--config:eqasim:vdf") || args[i].equals("--use-vdf")) {
+                arguments.add(args[i]);
+                if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                    arguments.add(args[i + 1]);
+                    i++;
+                }
+            }
+        }
 
         System.out.println("Arguments for simulation:");
         for (String argument : arguments) {
             System.out.println(argument);
         }
-        final File logFile = new File("simulation_" + networkFile.replace("_network.xml.gz", "") + "_seed_" + randomSeed + ".log"); 
-        final File errorLogFile = new File("simulation_" + networkFile.replace("_network.xml.gz", "") + "_seed_" + randomSeed + ".error.log");
+        final File logFile = new File("simulation_" + networkFile.replace("_network.xml.gz", "") + "_seed_" + randomSeed + "_capfactor_" + capfactor + ".log"); 
+        final File errorLogFile = new File("simulation_" + networkFile.replace("_network.xml.gz", "") + "_seed_" + randomSeed + "_capfactor_" + capfactor + ".error.log");
         System.out.println("Log file: " + logFile);
         System.out.println("Error log file: " + errorLogFile);
 

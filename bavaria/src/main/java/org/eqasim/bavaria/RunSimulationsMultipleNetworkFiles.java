@@ -221,7 +221,7 @@ public class RunSimulationsMultipleNetworkFiles extends SimulationRunnerBase {
                         try {
                             String configPath = config.city + "_config.xml";
                             runSimulation(configPath, networkPath, outputDirectory, baseWorkingDirectory, args, 
-                                currentSeed, config.threads, config.threads, config.memory);
+                                currentSeed, config.threads, config.threads, config.memory, "0.5");
                             deleteUnwantedFiles(outputDirectory);
                             LOGGER.info("Completed simulation for scenario " + scenarioNum + " with seed " + currentSeed);
                         } catch (InterruptedException e) {

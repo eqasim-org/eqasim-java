@@ -30,4 +30,4 @@ export FONTCONFIG_FILE=$HOME/test_java_font_4u/fonts/fonts.conf
 export FC_FONT_PATH=$HOME/test_java_font_4u/fonts
 
 # Run the Java program with full arguments
-java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city augsburg_test --seeds 1 --threads 12 --memory 80
+java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city wuerzburg --seeds 1 --threads 12 --memory 80

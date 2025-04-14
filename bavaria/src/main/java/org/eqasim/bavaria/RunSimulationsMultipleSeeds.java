@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg --seeds 3 > output.log 2>&1 &
  * 
  * You can also specify the number of threads and memory allocation:
- * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg --seeds 3 --threads 12 --memory 60 > output.log 2>&1 &
+ * nohup java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds --city bamberg --seeds 3 --threads 12 --memory 60 --capfactor 0.5 > output.log 2>&1 &
  * Note that for the run on the SuperMUC NG login node, for testing purposes, we used 12 threads and 60GB of memory.
  * For the actual runs in the batch script, we used: ...
  * 
@@ -66,7 +66,7 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
         LOGGER.info("Using network file: " + networkFile);
 
         final int currentSeed = config.numSeeds;
-        final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/" + config.city + "/" + config.city + "_seed_" + currentSeed + "/";
+        final String seedOutputDirectory = "bavaria/data/simulation_output/basecases/" + config.city + "/" + config.city + "_seed_" + currentSeed + "_capfactor_" + config.capfactor + "/";
         LOGGER.info("Output for seed " + currentSeed + " will be written to: " + seedOutputDirectory);
 
         // Check if the output file exists for the current seed
@@ -88,10 +88,10 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
                     LOGGER.info("Starting simulation task for: " + networkFile + " with seed " + currentSeed);
                     try {
                         runSimulation(configPath, networkFile, seedOutputDirectory, workingDirectory, args, currentSeed, 
-                            config.threads, config.threads, config.memory);
+                            config.threads, config.threads, config.memory, config.capfactor);
                         LOGGER.info("Completed simulation for: " + networkFile + " with seed " + currentSeed);
-                        deleteUnwantedFiles(seedOutputDirectory);
-                        LOGGER.info("Deleted unwanted files for: " + networkFile + " with seed " + currentSeed);
+                        // deleteUnwantedFiles(seedOutputDirectory);
+                        // LOGGER.info("Deleted unwanted files for: " + networkFile + " with seed " + currentSeed);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         LOGGER.log(Level.SEVERE, "Simulation interrupted for: " + networkFile + " with seed " + currentSeed, e);
@@ -129,7 +129,8 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
      */
     private static void printUsage() {
         LOGGER.severe("Usage: java -cp bavaria/target/bavaria-1.5.0.jar org.eqasim.bavaria.RunSimulationsMultipleSeeds " +
-                     "--city <city_name> [--seeds <number_of_seeds>] [--threads <number_of_threads>] [--memory <memory_in_GB>]");
+                     "--city <city_name> [--seeds <number_of_seeds>] [--threads <number_of_threads>] " +
+                     "[--memory <memory_in_GB>] [--capfactor <capfactor_value>]");
     }
 
     /**
@@ -139,12 +140,13 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
         String city = null;
         int numSeeds = 1;  // Default to 1 seed
         int threads = 12;   // Default to 12 threads
-        int memory = 100;   // Default to 60GB
+        int memory = 120;   // Default to 60GB
+        String capfactor = "0.5";
 
         @Override
         public String toString() {
-            return String.format("Config{city='%s', numSeeds=%d, threads=%d, memory=%dGB}", 
-                city, numSeeds, threads, memory);
+            return String.format("Config{city='%s', numSeeds=%d, threads=%d, memory=%dGB, capfactor=%s}", 
+                city, numSeeds, threads, memory, capfactor);
         }
     }
 
@@ -156,7 +158,7 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
      */
     private static Config parseConfig(String[] args) {
         Config config = new Config();
-
+    
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("--city") && i + 1 < args.length) {
                 config.city = args[i + 1];
@@ -191,6 +193,9 @@ public class RunSimulationsMultipleSeeds extends SimulationRunnerBase {
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Invalid memory allocation. Please provide a positive integer.");
                 }
+            } else if (args[i].equals("--capfactor") && i + 1 < args.length) {
+                config.capfactor = args[i + 1];
+                i++; // Skip the next argument
             }
         }
 
