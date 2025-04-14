@@ -1,0 +1,1 @@
+### This script creates subgraphs, that are then used as network inputs for the simulations, for the different scenarios.
