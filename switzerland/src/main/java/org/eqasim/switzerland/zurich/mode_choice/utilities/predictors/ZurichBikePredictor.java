@@ -25,7 +25,7 @@ public class ZurichBikePredictor extends CachedVariablePredictor<ZurichBikeVaria
 	@Override
 	protected ZurichBikeVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
-		double travelTime_min = ((Leg)elements.get(2)).getTravelTime().seconds() / 60.0;
+		double travelTime_min = ((Leg)elements.get(0)).getTravelTime().seconds() / 60.0;
       
 		BikeVariables delegateVariables = new BikeVariables(travelTime_min);
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
