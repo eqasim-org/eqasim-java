@@ -3,22 +3,36 @@ package org.eqasim.core.simulation.policies.impl.mobility_coins;
 import java.io.File;
 
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
+import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.policies.impl.mobility_coins.logic.MobilityCoinsCalculator;
 import org.eqasim.core.simulation.policies.impl.mobility_coins.logic.MobilityCoinsMarket;
 import org.eqasim.core.simulation.policies.impl.mobility_coins.logic.MobilityCoinsParameters;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class MobilityCoinsPolicyExtension extends AbstractEqasimExtension {
+	private final CommandLine cmd;
+
+	public MobilityCoinsPolicyExtension(CommandLine cmd) {
+		this.cmd = cmd;
+	}
+
 	@Override
 	protected void installEqasimExtension() {
-		bind(MobilityCoinsParameters.class).toInstance(new MobilityCoinsParameters());
-
 		addControlerListenerBinding().to(MobilityCoinsMarket.class);
+	}
+
+	@Provides
+	@Singleton
+	MobilityCoinsParameters provideMobilityCoinsParameters() {
+		MobilityCoinsParameters parameters = new MobilityCoinsParameters();
+		ParameterDefinition.applyCommandLine("moco", cmd, parameters);
+		return parameters;
 	}
 
 	@Provides

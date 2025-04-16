@@ -18,7 +18,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf", "use-vdf-engine") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "moco", "use-vdf", "use-vdf-engine") //
 				.build();
 
 		BavariaConfigurator configurator = new BavariaConfigurator(cmd);

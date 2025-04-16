@@ -1,6 +1,8 @@
 package org.eqasim.core.simulation.policies.impl.mobility_coins.logic;
 
-public class MobilityCoinsParameters {
+import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+
+public class MobilityCoinsParameters implements ParameterDefinition {
     // assumed CO2eq for one km of driving the car
     public final double emissions_gco2_per_km_car = 149.0;
 

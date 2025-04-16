@@ -27,7 +27,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-choice-parameter", "cost-parameter", "use-vdf", "use-vdf-engine") //
+				.allowPrefixes("mode-choice-parameter", "cost-parameter", "moco", "use-vdf", "use-vdf-engine") //
 				.build();
 
 		IDFConfigurator configurator = new IDFConfigurator(cmd);
@@ -68,7 +68,7 @@ public class RunSimulation {
 				addTravelTimeBinding("car_passenger").toProvider(new Provider<>() {
 					@Inject
 					VDFTravelTime delegate;
-					
+
 					@Override
 					public TravelTime get() {
 						return new TravelTime() {
@@ -77,7 +77,7 @@ public class RunSimulation {
 								double travelTime = delegate.getLinkTravelTime(link, time, person, vehicle);
 								double linkTravelTime = Math.floor(travelTime);
 								return linkTravelTime + 1.0;
-							}							
+							}
 						};
 					}
 				});

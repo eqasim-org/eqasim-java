@@ -22,6 +22,7 @@ import org.eqasim.core.simulation.policies.routing.SumRoutingPenalty;
 import org.eqasim.core.simulation.policies.utility.SumPenalty;
 import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.controler.AbstractModule;
 
 import com.google.common.base.Verify;
@@ -30,12 +31,18 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 
 public class PolicyModule extends AbstractModule {
+	private final CommandLine cmd;
+
+	public PolicyModule(CommandLine cmd) {
+		this.cmd = cmd;
+	}
+
 	@Override
 	public void install() {
 		install(new CityTaxPolicyExtension());
 		install(new LimitedTrafficZonePolicyExtension());
 		install(new DiscountPolicyExtension());
-		install(new MobilityCoinsPolicyExtension());
+		install(new MobilityCoinsPolicyExtension(cmd));
 
 		var policyBinder = MapBinder.newMapBinder(binder(), String.class, PolicyFactory.class);
 		policyBinder.addBinding(CityTaxPolicyFactory.POLICY_NAME).to(CityTaxPolicyFactory.class);

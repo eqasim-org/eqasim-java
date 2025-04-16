@@ -151,7 +151,7 @@ public abstract class EqasimConfigurator {
 
 		// Policies
 		registerConfigGroup(new PoliciesConfigGroup(), true);
-		registerModule(new PolicyModule());
+		registerModule(new PolicyModule(cmd));
 	}
 
 	private record ConfigGroupItem(ConfigGroup configGroup, boolean isOptional) {
