@@ -4,38 +4,38 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 
 public class MobilityCoinsParameters implements ParameterDefinition {
     // assumed CO2eq for one km of driving the car
-    public final double emissions_gco2_per_km_car = 149.0;
+    public double emissions_gco2_per_km_car = 149.0;
 
     // assumed CO2eq for one km of riding in transit
-    public final double emissions_gco2_per_km_transit = 30.0;
+    public double emissions_gco2_per_km_transit = 30.0;
 
     // Equivalent of one coin in CO2eq
-    public final double cost_coins_per_gco2 = 0.001;
+    public double cost_coins_per_gco2 = 0.001;
 
     // incentive in coins for riding one km the bicycle
-    public final double incentive_coins_per_km_bicycle = 10.0;
+    public double incentive_coins_per_km_bicycle = 10.0;
 
     // incentive in coins for walking one km
-    public final double incentive_coins_per_km_walking = 10.0;
+    public double incentive_coins_per_km_walking = 10.0;
 
     // marginal utility for coin losses
-    public final double beta_loss_u_per_coin = 1.0;
+    public double beta_loss_u_per_coin = 1.0;
 
     // marginal utility for coin gains
-    public final double beta_gain_u_per_coin = 1.0;
+    public double beta_gain_u_per_coin = 1.0;
 
     // blending factor when updating market price
-    public final double marketPriceSmoothing = 0.1;
+    public double marketPriceSmoothing = 0.1;
 
     // initial market price
-    public final double initialMarketPrice_EUR_per_coin = 1.0;
+    public double initialMarketPrice_EUR_per_coin = 1.0;
 
     // target coins volume
-    public final double targetCoins = 100000000.0 * 0.001;
+    public double targetCoins = 100000000.0 * 0.001;
 
     // update coins delta
-    public final double marketPriceUpdate = 0.1;
+    public double marketPriceUpdate = 0.1;
 
     // initial coins per person
-    public final double initialCoins_per_person = 20.0;
+    public double initialCoins_per_person = 20.0;
 }
