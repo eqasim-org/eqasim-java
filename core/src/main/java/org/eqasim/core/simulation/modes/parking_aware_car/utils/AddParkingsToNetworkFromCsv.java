@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.modes.parking_aware_car.utils;
 
+import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -12,6 +13,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
                 .requireOptions("csv-path", "network-path", "parking-type", "output-network-path")
                 .allowOptions("link-column", "capacity-columns", "separator", "init-missing-entries")
                 .allowOptions("allow-missing-links", "sampling")
+                .allowOptions("output-csv-path")
                 .build();
 
         String csvPath = commandLine.getOptionStrict("csv-path");
@@ -36,7 +39,9 @@ import java.util.stream.Collectors;
 
         boolean initMissingEntries = commandLine.hasOption("init-missing-entries");
 
-        float sampling = commandLine.getOption("sampling").map(Float::parseFloat).orElse(1.0f);
+        Float sampling = commandLine.getOption("sampling").map(Float::parseFloat).orElse(null);
+
+        String outputCsvPath = commandLine.getOption("output-csv-path").orElse(null);
 
         BufferedReader fileReader = new BufferedReader(new FileReader(csvPath));
         List<String> header = Arrays.stream(fileReader.readLine().split(separator)).toList();
@@ -51,11 +56,20 @@ import java.util.stream.Collectors;
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         new MatsimNetworkReader(scenario.getNetwork()).readFile(networkPath);
 
+        Random random = new Random();
+
         fileReader.lines().forEach(line -> {
             List<String> items = Arrays.asList(line.split(separator));
             Id<Link> linkId = Id.createLinkId(items.get(linkIdIndex));
             int capacity = (int) capacityIndices.stream().map(items::get).mapToDouble(Double::parseDouble).sum();
-            capacity = (int) (capacity * sampling);
+            if(sampling != null) {
+                float floatCapacity = capacity * sampling;
+                capacity = (int) Math.floor(floatCapacity);
+                if(random.nextDouble() <= floatCapacity - capacity) {
+                    capacity += 1;
+                }
+            }
+
             if(capacity == 0 && !initMissingEntries) {
                 return;
             }
@@ -77,6 +91,10 @@ import java.util.stream.Collectors;
             }
         }
 
+        if(outputCsvPath != null) {
+            NetworkWideParkingSpaceStore networkWideParkingSpaceStore = new NetworkWideParkingSpaceStore(scenario.getNetwork());
+            ExportNetworkParkingsToCsv.export(scenario.getNetwork(), networkWideParkingSpaceStore, outputCsvPath);
+        }
 
         new NetworkWriter(scenario.getNetwork()).write(commandLine.getOptionStrict("output-network-path"));
 
