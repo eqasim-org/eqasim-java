@@ -33,7 +33,7 @@ public record MobilityCoinsDistances(
                         transit_km += distance_km;
                         break;
                     case "bike":
-                    case "biyclce":
+                    case "bicycle":
                         bicycle_km += distance_km;
                         break;
                     case "walk":
