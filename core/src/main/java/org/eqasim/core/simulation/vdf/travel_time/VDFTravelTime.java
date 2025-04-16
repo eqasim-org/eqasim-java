@@ -13,6 +13,7 @@ import java.util.Map;
 import com.google.common.base.Verify;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.simulation.vdf.VDFScope;
 import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
@@ -31,23 +32,25 @@ public class VDFTravelTime implements TravelTime {
 	private final double minimumSpeed;
 	private final double capacityFactor;
 	private final double samplingRate;
-	private final double crossingPenalty;
 
 	private final Network network;
 	private final VolumeDelayFunction vdf;
 	private final ScenarioExtent updateAreaExtent;
+
+	private final CrossingPenalty crossingPenalty;
 
 	private final IdMap<Link, List<Double>> travelTimes = new IdMap<>(Link.class);
 
 	private final Logger logger = LogManager.getLogger(VDFTravelTime.class);
 
 	public VDFTravelTime(VDFScope scope, double minimumSpeed, double capacityFactor, double samplingRate,
-						 Network network, VolumeDelayFunction vdf, double crossingPenalty) {
+			Network network, VolumeDelayFunction vdf, CrossingPenalty crossingPenalty) {
 		this(scope, minimumSpeed, capacityFactor, samplingRate, network, vdf, crossingPenalty, null);
 	}
 
 	public VDFTravelTime(VDFScope scope, double minimumSpeed, double capacityFactor, double samplingRate,
-			Network network, VolumeDelayFunction vdf, double crossingPenalty, ScenarioExtent updateAreaExtent) {
+			Network network, VolumeDelayFunction vdf, CrossingPenalty crossingPenalty,
+			ScenarioExtent updateAreaExtent) {
 		this.scope = scope;
 		this.network = network;
 		this.vdf = vdf;
@@ -60,8 +63,8 @@ public class VDFTravelTime implements TravelTime {
 		for (Link link : network.getLinks().values()) {
 			double travelTime = Math.max(1.0,
 					Math.min(link.getLength() / minimumSpeed, link.getLength() / link.getFreespeed()));
-			travelTimes.put(link.getId(), new ArrayList<>(
-					Collections.nCopies(scope.getIntervals(), considerCrossingPenalty(link, travelTime))));
+			travelTimes.put(link.getId(), new ArrayList<>(Collections.nCopies(scope.getIntervals(),
+					travelTime + crossingPenalty.calculateCrossingPenalty(link))));
 		}
 	}
 
@@ -77,7 +80,7 @@ public class VDFTravelTime implements TravelTime {
 
 	public void update(IdMap<Link, List<Double>> counts, boolean forceUpdateAllLinks) {
 		String logMessage = "Updating VDFTravelTime ";
-		if(updateAreaExtent != null && !forceUpdateAllLinks) {
+		if (updateAreaExtent != null && !forceUpdateAllLinks) {
 			logMessage += " using update extent ...";
 		} else {
 			logMessage += " ...";
@@ -89,12 +92,13 @@ public class VDFTravelTime implements TravelTime {
 
 		for (Map.Entry<Id<Link>, List<Double>> entry : counts.entrySet()) {
 			Link link = network.getLinks().get(entry.getKey());
-			if(link == null) {
+			if (link == null) {
 				continue;
 			}
 
-			if(updateAreaExtent != null && !forceUpdateAllLinks) {
-				if(!updateAreaExtent.isInside(link.getFromNode().getCoord()) || !updateAreaExtent.isInside(link.getToNode().getCoord())) {
+			if (updateAreaExtent != null && !forceUpdateAllLinks) {
+				if (!updateAreaExtent.isInside(link.getFromNode().getCoord())
+						|| !updateAreaExtent.isInside(link.getToNode().getCoord())) {
 					continue;
 				}
 			}
@@ -112,7 +116,7 @@ public class VDFTravelTime implements TravelTime {
 
 				double travelTime = Math.max(1.0,
 						Math.min(link.getLength() / minimumSpeed, vdf.getTravelTime(time, flow, capacity, link)));
-				linkTravelTimes.set(i, considerCrossingPenalty(link, travelTime));
+				linkTravelTimes.set(i, travelTime + crossingPenalty.calculateCrossingPenalty(link));
 
 				if (travelTime > link.getLength() / link.getFreespeed()) {
 					nonFreespeedCount += 1;
@@ -121,22 +125,6 @@ public class VDFTravelTime implements TravelTime {
 		}
 
 		logger.info(String.format("  Done: %d/%d are slower than freespeed", nonFreespeedCount, totalCount));
-	}
-
-	private double considerCrossingPenalty(Link link, double baseTravelTime) {
-		boolean isMajor = true;
-
-		for (Link other : link.getToNode().getInLinks().values()) {
-			if (other.getCapacity() >= link.getCapacity()) {
-				isMajor = false;
-			}
-		}
-
-		if (isMajor || link.getToNode().getInLinks().size() == 1) {
-			return baseTravelTime;
-		} else {
-			return baseTravelTime + crossingPenalty;
-		}
 	}
 
 	public void write(File outputFile) {

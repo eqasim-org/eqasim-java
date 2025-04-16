@@ -11,6 +11,8 @@ import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.CrossingPenalty;
+import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -276,10 +278,12 @@ public class TestSimulationPipeline {
 
         ScenarioExtent updateExtent = new ShapeScenarioExtent.Builder(new File(updateExtentPath), Optional.empty(), Optional.empty()).build();
 
-        VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, eqasimConfigGroup.getCrossingPenalty(), updateExtent);
+        CrossingPenalty crossingPenalty = DefaultCrossingPenalty.build(scenario.getNetwork(), eqasimConfigGroup.getCrossingPenalty());
+
+        VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
         leftTravelTime.readFrom(new File(leftTravelTimesPath).toURI().toURL());
 
-        VDFTravelTime rightTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, eqasimConfigGroup.getCrossingPenalty(), updateExtent);
+        VDFTravelTime rightTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
         rightTravelTime.readFrom(new File(rightTravelTimesPath).toURI().toURL());
 
         for(double time = vdfScope.getStartTime(); time <= vdfScope.getEndTime(); time += vdfScope.getIntervalTime()) {
@@ -512,7 +516,7 @@ public class TestSimulationPipeline {
         });
         assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
-
+    
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
         RunStandaloneModeChoice.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",

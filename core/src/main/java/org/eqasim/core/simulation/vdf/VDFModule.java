@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -80,13 +81,15 @@ public class VDFModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public VDFTravelTime provideVDFTravelTime(VDFConfigGroup config, VDFScope scope, Network network,
-			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig) throws IOException {
+			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig,
+			CrossingPenalty crossingPenalty) throws IOException {
 		ScenarioExtent updateExtent = config.getUpdateAreaShapefile() == null ? null
 				: new ShapeScenarioExtent.Builder(new File(ConfigGroup
 						.getInputFileURL(getConfig().getContext(), config.getUpdateAreaShapefile()).getPath()),
 						Optional.empty(), Optional.empty()).build();
+
 		VDFTravelTime vdfTravelTime = new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
-				eqasimConfig.getSampleSize(), network, vdf, eqasimConfig.getCrossingPenalty(), updateExtent);
+				eqasimConfig.getSampleSize(), network, vdf, crossingPenalty, updateExtent);
 		if(config.getInputTravelTimesFile() != null) {
 			LOGGER.info("Reading VDF travel times");
 			URL inputTimeFile = ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputTravelTimesFile());

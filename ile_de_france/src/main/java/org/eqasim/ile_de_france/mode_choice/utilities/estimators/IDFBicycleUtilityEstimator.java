@@ -5,47 +5,48 @@ import java.util.List;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
-import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
-import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 import com.google.inject.Inject;
 
-public class IDFBikeUtilityEstimator extends BikeUtilityEstimator {
+public class IDFBicycleUtilityEstimator extends BikeUtilityEstimator {
 	private final IDFModeParameters parameters;
-	private final IDFSpatialPredictor spatialPredictor;
 
 	@Inject
-	public IDFBikeUtilityEstimator(IDFModeParameters parameters, IDFSpatialPredictor spatialPredictor,
-			PersonPredictor personPredictor, BikePredictor bikePredictor) {
-		super(parameters, personPredictor, bikePredictor);
-
+	public IDFBicycleUtilityEstimator(IDFModeParameters parameters, PersonPredictor personPredictor,
+			BikePredictor predictor) {
+		super(parameters, personPredictor, predictor);
 		this.parameters = parameters;
-		this.spatialPredictor = spatialPredictor;
 	}
 
-	protected double estimateUrbanUtility(IDFSpatialVariables variables) {
+	protected double estimateAccessEgressTimeUtility(CarVariables variables) {
+		return parameters.betaAccessTime_u_min * variables.accessEgressTime_min;
+	}
+
+	@Override
+	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		double utility = 0.0;
 
-		if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
-			utility += parameters.idfBike.betaInsideUrbanArea;
+		utility += super.estimateUtility(person, trip, elements);
+
+		if (isParis(trip)) {
+			utility += parameters.idfParis.bicycle_u;
 		}
 
 		return utility;
 	}
 
-	@Override
-	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		IDFSpatialVariables variables = spatialPredictor.predictVariables(person, trip, elements);
+	static private boolean isParis(DiscreteModeChoiceTrip trip) {
+		return isParis(trip.getOriginActivity()) || isParis(trip.getDestinationActivity());
+	}
 
-		double utility = 0.0;
-
-		utility += super.estimateUtility(person, trip, elements);
-		utility += estimateUrbanUtility(variables);
-
-		return utility;
+	static private boolean isParis(Activity activity) {
+		Boolean isParis = (Boolean) activity.getAttributes().getAttribute("isParis");
+		return isParis != null && isParis;
 	}
 }
