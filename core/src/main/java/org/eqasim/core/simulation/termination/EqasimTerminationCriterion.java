@@ -17,14 +17,16 @@ public class EqasimTerminationCriterion implements TerminationCriterion {
 
 	private final int firstIteration;
 	private final int lastIteration;
+	private final int minimumIteration;
 
 	private final TerminationWriter writer;
 
-	public EqasimTerminationCriterion(int firstIteration, int lastIteration,
+	public EqasimTerminationCriterion(int firstIteration, int lastIteration, int minimumIteration,
 			Map<String, TerminationIndicatorSupplier> indicators, Map<String, TerminationCriterionCalculator> criteria,
 			TerminationWriter writer) {
 		this.firstIteration = firstIteration;
 		this.lastIteration = lastIteration;
+		this.minimumIteration = minimumIteration;
 
 		this.indicators = indicators;
 		this.criteria = criteria;
@@ -39,7 +41,7 @@ public class EqasimTerminationCriterion implements TerminationCriterion {
 
 		boolean mayTerminate = false;
 
-		if (iteration > firstIteration) {
+		if (iteration > firstIteration && iteration >= minimumIteration) {
 			// check if we may terminate
 			TerminationData terminationData = prepareTerminationData(iteration);
 			history.add(terminationData);

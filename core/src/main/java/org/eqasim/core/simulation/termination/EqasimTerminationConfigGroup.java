@@ -20,6 +20,7 @@ public class EqasimTerminationConfigGroup extends ReflectiveConfigGroup {
 	static private final String THRESHOLD = "threshold";
 	static private final String MODES = "modes";
 	static private final String HISTORY_FILE = "historyFile";
+	static private final String MINIMUM_ITERATIONS = "minimumIterations";
 
 	private int horizon = 10;
 	private int smoothing = 20;
@@ -28,6 +29,8 @@ public class EqasimTerminationConfigGroup extends ReflectiveConfigGroup {
 	private List<String> modes = new LinkedList<>(Arrays.asList("car", "pt", "bike", "walk"));
 
 	private String historyFile = null;
+
+	private int minimumIterations = 0;
 
 	@StringGetter(HORIZON)
 	public int getHorizon() {
@@ -87,6 +90,16 @@ public class EqasimTerminationConfigGroup extends ReflectiveConfigGroup {
 	@StringGetter(HISTORY_FILE)
 	public String getHistoryFile() {
 		return historyFile;
+	}
+
+	@StringGetter(MINIMUM_ITERATIONS)
+	public int getMinimumIterations() {
+		return minimumIterations;
+	}
+
+	@StringSetter(MINIMUM_ITERATIONS)
+	public void setMinimumIterations(int value) {
+		this.minimumIterations = value;
 	}
 
 	static public EqasimTerminationConfigGroup getOrCreate(Config config) {
