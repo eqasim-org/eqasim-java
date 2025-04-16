@@ -1,0 +1,154 @@
+{
+    "road_router" : [ {
+      "request_index" : 0,
+      "in_vehicle_distance_km" : 3.842583879491435,
+      "in_vehicle_time_min" : 7.6439559922733675,
+      "access_time_min" : 3.3851857729347667,
+      "egress_time_min" : 4.592847727130273,
+      "access_distance_km" : 0.18748721203946403,
+      "egress_distance_km" : 0.25437310488721515,
+      "arrivalTime_s" : 29461.74850591249,
+      "total_travel_time_min" : 15.621989492338408
+    }, {
+      "request_index" : 0,
+      "in_vehicle_distance_km" : 1.1351695235411883,
+      "in_vehicle_time_min" : 1.7865556266096367,
+      "access_time_min" : 0.6834207730734212,
+      "egress_time_min" : 1.696209610188495,
+      "access_distance_km" : 0.03785099666252795,
+      "egress_distance_km" : 0.09394391687197819,
+      "arrivalTime_s" : 28948.198583980982,
+      "total_travel_time_min" : 4.166186009871553
+    }, {
+      "request_index" : 0,
+      "in_vehicle_distance_km" : 4.888854014354464,
+      "in_vehicle_time_min" : 5.630312133922416,
+      "access_time_min" : 0.7695219730018122,
+      "egress_time_min" : 2.942835411617807,
+      "access_distance_km" : 0.042619678504715756,
+      "egress_distance_km" : 0.16298780741267854,
+      "arrivalTime_s" : 29183.990046415453,
+      "total_travel_time_min" : 9.342669518542035,
+      "road_geometry" : "LINESTRING (674709.5320588042 6826145.433125519, 674781.1829609717 6826116.79770454, 674796.9823562971 6826110.037204346, 674837.4097994815 6826085.96195032, 674856.4882493154 6826074.285056951, 674934.2737875809 6826024.559205507, 674838.7606062001 6825971.299939094, 674833.0952634732 6825970.690750408, 674821.2746841208 6825985.9603553265, 674818.7053796867 6825999.622583058, 674873.8700236891 6826179.383941381, 674878.1536319541 6826191.760455639, 674897.1930905357 6826232.809754058, 674904.8241738515 6826251.085896134, 674921.9078109921 6826294.066879439, 674926.1126775135 6826305.343235749, 674949.671288017 6826362.270013471, 674953.0786751758 6826370.092563611, 674995.5299172394 6826360.294469901, 675114.0956071103 6826274.689677653, 675128.2926490621 6826259.210397221, 675130.9367622876 6826256.019776154, 675137.3652467302 6826248.688765734, 675157.743894111 6826219.87666277, 675159.7188876151 6826217.311435279, 675499.904543003 6825799.668076514, 675533.4208930166 6825747.90214219, 675755.272176121 6825089.300793759, 675856.3267726926 6824619.455727902, 675888.9397730104 6824453.952752363, 675882.470450992 6824441.4068300165, 675888.1920415745 6824428.499234143, 675894.301811382 6824339.776066263, 675891.5785452506 6824306.271335751, 675887.041016451 6824260.868441364, 675884.037268742 6824241.705058056, 675970.7124981324 6823932.489337387, 676035.6769254997 6823860.966023872, 676047.5573234658 6823845.84341052, 676104.0154176578 6823752.712284363, 676235.4836084226 6823428.789236426, 676259.0457267754 6823374.434427309, 676301.2397212159 6823284.520672108, 676450.9110313156 6822996.024067507, 676541.708731346 6822823.511198556, 676559.4651015565 6822832.266147972, 676570.1911327371 6822837.8478959, 676578.5320447701 6822841.805145749)",
+      "access_geometry" : "LINESTRING (674668 6826155, 674709.5320588042 6826145.433125519)",
+      "egress_geometry" : "LINESTRING (676578.5320447701 6822841.805145749, 676489 6822978)"
+    } ],
+    "road_isochrone" : [ ],
+    "transit_router" : [ {
+      "request_index" : 0,
+      "in_vehicle_travel_time" : 13.916666666666666,
+      "in_vehicle_travel_time_by_mode_min" : {
+        "bus" : 13.916666666666666
+      },
+      "in_vehicle_distance_km" : 5.987919399385293,
+      "in_vehicle_distance_by_mode_km" : {
+        "bus" : 5.987919399385293
+      },
+      "vehicle_legs_by_mode" : {
+        "bus" : 2
+      },
+      "access_walk_time_min" : 4.866666666666666,
+      "egress_walk_time_min" : 7.183333333333334,
+      "transfer_walk_time_min" : 5.766666666666667,
+      "access_walk_distance_km" : 0.26864842128155164,
+      "egress_walk_distance_km" : 0.39779049650824566,
+      "transfer_walk_distance_km" : 0.36,
+      "initial_wait_time_min" : 4.133333333333334,
+      "transfer_wait_time_min" : 9.233333333333333,
+      "transfers" : 1,
+      "total_travel_time_min" : 45.099999999999994,
+      "arrivalTime_s" : 31506.0,
+      "is_only_walk" : false
+    }, {
+      "request_index" : 0,
+      "in_vehicle_travel_time" : 0.0,
+      "in_vehicle_travel_time_by_mode_min" : { },
+      "in_vehicle_distance_km" : 0.0,
+      "in_vehicle_distance_by_mode_km" : { },
+      "vehicle_legs_by_mode" : { },
+      "access_walk_time_min" : 0.0,
+      "egress_walk_time_min" : 0.0,
+      "transfer_walk_time_min" : 22.78819162561142,
+      "access_walk_distance_km" : 0.0,
+      "egress_walk_distance_km" : 0.0,
+      "transfer_walk_distance_km" : 0.9708578680733859,
+      "initial_wait_time_min" : 0.0,
+      "transfer_wait_time_min" : 0.0,
+      "transfers" : 0,
+      "total_travel_time_min" : 22.78819162561142,
+      "arrivalTime_s" : 30167.291497536684,
+      "is_only_walk" : true
+    }, {
+      "request_index" : 0,
+      "in_vehicle_travel_time" : 25.0,
+      "in_vehicle_travel_time_by_mode_min" : {
+        "bus" : 25.0
+      },
+      "in_vehicle_distance_km" : 8.212808999095579,
+      "in_vehicle_distance_by_mode_km" : {
+        "bus" : 8.212808999095579
+      },
+      "vehicle_legs_by_mode" : {
+        "bus" : 1
+      },
+      "access_walk_time_min" : 5.833333333333333,
+      "egress_walk_time_min" : 8.783333333333333,
+      "transfer_walk_time_min" : 0.0,
+      "access_walk_distance_km" : 0.32231799858086674,
+      "egress_walk_distance_km" : 0.48569296588135297,
+      "transfer_walk_distance_km" : 0.0,
+      "initial_wait_time_min" : 24.166666666666668,
+      "transfer_wait_time_min" : 0.0,
+      "transfers" : 0,
+      "total_travel_time_min" : 63.78333333333333,
+      "arrivalTime_s" : 32627.0,
+      "is_only_walk" : false,
+      "itinerary" : {
+        "stops" : [ {
+          "id" : "IDFM:30984.link:316446",
+          "name" : "Notre Dame",
+          "x" : 674904.0000200471,
+          "y" : 6826231.004656577,
+          "arrival_time_s" : 29150.0,
+          "departure_time_s" : 30600.0,
+          "wait_time_s" : 24.166666666666668
+        }, {
+          "id" : "IDFM:30942.link:473818",
+          "name" : "Fief du Pré",
+          "x" : 676564.0000187175,
+          "y" : 6823344.004658005,
+          "arrival_time_s" : 29150.0,
+          "departure_time_s" : 29150.0,
+          "wait_time_s" : 0.0
+        } ],
+        "legs" : [ {
+          "type" : "access",
+          "mode" : "walk",
+          "departure_time_s" : 28800.0,
+          "arrival_time_s" : 29150.0,
+          "travel_time_min" : 5.833333333333333,
+          "distance_km" : 0.32231799858086674
+        }, {
+          "type" : "vehicle",
+          "mode" : "bus",
+          "departure_time_s" : 29150.0,
+          "arrival_time_s" : 32100.0,
+          "travel_time_min" : 49.166666666666664,
+          "distance_km" : 8.212808999095579,
+          "in_vehicle_time_min" : 25.0,
+          "wait_time_min" : 24.166666666666668,
+          "line_id" : "IDFM:C00877",
+          "route_id" : "IDFM:TRANSDEV_MELUN:40913-C00877-14444775",
+          "line_name" : "C"
+        }, {
+          "type" : "egress",
+          "mode" : "walk",
+          "departure_time_s" : 32100.0,
+          "arrival_time_s" : 32627.0,
+          "travel_time_min" : 8.783333333333333,
+          "distance_km" : 0.48569296588135297
+        } ]
+      }
+    } ],
+    "transit_isochrone" : [ ]
+  }

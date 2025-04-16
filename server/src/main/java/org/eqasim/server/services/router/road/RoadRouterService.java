@@ -46,12 +46,13 @@ public class RoadRouterService {
 	private final SpeedyALTFactory routerFactory = new SpeedyALTFactory();
 	private final ConcurrentLinkedQueue<RouterInstance> routerPool = new ConcurrentLinkedQueue<>();
 
-	private final FreeSpeedTravelTime defaultTravelTime = new FreeSpeedTravelTime();
+	private final TravelTime defaultTravelTime;
 	private final ModifiedFreeSpeedTravelTime modifiedTravelTime;
 
-	RoadRouterService(Network network, QuadTree<? extends Link> linkIndex, WalkParameters walkParameters, int threads) {
+	RoadRouterService(Network network, QuadTree<? extends Link> linkIndex, WalkParameters walkParameters, int threads, TravelTime defaultTravelTime) {
 		this.walkParameters = walkParameters;
 		this.linkIndex = linkIndex;
+		this.defaultTravelTime = defaultTravelTime;
 
 		for (int k = 0; k < threads; k++) {
 			routerPool.add(createRouterInstance(network));
@@ -196,11 +197,11 @@ public class RoadRouterService {
 	}
 
 	static public RoadRouterService create(Config config, Network network, WalkConfiguration configuration,
-			int threads) {
+			int threads, TravelTime defauTravelTime) {
 		WalkParameters walkParameters = createWalkParameters(config, configuration);
 		QuadTree<? extends Link> linkIndex = QuadTrees.createQuadTree(network.getLinks().values());
 
-		return new RoadRouterService(network, linkIndex, walkParameters, threads);
+		return new RoadRouterService(network, linkIndex, walkParameters, threads, defauTravelTime);
 	}
 
 	static public record WalkParameters(double beelineWalkFactor, double beelineWalkSpeed_m_s) {
