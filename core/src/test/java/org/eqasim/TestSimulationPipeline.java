@@ -32,8 +32,12 @@ import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvai
 import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
 import org.eqasim.core.simulation.modes.parking_aware_car.config.ParkingAwareNetworkModeConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
+import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareCumulativeTourEstimator;
+import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
+import org.eqasim.core.simulation.modes.parking_aware_car.utils.AddActivityParkingAttributes;
+import org.eqasim.core.simulation.modes.parking_aware_car.utils.AddVehiclesInitialLocation;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
@@ -55,16 +59,27 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.components.estimators.CumulativeTourEstimator;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
+import org.matsim.contribs.discrete_mode_choice.modules.EstimatorModule;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup;
+import org.matsim.core.config.groups.ReplanningConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
 
@@ -82,7 +97,7 @@ public class TestSimulationPipeline {
 
     @After
     public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(new File("melun_test"));
+        //FileUtils.deleteDirectory(new File("melun_test"));
     }
 
     private void runMelunSimulation(String configPath, String outputPath) throws ConfigurationException {
@@ -500,37 +515,119 @@ public class TestSimulationPipeline {
     @Test
     public void testParking() throws Exception {
 
+        // First we run the mode choice to make the mode chains consistent in regard to the vehicle tour constraints
+        RunStandaloneModeChoice.main(new String[]{
+                "--config-path", "melun_test/input/config.xml",
+                "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_for_parking",
+                "--config:standaloneModeChoice.removePersonsWithNoValidAlternatives", "true",
+                "--eqasim-configurator", TestConfigurator.class.getName(),
+        });
+
+        // Then we create a parking-adapted config file from the base one
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
         EqasimConfigurator eqasimConfigurator = new TestConfigurator();
         eqasimConfigurator.updateConfig(config);
 
+        // The parking config group
+        //// The assignment logic
         PersonAttributeBasedParkingAssignmentConfigGroup personAttributeBasedParkingAssignmentConfigGroup = new PersonAttributeBasedParkingAssignmentConfigGroup();
-        personAttributeBasedParkingAssignmentConfigGroup.orderedParkingTypes = List.of("roadSide");
+        personAttributeBasedParkingAssignmentConfigGroup.orderedParkingTypes = List.of("home", "roadSide");
         personAttributeBasedParkingAssignmentConfigGroup.parkingTypesAvailableForEveryone = Set.of("roadSide");
-
         ParkingSpaceAssignmentLogicParameterSet parkingSpaceAssignmentLogicParameterSet = new ParkingSpaceAssignmentLogicParameterSet();
         parkingSpaceAssignmentLogicParameterSet.addParameterSet(personAttributeBasedParkingAssignmentConfigGroup);
-
+        //// The mode choice
         ParkingAwareNetworkModeConfigGroup parkingAwareNetworkModeConfigGroup = new ParkingAwareNetworkModeConfigGroup();
-        parkingAwareNetworkModeConfigGroup.addParameterSet(parkingSpaceAssignmentLogicParameterSet);
+        ParkingAwareNetworkModeChoiceConfigGroup parkingAwareNetworkModeChoiceConfigGroup = new ParkingAwareNetworkModeChoiceConfigGroup();
+        parkingAwareNetworkModeChoiceConfigGroup.setPenaltyType(ParkingAwareNetworkModeChoiceConfigGroup.PenaltyType.ZERO);
 
+        parkingAwareNetworkModeConfigGroup.addParameterSet(parkingSpaceAssignmentLogicParameterSet);
+        parkingAwareNetworkModeConfigGroup.addParameterSet(parkingAwareNetworkModeChoiceConfigGroup);
         config.addModule(parkingAwareNetworkModeConfigGroup);
 
+        // Below we make the DMC config consistant with the parking
+        DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup = (DiscreteModeChoiceConfigGroup) config.getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
+        discreteModeChoiceConfigGroup.setTourEstimator(ParkingAwareCumulativeTourEstimator.NAME);
+        discreteModeChoiceConfigGroup.setCachedModes(discreteModeChoiceConfigGroup.getCachedModes().stream().filter(m -> !m.equals("car")).toList());
+
+        // Necessary for the rouing to work properly
+        config.routing().setAccessEgressType(RoutingConfigGroup.AccessEgressType.accessEgressModeToLink);
+
+        // We will run many iterations and no need to perform DMC for 95% of the agents
+        for(ReplanningConfigGroup.StrategySettings settings: config.replanning().getStrategySettings()) {
+            if(settings.getStrategyName().equals("KeepLastSelected")) {
+                settings.setWeight(0.95);
+            } else if(settings.getStrategyName().equals("DiscreteModeChoice")) {
+                settings.setWeight(0.05);
+            } else {
+                throw new IllegalStateException();
+            }
+        }
+
+        // We update the files used and write the config
         config.network().setInputFile("network_parking.xml");
+        config.plans().setInputFile("../output_mode_choice_for_parking/output_plans.xml.gz");
+        config.global().setNumberOfThreads(1);
 
         ConfigUtils.writeConfig(config, "melun_test/input/config_parking.xml");
 
+        // We write a no parking config to compare
+        discreteModeChoiceConfigGroup.setTourEstimator(EstimatorModule.CUMULATIVE);
+        config.getModules().remove(ParkingAwareNetworkModeConfigGroup.GROUP_NAME);
+        ConfigUtils.writeConfig(config, "melun_test/input/config_no_parking.xml");
+
+
+        // Putting parking spots on the network
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         new MatsimNetworkReader(scenario.getNetwork()).readFile("melun_test/input/network.xml.gz");
 
+        Network filteredNetwork = NetworkUtils.createNetwork();
+        TransportModeNetworkFilter filter = new TransportModeNetworkFilter(scenario.getNetwork());
+        filter.filter(filteredNetwork, Set.of("car"));
+
+        //// We start by roadSide parkings
         Map<String, Double> parkingSpace = new HashMap<>();
-        parkingSpace.put("roadSide", 10.0);
-        for(Link link: scenario.getNetwork().getLinks().values()) {
-            link.getAttributes().putAttribute("parking:roadSide", 10);
+        parkingSpace.put("roadSide", 1.0);
+        for(Id<Link> linkId: filteredNetwork.getLinks().keySet()) {
+            scenario.getNetwork().getLinks().get(linkId).getAttributes().putAttribute("parking:roadSide", 10);
         }
+
+        new PopulationReader(scenario).readFile("melun_test/output_mode_choice_for_parking/output_plans.xml.gz");
+        for(Person person: scenario.getPopulation().getPersons().values()) {
+            for(PlanElement planElement: person.getSelectedPlan().getPlanElements()) {
+                if(planElement instanceof Activity activity && activity.getType().equals("home")) {
+                    Id<Link> linkId = activity.getLinkId();
+                    if(filteredNetwork.getLinks().containsKey(linkId)) {
+                        linkId = NetworkUtils.getNearestLinkExactly(filteredNetwork, activity.getCoord()).getId();
+                    }
+                    scenario.getNetwork().getLinks().get(linkId).getAttributes().putAttribute("parking:home", 10);
+                }
+            }
+        }
+
         NetworkUtils.writeNetwork(scenario.getNetwork(), "melun_test/input/network_parking.xml");
 
-        runMelunSimulation("melun_test/input/config_parking.xml", "melun_test/output_parking");
+        // Now we add authorizations for agents to park in home parkings
+        AddActivityParkingAttributes.main(new String[]{
+                "--population-path", "melun_test/output_mode_choice_for_parking/output_plans.xml.gz",
+                "--network-path", "melun_test/input/network_parking.xml",
+                "--output-population-path", "melun_test/output_mode_choice_for_parking/output_plans.xml.gz",
+                "--activity-types", "home",
+                "--modes", "car"
+        });
+
+
+        AddVehiclesInitialLocation.main(new String[]{"--config-path", "melun_test/input/config_parking.xml",
+                "--output-path", "melun_test/output_mode_choice_for_parking/output_plans.xml.gz",
+                "--eqasim-configurator", TestConfigurator.class.getName()});
+
+        RunPopulationRouting.main(new String[]{"--config-path", "melun_test/input/config_parking.xml",
+                "--output-path", "melun_test/output_mode_choice_for_parking/output_plans.xml.gz",
+                "--eqasim-configurator", TestConfigurator.class.getName(),
+                "--threads", "1"
+        });
+
+        runMelunSimulation("melun_test/input/config_parking.xml", "melun_test/output_parking", null, 60 );
+        runMelunSimulation("melun_test/input/config_no_parking.xml", "melun_test/output_no_parking", null, 60);
     }
 
     @Test
@@ -548,7 +645,7 @@ public class TestSimulationPipeline {
         }
     }
 
-    public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
+    public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException, IOException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
                 "--output-path", "melun_test/output/routed_population.xml",
