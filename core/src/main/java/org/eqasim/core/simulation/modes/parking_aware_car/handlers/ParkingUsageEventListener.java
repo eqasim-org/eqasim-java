@@ -65,7 +65,11 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
 
     private void initializeParkingOccupancyWeights(Households households, Population population) {
         for(Household household: households.getHouseholds().values()) {
-            int numberOfCars = (int) household.getAttributes().getAttribute("number_of_vehicles");
+            Object attribute = household.getAttributes().getAttribute("number_of_vehicles");
+            int numberOfCars = 1;
+            if(attribute != null) {
+                numberOfCars = (int) attribute;
+            }
             IdSet<Person> drivingPersonIds = new IdSet<>(Person.class);
             household.getMemberIds().stream().map(population.getPersons()::get)
                     .filter(Objects::nonNull)
