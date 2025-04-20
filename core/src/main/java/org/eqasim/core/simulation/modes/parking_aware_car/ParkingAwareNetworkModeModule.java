@@ -20,11 +20,13 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.MultimodalLinkChooser;
 import org.matsim.core.router.NetworkRoutingProvider;
 import org.matsim.core.router.RoutingModule;
+import org.matsim.core.router.SingleModeNetworksCache;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.households.Households;
 
@@ -46,6 +48,9 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
 
         ParkingAwareNetworkModeConfigGroup configGroup = (ParkingAwareNetworkModeConfigGroup) getConfig().getModules().get(ParkingAwareNetworkModeConfigGroup.GROUP_NAME);
         Verify.verify(!((DiscreteModeChoiceConfigGroup) getConfig().getModules().get(DiscreteModeChoiceConfigGroup.GROUP_NAME)).getCachedModes().contains(configGroup.mode));
+
+        RoutingConfigGroup routingConfigGroup = getConfig().routing();
+        Verify.verify(routingConfigGroup.getAccessEgressType().equals(RoutingConfigGroup.AccessEgressType.accessEgressModeToLink) || routingConfigGroup.getAccessEgressType().equals(RoutingConfigGroup.AccessEgressType.accessEgressModeToLinkPlusTimeConstant));
 
         ParkingSpaceAssignmentLogicParameterSet.ParkingAssignmentLogicParams parkingAssignmentLogicParams = configGroup.getParkingSpaceAssignmentLogicParams();
 
@@ -191,7 +196,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
 
             @Override
             public MultimodalLinkChooser get() {
-                return new ParkingAwareMultimodalLinkChooser(parkingSpaceFinder);
+                return new ParkingAwareMultimodalLinkChooser(parkingSpaceFinder, configGroup.mode);
             }
         });
 
@@ -215,7 +220,8 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public NetworkWideParkingSpaceStore provideNetworkWideParkingSpaceStore(Network network) {
-        return new NetworkWideParkingSpaceStore(network);
+    public NetworkWideParkingSpaceStore provideNetworkWideParkingSpaceStore(SingleModeNetworksCache singleModeNetworksCache) {
+        ParkingAwareNetworkModeConfigGroup configGroup = (ParkingAwareNetworkModeConfigGroup) getConfig().getModules().get(ParkingAwareNetworkModeConfigGroup.GROUP_NAME);
+        return new NetworkWideParkingSpaceStore(singleModeNetworksCache.getOrCreateSingleModeNetwork(configGroup.mode));
     }
 }
