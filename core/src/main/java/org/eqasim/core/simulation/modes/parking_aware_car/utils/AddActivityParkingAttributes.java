@@ -8,11 +8,14 @@ import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.io.PopulationWriter;
@@ -29,7 +32,7 @@ public class AddActivityParkingAttributes {
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args)
                 .requireOptions("population-path", "network-path", "output-population-path")
-                .allowOptions("activity-types", "parking-types")
+                .allowOptions("activity-types", "parking-types", "modes")
                 .build();
 
         String populationPath = commandLine.getOptionStrict("population-path");
@@ -40,13 +43,22 @@ public class AddActivityParkingAttributes {
                 .orElse(activityTypes).stream()
                 .map(s -> Id.create(s, ParkingType.class))
                 .collect(Collectors.toSet());
+        Set<String> modes = commandLine.getOption("modes").map(s -> Set.of(s.split(","))).orElse(new HashSet<>());
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 
         new PopulationReader(scenario).readFile(populationPath);
         new MatsimNetworkReader(scenario.getNetwork()).readFile(networkPath);
 
-        NetworkWideParkingSpaceStore networkWideParkingSpaceStore = new NetworkWideParkingSpaceStore(scenario.getNetwork());
+        Network network = scenario.getNetwork();
+        if(!modes.isEmpty()) {
+            TransportModeNetworkFilter filter = new TransportModeNetworkFilter(network);
+            Network filteredNetwork = NetworkUtils.createNetwork();
+            filter.filter(filteredNetwork, modes);
+            network = filteredNetwork;
+        }
+
+        NetworkWideParkingSpaceStore networkWideParkingSpaceStore = new NetworkWideParkingSpaceStore(network);
 
         int requiredParkings = 0;
         int missedParkings = 0;
@@ -66,7 +78,13 @@ public class AddActivityParkingAttributes {
                     potentialParkingTypes = Set.of(Id.create(activity.getType(), ParkingType.class));
                 }
                 boolean found = false;
-                IdMap<ParkingType, ParkingSpace> potentialParkings = networkWideParkingSpaceStore.getLinkParkingSpaces(activity.getLinkId());
+
+                Id<Link> linkId = activity.getLinkId();
+                if(!network.getLinks().containsKey(linkId)) {
+                    linkId = NetworkUtils.getNearestLinkExactly(network, activity.getCoord()).getId();
+                }
+
+                IdMap<ParkingType, ParkingSpace> potentialParkings = networkWideParkingSpaceStore.getLinkParkingSpaces(linkId);
                 for(Id<ParkingType> parkingTypeId: potentialParkings.keySet()) {
                     if(potentialParkingTypes.isEmpty() || potentialParkingTypes.contains(parkingTypeId)) {
                         found = true;
