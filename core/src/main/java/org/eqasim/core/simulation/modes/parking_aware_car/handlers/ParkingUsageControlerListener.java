@@ -3,6 +3,7 @@ package org.eqasim.core.simulation.modes.parking_aware_car.handlers;
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.NetworkWideParkingSpaceStore;
 import org.eqasim.core.simulation.modes.parking_aware_car.definitions.ParkingType;
+import org.eqasim.core.simulation.modes.parking_aware_car.utils.HierarchicalComparator;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -80,29 +81,27 @@ public class ParkingUsageControlerListener implements IterationEndsListener, Shu
         try {
             CompactCSVWriter csvWriter = new CompactCSVWriter(new BufferedWriter(new FileWriter(fileName)), ';');
             CSVLineBuilder csvLineBuilder = new CSVLineBuilder();
-            csvLineBuilder.addAll("personId", "linkId", "parkingType", "startTime", "endTime", "occupancy");
+            csvLineBuilder.addAll("personId", "linkId", "parkingType", "startTime", "endTime", "occupancy", "parkingOccupancyOnArrival", "parkingOccupancyOnDeparture");
 
             csvWriter.writeNext(csvLineBuilder.build());
             this.parkingUsageEventListener.getParkingUsagesPerPerson().values().stream()
                     .flatMap(Collection::stream)
-                    .sorted(new Comparator<ParkingUsageEventListener.ParkingUsageRecord>() {
-                        @Override
-                        public int compare(ParkingUsageEventListener.ParkingUsageRecord o1, ParkingUsageEventListener.ParkingUsageRecord o2) {
-                            if(o1.enterTime() == o2.enterTime()) {
-                                return (int) (o1.exitTime() - o2.exitTime());
-                            } else {
-                                return (int) (o1.enterTime() - o2.enterTime());
-                            }
-                        }
-                    })
+                    .sorted(new HierarchicalComparator<>(
+                            Comparator.comparing(ParkingUsageEventListener.ParkingUsageRecord::getEnterTime),
+                            Comparator.comparing(o -> o.getParkingSpace().linkId()),
+                            Comparator.comparing(o -> o.getParkingSpace().parkingType().id()),
+                            Comparator.comparing(o -> o.getExitTime())
+                    ))
                     .forEach(parkingUsageRecord -> {
                         CSVLineBuilder builder = new CSVLineBuilder();
-                        builder.add(parkingUsageRecord.personId().toString());
-                        builder.add(parkingUsageRecord.parkingSpace().linkId().toString());
-                        builder.add(parkingUsageRecord.parkingSpace().parkingType().id().toString());
-                        builder.add(String.valueOf(parkingUsageRecord.enterTime()));
-                        builder.add(String.valueOf(parkingUsageRecord.exitTime()));
-                        builder.add(String.valueOf(parkingUsageRecord.occupancy()));
+                        builder.add(parkingUsageRecord.getPersonId().toString());
+                        builder.add(parkingUsageRecord.getParkingSpace().linkId().toString());
+                        builder.add(parkingUsageRecord.getParkingSpace().parkingType().id().toString());
+                        builder.add(String.valueOf(parkingUsageRecord.getEnterTime()));
+                        builder.add(String.valueOf(parkingUsageRecord.getExitTime()));
+                        builder.add(String.valueOf(parkingUsageRecord.getOccupancy()));
+                        builder.add(String.valueOf(parkingUsageRecord.getParkingOccupancyOnArrival()));
+                        builder.add(String.valueOf(parkingUsageRecord.getParkingOccupancyOnDeparture()));
                         csvWriter.writeNext(builder.build());
                     });
             csvWriter.close();

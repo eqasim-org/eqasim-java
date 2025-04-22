@@ -18,6 +18,7 @@ import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.Par
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignment;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.RoutingConfigGroup;
@@ -93,10 +94,11 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
             private Population population;
             @Inject
             private Households households;
+            @Inject ModeAvailability modeAvailability;
 
             @Override
             public ParkingUsageEventListener get() {
-                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, Optional.ofNullable(qSimConfigGroup).map(cfg -> cfg.getEndTime().seconds()).orElse(30.0 * 3600), population, households);
+                return new ParkingUsageEventListener(configGroup.mode, configGroup.parkingUsageAggregationInterval, networkWideParkingSpaceStore, parkingSpaceAssignmentLogic, Optional.ofNullable(qSimConfigGroup).map(cfg -> cfg.getEndTime().seconds()).orElse(30.0 * 3600), population, households, modeAvailability);
             }
         }).asEagerSingleton();
 
