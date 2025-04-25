@@ -6,15 +6,16 @@ import java.util.Set;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.population.io.PopulationWriter;
+import org.matsim.core.router.speedy.SpeedyALTFactory;
+import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
 import org.matsim.facilities.ActivityFacility;
@@ -61,7 +62,13 @@ public class RunPopulationRouting {
 		// TODO: Check what we can remove here
 		Injector injector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
-				.addOverridingModule(new TimeInterpretationModule()).build();
+				.addOverridingModule(new TimeInterpretationModule())
+				.addOverridingModule(new AbstractModule() {
+					@Override
+					public void install() {
+						bind(LeastCostPathCalculatorFactory.class).to(SpeedyALTFactory.class).asEagerSingleton();
+					}
+				}).build();
 
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
 		populationRouter.run(scenario.getPopulation());
