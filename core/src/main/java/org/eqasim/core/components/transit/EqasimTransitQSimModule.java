@@ -6,6 +6,7 @@ import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.QSim;
+import org.matsim.core.mobsim.qsim.TeleportationModule;
 import org.matsim.core.mobsim.qsim.components.QSimComponentsConfig;
 import org.matsim.core.mobsim.qsim.pt.TransitEngineModule;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -36,6 +37,9 @@ public class EqasimTransitQSimModule extends AbstractQSimModule {
 				components.removeNamedComponent(TransitEngineModule.TRANSIT_ENGINE_NAME);
 			}
 			components.addNamedComponent(COMPONENT_NAME);
+			// This way we make sure that the teleportation engine is called once more after the EqasimTransitEngine
+			// This allows to finish immediate legs in the same time step
+			components.addNamedComponent(TeleportationModule.COMPONENT_NAME);
 		}
 	}
 }
