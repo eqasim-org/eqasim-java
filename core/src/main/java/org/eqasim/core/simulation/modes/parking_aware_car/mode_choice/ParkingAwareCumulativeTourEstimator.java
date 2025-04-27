@@ -78,6 +78,7 @@ public class ParkingAwareCumulativeTourEstimator implements TourEstimator {
     @Override
     public TourCandidate estimateTour(Person person, List<String> modes, List<DiscreteModeChoiceTrip> trips, List<TourCandidate> previousTours) {
         if(previousTours.isEmpty()) {
+            person.getAttributes().getAsMap().keySet().stream().filter(s -> s.startsWith("parking:")).forEach(person.getAttributes()::removeAttribute);
             initialParkingAssignment.assignInitialParkingForPerson(person);
         }
         if(modes.contains(mode)) {

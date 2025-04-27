@@ -97,4 +97,12 @@ public class DefaultParkingSpaceFinder implements ParkingSpaceFinder {
 
         return selectedParkingSpace.orElseGet(() -> this.parkingSpaceAssignmentLogic.getUsedParkingSpace(networkWideParkingSpaceStore, person.getId(), facility.getLinkId()));
     }
+
+    public ParkingSpaceAssignmentLogic getParkingUsageLogic() {
+        return this.parkingSpaceAssignmentLogic;
+    }
+
+    public NetworkWideParkingSpaceStore getNetworkWideParkingSpaceStore() {
+        return this.networkWideParkingSpaceStore;
+    }
 }

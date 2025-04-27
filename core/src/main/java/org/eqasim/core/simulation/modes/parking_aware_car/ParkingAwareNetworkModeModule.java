@@ -34,6 +34,7 @@ import org.matsim.households.Households;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.Set;
 
 
 public class ParkingAwareNetworkModeModule extends AbstractModule {
@@ -187,7 +188,9 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
                         throw new RuntimeException(e);
                     }
                 }
-                return new DefaultParkingSpaceFinder(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener, scenarioExtent, configGroup.assumedParkingDuration, configGroup.searchRadius);
+                //return new DefaultParkingSpaceFinder(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener, scenarioExtent, configGroup.assumedParkingDuration, configGroup.searchRadius);
+                Set<String> activityTypes = Set.of("home");
+                return new FixedParkingPerDestinationLinkParkingSpaceFinder(networkWideParkingSpaceStore, network, parkingSpaceAssignmentLogic, parkingUsageEventListener, scenarioExtent, configGroup.assumedParkingDuration, configGroup.searchRadius, activityTypes);
             }
         }).asEagerSingleton();
 
