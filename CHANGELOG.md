@@ -15,7 +15,9 @@ included in the (note yet determined) next version number.
 - Switched to MATSim 2025 (PR)
 - In switzerland one can now switch off vehicles waiting to enter traffic
 - In swiss module: adjusted the adapt config to allow parametrizing capacity factors and freight in config
-
+- In swiss module: added vehicles to chonfig
+- In swiss module: adding the possibility to run a simulation with VDF 
+- Adding Zurich model
 **1.5.0**
 
 - Add terminaton criterion
