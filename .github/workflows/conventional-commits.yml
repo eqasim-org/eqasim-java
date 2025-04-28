@@ -1,4 +1,4 @@
-name: "Lint PR"
+name: Conventional Commits
 
 on:
   pull_request_target:
@@ -9,7 +9,7 @@ on:
       - synchronize
 
 jobs:
-  main:
+  verify_conventional_commits:
     name: Validate PR title
     runs-on: ubuntu-latest
     permissions:
