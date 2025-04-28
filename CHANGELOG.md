@@ -18,6 +18,7 @@ included in the (note yet determined) next version number.
 - In swiss module: added vehicles to chonfig
 - In swiss module: adding the possibility to run a simulation with VDF 
 - Adding Zurich model
+- adding config comments for some parameters
 **1.5.0**
 
 - Add terminaton criterion
