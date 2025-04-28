@@ -42,7 +42,8 @@ public class RunCorsicaVDFEngineSimulation {
 		config.qsim().setFlowCapFactor(1e9);
 		config.qsim().setStorageCapFactor(1e9);
 
-		// VDF: Set capacity factor instead (~0.1 for a 10% simulation in theory... any better advice?)
+		// VDF: Set capacity factor that can be used for calibration (in eqasim it does not correlate with
+		// sample size as this is controlled by the samplingRate in eqasim config group
 		VDFConfigGroup.getOrCreate(config).setCapacityFactor(0.1);
 
 		// VDF: Optional
