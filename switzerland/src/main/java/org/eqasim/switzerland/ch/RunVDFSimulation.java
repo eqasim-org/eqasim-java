@@ -37,14 +37,7 @@ public class RunVDFSimulation {
             }
         }
 
-        // VDF: Add config group
-        config.addModule(new VDFConfigGroup());
 
-        // VDF: Set capacity factor instead (~0.1 for a 10% simulation in theory... any
-        // better advice?)
-        // we can use the same as for the queue logic
-        VDFConfigGroup.getOrCreate(config).setCapacityFactor(
-                ((QSimConfigGroup) config.getModules().get(QSimConfigGroup.GROUP_NAME)).getFlowCapFactor());
 
         // VDF: Disable queue logic
         config.qsim().setFlowCapFactor(1e9);
@@ -54,11 +47,8 @@ public class RunVDFSimulation {
         config.qsim().setStorageCapFactor(1e9);
 
         // VDF: Optional
-        VDFConfigGroup.getOrCreate(config).setWriteInterval(1);
-        VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(1);
-
-        // VDF Engine: Add config group
-        config.addModule(new VDFEngineConfigGroup());
+        VDFConfigGroup.getOrCreate(config).setWriteInterval(10);
+        VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(10);
 
         // VDF Engine: Decide whether to genertae link events or not
         VDFEngineConfigGroup.getOrCreate(config).setGenerateNetworkEvents(false);
