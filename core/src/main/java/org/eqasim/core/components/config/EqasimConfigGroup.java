@@ -49,6 +49,15 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	public EqasimConfigGroup() {
 		super(GROUP_NAME);
 	}
+	
+	@Override
+	public final Map<String, String> getComments() {
+		Map<String, String> map = super.getComments();
+		map.put(SAMPLE_SIZE,
+				"The sample size of the population you are simulating. This is normally set by the synthesis pipeline.");
+		
+		return map;
+	}
 
 	@StringGetter(CROSSING_PENALTY)
 	public double getCrossingPenalty() {
