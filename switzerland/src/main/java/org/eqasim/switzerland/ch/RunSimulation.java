@@ -15,7 +15,7 @@ public class RunSimulation {
 		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic") //
+				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
 				.build();
 
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
@@ -31,11 +31,12 @@ public class RunSimulation {
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
+		
 
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
 		configurator.adjustScenario(scenario);
-
+		configurator.adjustPTpcu(scenario);
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
 		controller.run();
