@@ -12,10 +12,10 @@ import org.eqasim.core.simulation.modes.parking_aware_car.handlers.ParkingsWrite
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareCumulativeTourEstimator;
 import org.eqasim.core.simulation.modes.parking_aware_car.mode_choice.ParkingAwareNetworkModeChoiceModule;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogicParameterSet;
+import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.EfficientPersonAttributeBasedParkingAssignment;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignmentConfigGroup;
 import org.eqasim.core.simulation.modes.parking_aware_car.routing.*;
 import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.ParkingSpaceAssignmentLogic;
-import org.eqasim.core.simulation.modes.parking_aware_car.parking_assignment.attribute_based.PersonAttributeBasedParkingAssignment;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
@@ -68,7 +68,7 @@ public class ParkingAwareNetworkModeModule extends AbstractModule {
 
                 @Override
                 public ParkingSpaceAssignmentLogic get() {
-                    return new PersonAttributeBasedParkingAssignment(personAttributeBasedParkingAssignmentConfigGroup.getOrderedParkingTypes(),
+                    return new EfficientPersonAttributeBasedParkingAssignment(personAttributeBasedParkingAssignmentConfigGroup.getOrderedParkingTypes(),
                             personAttributeBasedParkingAssignmentConfigGroup.getParkingTypesAvailableForEveryone(), networkWideParkingSpaceStore, population);
                 }
             }).asEagerSingleton();
