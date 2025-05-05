@@ -48,6 +48,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 	private boolean isAnalysisActive = false;
 	private boolean isTravelTimeActive = false;
+	private boolean useScheduleBasedPT = false;
 
 	private final DistanceUnit scenarioDistanceUnit;
 	private final DistanceUnit analysisDistanceUnit;
@@ -63,6 +64,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 		this.analysisInterval = config.getAnalysisInterval();
 		this.travelTimeInterval = config.getTravelTimeRecordingInterval();
+		this.useScheduleBasedPT = config.getUseScheduleBasedTransport();
 
 		this.tripAnalysisListener = tripListener;
 		this.legAnalysisListener = legListener;
@@ -81,7 +83,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				isAnalysisActive = true;
 				event.getServices().getEvents().addHandler(tripAnalysisListener);
 				event.getServices().getEvents().addHandler(legAnalysisListener);
-				event.getServices().getEvents().addHandler(ptAnalysisListener);
+				if (this.useScheduleBasedPT)
+					event.getServices().getEvents().addHandler(ptAnalysisListener);
 				event.getServices().getEvents().addHandler(activityAnalysisListener);
 			}
 		}
@@ -111,9 +114,10 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 
 				new ActivityWriter(activityAnalysisListener.getActivityItems())
 						.write(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME));
-
-				new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
+				if (this.useScheduleBasedPT) {
+					new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
 						.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
+				}
 			}
 
 			if (isTravelTimeActive) {
@@ -135,8 +139,9 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 					new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME)).toPath());
 			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME)).toPath(),
 					new File(outputDirectory.getOutputFilename(LEGS_FILE_NAME)).toPath());
-			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
-					new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
+			if (this.useScheduleBasedPT)
+				Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
+						new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
 			Files.copy(
 					new File(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME)).toPath(),
 					new File(outputDirectory.getOutputFilename(ACTIVITIES_FILE_NAME)).toPath());
