@@ -9,6 +9,9 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
+import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
+
 public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		// set preventwaitingtoentertraffic to y if you want to to prevent that waiting traffic has to wait for space in the link buffer
@@ -39,6 +42,13 @@ public class RunSimulation {
 		configurator.adjustPTpcu(scenario);
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
+		 // To use the deterministic pt simulation (Part 1 of 2):
+        controller.addOverridingModule(new SBBTransitModule());
+        // To use the deterministic pt simulation (Part 2 of 2):
+        controller.configureQSimComponents(components -> {
+            new SBBTransitEngineQSimModule().configure(components);
+
+        });
 		controller.run();
 	}
 }
