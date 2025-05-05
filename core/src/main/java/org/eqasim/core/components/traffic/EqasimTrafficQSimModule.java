@@ -9,7 +9,7 @@ import com.google.inject.Singleton;
 public class EqasimTrafficQSimModule extends AbstractQSimModule {
 	@Override
 	protected void configureQSim() {
-		addLinkSpeedCalculator().to(EqasimLinkSpeedCalculator.class);
+		addLinkSpeedCalculatorBinding().to(EqasimLinkSpeedCalculator.class);
 		bind(EqasimLinkSpeedCalculator.class).to(DefaultEqasimLinkSpeedCalculator.class);
 	}
 
