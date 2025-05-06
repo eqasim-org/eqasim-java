@@ -31,6 +31,7 @@ import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.utilities.estimators.DrtUtilityEstimator;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
+import org.matsim.contribs.discrete_mode_choice.model.mode_chain.ModeChainGeneratorFactory;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 import org.matsim.core.config.Config;
@@ -93,6 +94,8 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTourConstraintFactory(VEHICLE_TOUR_CONSTRAINT).to(EqasimVehicleTourConstraint.Factory.class);
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
+
+		bind(ModeChainGeneratorFactory.class).to(EqasimModeChainGenerator.Factory.class);
 	}
 
 	@Provides
