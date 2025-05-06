@@ -37,17 +37,6 @@ public class EfficientPersonAttributeBasedParkingAssignment implements ParkingSp
         ParallelProgress progress = new ParallelProgress("Building population parking cache ...", population.getPersons().size());
         progress.start();
 
-        System.gc();
-
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.println("Before Memory");
-        long beforeMemory = Runtime.getRuntime().totalMemory() -Runtime.getRuntime().freeMemory();
-
         for(Person person: population.getPersons().values()) {
             progress.update();
 
@@ -140,16 +129,6 @@ public class EfficientPersonAttributeBasedParkingAssignment implements ParkingSp
         personLinkIdList.clear();
 
         System.gc();
-
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        System.out.println("Memory consumption in Mb");
-        long afterMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        System.out.println((afterMemory - beforeMemory) / (1024 * 1024));
     }
 
     @Override
