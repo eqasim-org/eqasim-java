@@ -13,12 +13,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>drt</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.eqasim</groupId>
 			<artifactId>ile_de_france</artifactId>
 			<version>1.5.0</version>
