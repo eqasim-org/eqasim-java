@@ -34,8 +34,8 @@ public class RunServer {
 
 		// Create Javalin application and enable CORS
 		Javalin app = Javalin.create(config -> {
-			config.plugins.enableCors(cors -> {
-				cors.add(it -> {
+			config.bundledPlugins.enableCors(cors -> {
+				cors.addRule(it -> {
 					it.anyHost();
 				});
 			});
