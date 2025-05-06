@@ -46,7 +46,7 @@ public class EqasimModeChainGenerator implements ModeChainGenerator {
 
     @Override
     public List<String> next() {
-        Verify.verify(!hasNext, "No more chains to generate");
+        Verify.verify(hasNext, "No more chains to generate");
         List<String> modes = new ArrayList<>(this.indices.length);
         this.indices[0]++;
         for(int i = 1; i < this.indices.length; i++) {
