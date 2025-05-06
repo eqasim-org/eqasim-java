@@ -151,7 +151,7 @@ public class RunScenarioCutterV2 {
         Network subNetwork = NetworkUtils.createNetwork();
         new TransportModeNetworkFilter(network).filter(subNetwork, Set.of(mode));
 
-        NetworkUtils.runNetworkCleaner(subNetwork);
+        NetworkUtils.cleanNetwork(subNetwork, Set.of(mode));
 
         for(Link link: network.getLinks().values()) {
             if(link.getAllowedModes().contains(mode) && !subNetwork.getLinks().containsKey(link.getId())) {
