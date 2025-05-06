@@ -13,7 +13,7 @@ import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
 import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
+import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.selective.SelectiveInsertionSearchParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
@@ -71,15 +71,16 @@ public class RunCorsicaDrtSimulation {
 			config.addModule(multiModeDrtConfig);
 
 			DrtConfigGroup drtConfig = new DrtConfigGroup();
-			drtConfig.mode = "drt";
-			drtConfig.operationalScheme = OperationalScheme.door2door;
-			drtConfig.stopDuration = 15.0;
-			DefaultDrtOptimizationConstraintsSet defaultDrtOptimizationConstraintsSet = new DefaultDrtOptimizationConstraintsSet();
-			defaultDrtOptimizationConstraintsSet.maxWaitTime = 3600;
-			defaultDrtOptimizationConstraintsSet.maxTravelTimeAlpha = 3;
-			defaultDrtOptimizationConstraintsSet.maxTravelTimeBeta = 3600;
-			drtConfig.addOrGetDrtOptimizationConstraintsParams().addParameterSet(defaultDrtOptimizationConstraintsSet);
-			drtConfig.vehiclesFile = Resources.getResource("corsica_drt/drt_vehicles.xml").toString();
+			drtConfig.setMode("drt");
+			drtConfig.setOperationalScheme(OperationalScheme.door2door);
+			drtConfig.setStopDuration(15.0);
+
+			DrtOptimizationConstraintsSetImpl constraints = new DrtOptimizationConstraintsSetImpl();
+			constraints.setMaxWaitTime(3600);
+			constraints.setMaxTravelTimeAlpha(3);
+			constraints.setMaxTravelTimeBeta(3600);
+			drtConfig.addOrGetDrtOptimizationConstraintsParams().addParameterSet(constraints);
+			drtConfig.setVehiclesFile(Resources.getResource("corsica_drt/drt_vehicles.xml").toString());
 
 			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
 			drtConfig.setDrtInsertionSearchParams(searchParams);
