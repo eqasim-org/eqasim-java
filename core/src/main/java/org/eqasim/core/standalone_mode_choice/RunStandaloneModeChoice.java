@@ -26,7 +26,8 @@ import org.eqasim.core.analysis.trips.TripWriter;
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.ClassUtils;
 import org.eqasim.core.misc.InjectorBuilder;
-import org.eqasim.core.scenario.routing.RunPopulationRouting;
+import org.eqasim.core.scenario.routing.PopulationRouter;
+import org.eqasim.core.scenario.routing.PopulationRouterModule;
 import org.eqasim.core.scenario.validation.ScenarioValidator;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -46,10 +47,8 @@ import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.vehicles.Vehicle;
 
-import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 
 /**
  * This class offers the functionality of running the discrete mode choice model on the whole population without having to go through the whole iterative MATSim process. It is also possible to filter-out the persons that do not have a valid alternative.
@@ -224,6 +223,8 @@ public class RunStandaloneModeChoice {
             }
         }));
 
+        injectorBuilder.addOverridingModule(new PopulationRouterModule(config.global().getNumberOfThreads(), 100, false));
+
         com.google.inject.Injector injector = injectorBuilder.build();
 
 
@@ -243,6 +244,9 @@ public class RunStandaloneModeChoice {
         StandaloneModeChoicePerformer modeChoicePerformer = injector.getInstance(StandaloneModeChoicePerformer.class);
 
         modeChoicePerformer.run();
+
+        PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
+        populationRouter.run(population);
 
         cmd.getOption(CMD_WRITE_OUTPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
