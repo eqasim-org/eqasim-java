@@ -75,7 +75,7 @@ public class EqasimModeChainGenerator implements ModeChainGenerator {
 
         @Override
         public ModeChainGenerator createModeChainGenerator(Collection<String> availableModes, Person person, List<DiscreteModeChoiceTrip> trips) {
-            return null;
+            return new EqasimModeChainGenerator(availableModes, trips.size());
         }
     }
 }
