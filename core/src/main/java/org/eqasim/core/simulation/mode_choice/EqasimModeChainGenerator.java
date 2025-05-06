@@ -63,11 +63,12 @@ public class EqasimModeChainGenerator implements ModeChainGenerator {
                 break;
             }
         }
-        hasNext = true;
+        boolean reachedEnd = true;
         for(int i = 0; i < this.indices.length; i++) {
-            hasNext &= this.indices[i] == this.numberOfModes - 1;
+            reachedEnd &= this.indices[i] == this.numberOfModes - 1;
             modes.add(this.modes.get(i));
         }
+        this.hasNext = !reachedEnd;
         return modes;
     }
 
