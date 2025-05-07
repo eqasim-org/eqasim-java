@@ -32,14 +32,9 @@ The main research reference for the eqasim-java framework:
 
 ## Versioning and Packging
 
-[![Build Status](https://travis-ci.com/eqasim-org/eqasim-java.svg?branch=develop)](https://travis-ci.com/eqasim-org/eqasim-java)
-
-The current version of `eqasim` is `1.5.0` and is based on MATSim `15.0`. You can access it through the `v1.5.0` tag. The
-`develop` branch is kept at version `1.5.0` until the next release is prepared,
-but may include additional developments since the last release.
-
-The code is available as a Maven package. To use it, add the following repository
-to your `pom.xml`:
+<!-- x-release-please-start-version -->
+The current version of `eqasim-java` is `1.5.0`. New versions are created with every Github release and can be used as a Maven dependency. First, you need to add our [packagecloud repository](https://packagecloud.io/eth-ivt/eqasim) to your `pom.xml`:
+<!-- x-release-please-end -->
 
 ```xml
 <repository>
@@ -50,6 +45,7 @@ to your `pom.xml`:
 
 Afterwards, you can add various sub-packages to your project:
 
+<!-- x-release-please-start-version -->
 ```xml
 <dependency>
     <groupId>org.eqasim</groupId>
@@ -57,9 +53,4 @@ Afterwards, you can add various sub-packages to your project:
     <version>1.5.0</version>
 </dependency>
 ```
-
-Besides the latest release based on MATSim 15.0, legacy versions `1.3.1`, `1.2.1`, `1.2.0`, `1.0.6`, and `1.0.5` are also available through packagecloud.
-
-## Upstream branch
-
-To keep scenario-based repositories up-to-date (for instance, [ile-de-france](https://github.com/eqasim-org/ile-de-france)), we provide the `upstream` branch, which contains a well-defined `develop` version of `eqasim-java` and is used in the `develop` version of the dependent repository. While this is useful for development purposes, their versioned releases will always depend on versioned releases of `eqasim-java`.
+<!-- x-release-please-end -->
