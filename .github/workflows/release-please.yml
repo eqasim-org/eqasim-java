@@ -28,7 +28,6 @@ jobs:
           cache: maven
       - name: Deploy to packagecloud
         if: ${{ steps.release.outputs.release_created }}
-        run: mvn --batch-mode deploy
+        run: mvn --settings .github/settings.xml --batch-mode deploy
         env:
-          MAVEN_USERNAME: ${{ secrets.PACKAGECLOUD_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.PACKAGECLOUD_TOKEN }}
+          PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
