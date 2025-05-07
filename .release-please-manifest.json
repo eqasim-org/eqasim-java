@@ -1,4 +1,6 @@
 {
-  "extra-files": ["README.md"],
-  ".": "1.5.0"
+  "extra-files": [
+    "README.md"
+  ],
+  ".": "2.0.0"
 }
