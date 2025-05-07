@@ -3,23 +3,23 @@
   "release-type": "simple",
   "extra-files": [
     { "type": "generic", "path": "README.md" },
-    { "type": "xml", "path": "pom.xml", "xpath": "/project/version" },
+    { "type": "generic", "path": "pom.xml" },
 
-    { "type": "xml", "path": "ile_de_france/pom.xml", "xpath": "/project/parent/version" },
-    { "type": "xml", "path": "los_angeles/pom.xml", "xpath": "/project/parent/version" },
-    { "type": "xml", "path": "san_francisco/pom.xml", "xpath": "/project/parent/version" },
-    { "type": "xml", "path": "sao_paulo/pom.xml", "xpath": "/project/parent/version" },
-    { "type": "xml", "path": "switzerland/pom.xml", "xpath": "/project/parent/version" },
-    { "type": "xml", "path": "server/pom.xml", "xpath": "/project/parent/version" },
-    { "type": "xml", "path": "examples/pom.xml", "xpath": "/project/parent/version" },
+    { "type": "generic", "path": "ile_de_france/pom.xml" },
+    { "type": "generic", "path": "los_angeles/pom.xml" },
+    { "type": "generic", "path": "san_francisco/pom.xml" },
+    { "type": "generic", "path": "sao_paulo/pom.xml" },
+    { "type": "generic", "path": "switzerland/pom.xml" },
+    { "type": "generic", "path": "server/pom.xml" },
+    { "type": "generic", "path": "examples/pom.xml" },
     
-    { "type": "xml", "path": "ile_de_france/pom.xml", "xpath": "/project/dependencies/dependency[groupId=\"org.eqasim\"]/version" },
-    { "type": "xml", "path": "los_angeles/pom.xml", "xpath": "/project/dependencies/dependency[groupId=\"org.eqasim\"]/version" },
-    { "type": "xml", "path": "san_francisco/pom.xml", "xpath": "/project/dependencies/dependency[groupId=\"org.eqasim\"]/version" },
-    { "type": "xml", "path": "sao_paulo/pom.xml", "xpath": "/project/dependencies/dependency[groupId=\"org.eqasim\"]/version" },
-    { "type": "xml", "path": "switzerland/pom.xml", "xpath": "/project/dependencies/dependency[groupId=\"org.eqasim\"]/version" },
-    { "type": "xml", "path": "server/pom.xml", "xpath": "/project/dependencies/dependency[groupId=\"org.eqasim\"]/version" },
-    { "type": "xml", "path": "examples/pom.xml", "xpath": "/project/dependencies/dependency[groupId=\"org.eqasim\"]/version" }
+    { "type": "generic", "path": "ile_de_france/pom.xml" },
+    { "type": "generic", "path": "los_angeles/pom.xml" },
+    { "type": "generic", "path": "san_francisco/pom.xml" },
+    { "type": "generic", "path": "sao_paulo/pom.xml" },
+    { "type": "generic", "path": "switzerland/pom.xml" },
+    { "type": "generic", "path": "server/pom.xml" },
+    { "type": "generic", "path": "examples/pom.xml" }
   ],
   "packages": { ".": {} }
 }
