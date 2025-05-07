@@ -7,10 +7,13 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.CommandLine;
 import org.matsim.households.Household;
+import org.matsim.vehicles.VehicleType;
 
 public class SwitzerlandConfigurator extends EqasimConfigurator {
+	private CommandLine cmd;
 	public SwitzerlandConfigurator(CommandLine cmd) {
 		super(cmd);
+		this.cmd = cmd;
 
 		registerModule(new SwissModeChoiceModule(cmd));
 	}
@@ -29,5 +32,21 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 				}
 			}
 		}
+	}
+	
+	public void adjustPTpcu(Scenario scenario) {
+		
+		if (cmd.getOption("samplingRateForPT").isPresent()) {
+			
+			double samplingRate = Double.parseDouble(cmd.getOption("samplingRateForPT").get());
+			
+			for (VehicleType vt : scenario.getTransitVehicles().getVehicleTypes().values()) {
+				
+				vt.setPcuEquivalents(vt.getPcuEquivalents() * samplingRate);
+			}
+			
+		}
+		
+		
 	}
 }
