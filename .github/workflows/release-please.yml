@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - develop
+  
   workflow_dispatch:
 
 permissions:
@@ -17,4 +18,16 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          release-type: maven
+          release-type: simple
+      - uses: actions/setup-java@v4
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          distribution: zulu
+          java-version: 21
+          cache: maven
+      - name: Deploy to packagecloud
+        if: ${{ steps.release.outputs.release_created }}
+        run: mvn --batch-mode deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.PACKAGECLOUD_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.PACKAGECLOUD_TOKEN }}
