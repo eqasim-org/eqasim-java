@@ -32,7 +32,9 @@ The main research reference for the eqasim-java framework:
 
 ## Versioning and Packging
 
-<!-- x-release-please-version --> The current version of `eqasim-java` is `1.5.0`. New versions are created with every Github release and can be used as a Maven dependency. First, you need to add our [packagecloud repository](https://packagecloud.io/eth-ivt/eqasim) to your `pom.xml`:
+<!-- x-release-please-start-version -->
+The current version of `eqasim-java` is `1.5.0`. New versions are created with every Github release and can be used as a Maven dependency. First, you need to add our [packagecloud repository](https://packagecloud.io/eth-ivt/eqasim) to your `pom.xml`:
+<!-- x-release-please-end -->
 
 ```xml
 <repository>
