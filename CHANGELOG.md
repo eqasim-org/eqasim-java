@@ -1,10 +1,4 @@
-# CHANGELOG
-
-This change log is written in descending order. Changes that happen after version
-`X` was released, are written *above* that version number, because they will be
-included in the (note yet determined) next version number.
-
-**Development version**
+# Historical changelog
 
 - Improve Emissions tools in order to handle unknown Osm highway tag values when mapping HBEFA road types
 - add configurable policies for IDF
@@ -19,6 +13,7 @@ included in the (note yet determined) next version number.
 - In swiss module: adding the possibility to run a simulation with VDF 
 - Adding Zurich model
 - adding config comments for some parameters
+
 **1.5.0**
 
 - Add terminaton criterion
