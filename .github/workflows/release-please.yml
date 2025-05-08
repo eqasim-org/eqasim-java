@@ -20,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           token: ${{ secrets.RELEASE }}
       - uses: actions/setup-java@v4
@@ -33,6 +34,6 @@ jobs:
         run: mvn package -DskipTests
       - name: Deploy to packagecloud
         if: ${{ steps.release.outputs.release_created }}
-        run: mvn --settings .github/settings.xml deploy
+        run: mvn --settings .github/settings.xml deploy -DskipTests
         env:
           PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
