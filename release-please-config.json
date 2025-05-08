@@ -5,14 +5,7 @@
     { "type": "generic", "path": "README.md" },
     { "type": "generic", "path": "pom.xml" },
 
-    { "type": "generic", "path": "ile_de_france/pom.xml" },
-    { "type": "generic", "path": "los_angeles/pom.xml" },
-    { "type": "generic", "path": "san_francisco/pom.xml" },
-    { "type": "generic", "path": "sao_paulo/pom.xml" },
-    { "type": "generic", "path": "switzerland/pom.xml" },
-    { "type": "generic", "path": "server/pom.xml" },
-    { "type": "generic", "path": "examples/pom.xml" },
-    
+    { "type": "generic", "path": "core/pom.xml" },
     { "type": "generic", "path": "ile_de_france/pom.xml" },
     { "type": "generic", "path": "los_angeles/pom.xml" },
     { "type": "generic", "path": "san_francisco/pom.xml" },
