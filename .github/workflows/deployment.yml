@@ -1,0 +1,25 @@
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+name: deployment
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 21
+          cache: maven
+      - name: Build
+        run: mvn package -DskipTests
+      - name: Deploy
+        run: mvn --settings .github/settings.xml deploy -DskipTests -Dmaven.resources.skip=true -Dmaven.install.skip=true
+        env:
+          PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
