@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.utils;
+package org.eqasim.switzerland.ch.utils.pt;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;

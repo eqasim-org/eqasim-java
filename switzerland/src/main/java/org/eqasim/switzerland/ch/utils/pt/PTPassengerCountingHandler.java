@@ -1,4 +1,17 @@
-package org.eqasim.switzerland.ch.utils;
+package org.eqasim.switzerland.ch.utils.pt;
+
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.zip.GZIPOutputStream;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
@@ -9,21 +22,8 @@ import org.matsim.core.api.experimental.events.VehicleArrivesAtFacilityEvent;
 import org.matsim.core.api.experimental.events.VehicleDepartsAtFacilityEvent;
 import org.matsim.core.api.experimental.events.handler.VehicleArrivesAtFacilityEventHandler;
 import org.matsim.core.api.experimental.events.handler.VehicleDepartsAtFacilityEventHandler;
-import org.matsim.pt.transitSchedule.api.Departure;
-import org.matsim.pt.transitSchedule.api.TransitLine;
-import org.matsim.pt.transitSchedule.api.TransitRoute;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.Vehicle;
-
-import java.io.*;
-import java.util.zip.GZIPOutputStream;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 
 public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEventHandler, VehicleDepartsAtFacilityEventHandler, 
@@ -33,15 +33,6 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
     private final Map<Id<Vehicle>, ArrivalInfo> vehicleArrivalMap = new HashMap<>();
     private final Map<BinKey, Counter> binCounts = new HashMap<>();
     private final Map<Id<Vehicle>, TransitTripInfo> vehicleToLineRoute;
-    private boolean enabled = false;
-
-    public void enable() {
-        this.enabled = true;
-    }
-    
-    public void disable() {
-        this.enabled = false;
-    }
 
     public PTPassengerCountingHandler(Map<Id<Vehicle>, TransitTripInfo> vehicleToLineRoute) {
         this.vehicleToLineRoute = vehicleToLineRoute;
@@ -100,7 +91,6 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
 
     @Override
     public void handleEvent(VehicleArrivesAtFacilityEvent event) {
-        if (!enabled) return;
         int timeBin = (int) event.getTime() / BIN_SIZE;
 
         ArrivalInfo info = new ArrivalInfo();
@@ -122,13 +112,11 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
     @Override
     public void handleEvent(VehicleDepartsAtFacilityEvent event) {
         // Remove the vehicle from tracking: we no longer count boardings/alightings
-        if (!enabled) return;
         vehicleArrivalMap.remove(event.getVehicleId());
     }
 
     @Override
     public void handleEvent(PersonEntersVehicleEvent event) {
-        if (!enabled) return;
         ArrivalInfo info = vehicleArrivalMap.get(event.getVehicleId());
         if (info == null) return; // not a PT vehicle
 
@@ -138,7 +126,6 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
 
     @Override
     public void handleEvent(PersonLeavesVehicleEvent event) {
-        if (!enabled) return;
         ArrivalInfo info = vehicleArrivalMap.get(event.getVehicleId());
         if (info == null) return;
 
@@ -157,28 +144,6 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         int minutes = (seconds % 3600) / 60;
         return String.format("%02d:%02d", hours, minutes);
     }
-
-    public static PTPassengerCountingHandler fromTransitSchedule(TransitSchedule schedule) {
-        Map<Id<Vehicle>, TransitTripInfo> vehicleToTripInfo = new HashMap<>();
-
-        for (TransitLine line : schedule.getTransitLines().values()) {
-            for (TransitRoute route : line.getRoutes().values()) {
-                for (Departure dep : route.getDepartures().values()) {
-                    Id<Vehicle> vehicleId = dep.getVehicleId();
-                    if (vehicleId != null) {
-                        vehicleToTripInfo.put(vehicleId, new TransitTripInfo(
-                            line.getId().toString(),
-                            route.getId().toString(),
-                            dep.getId().toString()
-                        ));
-                    }
-                }
-            }
-        }
-
-        return new PTPassengerCountingHandler(vehicleToTripInfo);
-    }
-
     
     public void writeCSV(String path) throws IOException {
         boolean isGzipped = path.endsWith(".gz");
@@ -203,7 +168,10 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
                     timeStr, k.stopId, k.lineId, k.routeId, k.vehicleId,
                     c.boardings, c.alightings));
             }
+            writer.flush();
+            writer.close();
         }
+        
     }
     
 }

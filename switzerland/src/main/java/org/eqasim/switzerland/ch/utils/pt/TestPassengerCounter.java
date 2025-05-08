@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.utils;
+package org.eqasim.switzerland.ch.utils.pt;
 
 import java.util.HashMap;
 import java.util.Map;

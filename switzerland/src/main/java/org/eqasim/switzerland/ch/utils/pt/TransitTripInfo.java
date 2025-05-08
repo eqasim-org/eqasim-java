@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.utils;
+package org.eqasim.switzerland.ch.utils.pt;
 
 public class TransitTripInfo {
     public final String lineId;
