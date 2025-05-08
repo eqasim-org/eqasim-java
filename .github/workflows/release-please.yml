@@ -26,8 +26,11 @@ jobs:
           distribution: zulu
           java-version: 21
           cache: maven
+      - name: Build
+        if: ${{ steps.release.outputs.release_created }}
+        run: mvn package -DskipTests
       - name: Deploy to packagecloud
         if: ${{ steps.release.outputs.release_created }}
-        run: mvn --settings .github/settings.xml --batch-mode deploy
+        run: mvn --settings .github/settings.xml deploy
         env:
           PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
