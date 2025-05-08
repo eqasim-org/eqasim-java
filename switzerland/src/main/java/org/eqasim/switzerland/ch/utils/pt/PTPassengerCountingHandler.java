@@ -42,7 +42,8 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         int timeBin;
         double time;
         Id<TransitStopFacility> stopId;
-        String lineId;   
+        String lineId;  
+        String lineName; 
         String routeId;  
         String departureId; 
         Id<Vehicle> vehicleId;
@@ -53,15 +54,17 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         int time;
         Id<TransitStopFacility> stopId;
         String lineId;
+        String lineName;
         String routeId;
         String departureId;
         Id<Vehicle> vehicleId; 
 
-        BinKey(int bin, double time, Id<TransitStopFacility> stopId, String lineId, String routeId, String departureId, Id<Vehicle> vehicleId) {
+        BinKey(int bin, double time, Id<TransitStopFacility> stopId, String lineId, String lineName, String routeId, String departureId, Id<Vehicle> vehicleId) {
             this.timeBin = bin;
             this.time = (int) time;
             this.stopId = stopId;
             this.lineId = lineId;
+            this.lineName = lineName;
             this.routeId = routeId;
             this.departureId = departureId;
             this.vehicleId = vehicleId;
@@ -100,12 +103,13 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         info.vehicleId = event.getVehicleId();
         TransitTripInfo lineRoute = vehicleToLineRoute.get(info.vehicleId);
         info.lineId = (lineRoute != null) ? lineRoute.lineId : "unknown";
+        info.lineName = (lineRoute != null) ? lineRoute.lineName : "unknown";
         info.routeId = (lineRoute != null) ? lineRoute.routeId : "unknown";
         info.departureId = (lineRoute != null) ? lineRoute.departureId : "unknown";
 
         vehicleArrivalMap.put(event.getVehicleId(), info);
 
-        BinKey key = new BinKey(timeBin, info.time, info.stopId, info.lineId, info.routeId, info.departureId, info.vehicleId);
+        BinKey key = new BinKey(timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId);
         binCounts.putIfAbsent(key, new Counter()); 
     }
 
@@ -120,7 +124,7 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         ArrivalInfo info = vehicleArrivalMap.get(event.getVehicleId());
         if (info == null) return; // not a PT vehicle
 
-        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.routeId, info.departureId, info.vehicleId);
+        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId);
         binCounts.computeIfAbsent(key, k -> new Counter()).boardings++;
     }
 
@@ -129,7 +133,7 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         ArrivalInfo info = vehicleArrivalMap.get(event.getVehicleId());
         if (info == null) return;
 
-        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.routeId, info.departureId, info.vehicleId);
+        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId);
         binCounts.computeIfAbsent(key, k -> new Counter()).alightings++;
     }
 
@@ -154,7 +158,7 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
 
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
             // Header
-            writer.write("time_bin,stop_id,line_id,route_id,vehicle_id,boardings,alightings\n");
+            writer.write("time_bin,stop_id,line_id,line_name,route_id,vehicle_id,boardings,alightings\n");
 
             // Sort entries by time
             List<Map.Entry<BinKey, Counter>> sortedEntries = new ArrayList<>(binCounts.entrySet());
@@ -164,8 +168,8 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
                 BinKey k = entry.getKey();
                 Counter c = entry.getValue();
                 String timeStr = formatTime(k.timeBin * BIN_SIZE);
-                writer.write(String.format("%s,%s,%s,%s,%s,%d,%d\n",
-                    timeStr, k.stopId, k.lineId, k.routeId, k.vehicleId,
+                writer.write(String.format("%s,%s,%s,%s,%s,%s,%d,%d\n",
+                    timeStr, k.stopId, k.lineId, k.lineName, k.routeId, k.vehicleId,
                     c.boardings, c.alightings));
             }
             writer.flush();

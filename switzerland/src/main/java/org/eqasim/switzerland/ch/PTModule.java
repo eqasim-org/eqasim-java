@@ -28,7 +28,7 @@ public class PTModule extends AbstractModule{
 	
 	@Provides
 	@Singleton
-	public PTPassengerCountingHandler providePTPassenferHandler(Scenario scenario) {
+	public PTPassengerCountingHandler providePTPassengerHandler(Scenario scenario) {
 		TransitSchedule schedule = scenario.getTransitSchedule();
 		Map<Id<Vehicle>, TransitTripInfo> vehicleToTripInfo = new HashMap<>();
 
@@ -39,6 +39,7 @@ public class PTModule extends AbstractModule{
                     if (vehicleId != null) {
                         vehicleToTripInfo.put(vehicleId, new TransitTripInfo(
                             line.getId().toString(),
+                            line.getName().toString(),
                             route.getId().toString(),
                             dep.getId().toString()
                         ));

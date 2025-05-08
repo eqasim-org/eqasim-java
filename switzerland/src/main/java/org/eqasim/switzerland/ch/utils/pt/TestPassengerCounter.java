@@ -28,10 +28,11 @@ import java.util.zip.GZIPInputStream;
 public class TestPassengerCounter {
 
     public static void main(String[] args) throws Exception {
-        // Path to your MATSim events file (compressed .xml.gz)
-        String eventsFile   = "/home/asallard/Euler_scratch/eqasim/10pct/busSim_base/matsim.simulation.run__d00fb05e9ad96c568d20d46484e775e2.cache/simulation_output/ITERS/it.60/60.events.xml.gz";
-        String outputCSV    = "/home/asallard/Euler_project/analysis/PT counts EventHandler/boarding_alighting_counts_10pct.csv.gz";
-        String scheduleFile = "/home/asallard/Euler_scratch/eqasim/pt_simulated_expPlans/cache/matsim.simulation.run_from_inputs__30e7b11abb5ada20e82969241781f015.cache/directWalkFactor5/switzerland_transit_schedule.xml.gz";
+        Map<String, String> argMap = parseArguments(args);
+
+        String eventsFile    = requireArg(argMap, "--events-path");
+        String outputCSV     = requireArg(argMap, "--output-path");
+        String scheduleFile  = requireArg(argMap, "--transit-schedule-path");
 
         // --- LOAD TRANSIT SCHEDULE (GZ) ---
         Config config = ConfigUtils.createConfig();
@@ -52,7 +53,7 @@ public class TestPassengerCounter {
                 for (Departure dep : route.getDepartures().values()) {
                     Id<Vehicle> vehicleId = dep.getVehicleId();
                     if (vehicleId != null) {
-                        vehicleToTripInfo.put(vehicleId, new TransitTripInfo(line.getId().toString(), route.getId().toString(), dep.getId().toString()));
+                        vehicleToTripInfo.put(vehicleId, new TransitTripInfo(line.getId().toString(), line.getName().toString() , route.getId().toString(), dep.getId().toString()));
                     }
                 }
             }
@@ -70,4 +71,21 @@ public class TestPassengerCounter {
         handler.writeCSV(outputCSV);
         System.out.println("Done! CSV written to: " + outputCSV);
     }
+
+    private static Map<String, String> parseArguments(String[] args) {
+        Map<String, String> map = new HashMap<>();
+        for (int i = 0; i < args.length - 1; i += 2) {
+            map.put(args[i], args[i + 1]);
+        }
+        return map;
+    }
+
+    private static String requireArg(Map<String, String> args, String key) {
+        if (!args.containsKey(key)) {
+            System.err.println("Missing required argument: " + key);
+            System.exit(1);
+        }
+        return args.get(key);
+    }
+
 }
