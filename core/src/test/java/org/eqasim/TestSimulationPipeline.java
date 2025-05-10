@@ -505,7 +505,7 @@ public class TestSimulationPipeline {
         RunDownsampling.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
                 "--sampling-rate", "0.1",
-                "--suffix", "_10pct",
+                "--suffix", "10pct",
                 "---update", "vehicles,facilities,households",
                 "--eqasim-configurator", TestConfigurator.class.getName()
         });
