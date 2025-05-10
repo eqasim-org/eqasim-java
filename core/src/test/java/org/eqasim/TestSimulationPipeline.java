@@ -42,6 +42,7 @@ import org.eqasim.core.tools.ExportNetworkToShapefile;
 import org.eqasim.core.tools.ExportPopulationToCSV;
 import org.eqasim.core.tools.ExportTransitLinesToShapefile;
 import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.sampling.RunDownsampling;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -475,6 +476,7 @@ public class TestSimulationPipeline {
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
+        runSampling();
         runPopulationRouting();
         runStandaloneModeChoice();
         runVdf();
@@ -497,6 +499,22 @@ public class TestSimulationPipeline {
             long secondCrc = CRCChecksum.getCRCFromFile("melun_test/output_determinism_2/"+comparedFile);
             assert firstCrc == secondCrc;
         }
+    }
+
+    public void runSampling() throws ConfigurationException {
+        RunDownsampling.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--sampling-rate", "0.1",
+                "--suffix", "_10pct",
+                "---update", "vehicles,facilities,households",
+                "--eqasim-configurator", TestConfigurator.class.getName()
+        });
+
+        assert new File("melun_test/input/config_10pct.xml").exists();
+        assert new File("melun_test/input/households_10pct.xml").exists();
+        assert new File("melun_test/input/vehicles_10pct.xml").exists();
+        assert new File("melun_test/input/population_10pct.xml").exists();
+        assert new File("melun_test/input/facilities_10pct.xml").exists();
     }
 
     public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
