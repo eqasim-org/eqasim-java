@@ -506,7 +506,7 @@ public class TestSimulationPipeline {
                 "--config-path", "melun_test/input/config.xml",
                 "--sampling-rate", "0.1",
                 "--suffix", "10pct",
-                "---update", "vehicles,facilities,households",
+                "--update", "vehicles,facilities,households",
                 "--eqasim-configurator", TestConfigurator.class.getName()
         });
 
