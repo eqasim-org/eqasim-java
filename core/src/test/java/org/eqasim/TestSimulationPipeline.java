@@ -511,10 +511,10 @@ public class TestSimulationPipeline {
         });
 
         assert new File("melun_test/input/config_10pct.xml").exists();
-        assert new File("melun_test/input/households_10pct.xml").exists();
-        assert new File("melun_test/input/vehicles_10pct.xml").exists();
-        assert new File("melun_test/input/population_10pct.xml").exists();
-        assert new File("melun_test/input/facilities_10pct.xml").exists();
+        assert new File("melun_test/input/households_10pct.xml.gz").exists();
+        assert new File("melun_test/input/vehicles_10pct.xml.gz").exists();
+        assert new File("melun_test/input/population_10pct.xml.gz").exists();
+        assert new File("melun_test/input/facilities_10pct.xml.gz").exists();
     }
 
     public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
