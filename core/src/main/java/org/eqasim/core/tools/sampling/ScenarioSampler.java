@@ -100,7 +100,7 @@ public class ScenarioSampler {
                 removedVehicles.removeAll(household.getVehicleIds());
             }
 
-            removedVehicles.forEach(scenario.getVehicles().getVehicles()::remove);
+            removedVehicles.forEach(scenario.getVehicles()::removeVehicle);
             logger.info("  removed " + removedVehicles.size() + " vehicles.");
         }
 
