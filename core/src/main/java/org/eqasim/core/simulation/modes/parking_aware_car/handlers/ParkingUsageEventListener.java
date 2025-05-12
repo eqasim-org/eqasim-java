@@ -22,8 +22,6 @@ import org.matsim.core.mobsim.framework.events.MobsimBeforeCleanupEvent;
 import org.matsim.core.mobsim.framework.events.MobsimInitializedEvent;
 import org.matsim.core.mobsim.framework.listeners.MobsimBeforeCleanupListener;
 import org.matsim.core.mobsim.framework.listeners.MobsimInitializedListener;
-import org.matsim.core.population.PersonUtils;
-import org.matsim.core.utils.collections.Tuple;
 import org.matsim.households.Household;
 import org.matsim.households.Households;
 
@@ -267,6 +265,7 @@ public class ParkingUsageEventListener implements PersonArrivalEventHandler, Per
 
             if(!parkingUsageRecord.parkingSpace.parkingType().id().equals(this.networkWideParkingSpaceStore.getFallBackParkingType().id())) {
                 parkingUsageRecord.exitTime = qsimEndTime;
+                parkingUsageRecord.parkingOccupancyOnDeparture = getCurrentParkingOccupancy(parkingUsageRecord.parkingSpace);
                 this.parkingUsagesPerPerson.computeIfAbsent(parkingUsageRecord.personId, key -> new ArrayList<>()).add(parkingUsageRecord);
             }
         }
