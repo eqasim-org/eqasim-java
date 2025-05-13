@@ -1,5 +1,6 @@
 package org.eqasim.server;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,6 +13,7 @@ import org.eqasim.server.api.TransitIsochroneEndpoint;
 import org.eqasim.server.api.TransitRouterEndpoint;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.utils.io.IOUtils;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -23,7 +25,7 @@ public class RunServer {
 			throws ConfigurationException, JsonParseException, JsonMappingException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "port") //
-				.allowOptions("threads", "configuration-path", "use-transit", "vdf-path",
+				.allowOptions("threads", "configuration-path", "use-transit", "vdf-path", "port-path",
 						EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
@@ -63,5 +65,11 @@ public class RunServer {
 		// Run API
 		int port = Integer.parseInt(cmd.getOptionStrict("port"));
 		app.start(port);
+
+		if (cmd.hasOption("port-path")) {
+			BufferedWriter writer = IOUtils.getBufferedWriter(cmd.getOptionStrict("port-path"));
+			writer.write(String.valueOf(app.jettyServer().port()));
+			writer.close();
+		}
 	}
 }
