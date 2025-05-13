@@ -24,8 +24,8 @@ public class RunServer {
 	public static void main(String[] args)
 			throws ConfigurationException, JsonParseException, JsonMappingException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "port") //
-				.allowOptions("threads", "configuration-path", "use-transit", "vdf-path", "port-path",
+				.requireOptions("config-path") //
+				.allowOptions("port", "threads", "configuration-path", "use-transit", "vdf-path", "port-path",
 						EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
@@ -63,7 +63,7 @@ public class RunServer {
 		}
 
 		// Run API
-		int port = Integer.parseInt(cmd.getOptionStrict("port"));
+		int port = cmd.getOption("port").map(Integer::parseInt).orElse(0);
 		app.start(port);
 
 		if (cmd.hasOption("port-path")) {
