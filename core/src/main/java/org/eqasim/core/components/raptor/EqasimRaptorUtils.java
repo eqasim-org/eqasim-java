@@ -18,7 +18,7 @@ public class EqasimRaptorUtils {
 	private final static Logger logger = LogManager.getLogger(EqasimRaptorUtils.class);
 
 	static public RaptorParameters createParameters(Config config, EqasimRaptorConfigGroup raptorConfig,
-			TransitSchedule schedule) {
+			TransitSchedule schedule, boolean verbose) {
 		RaptorParameters parameters = RaptorUtils.createParameters(config);
 
 		// use transportMode from TransitRoute in schedule
@@ -45,7 +45,9 @@ public class EqasimRaptorUtils {
 		requiredModes.removeAll(Arrays.asList("rail", "subway", "bus", "tram", "walk"));
 
 		if (requiredModes.size() > 0) {
-			logger.warn("Setting 'other' routing cost for following modes: " + String.join(", ", requiredModes));
+			if (verbose) {
+				logger.warn("Setting 'other' routing cost for following modes: " + String.join(", ", requiredModes));
+			}
 
 			for (String mode : requiredModes) {
 				parameters.setMarginalUtilityOfTravelTime_utl_s(mode, raptorConfig.travelTimeOther_u_h / 3600.0);

@@ -18,7 +18,7 @@ public class EqasimRaptorModule extends AbstractModule {
 	@Singleton
 	RaptorParametersForPerson provideRaptorParametersForPerson(EqasimRaptorConfigGroup raptorConfig,
 			TransitSchedule schedule) {
-		RaptorParameters parameters = EqasimRaptorUtils.createParameters(getConfig(), raptorConfig, schedule);
+		RaptorParameters parameters = EqasimRaptorUtils.createParameters(getConfig(), raptorConfig, schedule, true);
 		return person -> parameters;
 	}
 }
