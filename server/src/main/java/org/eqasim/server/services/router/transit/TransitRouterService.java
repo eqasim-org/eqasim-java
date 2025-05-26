@@ -423,7 +423,7 @@ public class TransitRouterService {
 				.get(EqasimRaptorConfigGroup.GROUP_NAME);
 
 		if (raptorConfig != null) {
-			parameters = EqasimRaptorUtils.createParameters(config, raptorConfig, schedule);
+			parameters = EqasimRaptorUtils.createParameters(config, raptorConfig, schedule, false);
 		}
 
 		if (configuration.directWalkFactor != null) {

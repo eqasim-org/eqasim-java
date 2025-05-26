@@ -1,0 +1,161 @@
+package org.eqasim.core.tools.sampling;
+
+import java.util.Iterator;
+import java.util.Random;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.IdSet;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.api.core.v01.population.Population;
+import org.matsim.facilities.ActivityFacility;
+import org.matsim.households.Household;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleUtils;
+
+public class ScenarioSampler {
+    private final Logger logger = LogManager.getLogger(ScenarioSampler.class);
+
+    private final UpdateSet update;
+    private final double samplingRate;
+    private final Random random;
+
+    public ScenarioSampler(UpdateSet update, double samplingRate, Random random) {
+        this.samplingRate = samplingRate;
+        this.random = random;
+        this.update = update;
+    }
+
+    public void process(Scenario scenario) {
+        // I) process persons
+        Population population = scenario.getPopulation();
+
+        IdSet<Person> removedPersons = new IdSet<>(Person.class);
+        IdSet<Vehicle> removedVehicles = new IdSet<>(Vehicle.class);
+        IdSet<ActivityFacility> removedFacilities = new IdSet<>(ActivityFacility.class);
+
+        logger.info("Sampling persons ...");
+
+        for (Person person : population.getPersons().values()) {
+            if (random.nextDouble() > samplingRate) {
+                removedPersons.add(person.getId());
+
+                if (update.vehicles) {
+                    removedVehicles.addAll(VehicleUtils.getVehicleIds(person).values());
+                }
+
+                if (update.facilities) {
+                    for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
+                        if (element instanceof Activity acitvity && acitvity.getType().equals("home")) {
+                            removedFacilities.add(acitvity.getFacilityId());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        logger.info("  removed " + removedPersons.size() + " persons.");
+
+        removedPersons.forEach(population::removePerson);
+
+        // II) process households
+        if (update.households) {
+            logger.info("Cleaning households ...");
+
+            Iterator<Household> householdIterator = scenario.getHouseholds().getHouseholds().values().iterator();
+            int removedHouseholds = 0;
+
+            while (householdIterator.hasNext()) {
+                Household household = householdIterator.next();
+                household.getMemberIds().removeAll(removedPersons);
+
+                if (household.getMemberIds().size() == 0) {
+                    householdIterator.remove();
+                    removedHouseholds++;
+
+                    if (update.vehicles) {
+                        removedVehicles.addAll(household.getVehicleIds());
+                    }
+                }
+            }
+
+            logger.info("  removed " + removedHouseholds + " households.");
+        }
+
+        // III) process vehicles
+        if (update.vehicles) {
+            logger.info("Cleaning vehicles ...");
+
+            for (Person person : population.getPersons().values()) {
+                // keep those that are still assigned
+                removedVehicles.removeAll(VehicleUtils.getVehicleIds(person).values());
+            }
+
+            for (Household household : scenario.getHouseholds().getHouseholds().values()) {
+                // keep those that are still assigned
+                removedVehicles.removeAll(household.getVehicleIds());
+            }
+
+            removedVehicles.forEach(scenario.getVehicles()::removeVehicle);
+            logger.info("  removed " + removedVehicles.size() + " vehicles.");
+        }
+
+        // IV) process facilities
+        if (update.facilities) {
+            logger.info("Cleaning home facilities ...");
+
+            for (Person person : population.getPersons().values()) {
+                // keep those that are still assigned
+                for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
+                    if (element instanceof Activity acitvity && acitvity.getType().equals("home")) {
+                        removedFacilities.remove(acitvity.getFacilityId());
+                        break;
+                    }
+                }
+            }
+
+            removedFacilities.forEach(scenario.getActivityFacilities().getFacilities()::remove);
+            logger.info("  removed " + removedFacilities.size() + " home facilities.");
+        }
+    }
+
+    static public class UpdateSet {
+        public final boolean households;
+        public final boolean vehicles;
+        public final boolean facilities;
+
+        public UpdateSet() {
+            households = false;
+            vehicles = false;
+            facilities = false;
+        }
+
+        public UpdateSet(String update) {
+            boolean households = false;
+            boolean vehicles = false;
+            boolean facilities = false;
+
+            for (String item : update.split(",")) {
+                item = item.strip();
+
+                if (item.equals("households")) {
+                    households = true;
+                } else if (item.equals("vehicles")) {
+                    vehicles = true;
+                } else if (item.equals("facilities")) {
+                    facilities = true;
+                } else {
+                    throw new IllegalStateException("Unknown update item: " + item);
+                }
+            }
+
+            this.households = households;
+            this.facilities = facilities;
+            this.vehicles = vehicles;
+        }
+    }
+}
