@@ -1,6 +1,12 @@
 package org.matsim.contribs.discrete_mode_choice.model.utilities;
 
 public class RandomValueGenerator {
+	
+	private static long globalSeed = 1234L;
+	
+	public static void setGlobalSeed(long seed) {
+        globalSeed = seed;
+    }
 
     /** 
      * 64-bit SplitMix64 mixer; very fast, good avalanche.
@@ -13,13 +19,13 @@ public class RandomValueGenerator {
     }
 
     /**
-     * Deterministic “random” in [0,1) for a given person & tour.
+     * Deterministic “random” in [0,1) for a given person and tour/trip id.
      * @param personId unique person identifier
      * @param tourId   unique tour identifier (per person)
      */
     public static double randomForTour(long personId, long tourId) {
         // pack into one 64-bit key
-        long key = (personId << 32) ^ tourId;
+        long key = (personId << 32) ^ tourId ^ globalSeed;
         // scramble it
         long mixed = splitMix64(key);
         // take the top 53 bits to form a double mantissa
@@ -27,13 +33,4 @@ public class RandomValueGenerator {
         return fractionBits * (1.0 / (1L << 53));
     }
 
-    public static void main(String[] args) {
-        // demo: same inputs => same output
-        System.out.println(randomForTour(12345, 1));  // e.g. 0.671234...
-        System.out.println(randomForTour(12345, 1));  // identical
-        // different tour => different
-        System.out.println(randomForTour(12345, 2));
-        // different person => different
-        System.out.println(randomForTour(67890, 1));
-    }
 }
