@@ -16,6 +16,7 @@ import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.config.groups.VehiclesConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultSelector;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
+import org.matsim.pt.config.TransitRouterConfigGroup;
 
 public class RunAdaptConfig {
 
@@ -87,6 +88,10 @@ public class RunAdaptConfig {
 		qsimConfig.setVehiclesSource(VehiclesSource.fromVehiclesData);
 		VehiclesConfigGroup vehiclesConfig = config.vehicles();
 		vehiclesConfig.setVehiclesFile(SwissConfigAdapter.prefix + "vehicles.xml.gz");
+
+		// Transit direct walk factor
+		TransitRouterConfigGroup transitConfig = config.transitRouter();
+		transitConfig.setDirectWalkFactor( 3.0);
 
 	}
 
