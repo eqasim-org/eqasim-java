@@ -45,11 +45,11 @@ public class DrtServiceAreaConstraint extends AbstractTripConstraint {
             if(config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
                 MultiModeDrtConfigGroup multiModeDrtConfigGroup = (MultiModeDrtConfigGroup) config.getModules().get(MultiModeDrtConfigGroup.GROUP_NAME);
                 multiModeDrtConfigGroup.getModalElements().stream()
-                        .filter(drtConfigGroup -> drtConfigGroup.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased))
+                        .filter(drtConfigGroup -> drtConfigGroup.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased))
                         .forEach(drtConfigGroup -> {
-                            String extentPath = ConfigGroup.getInputFileURL(config.getContext(), drtConfigGroup.drtServiceAreaShapeFile).getPath();
+                            String extentPath = ConfigGroup.getInputFileURL(config.getContext(), drtConfigGroup.getDrtServiceAreaShapeFile()).getPath();
                             try {
-                                scenarioExtentByMode.put(drtConfigGroup.mode, new ShapeScenarioExtent.Builder(new File(extentPath), Optional.empty(), Optional.empty()).build());
+                                scenarioExtentByMode.put(drtConfigGroup.getMode(), new ShapeScenarioExtent.Builder(new File(extentPath), Optional.empty(), Optional.empty()).build());
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
