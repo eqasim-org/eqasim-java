@@ -2,6 +2,10 @@ package org.eqasim.server;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,13 +27,46 @@ import io.javalin.Javalin;
 public class RunServer {
 	public static void main(String[] args)
 			throws ConfigurationException, JsonParseException, JsonMappingException, IOException {
-		CommandLine cmd = new CommandLine.Builder(args) //
+
+		List<String> filteredArgs = new ArrayList<>();
+        Map<String, String> raptorPenaltyOptions = new HashMap<>();
+
+        for (int i = 0; i < args.length; i++) {
+			String arg = args[i];
+
+			if (arg.startsWith("--raptorPenalties")) {
+				String key, value;
+
+				if (arg.contains("=")) {
+					// Example: --raptorPenalties.transfer_bus_to_rail=60
+					String[] parts = arg.substring(2).split("=", 2);
+					key = parts[0];  
+					value = parts[1]; 
+				} else {
+					// Example: --raptorPenalties.transfer_bus_to_rail 60
+					key = arg.substring(2); 
+
+					if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+						value = args[i + 1];
+						i++; 
+					} else {
+						value = ""; 
+					}
+				}
+
+				raptorPenaltyOptions.put(key, value);
+			} else {
+				filteredArgs.add(arg);
+			}
+		}
+		
+		CommandLine cmd = new CommandLine.Builder(filteredArgs.toArray(new String[0])) //
 				.requireOptions("config-path") //
 				.allowOptions("port", "threads", "configuration-path", "use-transit", "vdf-path", "port-path",
 						EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
-		Services services = new ServiceBuilder().build(cmd);
+		Services services = new ServiceBuilder().build(cmd, raptorPenaltyOptions);
 
 		int threads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());

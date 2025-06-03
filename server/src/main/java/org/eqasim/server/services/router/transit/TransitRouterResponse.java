@@ -28,6 +28,9 @@ public class TransitRouterResponse {
 	@JsonProperty("vehicle_legs_by_mode")
 	public Map<String, Integer> vehicleLegsByMode = new HashMap<>();
 
+	@JsonProperty("modes_sequence")
+	public List<String> modesSequence = new LinkedList<>();
+
 	@JsonProperty("access_walk_time_min")
 	public double accessWalkTime_min;
 

@@ -3,6 +3,7 @@ package org.eqasim.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -41,7 +42,7 @@ public class ServiceBuilder {
 			TransitIsochroneService transitIsochroneService) {
 	}
 
-	public Services build(CommandLine cmd)
+	public Services build(CommandLine cmd, Map<String, String> raptorPenalties)
 			throws JsonParseException, JsonMappingException, IOException, ConfigurationException {
 		int threads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
@@ -101,7 +102,7 @@ public class ServiceBuilder {
 
 		if (useTransit) {
 			transitRouterService = TransitRouterService.create(config, scenario.getNetwork(),
-					scenario.getTransitSchedule(), configuration.transit, configuration.walk);
+					scenario.getTransitSchedule(), configuration.transit, configuration.walk, raptorPenalties);
 
 			transitIsochroneService = TransitIsochroneService.create(config,
 					scenario.getTransitSchedule(), configuration.transit, configuration.walk);

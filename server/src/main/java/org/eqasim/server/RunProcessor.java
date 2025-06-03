@@ -2,8 +2,10 @@ package org.eqasim.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -41,7 +43,8 @@ public class RunProcessor {
 						EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
-		Services services = new ServiceBuilder().build(cmd);
+		Map<String, String> penalties = new HashMap<>();
+		Services services = new ServiceBuilder().build(cmd, penalties);
 
 		int threads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());

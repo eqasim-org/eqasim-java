@@ -2,6 +2,7 @@ package org.eqasim.server.services.router.transit;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorUtils;
@@ -273,6 +274,7 @@ public class TransitRouterService {
 					response.totalTravelTime_min += travelTime / 60.0;
 					response.inVehicleTravelTime_min += inVehicleTime / 60.0;
 					response.inVehicleDistance_km += distance * 1e-3;
+					response.modesSequence.addLast(mode);
 
 					if (vehiclarLegs == 1) {
 						response.initialWaitTime_min += waitTime / 60.0;
@@ -469,7 +471,7 @@ public class TransitRouterService {
 	}
 
 	static private RaptorStaticConfig createStaticConfig(Config config, TransitConfiguration configuration,
-			WalkConfiguration walkConfiguration) {
+			WalkConfiguration walkConfiguration, Map<String, String> raptorPenalties) {
 		RaptorStaticConfig staticConfig = RaptorUtils.createStaticConfig(config);
 
 		if (configuration.maximumTransferDistance_km != null) {
@@ -480,12 +482,48 @@ public class TransitRouterService {
 		staticConfig.setBeelineWalkSpeed(walkParameters.beelineWalkSpeed_m_s);
 		staticConfig.setBeelineWalkDistanceFactor(walkParameters.beelineWalkFactor);
 
+		for (Map.Entry<String, String> entry : raptorPenalties.entrySet()) {
+			String fullKey = entry.getKey();   // e.g. "raptorPenalties:transfer_bus_to_rail"
+			String valueStr = entry.getValue(); // e.g. "30"
+
+			// Remove prefix "raptorPenalties:"
+			String key = fullKey.substring("raptorPenalties:".length()); // "transfer_bus_to_rail"
+
+			// Assuming key format is "transfer_FROM_to_TO", parse modes:
+			if (key.startsWith("transfer_")) {
+				// remove "transfer_"
+				String modesPart = key.substring("transfer_".length()); // "bus_to_rail"
+
+				// split by "_to_"
+				String[] parts = modesPart.split("_to_");
+				if (parts.length == 2) {
+					String fromMode = parts[0]; // "bus"
+					String toMode = parts[1];   // "rail"
+
+					try {
+						double penalty = Double.parseDouble(valueStr);
+						System.out.println(String.format("Adding transfer penalty: from '%s' to '%s' = %f seconds", fromMode, toMode, penalty));
+						staticConfig.addModeToModeTransferPenalty(fromMode, toMode, penalty);
+						
+					} catch (NumberFormatException e) {
+						System.err.println("Invalid penalty value: " + valueStr + " for key: " + fullKey);
+					}
+				} else {
+					System.err.println("Invalid penalty key format (expected 'transfer_from_to_to'): " + fullKey);
+				}
+			} else {
+				System.err.println("Unknown raptor penalty key: " + fullKey);
+			}
+		}
+
 		return staticConfig;
 	}
 
 	static public TransitRouterService create(Config config, Network network, TransitSchedule schedule,
-			TransitConfiguration configuration, WalkConfiguration walkConfiguration) {
-		RaptorStaticConfig staticConfig = createStaticConfig(config, configuration, walkConfiguration);
+			TransitConfiguration configuration, WalkConfiguration walkConfiguration, Map<String, String> raptorPenalties) {
+
+		RaptorStaticConfig staticConfig = createStaticConfig(config, configuration, walkConfiguration, raptorPenalties);
+
 		SwissRailRaptorData data = SwissRailRaptorData.create(schedule, null, staticConfig, network, null);
 
 		return new TransitRouterService(data, config, network, configuration, walkConfiguration, schedule);
