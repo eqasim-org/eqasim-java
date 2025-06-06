@@ -62,7 +62,10 @@ public class RunComputeEmissionsEvents {
         Scenario scenario = ScenarioUtils.createScenario(config);
         ScenarioUtils.loadScenario(scenario);
 
-        OsmHbefaMapping osmHbefaMapping = OsmHbefaMapping.build();
+        // the default hbefa type is URB/Acess/30 but can be changed like this
+        // SafeOsmHbefaMapping.defaultType = "URB/Local/50";
+        SafeOsmHbefaMapping osmHbefaMapping = new SafeOsmHbefaMapping();
+
         Network network = scenario.getNetwork();
         // if the network is from pt2matsim it might not have "type" but "osm:way:highway" attribute instead
         for (Link link: network.getLinks().values()) {
