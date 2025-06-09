@@ -1,5 +1,7 @@
 package org.eqasim.server.services.router.road;
 
+import org.eqasim.core.scenario.freeflow.FreeflowConfiguration;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RoadRouterRequest {
@@ -29,10 +31,10 @@ public class RoadRouterRequest {
 
 	@JsonProperty("access_egress_radius_km")
 	public Double accessEgressRadius_km = null;
-	
+
 	@JsonProperty("consider_parallel_links")
 	public boolean considerParallelLinks = false;
 
-	@JsonProperty("freespeed")
-	public FreespeedSettings freespeed = null;
+	@JsonProperty("freeflow")
+	public FreeflowConfiguration freeflow = null;
 }
