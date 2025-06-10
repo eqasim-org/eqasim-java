@@ -15,10 +15,10 @@ public class SafeOsmHbefaMapping extends HbefaRoadTypeMapping {
     public static String defaultType = "URB/Access/30";
 
     @Override
-    public String determineHbefaType(Link link) {
+    public String determineHebfaType(Link link) {
         String result;
         try {
-            result = osmHbefaMapping.determineHbefaType(link);
+            result = osmHbefaMapping.determineHebfaType(link);
         } catch (RuntimeException runtimeException) {
             String type = (String) link.getAttributes().getAttribute(NetworkUtils.TYPE);
             log.warn("'" + type + "' not in hbefa map; setting to " + defaultType);
@@ -26,5 +26,4 @@ public class SafeOsmHbefaMapping extends HbefaRoadTypeMapping {
         }
         return result;
     }
-
 }
