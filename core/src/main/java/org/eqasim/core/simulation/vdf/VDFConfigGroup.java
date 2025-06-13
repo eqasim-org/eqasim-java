@@ -2,6 +2,7 @@ package org.eqasim.core.simulation.vdf;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.matsim.api.core.v01.TransportMode;
@@ -60,6 +61,17 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 
 	public VDFConfigGroup() {
 		super(GROUP_NAME);
+	}
+	
+	@Override
+	public final Map<String, String> getComments() {
+		Map<String, String> map = super.getComments();
+		map.put(CAPACITY_FACTOR,
+				"This is the factor used for calibration of the vdf function. Default is 1.0. \n"
+				+ "\t\tPlease note that samplingRate parameter in eqasim config group controls the sample size scaling \n"
+				+ "\t\twhich also scales the observed flow.");
+		
+		return map;
 	}
 
 	@StringGetter(START_TIME)

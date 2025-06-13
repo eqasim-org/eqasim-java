@@ -48,10 +48,10 @@ public class AccessEgressStopSearchModule extends AbstractDvrpModeModule {
 
         if(accessEgressStopSearchParams instanceof TransitStopByModeAccessEgressStopSearchParameterSet transitStopByModeAccessEgressStopSearchParameterSet) {
             ScenarioExtent serviceAreaExtent = null;
-            if (coveredDrtConfigGroup.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
+            if (coveredDrtConfigGroup.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
                 URI extentPath;
                 try {
-                    extentPath = ConfigGroup.getInputFileURL(getConfig().getContext(), coveredDrtConfigGroup.drtServiceAreaShapeFile).toURI();
+                    extentPath = ConfigGroup.getInputFileURL(getConfig().getContext(), coveredDrtConfigGroup.getDrtServiceAreaShapeFile()).toURI();
                 } catch (URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
