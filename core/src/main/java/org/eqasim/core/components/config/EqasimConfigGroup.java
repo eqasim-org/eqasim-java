@@ -24,6 +24,7 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private final static String ANALYSIS_DISTANCE_UNIT = "analysisDistanceUnit";
 	
 	private final static String TRAVEL_TIME_RECORDING_INTERVAL = "travelTimeRecordingInterval";
+	private final static String DETAILED_TRAVEL_TIME_ANALYSIS_INTERVAL = "detailedTravelTimeAnalysisInterval";
 
 	private final static String USE_SCHEDULE_BASED_TRANSPORT = "useScheduleBasedTransport";
 
@@ -41,6 +42,7 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private DistanceUnit analysisDistanceUnit = DistanceUnit.meter;
 	
 	private int travelTimeRecordingInterval = 0;
+	private int detailedTravelTimeAnalysisInterval = 0;
 
 	private boolean useScheduleBasedTransport = true;
 
@@ -87,6 +89,16 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(USE_PSEUDO_RANDOM_ERRORS)
 	public void setUsePseudoRandomErrors(boolean usePseudoRandomErrors) {
 		this.usePseudoRandomErrors = usePseudoRandomErrors;
+	}
+
+	@StringGetter(DETAILED_TRAVEL_TIME_ANALYSIS_INTERVAL)
+	public int getDetailedTravelTimeAnalysisInterval() {
+		return detailedTravelTimeAnalysisInterval;
+	}
+
+	@StringSetter(DETAILED_TRAVEL_TIME_ANALYSIS_INTERVAL)
+	public void setDetailedTravelTimeAnalysisInterval(int detailedTravelTimeAnalysisInterval) {
+		this.detailedTravelTimeAnalysisInterval = detailedTravelTimeAnalysisInterval;
 	}
 
 	@Override

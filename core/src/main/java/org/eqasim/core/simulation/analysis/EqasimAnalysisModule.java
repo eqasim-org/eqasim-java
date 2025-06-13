@@ -93,9 +93,9 @@ public class EqasimAnalysisModule extends AbstractModule {
 	public TravelTimeComparisionListener provideTravelTimeComparisionListener(Population population,
 			TimeInterpretation timeInterpretation,
 			OutputDirectoryHierarchy outputDirectoryHierarchy, EventsManager eventsManager,
-			EqasimConfigGroup eqasimConfig,
-			int detailedAnalysisInterval, RoutingConfigGroup routingConfig) {
+			EqasimConfigGroup eqasimConfig, RoutingConfigGroup routingConfig) {
 		return new TravelTimeComparisionListener(population, timeInterpretation, outputDirectoryHierarchy,
-				eventsManager, eqasimConfig.getAnalysisInterval(), 0, new HashSet<>(routingConfig.getNetworkModes()));
+				eventsManager, eqasimConfig.getAnalysisInterval(), eqasimConfig.getDetailedTravelTimeAnalysisInterval(), 
+				new HashSet<>(routingConfig.getNetworkModes()));
 	}
 }
