@@ -15,7 +15,13 @@ public class EqasimTrafficModule extends AbstractModule {
 
     @Provides
     @Singleton
-    AttributeCrossingPenalty providAttributeCrossingPenalty(Network network, EqasimConfigGroup eqasimConfig) {
-        return AttributeCrossingPenalty.sbuild(network, eqasimConfig.getCrossingPenalty());
+    AttributeCrossingPenalty providAttributeCrossingPenalty(Network network, DefaultCrossingPenalty delegate) {
+        return AttributeCrossingPenalty.sbuild(network, delegate);
+    }
+
+    @Provides
+    @Singleton
+    DefaultCrossingPenalty provideDefaultCrossingPenalty(Network network, EqasimConfigGroup eqasimConfig) {
+        return DefaultCrossingPenalty.build(network, eqasimConfig.getCrossingPenalty());
     }
 }

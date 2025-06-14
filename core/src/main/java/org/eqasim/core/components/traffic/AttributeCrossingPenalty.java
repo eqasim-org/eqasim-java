@@ -8,19 +8,20 @@ public class AttributeCrossingPenalty implements CrossingPenalty {
     static public String ATTRIBUTE = "crossingPenalty";
 
     private IdMap<Link, Double> delays = new IdMap<>(Link.class);
-    private double defaultValue;
+    private CrossingPenalty delegate;
 
-    public AttributeCrossingPenalty(IdMap<Link, Double> delays, double defaultValue) {
+    public AttributeCrossingPenalty(IdMap<Link, Double> delays, CrossingPenalty delegate) {
         this.delays = delays;
-        this.defaultValue = defaultValue;
+        this.delegate = delegate;
     }
 
     @Override
     public double calculateCrossingPenalty(Link link) {
-        return delays.getOrDefault(link.getId(), defaultValue);
+        Double value = delays.get(link.getId());
+        return value != null ? value : delegate.calculateCrossingPenalty(link);
     }
 
-    public static AttributeCrossingPenalty sbuild(Network network, double defaultValue) {
+    public static AttributeCrossingPenalty sbuild(Network network, CrossingPenalty delegate) {
         IdMap<Link, Double> delays = new IdMap<>(Link.class);
 
         for (Link link : network.getLinks().values()) {
@@ -31,6 +32,6 @@ public class AttributeCrossingPenalty implements CrossingPenalty {
             }
         }
 
-        return new AttributeCrossingPenalty(delays, defaultValue);
+        return new AttributeCrossingPenalty(delays, delegate);
     }
 }

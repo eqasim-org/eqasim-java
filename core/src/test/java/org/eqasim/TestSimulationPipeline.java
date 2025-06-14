@@ -13,6 +13,7 @@ import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.AttributeCrossingPenalty;
 import org.eqasim.core.components.traffic.CrossingPenalty;
+import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -280,7 +281,7 @@ public class TestSimulationPipeline {
 
         ScenarioExtent updateExtent = new ShapeScenarioExtent.Builder(new File(updateExtentPath), Optional.empty(), Optional.empty()).build();
 
-        CrossingPenalty crossingPenalty = new AttributeCrossingPenalty(new IdMap<>(Link.class), eqasimConfigGroup.getCrossingPenalty());
+        CrossingPenalty crossingPenalty = new AttributeCrossingPenalty(new IdMap<>(Link.class), DefaultCrossingPenalty.build(scenario.getNetwork(), eqasimConfigGroup.getCrossingPenalty()));
 
         VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
         leftTravelTime.readFrom(new File(leftTravelTimesPath).toURI().toURL());
