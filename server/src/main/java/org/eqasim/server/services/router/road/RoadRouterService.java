@@ -71,7 +71,7 @@ public class RoadRouterService {
 		if (configuration == null) {
 			return null;
 		} else {
-			return freeflowConfigurator.getTravelTime(configuration);
+			return freeflowConfigurator.buildTravelTime(configuration);
 		}
 	}
 
