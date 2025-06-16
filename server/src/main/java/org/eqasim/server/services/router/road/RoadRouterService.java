@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.eqasim.core.scenario.freeflow.FreeflowConfiguration;
+import org.eqasim.core.scenario.freeflow.FreeflowConfigurator;
 import org.eqasim.server.services.WalkConfiguration;
 import org.eqasim.server.services.router.road.RoadRouterResponse.LinkRecord;
 import org.locationtech.jts.geom.Coordinate;
@@ -26,7 +28,6 @@ import org.matsim.core.router.util.LeastCostPathCalculator.Path;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
-import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.core.utils.collections.QuadTrees;
 import org.matsim.core.utils.geometry.CoordUtils;
@@ -47,25 +48,34 @@ public class RoadRouterService {
 	private final ConcurrentLinkedQueue<RouterInstance> routerPool = new ConcurrentLinkedQueue<>();
 
 	private final TravelTime defaultTravelTime;
-	private final ModifiedFreeSpeedTravelTime modifiedTravelTime;
 
-	RoadRouterService(Network network, QuadTree<? extends Link> linkIndex, WalkParameters walkParameters, int threads, TravelTime defaultTravelTime) {
+	private final FreeflowConfigurator freeflowConfigurator;
+
+	RoadRouterService(Network network, QuadTree<? extends Link> linkIndex, WalkParameters walkParameters, int threads,
+			TravelTime defaultTravelTime, FreeflowConfigurator freeflowConfigurator) {
 		this.walkParameters = walkParameters;
 		this.linkIndex = linkIndex;
 		this.defaultTravelTime = defaultTravelTime;
+		this.freeflowConfigurator = freeflowConfigurator;
 
 		for (int k = 0; k < threads; k++) {
 			routerPool.add(createRouterInstance(network));
 		}
-
-		this.modifiedTravelTime = ModifiedFreeSpeedTravelTime.create(network);
 	}
 
 	private RouterInstance createRouterInstance(Network network) {
 		return new RouterInstance(routerFactory, network);
 	}
 
-	public RoadRouterResponse processRequest(RoadRouterRequest request, @Nullable FreespeedSettings freespeed) {
+	public TravelTime prepareFreeflowTravelTime(@Nullable FreeflowConfiguration configuration) {
+		if (configuration == null) {
+			return null;
+		} else {
+			return freeflowConfigurator.getTravelTime(configuration);
+		}
+	}
+
+	public RoadRouterResponse processRequest(RoadRouterRequest request, @Nullable TravelTime travelTime) {
 		RoadRouterResponse bestResponse = null;
 
 		Coord fromCoord = new Coord(request.originX, request.originY);
@@ -106,12 +116,12 @@ public class RoadRouterService {
 			}
 		}
 
-		TravelTime travelTime = defaultTravelTime;
+		if (request.freeflow != null) {
+			travelTime = prepareFreeflowTravelTime(request.freeflow);
+		}
 
-		if (request.freespeed != null || freespeed != null) {
-			FreespeedSettings settings = request.freespeed == null ? freespeed : request.freespeed;
-			travelTime = (Link link, double time, Person person, Vehicle vehicle) -> modifiedTravelTime
-					.getLinkTravelTime(settings, link, time, person, vehicle);
+		if (travelTime == null) {
+			travelTime = defaultTravelTime;
 		}
 
 		for (Link fromLink : fromLinks) {
@@ -146,7 +156,8 @@ public class RoadRouterService {
 				response.inVehicleTime_min = path.travelTime / 60.0;
 				response.inVehicleDistance_km = RouteUtils.calcDistance(path) * 1e-3;
 				response.arrivalTime_s = departureTime + path.travelTime;
-				response.totalTravelTime_min = response.accessTime_min + response.egressTime_min + response.inVehicleTime_min;
+				response.totalTravelTime_min = response.accessTime_min + response.egressTime_min
+						+ response.inVehicleTime_min;
 
 				if (request.provideLinks) {
 					response.links = new LinkedList<>();
@@ -197,11 +208,12 @@ public class RoadRouterService {
 	}
 
 	static public RoadRouterService create(Config config, Network network, WalkConfiguration configuration,
-			int threads, TravelTime defauTravelTime) {
+			int threads, TravelTime defauTravelTime, FreeflowConfigurator freeflowConfigurator) {
 		WalkParameters walkParameters = createWalkParameters(config, configuration);
 		QuadTree<? extends Link> linkIndex = QuadTrees.createQuadTree(network.getLinks().values());
 
-		return new RoadRouterService(network, linkIndex, walkParameters, threads, defauTravelTime);
+		return new RoadRouterService(network, linkIndex, walkParameters, threads, defauTravelTime,
+				freeflowConfigurator);
 	}
 
 	static public record WalkParameters(double beelineWalkFactor, double beelineWalkSpeed_m_s) {
