@@ -17,8 +17,11 @@ import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.geotools.api.feature.simple.SimpleFeature;
 
+@Deprecated
 public class ExportTransitStopsToShapefile {
 	public static void main(String[] args) throws Exception {
+        System.err.println("THIS SCRIPT IS DEPRECATED SINCE JUNE 2025");
+		
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("schedule-path", "output-path", "crs") //
 				.build();
