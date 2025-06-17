@@ -1,6 +1,12 @@
 package org.eqasim.switzerland.ch.scenario;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.ch.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
@@ -11,8 +17,11 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
 import org.matsim.core.config.groups.ReplanningConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
 import org.matsim.core.config.groups.ScoringConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.config.groups.VehiclesConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultSelector;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
@@ -56,16 +65,54 @@ public class RunAdaptConfig {
 		}
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
+		List<String> LOOP_MODES = new ArrayList<>(Arrays.asList("walk_loop", "pt_loop", "bike_loop", "car_loop", "car_passenger_loop"));
+
+		// also adding loop modes that should not be considered for mode choice
 		eqasimConfig.setEstimator(TransportMode.car, SwissModeChoiceModule.CAR_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, SwissModeChoiceModule.BIKE_ESTIMATOR_NAME);
+		for (String mode : LOOP_MODES) {
+			eqasimConfig.setEstimator(mode, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+		}
 
 		eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, SwissModeChoiceModule.PT_COST_MODEL_NAME);
+		for (String mode : LOOP_MODES) {
+			eqasimConfig.setCostModel(mode, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+		}
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
+		Collection<String> cachedModes = dmcConfig.getCachedModes();
+		for (String mode : LOOP_MODES) {
+			cachedModes.add(mode);
+		}
+		dmcConfig.setCachedModes(cachedModes);
+
+		ScoringConfigGroup scoringConfig1 = config.scoring();
+		RoutingConfigGroup routingConfig  = config.routing();
+		for (String mode : LOOP_MODES) {
+			ModeParams modeParams = scoringConfig1.getOrCreateModeParams(mode);
+
+			modeParams.setConstant(0.0);
+			modeParams.setMarginalUtilityOfDistance(0.0);
+			modeParams.setMarginalUtilityOfTraveling(-1.0);
+			modeParams.setMonetaryDistanceRate(0.0);
+
+			TeleportedModeParams modeParams2 = routingConfig.getOrCreateModeRoutingParams(mode);
+			modeParams2.setBeelineDistanceFactor(1.0);
+
+			if (mode.equals("walk_loop")) {
+				modeParams2.setTeleportedModeSpeed(1.2);
+			} else if (mode.equals("bike_loop")){
+				modeParams2.setTeleportedModeSpeed(3.1);
+			} else if (mode.equals("car_loop")){
+				modeParams2.setTeleportedModeSpeed(1000.0);
+			} else {
+				modeParams2.setTeleportedModeSpeed(1000.0);
+			}
+		}
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {

@@ -25,6 +25,11 @@ public class SwissModeAvailability implements ModeAvailability {
 		// Modes that are always available
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
+		modes.add("walk_loop");
+		modes.add("bike_loop");
+		modes.add("car_loop");
+		modes.add("pt_loop");
+		modes.add("car_passenger_loop");
 
 		// Check car availability
 		boolean carAvailability = true;
