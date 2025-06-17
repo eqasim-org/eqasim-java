@@ -25,11 +25,6 @@ public class SwissModeAvailability implements ModeAvailability {
 		// Modes that are always available
 		modes.add(TransportMode.walk);
 		modes.add(TransportMode.pt);
-		modes.add("walk_loop");
-		modes.add("bike_loop");
-		modes.add("car_loop");
-		modes.add("pt_loop");
-		modes.add("car_passenger_loop");
 
 		// Check car availability
 		boolean carAvailability = true;
@@ -69,6 +64,17 @@ public class SwissModeAvailability implements ModeAvailability {
 
 		if (isCarPassenger != null && isCarPassenger) {
 			modes.add("car_passenger");
+		}
+
+		// Add special modes "*_loop" if applicable
+		Boolean hasLoopTrip = (Boolean) person.getAttributes().getAttribute("hasLoopTrip");
+
+		if (hasLoopTrip != null && hasLoopTrip) {
+			modes.add("walk_loop");
+			modes.add("car_loop");
+			modes.add("pt_loop");
+			modes.add("bike_loop");
+			modes.add("car_passenger_loop");
 		}
 
 		return modes;
