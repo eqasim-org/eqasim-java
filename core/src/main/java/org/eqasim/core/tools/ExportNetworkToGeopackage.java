@@ -56,6 +56,7 @@ public class ExportNetworkToGeopackage {
 		featureTypeBuilder.add("lanes", Integer.class);
 		featureTypeBuilder.add("capacity", Double.class);
 		featureTypeBuilder.add("freespeed", Double.class);
+		featureTypeBuilder.add("modes", String.class);
 		featureTypeBuilder.add("geometry", LineString.class);
 
 		SimpleFeatureType featureType = featureTypeBuilder.buildFeatureType();
@@ -87,6 +88,7 @@ public class ExportNetworkToGeopackage {
 				featureBuilder.add(link.getNumberOfLanes());
 				featureBuilder.add(link.getCapacity());
 				featureBuilder.add(link.getFreespeed());
+				featureBuilder.add(String.join(",", link.getAllowedModes()));
 
 				featureBuilder.add(geometryFactory.createLineString(new Coordinate[] { fromCoordinate, toCoordinate }));
 				features.add(featureBuilder.buildFeature(null));
