@@ -564,11 +564,17 @@ public class TestSimulationPipeline {
         }
 
         // We update the files used and write the config
-        config.network().setInputFile("network_parking.xml");
         config.plans().setInputFile("../output_mode_choice_for_parking/output_plans.xml.gz");
         config.global().setNumberOfThreads(1);
 
+        config.network().setInputFile("network_parking.xml");
         ConfigUtils.writeConfig(config, "melun_test/input/config_parking.xml");
+
+        config.network().setInputFile("network_parking_large.xml");
+        ConfigUtils.writeConfig(config, "melun_test/input/config_parking_large.xml");
+
+        config.network().setInputFile("network_parking_tight.xml");
+        ConfigUtils.writeConfig(config, "melun_test/input/config_parking_tight.xml");
 
         // We write a no parking config to compare
         discreteModeChoiceConfigGroup.setTourEstimator(EstimatorModule.CUMULATIVE);
@@ -585,8 +591,6 @@ public class TestSimulationPipeline {
         filter.filter(filteredNetwork, Set.of("car"));
 
         //// We start by roadSide parkings
-        Map<String, Double> parkingSpace = new HashMap<>();
-        parkingSpace.put("roadSide", 1.0);
         for(Id<Link> linkId: filteredNetwork.getLinks().keySet()) {
             scenario.getNetwork().getLinks().get(linkId).getAttributes().putAttribute("parking:roadSide", 10);
         }
@@ -605,6 +609,16 @@ public class TestSimulationPipeline {
         }
 
         NetworkUtils.writeNetwork(scenario.getNetwork(), "melun_test/input/network_parking.xml");
+
+        for(Id<Link> linkId: filteredNetwork.getLinks().keySet()) {
+            scenario.getNetwork().getLinks().get(linkId).getAttributes().putAttribute("parking:roadSide", 100);
+        }
+        NetworkUtils.writeNetwork(scenario.getNetwork(), "melun_test/input/network_parking_large.xml");
+
+        for(Id<Link> linkId: filteredNetwork.getLinks().keySet()) {
+            scenario.getNetwork().getLinks().get(linkId).getAttributes().putAttribute("parking:roadSide", 1);
+        }
+        NetworkUtils.writeNetwork(scenario.getNetwork(), "melun_test/input/network_parking_tight.xml");
 
         // Now we add authorizations for agents to park in home parkings
         AddActivityParkingAttributes.main(new String[]{
@@ -627,6 +641,8 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/input/config_parking.xml", "melun_test/output_parking", null, 60 );
+        runMelunSimulation("melun_test/input/config_parking_large.xml", "melun_test/output_parking_large", null, 60 );
+        runMelunSimulation("melun_test/input/config_parking_tight.xml", "melun_test/output_parking_tight", null, 60 );
         runMelunSimulation("melun_test/input/config_no_parking.xml", "melun_test/output_no_parking", null, 60);
     }
 
