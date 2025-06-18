@@ -1,5 +1,7 @@
 package org.eqasim.switzerland.ch.mode_choice;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -67,14 +69,17 @@ public class SwissModeAvailability implements ModeAvailability {
 		}
 
 		// Add special modes "*_loop" if applicable
-		Boolean hasLoopTrip = (Boolean) person.getAttributes().getAttribute("hasLoopTrip");
+		List<String> LOOP_MODES      = new ArrayList<>(Arrays.asList("walk_loop", "pt_loop", "bike_loop", "car_loop", "car_passenger_loop"));
+		List<String> LOOP_ATTRIBUTES = new ArrayList<>(Arrays.asList("hasWalkLoopTrip", "hasPtLoopTrip", "hasBikeLoopTrip", "hasCarLoopTrip", "hasCarPassengerLoopTrip"));
 
-		if (hasLoopTrip != null && hasLoopTrip) {
-			modes.add("walk_loop");
-			modes.add("car_loop");
-			modes.add("pt_loop");
-			modes.add("bike_loop");
-			modes.add("car_passenger_loop");
+		for (int i = 0; i < LOOP_MODES.size(); i++){
+			String mode = LOOP_MODES.get(i);
+			String attribute = LOOP_ATTRIBUTES.get(i);
+
+			Boolean hasLoopTrip = (Boolean) person.getAttributes().getAttribute(attribute);
+			if (hasLoopTrip != null && hasLoopTrip) {
+				modes.add(mode);
+			}
 		}
 
 		return modes;
