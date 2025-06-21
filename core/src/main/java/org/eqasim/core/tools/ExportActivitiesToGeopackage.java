@@ -1,6 +1,9 @@
 package org.eqasim.core.tools;
 
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.feature.DefaultFeatureCollection;
+import org.geotools.geopkg.FeatureEntry;
+import org.geotools.geopkg.GeoPackage;
 import org.locationtech.jts.geom.Coordinate;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;
@@ -16,13 +19,14 @@ import org.matsim.core.utils.gis.PointFeatureFactory;
 import org.matsim.core.utils.gis.ShapeFileWriter;
 import org.geotools.api.feature.simple.SimpleFeature;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Deprecated
-public class ExportActivitiesToShapefile {
+public class ExportActivitiesToGeopackage {
 
-    public static void exportActivitiesToShapeFile(Population population, String crsString, Set<String> ignoredActivityTypesSet, String outputPath) {
+    public static void exportActivitiesToGeopackage(Population population, String crsString, Set<String> ignoredActivityTypesSet, File outputPath) throws IOException {
 
         CoordinateReferenceSystem crs = MGC.getCRS(crsString);
 
@@ -68,13 +72,28 @@ public class ExportActivitiesToShapefile {
                 features.add(feature);
             }
         }
-        ShapeFileWriter.writeGeometries(features, outputPath);
+
+
+
+		// Wrap up
+		DefaultFeatureCollection featureCollection = new DefaultFeatureCollection();
+		featureCollection.addAll(features);
+
+		// Write
+		if (outputPath.exists()) {
+			outputPath.delete();
+		}
+
+		GeoPackage outputPackage = new GeoPackage(outputPath);
+		outputPackage.init();
+
+		FeatureEntry featureEntry = new FeatureEntry();
+		outputPackage.add(featureEntry, featureCollection);
+
+		outputPackage.close();
     }
 
-
-    public static void main(String[] args) throws CommandLine.ConfigurationException {
-        System.err.println("THIS SCRIPT IS DEPRECATED SINCE JUNE 2025");
-        
+    public static void main(String[] args) throws CommandLine.ConfigurationException, IOException {
         CommandLine commandLine = new CommandLine.Builder(args).requireOptions("plans-path", "output-path", "crs")
                 .allowOptions("ignored-activity-types").build();
 
@@ -90,6 +109,6 @@ public class ExportActivitiesToShapefile {
         PopulationReader populationReader = new PopulationReader(scenario);
         populationReader.readFile(plansPath);
 
-        exportActivitiesToShapeFile(scenario.getPopulation(), crs, ignoredActivityTypes, outputPath);
+        exportActivitiesToGeopackage(scenario.getPopulation(), crs, ignoredActivityTypes, new File(outputPath));
     }
 }
