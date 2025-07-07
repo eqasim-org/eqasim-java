@@ -116,20 +116,20 @@ public class TestEmissions {
 	private void runAddHbefa() {
 		Vehicles vehicles = VehicleUtils.createVehiclesContainer();
 		new MatsimVehicleReader(vehicles).readFile("melun_test/input/vehicles.xml.gz");
-		
+
 		for (VehicleType vehicleType : vehicles.getVehicleTypes().values()) {
 			Attributes hbefa_attributes = vehicleType.getEngineInformation().getAttributes();
-			hbefa_attributes.putAttribute("HbefaVehicleCategory", "PASSENGER_CAR");
+			hbefa_attributes.putAttribute("HbefaVehicleCategory", "pass. car");
 			hbefa_attributes.putAttribute("HbefaTechnology", "diesel");
-			hbefa_attributes.putAttribute("HbefaSizeClass", "&lt;1,4L");
-			hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC diesel Euro-3 (DPF)");
+			hbefa_attributes.putAttribute("HbefaSizeClass", "not specified");
+			hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC D Euro-3");
 		}
 
 		MatsimVehicleWriter writer = new MatsimVehicleWriter(vehicles);
 		writer.writeFile("melun_test/input/vehicles.xml.gz");
-		
+
 	}
-	
+
 	private void runModifyConfig() {
 		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
 		config.controller().setOutputDirectory("melun_test/output");
@@ -181,7 +181,7 @@ public class TestEmissions {
 				"--eqasim-configurator", TestConfigurator.class.getName() });
 
 		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
-		
+
 		// NOTE: Locally, I always get 32527 lines here. On Github CI, it is always
 		// 32528. No clue why this is, but all the previous tests on the events line
 		// length etc. pass without a problem ...
@@ -192,9 +192,9 @@ public class TestEmissions {
 				& f.getAttribute("time").toString().equals("43200")).findFirst().orElse(null);
 		assertNotNull(feature);
 
-		double expectedPm = 0.006847378350421;
-		double expectedCo = 0.456258730331835;
-		double expectedNox = 0.477558671071797;
+		double expectedPm = 0.045174881256541;
+		double expectedCo = 0.627553969527029;
+		double expectedNox = 0.810111846744523;
 		double expectedUnknown = Double.NaN;
 
 		assertEquals(expectedPm, feature.getAttribute("PM"));
