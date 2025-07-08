@@ -10,6 +10,7 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_ac
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.abstract_access.AbstractAccessesFileReader;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.analysis.AbstractAccessAnalysisOutputListener;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.analysis.AbstractAccessLegListener;
+import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessData;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.PopulationFactory;
@@ -41,8 +42,8 @@ public class TransitWithAbstractAccessModule extends AbstractEqasimExtension {
     }
 
     @Provides
-    public TransitWithAbstractAccessRoutingModule provideTransitWithAbstractAccessRoutingModule(TransitSchedule transitSchedule, @Named("pt") RoutingModule ptRoutingModule, Network network, PopulationFactory populationFactory, AbstractAccesses abstractAccesses) {
-        return new TransitWithAbstractAccessRoutingModule(transitSchedule, abstractAccesses, network, ptRoutingModule, populationFactory);
+    public TransitWithAbstractAccessRoutingModule provideTransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, @Named("pt") RoutingModule ptRoutingModule, Network network, PopulationFactory populationFactory, AbstractAccesses abstractAccesses) {
+        return new TransitWithAbstractAccessRoutingModule(transitWithAbstractAccessData, abstractAccesses, network, ptRoutingModule, populationFactory);
     }
 
     @Provides
@@ -52,5 +53,11 @@ public class TransitWithAbstractAccessModule extends AbstractEqasimExtension {
         URL inputAccessFilePath = ConfigGroup.getInputFileURL(getConfig().getContext(), this.configGroup.getAccessItemsFilePath());
         fileReader.readFile(inputAccessFilePath.getPath());
         return new AbstractAccesses(fileReader.getAccessItems());
+    }
+
+    @Provides
+    @Singleton
+    public TransitWithAbstractAccessData provideTransitWithAbstractAccessData(TransitSchedule transitSchedule, Network network) {
+        return new TransitWithAbstractAccessData(transitSchedule, network);
     }
 }

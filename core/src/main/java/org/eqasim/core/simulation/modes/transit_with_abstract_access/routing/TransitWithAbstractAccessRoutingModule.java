@@ -19,7 +19,6 @@ import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
 import org.matsim.core.router.speedy.SpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelTime;
-import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.transitSchedule.api.*;
 
@@ -30,14 +29,16 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
     public static final String ABSTRACT_ACCESS_LEG_MODE_NAME = "abstractAccess";
     private final IdMap<TransitStopFacility, List<AbstractAccessItem>> accessItems;
     private final IdMap<AbstractAccessItem, LeastCostPathCalculator> pathCalculators;
-    private final QuadTree<TransitStopFacility> quadTree;
     private final RoutingModule transitRoutingModule;
     private final double maxRadius;
     private final PopulationFactory populationFactory;
     private final Network network;
     private final IdMap<TransitStopFacility, Id<Link>> transitStopFacilityLinks;
+    private final TransitWithAbstractAccessData transitWithAbstractAccessData;
 
-    public TransitWithAbstractAccessRoutingModule(TransitSchedule transitSchedule, AbstractAccesses abstractAccesses, Network network, RoutingModule transitRoutingModule, PopulationFactory populationFactory) {
+    public TransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, AbstractAccesses abstractAccesses, Network network, RoutingModule transitRoutingModule, PopulationFactory populationFactory) {
+
+        this.transitWithAbstractAccessData = transitWithAbstractAccessData;
 
         // The provided network is cleaned to keep only the biggest cluster
         // This is done to be able to compute paths to PT links from non-PT links.
@@ -55,7 +56,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
 
         for (Map.Entry<Id<TransitStopFacility>, List<AbstractAccessItem>> entry : abstractAccesses.getAbstractAccessItemsByTransitStop().entrySet()) {
             // In case there are facilities mentioned in the input map but with an empty list of access items
-            if (entry.getValue().size() > 0) {
+            if (!entry.getValue().isEmpty()) {
                 atLeastOneAccess = true;
                 this.accessItems.put(entry.getKey(), entry.getValue());
                 for (AbstractAccessItem abstractAccessItem : entry.getValue()) {
@@ -80,24 +81,8 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         this.maxRadius = maxRadius;
 
         this.transitRoutingModule = transitRoutingModule;
-        double[] bounds = NetworkUtils.getBoundingBox(network.getNodes().values());
-        this.quadTree = new QuadTree<>(bounds[0], bounds[1], bounds[2], bounds[3]);
 
         this.populationFactory = populationFactory;
-
-        Set<Id<TransitStopFacility>> processedFacilities = new HashSet<>();
-
-        for (TransitLine transitLine : transitSchedule.getTransitLines().values()) {
-            for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
-                for (TransitRouteStop transitRouteStop : transitRoute.getStops()) {
-                    TransitStopFacility transitStopFacility = transitRouteStop.getStopFacility();
-                    if (!processedFacilities.contains(transitStopFacility.getId())) {
-                        processedFacilities.add(transitStopFacility.getId());
-                        this.quadTree.put(transitStopFacility.getCoord().getX(), transitStopFacility.getCoord().getY(), transitStopFacility);
-                    }
-                }
-            }
-        }
     }
 
     @Override
@@ -192,7 +177,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
     }
 
     private TransitStopFacility getClosestTransitStopWithValidAccessItem(Coord coord, IdMap<TransitStopFacility, AbstractAccessItem> bestAccessesMap) {
-        return this.quadTree.getDisk(coord.getX(), coord.getY(), this.maxRadius).
+        return this.transitWithAbstractAccessData.getQuadTree().getDisk(coord.getX(), coord.getY(), this.maxRadius).
                 stream().
                 filter(transitStopFacility -> {
                     if (!accessItems.containsKey(transitStopFacility.getId())) {
