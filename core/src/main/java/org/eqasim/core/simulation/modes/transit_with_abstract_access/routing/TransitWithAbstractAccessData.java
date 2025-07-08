@@ -3,10 +3,12 @@ package org.eqasim.core.simulation.modes.transit_with_abstract_access.routing;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.utils.collections.QuadTree;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.transitSchedule.api.*;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -14,6 +16,7 @@ import java.util.stream.Stream;
 public class TransitWithAbstractAccessData {
 
     private final QuadTree<TransitStopFacility> quadTree;
+    private final Network network;
 
     public TransitWithAbstractAccessData(TransitSchedule transitSchedule, Network network) {
 
@@ -31,10 +34,21 @@ public class TransitWithAbstractAccessData {
                 }
             }
         }
+
+        this.network = NetworkUtils.createNetwork();
+
+        // The provided network is cleaned to keep only the biggest cluster
+        // This is done to be able to compute paths to PT links from non-PT links.
+        // The formers are very often not connected to the car network
+        new TransportModeNetworkFilter(network).filter(this.network, Collections.singleton("car"));
     }
 
     public QuadTree<TransitStopFacility> getQuadTree() {
         return this.quadTree;
+    }
+
+    public Network getNetwork() {
+        return this.network;
     }
 
 }

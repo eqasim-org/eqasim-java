@@ -42,8 +42,8 @@ public class TransitWithAbstractAccessModule extends AbstractEqasimExtension {
     }
 
     @Provides
-    public TransitWithAbstractAccessRoutingModule provideTransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, @Named("pt") RoutingModule ptRoutingModule, Network network, PopulationFactory populationFactory, AbstractAccesses abstractAccesses) {
-        return new TransitWithAbstractAccessRoutingModule(transitWithAbstractAccessData, abstractAccesses, network, ptRoutingModule, populationFactory);
+    public TransitWithAbstractAccessRoutingModule provideTransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, @Named("pt") RoutingModule ptRoutingModule, PopulationFactory populationFactory, AbstractAccesses abstractAccesses) {
+        return new TransitWithAbstractAccessRoutingModule(transitWithAbstractAccessData, abstractAccesses, ptRoutingModule, populationFactory);
     }
 
     @Provides

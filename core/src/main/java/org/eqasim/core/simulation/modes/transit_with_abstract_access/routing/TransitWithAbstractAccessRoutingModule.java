@@ -10,7 +10,6 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.RoutingModule;
@@ -32,20 +31,13 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
     private final RoutingModule transitRoutingModule;
     private final double maxRadius;
     private final PopulationFactory populationFactory;
-    private final Network network;
     private final IdMap<TransitStopFacility, Id<Link>> transitStopFacilityLinks;
     private final TransitWithAbstractAccessData transitWithAbstractAccessData;
 
-    public TransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, AbstractAccesses abstractAccesses, Network network, RoutingModule transitRoutingModule, PopulationFactory populationFactory) {
+    public TransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, AbstractAccesses abstractAccesses, RoutingModule transitRoutingModule, PopulationFactory populationFactory) {
 
         this.transitWithAbstractAccessData = transitWithAbstractAccessData;
 
-        // The provided network is cleaned to keep only the biggest cluster
-        // This is done to be able to compute paths to PT links from non-PT links.
-        // The formers are very often not connected to the car network
-
-        this.network = NetworkUtils.createNetwork();
-        new TransportModeNetworkFilter(network).filter(this.network, Collections.singleton("car"));
         this.accessItems = new IdMap<>(TransitStopFacility.class);
         this.pathCalculators = new IdMap<>(AbstractAccessItem.class);
         this.transitStopFacilityLinks = new IdMap<>(TransitStopFacility.class);
@@ -64,12 +56,12 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                         maxRadius = abstractAccessItem.getRadius();
                     }
                     if(!this.transitStopFacilityLinks.containsKey(entry.getKey())) {
-                        Link link = NetworkUtils.getNearestLink(this.network, abstractAccessItem.getCenterStop().getCoord());
+                        Link link = NetworkUtils.getNearestLink(this.transitWithAbstractAccessData.getNetwork(), abstractAccessItem.getCenterStop().getCoord());
                         this.transitStopFacilityLinks.put(entry.getKey(), link.getId());
                     }
                     if(abstractAccessItem.isUsingRoutedDistance()) {
                         TravelTime travelTime = (link, time, person, vehicle) -> Math.min(link.getLength() / abstractAccessItem.getAvgSpeedToCenterStop(), link.getLength() / link.getFreespeed());
-                        LeastCostPathCalculator pathCalculator = factory.createPathCalculator(this.network, new OnlyTimeDependentTravelDisutility(travelTime), travelTime);
+                        LeastCostPathCalculator pathCalculator = factory.createPathCalculator(this.transitWithAbstractAccessData.getNetwork(), new OnlyTimeDependentTravelDisutility(travelTime), travelTime);
                         this.pathCalculators.put(abstractAccessItem.getId(), pathCalculator);
                     }
                 }
@@ -88,11 +80,11 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
     @Override
     public List<? extends PlanElement> calcRoute(RoutingRequest routingRequest) {
         // Let's first find the transit stops that provide a feasible access from the origin and to the destination of the trip
-        Coord fromFacilityCoord = this.network.getLinks().get(routingRequest.getFromFacility().getLinkId()).getCoord();
+        Coord fromFacilityCoord = this.transitWithAbstractAccessData.getNetwork().getLinks().get(routingRequest.getFromFacility().getLinkId()).getCoord();
         IdMap<TransitStopFacility, AbstractAccessItem> bestAccessItemForOrigin = new IdMap<>(TransitStopFacility.class);
         TransitStopFacility accessTransitStopFacility = this.getClosestTransitStopWithValidAccessItem(fromFacilityCoord, bestAccessItemForOrigin);
 
-        Coord toFacilityCoord = this.network.getLinks().get(routingRequest.getToFacility().getLinkId()).getCoord();
+        Coord toFacilityCoord = this.transitWithAbstractAccessData.getNetwork().getLinks().get(routingRequest.getToFacility().getLinkId()).getCoord();
         IdMap<TransitStopFacility, AbstractAccessItem> bestAccessItemForDestination = new IdMap<>(TransitStopFacility.class);
         TransitStopFacility egresssTransitStopFacility = this.getClosestTransitStopWithValidAccessItem(toFacilityCoord, bestAccessItemForDestination);
 
@@ -159,14 +151,14 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         leg.getAttributes().putAttribute("accessId", accessItem.getId().toString());
 
         if(accessItem.isUsingRoutedDistance()) {
-            Node fromNode = this.network.getLinks().get(fromLinkId).getFromNode();
-            Node toNode = this.network.getLinks().get(toLinkId).getToNode();
+            Node fromNode = this.transitWithAbstractAccessData.getNetwork().getLinks().get(fromLinkId).getFromNode();
+            Node toNode = this.transitWithAbstractAccessData.getNetwork().getLinks().get(toLinkId).getToNode();
             LeastCostPathCalculator.Path path = this.pathCalculators.get(accessItem.getId()).calcLeastCostPath(fromNode, toNode, departureTime, person, null);
             double travelTime = path.travelTime;
             abstractAccessRoute.setDistance(path.travelCost);
             abstractAccessRoute.setTravelTime(travelTime);
         } else {
-            double distance = accessItem.getDistanceToCenter(this.network.getLinks().get(otherLinkId).getCoord());
+            double distance = accessItem.getDistanceToCenter(this.transitWithAbstractAccessData.getNetwork().getLinks().get(otherLinkId).getCoord());
             abstractAccessRoute.setDistance(distance);
             abstractAccessRoute.setTravelTime(accessItem.getTimeToCenter(distance));
         }
