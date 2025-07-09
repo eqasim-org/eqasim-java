@@ -6,7 +6,6 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.network.NetworkUtils;
@@ -105,13 +104,19 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             activity.setEndTime(departureTime);
             plan.add(activity);
         } else {
+            // We are sure that egressTransitStopFacility is not null because of the if block above
             List<? extends PlanElement> ptRoute = this.transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(routingRequest.getFromFacility(), egresssTransitStopFacility, routingRequest.getDepartureTime(), routingRequest.getPerson()));
             for(PlanElement element: ptRoute) {
                 if(element instanceof Leg leg) {
                     departureTime = leg.getDepartureTime().seconds();
                     departureTime+=leg.getTravelTime().seconds();
                 }
+                plan.add(element);
             }
+            Activity activity = this.populationFactory.createActivityFromLinkId("pt interaction", egresssTransitStopFacility.getLinkId());
+            activity.setStartTime(departureTime);
+            activity.setEndTime(departureTime);
+            plan.add(activity);
         }
 
         if(egresssTransitStopFacility != null) {
@@ -135,6 +140,10 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             AbstractAccessItem abstractAccessItem = bestAccessItemForDestination.get(egresssTransitStopFacility.getId());
             Leg leg = this.createAbstractAccessLeg(abstractAccessItem, false, routingRequest.getToFacility().getLinkId(), departureTime, routingRequest.getPerson());
             plan.add(leg);
+        } else {
+            // We are sure that the accessStopFacility was not null, so we route from there to the destination
+            List<? extends PlanElement> ptRoute = this.transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessTransitStopFacility, routingRequest.getToFacility(), departureTime, routingRequest.getPerson()));
+            plan.addAll(ptRoute);
         }
         return plan;
     }
