@@ -1,0 +1,181 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+package ch.sbb.matsim.routing.pt.raptor;
+
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.api.core.v01.population.Route;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.RoutingConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
+import org.matsim.core.gbl.Gbl;
+import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.population.routes.RouteUtils;
+import org.matsim.pt.router.TransitRouterConfig;
+import org.matsim.pt.routes.DefaultTransitPassengerRoute;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public final class RaptorUtils {
+    private static final Logger log = LogManager.getLogger(RaptorUtils.class);
+
+    private RaptorUtils() {
+    }
+
+    public static RaptorStaticConfig createStaticConfig(Config config) {
+        RoutingConfigGroup routingConfig = config.routing();
+        SwissRailRaptorConfigGroup srrConfig = (SwissRailRaptorConfigGroup)ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
+        RaptorStaticConfig staticConfig = new RaptorStaticConfig();
+        staticConfig.setBeelineWalkConnectionDistance(config.transitRouter().getMaxBeelineWalkConnectionDistance());
+        RoutingConfigGroup.TeleportedModeParams params = (RoutingConfigGroup.TeleportedModeParams)routingConfig.getTeleportedModeParams().get("transit_walk");
+        if (params == null) {
+            params = (RoutingConfigGroup.TeleportedModeParams)routingConfig.getTeleportedModeParams().get("non_network_walk");
+        }
+
+        if (params == null) {
+            params = (RoutingConfigGroup.TeleportedModeParams)routingConfig.getTeleportedModeParams().get("walk");
+        }
+
+        if (params == null) {
+            log.error("teleported mode params do not exist for transit_walk, non_network_walk, nor walk.  At least one of them needs to be defined for TransitRouterConfig.  Aborting ...");
+        }
+
+        Gbl.assertNotNull(params);
+        staticConfig.setBeelineWalkSpeed(params.getTeleportedModeSpeed() / params.getBeelineDistanceFactor());
+        staticConfig.setBeelineWalkDistanceFactor(params.getBeelineDistanceFactor());
+        staticConfig.setTransferWalkMargin(srrConfig.getTransferWalkMargin());
+        staticConfig.setIntermodalLegOnlyHandling(srrConfig.getIntermodalLegOnlyHandling());
+        staticConfig.setMinimalTransferTime(config.transitRouter().getAdditionalTransferTime());
+        staticConfig.setTransferCalculation(srrConfig.getTransferCalculation());
+        staticConfig.setUseModeMappingForPassengers(srrConfig.isUseModeMappingForPassengers());
+        if (srrConfig.isUseModeMappingForPassengers()) {
+            for(SwissRailRaptorConfigGroup.ModeMappingForPassengersParameterSet mapping : srrConfig.getModeMappingForPassengers()) {
+                staticConfig.addModeMappingForPassengers(mapping.getRouteMode(), mapping.getPassengerMode());
+            }
+        }
+
+        for(SwissRailRaptorConfigGroup.ModeToModeTransferPenalty penalty : srrConfig.getModeToModeTransferPenaltyParameterSets()) {
+            staticConfig.addModeToModeTransferPenalty(penalty.fromMode, penalty.toMode, penalty.transferPenalty);
+        }
+
+        staticConfig.setUseCapacityConstraints(srrConfig.isUseCapacityConstraints());
+        return staticConfig;
+    }
+
+    public static RaptorParameters createParameters(Config config) {
+        SwissRailRaptorConfigGroup advancedConfig = (SwissRailRaptorConfigGroup)ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
+        TransitRouterConfig trConfig = new TransitRouterConfig(config);
+        RaptorParameters raptorParams = new RaptorParameters(advancedConfig);
+        raptorParams.setBeelineWalkSpeed(trConfig.getBeelineWalkSpeed());
+        raptorParams.setSearchRadius(config.transitRouter().getSearchRadius());
+        raptorParams.setExtensionRadius(config.transitRouter().getExtensionRadius());
+        raptorParams.setDirectWalkFactor(config.transitRouter().getDirectWalkFactor());
+        raptorParams.setMarginalUtilityOfWaitingPt_utl_s(trConfig.getMarginalUtilityOfWaitingPt_utl_s());
+        ScoringConfigGroup pcsConfig = config.scoring();
+        double marginalUtilityPerforming = pcsConfig.getPerforming_utils_hr() / (double)3600.0F;
+
+        for(Map.Entry<String, ScoringConfigGroup.ModeParams> e : pcsConfig.getModes().entrySet()) {
+            String mode = (String)e.getKey();
+            ScoringConfigGroup.ModeParams modeParams = (ScoringConfigGroup.ModeParams)e.getValue();
+            double marginalUtility_utl_s = modeParams.getMarginalUtilityOfTraveling() / (double)3600.0F - marginalUtilityPerforming;
+            raptorParams.setMarginalUtilityOfTravelTime_utl_s(mode, marginalUtility_utl_s);
+        }
+
+        double costPerHour = advancedConfig.getTransferPenaltyCostPerTravelTimeHour();
+        if (costPerHour == (double)0.0F) {
+            raptorParams.setTransferPenaltyFixCostPerTransfer(-trConfig.getUtilityOfLineSwitch_utl());
+        } else {
+            raptorParams.setTransferPenaltyFixCostPerTransfer(advancedConfig.getTransferPenaltyBaseCost());
+        }
+
+        raptorParams.setTransferPenaltyPerTravelTimeHour(costPerHour);
+        raptorParams.setTransferPenaltyMinimum(advancedConfig.getTransferPenaltyMinCost());
+        raptorParams.setTransferPenaltyMaximum(advancedConfig.getTransferPenaltyMaxCost());
+        return raptorParams;
+    }
+
+    public static List<? extends PlanElement> convertRouteToLegs(RaptorRoute route, double transferWalkMargin) {
+        List<PlanElement> legs = new ArrayList(route.parts.size());
+        double lastArrivalTime = Double.NaN;
+        boolean firstPtLegProcessed = false;
+        Leg previousTransferWalkleg = null;
+
+        for(RaptorRoute.RoutePart part : route.parts) {
+            if (part.planElements != null) {
+                for(PlanElement pe : part.planElements) {
+                    if (pe instanceof Leg) {
+                        Leg leg = (Leg)pe;
+                        legs.add(leg);
+                        if (leg.getDepartureTime().isUndefined()) {
+                            leg.setDepartureTime(lastArrivalTime);
+                        }
+
+                        lastArrivalTime = leg.getDepartureTime().seconds() + leg.getTravelTime().seconds();
+                    } else {
+                        Activity act = (Activity)pe;
+                        legs.add(act);
+                    }
+                }
+            } else if (part.line != null) {
+                Leg ptLeg = PopulationUtils.createLeg(part.mode);
+                ptLeg.setDepartureTime(part.depTime);
+                ptLeg.setTravelTime(part.arrivalTime - part.depTime);
+
+                DefaultTransitPassengerRoute defaultTransitPassengerRoute = convertRoutePart(part);
+                defaultTransitPassengerRoute.totalPtRoutingCost = route.getTotalCosts();
+                ptLeg.setRoute(defaultTransitPassengerRoute);
+
+                legs.add(ptLeg);
+                lastArrivalTime = part.arrivalTime;
+                firstPtLegProcessed = true;
+                if (previousTransferWalkleg != null) {
+                    double traveltime = Math.max((double)0.0F, previousTransferWalkleg.getTravelTime().seconds() - transferWalkMargin);
+                    previousTransferWalkleg.setTravelTime(traveltime);
+                    previousTransferWalkleg.getRoute().setTravelTime(traveltime);
+                }
+            } else {
+                Leg walkLeg = PopulationUtils.createLeg(part.mode);
+                walkLeg.setDepartureTime(part.depTime);
+                double travelTime = part.arrivalTime - part.depTime;
+                walkLeg.setTravelTime(travelTime);
+                Id<Link> startLinkId = part.fromStop == null ? (route.fromFacility == null ? null : route.fromFacility.getLinkId()) : part.fromStop.getLinkId();
+                Id<Link> endLinkId = part.toStop == null ? (route.toFacility == null ? null : route.toFacility.getLinkId()) : part.toStop.getLinkId();
+                Route walkRoute = RouteUtils.createGenericRouteImpl(startLinkId, endLinkId);
+                walkRoute.setTravelTime(travelTime);
+                walkRoute.setDistance(part.distance);
+                walkLeg.setRoute(walkRoute);
+                legs.add(walkLeg);
+                lastArrivalTime = part.arrivalTime;
+                if (firstPtLegProcessed) {
+                    previousTransferWalkleg = walkLeg;
+                }
+            }
+        }
+
+        return legs;
+    }
+
+    private static DefaultTransitPassengerRoute convertRoutePart(RaptorRoute.RoutePart part) {
+        if (part == null) {
+            return null;
+        } else {
+            DefaultTransitPassengerRoute ptRoute = new DefaultTransitPassengerRoute(part.fromStop, part.line, part.route, part.toStop, convertRoutePart(part.chainedPart));
+            ptRoute.setBoardingTime(part.boardingTime);
+            ptRoute.setTravelTime(part.arrivalTime - part.depTime);
+            ptRoute.setDistance(part.distance);
+            return ptRoute;
+        }
+    }
+}

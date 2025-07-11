@@ -1,5 +1,7 @@
 package org.eqasim.core.simulation.modes.transit_with_abstract_access;
 
+import ch.sbb.matsim.routing.pt.raptor.RaptorParametersForPerson;
+import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
@@ -14,6 +16,7 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.Tra
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.PopulationFactory;
+import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -42,8 +45,8 @@ public class TransitWithAbstractAccessModule extends AbstractEqasimExtension {
     }
 
     @Provides
-    public TransitWithAbstractAccessRoutingModule provideTransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, @Named("pt") RoutingModule ptRoutingModule, PopulationFactory populationFactory, AbstractAccesses abstractAccesses) {
-        return new TransitWithAbstractAccessRoutingModule(transitWithAbstractAccessData, abstractAccesses, ptRoutingModule, populationFactory);
+    public TransitWithAbstractAccessRoutingModule provideTransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, @Named("pt") RoutingModule ptRoutingModule, PopulationFactory populationFactory, AbstractAccesses abstractAccesses, RaptorParametersForPerson raptorParametersForPerson, Config config) {
+        return new TransitWithAbstractAccessRoutingModule(transitWithAbstractAccessData, abstractAccesses, ptRoutingModule, populationFactory, raptorParametersForPerson, RaptorUtils.createStaticConfig(config));
     }
 
     @Provides
