@@ -260,6 +260,14 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
 
         TransitWithAbstractAccessRouteAlternative bestAlternative = alternatives.poll();
 
+        // We put the total routing cost of the mixed route in the first abstract access route of the chain
+        for(PlanElement planElement: bestAlternative.elements) {
+            if(planElement instanceof Leg leg && leg.getRoute() instanceof DefaultAbstractAccessRoute defaultAbstractAccessRoute) {
+                defaultAbstractAccessRoute.setTotalRoutingCost(bestAlternative.totalRoutingCost);
+                break;
+            }
+        }
+
         return bestAlternative.elements;
     }
 

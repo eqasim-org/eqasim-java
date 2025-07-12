@@ -76,6 +76,14 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
         this.routeDescription.waitTime = waitTime;
     }
 
+    public void setTotalRoutingCost(double totalRoutingCost) {
+        this.routeDescription.totalRoutingCost = totalRoutingCost;
+    }
+
+    public double getTotalRoutingCost() {
+        return this.routeDescription.totalRoutingCost;
+    }
+
     @Override
     public Id<AbstractAccessItem> getAbstractAccessItemId() {
         return this.routeDescription.accessItemId;
@@ -86,6 +94,7 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
         public boolean leavingAccessCenter;
         public boolean isRouted;
         public double waitTime = 0;
+        public double totalRoutingCost = Double.NaN;
 
         @JsonProperty("accessItemId")
         public String getAccessItemId() {
@@ -95,6 +104,15 @@ public class DefaultAbstractAccessRoute extends AbstractRoute implements Abstrac
         @JsonProperty("accessItemId")
         public void setAccessItemId(String accessItemId) {
             this.accessItemId = accessItemId == null ? null : Id.create(accessItemId, AbstractAccessItem.class);
+        }
+
+        public String getTotalRoutingCost() {
+            return String.valueOf(totalRoutingCost);
+        }
+
+        @JsonProperty
+        public void setTotalRoutingCost(String totalRoutingCost) {
+            this.totalRoutingCost = totalRoutingCost == null ? Double.NaN : Double.parseDouble(totalRoutingCost);
         }
     }
 }
