@@ -42,7 +42,8 @@ public class RunSimulation {
 		configurator.adjustPTpcu(scenario);
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
-        controller.addOverridingModule(new PTModule());
+        controller.addOverridingModule(new PTPassengerCountsModule());
+        controller.addOverridingModule(new PTLinkVolumesModule());
 
 		 // To use the deterministic pt simulation (Part 1 of 2):
         controller.addOverridingModule(new SBBTransitModule());

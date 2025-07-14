@@ -18,7 +18,7 @@ import org.matsim.vehicles.Vehicle;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
-public class PTModule extends AbstractModule{
+public class PTPassengerCountsModule extends AbstractModule{
 
 	@Override
 	public void install() {

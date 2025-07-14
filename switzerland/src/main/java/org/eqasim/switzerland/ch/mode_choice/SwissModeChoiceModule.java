@@ -6,7 +6,9 @@ import java.io.IOException;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissPtCostModel;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissCostParameters;
@@ -29,12 +31,16 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String CAR_COST_MODEL_NAME = "SwissCarCostModel";
 	static public final String PT_COST_MODEL_NAME = "SwissPtCostModel";
 
+	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
+
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
 	}
 
 	@Override
 	protected void installEqasimExtension() {
+		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
+
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissModeAvailability.class);
 
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(SwissCarUtilityEstimator.class);

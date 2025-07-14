@@ -90,6 +90,11 @@ public class RunAdaptConfig {
 		}
 		dmcConfig.setCachedModes(cachedModes);
 
+		Collection<String> constraints = dmcConfig.getTripConstraints();
+		constraints.add("LoopModesConstraint");
+
+		dmcConfig.setTripConstraints(constraints);
+
 		ScoringConfigGroup scoringConfig1 = config.scoring();
 		RoutingConfigGroup routingConfig  = config.routing();
 		for (String mode : LOOP_MODES) {
