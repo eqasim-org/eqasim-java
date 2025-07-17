@@ -69,7 +69,6 @@ public class RunSimulation {
 		configurator.configureController(controller);
         controller.addOverridingModule(new PTPassengerCountsModule());
         controller.addOverridingModule(new PTLinkVolumesModule());
-		controller.addOverridingModule(new StopVisitModule(zonalRegistry));
 
 		 // To use the deterministic pt simulation (Part 1 of 2):
         controller.addOverridingModule(new SBBTransitModule());
