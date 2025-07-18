@@ -1,14 +1,6 @@
 package org.eqasim.switzerland.ch;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-
-import org.eqasim.switzerland.ch.utils.pricing.inputs.zonal.ZonalReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.zonal.ZonalRegistry;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.zonal.Zone;
-import org.eqasim.switzerland.ch.utils.pricing.stopvisiteventhandler.StopVisitModule;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.zonal.Authority;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -18,8 +10,6 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-
-import com.opencsv.exceptions.CsvValidationException;
 
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
@@ -32,20 +22,6 @@ public class RunSimulation {
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
 				.build();
-
-		File path = new File("/cluster/project/cmdp/asallard/analysis/PT pricing/data/gtfs_zones.csv");
-
-		ZonalReader zonalReader = new ZonalReader();
-		ZonalRegistry zonalRegistry = null;
-		try {
-			Collection<Authority> authorities = zonalReader.readTarifNetworks(path);
-			Collection<Zone> zones = zonalReader.readZones(path, authorities);
-			zonalRegistry = new ZonalRegistry(authorities, zones);
-
-			System.out.println("Test of zonal registry");
-			System.out.println(zonalRegistry.getZones("8590554"));
-		} catch (CsvValidationException e) {
-		}
 		
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
