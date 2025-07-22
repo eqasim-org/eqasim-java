@@ -32,11 +32,11 @@ public class IDFCarCostModel extends AbstractCostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		double parkingCost_EUR = calculateParkingCost_EUR(person, trip, elements);
+		double parkingCost_EUR = 0.0; // calculateParkingCost_EUR(person, trip, elements);
 		return costParameters.carCost_EUR_km * getInVehicleDistance_km(elements) + parkingCost_EUR;
 	}
 
-	private double calculateParkingCost_EUR(Person person, DiscreteModeChoiceTrip trip,
+	/*private double calculateParkingCost_EUR(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 
@@ -67,5 +67,5 @@ public class IDFCarCostModel extends AbstractCostModel {
 	private boolean hasParisDestination(DiscreteModeChoiceTrip trip) {
 		Boolean isParis = (Boolean) trip.getDestinationActivity().getAttributes().getAttribute("isParis");
 		return isParis != null && isParis;
-	}
+	}*/
 }
