@@ -11,6 +11,9 @@ import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.AttributeCrossingPenalty;
+import org.eqasim.core.components.traffic.CrossingPenalty;
+import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.scenario.cutter.RunScenarioCutterV2;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -46,6 +49,7 @@ import org.eqasim.core.tools.sampling.RunDownsampling;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
@@ -277,10 +281,12 @@ public class TestSimulationPipeline {
 
         ScenarioExtent updateExtent = new ShapeScenarioExtent.Builder(new File(updateExtentPath), Optional.empty(), Optional.empty()).build();
 
-        VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, eqasimConfigGroup.getCrossingPenalty(), updateExtent);
+        CrossingPenalty crossingPenalty = new AttributeCrossingPenalty(new IdMap<>(Link.class), DefaultCrossingPenalty.build(scenario.getNetwork(), eqasimConfigGroup.getCrossingPenalty()));
+
+        VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
         leftTravelTime.readFrom(new File(leftTravelTimesPath).toURI().toURL());
 
-        VDFTravelTime rightTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, eqasimConfigGroup.getCrossingPenalty(), updateExtent);
+        VDFTravelTime rightTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
         rightTravelTime.readFrom(new File(rightTravelTimesPath).toURI().toURL());
 
         for(double time = vdfScope.getStartTime(); time <= vdfScope.getEndTime(); time += vdfScope.getIntervalTime()) {
