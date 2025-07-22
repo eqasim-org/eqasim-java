@@ -45,7 +45,7 @@ public class RunAdaptConfig {
 		config.routing().addTeleportedModeParams(bicycleRouteParams);
 		
 		TeleportedModeParams walkRouteParams = config.routing().getTeleportedModeParams().get(TransportMode.walk);
-		walkRouteParams.setTeleportedModeSpeed(3.5 / 3.6);
+		walkRouteParams.setTeleportedModeSpeed(3.25 / 3.6);
 		walkRouteParams.setBeelineDistanceFactor(1.3);
 
 		// MATSim: scoring
