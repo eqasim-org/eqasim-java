@@ -17,8 +17,11 @@ import org.matsim.core.utils.gis.PolylineFeatureFactory;
 import org.matsim.core.utils.gis.ShapeFileWriter;
 import org.geotools.api.feature.simple.SimpleFeature;
 
+@Deprecated
 public class ExportNetworkToShapefile {
 	public static void main(String[] args) throws Exception {
+        System.err.println("THIS SCRIPT IS DEPRECATED SINCE JUNE 2025");
+		
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("network-path", "output-path", "crs") //
 				.allowOptions("modes") //

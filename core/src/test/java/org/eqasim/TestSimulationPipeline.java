@@ -39,12 +39,12 @@ import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
-import org.eqasim.core.tools.ExportActivitiesToShapefile;
+import org.eqasim.core.tools.ExportActivitiesToGeopackage;
 import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
+import org.eqasim.core.tools.ExportNetworkToGeopackage;
 import org.eqasim.core.tools.ExportPopulationToCSV;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.ExportTransitLinesToGeopackage;
+import org.eqasim.core.tools.ExportTransitStopsToGeopackage;
 import org.eqasim.core.tools.sampling.RunDownsampling;
 import org.junit.After;
 import org.junit.Before;
@@ -156,14 +156,14 @@ public class TestSimulationPipeline {
     }
 
     private void runExports() throws Exception {
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
                 "--output-path", "melun_test/exports/lines.shp"
         });
 
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
@@ -171,7 +171,7 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/lines_rail.shp"
         });
 
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
@@ -179,7 +179,7 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/lines_line_ids.shp"
         });
 
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
@@ -187,19 +187,19 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/lines_route_ids.shp"
         });
 
-        ExportTransitStopsToShapefile.main(new String[]{
+        ExportTransitStopsToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--crs", "EPSG:2154",
                 "--output-path", "melun_test/exports/stops.shp"
         });
 
-        ExportNetworkToShapefile.main(new String[]{
+        ExportNetworkToGeopackage.main(new String[]{
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
                 "--output-path", "melun_test/exports/network.shp"
         });
 
-        ExportActivitiesToShapefile.main(new String[]{
+        ExportActivitiesToGeopackage.main(new String[]{
                 "--plans-path", "melun_test/input/population.xml.gz",
                 "--output-path", "melun_test/exports/activities.shp",
                 "--crs", "EPSG:2154"
