@@ -65,8 +65,8 @@ public class FeederTripSequenceWriter {
                     Double.isNaN(item.accessArrivalTime) ? "NaN" : String.valueOf(item.accessArrivalTime),
                     Double.isNaN(item.egressArrivalTime) ? "NaN" : String.valueOf(item.egressArrivalTime),
 
-                    String.valueOf(item.accessVehicleId),
-                    String.valueOf(item.egressVehicleId),
+                    String.valueOf(item.accessTransitStopId),
+                    String.valueOf(item.egressTransitStopId),
 
                     String.valueOf(item.accessTransitLineId),
                     String.valueOf(item.egressTransitLineId),

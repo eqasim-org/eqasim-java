@@ -1,0 +1,36 @@
+on:
+  push:
+    branches:
+      - develop
+  
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+name: release-please
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.RELEASE }}
+      - uses: actions/setup-java@v4
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          distribution: zulu
+          java-version: 21
+          cache: maven
+      - name: Build
+        if: ${{ steps.release.outputs.release_created }}
+        run: mvn package -DskipTests
+      - name: Deploy to packagecloud
+        if: ${{ steps.release.outputs.release_created }}
+        run: mvn --settings .github/settings.xml deploy -DskipTests
+        env:
+          PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}

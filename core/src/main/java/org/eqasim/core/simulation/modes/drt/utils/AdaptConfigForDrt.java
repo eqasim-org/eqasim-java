@@ -21,11 +21,11 @@ import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstr
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
 import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
-import org.matsim.contrib.drt.analysis.zonal.DrtZoneSystemParams;
-import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
+import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.extensive.ExtensiveInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.rebalancing.RebalancingParams;
+import org.matsim.contrib.drt.optimizer.rebalancing.RebalancingParams.TargetLinkSelection;
 import org.matsim.contrib.drt.optimizer.rebalancing.plusOne.PlusOneRebalancingStrategyParams;
 import org.matsim.contrib.drt.run.DrtConfigGroup;
 import org.matsim.contrib.drt.run.DrtConfigs;
@@ -33,6 +33,7 @@ import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.dvrp.fleet.FleetReader;
 import org.matsim.contrib.dvrp.fleet.FleetSpecification;
 import org.matsim.contrib.dvrp.fleet.FleetSpecificationImpl;
+import org.matsim.contrib.dvrp.load.IntegerLoadType;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -73,33 +74,31 @@ public class AdaptConfigForDrt {
 
         for(String drtMode: vehiclesPathByDrtMode.keySet()) {
             DrtConfigGroup drtConfigGroup = new DrtConfigGroup();
-            drtConfigGroup.mode = drtMode;
-            drtConfigGroup.operationalScheme = DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode));
-            if(drtConfigGroup.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
+            drtConfigGroup.setMode(drtMode);
+            drtConfigGroup.setOperationalScheme(DrtConfigGroup.OperationalScheme.valueOf(operationalSchemes.get(drtMode)));
+            if(drtConfigGroup.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
                 serviceAreaDrt = true;
             }
-            drtConfigGroup.stopDuration = 15.0;
-            DefaultDrtOptimizationConstraintsSet defaultDrtOptimizationConstraintsSet = (DefaultDrtOptimizationConstraintsSet) drtConfigGroup.addOrGetDrtOptimizationConstraintsParams().addOrGetDefaultDrtOptimizationConstraintsSet();
-            defaultDrtOptimizationConstraintsSet.maxWaitTime = 600;
-            defaultDrtOptimizationConstraintsSet.maxTravelTimeAlpha= 1.5;
-            defaultDrtOptimizationConstraintsSet.maxTravelTimeBeta = 300.0;
-            drtConfigGroup.vehiclesFile  = vehiclesPathByDrtMode.get(drtMode);
+            drtConfigGroup.setStopDuration(15.0);
+            DrtOptimizationConstraintsSetImpl defaultDrtOptimizationConstraintsSet = (DrtOptimizationConstraintsSetImpl) drtConfigGroup.addOrGetDrtOptimizationConstraintsParams().addOrGetDefaultDrtOptimizationConstraintsSet();
+            defaultDrtOptimizationConstraintsSet.setMaxWaitTime(600);
+            defaultDrtOptimizationConstraintsSet.setMaxTravelTimeAlpha(1.5);
+            defaultDrtOptimizationConstraintsSet.setMaxTravelTimeBeta(300.0);
+            drtConfigGroup.setVehiclesFile(vehiclesPathByDrtMode.get(drtMode));
 
             DrtInsertionSearchParams searchParams = new ExtensiveInsertionSearchParams();
             drtConfigGroup.setDrtInsertionSearchParams(searchParams);
 
             RebalancingParams rebalancingParams = new RebalancingParams();
-            rebalancingParams.interval  =1800;
+            rebalancingParams.setInterval(1800);
+            rebalancingParams.setTargetLinkSelection(TargetLinkSelection.mostCentral);
             rebalancingParams.addParameterSet(new PlusOneRebalancingStrategyParams());
             drtConfigGroup.addParameterSet(rebalancingParams);
 
-            DrtZoneSystemParams drtZonalSystemParams = new DrtZoneSystemParams();
-            drtZonalSystemParams.targetLinkSelection = DrtZoneSystemParams.TargetLinkSelection.mostCentral;
             SquareGridZoneSystemParams squareGridZoneSystemParams = new SquareGridZoneSystemParams();
-            squareGridZoneSystemParams.cellSize = 500;
+            squareGridZoneSystemParams.setCellSize(500);
+            rebalancingParams.addParameterSet(squareGridZoneSystemParams);
 
-            drtZonalSystemParams.addParameterSet(squareGridZoneSystemParams);
-            drtConfigGroup.addParameterSet(drtZonalSystemParams);
             multiModeDrtConfigGroup.addParameterSet(drtConfigGroup);
 
             // Set up choice model
@@ -112,7 +111,7 @@ public class AdaptConfigForDrt {
 
             if(Boolean.parseBoolean(addLegTimeConstraint.get(drtMode))) {
                 FleetSpecification fleetSpecification = new FleetSpecificationImpl();
-                new FleetReader(fleetSpecification).parse(ConfigGroup.getInputFileURL(config.getContext(), vehiclesPathByDrtMode.get(drtMode)));
+                new FleetReader(fleetSpecification, new IntegerLoadType("passengers")).parse(ConfigGroup.getInputFileURL(config.getContext(), vehiclesPathByDrtMode.get(drtMode)));
                 DoubleSummaryStatistics serviceTimeSummaryStatistics = fleetSpecification.getVehicleSpecifications().values().stream()
                         .flatMapToDouble(dvrpVehicleSpecification -> DoubleStream.of(dvrpVehicleSpecification.getServiceBeginTime(), dvrpVehicleSpecification.getServiceEndTime()))
                         .summaryStatistics();

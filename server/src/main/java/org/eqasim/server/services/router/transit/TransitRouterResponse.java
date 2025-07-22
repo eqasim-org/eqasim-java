@@ -13,7 +13,7 @@ public class TransitRouterResponse {
 	@JsonProperty("request_index")
 	public int requestIndex = 0;
 
-	@JsonProperty("in_vehicle_travel_time")
+	@JsonProperty("in_vehicle_travel_time_min")
 	public double inVehicleTravelTime_min;
 
 	@JsonProperty("in_vehicle_travel_time_by_mode_min")
