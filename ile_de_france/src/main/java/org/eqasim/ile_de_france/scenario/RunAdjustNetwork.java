@@ -18,7 +18,7 @@ public class RunAdjustNetwork {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("input-path", "output-path") //
-				.allowOptions("capacity-factor", "speed-factor", "extent-path") //
+				.allowOptions("capacity-factor", "speed-factor", "extent-path", "capacity-value") //
 				.build();
 
 		String inputPath = cmd.getOptionStrict("input-path");
@@ -26,6 +26,8 @@ public class RunAdjustNetwork {
 
 		double capacityFactor = cmd.getOption("capacity-factor").map(Double::parseDouble).orElse(1.0);
 		double speedFactor = cmd.getOption("speed-factor").map(Double::parseDouble).orElse(1.0);
+
+		Optional<Double> capacityValue = cmd.getOption("capacity-value").map(Double::parseDouble);
 
 		ScenarioExtent extent = null;
 		if (cmd.hasOption("extent-path")) {
@@ -39,6 +41,10 @@ public class RunAdjustNetwork {
 
 		for (Link link : network.getLinks().values()) {
 			if (extent == null || extent.isInside(link.getCoord())) {
+				if (capacityValue.isPresent()) {
+					link.setCapacity(capacityValue.get());
+				}
+
 				link.setCapacity(link.getCapacity() * capacityFactor);
 				link.setFreespeed(link.getFreespeed() * speedFactor);
 			}
