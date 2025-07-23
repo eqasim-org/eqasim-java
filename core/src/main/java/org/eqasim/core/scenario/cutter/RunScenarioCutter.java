@@ -2,6 +2,8 @@ package org.eqasim.core.scenario.cutter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -73,6 +75,14 @@ public class RunScenarioCutter {
 		configurator.updateConfig(config);
 		config.removeModule(EqasimTerminationConfigGroup.GROUP_NAME);
 		cmd.applyConfiguration(config);
+
+		// We make sure that the classical outputDirectory is written in a temporary location
+		try {
+			Path tempDirPath = Files.createTempDirectory("population_cutter_routing");
+			config.controller().setOutputDirectory(tempDirPath.resolve("outputs").toString());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		VehiclesValidator.validate(config);
 
@@ -164,6 +174,14 @@ public class RunScenarioCutter {
 		cmd.applyConfiguration(config);
 		ConfigCutter configCutter = new ConfigCutter(prefix);
 		configCutter.run(config);
+
+		// We make sure that the classical outputDirectory is written in a temporary location
+		try {
+			Path tempDirPath = Files.createTempDirectory("population_cutter_routing");
+			config.controller().setOutputDirectory(tempDirPath.resolve("outputs").toString());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		// Final routing
 		// TODO: Check if we can remove stuff
