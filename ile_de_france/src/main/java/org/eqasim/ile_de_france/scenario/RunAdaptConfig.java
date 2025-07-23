@@ -43,13 +43,13 @@ public class RunAdaptConfig {
 		bicycleRouteParams.setTeleportedModeSpeed(9.1 / 3.6);
 		bicycleRouteParams.setBeelineDistanceFactor(1.3);
 		config.routing().addTeleportedModeParams(bicycleRouteParams);
-		
+
 		TeleportedModeParams walkRouteParams = config.routing().getTeleportedModeParams().get(TransportMode.walk);
 		walkRouteParams.setTeleportedModeSpeed(3.25 / 3.6);
 		walkRouteParams.setBeelineDistanceFactor(1.3);
 
 		// MATSim: scoring
-		for (String mode : Arrays.asList("bicycle", "passenger")) {
+		for (String mode : Arrays.asList(IDFModeChoiceModule.BICYCLE, IDFModeChoiceModule.CAR_PASSENGER)) {
 			ModeParams modeScoringParams = new ModeParams(mode);
 			modeScoringParams.setMarginalUtilityOfTraveling(-1.0);
 			config.scoring().addModeParams(modeScoringParams);
@@ -72,14 +72,15 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
-		dmcConfig.setCachedModes(Arrays.asList("car", "bicycle", "pt", "walk", IDFModeChoiceModule.CAR_PASSENGER, "truck"));
+		dmcConfig.setCachedModes(Arrays.asList("car", IDFModeChoiceModule.BICYCLE, "pt", "walk",
+				IDFModeChoiceModule.CAR_PASSENGER, "truck"));
 
 		Set<String> tripConstraints = new HashSet<>(dmcConfig.getTripConstraints());
 		tripConstraints.remove(EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME);
 		dmcConfig.setTripConstraints(tripConstraints);
 
 		VehicleTourConstraintConfigGroup vehicleTourConstraint = dmcConfig.getVehicleTourConstraintConfig();
-		vehicleTourConstraint.setRestrictedModes(Arrays.asList("car", "bicycle"));
+		vehicleTourConstraint.setRestrictedModes(Arrays.asList("car", IDFModeChoiceModule.BICYCLE));
 
 		// Major crossing penalty from calibration
 		eqasimConfig.setCrossingPenalty(4.2);
@@ -96,6 +97,7 @@ public class RunAdaptConfig {
 
 		// Convergence
 		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
-		terminationConfig.setModes(Arrays.asList("car", "car_passenger", "pt", "bicycle", "walk"));
+		terminationConfig.setModes(
+				Arrays.asList("car", IDFModeChoiceModule.CAR_PASSENGER, "pt", IDFModeChoiceModule.BICYCLE, "walk"));
 	}
 }
