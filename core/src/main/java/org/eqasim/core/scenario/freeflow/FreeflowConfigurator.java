@@ -134,10 +134,11 @@ public class FreeflowConfigurator {
         for (Link link : network.getLinks().values()) {
             LinkRecord record = records.get(link.getId());
 
-            double travelTime = record.networkTravelTime * container.factors.get(link.getId());
+            double travelTime = record.networkTravelTime * container.factors.getOrDefault(link.getId(), 1.0);
 
             link.setFreespeed(link.getLength() / travelTime);
-            link.getAttributes().putAttribute(AttributeCrossingPenalty.ATTRIBUTE, container.delays.get(link.getId()));
+            link.getAttributes().putAttribute(AttributeCrossingPenalty.ATTRIBUTE,
+                    container.delays.getOrDefault(link.getId(), 0.0));
             link.getAttributes().putAttribute("freeflow:linkType", record.linkType.toString());
             link.getAttributes().putAttribute("freeflow:crossingType", record.crossingType.toString());
         }
