@@ -65,28 +65,31 @@ public class RunSimulation {
 
 		double passengerSpeedFactor = cmd.getOption("passenger-speed-factor").map(Double::parseDouble).orElse(1.0);
 
-		controller.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				addTravelTimeBinding("car_passenger").toProvider(new Provider<>() {
-					@Inject
-					VDFTravelTime delegate;
-					
-					@Override
-					public TravelTime get() {
-						return new TravelTime() {
-							@Override
-							public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
-								double travelTime = delegate.getLinkTravelTime(link, time, person, vehicle);
-								travelTime /= passengerSpeedFactor;
-								double linkTravelTime = Math.floor(travelTime);
-								return linkTravelTime + 1.0;
-							}							
-						};
-					}
-				});
-			}
-		});
+		if (cmd.hasOption("use-vdf")) {
+			controller.addOverridingModule(new AbstractModule() {
+				@Override
+				public void install() {
+					addTravelTimeBinding("car_passenger").toProvider(new Provider<>() {
+						@Inject
+						VDFTravelTime delegate;
+
+						@Override
+						public TravelTime get() {
+							return new TravelTime() {
+								@Override
+								public double getLinkTravelTime(Link link, double time, Person person,
+										Vehicle vehicle) {
+									double travelTime = delegate.getLinkTravelTime(link, time, person, vehicle);
+									travelTime /= passengerSpeedFactor;
+									double linkTravelTime = Math.floor(travelTime);
+									return linkTravelTime + 1.0;
+								}
+							};
+						}
+					});
+				}
+			});
+		}
 
 		controller.run();
 	}
