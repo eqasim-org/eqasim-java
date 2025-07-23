@@ -1,8 +1,14 @@
 package org.eqasim.core.scenario.routing;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -36,7 +42,16 @@ public class RunPopulationRouting {
 		config.replanning().clearStrategySettings();
 		VehiclesValidator.validate(config);
 
-		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
+		Path tempDirPath;
+
+		try {
+			tempDirPath = Files.createTempDirectory("population_routing");
+			config.controller().setOutputDirectory(tempDirPath.resolve("outputs").toString());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+        int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
 
@@ -67,5 +82,5 @@ public class RunPopulationRouting {
 		populationRouter.run(scenario.getPopulation());
 
 		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-path"));
-	}
+    }
 }
