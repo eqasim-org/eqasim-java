@@ -1,4 +1,4 @@
-package org.eqasim.core.components.flow;
+package org.eqasim.core.components.traffic_light.flow;
 
 
 import org.apache.logging.log4j.LogManager;
@@ -36,6 +36,16 @@ public class FlowDataSet {
         this.beta = beta;
 
         initializeFlowMap();
+    }
+
+    public double getFlow(Id<Link> linkId, double time) {
+        if (time >= timeBinManager.getStartTime() || time <= timeBinManager.getEndTime()) {
+            List<Double> flows = flowMap.get(linkId);
+            int binIdx = timeBinManager.getBinIndex(time);
+            return flows.get(binIdx);
+        } else  {
+            return 0.0; // Return 0 if the time is outside the defined range
+        }
     }
 
     private void initializeFlowMap() {

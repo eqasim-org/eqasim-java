@@ -13,6 +13,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic_light.FlowConfigGroup;
+import org.eqasim.core.components.traffic_light.FlowModule;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorModule;
 import org.eqasim.core.components.traffic.EqasimTrafficModule;
@@ -148,6 +150,10 @@ public abstract class EqasimConfigurator {
 
 		// Emissions
 		registerConfigGroup(new EmissionsConfigGroup(), true);
+
+		// Flow functionality
+		registerConfigGroup(new FlowConfigGroup(), true);
+		registerModule(new FlowModule(), FlowConfigGroup.GROUP_NAME);
 
 		// Policies
 		registerConfigGroup(new PoliciesConfigGroup(), true);

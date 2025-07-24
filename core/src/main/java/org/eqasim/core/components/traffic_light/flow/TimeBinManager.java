@@ -1,4 +1,4 @@
-package org.eqasim.core.components.flow;
+package org.eqasim.core.components.traffic_light.flow;
 
 
 public class TimeBinManager {
@@ -17,6 +17,14 @@ public class TimeBinManager {
 
         public int getNumberOfBins() {
             return numberOfBins;
+        }
+
+        public double[] getBinsCenters() {
+            double[] centers = new double[numberOfBins];
+            for (int i = 0; i < numberOfBins; i++) {
+                centers[i] = startTime + (i + 0.5) * binSize;
+            }
+            return centers;
         }
 
         public int getBinIndex(double time) {

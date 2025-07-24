@@ -1,4 +1,4 @@
-package org.eqasim.core.components.flow;
+package org.eqasim.core.components.traffic_light;
 
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
