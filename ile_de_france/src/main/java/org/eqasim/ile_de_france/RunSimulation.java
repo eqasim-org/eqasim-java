@@ -12,6 +12,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.groups.QSimConfigGroup.NodeTransition;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
@@ -41,6 +42,10 @@ public class RunSimulation {
 
 			vdfConfig.setCapacityFactor(1.0);
 			vdfConfig.setModes(Set.of("car", "car_passenger"));
+
+			config.qsim().setFlowCapFactor(1e9);
+			config.qsim().setStorageCapFactor(1e9);
+			config.qsim().setStuckTime(3600.0);
 
 			if (cmd.getOption("use-vdf-engine").map(Boolean::parseBoolean).orElse(false)) {
 				VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
