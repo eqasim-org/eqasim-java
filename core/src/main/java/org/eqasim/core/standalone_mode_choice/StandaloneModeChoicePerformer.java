@@ -5,6 +5,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.LogManager;
@@ -35,6 +41,7 @@ public class StandaloneModeChoicePerformer {
     private final Population population;
     private final int numberOfThreads;
     private final long seed;
+    private final int chunkSize;
     private final OutputDirectoryHierarchy outputDirectoryHierarchy;
     private final Scenario scenario;
 
@@ -46,61 +53,75 @@ public class StandaloneModeChoicePerformer {
         this.seed = seed;
         this.outputDirectoryHierarchy = outputDirectoryHierarchy;
         this.scenario = scenario;
+        this.chunkSize = configGroup.getChunkSize();
     }
 
-    public void run() throws InterruptedException {
+    public void run() throws InterruptedException, ExecutionException {
 
         Counter counter = new Counter("handled plan #");
-
-        if(numberOfThreads > 0) {
-            List<Thread> threads = new LinkedList<>();
-
-            final AtomicBoolean errorOccurred = new AtomicBoolean(false);
-
-
-            PlanAlgoThread[] planAlgoThreads = new PlanAlgoThread[this.numberOfThreads];
-
-            for (int i = 0; i < numberOfThreads; i++) {
-                Random random = new Random(this.seed);
-                planAlgoThreads[i] = new PlanAlgoThread(new DiscreteModeChoiceAlgorithm(random, this.discreteModeChoiceModelProvider.get(), this.population.getFactory(), new TripListConverter()), counter, this.removePersonsWithBadPlans);
-                Thread thread = new Thread(planAlgoThreads[i]);
-                thread.setUncaughtExceptionHandler((t, e) -> {
-                    e.printStackTrace();
-                    errorOccurred.set(true);
-                });
-                threads.add(thread);
+        
+        // we only collect the selected plans to perform mode-choice
+        List<Plan> selectedPlans = new ArrayList<>(population.getPersons().size());
+        for (Person person : population.getPersons().values()) {
+            // remove unselected plans
+            List<Plan> toRemove = new ArrayList<>();
+            for (Plan plan : person.getPlans()) {
+                if (plan != person.getSelectedPlan()) {
+                    toRemove.add(plan);
+                }
             }
+            toRemove.forEach(person::removePlan);
+            selectedPlans.add(person.getSelectedPlan());
+        }
 
-            int personsCount = 0;
-            logger.info(String.format("Distributing %d persons on %d threads", population.getPersons().size(), this.numberOfThreads));
-            for(Person person: population.getPersons().values()) {
-                List<Plan> unselectedPlans = new ArrayList<>();
-                for(Plan plan: person.getPlans()) {
-                    if(plan != person.getSelectedPlan()) {
-                        unselectedPlans.add(plan);
+        if(numberOfThreads > 0 && !selectedPlans.isEmpty()) {
+        	ExecutorService exec = Executors.newFixedThreadPool(numberOfThreads);
+            List<Future<Set<Id<Person>>>> futures = new ArrayList<>();
+
+            final int total = selectedPlans.size();
+            int numChunks = (total + chunkSize - 1) / chunkSize;
+
+            logger.info(String.format(
+                    "Splitting %d plans into %d chunks (%,d each) over %d threads",
+                    total, numChunks, chunkSize, numberOfThreads));
+            
+            for (int chunk = 0; chunk < numChunks; chunk++) {
+                final int from = chunk * chunkSize;
+                final int to   = Math.min(from + chunkSize, total);
+
+                List<Plan> subList = selectedPlans.subList(from, to);
+                futures.add(exec.submit(() -> {
+                    PlanAlgoThread worker = new PlanAlgoThread(
+                        new DiscreteModeChoiceAlgorithm(
+                            new Random(seed),
+                            discreteModeChoiceModelProvider.get(),
+                            population.getFactory(),
+                            new TripListConverter()
+                        ),
+                        counter,
+                        removePersonsWithBadPlans
+                    );
+                    // feed our little chunk
+                    for (Plan plan : subList) {
+                        worker.addPlanToThread(plan);
                     }
-                }
-                unselectedPlans.forEach(person::removePlan);
-                planAlgoThreads[personsCount % this.numberOfThreads].addPlanToThread(person.getSelectedPlan());
-                personsCount+=1;
+                    // run and collect any bad-plan IDs
+                    worker.run();
+                    return worker.getPersonsWithNoAlternative();
+                }));
             }
-            logger.info(String.format("Starting %d threads, handling in %d plans", this.numberOfThreads, population.getPersons().size()));
+            // wait for everything to finish
+            exec.shutdown();
+            exec.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
-            threads.forEach(Thread::start);
-
-            for (Thread thread: threads) {
-                thread.join();
-            }
-
-            if (errorOccurred.get()) {
-                throw new RuntimeException("Found errors in mode choice threads threads");
+            // combine results
+            IdSet<Person> personsToRemove = new IdSet<>(Person.class);
+            for (Future<Set<Id<Person>>> f : futures) {
+                personsToRemove.addAll(f.get());
             }
 
-            if(this.removePersonsWithBadPlans) {
-                IdSet<Person> personsToRemove = new IdSet<>(Person.class);
-                for(PlanAlgoThread planAlgoThread: planAlgoThreads) {
-                    personsToRemove.addAll(planAlgoThread.getPersonsWithNoAlternative());
-                }
+            if(this.removePersonsWithBadPlans && !personsToRemove.isEmpty()) {
+
                 double percentage = ((double) personsToRemove.size()) * 100 / population.getPersons().size();
                 logger.info(String.format("Removing %d persons with no valid alternative out of %d (%f %%)", personsToRemove.size(), population.getPersons().size(), percentage));
                 for(Id<Person> personId: personsToRemove) {
