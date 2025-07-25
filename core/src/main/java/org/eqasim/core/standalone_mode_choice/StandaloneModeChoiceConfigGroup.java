@@ -8,8 +8,10 @@ public class StandaloneModeChoiceConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "standaloneModeChoice";
     public static final String REMOVE_PERSON_WITH_NO_VALID_ALTERNATIVES = "removePersonsWithNoValidAlternatives";
     public static final String OUTPUT_DIRECTORY = "outputDirectory";
+    public static final String CHUNK_SIZE = "chunkSize";
 
     private boolean removePersonsWithNoValidAlternative = false;
+    private int chunkSize = 1000;
 
     @NotNull
     private String outputDirectory = "output_mode_choice";
@@ -36,5 +38,15 @@ public class StandaloneModeChoiceConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(OUTPUT_DIRECTORY)
     public void setOutputDirectory(String outputDirectory) {
         this.outputDirectory = outputDirectory;
+    }
+    
+    @StringGetter(CHUNK_SIZE)
+    public int getChunkSize() {
+        return this.chunkSize;
+    }
+
+    @StringSetter(CHUNK_SIZE)
+    public void setChunkSize(int chunkSize) {
+        this.chunkSize = chunkSize;
     }
 }
