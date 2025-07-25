@@ -1,37 +1,29 @@
 package org.eqasim.core.components.traffic;
 
+import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 
 public class TrafficLightCrossingPenalty implements CrossingPenalty {
-    static public String ATTRIBUTE = "crossingPenalty";
 
-    private IdMap<Link, Double> delays = new IdMap<>(Link.class);
-    private CrossingPenalty delegate;
+    private final TrafficLightDelay tlDelays;
+    private final CrossingPenalty delegate;
 
-    public TrafficLightCrossingPenalty(IdMap<Link, Double> delays, CrossingPenalty delegate) {
-        this.delays = delays;
+    public TrafficLightCrossingPenalty(TrafficLightDelay tlDelays, CrossingPenalty delegate) {
+        this.tlDelays = tlDelays;
         this.delegate = delegate;
     }
 
     @Override
-    public double calculateCrossingPenalty(Link link) {
-        Double value = delays.get(link.getId());
-        return value != null ? value : delegate.calculateCrossingPenalty(link);
+    public double calculateCrossingPenalty(Link link, double time) {
+        double tlValue = tlDelays.getDelay(link, time);
+        return tlValue >0.0 ? tlValue : delegate.calculateCrossingPenalty(link, time);
     }
 
-    public static AttributeCrossingPenalty sbuild(Network network, CrossingPenalty delegate) {
-        IdMap<Link, Double> delays = new IdMap<>(Link.class);
-
-        for (Link link : network.getLinks().values()) {
-            Double delay = (Double) link.getAttributes().getAttribute(ATTRIBUTE);
-
-            if (delay != null) {
-                delays.put(link.getId(), delay);
-            }
-        }
-
-        return new AttributeCrossingPenalty(delays, delegate);
+    public static TrafficLightCrossingPenalty build(Network network, CrossingPenalty delegate,
+                                                    TrafficLightDelay tlDelays) {
+        // here delegate is the attribute crossing penalty
+        return new TrafficLightCrossingPenalty(tlDelays, delegate);
     }
 }

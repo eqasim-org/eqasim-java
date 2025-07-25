@@ -14,7 +14,7 @@ public class DefaultEqasimLinkSpeedCalculator implements EqasimLinkSpeedCalculat
 	public double getMaximumVelocity(QVehicle vehicle, Link link, double time) {
 		double maximumVelocity = Math.min(vehicle.getMaximumVelocity(), link.getFreespeed(time));
 		double travelTime = link.getLength() / maximumVelocity;
-		travelTime += crossingPenalty.calculateCrossingPenalty(link);
+		travelTime += crossingPenalty.calculateCrossingPenalty(link, time);
 		return link.getLength() / travelTime;
 	}
 }

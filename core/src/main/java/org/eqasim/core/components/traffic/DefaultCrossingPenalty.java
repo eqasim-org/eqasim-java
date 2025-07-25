@@ -14,7 +14,7 @@ public class DefaultCrossingPenalty implements CrossingPenalty {
     }
 
     @Override
-    public double calculateCrossingPenalty(Link link) {
+    public double calculateCrossingPenalty(Link link, double time) {
         return active.contains(link.getId()) ? crossingPenalty : 0.0;
     }
 

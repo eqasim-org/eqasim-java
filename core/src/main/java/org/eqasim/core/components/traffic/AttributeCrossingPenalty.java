@@ -16,7 +16,7 @@ public class AttributeCrossingPenalty implements CrossingPenalty {
     }
 
     @Override
-    public double calculateCrossingPenalty(Link link) {
+    public double calculateCrossingPenalty(Link link, double time) {
         Double value = delays.get(link.getId());
         return value != null ? value : delegate.calculateCrossingPenalty(link);
     }

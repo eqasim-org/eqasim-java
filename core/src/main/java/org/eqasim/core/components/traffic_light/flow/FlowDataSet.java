@@ -39,7 +39,7 @@ public class FlowDataSet {
     }
 
     public double getFlow(Id<Link> linkId, double time) {
-        if (time >= timeBinManager.getStartTime() || time <= timeBinManager.getEndTime()) {
+        if (time >= timeBinManager.getStartTime() && time <= timeBinManager.getEndTime()) {
             List<Double> flows = flowMap.get(linkId);
             int binIdx = timeBinManager.getBinIndex(time);
             return flows.get(binIdx);
@@ -56,11 +56,11 @@ public class FlowDataSet {
         }
     }
 
-    public void updateFlow(int iteration, IdMap<Link, List<Double>> flow) {
+    public void updateFlow(int iteration, TrafficCounter counts) {
         logger.info("Iteration {}: Adding iteration flow data", iteration);
 
-        if (flow.size() != network.getLinks().size()) {
-            logger.error("FlowDataSet size mismatch. Expected: {}, Got: {}", network.getLinks().size(), flow.size());
+        if (counts.getCounts().size() != network.getLinks().size()) {
+            logger.error("FlowDataSet size mismatch. Expected: {}, Got: {}", network.getLinks().size(), counts.getCounts().size());
             return;
         }
 
@@ -68,7 +68,7 @@ public class FlowDataSet {
 
         for (Id<Link> linkId : network.getLinks().keySet()) {
             List<Double> existingFlow = flowMap.get(linkId);
-            List<Double> newFlow = flow.get(linkId);
+            List<Double> newFlow = counts.getLinkCounts(linkId);
 
             for (int i = 0; i < timeBinManager.getNumberOfBins(); i++) {
                 double updated = betaEffective * newFlow.get(i) + (1.0 - betaEffective) * existingFlow.get(i);

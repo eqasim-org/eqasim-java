@@ -13,6 +13,7 @@ import org.matsim.api.core.v01.network.Network;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.SequencedCollection;
 
 public class TrafficCounter implements LinkEnterEventHandler {
 
@@ -25,7 +26,8 @@ public class TrafficCounter implements LinkEnterEventHandler {
     public TrafficCounter(Network network, TimeBinManager timeBinManager) {
         this.timeBinManager = timeBinManager;
         this.network = network;
-
+        // I can optimize this function, I need to only store links where there is actual flow
+        // need special attention though when updating the flow map (for links that might have 0 flow in upcoming iterations)
         initializeFlowMap();
     }
 
@@ -43,7 +45,7 @@ public class TrafficCounter implements LinkEnterEventHandler {
     }
 
     public void processEnterLink(double time, Id<Link> linkId) {
-        if (time >= timeBinManager.getStartTime() || time <= timeBinManager.getEndTime()) {
+        if (time >= timeBinManager.getStartTime() && time <= timeBinManager.getEndTime()) {
             int idx = timeBinManager.getBinIndex(time);
             List<Double> linkCounts = counts.get(linkId);
             linkCounts.set(idx, linkCounts.get(idx) + 1);
@@ -52,6 +54,10 @@ public class TrafficCounter implements LinkEnterEventHandler {
 
     public IdMap<Link, List<Double>> getCounts() {
         return counts;
+    }
+
+    public List<Double> getLinkCounts(Id<Link> linkId) {
+        return counts.get(linkId);
     }
 
     @Override
