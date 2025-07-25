@@ -69,6 +69,8 @@ public class InjectorBuilder {
 		if (cleanOutputHierarchy) {
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				try {
+					// need to close these file handles manually as they are opened by default by
+					// MATSim
 					injector.getInstance(TravelDistanceStats.class).close();
 					injector.getInstance(ScoreStatsControlerListener.class)
 							.notifyShutdown(new ShutdownEvent(null, false, 0, null));
