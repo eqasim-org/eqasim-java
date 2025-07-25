@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.TestConfigurator.TestModeAvailability;
@@ -426,7 +427,7 @@ public class TestSimulationPipeline {
         runMelunSimulation("melun_test/input/config_abstract_access.xml", "melun_test/output_abstract_access");
     }
 
-    public void runVdf() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+    public void runVdf() throws CommandLine.ConfigurationException, IOException, InterruptedException, ExecutionException {
         // This one will use the SparseHorizon handler
         AdaptConfigForVDF.main(new String[] {
                 "--input-config-path", "melun_test/input/config.xml",
@@ -537,7 +538,7 @@ public class TestSimulationPipeline {
         assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
 
-    public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+    public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException, ExecutionException {
         RunStandaloneModeChoice.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
                 "--recorded-travel-times-path", "melun_test/output/eqasim_travel_times.bin",
