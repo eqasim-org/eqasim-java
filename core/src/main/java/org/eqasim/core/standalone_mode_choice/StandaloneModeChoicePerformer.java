@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.misc.ParallelProgress;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
@@ -58,7 +59,6 @@ public class StandaloneModeChoicePerformer {
 
     public void run() throws InterruptedException, ExecutionException {
 
-        Counter counter = new Counter("handled plan #");
         
         // we only collect the selected plans to perform mode-choice
         List<Plan> selectedPlans = new ArrayList<>(population.getPersons().size());
@@ -73,6 +73,8 @@ public class StandaloneModeChoicePerformer {
             toRemove.forEach(person::removePlan);
             selectedPlans.add(person.getSelectedPlan());
         }
+        
+        ParallelProgress progress = new ParallelProgress("Doing mode-choice for the population …", selectedPlans.size());
 
         if(numberOfThreads > 0 && !selectedPlans.isEmpty()) {
         	ExecutorService exec = Executors.newFixedThreadPool(numberOfThreads);
@@ -98,7 +100,7 @@ public class StandaloneModeChoicePerformer {
                             population.getFactory(),
                             new TripListConverter()
                         ),
-                        counter,
+                        progress,
                         removePersonsWithBadPlans
                     );
                     // feed our little chunk
@@ -130,7 +132,7 @@ public class StandaloneModeChoicePerformer {
             }
         } else {
             Random random = new Random(this.seed);
-            PlanAlgoThread planAlgoThread = new PlanAlgoThread(new DiscreteModeChoiceAlgorithm(random, this.discreteModeChoiceModelProvider.get(), this.population.getFactory(), new TripListConverter()), counter, this.removePersonsWithBadPlans);
+            PlanAlgoThread planAlgoThread = new PlanAlgoThread(new DiscreteModeChoiceAlgorithm(random, this.discreteModeChoiceModelProvider.get(), this.population.getFactory(), new TripListConverter()), progress, this.removePersonsWithBadPlans);
             for(Person person: population.getPersons().values()) {
                 List<Plan> unselectedPlans = new ArrayList<>();
                 for(Plan plan: person.getPlans()) {
@@ -161,13 +163,13 @@ public class StandaloneModeChoicePerformer {
 
         private final DiscreteModeChoiceAlgorithm planAlgo;
         private final List<Plan> plans = new LinkedList<>();
-        private final Counter counter;
+        private final ParallelProgress progress;
         private final IdSet<Person> personsWithNoAlternative;
         private final boolean reportPersonsWithNoAlternative;
 
-        public PlanAlgoThread(final DiscreteModeChoiceAlgorithm algo, final Counter counter, boolean reportPersonsWithNoAlternative) {
+        public PlanAlgoThread(final DiscreteModeChoiceAlgorithm algo, final ParallelProgress progress, boolean reportPersonsWithNoAlternative) {
             this.planAlgo = algo;
-            this.counter = counter;
+            this.progress = progress;
             this.personsWithNoAlternative = new IdSet<>(Person.class);
             this.reportPersonsWithNoAlternative = reportPersonsWithNoAlternative;
         }
@@ -190,7 +192,7 @@ public class StandaloneModeChoicePerformer {
                         throw e;
                     }
                 }
-                this.counter.incCounter();
+                this.progress.update(1);
             }
         }
 
