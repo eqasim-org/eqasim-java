@@ -36,7 +36,9 @@ public class PopulationRouter {
 	public void run(Population population) throws InterruptedException {
 		List<Person> allPersons = new ArrayList<>(population.getPersons().values());
 		int total = allPersons.size();
+		
 		ParallelProgress progress = new ParallelProgress("Routing population …", total);
+		progress.start();
 
 		ExecutorService exec = Executors.newFixedThreadPool(numberOfThreads);
 		AtomicBoolean errorOccurred = new AtomicBoolean(false);
@@ -70,10 +72,9 @@ public class PopulationRouter {
 			});
 		}
 
-		
-		progress.start();
 		exec.shutdown();
 		exec.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		
 		progress.close();
 
 		if (errorOccurred.get()) {
