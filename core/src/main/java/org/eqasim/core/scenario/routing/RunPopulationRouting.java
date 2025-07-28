@@ -2,14 +2,13 @@ package org.eqasim.core.scenario.routing;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.eqasim.core.misc.InjectorBuilder;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -22,7 +21,7 @@ import org.matsim.facilities.ActivityFacility;
 import com.google.inject.Injector;
 
 public class RunPopulationRouting {
-	static public void main(String[] args) throws ConfigurationException, InterruptedException {
+	static public void main(String[] args) throws ConfigurationException, InterruptedException, ExecutionException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
 				.allowOptions("threads", "batch-size", "modes", EqasimConfigurator.CONFIGURATOR) //
