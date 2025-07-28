@@ -4,6 +4,7 @@ import org.eqasim.core.components.traffic_light.TrafficLightConfigGroup;
 import org.eqasim.core.components.traffic_light.delays.webster.WebsterFormula;
 import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
 import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -12,24 +13,39 @@ import org.matsim.api.core.v01.network.Node;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.vehicles.Vehicle;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.core.utils.geometry.CoordUtils;
 
 public class TrafficLightDelay {
     private final Logger logger = LogManager.getLogger(TrafficLightDelay.class);
 
     static public String TL_ATTRIBUTE = "traffic_light";
     private final IdMap<Link, List<Double>> delays = new IdMap<>(Link.class);;
+    private final IdMap<Vehicle, Coord> lastTrafficLightLocation = new IdMap<Vehicle, Coord>(Vehicle.class);
     private final TimeBinManager timeBinManager;
     private final Network network;
     private final WebsterFormula webster;
     private final double sampleSize;
     private int currentIteration;
     private final int tlStartingIteration;
+
+    private final double tlDistanceThreshold = 30.0; // Distance threshold between two tl, to set a delay at the tl intersection
+
+    private int ignoredTlCount = 0; // Counter for ignored traffic lights
+    // flags
+    public static final double NO_TL = -1; // No traffic light
+    public static final double OUT_OF_BOUNDS = -2; // Time out of bounds
+    public static final double BEFORE_TL = -3; // Before the traffic light module starts
+    public static final double INCORRECT_DELAY = -4; // After the traffic light module ends
+    public static final double NO_DELAY = -5; // No delay set (vehicle got a delay in the last 'threshold' meters)
 
     public TrafficLightDelay(Network network, TimeBinManager timeBinManager,
                              WebsterFormula webster, TrafficLightConfigGroup trafficLightConfigGroup,
@@ -69,19 +85,48 @@ public class TrafficLightDelay {
         }
     }
 
-    public double getDelay(Link link, double time) {
+    public double getDelay(Link link, double time, Id<Vehicle> vehicleId) {
         if (!delays.containsKey(link.getId())) {
-            return 0.0; // Return 0 if the link is not in the delays' map or time out of bounds
+            return NO_TL; // The link does not have a traffic light (or no delays set)
         }
         if (currentIteration<tlStartingIteration) {
-            return 0.0; // No delays before the traffic light module starts
+            return BEFORE_TL; // No delays before the traffic light module starts
         }
         if (time < timeBinManager.getStartTime() || time > timeBinManager.getEndTime()){
-            return 0.0;
+            return OUT_OF_BOUNDS; // Time is out of bounds of the time bins (normal crossing penalty will be applied)
+        }
+
+        // at this point, we know that the link has a traffic light and the time is within bounds
+        if (!shouldApplyTrafficLightDelay(link, vehicleId)) {
+            return NO_DELAY; // No delay if the vehicle has not traveled far enough since the last traffic light
         }
         int binIdx = timeBinManager.getBinIndex(time);
         Double delayValue = delays.get(link.getId()).get(binIdx);
-        return delayValue != null ? delayValue : 0.0; // Default to 0 if no delay is set
+        return delayValue != null ? delayValue : INCORRECT_DELAY; // Default to 0 if no delay is set
+    }
+
+    private boolean shouldApplyTrafficLightDelay(Link link, Id<Vehicle> vehicleId) {
+        // link should have a traffic light
+        Coord lastTrafficLightPosition = lastTrafficLightLocation.get(vehicleId);
+        Coord currentCoord = link.getToNode().getCoord();
+
+        // Calculate distance from last traffic light position
+        double distanceSinceLastTrafficLight = (lastTrafficLightPosition == null)
+                ? 0.0 // If no previous traffic light position, treat as 0 distance
+                : CoordUtils.calcEuclideanDistance(lastTrafficLightPosition, currentCoord);
+
+        // if distance higher than the threshold, we should apply the traffic light delay, and update the last known traffic light position
+        if (distanceSinceLastTrafficLight > tlDistanceThreshold){
+            // Update the last known traffic light position to current link's end
+            lastTrafficLightLocation.put(vehicleId, currentCoord);
+            return true;
+        }else {
+            ignoredTlCount += 1; // Increment the counter for ignored traffic lights
+            if (ignoredTlCount % 100 == 0) {
+                logger.warn("Ignored {} traffic lights so far", ignoredTlCount);
+            }
+            return false;
+        }
     }
 
     public void clearDelays() {
@@ -96,6 +141,13 @@ public class TrafficLightDelay {
         currentIteration = iteration+1; // delays are reset at the end of an iteration, and used in the next iteration
     }
 
+    /**
+     * Builds the traffic light delays based on the provided flow data set.
+     * This method iterates through all links in the network, checks if they have a traffic light,
+     * and computes delays for each node with a traffic light.
+     *
+     * @param flow The flow data set containing traffic flow information.
+     */
     private void buildDelays(FlowDataSet flow) {
         logger.info("Building traffic light delays");
         Set<Id<Node>> visitedNodes = new HashSet<>();
@@ -112,6 +164,10 @@ public class TrafficLightDelay {
             }
         }
     }
+
+    // All the methods below are private and used to compute the delays for a given node based on the Webster formula
+    // when a node is provided, all its incoming links are considered, and the delays are computed and injected
+    // in the delays map, which is indexed by link Id and time bin index.
 
     private void computeNodeDelays(Node node, FlowDataSet flow, double time) {
         List<Link> inLinks = new ArrayList<>(node.getInLinks().values());
@@ -220,6 +276,13 @@ public class TrafficLightDelay {
     }
 
 
+    /**
+     * Exports the traffic light delays to a CSV file.
+     * The CSV will have a header with link IDs and bins, followed by rows of delays for each link.
+     *
+     * @param filename The name of the file to export the delays to.
+     * @throws IOException If an I/O error occurs while writing to the file.
+     */
     public void exportToCSV(String filename) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filename))) {
             int numberOfBins = timeBinManager.getNumberOfBins();

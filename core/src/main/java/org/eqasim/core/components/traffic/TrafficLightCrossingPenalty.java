@@ -1,9 +1,12 @@
 package org.eqasim.core.components.traffic;
 
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
+import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.vehicles.Vehicle;
 
 public class TrafficLightCrossingPenalty implements CrossingPenalty {
 
@@ -16,9 +19,19 @@ public class TrafficLightCrossingPenalty implements CrossingPenalty {
     }
 
     @Override
-    public double calculateCrossingPenalty(Link link, double time) {
-        double tlValue = tlDelays.getDelay(link, time);
-        return tlValue >0.0 ? tlValue : delegate.calculateCrossingPenalty(link, time);
+    public double calculateCrossingPenalty(Link link, double time, Id<Vehicle> vehicleId) {
+        double tlValue = tlDelays.getDelay(link, time, vehicleId);
+        // in these special cases, we delegate to the original crossing penalty
+        if (tlValue== TrafficLightDelay.NO_TL || tlValue == TrafficLightDelay.BEFORE_TL ||
+                tlValue == TrafficLightDelay.OUT_OF_BOUNDS || tlValue == TrafficLightDelay.INCORRECT_DELAY) {
+            return delegate.calculateCrossingPenalty(link);
+        }
+        // If there's explicitly no delay, return 0
+        if (tlValue == TrafficLightDelay.NO_DELAY) {
+            return 0.0;
+        }
+        // Otherwise, the returned value is the actual delay
+        return tlValue;
     }
 
     public static TrafficLightCrossingPenalty build(Network network, CrossingPenalty delegate,

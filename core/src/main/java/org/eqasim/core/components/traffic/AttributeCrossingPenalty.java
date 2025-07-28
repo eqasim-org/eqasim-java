@@ -1,8 +1,10 @@
 package org.eqasim.core.components.traffic;
 
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.vehicles.Vehicle;
 
 public class AttributeCrossingPenalty implements CrossingPenalty {
     static public String ATTRIBUTE = "crossingPenalty";
@@ -16,7 +18,7 @@ public class AttributeCrossingPenalty implements CrossingPenalty {
     }
 
     @Override
-    public double calculateCrossingPenalty(Link link, double time) {
+    public double calculateCrossingPenalty(Link link, double time, Id<Vehicle> vehicleId) {
         Double value = delays.get(link.getId());
         return value != null ? value : delegate.calculateCrossingPenalty(link);
     }
