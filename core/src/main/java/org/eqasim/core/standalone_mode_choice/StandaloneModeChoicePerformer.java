@@ -75,6 +75,7 @@ public class StandaloneModeChoicePerformer {
         }
         
         ParallelProgress progress = new ParallelProgress("Doing mode-choice for the population …", selectedPlans.size());
+        progress.start();
 
         if(numberOfThreads > 0 && !selectedPlans.isEmpty()) {
         	ExecutorService exec = Executors.newFixedThreadPool(numberOfThreads);
@@ -152,6 +153,8 @@ public class StandaloneModeChoicePerformer {
                 personsToRemove.forEach(population::removePerson);
             }
         }
+
+        progress.close();
 
         String outputPlansName = outputDirectoryHierarchy.getOutputFilename("output_plans.xml.gz");
         new PopulationWriter(population).write(outputPlansName);
