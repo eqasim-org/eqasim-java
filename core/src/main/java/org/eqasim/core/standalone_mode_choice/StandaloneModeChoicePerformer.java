@@ -74,7 +74,7 @@ public class StandaloneModeChoicePerformer {
             selectedPlans.add(person.getSelectedPlan());
         }
         
-        ParallelProgress progress = new ParallelProgress("Doing mode-choice for the population …", selectedPlans.size());
+        ParallelProgress progress = new ParallelProgress("Standalone mode choice", selectedPlans.size());
         progress.start();
 
         if(numberOfThreads > 0 && !selectedPlans.isEmpty()) {

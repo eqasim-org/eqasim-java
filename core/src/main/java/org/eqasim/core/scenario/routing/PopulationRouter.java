@@ -37,7 +37,7 @@ public class PopulationRouter {
 		List<Person> allPersons = new ArrayList<>(population.getPersons().values());
 		int total = allPersons.size();
 		
-		ParallelProgress progress = new ParallelProgress("Routing population …", total);
+		ParallelProgress progress = new ParallelProgress("Population routing", total);
 		progress.start();
 
 		ExecutorService exec = Executors.newFixedThreadPool(numberOfThreads);
