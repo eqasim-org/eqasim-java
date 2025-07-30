@@ -24,11 +24,11 @@ public class TrafficLightModule extends AbstractEqasimExtension {
     protected void installEqasimExtension() {
         TrafficLightConfigGroup tlConfig = TrafficLightConfigGroup.getOrCreate(getConfig());
         if (tlConfig.isActivated()) {
-            logger.info("Flow module is enabled.");
+            logger.info("Traffic light module is enabled.");
             addEventHandlerBinding().to(TrafficCounter.class);
             addControlerListenerBinding().to(TrafficLightListener.class);
         } else {
-            logger.info("Flow module is disabled, skipping installation.");
+            logger.info("Traffic light is disabled, skipping installation.");
         }
     }
 

@@ -13,6 +13,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.EqasimComponentsModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.fast_calibration.alphaCalibratorConfig;
+import org.eqasim.core.components.fast_calibration.alphaCalibratorModule;
 import org.eqasim.core.components.traffic_light.TrafficLightConfigGroup;
 import org.eqasim.core.components.traffic_light.TrafficLightModule;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
@@ -151,9 +153,13 @@ public abstract class EqasimConfigurator {
 		// Emissions
 		registerConfigGroup(new EmissionsConfigGroup(), true);
 
-		// Flow functionality
+		// Traffic light functionality
 		registerConfigGroup(new TrafficLightConfigGroup(), true);
 		registerModule(new TrafficLightModule(), TrafficLightConfigGroup.GROUP_NAME);
+
+		// Fast calibration functionality
+		registerConfigGroup(new alphaCalibratorConfig(), true);
+		registerModule(new alphaCalibratorModule(), EqasimConfigGroup.GROUP_NAME);
 
 		// Policies
 		registerConfigGroup(new PoliciesConfigGroup(), true);

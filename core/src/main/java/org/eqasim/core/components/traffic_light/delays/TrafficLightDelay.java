@@ -40,6 +40,7 @@ public class TrafficLightDelay {
     private final double tlDistanceThreshold = 30.0; // Distance threshold between two tl, to set a delay at the tl intersection
 
     private int ignoredTlCount = 0; // Counter for ignored traffic lights
+    private int totalTlCount = 0; // Counter for total traffic lights processed
     // flags
     public static final double NO_TL = -1; // No traffic light
     public static final double OUT_OF_BOUNDS = -2; // Time out of bounds
@@ -109,11 +110,16 @@ public class TrafficLightDelay {
         // link should have a traffic light
         Coord lastTrafficLightPosition = lastTrafficLightLocation.get(vehicleId);
         Coord currentCoord = link.getToNode().getCoord();
+        totalTlCount += 1; // Increment the total traffic light count
+
+        // If the vehicle has not crossed a traffic light before, we should apply the delay
+         if (lastTrafficLightPosition == null){
+             lastTrafficLightLocation.put(vehicleId, currentCoord);
+             return true;
+         }
 
         // Calculate distance from last traffic light position
-        double distanceSinceLastTrafficLight = (lastTrafficLightPosition == null)
-                ? 0.0 // If no previous traffic light position, treat as 0 distance
-                : CoordUtils.calcEuclideanDistance(lastTrafficLightPosition, currentCoord);
+        double distanceSinceLastTrafficLight = CoordUtils.calcEuclideanDistance(lastTrafficLightPosition, currentCoord);
 
         // if distance higher than the threshold, we should apply the traffic light delay, and update the last known traffic light position
         if (distanceSinceLastTrafficLight > tlDistanceThreshold){
@@ -122,8 +128,8 @@ public class TrafficLightDelay {
             return true;
         }else {
             ignoredTlCount += 1; // Increment the counter for ignored traffic lights
-            if (ignoredTlCount % 100 == 0) {
-                logger.warn("Ignored {} traffic lights so far", ignoredTlCount);
+            if (ignoredTlCount % 1000 == 0) {
+                logger.warn("Ignored {}/{} traffic lights so far", ignoredTlCount, totalTlCount);
             }
             return false;
         }
@@ -139,6 +145,8 @@ public class TrafficLightDelay {
         clearDelays();
         buildDelays(flow);
         currentIteration = iteration+1; // delays are reset at the end of an iteration, and used in the next iteration
+        ignoredTlCount = 0; // Reset the ignored traffic light counter
+        totalTlCount = 0; // Reset the total traffic light counter
     }
 
     /**
