@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -148,7 +149,7 @@ public class RunStandaloneModeChoice {
     public static final String CMD_RECORDED_TRAVEL_TIMES_PATH = "recorded-travel-times-path";
     public static final String CMD_SKIP_SCENARIO_CHECK = "skip-scenario-check";
     
-    public static void main(String[] args) throws CommandLine.ConfigurationException, InterruptedException, IOException {
+    public static void main(String[] args) throws CommandLine.ConfigurationException, InterruptedException, IOException, ExecutionException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions(CMD_CONFIG_PATH)
                 .allowOptions(CMD_WRITE_INPUT_CSV, CMD_WRITE_OUTPUT_CSV)
