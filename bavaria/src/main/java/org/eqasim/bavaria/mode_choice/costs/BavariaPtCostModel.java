@@ -5,6 +5,8 @@ import java.util.List;
 import org.eqasim.bavaria.mode_choice.utilities.predictors.BavariaPersonPredictor;
 import org.eqasim.bavaria.mode_choice.utilities.variables.BavariaPersonVariables;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -25,19 +27,25 @@ import com.google.inject.Inject;
 public class BavariaPtCostModel implements CostModel {
 	private final TransitSchedule schedule;
 	private final TimeInterpretation timeInterpretation;
+
+	private final PersonPredictor generalPersonPredictor;
 	private final BavariaPersonPredictor personPredictor;
 
 	@Inject
 	public BavariaPtCostModel(TransitSchedule schedule, TimeInterpretation timeInterpretation,
-			BavariaPersonPredictor personPredictor) {
+			BavariaPersonPredictor personPredictor, PersonPredictor generalPersonPredictor) {
 		this.schedule = schedule;
 		this.timeInterpretation = timeInterpretation;
 		this.personPredictor = personPredictor;
+		this.generalPersonPredictor = generalPersonPredictor;
 	}
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+		PersonVariables generalPersonVariables = generalPersonPredictor.predictVariables(person, trip, elements);
 		BavariaPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
+
+		double ageFactor = generalPersonVariables.age_a <= 14 ? 0.5 : 1.0;
 
 		if (personVariables.hasSubscription) {
 			return 0.0;
@@ -99,7 +107,7 @@ public class BavariaPtCostModel implements CostModel {
 			}
 
 			if (isValid) {
-				return shortPrice;
+				return ageFactor * shortPrice;
 			}
 		}
 
@@ -118,10 +126,10 @@ public class BavariaPtCostModel implements CostModel {
 
 		if (firstMinimumZone != null && lastMinimumZone != null) {
 			// we have a zonal trip
-			return getZonalPrice(firstMinimumZone, firstMaximumZone, lastMinimumZone, lastMaximumZone);
+			return ageFactor * getZonalPrice(firstMinimumZone, firstMaximumZone, lastMinimumZone, lastMaximumZone);
 		} else {
 			// something is outside of any zone
-			return basePrice_h * Math.max(1.0, Math.ceil(travelTime / 3600.0));
+			return ageFactor * basePrice_h * Math.max(1.0, Math.ceil(travelTime / 3600.0));
 		}
 	}
 
