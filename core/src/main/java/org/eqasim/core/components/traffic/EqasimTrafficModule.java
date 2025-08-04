@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic_light.TrafficLightConfigGroup;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
+import org.eqasim.core.components.traffic_light.delays.UnsignalizedIntersectionDelay;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.AbstractModule;
 
@@ -40,7 +41,7 @@ public class EqasimTrafficModule extends AbstractModule {
     @Provides
     @Singleton
     TrafficLightCrossingPenalty provideTrafficLightCrossingPenalty(Network network, AttributeCrossingPenalty delegate,
-                                                                    TrafficLightDelay tlDelays) {
-        return TrafficLightCrossingPenalty.build(network, delegate, tlDelays);
+                                                                    TrafficLightDelay tlDelays, UnsignalizedIntersectionDelay usDelays) {
+        return TrafficLightCrossingPenalty.build(network, delegate, tlDelays, usDelays);
     }
 }

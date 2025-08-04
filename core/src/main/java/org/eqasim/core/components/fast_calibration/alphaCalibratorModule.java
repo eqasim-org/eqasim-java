@@ -21,7 +21,7 @@ public class alphaCalibratorModule extends AbstractEqasimExtension {
         alphaCalibratorConfig calConfig = alphaCalibratorConfig.getOrCreate(getConfig());
         if (calConfig.isActivate()){
             logger.info("Activate calibration module (calibration of the alpha parameters of the utilities)");
-            addControlerListenerBinding().to(alphaCalibrator.class);
+            addControlerListenerBinding().to(alphaCalibrator.class).asEagerSingleton();
         }
     }
 
