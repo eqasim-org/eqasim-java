@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 public class alphaCalibrator implements IterationStartsListener {
-    // This should be iteration starts listener because mode shares are tracked at the end of each iteration
-
     // This class tracks the mode share at the beginning of each iteration and calibrates the alpha value
     // based on the mode share from the previous iteration and the target mode shares.
 
