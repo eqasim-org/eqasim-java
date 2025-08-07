@@ -3,47 +3,111 @@ package org.eqasim.core.components.traffic_light.delays.shahpar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
-import org.matsim.api.core.v01.Coord;
+import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.network.turnRestrictions.DisallowedNextLinks;
-import org.matsim.vehicles.Vehicle;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ShahparDelay {
     private final Logger logger = LogManager.getLogger(ShahparDelay.class);
-    private double alpha = 3.5; // constant for the formula of the dalay
-    private double beta = 4.85; // constant for the formula of the delay
-    private double eta = 1.48;  // exponent for the formula of the delay
+    private double alpha; // constant for the formula of the dalay
+    private double beta; // constant for the formula of the delay
+    private double eta;  // exponent for the formula of the delay
+    private final double maximumSaturation = 1.0; // maximum saturation ratio for the intersection
 
     private final IdMap<Node, Double> ffMap = new IdMap<>(Node.class);
     private final IdMap<Link, Double> rowMap = new IdMap<>(Link.class);
     private final IdMap<Node, Double> nodesDegrees = new IdMap<>(Node.class);
+    private final IdMap<Link, List<Double>> delays = new IdMap<>(Link.class);;
+    private boolean mapsAreInitialized;
 
-
-    private final double sampleSize;
     private final FlowDataSet flow;
+    private final Network network;
+    private final TimeBinManager timeBinManager;
+    private final double flowRatio; // Ratio to convert flow to hours, based on the time bin size
+    private final double sampleSize;
 
-    public ShahparDelay(Network network, FlowDataSet flow, double sampleSize) {
-        this.sampleSize = sampleSize;
+    public ShahparDelay(Network network, FlowDataSet flow, TimeBinManager timeBinManager, ShahparConfigGroup config,
+                        double sampleSize) {
+        this.alpha = config.getAlpha();
+        this.beta = config.getBeta();
+        this.eta = config.getEta();
         this.flow = flow;
-
-        for (Node node : network.getNodes().values()) {
-            // Step 1: Assign degree to each node
-            assignDegreeToNode(node);
-            // Step 2: Assign FF to each intersection node
-            assignFfToNode(node);
-            // Step 3: Assign ROW to each in-link of each intersection node
-            assignRowToInLinks(node);
-        }
+        this.network = network;
+        this.timeBinManager = timeBinManager;
+        this.mapsAreInitialized = false;
+        this.flowRatio = 3600.0 / timeBinManager.getBinSize();
+        this.sampleSize = sampleSize;
 
         logger.info("Shahpar delay initialized with {} intersection nodes.", ffMap.size());
+    }
+
+
+    public void initDelays(){
+        logger.info("Initializing unsignalized intersection's delays");
+        if (!mapsAreInitialized) {
+            for (Node node : network.getNodes().values()) {
+                // Step 1: Assign degree to each node
+                assignDegreeToNode(node);
+                // Step 2: Assign FF to each intersection node
+                assignFfToNode(node);
+                // Step 3: Assign ROW to each in-link of each intersection node
+                assignRowToInLinks(node);
+                mapsAreInitialized = true;
+            }
+        }
+        // limit memory usage by removing the links with 0 delay from memory
+        for (Link link : network.getLinks().values()) {
+            if (link.getAllowedModes().contains("car")) {
+                if (getNodeDegree(link.getToNode().getId())>2) {
+                    delays.put(link.getId(), new ArrayList<>(Collections.nCopies(timeBinManager.getNumberOfBins(), 0.0)));
+                }
+            }
+        }
+    }
+
+    public void resetDelays(){
+        logger.info("Resetting unsignalized intersection's delays");
+        clearDelays();
+        buildDelays();
+    }
+
+    public void clearDelays() {
+        // Reset all delays to 0.0
+        delays.values().forEach(delayList -> Collections.fill(delayList, 0.0));
+    }
+
+    public void buildDelays(){
+        for (Link link : network.getLinks().values()) {
+            if (link.getAllowedModes().contains("car")) {
+                if (getNodeDegree(link.getToNode().getId())>2) {
+                    List<Double> delayList = delays.get(link.getId());
+                    if (delayList != null) {
+                        double[] binCenters = timeBinManager.getBinsCenters();
+                        for (int i = 0; i < timeBinManager.getNumberOfBins(); i++) {
+                            double time = binCenters[i];
+                            double delay = computeDelay(link, time);
+                            delayList.set(i, delay);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public Double getDelay(Link link, double time){
+        return delays.get(link.getId()).get(timeBinManager.getBinIndex(time));
     }
 
     public void setAlpha(double alpha) {
@@ -55,27 +119,39 @@ public class ShahparDelay {
     public void setEta(double eta) {
         this.eta = eta;
     }
+    public Double getNodeDegree(Id<Node> nodeId) {
+        // Returns the degree of the node, or null if not assigned
+        return nodesDegrees.get(nodeId);
+    }
 
-    public double getDelay(Link link, double time) {
+    public double getFlow(Link link, double time) {
+        return Math.min(flow.getFlow(link.getId(), time)*flowRatio/sampleSize,
+                        link.getCapacity()); // Adjust flow based on the time bin size, rescale it to 100%, and cap it by the capacity of the link.
+    }
+
+    public double computeDelay(Link link, double time) {
         Node intersectionNode = link.getToNode();
-        Double degree = nodesDegrees.get(intersectionNode.getId());
-        // 1. Check if the intersection node has a degree assigned, and this degree is higher then 2 (otherwise it is a simple connection)
-        if (degree == null || degree <= 2) {
-            return 0.0;
+        // 1. estimate the FF and ROW of the delay Shahpar formula
+        Double FF = ffMap.get(intersectionNode.getId());
+        Double ROW = rowMap.get(link.getId());
+        if (FF == null || ROW == null) {
+            logger.warn("FF or ROW not assigned for intersection node {} or link {}. Returning 0.0 delay.", intersectionNode.getId(), link.getId());
+            return 0.0; // Return 0.0 if FF or ROW is not assigned
         }
-        // 2. estimate the delay using the Shahpar formula
-        double FF = ffMap.get(intersectionNode.getId());
-        double ROW = rowMap.get(link.getId());
 
-        // 3. Get the saturation ration of the intersection
+        // 2. Get the saturation ration of the intersection
         Collection<Link> inLinks = getLinksCar(intersectionNode, "in").values();
         double intersectionCapacity = Collections.max(inLinks.stream().map(Link::getCapacity).toList());
-        double intersectionFlow = inLinks.stream().mapToDouble(l -> flow.getFlow(l.getId(), time)).sum();
-        double intersectionSaturation = Math.min(intersectionFlow / intersectionCapacity,1.2); // saturation ratio capped at 1.2
+        double intersectionFlow = inLinks.stream().mapToDouble(l -> getFlow(l, time)).sum();
+        double intersectionSaturation = Math.min(intersectionFlow / intersectionCapacity,maximumSaturation); // saturation ratio capped at 1.2
 
-        // 4. Calculate the delay using the Shahpar formula
-        Double delay = FF*ROW*(alpha+beta*Math.pow(intersectionSaturation, eta));
-        return (delay != null && Double.isFinite(delay)) ? delay : 0.0;
+        // 3. Calculate the delay using the Shahpar formula
+        double delay = FF*ROW*(alpha+beta*Math.pow(intersectionSaturation, eta));
+        if (!Double.isFinite(delay)||delay<0.0){
+            logger.warn("The computed delay for link {} at time {} is wrong ({}). Returning 0.0", link.getId(), time, delay);
+            delay = 0.0; // Return 0.0 if the delay is not finite or negative
+        }
+        return delay;
     }
 
 
@@ -174,7 +250,7 @@ public class ShahparDelay {
     }
 
     private void assignRowToInLinks(Node node) {
-        List<Link> inLinks = new ArrayList<>(node.getInLinks().values());
+        List<Link> inLinks = new ArrayList<>(getLinksCar(node, "in").values());
         if (inLinks.isEmpty()) {
             return;
         }
@@ -195,6 +271,31 @@ public class ShahparDelay {
         }
     }
 
+    public void exportToCSV(String filename) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filename))) {
+            int numberOfBins = timeBinManager.getNumberOfBins();
+            // Write header: linkId, bin0, bin1, bin2, ...
+            StringBuilder header = new StringBuilder("linkId");
+            for (int bin = 0; bin < numberOfBins; bin++) {
+                double [] timeIntervals = timeBinManager.getBinInterval(bin);
+                double [] timeInHours = {timeIntervals[0]/3600.0, timeIntervals[1]/3600.0};
+                header.append(String.format(";bin%d (%.1f-%.1f h)", bin, timeInHours[0], timeInHours[1]));
+            }
+            writer.write(header.toString() + "\n");
+
+            // Write each link's flows as a row
+            for (Map.Entry<Id<Link>, List<Double>> entry : delays.entrySet()) {
+                Id<Link> linkId = entry.getKey();
+                List<Double> delayValue = entry.getValue();
+
+                StringBuilder row = new StringBuilder(linkId.toString());
+                for (int bin = 0; bin < numberOfBins; bin++) {
+                    row.append(String.format(";%.1f", delayValue.get(bin)));
+                }
+                writer.write(row.toString() + "\n");
+            }
+        }
+    }
 }
 
 //public static void main(String[] args) {

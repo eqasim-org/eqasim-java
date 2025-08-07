@@ -3,9 +3,8 @@ package org.eqasim.core.components.traffic;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.components.traffic_light.TrafficLightConfigGroup;
-import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
-import org.eqasim.core.components.traffic_light.delays.UnsignalizedIntersectionDelay;
+import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
+import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.AbstractModule;
 
@@ -16,10 +15,10 @@ public class EqasimTrafficModule extends AbstractModule {
     private static final Logger logger = LogManager.getLogger(EqasimTrafficModule.class);
     @Override
     public void install() {
-        TrafficLightConfigGroup tlConfig = TrafficLightConfigGroup.getOrCreate(getConfig());
+        DelaysConfigGroup tlConfig = DelaysConfigGroup.getOrCreate(getConfig());
         if (tlConfig.isActivated()) {
             logger.info("Traffic light crossing penalty is enabled.");
-            bind(CrossingPenalty.class).to(TrafficLightCrossingPenalty.class);
+            bind(CrossingPenalty.class).to(IntersectionDelay.class);
         } else {
             logger.info("Attribute crossing penalty is enabled.");
             bind(CrossingPenalty.class).to(AttributeCrossingPenalty.class);
@@ -36,12 +35,5 @@ public class EqasimTrafficModule extends AbstractModule {
     @Singleton
     DefaultCrossingPenalty provideDefaultCrossingPenalty(Network network, EqasimConfigGroup eqasimConfig) {
         return DefaultCrossingPenalty.build(network, eqasimConfig.getCrossingPenalty());
-    }
-
-    @Provides
-    @Singleton
-    TrafficLightCrossingPenalty provideTrafficLightCrossingPenalty(Network network, AttributeCrossingPenalty delegate,
-                                                                    TrafficLightDelay tlDelays, UnsignalizedIntersectionDelay usDelays) {
-        return TrafficLightCrossingPenalty.build(network, delegate, tlDelays, usDelays);
     }
 }

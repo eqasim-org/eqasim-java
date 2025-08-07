@@ -10,6 +10,8 @@ public class WebsterConfigGroup extends ReflectiveConfigGroup {
 
     public static final String TOTAL_LOST_TIME = "totalLostTime"; // NOT USED
     public static final String MINIMUM_GREEN_TIME = "minimumGreenTime";
+    public static final String MAXIMUM_GREEN_TIME = "maximumGreenTime";
+    public static final String MAXIMUM_CYCLE_LENGTH = "maximumCycleLength";
     public static final String LOST_TIME_PER_PHASE = "lostTimePerPhase";
     public static final String ALL_RED_TIME = "allRedTime";
     public static final String MAXIMUM_SATURATED_RATIO = "maximumSaturatedFlow";
@@ -17,10 +19,12 @@ public class WebsterConfigGroup extends ReflectiveConfigGroup {
 
     private double totalLostTime = 0.0;
     private double minimumGreenTime = 10.0;
-    private double lostTimePerPhase = 3.0;
+    private double maximumCycleLength = 120.0;
+    private double lostTimePerPhase = 4.0;
     private double allRedTime = 0.0;
-    private double maximumSaturatedFlow = 0.98;
-    private double minimumFlowRate = 1.0/3600;
+    private double maximumSaturatedFlow = 0.95;
+    private double minimumFlowRate = 5.0/3600;
+    private double maximumGreenTime = 60.0;
 
     public WebsterConfigGroup() {
         super(GROUP_NAME);
@@ -35,15 +39,19 @@ public class WebsterConfigGroup extends ReflectiveConfigGroup {
                 "calculated as n*lostTimePerPhase + allRedTime, where n in the number of phases (number of groups at an intersection)");
         comments.put(MINIMUM_GREEN_TIME,
                 "Is the minimum green time in seconds per phase, default value is 10.0 seconds");
+        comments.put(MAXIMUM_GREEN_TIME,
+                "Is the maximum green time in seconds per phase, default value is 60.0");
+        comments.put(MAXIMUM_CYCLE_LENGTH,
+                "The maximum cycle length in seconds, default value is 120.0 seconds (Flotterod & Behrisch, SUMO, 2018). ");
         comments.put(LOST_TIME_PER_PHASE,
                 "Is the lost time per phase in seconds, only used if the totalLostTime is 0. Default value is 3.0 seconds");
         comments.put(ALL_RED_TIME,
                 "Is the all red time in seconds, only used if the totalLostTime is 0. Default value is 0.0 seconds");
         comments.put(MAXIMUM_SATURATED_RATIO,
-                "Is the maximum saturated flow ratio, this value is used to avoid division by zero in the delay function. Default value is 0.98");
+                "Is the maximum saturated flow ratio, this value is used to avoid division by zero in the delay function. Default value is 0.95");
         comments.put(MINIMUM_FLOW_RATE,
                 "Is the minimum flow rate in vehicles per second, this value is used to avoid division by zero in the delay function. "+
-                "Default value is 1.0/3600 (1 vehicle per hour)");
+                "Default value is 5.0/3600 (5 vehicle per hour)");
         return comments;
     }
 
@@ -63,6 +71,24 @@ public class WebsterConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(MINIMUM_GREEN_TIME)
     public void setMinimumGreenTime(double minimumGreenTime) {
         this.minimumGreenTime = minimumGreenTime;
+    }
+
+    @StringGetter(MAXIMUM_GREEN_TIME)
+    public double getMaximumGreenTime() {
+        return maximumGreenTime;
+    }
+    @StringSetter(MAXIMUM_GREEN_TIME)
+    public void setMaximumGreenTime(double maximumGreenTime) {
+        this.maximumGreenTime = maximumGreenTime;
+    }
+
+    @StringGetter(MAXIMUM_CYCLE_LENGTH)
+    public double getMaximumCycleLength() {
+        return maximumCycleLength;
+    }
+    @StringSetter(MAXIMUM_CYCLE_LENGTH)
+    public void setMaximumCycleLength(double maximumCycleLength) {
+        this.maximumCycleLength = maximumCycleLength;
     }
 
     @StringGetter(LOST_TIME_PER_PHASE)

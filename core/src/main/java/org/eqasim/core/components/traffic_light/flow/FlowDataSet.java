@@ -34,21 +34,19 @@ public class FlowDataSet {
         this.network = network;
         this.timeBinManager = timeBinManager;
         this.beta = beta;
-
-        initializeFlowMap();
     }
 
     public double getFlow(Id<Link> linkId, double time) {
-        if (time >= timeBinManager.getStartTime() && time <= timeBinManager.getEndTime()) {
-            List<Double> flows = flowMap.get(linkId);
-            int binIdx = timeBinManager.getBinIndex(time);
-            return flows.get(binIdx);
-        } else  {
-            return 0.0; // Return 0 if the time is outside the defined range
+        if (time < timeBinManager.getStartTime() || time > timeBinManager.getEndTime()) {
+            throw new IllegalArgumentException("Time " + time + " is out of bounds (" +
+                    timeBinManager.getStartTime() + " - " + timeBinManager.getEndTime() + ")");
         }
+        List<Double> flows = flowMap.get(linkId);
+        int binIdx = timeBinManager.getBinIndex(time);
+        return flows.get(binIdx);
     }
 
-    private void initializeFlowMap() {
+    public void initializeFlowMap() {
         logger.info("Initializing FlowDataSet Map");
         flowMap.clear();
         for (Id<Link> linkId : network.getLinks().keySet()) {
@@ -57,7 +55,7 @@ public class FlowDataSet {
     }
 
     public void updateFlow(int iteration, TrafficCounter counts) {
-        logger.info("Iteration {}: Adding iteration flow data", iteration);
+        logger.info("Iteration {}: Updating iteration flow data", iteration);
 
         if (counts.getCounts().size() != network.getLinks().size()) {
             logger.error("FlowDataSet size mismatch. Expected: {}, Got: {}", network.getLinks().size(), counts.getCounts().size());
@@ -103,5 +101,8 @@ public class FlowDataSet {
         }
     }
 
+    public double getAverageFlow() {
+        return flowMap.values().stream().flatMap(List::stream).mapToDouble(Double::doubleValue).average().orElse(0.0);
+    }
 
 }

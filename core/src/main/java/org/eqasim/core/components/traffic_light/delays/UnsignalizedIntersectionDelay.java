@@ -7,26 +7,42 @@ import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UnsignalizedIntersectionDelay {
     private final Logger logger = LogManager.getLogger(UnsignalizedIntersectionDelay.class);
-    private final FlowDataSet flow;
-    private final Network network;
-    private final ShahparDelay formula;
-    //private final List<Double> delays = new ArrayList<>();
+    private final ShahparDelay intersectionDelayFormula;
 
-    public UnsignalizedIntersectionDelay(FlowDataSet flow, Network network, ShahparDelay formula) {
-        this.flow = flow;
-        this.network = network;
-        this.formula = formula;
+    public UnsignalizedIntersectionDelay(ShahparDelay intersectionDelay) {
+        this.intersectionDelayFormula = intersectionDelay;
         logger.info("Unsignalized intersection delay initialized with Shahpar formula.");
     }
 
     public double getDelay(Link link, double time){
-        return formula.getDelay(link, time);
+        // 1. Check if the intersection node has a degree assigned, and this degree is higher then 2 (otherwise it is a simple connection)
+        Double intersectionNodeDegree = intersectionDelayFormula.getNodeDegree(link.getToNode().getId());
+        if (intersectionNodeDegree == null || intersectionNodeDegree <= 2) {
+            return 0.0;
+        }
+        // 2. Check if the link has car mode (delays only set for cars)
+        if (!link.getAllowedModes().contains("car")) {
+            return 0.0;
+        }
+        // 3. return the delay using the formula
+        return intersectionDelayFormula.getDelay(link, time);
     }
 
+    public void initDelays() {
+        intersectionDelayFormula.initDelays();
+    }
 
+    public void resetDelays() {
+        intersectionDelayFormula.resetDelays();
+    }
+
+    public void exportToCSV(String filename) throws IOException {
+        intersectionDelayFormula.exportToCSV(filename);
+    }
 }

@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class IntersectionGroups {
 
-    private static final double BEARING_TOLERANCE_DEGREES = 20.0;
+    private static final double BEARING_TOLERANCE_DEGREES = 15.0;
 
     /**
      * Groups incoming links at a node based on their names and bearings.
@@ -24,18 +24,29 @@ public class IntersectionGroups {
      * @return a list of groups, each group being a list of links
      */
     public static List<List<Link>> groupInLinks(List<Link> inLinksList) {
+        // if only one inlink, it should have multiple outlink. In most cases it has two outlink. So, the outlink might be
+        // treated as separate groups. this could be done by having the same link twice in the list.
+        if (inLinksList.size() == 1) {
+            List<List<Link>> groups = new ArrayList<>();
+            groups.add(Collections.singletonList(inLinksList.getFirst()));
+            groups.add(Collections.singletonList(inLinksList.getFirst()));
+            return groups;
+        }
 
-        // If 2 or fewer links, return all as one group (or empty if none)
-        if (inLinksList.size() <= 2) {
-            return inLinksList.isEmpty() ?
-                    Collections.emptyList() :
-                    Collections.singletonList(new ArrayList<>(inLinksList));
+        // If 2 in links, return each as a group
+        if (inLinksList.size() == 2) {
+            List<List<Link>> groups = new ArrayList<>();
+            groups.add(Collections.singletonList(inLinksList.get(0)));
+            groups.add(Collections.singletonList(inLinksList.get(1)));
+            return groups;
         }
 
         // Extract names and bearings for all links for later comparison
         List<String> names = inLinksList.stream()
                 .map(IntersectionGroups::getLinkName)
                 .toList();
+        // check names only if there are different names
+        boolean checkNames = new HashSet<>(names).size() > 1;
 
         List<Double> bearings = inLinksList.stream()
                 .map(IntersectionGroups::getBearing)
@@ -59,13 +70,15 @@ public class IntersectionGroups {
                 boolean shouldGroup = false;
 
                 // Criterion 1: Group if names are non-null, non-empty, and equal
-                String nameI = names.get(i);
-                String nameJ = names.get(j);
-                if (nameI != null && !nameI.isEmpty() && nameI.equals(nameJ)) {
-                    shouldGroup = true;
+                if (checkNames) {
+                    String nameI = names.get(i);
+                    String nameJ = names.get(j);
+                    if (nameI != null && !nameI.isEmpty() && nameI.equals(nameJ)) {
+                        shouldGroup = true;
+                    }
                 }
                 // Criterion 2: Group if bearings are within tolerance (nearly straight)
-                else {
+                if (!shouldGroup) {
                     double diff = angleDifference(bearings.get(i), bearings.get(j));
                     if (diff <= BEARING_TOLERANCE_DEGREES) {
                         shouldGroup = true;

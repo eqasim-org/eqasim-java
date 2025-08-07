@@ -6,6 +6,8 @@ public class WebsterFormula {
     // Automated generation of traffic signals and lanes for MATSim based on OpenStreetMap
     // Theresa Ziemke, Sohnke Braun, 2021, section 3.4
     private final double minimumGreenTime;// default 10.0 - same source as above
+    private final double maximumGreenTime; // default 60.0 - same source as above
+    private final double maximumCycleLength;
 
     // source: //https://www.apsed.in/post/traffic-signal-design-webster-s-formula-for-optimum-cycle-length#:~:text=All%20red%20time%20is%20usually,ratio%20at%20all%20the%20phases
     // same formula used in: Investigating Parameter Interactions with the Factorial Design Method: Webster’s Optimal Cycle Length Model, Ali Payıdar AKGÜNGÖR, Ersin KORKMAZ, 2018
@@ -18,16 +20,27 @@ public class WebsterFormula {
     public WebsterFormula(WebsterConfigGroup config) {
         this.totalLostTime = config.getTotalLostTime();
         this.minimumGreenTime = config.getMinimumGreenTime();
+        this.maximumGreenTime = config.getMaximumGreenTime();
+        this.maximumCycleLength = config.getMaximumCycleLength();
         this.lostTimePerPhase = config.getLostTimePerPhase();
         this.allRedTime =  config.getAllRedTime();
         this.maximumSaturatedRatio = config.getMaximumSaturatedFlow();
         this.minimumFlowRate = config.getMinimumFlowRate();
     }
 
+    public double getMaximumGreenTime() {
+        return maximumGreenTime;
+    }
+
     public double getMinimumGreenTime() {
         return minimumGreenTime;
     }
-    public double getLostTimeAtPhase() {
+
+    public double getMaximumCycleLength() {
+        return maximumCycleLength;
+    }
+
+    public double getLostTimePerPhase() {
         return lostTimePerPhase;
     }
     public double getAllRedTime() {
@@ -40,10 +53,8 @@ public class WebsterFormula {
         return minimumFlowRate;
     }
 
-
-
     public double getMinimumCycleTime(int numPhases) {
-        return totalLostTime>0.0 ? totalLostTime : minimumGreenTime * numPhases + L(numPhases);
+        return minimumGreenTime * numPhases + L(numPhases);
     }
 
     public double delay(double c, double g, double x, double q){
@@ -70,6 +81,9 @@ public class WebsterFormula {
     }
 
     public double L(int n){
+        if (totalLostTime > 0.0) {
+            return totalLostTime; // Use the total lost time if it is set
+        }
         return n*lostTimePerPhase + allRedTime; // Total lost time in seconds
     }
 
@@ -77,10 +91,13 @@ public class WebsterFormula {
         // Optimal cycle time using Webster's formula
         // l: the total lost or unusable time during a signal cycle, in seconds.
         // y: the sum of saturated ratios
-        if (y==1) {
-            throw new IllegalArgumentException("Invalid input: y (cannot be 1).");
-        }
-        return (1.5 * L(n) + 5.0) / (1.0 - y);
+        // n: the number of phases
+
+        double optimalCycleTime = (1.5 * L(n) + 5.0) / (1.0 - Math.min(y, maximumSaturatedRatio)); // Ensure y does not exceed the maximum saturated ratio
+        double minimumCycleTime = getMinimumCycleTime(n);
+        double maximumCycleTime = getMaximumCycleLength();
+        return Math.min(Math.max(optimalCycleTime, minimumCycleTime),
+                        maximumCycleTime); // Ensure the cycle time is within the range of minimum and maximum cycle times
     }
 
     public double gOpt(double C, int n) {
