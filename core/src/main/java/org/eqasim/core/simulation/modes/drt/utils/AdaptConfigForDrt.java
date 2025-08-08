@@ -20,7 +20,6 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
-import org.matsim.contrib.common.zones.ZoneSystemParams;
 import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
 import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
@@ -34,7 +33,6 @@ import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.dvrp.fleet.FleetReader;
 import org.matsim.contrib.dvrp.fleet.FleetSpecification;
 import org.matsim.contrib.dvrp.fleet.FleetSpecificationImpl;
-import org.matsim.contrib.dvrp.load.DefaultDvrpLoadFromFleet;
 import org.matsim.contrib.dvrp.load.IntegerLoadType;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -113,7 +111,7 @@ public class AdaptConfigForDrt {
 
             if(Boolean.parseBoolean(addLegTimeConstraint.get(drtMode))) {
                 FleetSpecification fleetSpecification = new FleetSpecificationImpl();
-                new FleetReader(fleetSpecification, new DefaultDvrpLoadFromFleet(new IntegerLoadType("passengers"), "passengers")).parse(ConfigGroup.getInputFileURL(config.getContext(), vehiclesPathByDrtMode.get(drtMode)));
+                new FleetReader(fleetSpecification, new IntegerLoadType("passengers")).parse(ConfigGroup.getInputFileURL(config.getContext(), vehiclesPathByDrtMode.get(drtMode)));
                 DoubleSummaryStatistics serviceTimeSummaryStatistics = fleetSpecification.getVehicleSpecifications().values().stream()
                         .flatMapToDouble(dvrpVehicleSpecification -> DoubleStream.of(dvrpVehicleSpecification.getServiceBeginTime(), dvrpVehicleSpecification.getServiceEndTime()))
                         .summaryStatistics();

@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -43,20 +44,20 @@ public class VDFModule extends AbstractEqasimExtension {
 		bind(VolumeDelayFunction.class).to(BPRFunction.class);
 
 		switch (vdfConfig.getHandler()) {
-		case Horizon:
-			bind(VDFTrafficHandler.class).to(VDFHorizonHandler.class);
-			addEventHandlerBinding().to(VDFHorizonHandler.class);
-			break;
-		case SparseHorizon:
-			bind(VDFTrafficHandler.class).to(VDFSparseHorizonHandler.class);
-			addEventHandlerBinding().to(VDFSparseHorizonHandler.class);
-			break;
-		case Interpolation:
-			bind(VDFTrafficHandler.class).to(VDFInterpolationHandler.class);
-			addEventHandlerBinding().to(VDFInterpolationHandler.class);
-			break;
-		default:
-			throw new IllegalStateException();
+			case Horizon:
+				bind(VDFTrafficHandler.class).to(VDFHorizonHandler.class);
+				addEventHandlerBinding().to(VDFHorizonHandler.class);
+				break;
+			case SparseHorizon:
+				bind(VDFTrafficHandler.class).to(VDFSparseHorizonHandler.class);
+				addEventHandlerBinding().to(VDFSparseHorizonHandler.class);
+				break;
+			case Interpolation:
+				bind(VDFTrafficHandler.class).to(VDFInterpolationHandler.class);
+				addEventHandlerBinding().to(VDFInterpolationHandler.class);
+				break;
+			default:
+				throw new IllegalStateException();
 		}
 	}
 
@@ -68,7 +69,8 @@ public class VDFModule extends AbstractEqasimExtension {
 		URL inputFile = config.getInputFlowFile() == null ? null
 				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFlowFile());
 		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
-				config.getWriteFlowInterval(), config.getWriteTravelTimesInterval(), controllerConfig.getFirstIteration(), inputFile);
+				config.getWriteFlowInterval(), config.getWriteTravelTimesInterval(),
+				controllerConfig.getFirstIteration(), inputFile);
 	}
 
 	@Provides
@@ -80,14 +82,15 @@ public class VDFModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public VDFTravelTime provideVDFTravelTime(VDFConfigGroup config, VDFScope scope, Network network,
-			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig) throws IOException {
+			VolumeDelayFunction vdf, QSimConfigGroup qsimConfig, EqasimConfigGroup eqasimConfig,
+			CrossingPenalty crossingPenalty) throws IOException {
 		ScenarioExtent updateExtent = config.getUpdateAreaShapefile() == null ? null
 				: new ShapeScenarioExtent.Builder(new File(ConfigGroup
 						.getInputFileURL(getConfig().getContext(), config.getUpdateAreaShapefile()).getPath()),
 						Optional.empty(), Optional.empty()).build();
 		VDFTravelTime vdfTravelTime = new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
-				eqasimConfig.getSampleSize(), network, vdf, eqasimConfig.getCrossingPenalty(), updateExtent);
-		if(config.getInputTravelTimesFile() != null) {
+				eqasimConfig.getSampleSize(), network, vdf, crossingPenalty, updateExtent);
+		if (config.getInputTravelTimesFile() != null) {
 			LOGGER.info("Reading VDF travel times");
 			URL inputTimeFile = ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputTravelTimesFile());
 			vdfTravelTime.readFrom(inputTimeFile);
@@ -104,8 +107,10 @@ public class VDFModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public VDFSparseHorizonHandler provideVDFSparseHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope) {
-		return new VDFSparseHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads());
+	public VDFSparseHorizonHandler provideVDFSparseHorizonHandler(VDFConfigGroup config, Network network,
+			VDFScope scope) {
+		return new VDFSparseHorizonHandler(network, scope, config.getHorizon(),
+				getConfig().global().getNumberOfThreads());
 	}
 
 	@Provides

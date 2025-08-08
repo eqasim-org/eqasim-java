@@ -13,13 +13,13 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import org.eqasim.core.misc.ParallelProgress;
+import org.eqasim.core.scenario.freeflow.FreeflowConfiguration;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.server.ServiceBuilder.Services;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneRequest;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneResponse;
 import org.eqasim.server.services.isochrone.transit.TransitIsochroneRequest;
 import org.eqasim.server.services.isochrone.transit.TransitIsochroneResponse;
-import org.eqasim.server.services.router.road.FreespeedSettings;
 import org.eqasim.server.services.router.road.RoadRouterRequest;
 import org.eqasim.server.services.router.road.RoadRouterResponse;
 import org.eqasim.server.services.router.transit.TransitRouterRequest;
@@ -50,9 +50,6 @@ public class RunProcessor {
 				.orElse(Runtime.getRuntime().availableProcessors());
 
 		ObjectMapper objectMapper = new ObjectMapper();
-		if (cmd.getOption("indent-response").map(Boolean::parseBoolean).orElse(false)) {
-
-		}
 
 		ProcessorInput input = objectMapper.readValue(new File(cmd.getOptionStrict("input-path")),
 				ProcessorInput.class);
@@ -61,7 +58,9 @@ public class RunProcessor {
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
 
 		process(input.roadRouter, output.roadRouter,
-				request -> services.roadRouterService().processRequest(request, input.freespeed), "road_router",
+				request -> services.roadRouterService().processRequest(request,
+						services.roadRouterService().prepareFreeflowTravelTime(input.freeflow)),
+				"road_router",
 				executor);
 
 		process(input.roadIsochrone, output.roadIsochrone, services.roadIsochroneService()::processRequest,
@@ -77,13 +76,13 @@ public class RunProcessor {
 		}
 
 		objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(cmd.getOptionStrict("output-path")), output);
-	
+
 		executor.shutdown();
 	}
 
 	private static class ProcessorInput {
-		@JsonProperty("freespeed")
-		FreespeedSettings freespeed = null;
+		@JsonProperty("freeflow")
+		FreeflowConfiguration freeflow = null;
 
 		@JsonProperty("road_router")
 		List<RoadRouterRequest> roadRouter = new LinkedList<>();
