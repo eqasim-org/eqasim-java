@@ -5,7 +5,9 @@ import java.util.Random;
 import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.fast_calibration.alphaCalibratorConfig;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
+import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.SwissModeChoiceModule;
@@ -38,7 +40,7 @@ public class ZurichConfigurator extends EqasimConfigurator {
 		super(cmd);
 		registerModule(new SwissModeChoiceModule(cmd));
 		registerModule(new ZurichModeChoiceModule(cmd));
-		registerModule(new SmoothingTravelTimeModule());
+		//registerModule(new SmoothingTravelTimeModule());
 	}
 
 	public ConfigGroup[] getConfigGroups() {
@@ -46,7 +48,10 @@ public class ZurichConfigurator extends EqasimConfigurator {
 				new SwissRailRaptorConfigGroup(), //
 				new EqasimConfigGroup(), //
 				new DiscreteModeChoiceConfigGroup(), //
-				new EqasimTerminationConfigGroup(), new EqasimRaptorConfigGroup() };
+				new EqasimTerminationConfigGroup(),
+				new EqasimRaptorConfigGroup(),
+				new alphaCalibratorConfig(),
+				new DelaysConfigGroup()};
 	}
 
 	public void configure(Config config) {

@@ -10,7 +10,7 @@ public class ShahparConfigGroup extends ReflectiveConfigGroup {
 
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
-    public static final String ETA = "ETA";
+    public static final String ETA = "eta";
 
     private double alpha = 3.5;
     private double beta = 4.85;

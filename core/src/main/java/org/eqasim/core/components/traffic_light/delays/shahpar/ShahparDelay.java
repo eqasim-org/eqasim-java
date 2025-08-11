@@ -119,6 +119,7 @@ public class ShahparDelay {
     public void setEta(double eta) {
         this.eta = eta;
     }
+
     public Double getNodeDegree(Id<Node> nodeId) {
         // Returns the degree of the node, or null if not assigned
         return nodesDegrees.get(nodeId);
@@ -193,9 +194,8 @@ public class ShahparDelay {
             ffMap.put(intersectionNode.getId(), 0.0);
             return;
         }
-        // Collect unique neighboring node IDs from in-links and out-links
+        // Check if the intersection node has a degree assigned, and this degree is higher than 2 (otherwise it is a simple connection)
         if (nodesDegrees.get(intersectionNode.getId()) <= 2) {
-            // If only two unique neighboring nodes, it's a simple connection
             ffMap.put(intersectionNode.getId(), 0.0);
             return;
         }

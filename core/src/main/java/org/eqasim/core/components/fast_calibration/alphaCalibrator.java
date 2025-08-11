@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class alphaCalibrator implements IterationStartsListener {
     // This class tracks the mode share at the beginning of each iteration and calibrates the alpha value
@@ -30,7 +31,7 @@ public class alphaCalibrator implements IterationStartsListener {
     private final double beta;
     private final Scenario scenario;
     private final Map<String, Double> shares = new HashMap<>();
-
+    private final Set<String> consideredModes = Set.of("car", "pt", "walk", "bike", "car_passenger");
 
     private final OutputDirectoryHierarchy outputHierarchy;
     private final ModeParameters modeParameters;
@@ -52,7 +53,29 @@ public class alphaCalibrator implements IterationStartsListener {
         this.modeParameters = modeParameters;
         this.tripListConverter = tripListConverter;
         this.beta = beta;
+
+        checkTargetModeShares();
         resetPlansCreationFlag();
+    }
+
+    public void checkTargetModeShares() {
+        // Check first that the required modes are present in the target mode shares
+        Set<String> modesWithRequiredShares = Set.of("car", "pt", "walk", "bike");
+        for (String mode : targetModeShares.keySet()) {
+            if (!modesWithRequiredShares.contains(mode)) {
+                logger.warn("Mode '" + mode + "' is not considered in the calibration. This may lead to unexpected results in the calibration process. " +
+                        "Please check the target mode shares in the configuration file and ensure you provide shares for all required modes: " + modesWithRequiredShares);
+            }
+        }
+        // ensure the sum of target mode shares is below 1.0 (if passenger_car is not given, else it is 1.0)
+        double sumOfShares = targetModeShares.values().stream().mapToDouble(Double::doubleValue).sum();
+        if (sumOfShares > 1.0) {
+            logger.warn("The sum of target mode shares is greater than 1.0: " + sumOfShares + ". This may lead to unexpected results in the calibration process. " +
+                        "Please check the target mode shares in the configuration file.");
+        } else if ((sumOfShares < 0.99)&&targetModeShares.containsKey("car_passenger")) {
+            logger.warn("The sum of target mode shares is less than 1.0: " + sumOfShares + ". This may lead to unexpected results in the calibration process. " +
+                    "Please check the target mode shares in the configuration file.");
+        }
     }
 
     @Override
@@ -78,7 +101,7 @@ public class alphaCalibrator implements IterationStartsListener {
             Plan plan = person.getSelectedPlan();
             plan.getAttributes().putAttribute("createdLastIteration", false);
 
-            // this part is for counting the utilities' changes
+            // this part is for checking the utilities' changes
             Double utility = (Double) plan.getAttributes().getAttribute("utility");
             Double lastIterationUtility = utilities.get(person.getId());
 
@@ -115,8 +138,10 @@ public class alphaCalibrator implements IterationStartsListener {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);
                 for (DiscreteModeChoiceTrip trip : trips) {
                     String mode = trip.getInitialMode();
-                    estimatedShares.put(mode, estimatedShares.getOrDefault(mode, 0.0) + 1.0);
-                    replannedTripsCount += 1; // Count the number of replanned plans
+                    if (consideredModes.contains(mode)) {
+                        estimatedShares.put(mode, estimatedShares.getOrDefault(mode, 0.0) + 1.0);
+                        replannedTripsCount += 1; // Count the number of replanned plans
+                    }
                 }
             }
         }
@@ -128,7 +153,7 @@ public class alphaCalibrator implements IterationStartsListener {
             estimatedShares.put(mode, share);
         }
 
-        if (replannedTripsCount!=changedUtilityCount){
+        if (replannedTripsCount>changedUtilityCount){
             logger.warn("The number of replanned trips (as estimated: " + replannedTripsCount + ") does not match " +
                         "the number of trips in the plans whose utilities have changed (" + changedUtilityCount + "). " +
                         "This might indicate an inconsistency in the calibration process. Please check this part of the code.");
@@ -153,8 +178,10 @@ public class alphaCalibrator implements IterationStartsListener {
             // Calculate the new alpha value based on the current share and the target share
             double newAlpha = alpha + (Math.log(zi)-Math.log(mi)) - (Math.log(zo)-Math.log(mo));
             // update it using EMA
-            double effectiveBeta = Math.min(beta, beta * ( 10.0 / (iteration + 1.0) ) );
-            newAlpha = newAlpha * effectiveBeta + (1.0 - effectiveBeta) * alpha;
+            if (Math.abs(newAlpha - alpha) > 1e-3) { // Only use EMA if the change is significant
+                double effectiveBeta = Math.max(Math.min(beta, beta * ( 10.0 / (iteration + 1.0) )), 0.1);
+                newAlpha = newAlpha * effectiveBeta + (1.0 - effectiveBeta) * alpha;
+            }
             // put the new alpha in the map
             newAlphas.put(mode, newAlpha);
         }
