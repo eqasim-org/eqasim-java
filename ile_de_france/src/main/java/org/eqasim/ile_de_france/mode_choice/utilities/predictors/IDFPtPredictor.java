@@ -53,30 +53,30 @@ public class IDFPtPredictor extends CachedVariablePredictor<IDFPtVariables> {
 		for (PlanElement element : elements) {
 			if (element instanceof Leg leg) {
 				switch (leg.getMode()) {
-				case TransportMode.walk:
-				case TransportMode.non_network_walk:
-					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
-					break;
-				case TransportMode.transit_walk:
-					// different than standard estimator
-					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
-					break;
-				case TransportMode.pt:
-					TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
+					case TransportMode.walk:
+					case TransportMode.non_network_walk:
+						accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
+						break;
+					case TransportMode.transit_walk:
+						// different than standard estimator
+						accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
+						break;
+					case TransportMode.pt:
+						TransitPassengerRoute route = (TransitPassengerRoute) leg.getRoute();
 
-					double departureTime = leg.getDepartureTime().seconds();
-					double waitingTime = route.getBoardingTime().seconds() - departureTime;
-					double inVehicleTime = leg.getTravelTime().seconds() - waitingTime;
+						double departureTime = leg.getDepartureTime().seconds();
+						double waitingTime = route.getBoardingTime().seconds() - departureTime;
+						double inVehicleTime = leg.getTravelTime().seconds() - waitingTime;
 
-					inVehicleTime_min += inVehicleTime / 60.0;
-					waitingTime_min += waitingTime / 60.0;
+						inVehicleTime_min += inVehicleTime / 60.0;
+						waitingTime_min += waitingTime / 60.0;
 
-					numberOfVehicularLegs++;
-					break;
-				default:
-					throw new IllegalStateException("Unknown mode in PT trip: " + leg.getMode());
+						numberOfVehicularLegs++;
+						break;
+					default:
+						throw new IllegalStateException("Unknown mode in PT trip: " + leg.getMode());
 				}
-				
+
 				if (leg.getRoute() instanceof TransitPassengerRoute route) {
 					TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
 					TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());

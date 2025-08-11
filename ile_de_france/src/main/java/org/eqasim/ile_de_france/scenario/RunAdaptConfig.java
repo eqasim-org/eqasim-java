@@ -83,7 +83,7 @@ public class RunAdaptConfig {
 		vehicleTourConstraint.setRestrictedModes(Arrays.asList("car", IDFModeChoiceModule.BICYCLE));
 
 		// Major crossing penalty from calibration
-		eqasimConfig.setCrossingPenalty(4.2);
+		eqasimConfig.setCrossingPenalty(0.0);
 
 		// Epsilon
 		AdaptConfigForEpsilon.run(config);

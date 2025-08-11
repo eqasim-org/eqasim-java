@@ -5,11 +5,14 @@ import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
 public class IDFPersonVariables implements BaseVariables {
 	public final boolean hasSubscription;
 	public final boolean hasDrivingPermit;
-	public final boolean isParisResident;
+	public final double householdIncomePerCU_EUR;
+	public final String residenceMunicipalityId;
 
-	public IDFPersonVariables(boolean hasSubscription, boolean hasDrivingPermit, boolean isParisResident) {
+	public IDFPersonVariables(boolean hasSubscription, boolean hasDrivingPermit, double householdIncomePerCU_EUR,
+			String residenceMunicipalityId) {
 		this.hasSubscription = hasSubscription;
 		this.hasDrivingPermit = hasDrivingPermit;
-		this.isParisResident = isParisResident;
+		this.householdIncomePerCU_EUR = householdIncomePerCU_EUR;
+		this.residenceMunicipalityId = residenceMunicipalityId;
 	}
 }
