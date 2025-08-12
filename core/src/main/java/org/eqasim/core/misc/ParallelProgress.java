@@ -45,8 +45,7 @@ public class ParallelProgress {
 	}
 
 	private void run() {
-		long startTime = System.currentTimeMillis();
-		long currentTime = startTime;
+		final long startTime = System.currentTimeMillis();
 
 		try {
 			while (currentCount < totalCount) {
@@ -56,8 +55,8 @@ public class ParallelProgress {
 					message.add(String.format("%d/%d", currentCount, totalCount));
 					message.add(String.format("(%.2f%%)", 100.0 * currentCount / totalCount));
 
-					currentTime = System.currentTimeMillis();
-					long elapsedTime = currentTime - startTime;
+					final long currentTime = System.currentTimeMillis();
+					final long elapsedTime = (currentTime - startTime) / 1000;
 
 					if (showElapsedTime) {
 						message.add("+" + writeTime(elapsedTime));
