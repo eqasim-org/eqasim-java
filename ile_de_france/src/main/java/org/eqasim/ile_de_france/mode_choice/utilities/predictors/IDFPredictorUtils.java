@@ -32,8 +32,8 @@ public class IDFPredictorUtils {
 		return householdIncome;
 	}
 
-	static public int getConsumptionUnits(Person person) {
-		Integer consumptionUnits = (Integer) person.getAttributes().getAttribute("householdConsumptionUnits");
+	static public double getConsumptionUnits(Person person) {
+		Double consumptionUnits = (Double) person.getAttributes().getAttribute("householdConsumptionUnits");
 		return consumptionUnits;
 	}
 
