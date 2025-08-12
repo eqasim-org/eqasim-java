@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.utils.pricing.inputs.zonal;
+package org.eqasim.switzerland.ch.utils.pricing.inputs;
 
 import java.io.File;
 import java.io.FileReader;
@@ -36,9 +36,13 @@ public class ZonalReader {
             String[] line;
             while ((line = reader.readNext()) != null) {
                 if (line.length > index) {
-                    String network = line[index].trim();
-                    if (!network.isEmpty()) {
-                        authorities.putIfAbsent(network, new Authority(network));
+                    String authority      = line[index].trim().replaceAll("[\\[\\]' ]", "");
+                    String[] authorityIds = authority.split(",");
+                    
+                    for (String authID : authorityIds){
+                        if (!authID.isEmpty() & !authID.equals("nan")){
+                            authorities.putIfAbsent(authID, new Authority(authID, 1, "ZoneBased"));
+                        }
                     }
                 }
             }
@@ -77,27 +81,27 @@ public class ZonalReader {
             }
 
             String[] line;
-            while ((line = reader.readNext()) != null) {
-                String authorityId = line[authorityIdIndex].trim();
+            while ((line = reader.readNext()) != null) {                
+                // stop ID
                 String stopIdStr   = line[stopIdIndex].trim();
-                String zoneIdStr   = line[zoneIdIndex].trim();
 
-                if (!authorityId.isEmpty() && !stopIdStr.isEmpty() && !zoneIdStr.isEmpty()) {
-                    try {
+                // zones
+                String[] zoneEntries = line[zoneIdIndex].split(",");
 
-                        Authority authority = authoritiesMap.get(authorityId);
+                // add builders
+                for (String entry : zoneEntries){
+                    String[] parts = entry.trim().split(":");
+                    if (parts.length == 2){
+                        String authorityID = parts[0].trim();
+                        String zoneID      = parts[1].trim();
+
+                        Authority authority = authoritiesMap.get(authorityID);
                         if (authority == null) continue;
 
-                        builders
-                            .computeIfAbsent(authority, k -> new HashMap<>())
-                            .computeIfAbsent(zoneIdStr, z -> new Zone.Builder(authority, zoneIdStr))
-                            .addStopId(stopIdStr);
-
-                    } catch (NumberFormatException e) {
-                        // Skip rows with invalid integers
-                        continue;
+                        builders.computeIfAbsent(authority, k -> new HashMap<>()).computeIfAbsent(zoneID, z -> new Zone.Builder(authority, zoneID)).addStopId(stopIdStr);
                     }
                 }
+
             }
         }
 

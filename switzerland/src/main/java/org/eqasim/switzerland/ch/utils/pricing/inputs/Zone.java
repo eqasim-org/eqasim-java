@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.utils.pricing.inputs.zonal;
+package org.eqasim.switzerland.ch.utils.pricing.inputs;
 
 import java.util.Collection;
 import java.util.HashSet;

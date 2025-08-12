@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.eqasim.switzerland.ch.utils.pricing.inputs.zonal.ZonalRegistry;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.zonal.Zone;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;

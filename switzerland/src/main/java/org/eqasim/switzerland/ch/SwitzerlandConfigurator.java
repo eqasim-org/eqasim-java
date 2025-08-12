@@ -1,6 +1,7 @@
 package org.eqasim.switzerland.ch;
 
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -14,7 +15,8 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 	public SwitzerlandConfigurator(CommandLine cmd) {
 		super(cmd);
 		this.cmd = cmd;
-
+		
+		registerConfigGroup(new SwissPTZonesConfigGroup(), true);
 		registerModule(new SwissModeChoiceModule(cmd));
 	}
 

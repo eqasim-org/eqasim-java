@@ -1,6 +1,6 @@
 package org.eqasim.switzerland.ch.utils.pricing.stopvisiteventhandler;
 
-import org.eqasim.switzerland.ch.utils.pricing.inputs.zonal.ZonalRegistry;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.controler.AbstractModule;
 

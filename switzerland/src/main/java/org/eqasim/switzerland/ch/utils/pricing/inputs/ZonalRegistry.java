@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.utils.pricing.inputs.zonal;
+package org.eqasim.switzerland.ch.utils.pricing.inputs;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 public class ZonalRegistry {
-    private final Map<String, Collection<Zone>> zonesByStopId         = new HashMap<>();
+    private final Map<String, Collection<Zone>> zonesByStopId       = new HashMap<>();
 	private final Map<String, Authority> authoritiesById            = new HashMap<>();
 	private final Map<Authority, Collection<Zone>> zonesByAuthority = new HashMap<>();
 
@@ -36,7 +36,7 @@ public class ZonalRegistry {
 
 	public Zone getZone(Authority authority, String zoneId) {
 		for (Zone zone : zonesByAuthority.get(authority)) {
-			if (zone.getZoneId() == zoneId) {
+			if (zone.getZoneId().equals(zoneId)) {
 				return zone;
 			}
 		}

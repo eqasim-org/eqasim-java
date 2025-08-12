@@ -2,12 +2,13 @@ package org.eqasim.switzerland.ch.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
-import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissPtCostModel;
@@ -16,11 +17,17 @@ import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissBikeUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissCarUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.opencsv.exceptions.CsvValidationException;
 
 public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -50,6 +57,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bindCostModel(PT_COST_MODEL_NAME).to(SwissPtCostModel.class);
 
 		bind(SwissPersonPredictor.class);
+		bind(SwissPtRoutePredictor.class);
 
 		bind(ModeParameters.class).to(SwissModeParameters.class).asEagerSingleton();
 	}
@@ -79,5 +87,25 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
+	}
+
+	@Provides
+	//@Singleton
+	public ZonalRegistry provideZonalRegistry(SwissPTZonesConfigGroup ptZonesConfig) throws IOException, CsvValidationException{
+		String file_path = "";
+		ZonalReader zonalReader = new ZonalReader();
+		ZonalRegistry zonalRegistry = null;
+
+		if (ptZonesConfig.getZonePath() != null){
+			file_path = ptZonesConfig.getZonePath();
+			File path = new File(file_path);
+			Collection<Authority> authorities = zonalReader.readTarifNetworks(path);
+			Collection<Zone> zones = zonalReader.readZones(path, authorities);
+			zonalRegistry = new ZonalRegistry(authorities, zones);
+		}
+		else{
+			throw new IOException("No  input file detected to create the zonal registry");
+		}
+		return zonalRegistry;
 	}
 }
