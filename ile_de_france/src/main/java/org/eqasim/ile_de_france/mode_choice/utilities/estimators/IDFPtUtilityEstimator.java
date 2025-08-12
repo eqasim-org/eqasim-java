@@ -55,10 +55,13 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 
 	protected double estimateMonetaryCostUtility(IDFPtVariables variables, IDFPersonVariables personVariables,
 			double cost_EUR) {
-		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables.euclideanDistance_km,
-				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance)
+		System.err.println("pt:householdIncome " + personVariables.householdIncomePerCU_EUR);
+
+		return parameters.betaCost_u_MU * //
+				EstimatorUtils.interaction(variables.euclideanDistance_km,
+						parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) //
 				* EstimatorUtils.interaction(personVariables.householdIncomePerCU_EUR,
-						parameters.referenceIncomePerCU_EUR, parameters.lambdaCostIncome)
+						parameters.referenceIncomePerCU_EUR, parameters.lambdaCostIncome) //
 				* cost_EUR;
 	}
 
@@ -75,6 +78,7 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateCrossingParisBoundaryUtility(IDFSpatialVariables variables) {
+		System.err.println("pt:crossingParis " + variables.isCrossingParisBoundary);
 		return variables.isCrossingParisBoundary ? parameters.idfPt.betaCrossingParisBorder_u : 0.0;
 	}
 

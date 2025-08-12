@@ -23,7 +23,7 @@ public class ParkingTariff {
         }
     }
 
-    public double getParkingPressure(Id<Link> link) {
+    public double getParkingTariff(Id<Link> link) {
         return values.getOrDefault(link, 0.0);
     }
 }

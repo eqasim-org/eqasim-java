@@ -45,6 +45,8 @@ public class IDFCarUtilityEstimator extends CarUtilityEstimator {
 	}
 
 	protected double estimateMonetaryCostUtility(CarVariables carVariables, IDFPersonVariables personVariables) {
+		System.err.println("car:householdIncome " + personVariables.householdIncomePerCU_EUR);
+
 		double baseValue = super.estimateMonetaryCostUtility(carVariables);
 
 		return baseValue * EstimatorUtils.interaction(personVariables.householdIncomePerCU_EUR,
@@ -52,10 +54,12 @@ public class IDFCarUtilityEstimator extends CarUtilityEstimator {
 	}
 
 	protected double estimateParkingPressureUtility(IDFParkingVariables parkingVariables) {
+		System.err.println("car:parkingPressure " + parkingVariables.parkingPressure);
 		return parameters.idfCar.betaParkingPressure_u * parkingVariables.parkingPressure;
 	}
 
 	protected double estimateInsideParisUtility(IDFSpatialVariables spatialVariables) {
+		System.err.println("car:insideParis " + spatialVariables.isInsideParisBoundary);
 		return spatialVariables.isInsideParisBoundary ? parameters.betaRoadInsideParis_u : 0.0;
 	}
 

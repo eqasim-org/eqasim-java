@@ -25,12 +25,21 @@ public class IDFParkingPredictor extends CachedVariablePredictor<IDFParkingVaria
 	@Override
 	protected IDFParkingVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
-		double originParkingTariff_EUR_h = parkingTariff.getParkingPressure(trip.getOriginActivity().getLinkId());
-		double destinationParkingTariff_EUR_h = parkingTariff
-				.getParkingPressure(trip.getDestinationActivity().getLinkId());
+		double originParkingPressure = parkingPressure.getParkingPressure(
+				trip.getOriginActivity().getLinkId());
 
-		return new IDFParkingVariables(parkingPressure.getParkingPressure( //
-				trip.getOriginActivity().getLinkId()), //
-				originParkingTariff_EUR_h, destinationParkingTariff_EUR_h);
+		double destinationParkingPressure = parkingPressure.getParkingPressure(
+				trip.getDestinationActivity().getLinkId());
+
+		double parkingPressure = originParkingPressure + destinationParkingPressure;
+
+		double originParkingTariff_EUR_h = parkingTariff.getParkingTariff(trip.getOriginActivity().getLinkId());
+		double destinationParkingTariff_EUR_h = parkingTariff
+				.getParkingTariff(trip.getDestinationActivity().getLinkId());
+
+		return new IDFParkingVariables( //
+				parkingPressure, //
+				originParkingTariff_EUR_h, //
+				destinationParkingTariff_EUR_h);
 	}
 }

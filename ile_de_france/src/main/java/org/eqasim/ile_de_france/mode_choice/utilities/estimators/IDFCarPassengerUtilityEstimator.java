@@ -48,6 +48,7 @@ public class IDFCarPassengerUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateInsideParisUtility(IDFSpatialVariables spatialVariables) {
+		System.err.println("carPassenger:insideParis " + spatialVariables.isInsideParisBoundary);
 		return spatialVariables.isInsideParisBoundary ? parameters.betaRoadInsideParis_u : 0.0;
 	}
 
