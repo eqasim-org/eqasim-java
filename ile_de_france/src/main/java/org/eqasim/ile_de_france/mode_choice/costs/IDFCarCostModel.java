@@ -46,8 +46,6 @@ public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
 			List<TripCandidate> previousTrips) {
 		double parkingCost_EUR = calculateParkingCost_EUR(person, trip, elements, previousTrips);
 
-		System.err.println("carcost:parkingCost " + parkingCost_EUR);
-
 		return costParameters.carCost_EUR_km * getInVehicleDistance_km(elements)
 				+ parkingCost_EUR;
 	}
@@ -82,14 +80,6 @@ public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
 			double destinationDuration = getDestinationDuration(person, trip, tripElements);
 			destinationParkingCost_EUR = Math.ceil(destinationDuration / 3600.0)
 					* parkingVariables.destinationParkingTariff_EUR_h;
-		}
-
-		if (originParkingCost_EUR > 0.0) {
-			System.err.println("carcost:origin " + originParkingCost_EUR);
-		}
-
-		if (destinationParkingCost_EUR > 0.0) {
-			System.err.println("carcost:destination " + destinationParkingCost_EUR);
 		}
 
 		return originParkingCost_EUR + destinationParkingCost_EUR;
