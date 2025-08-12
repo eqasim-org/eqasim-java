@@ -1,6 +1,7 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.predictors;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,39 +38,87 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
         this.zonalRegistry = zonalRegistry;
 	}
 
-    private Set<Zone> filterZones(Set<Zone> zones) {
-        // Group zones by authority so that comparisons only happen within the same network
-        Map<Authority, List<Zone>> groupedByAuthority = zones.stream()
-            .collect(Collectors.groupingBy(Zone::getAuthority));
+    private Set<Zone> filterZones(Map<String, List<Zone>> zonesByStop) {
+        // TODO check this function or the identification of zones the stops belong to.
+        // I have the impression we are missing SBB stops
+        Set<Zone> filtered = new HashSet<Zone>();
 
-        Set<Zone> result = new HashSet<>();
+        Set<Authority> authorities = new HashSet<Authority>();
 
-        for (Map.Entry<Authority, List<Zone>> entry : groupedByAuthority.entrySet()) {
-            List<Zone> authorityZones = entry.getValue();
+        // Get all authorities
+        for (List<Zone> zones : zonesByStop.values()){
+            for (Zone zone : zones){
+                authorities.add(zone.getAuthority());
+            }
+        }
 
-            // Collect all individual zone IDs for quick lookup
-            Set<String> individualIds = authorityZones.stream()
-                .filter(z -> z.getZoneId().split(", ").length == 1)
-                .flatMap(z -> Arrays.stream(z.getZoneId().split(", ")))
-                .map(String::trim)
-                .collect(Collectors.toSet());
+        // Get all authorities serving all visited stops
+        Set<Authority> cleanedAuthorities = new HashSet<>();
+        for (Authority authority : authorities) {
+            boolean servesAllStops = true;
 
-            for (Zone z : authorityZones) {
-                String[] parts = z.getZoneId().split(", ");
-                if (parts.length == 1) {
-                    result.add(z);
-                } else {
-                    boolean hasOverlap = Arrays.stream(parts)
-                        .map(String::trim)
-                        .anyMatch(individualIds::contains);
-                    if (!hasOverlap) {
-                        result.add(z);
-                    }
+            for (List<Zone> zones : zonesByStop.values()) {
+                boolean servedHere = zones.stream().anyMatch(z -> z.getAuthority().equals(authority));
+                if (!servedHere) {
+                    servesAllStops = false;
+                    break;
+                }
+            }
+            if (servesAllStops) {
+                cleanedAuthorities.add(authority);
+            }
+        }
+
+        // Only keep authority with max priority if applicable
+        if (cleanedAuthorities.size() > 1) {
+            int maxPriority = cleanedAuthorities.stream()
+                    .mapToInt(Authority::getPriority)
+                    .max()
+                    .orElse(Integer.MIN_VALUE);
+
+            cleanedAuthorities.removeIf(auth -> auth.getPriority() < maxPriority);
+        }
+
+        // If a stop is served by only one zone of a cleanedAuthority, add this zone to the filtered list
+        for (List<Zone> zones: zonesByStop.values()){
+            List<Zone> matchingZones = zones.stream()
+                .filter(z -> cleanedAuthorities.contains(z.getAuthority()))
+                .collect(Collectors.toList());
+            if (matchingZones.size() == 1) {
+                filtered.add(matchingZones.get(0));
+            }
+        }
+
+        // Now that the identified unique zones are identified, add the multiple zones by selecting only the relevant ones
+        for (List<Zone> zones: zonesByStop.values()){
+            List<Zone> matchingZones = zones.stream()
+                .filter(z -> cleanedAuthorities.contains(z.getAuthority()))
+                .collect(Collectors.toList());
+            if (matchingZones.size() > 1) {
+                boolean hasIntersection = matchingZones.stream().anyMatch(filtered::contains);
+                if (!hasIntersection) {
+                    filtered.addAll(matchingZones);
                 }
             }
         }
-        return result;
+
+        return filtered;
+        
     }
+
+
+    private Stream<Zone> getZones(ZonalRegistry registry, String stopId) {
+        // Direct match
+        Stream<Zone> direct = registry.getZones(stopId).stream();
+
+        // Simplified match
+        String simplifiedId = stopId.contains(":") ? stopId.split("[:\\.]")[0] : stopId;
+        Stream<Zone> simplified = registry.getZones(simplifiedId).stream();
+
+        // Merge both streams
+        return Stream.concat(direct, simplified).distinct();
+    }
+
 
     @Override
     protected SwissPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
@@ -78,6 +127,8 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 
         for (PlanElement element : elements) {
 			if (element instanceof Leg) {
+
+                zones   = new HashSet<>();
 				Leg leg = (Leg) element;
 
 				if ("pt".equals(leg.getMode())) {
@@ -105,20 +156,33 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                             .map(stop -> stop.getId().toString().replaceAll("\\.link.*$", ""))
                             .collect(Collectors.toList());
 
-                        Stream.concat(
-                            Stream.concat(
-                                zonalRegistry.getZones(ptRoute.getAccessStopId().toString()).stream(), 
-                                zonalRegistry.getZones(ptRoute.getEgressStopId().toString()).stream()),
-                            stopsVisited.stream().flatMap(stopId -> zonalRegistry.getZones(stopId).stream())
-                        ).forEach(zones::add);
+                        String accessStopId = ptRoute.getAccessStopId().toString().replaceAll("\\.link.*$", "");
+                        String egressStopId = ptRoute.getEgressStopId().toString().replaceAll("\\.link.*$", "");
+
+                        Map<String, List<Zone>> stopsAndZones = new HashMap<>();
+
+                        stopsAndZones.put(accessStopId, getZones(zonalRegistry, accessStopId).collect(Collectors.toList()));
+                        stopsAndZones.put(egressStopId, getZones(zonalRegistry, egressStopId).collect(Collectors.toList()));
+
+                        for (String stopId : stopsVisited) {
+                            stopsAndZones.put(stopId, getZones(zonalRegistry, stopId).collect(Collectors.toList()));
+                        }
 
 						System.out.println("PT leg found:");
-						System.out.println("  Access stop: " + ptRoute.getAccessStopId());
-						System.out.println("  Egress stop: " + ptRoute.getEgressStopId());
+						System.out.println("  Access stop: " + accessStopId + " in zones " + stopsAndZones.get(accessStopId));
+						System.out.println("  Egress stop: " + egressStopId + " in zones " + stopsAndZones.get(egressStopId));
                         System.out.println("  Visited stops: ");
 
                         for (String stopId : stopsVisited){
-                           System.out.println("    " + stopId);
+                           System.out.println("    " + stopId + " in zones " + stopsAndZones.get(stopId));
+                        }
+
+                        zones = filterZones(stopsAndZones);
+
+                        System.out.println("  Visited zones: ");
+
+                        for (Zone zone : zones){
+                            System.out.println("    " + zone.toString());
                         }
 
 					} 
@@ -130,14 +194,6 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 				}
 			}
 		}
-
-        zones = filterZones(zones);
-
-        System.out.println("  Visited zones: ");
-
-        for (Zone zone : zones){
-            System.out.println("    " + zone.toString());
-        }
 
         return new SwissPtVariables(zones);
     }

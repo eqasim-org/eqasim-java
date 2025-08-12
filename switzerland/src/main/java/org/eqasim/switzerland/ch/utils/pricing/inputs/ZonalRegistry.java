@@ -55,4 +55,25 @@ public class ZonalRegistry {
 	public Collection<Zone> getZones(Authority authority) {
 		return zonesByAuthority.get(authority);
 	}
+
+	public void merge(ZonalRegistry other) {
+		// Merge authorities
+		for (Map.Entry<String, Authority> entry : other.authoritiesById.entrySet()) {
+			this.authoritiesById.putIfAbsent(entry.getKey(), entry.getValue());
+		}
+
+		// Merge zones by authority
+		for (Map.Entry<Authority, Collection<Zone>> entry : other.zonesByAuthority.entrySet()) {
+			this.zonesByAuthority
+				.computeIfAbsent(entry.getKey(), k -> new HashSet<>())
+				.addAll(entry.getValue());
+		}
+
+		// Merge zones by stopId
+		for (Map.Entry<String, Collection<Zone>> entry : other.zonesByStopId.entrySet()) {
+			this.zonesByStopId
+				.computeIfAbsent(entry.getKey(), k -> new HashSet<>())
+				.addAll(entry.getValue());
+		}
+	}
 }

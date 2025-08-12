@@ -20,11 +20,14 @@ import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPre
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
+import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.opencsv.exceptions.CsvValidationException;
@@ -95,6 +98,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		String file_path = "";
 		ZonalReader zonalReader = new ZonalReader();
 		ZonalRegistry zonalRegistry = null;
+		ZonalRegistry sbbZonalRegistry = null;
 
 		if (ptZonesConfig.getZonePath() != null){
 			file_path = ptZonesConfig.getZonePath();
@@ -104,7 +108,17 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 			zonalRegistry = new ZonalRegistry(authorities, zones);
 		}
 		else{
-			throw new IOException("No  input file detected to create the zonal registry");
+			throw new IOException("No  input file detected to create the zonal registry.");
+		}
+		if (ptZonesConfig.getSBBDistancesPath() != null) {
+			file_path = ptZonesConfig.getSBBDistancesPath();
+			File path = new File(file_path);
+			Zone sbbZone = SBBDistanceReader.createZone(path);
+			sbbZonalRegistry = SBBDistanceReader.createZonalRegistry(sbbZone);
+			zonalRegistry.merge(sbbZonalRegistry);
+		}
+		else{
+			throw new IOException("No  input file detected to create the SBB network.");
 		}
 		return zonalRegistry;
 	}

@@ -53,7 +53,9 @@ public class Zone {
 		}
 
 		public void addStopId(String stopId) {
-			stopIds.add(stopId);
+			if (!stopIds.contains(stopId)) {
+				stopIds.add(stopId);
+			}
 		}
 
 		public Zone build() {
