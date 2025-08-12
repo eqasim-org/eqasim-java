@@ -32,6 +32,15 @@ public class IDFPredictorUtils {
 		return householdIncome;
 	}
 
+	static public int getConsumptionUnits(Person person) {
+		Integer consumptionUnits = (Integer) person.getAttributes().getAttribute("householdConsumptionUnits");
+		return consumptionUnits;
+	}
+
+	static public double getHouseholdIncomePerCU(Person person) {
+		return getHouseholdIncome(person) / getConsumptionUnits(person);
+	}
+
 	static public final String ACTIVITY_MUNICIPALITY_ID = "municipalityId";
 
 	static public String getMunicipalityId(Activity activity) {

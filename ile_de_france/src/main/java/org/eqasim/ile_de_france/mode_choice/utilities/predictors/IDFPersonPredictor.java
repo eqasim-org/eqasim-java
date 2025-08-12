@@ -14,7 +14,7 @@ public class IDFPersonPredictor extends CachedVariablePredictor<IDFPersonVariabl
 			List<? extends PlanElement> elements) {
 		boolean hasSubscription = IDFPredictorUtils.hasSubscription(person);
 		boolean hasDrivingPermit = IDFPredictorUtils.hasDrivingLicense(person);
-		double householdIncomePerCU_EUR = IDFPredictorUtils.getHouseholdIncome(person);
+		double householdIncomePerCU_EUR = IDFPredictorUtils.getHouseholdIncomePerCU(person);
 		String residenceMunicipalityId = IDFPredictorUtils.getMunicipalityId(person);
 
 		return new IDFPersonVariables(hasSubscription, hasDrivingPermit, householdIncomePerCU_EUR,
