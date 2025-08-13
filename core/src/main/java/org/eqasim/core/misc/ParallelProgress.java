@@ -45,8 +45,7 @@ public class ParallelProgress {
 	}
 
 	private void run() {
-		long startTime = System.currentTimeMillis();
-		long currentTime = startTime;
+		final long startTime = System.currentTimeMillis();
 
 		try {
 			while (currentCount < totalCount) {
@@ -56,8 +55,8 @@ public class ParallelProgress {
 					message.add(String.format("%d/%d", currentCount, totalCount));
 					message.add(String.format("(%.2f%%)", 100.0 * currentCount / totalCount));
 
-					currentTime = System.currentTimeMillis();
-					long elapsedTime = currentTime - startTime;
+					final long currentTime = System.currentTimeMillis();
+					final long elapsedTime = (currentTime - startTime) / 1000;
 
 					if (showElapsedTime) {
 						message.add("+" + writeTime(elapsedTime));
@@ -77,6 +76,7 @@ public class ParallelProgress {
 						long remainingTime = (long) ((double) (totalCount - currentCount) / speed);
 						message.add("-" + writeTime(remainingTime));
 					}
+					logger.info(message);
 				}
 
 				lastCount = currentCount;
@@ -91,17 +91,17 @@ public class ParallelProgress {
 		seconds -= days * 24 * 3600;
 		long hours = seconds / 3600;
 		seconds -= hours * 3600;
-		long minutes = seconds / 3600;
+		long minutes = seconds / 60;
 		seconds -= minutes * 60;
 
 		if (days > 0) {
 			return String.format("%d-%02d:%02d:%02d", days, hours, minutes, seconds);
 		} else if (hours > 0) {
-			return String.format("%02d:%02d:%02d", days, hours, minutes, seconds);
+			return String.format("%02d:%02d:%02d", hours, minutes, seconds);
 		} else if (minutes > 0) {
-			return String.format("%02d:%02d", days, hours, minutes, seconds);
+			return String.format("%02d:%02d", minutes, seconds);
 		} else {
-			return String.format("%02ds", days, hours, minutes, seconds);
+			return String.format("%02ds", seconds);
 		}
 	}
 
