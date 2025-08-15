@@ -21,6 +21,7 @@ public class RunSimulation {
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
+		configurator.configure(config);
 		cmd.applyConfiguration(config);
 
 		if (cmd.hasOption("preventwaitingtoentertraffic")) {

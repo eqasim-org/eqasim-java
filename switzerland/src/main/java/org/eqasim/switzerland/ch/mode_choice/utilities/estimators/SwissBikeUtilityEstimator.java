@@ -1,9 +1,7 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.estimators;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.google.inject.Inject;
+import org.eqasim.core.components.calibration.writer.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
@@ -11,12 +9,13 @@ import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPersonVariables;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-import com.google.inject.Inject;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 	private final SwissModeParameters parameters;
@@ -46,7 +45,7 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 		utility += super.estimateUtility(person, trip, elements);
 		utility += estimateRegionalUtility(personVariables);
 
-		if(EstimatorLogger.isInitiated()) {
+		if(VariablesWriter.isInitiated()) {
 			BikeVariables bikeVariables = bikePredictor.predictVariables(person, trip, elements);
 			writeVariablesToCsv(person, trip, bikeVariables, personVariables, utility);
 		}
@@ -66,6 +65,6 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 		bikeAttributes.put("age_a", String.valueOf(personVariables.age_a));
 		bikeAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
 
-		EstimatorLogger.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);
+		VariablesWriter.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);
 	}
 }

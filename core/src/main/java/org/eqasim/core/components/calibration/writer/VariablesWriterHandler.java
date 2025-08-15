@@ -1,6 +1,7 @@
-package org.eqasim.core.components.calibration;
+package org.eqasim.core.components.calibration.writer;
 
 import com.google.inject.Inject;
+import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;

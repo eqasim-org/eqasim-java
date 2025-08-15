@@ -6,7 +6,7 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 import java.util.Map;
 
 public class alphaCalibratorConfig extends ReflectiveConfigGroup {
-    static public final String GROUP_NAME = "eqasim:calibration";
+    static public final String GROUP_NAME = "eqasim:alphaCalibration";
 
     static private final String ACTIVATE = "activate";
     static private final String BETA = "beta";

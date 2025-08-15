@@ -1,4 +1,4 @@
-package org.eqasim.core.components.calibration.calibration;
+package org.eqasim.core.components.calibration.optimizer;
 
 
 import com.google.inject.Inject;
@@ -16,17 +16,17 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 
 import java.io.File;
 
-public class CalibrationHandler implements IterationStartsListener {
-    private final Logger logger = LogManager.getLogger(CalibrationHandler.class);
+public class OptimizerHandler implements IterationStartsListener {
+    private final Logger logger = LogManager.getLogger(OptimizerHandler.class);
     private final OutputDirectoryHierarchy outputDirectoryHierarchy;
     private final CalibrationConfigGroup calibrationConfig;
-    private final RunParametersCalibration optimizer;
+    private final Optimizer optimizer;
     private final ModeParameters parameters;
     private final EqasimConfigGroup eqasimConfigGroup;
 
     @Inject
-    public CalibrationHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
-                              EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, RunParametersCalibration optimizer){
+    public OptimizerHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
+                            EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, Optimizer optimizer){
         this.calibrationConfig = calibrationConfig;
         this.outputDirectoryHierarchy = outputDirectoryHierarchy;
         this.optimizer = optimizer;
@@ -68,8 +68,18 @@ public class CalibrationHandler implements IterationStartsListener {
         int startIteration = calibrationConfig.getStartIteration();
 
         if (iteration == startIteration || !lastFile.exists()) {
-            logger.info("Using initial mode parameters file as initial parameters FilePath.");
-            return eqasimConfigGroup.getModeParametersPath();
+            if (iteration>startIteration) {
+                logger.warn("Parameters files that is supposed to be located in" + lastFile + " is not found. Using initial parameters instead. This may affect calibration results.");
+            } else {
+                logger.info("Using initial parameters file as no previous iteration exists.");
+            }
+            String modeParametersPath = eqasimConfigGroup.getModeParametersPath();
+            if (modeParametersPath == null || modeParametersPath.isEmpty()) {
+                logger.warn("No mode parameters path is set in the configuration. It should be specified in the EqasimConfigGroup.");
+                logger.warn("This behavior should be changed here in the code, to create the file if it doesn't exist.");
+                throw new IllegalStateException("No mode parameters path is set in the configuration. It should be specified in the EqasimConfigGroup.");
+            }
+            return modeParametersPath;
         }
 
         return lastPath;
