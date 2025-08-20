@@ -86,7 +86,19 @@ public class OptimizerHandler implements IterationStartsListener {
     }
 
     private String getVariablesIterationPath(int iteration) {
-        return outputDirectoryHierarchy.getIterationPath(iteration - 1);
+        String paths = outputDirectoryHierarchy.getIterationPath(iteration - 1);
+        // this would results in a much more stable calibration
+        if (iteration > calibrationConfig.getStartIteration()) {
+            paths += "," + outputDirectoryHierarchy.getIterationPath(iteration - 2);
+            if (iteration > calibrationConfig.getStartIteration() + 1) {
+                paths += "," + outputDirectoryHierarchy.getIterationPath(iteration - 3);
+                if (iteration > calibrationConfig.getStartIteration() + 2) {
+                    paths += "," + outputDirectoryHierarchy.getIterationPath(iteration - 4);
+                }
+            }
+        }
+        logger.info("Variables paths for iteration {}: {}", iteration, paths);
+        return paths;
     }
 
     private boolean runOptimizer(int iteration, String newPath, String lastPath, String variablesPath) {

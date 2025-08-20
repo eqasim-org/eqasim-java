@@ -18,11 +18,11 @@ public class alphaCalibratorConfig extends ReflectiveConfigGroup {
 
     private boolean activate = false;
     private double beta = 0.5;
-    private double carModeShare = 0.55;
-    private double ptModeShare = 0.05;
-    private double walkModeShare = 0.25;
-    private double bikeModeShare = 0.07;
-    private double carPassengerModeShare = 0.8;
+    private double carModeShare = 0.423;
+    private double ptModeShare = 0.146;
+    private double walkModeShare = 0.256;
+    private double bikeModeShare = 0.083;
+    private double carPassengerModeShare = 0.092;
 
 
     public alphaCalibratorConfig() {

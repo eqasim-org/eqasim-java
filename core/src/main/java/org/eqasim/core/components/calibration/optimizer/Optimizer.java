@@ -144,10 +144,11 @@ public class Optimizer {
             // Build command-line arguments based on config
             Map<String, String> args = new HashMap<>();
 
+            // Add arguments from calibrationConfig
+            args.put("--variables-path", variablesIterationPath);
             args.put("--selector", calibrationConfig.getSelector());
             args.put("--input-parameters", lastParametersFilePath);
             args.put("--output-parameters", newParametersFilePath);
-            args.put("--variables-path", variablesIterationPath);
             args.put("--eqasim-cache-path", calibrationConfig.getEqasimCachePath());
             args.put("--iteration", String.valueOf(iteration));
             args.put("--bounds", calibrationConfig.getBounds());
