@@ -20,7 +20,7 @@ jobs:
         id: release
         with:
           token: ${{ secrets.RELEASE }}
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         if: ${{ steps.release.outputs.release_created }}
         with:
           distribution: zulu
