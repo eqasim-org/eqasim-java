@@ -15,7 +15,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     private String repoUrl = "https://github.com/Dib-AEK/EqasimParametersCalibration.git";
     private String repoBranch = "polars";
-    private String repoCommit = "dc7d567f2bce581c99018a1dea2e90c5b9f3fd54";
+    private String repoCommit = "1de98c60cf0ca5c3f48d2342ea776f54cad05ffd";
 
     private String optimizerPath = "C:/Users/dabdelkader/Desktop/work/codes/zurichScenario/optimizer";
     private String optimizer = "cmaes";
@@ -36,6 +36,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
     private double betaMomentum = 0.8;
     private String eqasimCachePath = "/home/dabdelkader/Euler/ch-zh-synpop/cache10p100";
     private String objectives = "global,distance,mode_distance";
+    private String distanceBins = "";
 
     private String pythonPath = "python3";
 
@@ -52,6 +53,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
     public static final String BETA_MOMENTUM = "betaMomentum";
     public static final String EQASIM_CACHE_PATH = "eqasimCachePath";
     public static final String OBJECTIVES = "objectives";
+    public static final String DISTANCE_BINS = "distanceBins";
 
     public static final String PYTHON_PATH = "pythonPath";
     public static final String REPO_URL = "repoUrl";
@@ -97,6 +99,9 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
                 "parameter1:delta, parameter2:delta, ...\nThe min bound is x-delta and the max bound is x+delta for each parameter.");
         comments.put(PYTHON_PATH,
                 "The path to the Python executable to run the calibration script.");
+        comments.put(DISTANCE_BINS,
+                "The distance bins to be used in the calibration, separated by commas. " +
+                        "This is used to calculate the distance-based objectives.");
         return comments;
     }
 
@@ -114,6 +119,15 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     public boolean isActivated() {
         return runCalibration;
+    }
+
+    @StringSetter(DISTANCE_BINS)
+    public void setDistanceBins(String distanceBins) {
+        this.distanceBins = distanceBins;
+    }
+    @StringGetter(DISTANCE_BINS)
+    public String getDistanceBins() {
+        return distanceBins;
     }
 
     @StringGetter(PYTHON_PATH)

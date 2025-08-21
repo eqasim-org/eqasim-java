@@ -160,6 +160,7 @@ public class Optimizer {
             args.put("--population-sample", String.valueOf(calibrationConfig.getPopulationSample()));
             args.put("--objectives", calibrationConfig.getObjectives());
             args.put("--optimizer-cache", optimizerPath + "/optimizerCache");
+            args.put("--distance-bins", calibrationConfig.getDistanceBins());
 
             // Append to command list
             args.forEach((key, value) -> {
