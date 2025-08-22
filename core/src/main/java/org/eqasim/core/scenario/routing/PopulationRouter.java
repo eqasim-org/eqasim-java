@@ -3,10 +3,8 @@ package org.eqasim.core.scenario.routing;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,8 +41,14 @@ public class PopulationRouter {
 		ExecutorService exec = Executors.newFixedThreadPool(numberOfThreads);
 		AtomicBoolean errorOccurred = new AtomicBoolean(false);
 
-		// One PlanRouter instance per thread
-		ThreadLocal<PlanRouter> routerLocal = ThreadLocal.withInitial(() -> routerProvider.get());
+		final Object lock = new Object();
+
+		ThreadLocal<PlanRouter> routerLocal =
+		    ThreadLocal.withInitial(() -> {
+		        synchronized (lock) {
+		            return routerProvider.get(); // constructed one-at-a-time to avoid concurrent modifications of the network due to turn restrictions
+		        }
+		    });
 
 		// Build independent chunk lists
 		List<List<Person>> chunks = new ArrayList<>();
