@@ -45,10 +45,16 @@ public class ParallelProgress {
 	}
 
 	private void run() {
-		final long startTime = System.currentTimeMillis();
+		boolean waitingForStart = true;
+		long startTime = 0;
 
 		try {
 			while (currentCount < totalCount) {
+				if (waitingForStart && currentCount > 0) {
+					startTime = System.currentTimeMillis();
+					waitingForStart = false;
+				}
+
 				if (currentCount > lastCount) {
 					List<String> message = new LinkedList<>();
 					message.add(description);
@@ -58,13 +64,13 @@ public class ParallelProgress {
 					final long currentTime = System.currentTimeMillis();
 					final long elapsedTime = (currentTime - startTime) / 1000;
 
-					if (showElapsedTime) {
-						message.add("+" + writeTime(elapsedTime));
+					if (showElapsedTime && elapsedTime > 0.0) {
+						message.add("RT:" + writeTime(elapsedTime));
 					}
 
 					double speed = (double) currentCount / elapsedTime;
 
-					if (showSpeed) {
+					if (showSpeed && elapsedTime > 0.0) {
 						if (speed >= 1.0) {
 							message.add(String.format("%.2fit/s", speed));
 						} else {
@@ -72,10 +78,11 @@ public class ParallelProgress {
 						}
 					}
 
-					if (showRemainingTime) {
+					if (showRemainingTime && elapsedTime > 0.0) {
 						long remainingTime = (long) ((double) (totalCount - currentCount) / speed);
-						message.add("-" + writeTime(remainingTime));
+						message.add("~" + writeTime(remainingTime));
 					}
+
 					logger.info(message);
 				}
 
