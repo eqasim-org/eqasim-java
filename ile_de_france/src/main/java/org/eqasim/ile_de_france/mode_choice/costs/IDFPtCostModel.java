@@ -5,8 +5,10 @@ import java.util.List;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPtVariables;
+import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -16,13 +18,18 @@ import org.matsim.core.utils.geometry.CoordUtils;
 import com.google.inject.Inject;
 
 public class IDFPtCostModel implements CostModel {
+	private static final double UNIT_PRICE = 1.8;
+
 	private final IDFPersonPredictor personPredictor;
 	private final IDFPtPredictor ptPredictor;
+	private final IDFSpatialPredictor spatialPredictor;
 
 	@Inject
-	public IDFPtCostModel(IDFPersonPredictor personPredictor, IDFPtPredictor ptPredictor) {
+	public IDFPtCostModel(IDFPersonPredictor personPredictor, IDFPtPredictor ptPredictor,
+			IDFSpatialPredictor spatialPredictor) {
 		this.personPredictor = personPredictor;
 		this.ptPredictor = ptPredictor;
+		this.spatialPredictor = spatialPredictor;
 	}
 
 	private final static Coord CENTER = new Coord(651726, 6862287);
@@ -45,8 +52,14 @@ public class IDFPtCostModel implements CostModel {
 		// II) Special case: Within Paris or only metro and bus
 		IDFPtVariables ptVariables = ptPredictor.predictVariables(person, trip, elements);
 
-		if (ptVariables.hasOnlySubwayAndBus || ptVariables.isWithinParis) {
-			return 1.9;
+		if (ptVariables.isWithoutRail) {
+			return UNIT_PRICE;
+		}
+
+		IDFSpatialVariables spatialVariables = spatialPredictor.predictVariables(person, trip, elements);
+
+		if (spatialVariables.isInsideParisBoundary) {
+			return UNIT_PRICE;
 		}
 
 		// III) Otherwise, use regression by Abdelkader DIB
