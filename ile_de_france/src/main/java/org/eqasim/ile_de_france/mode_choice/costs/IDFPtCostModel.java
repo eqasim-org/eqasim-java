@@ -72,8 +72,9 @@ public class IDFPtCostModel implements CostModel {
 		double destinationCenterDistance_km = 1e-3
 				* CoordUtils.calcEuclideanDistance(CENTER, trip.getDestinationActivity().getCoord());
 
-		return Math.max(1.9, basePrice * sigmoid(regressionA * directDistance_km + regressionB * originCenterDistance_km
-				+ regressionC * destinationCenterDistance_km + regressionD));
+		return Math.max(UNIT_PRICE,
+				basePrice * sigmoid(regressionA * directDistance_km + regressionB * originCenterDistance_km
+						+ regressionC * destinationCenterDistance_km + regressionD));
 	}
 
 	private double sigmoid(double x) {
