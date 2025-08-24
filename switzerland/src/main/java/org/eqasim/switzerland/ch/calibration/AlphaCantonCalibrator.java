@@ -26,17 +26,18 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private final Map<String, Double> targetGlobalModeShares;
     private final double beta;
     private final Scenario scenario;
-    private final int interationsInterval = 2; // how often to update the alphas
     private final int batchSizeLimit = 1000; // the minimum number of observations before updating the parameters
     private final String cantonsModeShareFile = "cantons_mode_shares.csv";
-
 
     private final Map<String, Double> modeCounts = new HashMap<>();
     private final Map<String, Map<String, Double>> modeCountsByCanton = new HashMap<>();
 
-
     private final Map<String, Double> shares = new HashMap<>();
     private final Map<String, Map<String, Double>> sharesByCanton = new HashMap<>();
+
+    private final Map<String, Boolean> doUpdateThisIteration = new HashMap<>();
+    private final Map<String, Integer> numberOfUpdates = new HashMap<>();
+
     private final Set<String> consideredModes = Set.of("car", "pt", "walk", "bike", "car_passenger");
 
     private final OutputDirectoryHierarchy outputHierarchy;
@@ -72,16 +73,18 @@ public class AlphaCantonCalibrator implements FastCalibration {
         // Starting calibration at the beginning of the iteration
         if (iteration>1) {
             updateCounts();
-            if (iteration % interationsInterval == 0) {
-                logger.info("Updating alphas at iteration {}", iteration);
-                // update the shares based on the previous counts, and reset the counts
-                updateShares();
-                resetCounts();
-                // update the alphas based on the updated shares
-                updateAlphas(iteration);
-                saveSharesToFile(iteration);
-                saveAlphasToFile(iteration);
-            }
+            // decide which cantons to update based on the counts
+            updateCantonsToUpdate();
+            // update the shares based on the previous counts, and reset the counts
+            updateShares();
+            // update the alphas based on the updated shares
+            updateAlphas();
+            // reset the counts for the cantons whose parameters were updated
+            resetCounts();
+
+            // writing
+            saveSharesToFile(iteration);
+            saveAlphasToFile(iteration);
         }
     }
 
@@ -176,13 +179,33 @@ public class AlphaCantonCalibrator implements FastCalibration {
         }
     }
 
-    private void resetCounts() {
-        modeCounts.clear();
-        modeCountsByCanton.clear();
+    private void updateCantonsToUpdate(){
+        for (String canton : sharesByCanton.keySet()){
+            Map<String, Double> cantonCounts = modeCountsByCanton.getOrDefault(canton, new HashMap<>());
+            double total = cantonCounts.values().stream().mapToDouble(Double::doubleValue).sum();
+            if (total >= batchSizeLimit) {
+                doUpdateThisIteration.put(canton, true);
+                numberOfUpdates.put(canton, numberOfUpdates.getOrDefault(canton, -1) + 1); // so that the first iteration will be 0
+            } else {
+                doUpdateThisIteration.put(canton, false);
+            }
+        }
     }
 
-    private void updateAlphas(int iteration) {
+    private void resetCounts() {
+        for (String canton : doUpdateThisIteration.keySet()){
+            if (doUpdateThisIteration.get(canton)) {
+                modeCountsByCanton.put(canton, new HashMap<>()); // reset the counts for this canton
+            }
+        }
+        modeCounts.clear();
+    }
+
+    private void updateAlphas() {
         for (String canton : sharesByCanton.keySet()){
+            if (!doUpdateThisIteration.get(canton)) {
+                continue; // Skip this canton if not enough data
+            }
             Map<String, Double> alphas = getAlphas(canton);
             Map<String, Double> cantonShares = sharesByCanton.get(canton);
             Map<String, Double> targetCantonShares = targetModeSharesByCanton.get(canton);
@@ -205,6 +228,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
                 double newAlpha = alpha + (Math.log(zi) - Math.log(mi)) - (Math.log(zo) - Math.log(mo));
                 // update it using EMA
                 if (Math.abs(newAlpha - alpha) > 1e-3) { // Only use EMA if the change is significant
+                    int iteration = numberOfUpdates.get(canton);
                     double effectiveBeta = Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2*iteration + 1.0)));
                     newAlpha = alpha * effectiveBeta + (1.0 - effectiveBeta) * newAlpha;
                 }
