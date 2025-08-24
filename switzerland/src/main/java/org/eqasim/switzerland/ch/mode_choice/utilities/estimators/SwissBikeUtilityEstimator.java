@@ -36,6 +36,14 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 		return (variables.statedPreferenceRegion == 3) ? parameters.swissBike.betaStatedPreferenceRegion3_u : 0.0;
 	}
 
+	protected double estimateCantonUtility(Person person) {
+		Object cantonObj = person.getAttributes().getAttribute("cantonName");
+		if (cantonObj instanceof String canton) {
+			return parameters.swissCanton.bike.getOrDefault(canton, 0.0);
+		}
+		return 0.0;
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
@@ -44,6 +52,7 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 
 		utility += super.estimateUtility(person, trip, elements);
 		utility += estimateRegionalUtility(personVariables);
+		utility += estimateCantonUtility(person);
 
 		if(VariablesWriter.isInitiated()) {
 			BikeVariables bikeVariables = bikePredictor.predictVariables(person, trip, elements);

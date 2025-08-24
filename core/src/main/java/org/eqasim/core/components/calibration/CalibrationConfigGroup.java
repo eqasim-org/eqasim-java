@@ -1,6 +1,5 @@
 package org.eqasim.core.components.calibration;
 
-import org.eqasim.core.components.fast_calibration.alphaCalibratorConfig;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
 

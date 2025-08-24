@@ -11,7 +11,6 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationStartsEvent;
-import org.matsim.core.controler.listener.IterationStartsListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,11 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class alphaCalibrator implements IterationStartsListener {
+public class AlphaCalibrator implements FastCalibration {
     // This class tracks the mode share at the beginning of each iteration and calibrates the alpha value
     // based on the mode share from the previous iteration and the target mode shares.
 
-    private static final Logger logger = LogManager.getLogger(alphaCalibrator.class);
+    private static final Logger logger = LogManager.getLogger(AlphaCalibrator.class);
 
     private final Map<String, Double> targetModeShares;
     private final double beta;
@@ -40,7 +39,7 @@ public class alphaCalibrator implements IterationStartsListener {
     private int changedUtilityCount = 0;
     private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
 
-    public alphaCalibrator(Scenario scenario,
+    public AlphaCalibrator(Scenario scenario,
                            OutputDirectoryHierarchy outputHierarchy,
                            ModeParameters modeParameters,
                            TripListConverter tripListConverter,
@@ -138,7 +137,9 @@ public class alphaCalibrator implements IterationStartsListener {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);
                 for (DiscreteModeChoiceTrip trip : trips) {
                     String mode = trip.getInitialMode();
-                    if (consideredModes.contains(mode)) {
+                    boolean sameLocation = trip.getOriginActivity().getCoord().equals(trip.getDestinationActivity().getCoord());
+                    // only consider trips with considered modes and different locations
+                    if (consideredModes.contains(mode) && !sameLocation) {
                         estimatedShares.put(mode, estimatedShares.getOrDefault(mode, 0.0) + 1.0);
                         replannedTripsCount += 1; // Count the number of replanned plans
                     }
@@ -179,8 +180,8 @@ public class alphaCalibrator implements IterationStartsListener {
             double newAlpha = alpha + (Math.log(zi)-Math.log(mi)) - (Math.log(zo)-Math.log(mo));
             // update it using EMA
             if (Math.abs(newAlpha - alpha) > 1e-3) { // Only use EMA if the change is significant
-                double effectiveBeta = Math.max(Math.min(beta, beta * ( 10.0 / (iteration + 1.0) )), 0.1);
-                newAlpha = newAlpha * effectiveBeta + (1.0 - effectiveBeta) * alpha;
+                double effectiveBeta = Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2*iteration + 1.0)));
+                newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
             }
             // put the new alpha in the map
             newAlphas.put(mode, newAlpha);

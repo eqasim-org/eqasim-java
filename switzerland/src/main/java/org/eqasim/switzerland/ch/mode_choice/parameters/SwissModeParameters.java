@@ -2,6 +2,11 @@ package org.eqasim.switzerland.ch.mode_choice.parameters;
 
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class SwissModeParameters extends ModeParameters {
 	public class SwissCarParameters {
 		public double betaStatedPreferenceRegion1_u = 0.0;
@@ -12,8 +17,33 @@ public class SwissModeParameters extends ModeParameters {
 		public double betaStatedPreferenceRegion3_u = 0.0;
 	}
 
+	public class SwissCantonDummies {
+		public Map<String, Double> car = getCantonDummies();
+		public Map<String, Double> pt = getCantonDummies();
+		public Map<String, Double> bike = getCantonDummies();
+		public Map<String, Double> walk = getCantonDummies();
+	}
+
+	public static Map<String, Double> getCantonDummies() {
+		// By default all dummies are zeros
+		List<String> cantons = Arrays.asList(
+			"Aargau", "Appenzell Ausserrhoden","Appenzell Innerrhoden","Basel-Landschaft",
+			"Basel-Stadt","Bern","Fribourg","Genève","Glarus","Graubünden","Jura","Luzern",
+			"Neuchâtel","Nidwalden","Obwalden","Schaffhausen","Schwyz","Solothurn","St. Gallen",
+			"Thurgau","Ticino","Uri","Valais","Vaud","Zug","Zürich"
+		);
+		Map<String, Double> cantonDummies = new HashMap<>();
+		for (String canton : cantons) {
+			cantonDummies.put(canton, 0.0);
+		}
+		return cantonDummies;
+	}
+
+
+
 	public final SwissCarParameters swissCar = new SwissCarParameters();
 	public final SwissBikeParameters swissBike = new SwissBikeParameters();
+	public final SwissCantonDummies swissCanton = new SwissCantonDummies();
 
 	public static SwissModeParameters buildDefault() {
 		SwissModeParameters parameters = new SwissModeParameters();

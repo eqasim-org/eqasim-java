@@ -13,25 +13,27 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import java.util.Map;
 
-public class alphaCalibratorModule extends AbstractEqasimExtension {
-    private static final Logger logger = LogManager.getLogger(alphaCalibratorModule.class);
+public class FastCalibrationModule extends AbstractEqasimExtension {
+    private static final Logger logger = LogManager.getLogger(FastCalibrationModule.class);
 
     @Override
     protected void installEqasimExtension() {
-        alphaCalibratorConfig calConfig = alphaCalibratorConfig.getOrCreate(getConfig());
+        AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
         if (calConfig.isActivate()){
-            logger.info("Activate calibration module (calibration of the alpha parameters of the utilities)");
-            addControlerListenerBinding().to(alphaCalibrator.class).asEagerSingleton();
+            logger.info("Activate fast calibration module");
+            addControlerListenerBinding().to(FastCalibration.class).asEagerSingleton();
+            bind(FastCalibration.class).to(AlphaCalibrator.class).asEagerSingleton();
+
         }
     }
 
     @Provides
     @Singleton
-    public alphaCalibrator provideAlphaCalibrator(Scenario scenario,
+    public AlphaCalibrator provideAlphaCalibrator(Scenario scenario,
                                                   OutputDirectoryHierarchy outputHierarchy,
                                                   ModeParameters modeParameters,
                                                   TripListConverter tripListConverter,
-                                                  alphaCalibratorConfig calConfig) {
+                                                  AlphaCalibratorConfig calConfig) {
         double beta = calConfig.getBeta();
         Map<String, Double> targetModeShares = Map.of(
                 "car", calConfig.getCarModeShare(),
@@ -40,6 +42,6 @@ public class alphaCalibratorModule extends AbstractEqasimExtension {
                 "bike", calConfig.getBikeModeShare(),
                 "car_passenger", calConfig.getCarPassengerModeShare()
         );
-        return new alphaCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares,beta);
+        return new AlphaCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares,beta);
     }
 }

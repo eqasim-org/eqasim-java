@@ -5,7 +5,7 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 
 import java.util.Map;
 
-public class alphaCalibratorConfig extends ReflectiveConfigGroup {
+public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
     static public final String GROUP_NAME = "eqasim:alphaCalibration";
 
     static private final String ACTIVATE = "activate";
@@ -25,7 +25,7 @@ public class alphaCalibratorConfig extends ReflectiveConfigGroup {
     private double carPassengerModeShare = 0.092;
 
 
-    public alphaCalibratorConfig() {
+    public AlphaCalibratorConfig() {
         super(GROUP_NAME);
     }
 
@@ -106,11 +106,11 @@ public class alphaCalibratorConfig extends ReflectiveConfigGroup {
     }
 
 
-    public static alphaCalibratorConfig getOrCreate(Config config) {
-        alphaCalibratorConfig group = (alphaCalibratorConfig) config.getModules().get(GROUP_NAME);
+    public static AlphaCalibratorConfig getOrCreate(Config config) {
+        AlphaCalibratorConfig group = (AlphaCalibratorConfig) config.getModules().get(GROUP_NAME);
 
         if (group == null) {
-            group = new alphaCalibratorConfig();
+            group = new AlphaCalibratorConfig();
             config.addModule(group);
         }
 

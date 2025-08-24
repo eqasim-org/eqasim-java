@@ -41,6 +41,14 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 		}
 	}
 
+	protected double estimateCantonUtility(Person person) {
+		Object cantonObj = person.getAttributes().getAttribute("cantonName");
+		if (cantonObj instanceof String canton) {
+            return parameters.swissCanton.car.getOrDefault(canton, 0.0);
+		}
+		return 0.0;
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SwissPersonVariables personVariables = predictor.predictVariables(person, trip, elements);
@@ -49,6 +57,7 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 
 		utility += super.estimateUtility(person, trip, elements);
 		utility += estimateRegionalUtility(personVariables);
+		utility += estimateCantonUtility(person);
 
 		if(VariablesWriter.isInitiated()) {
 			CarVariables carVariable = carPredictor.predictVariables(person, trip, elements);

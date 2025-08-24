@@ -26,11 +26,20 @@ public class SwissPtUtilityEstimator extends PtUtilityEstimator {
         this.parameters = parameters;
     }
 
+    protected double estimateCantonUtility(Person person) {
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        if (cantonObj instanceof String canton) {
+            return parameters.swissCanton.pt.getOrDefault(canton, 0.0);
+        }
+        return 0.0;
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         double utility = 0.0;
 
         utility += super.estimateUtility(person, trip, elements);
+        utility += estimateCantonUtility(person);
 
         if(VariablesWriter.isInitiated()) {
             PtVariables variables = predictor.predictVariables(person, trip, elements);
