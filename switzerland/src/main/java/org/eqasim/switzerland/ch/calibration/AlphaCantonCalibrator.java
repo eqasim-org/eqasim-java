@@ -126,14 +126,14 @@ public class AlphaCantonCalibrator implements FastCalibration {
         for (Map.Entry<String, Map<String, Double>> entry : modeCountsByCanton.entrySet()) {
             String canton = entry.getKey();
             Map<String, Double> cantonCounts = entry.getValue();
+            Map<String, Double> cantonShares = new HashMap<>();
             double cantonTotal = cantonCounts.values().stream().mapToDouble(Double::doubleValue).sum() + 1e-10; // Avoid division by zero
             for (String mode : cantonCounts.keySet()) {
                 double share = cantonCounts.get(mode) / cantonTotal;
-                cantonCounts.put(mode, share);
+                cantonShares.put(mode, share);
             }
-            estimatedSharesByCanton.put(canton, cantonCounts);
+            estimatedSharesByCanton.put(canton, cantonShares);
         }
-
 
         for (String mode : consideredModes) {
             double replannedTripsShare = estimatedGlobalShares.getOrDefault(mode, 0.0); //0.0 because maybe no trip was recorded for this mode
@@ -182,11 +182,13 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private void updateCantonsToUpdate(){
         for (String canton : sharesByCanton.keySet()){
             Map<String, Double> cantonCounts = modeCountsByCanton.getOrDefault(canton, new HashMap<>());
-            double total = cantonCounts.values().stream().mapToDouble(Double::doubleValue).sum();
+            int total = (int) cantonCounts.values().stream().mapToDouble(Double::doubleValue).sum();
             if (total >= batchSizeLimit) {
+                logger.info("Canton {} has enough data ({} trips). Will update alphas.", canton, total);
                 doUpdateThisIteration.put(canton, true);
                 numberOfUpdates.put(canton, numberOfUpdates.getOrDefault(canton, -1) + 1); // so that the first iteration will be 0
             } else {
+                logger.info("Canton {} does not have enough data ({} trips). Will NOT update alphas.", canton, total);
                 doUpdateThisIteration.put(canton, false);
             }
         }
@@ -202,41 +204,41 @@ public class AlphaCantonCalibrator implements FastCalibration {
     }
 
     private void updateAlphas() {
-        for (String canton : sharesByCanton.keySet()){
-            if (!doUpdateThisIteration.get(canton)) {
-                continue; // Skip this canton if not enough data
-            }
-            Map<String, Double> alphas = getAlphas(canton);
-            Map<String, Double> cantonShares = sharesByCanton.get(canton);
-            Map<String, Double> targetCantonShares = targetModeSharesByCanton.get(canton);
+        for (String canton : sharesByCanton.keySet()) {
+            if (doUpdateThisIteration.get(canton)) {
+                logger.info("Updating alphas for canton {}", canton);
+                Map<String, Double> alphas = getAlphas(canton);
+                Map<String, Double> cantonShares = sharesByCanton.get(canton);
+                Map<String, Double> targetCantonShares = targetModeSharesByCanton.get(canton);
 
-            Map<String, Double> newAlphas = new HashMap<>();
-            double epsilon = 0.0001; // Small value to avoid log(0) issues
+                Map<String, Double> newAlphas = new HashMap<>();
+                double epsilon = 0.0001; // Small value to avoid log(0) issues
 
-            // Reference mode is pt, its alpha remains unchanged, 0.0
-            double mo = Math.max(cantonShares.get("pt"), epsilon);
-            double zo = Math.max(targetCantonShares.get("pt"), epsilon);
+                // Reference mode is pt, its alpha remains unchanged, 0.0
+                double mo = Math.max(cantonShares.get("pt"), epsilon);
+                double zo = Math.max(targetCantonShares.get("pt"), epsilon);
 
-            newAlphas.put("pt", 0.0);
-            // update alphas for other modes (car, walk, bike)
-            for (String mode : new String[]{"car", "walk", "bike"}) {
-                double mi = Math.max(cantonShares.get(mode), epsilon);
-                double zi = Math.max(targetCantonShares.get(mode), epsilon);
-                double alpha = alphas.get(mode);
+                newAlphas.put("pt", 0.0);
+                // update alphas for other modes (car, walk, bike)
+                for (String mode : new String[]{"car", "walk", "bike"}) {
+                    double mi = Math.max(cantonShares.get(mode), epsilon);
+                    double zi = Math.max(targetCantonShares.get(mode), epsilon);
+                    double alpha = alphas.get(mode);
 
-                // Calculate the new alpha value based on the current share and the target share
-                double newAlpha = alpha + (Math.log(zi) - Math.log(mi)) - (Math.log(zo) - Math.log(mo));
-                // update it using EMA
-                if (Math.abs(newAlpha - alpha) > 1e-3) { // Only use EMA if the change is significant
-                    int iteration = numberOfUpdates.get(canton);
-                    double effectiveBeta = Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2*iteration + 1.0)));
-                    newAlpha = alpha * effectiveBeta + (1.0 - effectiveBeta) * newAlpha;
+                    // Calculate the new alpha value based on the current share and the target share
+                    double newAlpha = alpha + (Math.log(zi) - Math.log(mi)) - (Math.log(zo) - Math.log(mo));
+                    // update it using EMA
+                    if (Math.abs(newAlpha - alpha) > 1e-3) { // Only use EMA if the change is significant
+                        int iteration = numberOfUpdates.get(canton);
+                        double effectiveBeta = Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2 * iteration + 1.0)));
+                        newAlpha = alpha * effectiveBeta + (1.0 - effectiveBeta) * newAlpha;
+                    }
+                    // put the new alpha in the map
+                    newAlphas.put(mode, newAlpha);
                 }
-                // put the new alpha in the map
-                newAlphas.put(mode, newAlpha);
+                // Update the alphas in the mode parameters
+                setAlphas(canton, newAlphas);
             }
-            // Update the alphas in the mode parameters
-            setAlphas(canton, newAlphas);
         }
     }
 
