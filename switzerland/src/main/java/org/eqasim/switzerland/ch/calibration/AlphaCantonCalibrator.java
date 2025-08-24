@@ -73,10 +73,10 @@ public class AlphaCantonCalibrator implements FastCalibration {
         // Starting calibration at the beginning of the iteration
         if (iteration>1) {
             updateCounts();
-            // decide which cantons to update based on the counts
-            updateCantonsToUpdate();
             // update the shares based on the previous counts, and reset the counts
             updateShares();
+            // decide which cantons to update based on the counts
+            updateCantonsToUpdate();
             // update the alphas based on the updated shares
             updateAlphas();
             // reset the counts for the cantons whose parameters were updated
