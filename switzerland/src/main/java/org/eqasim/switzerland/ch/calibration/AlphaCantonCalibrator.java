@@ -21,20 +21,24 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
     private final Map<String, Map<String, Double>> targetModeSharesByCanton;
     private final Map<String, Double> targetGlobalModeShares;
-    private final double beta;
-    private final Scenario scenario;
-    private final int batchSizeLimit = 700; // the minimum number of observations before updating the parameters
-    private final String cantonsModeShareFile = "cantons_mode_shares.csv";
+
+    private final Map<String, Double> shares = new HashMap<>();
+    private final Map<String, Map<String, Double>> sharesByCanton = new HashMap<>();
 
     private final Map<String, Double> modeCounts = new HashMap<>();
     private final Map<String, Map<String, Double>> modeCountsByCanton = new HashMap<>();
 
-    private final Map<String, Double> shares = new HashMap<>();
-    private final Map<String, Map<String, Double>> sharesByCanton = new HashMap<>();
-    private final Map<String, List<Double>> improvements = new HashMap<>();
+    private final Map<String, List<Double>> errors = new HashMap<>();
 
     private final Map<String, Boolean> doUpdateThisIteration = new HashMap<>();
     private final Map<String, Integer> numberOfUpdates = new HashMap<>();
+
+    private final Set<String> cantons;
+
+    private final double beta;
+    private final Scenario scenario;
+    private final int batchSizeLimit = 800; // the minimum number of observations before updating the parameters
+    private final String cantonsModeShareFile = "cantons_mode_shares.csv";
 
     private final Set<String> consideredModes = Set.of("car", "pt", "walk", "bike", "car_passenger");
 
@@ -59,6 +63,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
         this.tripListConverter = tripListConverter;
         this.beta = beta;
         this.targetModeSharesByCanton = readCantonsModeShares();
+        this.cantons = targetModeSharesByCanton.keySet();
         resetPlansCreationFlag();
         logger.info("AlphaCantonCalibrator initialized.");
     }
@@ -79,7 +84,6 @@ public class AlphaCantonCalibrator implements FastCalibration {
             updateAlphas(iteration);
             // reset the counts for the cantons whose parameters were updated
             resetCounts();
-
             // writing
             saveSharesToFile(iteration);
             saveAlphasToFile(iteration);
@@ -151,7 +155,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
                 storedCantonShares.put(mode, replannedTripsShare);
             }
             if (doUpdateThisIteration.get(canton)){
-                List<Double> cantonImprovements = improvements.computeIfAbsent(canton, k -> new java.util.ArrayList<>());
+                List<Double> cantonImprovements = errors.computeIfAbsent(canton, k -> new java.util.ArrayList<>());
                 error = 0.3*error+0.7* (cantonImprovements.isEmpty() ? error : cantonImprovements.getLast()); // smoothing the error, beta = 0.7ast(); // smoothing the error, beta = 0.7
                 cantonImprovements.add(error);
             }
@@ -174,8 +178,8 @@ public class AlphaCantonCalibrator implements FastCalibration {
                     if (consideredModes.contains(mode) && !sameLocation) {
                         modeCounts.put(mode, modeCounts.getOrDefault(mode, 0.0) + 1.0);
 
-                        Map<String, Double> cantonShares = modeCountsByCanton.computeIfAbsent(canton, k -> new HashMap<>());
-                        cantonShares.put(mode, cantonShares.getOrDefault(mode, 0.0) + 1.0);
+                        Map<String, Double> cantonModeCounts = modeCountsByCanton.computeIfAbsent(canton, k -> new HashMap<>());
+                        cantonModeCounts.put(mode, cantonModeCounts.getOrDefault(mode, 0.0) + 1.0);
                         replannedTripsCount += 1; // Count the number of replanned plans
                     }
                 }
@@ -188,7 +192,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
     }
 
     private void updateCantonsToUpdate(){
-        for (String canton : modeCountsByCanton.keySet()){
+        for (String canton : cantons){
             Map<String, Double> cantonCounts = modeCountsByCanton.getOrDefault(canton, new HashMap<>());
             int total = (int) cantonCounts.values().stream().mapToDouble(Double::doubleValue).sum();
             if (total >= batchSizeLimit) {
@@ -227,8 +231,6 @@ public class AlphaCantonCalibrator implements FastCalibration {
                 // Reference mode is pt, its alpha remains unchanged, 0.0
                 double mo = Math.max(cantonShares.get("pt"), epsilon);
                 double zo = Math.max(targetCantonShares.get("pt"), epsilon);
-                mo = (zo<0.05) ? 0.05+mo : mo; // avoid too small target shares for pt, and is more stable
-                zo = (zo<0.05) ? 0.05+zo : zo;
 
                 newAlphas.put("pt", 0.0);
                 // update alphas for other modes (car, walk, bike)
@@ -240,34 +242,26 @@ public class AlphaCantonCalibrator implements FastCalibration {
                     // Calculate the new alpha value based on the current share and the target share
                     double newAlpha = alpha + (Math.log(zi) - Math.log(mi)) - (Math.log(zo) - Math.log(mo));
                     // update it using EMA
-                    if (Math.abs(newAlpha - alpha) > 1e-3) { // Only use EMA if the change is significant
-                        int iteration = numberOfUpdates.get(canton);
-                        int effectiveIteration = (2*iteration+matsimIteration)/3;
-                        double effectiveBeta = (iteration < 3) ? 0.0 : Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2 * effectiveIteration + 1.0)));
-                        newAlpha = alpha * effectiveBeta + (1.0 - effectiveBeta) * newAlpha;
+                    int iteration = numberOfUpdates.getOrDefault(canton, 0);
+                    double effectiveBeta;
+                    if (matsimIteration >= 110) {
+                        effectiveBeta = 0.998;
+                    } else if (matsimIteration > 90) {
+                        effectiveBeta = 0.98;
+                    } else if (matsimIteration > 70) {
+                        effectiveBeta = 0.95;
+                    } else {
+                        effectiveBeta = (iteration < 5)
+                            ? 0.0
+                            : Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2 * iteration + 1.0)));
                     }
+                    newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
                     // put the new alpha in the map
                     newAlphas.put(mode, newAlpha);
                 }
                 // Update the alphas in the mode parameters
                 setAlphas(canton, newAlphas);
             }
-        }
-    }
-
-    private boolean checkIfItImproved(String canton) {
-        List<Double> cantonImprovements = improvements.getOrDefault(canton, new ArrayList<>());
-        int size = cantonImprovements.size();
-        if (size < 4) {
-            return true; // Not enough data to determine improvement, assume it has improved
-        } else {
-            double last = cantonImprovements.get(size - 1) + cantonImprovements.get(size - 2);
-            double first = cantonImprovements.get(size - 3) + cantonImprovements.get(size - 4);
-            boolean hasImproved = last < first+1e-3; // Check if the sum of the last three improvements is less than the sum of the previous three
-            if (!hasImproved) {
-                logger.info("Canton {} has not improved in the last 3 iterations. Not updating alphas this iteration.", canton);
-            }
-            return hasImproved;
         }
     }
 
