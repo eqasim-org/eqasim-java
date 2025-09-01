@@ -1,6 +1,5 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.predictors;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,8 +9,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
+import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtLegVariables;
 import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtVariables;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 import org.matsim.api.core.v01.population.Leg;
@@ -31,16 +32,16 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 
     private final TransitSchedule schedule;
     private final ZonalRegistry zonalRegistry;
+    private final NetworkOfDistances networkOfDistances;
 
     @Inject
-	public SwissPtRoutePredictor(TransitSchedule schedule, ZonalRegistry zonalRegistry) {
-		this.schedule = schedule;
+	public SwissPtRoutePredictor(TransitSchedule schedule, ZonalRegistry zonalRegistry, NetworkOfDistances sbbNetwork) {
+		this.schedule      = schedule;
         this.zonalRegistry = zonalRegistry;
+        this.networkOfDistances = sbbNetwork;
 	}
 
     private Set<Zone> filterZones(Map<String, List<Zone>> zonesByStop) {
-        // TODO check this function or the identification of zones the stops belong to.
-        // I have the impression we are missing SBB stops
         Set<Zone> filtered = new HashSet<Zone>();
 
         Set<Authority> authorities = new HashSet<Authority>();
@@ -120,8 +121,29 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
     }
 
 
+    private double computeSBBDistance(Set<Zone> zones, String fromId, String toId){
+
+        String simplifiedFromId = fromId.contains(":") ? fromId.split("[:\\.]")[0] : fromId;
+        String simplifiedToId   = toId.contains(":") ? toId.split("[:\\.]")[0] : toId;
+
+        double dist = -1.0;
+
+        if (zones.size() == 1){
+            Zone onlyZone = zones.iterator().next();
+            if (onlyZone.getAuthority().getId() == "SBB"){
+                return networkOfDistances.getDistance(simplifiedFromId, simplifiedToId);
+            }
+        }
+
+        return dist;
+
+    }
+
+
     @Override
     protected SwissPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+
+        SwissPtVariables tripDescription = new SwissPtVariables();
 
         Set<Zone> zones = new HashSet<>();
 
@@ -130,6 +152,9 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 
                 zones   = new HashSet<>();
 				Leg leg = (Leg) element;
+
+                double departureTime = leg.getDepartureTime().seconds();
+                double arrivalTime   = departureTime + leg.getTravelTime().seconds();
 
 				if ("pt".equals(leg.getMode())) {
 					Route route = leg.getRoute();
@@ -168,22 +193,13 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                             stopsAndZones.put(stopId, getZones(zonalRegistry, stopId).collect(Collectors.toList()));
                         }
 
-						System.out.println("PT leg found:");
-						System.out.println("  Access stop: " + accessStopId + " in zones " + stopsAndZones.get(accessStopId));
-						System.out.println("  Egress stop: " + egressStopId + " in zones " + stopsAndZones.get(egressStopId));
-                        System.out.println("  Visited stops: ");
-
-                        for (String stopId : stopsVisited){
-                           System.out.println("    " + stopId + " in zones " + stopsAndZones.get(stopId));
-                        }
-
                         zones = filterZones(stopsAndZones);
 
-                        System.out.println("  Visited zones: ");
+                        double sbbDistance = computeSBBDistance(zones, accessStopId, egressStopId);
+                        double networkDistance = route.getDistance();
 
-                        for (Zone zone : zones){
-                            System.out.println("    " + zone.toString());
-                        }
+                        SwissPtLegVariables legVariables = new SwissPtLegVariables(zones, departureTime, arrivalTime, networkDistance, sbbDistance, accessStopId, egressStopId);
+                        tripDescription.addStage(legVariables);
 
 					} 
                     
@@ -195,7 +211,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 			}
 		}
 
-        return new SwissPtVariables(zones);
+        return tripDescription;
     }
     
 }

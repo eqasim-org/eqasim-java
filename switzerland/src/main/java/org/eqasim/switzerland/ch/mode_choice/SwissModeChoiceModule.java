@@ -12,6 +12,7 @@ import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissPtCostModel;
+import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissBikeUtilityEstimator;
@@ -22,12 +23,11 @@ import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
-import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.opencsv.exceptions.CsvValidationException;
@@ -108,8 +108,9 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 			zonalRegistry = new ZonalRegistry(authorities, zones);
 		}
 		else{
-			throw new IOException("No  input file detected to create the zonal registry.");
+			throw new IOException("No input file detected to create the zonal registry.");
 		}
+
 		if (ptZonesConfig.getSBBDistancesPath() != null) {
 			file_path = ptZonesConfig.getSBBDistancesPath();
 			File path = new File(file_path);
@@ -118,8 +119,32 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 			zonalRegistry.merge(sbbZonalRegistry);
 		}
 		else{
-			throw new IOException("No  input file detected to create the SBB network.");
+			throw new IOException("No input file detected to create the SBB network.");
 		}
+
 		return zonalRegistry;
+	}
+
+	@Provides
+	public NetworkOfDistances provideNetworkOfDistances(SwissPTZonesConfigGroup ptZonesConfig) throws IOException, CsvValidationException{
+		String file_path = "";
+		NetworkOfDistances sbbNetwork = new NetworkOfDistances();
+
+		if (ptZonesConfig.getSBBDistancesPath() != null){
+			file_path = ptZonesConfig.getSBBDistancesPath();
+			File path = new File(file_path);
+			sbbNetwork = SBBDistanceReader.createNetworkOfDistances(path);
+		}
+		else{
+			throw new IOException("No input file detected to create the SBB network.");
+		}
+
+		return sbbNetwork;
+
+	}
+
+	@Provides
+	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(){
+		return new SwissPtStageCostCalculator();
 	}
 }

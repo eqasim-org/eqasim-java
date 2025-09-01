@@ -15,6 +15,7 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 
 public class RunSimulation {
+	@SuppressWarnings("deprecation")
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		// set preventwaitingtoentertraffic to y if you want to to prevent that waiting traffic has to wait for space in the link buffer
 		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.

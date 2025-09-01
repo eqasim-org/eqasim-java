@@ -1,12 +1,16 @@
 package org.eqasim.switzerland.ch.mode_choice.costs;
 
 import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.simulation.mode_choice.cost.AbstractCostModel;
+import org.eqasim.switzerland.ch.mode_choice.costs.pt.PtStageCostCalculator;
+import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
 import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPersonVariables;
+import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtLegVariables;
 import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -19,14 +23,16 @@ public class SwissPtCostModel extends AbstractCostModel {
 	private final SwissCostParameters parameters;
 	private final SwissPersonPredictor predictor;
 	private final SwissPtRoutePredictor ptRoutePredictor;
+	private final SwissPtStageCostCalculator calculators;
 
 	@Inject
-	public SwissPtCostModel(SwissCostParameters costParameters, SwissPersonPredictor predictor, SwissPtRoutePredictor ptRoutePredictor) {
+	public SwissPtCostModel(SwissCostParameters costParameters, SwissPersonPredictor predictor, SwissPtRoutePredictor ptRoutePredictor, SwissPtStageCostCalculator calculators) {
 		super("pt");
 
-		this.parameters = costParameters;
-		this.predictor = predictor;
+		this.parameters       = costParameters;
+		this.predictor        = predictor;
 		this.ptRoutePredictor = ptRoutePredictor;
+		this.calculators      = calculators;
 	}
 
 	protected double calculateHomeDistance_km(SwissPersonVariables variables, DiscreteModeChoiceTrip trip) {
@@ -39,28 +45,58 @@ public class SwissPtCostModel extends AbstractCostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		SwissPersonVariables variables = predictor.predictVariables(person, trip, elements);
-		SwissPtVariables ptVariables   = ptRoutePredictor.predictVariables(person, trip, elements);
+		SwissPersonVariables personVariables = predictor.predictVariables(person, trip, elements);
+		SwissPtVariables ptVariables         = ptRoutePredictor.predictVariables(person, trip, elements);
+		double price                         = 0;
+		double legPrice                      = 0;
+		double totalDistance                 = 0;
 
-		if (variables.hasGeneralSubscription) {
+		if (personVariables.hasGeneralSubscription || personVariables.age_a < 6) {
 			return 0.0;
 		}
 
-		if (variables.hasRegionalSubscription) {
-			double homeDistance_km = calculateHomeDistance_km(variables, trip);
+		boolean halfFareTariff = personVariables.hasHalbtaxSubscription || (personVariables.age_a <= 16);
+
+		// TODO find a better way to identify which regional subscription the agent has access to
+		if (personVariables.hasRegionalSubscription) {
+			double homeDistance_km = calculateHomeDistance_km(personVariables, trip);
 
 			if (homeDistance_km <= parameters.ptRegionalRadius_km) {
 				return 0.0;
 			}
 		}
+		
+		Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
 
-		double fullCost_CHF = Math.max(parameters.ptMinimumCost_CHF,
-				parameters.ptCost_CHF_km * getInVehicleDistance_km(elements));
+		System.out.println("\nStarting to compute the price for a trip from " + trip.getOriginActivity().getCoord().toString() + " to " + trip.getDestinationActivity().getCoord().toString());
 
-		if (variables.hasHalbtaxSubscription) {
-			return fullCost_CHF * 0.5;
+		for (Map.Entry<String, List<SwissPtLegVariables>> entry : groupedByAuthority.entrySet()){
+            String authority                        = entry.getKey();
+            List<SwissPtLegVariables> authorityLegs = entry.getValue();
+			PtStageCostCalculator calculator        = this.calculators.priceCalculators.get("None");
+
+			if (this.calculators.priceCalculators.containsKey(authority)){
+				calculator = this.calculators.priceCalculators.get(authority);				
+			}
+
+			legPrice = calculator.calculatePrice(authorityLegs, halfFareTariff);
+			price += legPrice;
+			System.out.println("  Computed price for authority " + authority + ": " + legPrice);
+
+			for (SwissPtLegVariables leg : authorityLegs){
+				totalDistance += leg.networkDistance / 1000.0;
+			}
+        }
+
+		double oldPriceModel = 0.6 * totalDistance;
+		if (halfFareTariff){
+			oldPriceModel /= 2;
 		}
+		oldPriceModel = Math.round(oldPriceModel * 100.0) / 100.0;
 
-		return fullCost_CHF;
+        System.out.println("\nTotal price: " + price);
+		System.out.println("Old cost model (0.6*distance): " + oldPriceModel + "\n");
+
+		return price;
 	}
 }
