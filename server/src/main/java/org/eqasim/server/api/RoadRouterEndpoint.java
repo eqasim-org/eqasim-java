@@ -8,10 +8,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
-import org.eqasim.server.services.router.road.FreespeedSettings;
+import org.eqasim.core.scenario.freeflow.FreeflowConfiguration;
 import org.eqasim.server.services.router.road.RoadRouterRequest;
 import org.eqasim.server.services.router.road.RoadRouterResponse;
 import org.eqasim.server.services.router.road.RoadRouterService;
+import org.matsim.core.router.util.TravelTime;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -26,11 +27,13 @@ public class RoadRouterEndpoint extends AbstractEndpoint {
 		this.service = service;
 	}
 
-	private Collection<RoadRouterResponse> process(List<RoadRouterRequest> requests, FreespeedSettings freespeed)
+	private Collection<RoadRouterResponse> process(List<RoadRouterRequest> requests, FreeflowConfiguration freeflow)
 			throws InterruptedException, ExecutionException {
+		TravelTime travelTime = service.prepareFreeflowTravelTime(freeflow);
+
 		List<Callable<RoadRouterResponse>> tasks = new LinkedList<>();
 		for (RoadRouterRequest request : requests) {
-			tasks.add(() -> service.processRequest(request, freespeed));
+			tasks.add(() -> service.processRequest(request, travelTime));
 		}
 
 		List<RoadRouterResponse> response = new LinkedList<>();
@@ -46,15 +49,15 @@ public class RoadRouterEndpoint extends AbstractEndpoint {
 
 		if (request.request != null) {
 			writeResponse(ctx,
-					process(Collections.singletonList(request.request), request.freespeed).iterator().next());
+					process(Collections.singletonList(request.request), request.freeflow).iterator().next());
 		} else {
-			writeResponse(ctx, process(request.batch, request.freespeed));
+			writeResponse(ctx, process(request.batch, request.freeflow));
 		}
 	}
 
 	static public class Request {
 		public RoadRouterRequest request = null;
 		public List<RoadRouterRequest> batch = new LinkedList<>();
-		public FreespeedSettings freespeed = null;
+		public FreeflowConfiguration freeflow = null;
 	}
 }

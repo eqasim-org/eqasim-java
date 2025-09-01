@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.RunInsertVehicles;
@@ -53,7 +54,7 @@ public class TestCorisica {
 
 	@Test
 	public void testCorsicaPipeline()
-			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
+			throws ConfigurationException, InterruptedException, MalformedURLException, IOException, ExecutionException {
 
 		Assert.assertEquals(389, countPersons("corsica_test/corsica_population.xml.gz"));
 
