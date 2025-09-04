@@ -3,17 +3,18 @@ package org.eqasim.core.scenario.freeflow;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.eqasim.core.components.traffic.AttributeCrossingPenalty;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.router.util.TravelTime;
-import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 
 public class FreeflowConfigurator {
     private static final GeometryFactory geometryFactory = new GeometryFactory();
@@ -26,20 +27,19 @@ public class FreeflowConfigurator {
         major, minor, equal, none
     }
 
-    public record LinkRecord(LinkType linkType, CrossingType crossingType) {
+    public record LinkRecord(LinkType linkType, CrossingType crossingType, double networkTravelTime) {
     }
 
     static public FreeflowConfigurator create(Network network) {
         IdMap<Link, LinkRecord> links = new IdMap<>(Link.class);
 
         for (Link link : network.getLinks().values()) {
-            links.put(link.getId(), new LinkRecord(decideLinkType(link), decideCrossingType(link)));
+            links.put(link.getId(), new LinkRecord(decideLinkType(link), decideCrossingType(link),
+                    link.getLength() / link.getFreespeed()));
         }
 
         return new FreeflowConfigurator(links, network);
     }
-
-    private final TravelTime delegate = new FreeSpeedTravelTime();
 
     private final Network network;
     private final IdMap<Link, LinkRecord> records;
@@ -52,7 +52,10 @@ public class FreeflowConfigurator {
     private record AreaRecord(Geometry geometry, double factor) {
     }
 
-    public TravelTime getTravelTime(FreeflowConfiguration configuration) {
+    private record Container(IdMap<Link, Double> delays, IdMap<Link, Double> factors) {
+    }
+
+    private Container buildContainer(FreeflowConfiguration configuration) {
         IdMap<Link, Double> factors = new IdMap<>(Link.class);
         IdMap<Link, Double> delays = new IdMap<>(Link.class);
 
@@ -105,19 +108,37 @@ public class FreeflowConfigurator {
             }
         }
 
-        return (link, time, person,
-                vehicle) -> delegate.getLinkTravelTime(link, time, person, vehicle)
-                        * factors.getOrDefault(link.getId(), 1.0)
-                        + delays.getOrDefault(link.getId(), 0.0);
+        return new Container(delays, factors);
+    }
+
+    public TravelTime buildTravelTime(FreeflowConfiguration configuration) {
+        Container container = buildContainer(configuration);
+        IdMap<Link, Double> travelTimes = new IdMap<>(Link.class);
+
+        for (var entry : records.entrySet()) {
+            Id<Link> linkId = entry.getKey();
+
+            double travelTime = entry.getValue().networkTravelTime;
+            travelTime *= container.factors.get(linkId);
+            travelTime += container.delays.get(linkId);
+
+            travelTimes.put(linkId, travelTime);
+        }
+
+        return (link, time, person, vehicle) -> travelTimes.get(link.getId());
     }
 
     public void apply(Network network, FreeflowConfiguration configuration) {
-        TravelTime travelTime = getTravelTime(configuration);
+        Container container = buildContainer(configuration);
 
         for (Link link : network.getLinks().values()) {
             LinkRecord record = records.get(link.getId());
 
-            link.setFreespeed(link.getLength() / travelTime.getLinkTravelTime(link, 0.0, null, null));
+            double travelTime = record.networkTravelTime * container.factors.getOrDefault(link.getId(), 1.0);
+
+            link.setFreespeed(link.getLength() / travelTime);
+            link.getAttributes().putAttribute(AttributeCrossingPenalty.ATTRIBUTE,
+                    container.delays.getOrDefault(link.getId(), 0.0));
             link.getAttributes().putAttribute("freeflow:linkType", record.linkType.toString());
             link.getAttributes().putAttribute("freeflow:crossingType", record.crossingType.toString());
         }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.InjectorBuilder;
@@ -47,7 +48,7 @@ public class RunScenarioCutter {
 	public static final Collection<String> OPTIONAL_ARGS = Set.of("threads", "prefix", "extent-attribute",
 			"extent-value", "plans-path", "events-path", "skip-routing", EqasimConfigurator.CONFIGURATOR);
 
-	static public void main(String[] args) throws ConfigurationException, IOException, InterruptedException {
+	static public void main(String[] args) throws ConfigurationException, IOException, InterruptedException, ExecutionException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions(REQUIRED_ARGS) //
 				.allowOptions(OPTIONAL_ARGS) //
