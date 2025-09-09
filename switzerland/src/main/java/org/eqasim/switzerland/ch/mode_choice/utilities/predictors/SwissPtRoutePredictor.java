@@ -175,7 +175,13 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                         int start = intermediateStops.indexOf(accessStop);
                         int end   = intermediateStops.indexOf(egressStop);
 
-                        intermediateStops = intermediateStops.subList(start, end+1);
+                        if (start <= end){
+                            intermediateStops = intermediateStops.subList(start, end+1);
+                        }
+                        else{
+                            intermediateStops = intermediateStops.subList(end, start+1);
+                        }
+                        
 
                         List<String> stopsVisited = intermediateStops.stream()
                             .map(stop -> stop.getId().toString().replaceAll("\\.link.*$", ""))

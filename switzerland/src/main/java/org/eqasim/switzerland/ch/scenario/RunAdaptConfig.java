@@ -53,6 +53,20 @@ public class RunAdaptConfig {
 			replanningConfigGroup.addStrategySettings(selectorStrategy);
 		}
 
+		// Cross border agents should not replan their mode
+		StrategySettings crossborderStrategy = new StrategySettings();
+		crossborderStrategy.setStrategyName(DefaultStrategy.ReRoute);
+		crossborderStrategy.setWeight(SwissConfigAdapter.replanningRate);
+		crossborderStrategy.setSubpopulation("crossborder");
+		replanningConfigGroup.addStrategySettings(crossborderStrategy);
+
+		StrategySettings crossBorderStrategy = new StrategySettings();
+		crossBorderStrategy.setStrategyName(DefaultSelector.KeepLastSelected);
+		crossBorderStrategy.setWeight(1.0 - SwissConfigAdapter.replanningRate);
+		crossBorderStrategy.setSubpopulation("crossborder");
+		replanningConfigGroup.addStrategySettings(crossBorderStrategy);
+
+
 		if (SwissConfigAdapter.downsamplingRate < 1.0) {
 			// adjust the flow and storage capacities based on
 			// the work from T.W. Nicolai Using MATSim as a travel model plug-in to UrbanSim

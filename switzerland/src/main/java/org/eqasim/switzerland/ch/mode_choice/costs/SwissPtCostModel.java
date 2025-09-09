@@ -68,7 +68,7 @@ public class SwissPtCostModel extends AbstractCostModel {
 		
 		Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
 
-		System.out.println("\nStarting to compute the price for a trip from " + trip.getOriginActivity().getCoord().toString() + " to " + trip.getDestinationActivity().getCoord().toString());
+		//System.out.println("\nStarting to compute the price for a trip from " + trip.getOriginActivity().getCoord().toString() + " to " + trip.getDestinationActivity().getCoord().toString());
 
 		for (Map.Entry<String, List<SwissPtLegVariables>> entry : groupedByAuthority.entrySet()){
             String authority                        = entry.getKey();
@@ -81,7 +81,7 @@ public class SwissPtCostModel extends AbstractCostModel {
 
 			legPrice = calculator.calculatePrice(authorityLegs, halfFareTariff);
 			price += legPrice;
-			System.out.println("  Computed price for authority " + authority + ": " + legPrice);
+			//System.out.println("  Computed price for authority " + authority + ": " + legPrice);
 
 			for (SwissPtLegVariables leg : authorityLegs){
 				totalDistance += leg.networkDistance / 1000.0;
@@ -94,8 +94,8 @@ public class SwissPtCostModel extends AbstractCostModel {
 		}
 		oldPriceModel = Math.round(oldPriceModel * 100.0) / 100.0;
 
-        System.out.println("\nTotal price: " + price);
-		System.out.println("Old cost model (0.6*distance): " + oldPriceModel + "\n");
+        //System.out.println("\nTotal price: " + price);
+		//System.out.println("Old cost model (0.6*distance): " + oldPriceModel + "\n");
 
 		return price;
 	}
