@@ -25,9 +25,4 @@ public class BavariaPredictorUtils {
 	static public boolean hasBicycleAvailability(Person person) {
 		return !"none".equals((String) person.getAttributes().getAttribute("bicycleAvailability"));
 	}
-	
-	static public boolean isParisResident(Person person) {
-		Boolean isResident = (Boolean) person.getAttributes().getAttribute("isParis");
-		return isResident != null && isResident;
-	}
 }
