@@ -11,6 +11,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
+import java.util.List;
 import java.util.Map;
 
 public class FastCalibrationModule extends AbstractEqasimExtension {
@@ -19,12 +20,8 @@ public class FastCalibrationModule extends AbstractEqasimExtension {
     @Override
     protected void installEqasimExtension() {
         AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
-        if (calConfig.isActivate()){
-            logger.info("Activate fast calibration module");
-            addControlerListenerBinding().to(FastCalibration.class).asEagerSingleton();
-            bind(FastCalibration.class).to(AlphaCalibrator.class).asEagerSingleton();
-
-        }
+        addControlerListenerBinding().to(FastCalibration.class).asEagerSingleton();
+        bind(FastCalibration.class).to(AlphaCalibrator.class).asEagerSingleton();
     }
 
     @Provides
@@ -42,6 +39,8 @@ public class FastCalibrationModule extends AbstractEqasimExtension {
                 "bike", calConfig.getBikeModeShare(),
                 "car_passenger", calConfig.getCarPassengerModeShare()
         );
-        return new AlphaCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares,beta);
+        boolean isActivated = calConfig.isActivate();
+        List<String> modesToCalibrate = calConfig.getCalibratedModes();
+        return new AlphaCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares, modesToCalibrate, beta, isActivated);
     }
 }

@@ -2,7 +2,7 @@ package org.eqasim.switzerland.ch_cmdp;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.switzerland.ch.mode_choice.SwissModeChoiceModule;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -59,13 +59,5 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 		config.qsim().setNumberOfThreads(Math.min(12, Runtime.getRuntime().availableProcessors()));
 		config.global().setNumberOfThreads(Runtime.getRuntime().availableProcessors());
 
-		// Estimators
-		// eqasimConfig.setEstimator("car", "SwissCarEstimator");
-		// eqasimConfig.setEstimator("pt", "SwissPtEstimator");
-		// eqasimConfig.setEstimator("bike", "SwissBikeEstimator");
-		// eqasimConfig.setEstimator("walk", "SwissWalkEstimator");
-		// eqasimConfig.setEstimator("outsider", "SwissZeroUtilityEstimator");
-		// eqasimConfig.setEstimator("car_passenger", "SwissZeroUtilityEstimator");
-		// eqasimConfig.setEstimator("truck", "SwissZeroUtilityEstimator");
 	}
 }

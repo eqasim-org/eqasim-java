@@ -3,7 +3,9 @@ package org.eqasim.core.components.fast_calibration;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
     static public final String GROUP_NAME = "eqasim:alphaCalibration";
@@ -15,6 +17,9 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
     static private final String WALK_MODE_SHARE = "walkModeShare";
     static private final String BIKE_MODE_SHARE = "bikeModeShare";
     static private final String CAR_PASSENGER_MODE_SHARE = "carPassengerModeShare";
+    static private final String FILE_PATH = "filePath";
+    static private final String LEVEL = "level";
+    static private final String CALIBRATED_MODES = "calibratedModes";
 
     private boolean activate = false;
     private double beta = 0.5;
@@ -23,7 +28,9 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
     private double walkModeShare = 0.256;
     private double bikeModeShare = 0.083;
     private double carPassengerModeShare = 0.092;
-
+    private String filePath = "";
+    private String level = "global";
+    private String calibratedModes = "car,pt,walk,bike";
 
     public AlphaCalibratorConfig() {
         super(GROUP_NAME);
@@ -39,7 +46,37 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
         map.put(WALK_MODE_SHARE, "Target mode share for walking");
         map.put(BIKE_MODE_SHARE, "Target mode share for biking");
         map.put(CAR_PASSENGER_MODE_SHARE, "Target mode share for car passengers");
+        map.put(FILE_PATH, "In case of using canton level calibration, this is the path to the csv file containing modes shares per canton");
+        map.put(LEVEL, "Level of calibration: current implementation contains either 'global' or 'canton'");
+        map.put(CALIBRATED_MODES, "Comma-separated list of modes to be calibrated (default: car,pt,walk,bike)," +
+                "When car passenger is simulated, it can be added to the list as 'car_passenger'");
         return map;
+    }
+
+    @StringGetter(CALIBRATED_MODES)
+    public List<String> getCalibratedModes() {
+        return Stream.of(calibratedModes.split(",")).map(String::trim).toList();
+    }
+    @StringSetter(CALIBRATED_MODES)
+    public void setCalibratedModes(String calibratedModes) {
+        this.calibratedModes = calibratedModes;
+    }
+
+    @StringGetter(FILE_PATH)
+    public String getFilePath() {
+        return filePath;
+    }
+    @StringSetter(FILE_PATH)
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+    @StringGetter(LEVEL)
+    public String getLevel() {
+        return level;
+    }
+    @StringSetter(LEVEL)
+    public void setLevel(String level) {
+        this.level = level;
     }
 
     @StringGetter(ACTIVATE)

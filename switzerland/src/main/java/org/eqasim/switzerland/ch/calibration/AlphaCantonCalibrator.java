@@ -38,7 +38,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private final double beta;
     private final Scenario scenario;
     private final int batchSizeLimit = 800; // the minimum number of observations before updating the parameters
-    private final String cantonsModeShareFile = "cantons_mode_shares.csv";
+    private final String cantonsModeShareFile;
 
     private final Set<String> consideredModes = Set.of("car", "pt", "walk", "bike", "car_passenger");
 
@@ -49,12 +49,16 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private int changedUtilityCount = 0;
     private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
 
+    private final boolean isActivated;
+
     public AlphaCantonCalibrator(Scenario scenario,
                                  OutputDirectoryHierarchy outputHierarchy,
                                  SwissModeParameters modeParameters,
                                  TripListConverter tripListConverter,
                                  Map<String, Double> targetModeShares,
-                                 double beta) {
+                                 double beta,
+                                 String filePath,
+                                 boolean isActivated) {
 
         this.targetGlobalModeShares = targetModeShares;
         this.scenario = scenario;
@@ -62,6 +66,14 @@ public class AlphaCantonCalibrator implements FastCalibration {
         this.modeParameters = modeParameters;
         this.tripListConverter = tripListConverter;
         this.beta = beta;
+        this.isActivated = isActivated;
+        this.cantonsModeShareFile = filePath;
+        // assert if file exists
+        File file = new File(cantonsModeShareFile);
+        if (!file.exists()) {
+            throw new IllegalArgumentException("Cantons mode share file does not exist: " + cantonsModeShareFile);
+        }
+        // read the target mode shares by canton from file
         this.targetModeSharesByCanton = readCantonsModeShares();
         this.cantons = targetModeSharesByCanton.keySet();
         resetPlansCreationFlag();
@@ -70,6 +82,10 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
+        if (!isActivated) {
+            return;
+        }
+
         int iteration = event.getIteration();
         // if a plan is replanned in the last iteration, the createdLastIteration attribute is set to true
         resetPlansCreationFlag();
@@ -243,18 +259,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
                     double newAlpha = alpha + (Math.log(zi) - Math.log(mi)) - (Math.log(zo) - Math.log(mo));
                     // update it using EMA
                     int iteration = numberOfUpdates.getOrDefault(canton, 0);
-                    double effectiveBeta;
-                    if (matsimIteration >= 110) {
-                        effectiveBeta = 0.998;
-                    } else if (matsimIteration > 90) {
-                        effectiveBeta = 0.98;
-                    } else if (matsimIteration > 70) {
-                        effectiveBeta = 0.95;
-                    } else {
-                        effectiveBeta = (iteration < 5)
-                            ? 0.0
-                            : Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2 * iteration + 1.0)));
-                    }
+                    double effectiveBeta = getEffectiveBeta(iteration, matsimIteration);
                     newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
                     // put the new alpha in the map
                     newAlphas.put(mode, newAlpha);
@@ -263,6 +268,22 @@ public class AlphaCantonCalibrator implements FastCalibration {
                 setAlphas(canton, newAlphas);
             }
         }
+    }
+
+    private double getEffectiveBeta(int iteration, int matsimIteration) {
+        double effectiveBeta;
+        if (matsimIteration >= 110) {
+            effectiveBeta = 0.998;
+        } else if (matsimIteration > 90) {
+            effectiveBeta = 0.98;
+        } else if (matsimIteration > 70) {
+            effectiveBeta = 0.95;
+        } else {
+            effectiveBeta = (iteration < 5)
+                    ? 0.0
+                    : Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2 * iteration + 1.0)));
+        }
+        return effectiveBeta;
     }
 
     private Map<String, Double> getAlphas(String canton) {

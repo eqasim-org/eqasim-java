@@ -62,7 +62,13 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bind(SwissPersonPredictor.class);
 
 		bind(ModeParameters.class).to(SwissModeParameters.class).asEagerSingleton();
-		bind(FastCalibration.class).to(AlphaCantonCalibrator.class).asEagerSingleton();
+
+		// Calibration
+		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
+		if (calConfig.isActivate() && calConfig.getLevel().equals("canton")) {
+			bind(FastCalibration.class).to(AlphaCantonCalibrator.class).asEagerSingleton();
+		}
+
 	}
 
 	@Provides
@@ -107,6 +113,11 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 				"bike", calConfig.getBikeModeShare(),
 				"car_passenger", calConfig.getCarPassengerModeShare()
 		);
-		return new AlphaCantonCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares,beta);
+		String filePath = calConfig.getFilePath();
+		if (filePath.isEmpty()) {
+			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
+		}
+		return new AlphaCantonCalibrator(scenario,outputHierarchy,modeParameters,
+				tripListConverter,targetModeShares,beta, filePath, calConfig.isActivate());
 	}
 }

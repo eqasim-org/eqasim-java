@@ -1,6 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp.scenario;
 
-import org.eqasim.switzerland.ch_cmdp.ovgk.CalculateStopCategories;
+import org.eqasim.switzerland.ch.ovgk.CalculateStopCategories;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;

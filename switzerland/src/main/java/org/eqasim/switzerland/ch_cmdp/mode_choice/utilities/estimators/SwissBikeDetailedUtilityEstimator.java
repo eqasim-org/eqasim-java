@@ -1,30 +1,26 @@
-package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.detailed_estimators;
+package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.calibration.writer.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissModeDetailedParameters;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
-    private final SwissModeDetailedParameters parameters;
+    private final SwissCmdpModeParameters parameters;
     private final SwissPersonPredictor personPredictor;
     private final BikePredictor bikePredictor;
 
     @Inject
-    public SwissBikeDetailedUtilityEstimator(SwissModeDetailedParameters parameters, SwissPersonPredictor personPredictor,
+    public SwissBikeDetailedUtilityEstimator(SwissCmdpModeParameters parameters, SwissPersonPredictor personPredictor,
                                              BikePredictor bikePredictor) {
         super(parameters, personPredictor.delegate, bikePredictor);
 
@@ -42,16 +38,15 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.bike.betaAge * Math.max(0.0, personVariables.age_a - 18);
+        return parameters.bike.betaAge_u * Math.max(0.0, personVariables.age_a - 18);
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
-        return personVariables.sex==1 ? parameters.bike.betaSex:0.0;
+        return personVariables.sex==1 ? parameters.bike.betaSex_u :0.0;
     }
 
     protected double estimateHomeOriginUtility(DiscreteModeChoiceTrip trip) {
-        String originActivity = trip.getOriginActivity().getType();
-        return "home".equals(originActivity) ? parameters.bike.betaOriginHome : 0.0;
+        return Utils.originIsHome(trip) ? parameters.bike.betaOriginHome_u : 0.0;
     }
 
     protected double estimateRegionalUtility(SwissPersonVariables personVariables) {
@@ -65,8 +60,15 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     }
 
     protected double estimateShortDistanceUtility(DiscreteModeChoiceTrip trip) {
-        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return (euclideanDistance_km>1.0)? 0.0 : parameters.bike.betaShortDistance;
+        return Utils.isShortDistanceTrip(trip)? parameters.bike.betaShortDistance_u :0.0;
+    }
+
+    protected double estimateUrbanDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsUrban(trip) ? parameters.bike.betaUrbanDestination_u : 0.0;
+    }
+
+    protected double estimateWorkDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsWork(trip) ? parameters.bike.betaDestinationWork_u : 0.0;
     }
 
     @Override
@@ -77,31 +79,16 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         double utility = 0.0;
         utility += estimateConstantUtility();
         utility += estimateTravelTimeUtility(bikeVariables);
+
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
-        utility += estimateHomeOriginUtility(trip);
         utility += estimateRegionalUtility(personVariables);
+        utility += estimateHomeOriginUtility(trip);
         utility += estimateShortDistanceUtility(trip);
+        utility += estimateUrbanDestinationUtility(trip);
+        utility += estimateWorkDestinationUtility(trip);
 
-//        if(VariablesWriter.isInitiated()) {
-//            writeVariablesToCsv(person, trip, bikeVariables, personVariables, utility);
-//        }
         return utility;
     }
 
-    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, BikeVariables bikevariable,
-                                     SwissPersonVariables personVariables, double utility) {
-        double departureTime = trip.getDepartureTime();
-        int tripIndex = trip.getIndex();
-        String personId = person.getId().toString();
-        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-
-        Map<String, String> bikeAttributes = new HashMap<>();
-        bikeAttributes.put("statedPreferenceRegion", String.valueOf(personVariables.statedPreferenceRegion));
-        bikeAttributes.put("travelTime_min", String.valueOf(bikevariable.travelTime_min));
-        bikeAttributes.put("age_a", String.valueOf(personVariables.age_a));
-        bikeAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
-
-        VariablesWriter.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);
-    }
 }

@@ -38,13 +38,17 @@ public class AlphaCalibrator implements FastCalibration {
     private int replannedTripsCount = 0;
     private int changedUtilityCount = 0;
     private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
+    private final boolean isActivated;
+    private final List<String> modesToCalibrate;
 
     public AlphaCalibrator(Scenario scenario,
                            OutputDirectoryHierarchy outputHierarchy,
                            ModeParameters modeParameters,
                            TripListConverter tripListConverter,
                            Map<String, Double> targetModeShares,
-                           double beta) {
+                           List<String> modesToCalibrate,
+                           double beta,
+                           boolean isActivated) {
 
         this.targetModeShares = targetModeShares;
         this.scenario = scenario;
@@ -52,26 +56,33 @@ public class AlphaCalibrator implements FastCalibration {
         this.modeParameters = modeParameters;
         this.tripListConverter = tripListConverter;
         this.beta = beta;
+        this.isActivated = isActivated;
+        this.modesToCalibrate = modesToCalibrate;
 
-        checkTargetModeShares();
-        resetPlansCreationFlag();
+        if (isActivated) {
+            // if the calibration is activated, check the target mode shares and reset the plans creation flag
+            checkTargetModeShares();
+            resetPlansCreationFlag();
+        }
     }
 
     public void checkTargetModeShares() {
         // Check first that the required modes are present in the target mode shares
-        Set<String> modesWithRequiredShares = Set.of("car", "pt", "walk", "bike");
-        for (String mode : targetModeShares.keySet()) {
-            if (!modesWithRequiredShares.contains(mode)) {
-                logger.warn("Mode '" + mode + "' is not considered in the calibration. This may lead to unexpected results in the calibration process. " +
-                        "Please check the target mode shares in the configuration file and ensure you provide shares for all required modes: " + modesWithRequiredShares);
+        for (String mode : modesToCalibrate) {
+            if (!targetModeShares.containsKey(mode)) {
+                throw new IllegalArgumentException("Target mode shares must contain the mode: " + mode);
             }
+        }
+        // pt is used as reference mode, it should be in the list of modes to calibrate
+        if (!modesToCalibrate.contains("pt")) {
+            throw new IllegalArgumentException("The list of modes to calibrate must contain 'pt', as it is used as reference mode for calibration.");
         }
         // ensure the sum of target mode shares is below 1.0 (if passenger_car is not given, else it is 1.0)
         double sumOfShares = targetModeShares.values().stream().mapToDouble(Double::doubleValue).sum();
         if (sumOfShares > 1.0) {
             logger.warn("The sum of target mode shares is greater than 1.0: " + sumOfShares + ". This may lead to unexpected results in the calibration process. " +
                         "Please check the target mode shares in the configuration file.");
-        } else if ((sumOfShares < 0.99)&&targetModeShares.containsKey("car_passenger")) {
+        } else if (sumOfShares < 0.999) {
             logger.warn("The sum of target mode shares is less than 1.0: " + sumOfShares + ". This may lead to unexpected results in the calibration process. " +
                     "Please check the target mode shares in the configuration file.");
         }
@@ -79,6 +90,9 @@ public class AlphaCalibrator implements FastCalibration {
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
+        if (!isActivated) {
+            return; // If the calibration is not activated, do nothing
+        }
         int iteration = event.getIteration();
         // if a plan is replanned in the last iteration, the createdLastIteration attribute is set to true
         resetPlansCreationFlag();
@@ -127,8 +141,6 @@ public class AlphaCalibrator implements FastCalibration {
     }
 
     private Map<String, Double> getEstimatedModeSharesFromPlans(){
-        // This method estimates the mode shares from the plans created in the last iteration
-        // and updates the modeShareTracker with these values.
         Map<String, Double> estimatedShares = new HashMap<>();
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
@@ -171,18 +183,20 @@ public class AlphaCalibrator implements FastCalibration {
         double mo = Math.max(shares.get("pt"), epsilon);
         double zo = Math.max(targetModeShares.get("pt"), epsilon);
         newAlphas.put("pt", 0.0);
-        // update alphas for other modes (car, walk, bike)
-        for (String mode : new String[] {"car", "walk", "bike"}) {
+        // update alphas for other modes
+        for (String mode : modesToCalibrate) {
+            if (mode.equals("pt")) {
+                continue; // Skip the reference mode
+            }
+
             double mi = Math.max(shares.get(mode), epsilon);
             double zi = Math.max(targetModeShares.get(mode), epsilon);
             double alpha = alphas.get(mode);
             // Calculate the new alpha value based on the current share and the target share
             double newAlpha = alpha + (Math.log(zi)-Math.log(mi)) - (Math.log(zo)-Math.log(mo));
             // update it using EMA
-            if (Math.abs(newAlpha - alpha) > 1e-3) { // Only use EMA if the change is significant
-                double effectiveBeta = Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2*iteration + 1.0)));
-                newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
-            }
+            double effectiveBeta = Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2*iteration + 1.0)));
+            newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
             // put the new alpha in the map
             newAlphas.put(mode, newAlpha);
         }
@@ -191,19 +205,11 @@ public class AlphaCalibrator implements FastCalibration {
     }
 
     private Map<String, Double> getAlphas() {
-        Map<String, Double> alphas = new HashMap<>();
-        alphas.put("car", modeParameters.car.alpha_u);
-        alphas.put("pt", modeParameters.pt.alpha_u);
-        alphas.put("walk", modeParameters.walk.alpha_u);
-        alphas.put("bike", modeParameters.bike.alpha_u);
-        return alphas;
+        return modeParameters.getASCs();
     }
 
     private void setAlphas(Map<String, Double> alphas) {
-        this.modeParameters.car.alpha_u = alphas.get("car");
-        this.modeParameters.pt.alpha_u = alphas.get("pt");
-        this.modeParameters.walk.alpha_u = alphas.get("walk");
-        this.modeParameters.bike.alpha_u = alphas.get("bike");
+        modeParameters.setASCs(alphas);
     }
 
     private void saveAlphasToFile(int iteration) {

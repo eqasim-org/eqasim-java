@@ -1,7 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.scenario;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.switzerland.ch.SwitzerlandConfigurator;
+import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -16,6 +16,8 @@ import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.config.groups.VehiclesConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultSelector;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
+
+import java.util.Arrays;
 
 public class RunAdaptConfig {
 
@@ -57,6 +59,9 @@ public class RunAdaptConfig {
 
 		eqasimConfig.setEstimator(TransportMode.car, SwissModeChoiceModule.CAR_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, SwissModeChoiceModule.BIKE_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.pt, SwissModeChoiceModule.PT_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.walk, SwissModeChoiceModule.WALK_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator("car_passenger", SwissModeChoiceModule.CP_ESTIMATOR_NAME);
 
 		eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, SwissModeChoiceModule.PT_COST_MODEL_NAME);
@@ -65,6 +70,7 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
+		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk"));
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {

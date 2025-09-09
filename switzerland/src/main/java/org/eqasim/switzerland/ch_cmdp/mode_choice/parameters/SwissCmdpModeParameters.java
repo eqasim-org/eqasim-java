@@ -1,21 +1,27 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.parameters;
 
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 
-public class SwissModeDetailedParameters extends ModeParameters {
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class SwissCmdpModeParameters extends SwissModeParameters {
 
     public static class SwissBikeParameters {
         public double alpha_u = 0.0;
         public double betaTravelTime_u_min = 0.0;
         public double travelTimeExponent = 1.0;
 
-        public double betaAge = 0.0;
-        public double betaSex = 0.0;
+        public double betaAge_u = 0.0;
+        public double betaSex_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
-        public double betaOriginHome = 0.0;
-        public double betaShortDistance = 0.0;
-        public double betaMediumDistance = 0.0;
+        public double betaOriginHome_u = 0.0;
+        public double betaShortDistance_u = 0.0;
+        public double betaDestinationWork_u = 0.0;
+        public double betaUrbanDestination_u = 0.0;
     }
 
     public static class SwissCarParameters {
@@ -23,25 +29,21 @@ public class SwissModeDetailedParameters extends ModeParameters {
         public double betaTravelTime_u_min = 0.0;
         public double travelTimeExponent = 1.0;
 
-        public double betaAge = 0.0;
-        public double betaSex = 0.0;
+        public double betaAge_u = 0.0;
+        public double betaSex_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
-        public double betaOriginHome = 0.0;
-        public double betaDestinationWork = 0.0;
-        public double betaUrbanDestination = 0.0;
-        public double betaShortDistance = 0.0;
-        public double betaMediumDistance = 0.0;
-
+        public double betaOriginHome_u = 0.0;
+        public double betaDestinationWork_u = 0.0;
+        public double betaUrbanDestination_u = 0.0;
+        public double betaShortDistance_u = 0.0;
+        // just because are used for calculating travel times
         public double additionalAccessEgressWalkTime_min = 0.0;
         public double constantParkingSearchPenalty_min = 0.0;
     }
 
     public static class SwissParking {
-        public double urbanParkingCostPerHour = 0.0;
         public double urbanParkingSearchDuration_min = 0.0;
-
-        public double suburbanParkingCostPerHour = 0.0;
         public double suburbanParkingSearchDuration_min = 0.0;
     }
 
@@ -53,22 +55,22 @@ public class SwissModeDetailedParameters extends ModeParameters {
         public double betaWaitingTime_u_min = 0.0;
         public double betaAccessEgressTime_u_min = 0.0;
 
+        public double betaDistance_u_km = 0.0;
+
         public double inVehicleTimeExponent = 1.0;
         public double waitingTimeExponent = 1.0;
         public double accessEgressTimeExponent = 1.0;
         public double lineSwitchExponent = 1.0;
         public double distanceExponent = 1.0;
 
-        public double betaAge = 0.0;
-        public double betaSex = 0.0;
+        public double betaAge_u = 0.0;
+        public double betaSex_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
-        public double betaOriginHome = 0.0;
-        public double betaDestinationWork = 0.0;
-        public double betaUrbanDestination = 0.0;
-
-        public double betaShortDistance = 0.0;
-        public double betaMediumDistance = 0.0;
+        public double betaOriginHome_u = 0.0;
+        public double betaDestinationWork_u = 0.0;
+        public double betaUrbanDestination_u = 0.0;
+        public double betaShortDistance_u = 0.0;
     }
 
     public static class SwissWalkParameters {
@@ -76,13 +78,14 @@ public class SwissModeDetailedParameters extends ModeParameters {
         public double betaTravelTime_u_min = 0.0;
         public double travelTimeExponent = 1.0;
 
-        public double betaAge = 0.0;
-        public double betaSex = 0.0;
+        public double betaAge_u = 0.0;
+        public double betaSex_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
-        public double betaOriginHome = 0.0;
-        public double betaShortDistance = 0.0;
-        public double betaMediumDistance = 0.0;
+        public double betaOriginHome_u = 0.0;
+        public double betaShortDistance_u = 0.0;
+        public double betaDestinationWork_u = 0.0;
+        public double betaUrbanDestination_u = 0.0;
     }
 
     public static class SwissCarPassengerParameters {
@@ -93,16 +96,37 @@ public class SwissModeDetailedParameters extends ModeParameters {
         public double betaDistance_km = 0.0;
         public double distanceExponent = 1.0;
 
-        public double betaAge = 0.0;
-        public double betaSex = 0.0;
+        public double betaAge_u = 0.0;
+        public double betaSex_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
-        public double betaOriginHome = 0.0;
-        public double betaDestinationWork = 0.0;
-        public double betaUrbanDestination = 0.0;
-        public double betaDrivingLicense = 0.0;
-        public double betaShortDistance = 0.0;
-        public double betaMediumDistance = 0.0;
+        public double betaOriginHome_u = 0.0;
+        public double betaDestinationWork_u = 0.0;
+        public double betaUrbanDestination_u = 0.0;
+        public double betaDrivingLicense_u = 0.0;
+        public double betaShortDistance_u = 0.0;
+    }
+
+    public class SwissCantonDummies {
+        public Map<String, Double> car = getCantonDummies();
+        public Map<String, Double> pt = getCantonDummies();
+        public Map<String, Double> bike = getCantonDummies();
+        public Map<String, Double> walk = getCantonDummies();
+    }
+
+    public static Map<String, Double> getCantonDummies() {
+        // By default all dummies are zeros
+        List<String> cantons = Arrays.asList(
+                "Aargau", "Appenzell Ausserrhoden","Appenzell Innerrhoden","Basel-Landschaft",
+                "Basel-Stadt","Bern","Fribourg","Genève","Glarus","Graubünden","Jura","Luzern",
+                "Neuchâtel","Nidwalden","Obwalden","Schaffhausen","Schwyz","Solothurn","St. Gallen",
+                "Thurgau","Ticino","Uri","Valais","Vaud","Zug","Zürich"
+        );
+        Map<String, Double> cantonDummies = new HashMap<>();
+        for (String canton : cantons) {
+            cantonDummies.put(canton, 0.0);
+        }
+        return cantonDummies;
     }
 
     public final SwissBikeParameters bike = new SwissBikeParameters();
@@ -112,96 +136,111 @@ public class SwissModeDetailedParameters extends ModeParameters {
     public final SwissWalkParameters walk = new SwissWalkParameters();
     public final SwissCarPassengerParameters cp = new SwissCarPassengerParameters();
 
+    public final SwissCantonDummies swissCanton = new SwissCantonDummies();
+
     public double lambdaCostIncome = 0.0;
     public double referenceIncome = 0.0;
 
-    public static SwissModeDetailedParameters buildDefault() {
-        SwissModeDetailedParameters parameters = new SwissModeDetailedParameters();
-        // bike parameters
-        parameters.bike.alpha_u = 4.246629786956503;
-        parameters.bike.betaTravelTime_u_min = -0.8147649723046508;
-        parameters.bike.travelTimeExponent = 0.5827142290071728;
-        parameters.bike.betaAge = 0.0027926747913770617;
-        parameters.bike.betaSex = -0.2872760033686839;
-        parameters.bike.betaRegion1_u = -0.9127275599587426;
-        parameters.bike.betaRegion2_u = -0.14244614114798254;
-        parameters.bike.betaOriginHome = 0.1447788172488431;
-        parameters.bike.betaShortDistance = 0.33360364911631607;
-        parameters.bike.betaMediumDistance = 0.0;
-        // car parameters
-        parameters.car.alpha_u = 4.562389558207741;
-        parameters.car.betaTravelTime_u_min = -0.5099008775071441;
-        parameters.car.travelTimeExponent = 0.6260707505751207;
-        parameters.car.betaAge = 0.005421209026286799;
-        parameters.car.betaSex = -0.22016349540370544;
-        parameters.car.betaRegion1_u = 0.33380109553550774;
-        parameters.car.betaRegion2_u = -0.23207743104071657;
-        parameters.car.betaOriginHome = 0.041627468198286985;
-        parameters.car.betaDestinationWork = 0.6336766600163395;
-        parameters.car.betaUrbanDestination = 0.12166994895495664;
-        parameters.car.betaShortDistance = 0.16082276237059584;
-        parameters.car.betaMediumDistance = 0.0;
-        // parking parameters
-        parameters.parking.urbanParkingCostPerHour = 1.0;
-        parameters.parking.urbanParkingSearchDuration_min = 2.0;
-        parameters.parking.suburbanParkingCostPerHour = 0.5;
-        parameters.parking.suburbanParkingSearchDuration_min = 1.0;
-        // pt parameters
-        parameters.pt.alpha_u = 0.0;
-        parameters.pt.betaLineSwitch_u = -0.5354462787763474;
-        parameters.pt.betaInVehicleTime_u_min = -0.00025896058106833367;
-        parameters.pt.betaWaitingTime_u_min = -0.004330518966022614;
-        parameters.pt.betaAccessEgressTime_u_min = -0.0754569202344438;
-        parameters.pt.inVehicleTimeExponent = 2.044183466473679;
-        parameters.pt.waitingTimeExponent = 1.0;
-        parameters.pt.accessEgressTimeExponent = 0.8953328836658916;
-        parameters.pt.lineSwitchExponent = 1.2220187110863545;
-        parameters.pt.betaAge = -0.009023071952701411;
-        parameters.pt.betaSex = 0.1797530699381978;
-        parameters.pt.betaRegion1_u = 0.04861026118010742;
-        parameters.pt.betaRegion2_u = 0.4708356583055888;
-        parameters.pt.betaOriginHome = 0.03235778087242491;
-        parameters.pt.betaDestinationWork = 0.0;
-        parameters.pt.betaUrbanDestination = 0.6488727071892483;
-        parameters.pt.distanceExponent = 0.9573301347309126;
-        parameters.pt.betaShortDistance = -0.27534520079668295;
-        parameters.pt.betaMediumDistance = 0.0;
-        // walk parameters
-        parameters.walk.alpha_u = 10.619723062177538;
-        parameters.walk.betaTravelTime_u_min = -3.4578500083931205;
-        parameters.walk.travelTimeExponent = 0.3267760931924328;
-        parameters.walk.betaAge = -0.003441247004592393;
-        parameters.walk.betaSex = 0.0;
-        parameters.walk.betaRegion1_u = 0.26104630030038883;
-        parameters.walk.betaRegion2_u = 0.16038241705689887;
-        parameters.walk.betaOriginHome = 0.0;
-        parameters.walk.betaShortDistance = 0.4567832887326879;
-        parameters.walk.betaMediumDistance = 0.0;
-        // car passenger parameters
-        parameters.cp.alpha_u = 0.7721638907379854;
-        parameters.cp.betaTravelTime_u_min = -0.43998973060765384;
-        parameters.cp.travelTimeExponent = 0.6908252223965073;
-        parameters.cp.betaDistance_km = 0.0;
-        parameters.cp.distanceExponent = 1.0;
-        parameters.cp.betaAge = 0.004250435133252666;
-        parameters.cp.betaSex = 0.42193608162286583;
-        parameters.cp.betaRegion1_u = 0.26926990294329933;
-        parameters.cp.betaRegion2_u = -0.2566945031742727;
-        parameters.cp.betaOriginHome = 0.0;
-        parameters.cp.betaDestinationWork = -0.5768940645800898;
-        parameters.cp.betaUrbanDestination = -0.15424833585060732;
-        parameters.cp.betaDrivingLicense = 0.7721638907379854;
-        parameters.cp.betaShortDistance = 4.837096752092824e-05;
-        parameters.cp.betaMediumDistance = 0.0;
-        // cost parameters
-        parameters.lambdaCostIncome = -0.050091259973945076;
-        parameters.referenceIncome = 3700;
-
-        parameters.lambdaCostEuclideanDistance = -0.2398221108268413;
-        parameters.referenceEuclideanDistance_km = 8.0;
-
-        parameters.betaCost_u_MU = -0.18752030808992587;
-
+    public static SwissCmdpModeParameters buildDefault() {
+        SwissCmdpModeParameters parameters = new SwissCmdpModeParameters();
+        // car
+        parameters.car.betaAge_u= 0.0054215004867201825;
+        parameters.car.alpha_u= 4.500752236591399;
+        parameters.car.betaUrbanDestination_u= 0.13005233050021825;
+        parameters.car.betaOriginHome_u= 0.046896053773648104;
+        parameters.car.betaRegion1_u= 0.3319119914462197;
+        parameters.car.betaRegion2_u= -0.23392630546719964;
+        parameters.car.betaSex_u= -0.22164457603391627;
+        parameters.car.betaShortDistance_u= 0.16077895094394368;
+        parameters.car.betaTravelTime_u_min= -0.48696884495358556;
+        parameters.car.betaDestinationWork_u= 0.6260452824028707;
+        parameters.car.travelTimeExponent= 0.6361151667296904;
+        // pt
+        parameters.pt.betaAccessEgressTime_u_min= -0.07554583326245376;
+        parameters.pt.betaAge_u= -0.00896408773500069;
+        parameters.pt.betaUrbanDestination_u= 0.6436952385896489;
+        parameters.pt.betaDistance_u_km= -0.5430317338734312;
+        parameters.pt.betaInVehicleTime_u_min= -0.00026132311997366104;
+        parameters.pt.betaOriginHome_u= 0.050526371893232995;
+        parameters.pt.betaRegion1_u= 0.05108189229132989;
+        parameters.pt.betaRegion2_u= 0.4724768305292634;
+        parameters.pt.betaSex_u= 0.17744678570510417;
+        parameters.pt.betaShortDistance_u= -0.2735375479656389;
+        parameters.pt.betaWaitingTime_u_min= -0.0045562570994452005;
+        parameters.pt.betaLineSwitch_u= -0.5342617906465101;
+        parameters.pt.betaDestinationWork_u= -0.01905183445413108;
+        parameters.pt.accessEgressTimeExponent= 0.8956446260664328;
+        parameters.pt.distanceExponent= 0.9522023923858368;
+        parameters.pt.inVehicleTimeExponent= 2.045017490899073;
+        parameters.pt.lineSwitchExponent= 1.2223446798096183;
+        parameters.pt.alpha_u= 0.0;
+        parameters.pt.waitingTimeExponent= 1.0;
+        // bike
+        parameters.bike.betaAge_u= 0.0024827298040012167;
+        parameters.bike.alpha_u= 4.284390563718338;
+        parameters.bike.betaUrbanDestination_u= -0.11961926967745469;
+        parameters.bike.betaOriginHome_u= 0.14717039229495857;
+        parameters.bike.betaRegion1_u= -0.9136805993994767;
+        parameters.bike.betaRegion2_u= -0.12541366212160704;
+        parameters.bike.betaSex_u= -0.2786301305645197;
+        parameters.bike.betaShortDistance_u= 0.33406098860914707;
+        parameters.bike.betaTravelTime_u_min= -0.8068346935507416;
+        parameters.bike.betaDestinationWork_u= 0.15964180772062575;
+        parameters.bike.travelTimeExponent= 0.5861675981847162;
+        // walk
+        parameters.walk.betaAge_u= -0.0034896542716708885;
+        parameters.walk.alpha_u= 10.670208465521767;
+        parameters.walk.betaUrbanDestination_u= 0.10020916130431032;
+        parameters.walk.betaOriginHome_u= 0.05668720415889544;
+        parameters.walk.betaRegion1_u= 0.26413964659784805;
+        parameters.walk.betaRegion2_u= 0.1471764772159446;
+        parameters.walk.betaSex_u= -0.009450069399480747;
+        parameters.walk.betaShortDistance_u= 0.45803917665913396;
+        parameters.walk.betaTravelTime_u_min= -3.5726223521479623;
+        parameters.walk.betaDestinationWork_u= -0.15213357941990846;
+        parameters.walk.travelTimeExponent= 0.3210572590426351;
+        // cp
+        parameters.cp.betaAge_u= 0.004549511716379108;
+        parameters.cp.alpha_u= 0.7610196486456368;
+        parameters.cp.betaUrbanDestination_u= -0.1380431406318976;
+        parameters.cp.betaDrivingLicense_u= 0.7610196486456368;
+        parameters.cp.betaOriginHome_u= -0.08251595574860865;
+        parameters.cp.betaRegion1_u= 0.26654706906460224;
+        parameters.cp.betaRegion2_u= -0.2603133401568398;
+        parameters.cp.betaSex_u= 0.426527642927639;
+        parameters.cp.betaShortDistance_u= -0.003428697856153015;
+        parameters.cp.betaTravelTime_u_min= -0.42848476357716925;
+        parameters.cp.betaDestinationWork_u= -0.5577190808026801;
+        parameters.cp.travelTimeExponent= 0.6962170178554364;
+        parameters.cp.betaDistance_km= 0.0;
+        parameters.cp.distanceExponent= 1.0;
+        // cost
+        parameters.betaCost_u_MU= -0.18767356558283543;
+        parameters.lambdaCostEuclideanDistance= -0.2430143714103748;
+        parameters.lambdaCostIncome= -0.05040248536634442;
+        parameters.referenceIncome= 3700;
+        parameters.referenceEuclideanDistance_km= 8.0;
+        
         return parameters;
+    }
+
+    @Override
+    public Map<String, Double> getASCs() {
+        Map<String, Double> alphas = new HashMap<>();
+        alphas.put("car", car.alpha_u);
+        alphas.put("pt", pt.alpha_u);
+        alphas.put("walk", walk.alpha_u);
+        alphas.put("bike", bike.alpha_u);
+        alphas.put("car_passenger", cp.alpha_u);
+        return alphas;
+    }
+
+    @Override
+    public void setASCs(Map<String, Double> alphas) {
+        car.alpha_u = alphas.getOrDefault("car", car.alpha_u);
+        pt.alpha_u = alphas.getOrDefault("pt", pt.alpha_u);
+        walk.alpha_u = alphas.getOrDefault("walk", walk.alpha_u);
+        bike.alpha_u = alphas.getOrDefault("bike", bike.alpha_u);
+        cp.alpha_u = alphas.getOrDefault("car_passenger", cp.alpha_u);
     }
 }

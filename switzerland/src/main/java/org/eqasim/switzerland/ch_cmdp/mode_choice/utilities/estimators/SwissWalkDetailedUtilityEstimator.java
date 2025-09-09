@@ -1,29 +1,25 @@
-package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.detailed_estimators;
+package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.calibration.writer.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.WalkVariables;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissModeDetailedParameters;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
-    private final SwissModeDetailedParameters parameters;
+    private final SwissCmdpModeParameters parameters;
     private final WalkPredictor walkPredictor;
     private final SwissPersonPredictor personPredictor;
 
     @Inject
-    public SwissWalkDetailedUtilityEstimator(SwissModeDetailedParameters parameters, WalkPredictor predictor,
+    public SwissWalkDetailedUtilityEstimator(SwissCmdpModeParameters parameters, WalkPredictor predictor,
                                              SwissPersonPredictor personPredictor) {
         super(parameters, predictor);
 
@@ -51,16 +47,27 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.walk.betaAge * Math.max(0.0, personVariables.age_a - 18);
+        return parameters.walk.betaAge_u * Math.max(0.0, personVariables.age_a - 18);
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
-        return personVariables.sex==1 ? parameters.walk.betaSex:0.0;
+        return personVariables.sex==1 ? parameters.walk.betaSex_u :0.0;
     }
 
     protected double estimateShortDistanceUtility(DiscreteModeChoiceTrip trip) {
-        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return (euclideanDistance_km>1.0)? 0.0 : parameters.walk.betaShortDistance;
+        return Utils.isShortDistanceTrip(trip)? parameters.walk.betaShortDistance_u :0.0;
+    }
+
+    protected double estimateHomeOriginUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.originIsHome(trip) ? parameters.walk.betaOriginHome_u : 0.0;
+    }
+
+    protected double estimateUrbanDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsUrban(trip) ? parameters.walk.betaUrbanDestination_u : 0.0;
+    }
+
+    protected double estimateWorkDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsWork(trip) ? parameters.walk.betaDestinationWork_u : 0.0;
     }
 
     @Override
@@ -72,30 +79,16 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
 
         utility += estimateConstantUtility();
         utility += estimateTravelTimeUtility(variables);
+
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
         utility += estimateRegionalUtility(personVariables);
         utility += estimateShortDistanceUtility(trip);
+        utility += estimateHomeOriginUtility(trip);
+        utility += estimateUrbanDestinationUtility(trip);
+        utility += estimateWorkDestinationUtility(trip);
 
-//        if(VariablesWriter.isInitiated()) {
-//            writeVariablesToCsv(person, trip, variables, utility);
-//        }
         return utility;
     }
 
-
-
-
-    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, WalkVariables variables, double utility) {
-        double departureTime = trip.getDepartureTime();
-        int tripIndex = trip.getIndex();
-        String personId = person.getId().toString();
-        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-
-        Map<String, String> walkAttributes = new HashMap<>();
-        walkAttributes.put("travelTime_min", String.valueOf(variables.travelTime_min));
-        walkAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
-
-        VariablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
-    }
 }

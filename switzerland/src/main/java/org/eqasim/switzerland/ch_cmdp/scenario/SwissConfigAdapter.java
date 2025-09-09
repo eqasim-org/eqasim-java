@@ -1,6 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp.scenario;
 
-import org.eqasim.switzerland.ch.SwitzerlandConfigurator;
+import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
