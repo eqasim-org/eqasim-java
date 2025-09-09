@@ -3,14 +3,6 @@ package org.eqasim.bavaria.mode_choice.parameters;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
 public class BavariaModeParameters extends ModeParameters {
-	public class MunichParameters {
-		public double car_u;
-		public double carPassenger_u;
-		public double bicycle_u;
-	}
-
-	public final MunichParameters munich = new MunichParameters();
-
 	public class BavariaCarPassengerParameters {
 		public double alpha_u;
 		public double betaInVehicleTravelTime_u_min;

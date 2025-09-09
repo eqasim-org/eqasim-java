@@ -14,7 +14,6 @@ public class BavariaPersonPredictor extends CachedVariablePredictor<BavariaPerso
 			List<? extends PlanElement> elements) {
 		boolean hasSubscription = BavariaPredictorUtils.hasSubscription(person);
 		boolean hasDrivingPermit = BavariaPredictorUtils.hasDrivingLicense(person);
-		boolean isParisResident = BavariaPredictorUtils.isParisResident(person);
-		return new BavariaPersonVariables(hasSubscription, hasDrivingPermit, isParisResident);
+		return new BavariaPersonVariables(hasSubscription, hasDrivingPermit);
 	}
 }
