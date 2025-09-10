@@ -44,6 +44,9 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 				if (person != null) {
 					copyAttribute(household, person, "spRegion");
 					copyAttribute(household, person, "bikeAvailability");
+					copyAttribute(household, person, "cantonId");
+					copyAttribute(household, person, "municipalityType");
+					copyAttribute(household, person, "incomePerCapita");
 				}
 			}
 		}
