@@ -58,11 +58,11 @@ public class HannoverPtUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateDrivingPermitUtility(HannoverPersonVariables variables) {
-		return variables.hasDrivingPermit ? parameters.bavariaPt.betaDrivingPermit_u : 0.0;
+		return variables.hasDrivingPermit ? parameters.hannoverPt.betaDrivingPermit_u : 0.0;
 	}
 
 	protected double estimateOnlyBus(HannoverPtVariables variables) {
-		return variables.isOnlyBus ? parameters.bavariaPt.onlyBus_u : 0.0;
+		return variables.isOnlyBus ? parameters.hannoverPt.onlyBus_u : 0.0;
 	}
 
 	@Override

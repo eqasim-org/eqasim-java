@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Set;
 
+import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;

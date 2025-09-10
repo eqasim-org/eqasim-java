@@ -41,7 +41,7 @@ public class HannoverCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateMonetaryCostUtility(variables);
 
 		if (isParis(trip)) {
-			utility += parameters.munich.car_u;
+			utility += parameters.hannover.car_u;
 		}
 
 		return utility;

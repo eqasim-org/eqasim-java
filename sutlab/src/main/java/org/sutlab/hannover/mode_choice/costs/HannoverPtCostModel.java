@@ -22,6 +22,8 @@ import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.google.inject.Inject;
+import java.util.List;
+
 
 public class HannoverPtCostModel implements CostModel {
 	private final TransitSchedule schedule;

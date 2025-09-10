@@ -57,7 +57,7 @@ public class HannoverCarPassengerUtilityEstimator implements UtilityEstimator {
 		utility += estimateDrivingPermit(personVariables);
 
 		if (isParis(trip)) {
-			utility += parameters.munich.carPassenger_u;
+			utility += parameters.hannover.carPassenger_u;
 		}
 
 		return utility;

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
 import org.sutlab.hannover.HannoverConfigurator;
 import org.sutlab.hannover.mode_choice.HannoverModeChoiceModule;
 import org.eqasim.core.components.config.ConfigAdapter;
@@ -83,8 +84,10 @@ public class RunAdaptConfig {
 		// Major crossing penalty from calibration
 		eqasimConfig.setCrossingPenalty(4.2);
 
-		// Epsilon
-		AdaptConfigForEpsilon.run(config);
+		// Setting this as done in Epsilon AdaptConfigForEpsilon.run(config) as it has been deprecated
+		dmcConfig.setSelector(SelectorModule.MAXIMUM);
+		eqasimConfig.setUsePseudoRandomErrors(true);
+
 
 		// Vehicles
 		QSimConfigGroup qsimConfig = config.qsim();
