@@ -17,6 +17,7 @@
 		<module>san_francisco</module>
 		<module>los_angeles</module>
 		<module>server</module>
+		<module>sutlab</module>
 	</modules>
 
 	<properties>
