@@ -1,0 +1,165 @@
+package org.sutlab.hannover.mode_choice.costs;
+
+import org.sutlab.hannover.mode_choice.utilities.predictors.HannoverPersonPredictor;
+import org.sutlab.hannover.mode_choice.utilities.variables.HannoverPersonVariables;
+
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.population.Leg;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.core.router.TripStructureUtils;
+import org.matsim.core.utils.timing.TimeInterpretation;
+import org.matsim.core.utils.timing.TimeTracker;
+import org.matsim.pt.routes.TransitPassengerRoute;
+import org.matsim.pt.transitSchedule.api.TransitLine;
+import org.matsim.pt.transitSchedule.api.TransitRoute;
+import org.matsim.pt.transitSchedule.api.TransitRouteStop;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+
+import com.google.inject.Inject;
+
+public class HannoverPtCostModel implements CostModel {
+	private final TransitSchedule schedule;
+	private final TimeInterpretation timeInterpretation;
+
+	private final PersonPredictor generalPersonPredictor;
+	private final HannoverPersonPredictor personPredictor;
+
+	@Inject
+	public HannoverPtCostModel(TransitSchedule schedule, TimeInterpretation timeInterpretation,
+			HannoverPersonPredictor personPredictor, PersonPredictor generalPersonPredictor) {
+		this.schedule = schedule;
+		this.timeInterpretation = timeInterpretation;
+		this.personPredictor = personPredictor;
+		this.generalPersonPredictor = generalPersonPredictor;
+	}
+
+	@Override
+	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+		PersonVariables generalPersonVariables = generalPersonPredictor.predictVariables(person, trip, elements);
+		HannoverPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
+
+		double ageFactor = generalPersonVariables.age_a <= 14 ? 0.5 : 1.0;
+
+		if (personVariables.hasSubscription) {
+			return 0.0;
+		}
+
+		Id<TransitStopFacility> firstFacilityId = null;
+		Id<TransitStopFacility> lastFacilityId = null;
+
+		TimeTracker timeTracker = new TimeTracker(timeInterpretation);
+		timeTracker.setTime(trip.getDepartureTime());
+
+		for (var element : elements) {
+			if (element instanceof Leg leg && leg.getRoute() instanceof TransitPassengerRoute route) {
+				if (firstFacilityId == null) {
+					firstFacilityId = route.getAccessStopId();
+				}
+
+				lastFacilityId = route.getEgressStopId();
+			}
+
+			timeTracker.addElement(element);
+		}
+
+		double travelTime = timeTracker.getTime().seconds() - trip.getDepartureTime();
+
+		if (travelTime <= 3600.0) {
+			// maybe short distance ticket
+
+			boolean isValid = true;
+			int stopCount = 0;
+
+			for (Leg leg : TripStructureUtils.getLegs(elements)) {
+				if (leg.getRoute() instanceof TransitPassengerRoute route) {
+					TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
+					TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
+
+					if (transitRoute.getTransportMode().equals("subway")
+							|| transitRoute.getTransportMode().equals("bus")) {
+						TransitStopFacility accessFacility = schedule.getFacilities().get(route.getAccessStopId());
+						TransitStopFacility egressFacility = schedule.getFacilities().get(route.getEgressStopId());
+
+						TransitRouteStop accessStop = transitRoute.getStop(accessFacility);
+						TransitRouteStop egressStop = transitRoute.getStop(egressFacility);
+
+						int accessStopIndex = transitRoute.getStops().indexOf(accessStop);
+						int egressStopIndex = transitRoute.getStops().indexOf(egressStop);
+
+						stopCount += egressStopIndex - accessStopIndex;
+
+						if (stopCount > 4) {
+							isValid = false;
+							break;
+						}
+					} else {
+						isValid = false;
+						break;
+					}
+				}
+			}
+
+			if (isValid) {
+				return ageFactor * shortPrice;
+			}
+		}
+
+		if (firstFacilityId == null) {
+			return 0.0; // this will turn out to not be a real PT leg
+		}
+
+		TransitStopFacility firstFacility = schedule.getFacilities().get(firstFacilityId);
+		TransitStopFacility lastFacility = schedule.getFacilities().get(lastFacilityId);
+
+		Integer firstMinimumZone = (Integer) firstFacility.getAttributes().getAttribute("minimumZone");
+		Integer firstMaximumZone = (Integer) firstFacility.getAttributes().getAttribute("maximumZone");
+
+		Integer lastMinimumZone = (Integer) lastFacility.getAttributes().getAttribute("minimumZone");
+		Integer lastMaximumZone = (Integer) lastFacility.getAttributes().getAttribute("maximumZone");
+
+		if (firstMinimumZone != null && lastMinimumZone != null) {
+			// we have a zonal trip
+			return ageFactor * getZonalPrice(firstMinimumZone, firstMaximumZone, lastMinimumZone, lastMaximumZone);
+		} else {
+			// something is outside of any zone
+			return ageFactor * basePrice_h * Math.max(1.0, Math.ceil(travelTime / 3600.0));
+		}
+	}
+
+	private final static double shortPrice = 1.9;
+	private final static double basePrice_h = 8.0;
+
+	private final static double[] prices = new double[] { //
+			3.9, 3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2 //
+	};
+
+	private final static double[] pricesM = new double[] { //
+			3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 23.9, 25.5 //
+	};
+
+	private double getZonalPrice(int firstMinimumZone, int firstMaximumZone, int lastMinimumZone, int lastMaximumZone) {
+		int difference = Integer.MAX_VALUE;
+		difference = Math.min(difference, Math.abs(firstMinimumZone - lastMinimumZone));
+		difference = Math.min(difference, Math.abs(firstMinimumZone - lastMaximumZone));
+		difference = Math.min(difference, Math.abs(firstMaximumZone - lastMinimumZone));
+		difference = Math.min(difference, Math.abs(firstMaximumZone - lastMaximumZone));
+
+		boolean includesM = false; // M = 0
+		includesM |= firstMinimumZone == 0;
+		includesM |= firstMaximumZone == 0;
+		includesM |= lastMinimumZone == 0;
+		includesM |= lastMaximumZone == 0;
+
+		if (includesM) {
+			return pricesM[difference];
+		} else {
+			return prices[difference];
+		}
+	}
+}
