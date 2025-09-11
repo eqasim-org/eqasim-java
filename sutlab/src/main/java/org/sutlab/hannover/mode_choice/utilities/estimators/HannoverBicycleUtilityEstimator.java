@@ -7,7 +7,6 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.sutlab.hannover.mode_choice.parameters.HannoverModeParameters;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -34,19 +33,7 @@ public class HannoverBicycleUtilityEstimator extends BikeUtilityEstimator {
 
 		utility += super.estimateUtility(person, trip, elements);
 
-		if (isParis(trip)) {
-			utility += parameters.hannover.bike_u;
-		}
-
 		return utility;
 	}
 
-	static private boolean isParis(DiscreteModeChoiceTrip trip) {
-		return isParis(trip.getOriginActivity()) || isParis(trip.getDestinationActivity());
-	}
-
-	static private boolean isParis(Activity activity) {
-		Boolean isParis = (Boolean) activity.getAttributes().getAttribute("isParis");
-		return isParis != null && isParis;
-	}
 }

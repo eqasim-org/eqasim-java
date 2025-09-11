@@ -14,7 +14,6 @@ public class HannoverPersonPredictor extends CachedVariablePredictor<HannoverPer
 			List<? extends PlanElement> elements) {
 		boolean hasSubscription = HannoverPredictorUtils.hasSubscription(person);
 		boolean hasDrivingPermit = HannoverPredictorUtils.hasDrivingLicense(person);
-		boolean isParisResident = HannoverPredictorUtils.isParisResident(person);
-		return new HannoverPersonVariables(hasSubscription, hasDrivingPermit, isParisResident);
+		return new HannoverPersonVariables(hasSubscription, hasDrivingPermit);
 	}
 }

@@ -3,13 +3,6 @@ package org.sutlab.hannover.mode_choice.parameters;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 
 public class HannoverModeParameters extends ModeParameters {
-	public class HannoverParameters {
-		public double car_u;
-		public double carPassenger_u;
-		public double bike_u;
-	}
-
-	public final HannoverParameters hannover = new HannoverParameters();
 
 	public class HannoverCarPassengerParameters {
 		public double alpha_u;
