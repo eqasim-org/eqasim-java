@@ -52,7 +52,8 @@ public class Utils {
     }
 
     public static boolean isShortDistanceTrip(DiscreteModeChoiceTrip trip){
-        return (PredictorUtils.calculateEuclideanDistance_km(trip)<SHORT_DISTANCE_TRIP_KM);
+        double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+        return isShortDistanceTrip(distance_km);
     }
 
     public static double interaction(double distance_km, double income_CHF, SwissCmdpModeParameters parameters){

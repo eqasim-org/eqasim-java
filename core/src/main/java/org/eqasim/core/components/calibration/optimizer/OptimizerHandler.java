@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
+import org.eqasim.core.components.calibration.Optimizer;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.matsim.core.controler.OutputDirectoryHierarchy;

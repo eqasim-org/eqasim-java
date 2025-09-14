@@ -1,7 +1,8 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.calibration.writer.VariablesWriter;
+import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
@@ -18,13 +19,15 @@ import java.util.Map;
 public class SwissWalkUtilityEstimator extends WalkUtilityEstimator {
     private final SwissModeParameters parameters;
     private final WalkPredictor predictor;
+    private final VariablesWriter variablesWriter;
 
     @Inject
-    public SwissWalkUtilityEstimator(SwissModeParameters parameters, WalkPredictor predictor) {
+    public SwissWalkUtilityEstimator(SwissModeParameters parameters, WalkPredictor predictor, VariablesWriter variablesWriter) {
         super(parameters, predictor);
 
         this.predictor = predictor;
         this.parameters = parameters;
+        this.variablesWriter = variablesWriter;
     }
 
     protected double estimateCantonUtility(Person person) {
@@ -43,7 +46,7 @@ public class SwissWalkUtilityEstimator extends WalkUtilityEstimator {
         utility += estimateCantonUtility(person);
 
         // I think we need to add age condition
-        if(VariablesWriter.isInitiated()) {
+        if(variablesWriter.isInitiated()) {
             WalkVariables variables = predictor.predictVariables(person, trip, elements);
             writeVariablesToCsv(person, trip, variables, utility);
         }
@@ -60,6 +63,6 @@ public class SwissWalkUtilityEstimator extends WalkUtilityEstimator {
         walkAttributes.put("travelTime_min", String.valueOf(variables.travelTime_min));
         walkAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
 
-        VariablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
+        variablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
     }
 }

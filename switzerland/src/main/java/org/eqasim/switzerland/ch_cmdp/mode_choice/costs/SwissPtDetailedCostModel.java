@@ -61,7 +61,11 @@ public class SwissPtDetailedCostModel extends AbstractCostModel {
                 parameters.ptCost_CHF_km * inVehicleDistance + parameters.ptCost_CHF_km2 * Math.pow(inVehicleDistance,2));
 
         if (variables.hasHalbtaxSubscription) {
-            return fullCost_CHF * 0.5;
+            return Math.min(fullCost_CHF * 0.5 , 50.0);
+        }
+
+        if (variables.age_a < 16) {
+            return Math.min(fullCost_CHF * 0.5 , 50.0);
         }
 
         return Math.min(fullCost_CHF, 50.0);

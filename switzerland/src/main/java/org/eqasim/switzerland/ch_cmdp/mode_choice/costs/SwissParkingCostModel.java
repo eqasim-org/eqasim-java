@@ -20,13 +20,34 @@ public class SwissParkingCostModel {
 
         double travelTime = variables.travelTime_min * 60.0;
         double tripArrivalTime = trip.getDepartureTime() + travelTime;
-        double parkingDuration = trip.getDestinationActivity().getEndTime().isDefined()
-                ? Math.max(trip.getDestinationActivity().getEndTime().seconds() - tripArrivalTime, 0.0)
-                : (trip.getDestinationActivity().getMaximumDuration().isDefined()
-                    ? trip.getDestinationActivity().getMaximumDuration().seconds()
-                    : 3600.0);
+        if (tripArrivalTime > 19.0 * 3600.0){
+            return 0.0; // No parking costs after 7pm
+        }
 
-        double parking_duration_h = parkingDuration / 3600.0;
+        double unpaidDuration = 0.0;
+        if (tripArrivalTime<8.0 * 3600.0){
+            unpaidDuration += (8.0 * 3600.0 - tripArrivalTime); // Assume arrival at 8am if arriving earlier
+        }
+
+        double parkingDuration;
+        if (trip.getDestinationActivity().getEndTime().isDefined()) {
+            parkingDuration = Math.max(trip.getDestinationActivity().getEndTime().seconds() - tripArrivalTime, 0.0);
+        } else if (trip.getDestinationActivity().getMaximumDuration().isDefined()) {
+            parkingDuration = trip.getDestinationActivity().getMaximumDuration().seconds();
+        } else {
+            parkingDuration = 3600.0; // Default to 1 hour if no time info is available
+        }
+
+        double departureTime = tripArrivalTime + parkingDuration;
+        if (departureTime < 8.0 * 3600.0){
+            return 0.0; // No parking costs if parked before 8am
+        }
+        if (departureTime > 19.0 * 3600.0){
+            unpaidDuration += (departureTime - 19.0 * 3600.0); // don't pay for parking after 7pm
+        }
+
+        parkingDuration = Math.max(parkingDuration - unpaidDuration, 0.0);
+        double parking_duration_h = Math.min(parkingDuration / 3600.0, 11.0) ; // Cap parking duration at 11 hours (from 8am to 7pm)
 
         if (destinationType.equals("urban") && parking_duration_h>1.0){
             return parameters.urbanParkingCost_CHF_h * parking_duration_h;

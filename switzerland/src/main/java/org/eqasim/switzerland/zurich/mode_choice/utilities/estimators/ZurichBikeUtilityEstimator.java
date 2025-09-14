@@ -2,6 +2,7 @@ package org.eqasim.switzerland.zurich.mode_choice.utilities.estimators;
 
 import java.util.List;
 
+import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissBikeUtilityEstimator;
 import org.eqasim.switzerland.zurich.mode_choice.parameters.ZurichModeParameters;
@@ -27,8 +28,8 @@ public class ZurichBikeUtilityEstimator extends SwissBikeUtilityEstimator {
 
 	@Inject
 	public ZurichBikeUtilityEstimator(ZurichModeParameters parameters, ZurichBikePredictor predictor,
-			ZurichPersonPredictor personPredictor, ZurichTripPredictor tripPredictor) {
-		super(parameters, personPredictor.delegate, predictor.delegate);
+			ZurichPersonPredictor personPredictor, ZurichTripPredictor tripPredictor, VariablesWriter variablesWriter) {
+		super(parameters, personPredictor.delegate, predictor.delegate, variablesWriter);
 
 		this.parameters = parameters;
 		this.predictor = predictor;

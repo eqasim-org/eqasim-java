@@ -21,6 +21,7 @@ import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissPtUtility
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissWalkUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissZeroUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.config.CommandLine;
@@ -102,22 +103,15 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	@Singleton
 	public AlphaCantonCalibrator provideAlphaCantonCalibrator(Scenario scenario,
 															  OutputDirectoryHierarchy outputHierarchy,
-															  SwissModeParameters modeParameters,
-															  TripListConverter tripListConverter,
-															  AlphaCalibratorConfig calConfig) {
-		double beta = calConfig.getBeta();
-		Map<String, Double> targetModeShares = Map.of(
-				"car", calConfig.getCarModeShare(),
-				"pt", calConfig.getPtModeShare(),
-				"walk", calConfig.getWalkModeShare(),
-				"bike", calConfig.getBikeModeShare(),
-				"car_passenger", calConfig.getCarPassengerModeShare()
-		);
+															  SwissCmdpModeParameters modeParameters,
+															  TripListConverter tripListConverter) {
+		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
+
 		String filePath = calConfig.getFilePath();
 		if (filePath.isEmpty()) {
 			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
 		}
 		return new AlphaCantonCalibrator(scenario,outputHierarchy,modeParameters,
-				tripListConverter,targetModeShares,beta, filePath, calConfig.isActivate());
+				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate());
 	}
 }

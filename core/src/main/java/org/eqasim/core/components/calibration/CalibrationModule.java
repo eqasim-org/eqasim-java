@@ -5,7 +5,8 @@ import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.calibration.optimizer.OptimizerHandler;
-import org.eqasim.core.components.calibration.optimizer.Optimizer;
+import org.eqasim.core.components.calibration.optimizer.StandardOptimizer;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.components.calibration.writer.VariablesWriterHandler;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -19,8 +20,11 @@ public class CalibrationModule extends AbstractEqasimExtension {
     @Override
     protected void installEqasimExtension() {
         CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.getOrCreate(getConfig());
-        if (calibrationConfig.isActivated()) {
+        if (calibrationConfig.getActivated()) {
             logger.info("Activate calibration module");
+            bind(VariablesWriter.class).to(StandardVariablesWriter.class).asEagerSingleton();
+            bind(Optimizer.class).to(StandardOptimizer.class).asEagerSingleton();
+
             addControlerListenerBinding().to(VariablesWriterHandler.class).asEagerSingleton();
             addControlerListenerBinding().to(OptimizerHandler.class).asEagerSingleton();
         } else {
@@ -30,25 +34,34 @@ public class CalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
+    public StandardVariablesWriter provideStandardVariablesWriter(){
+        return new StandardVariablesWriter();
+    }
+
+    @Provides
+    @Singleton
     public VariablesWriterHandler provideVariablesWriterHandler(DiscreteModeChoiceConfigGroup discreteModeChoiceConfigGroup, OutputDirectoryHierarchy outputDirectoryHierarchy,
-                                                                EqasimConfigGroup eqasimConfigGroup, CalibrationConfigGroup calibrationConfig){
-        if (calibrationConfig.isActivated()){
+                                                                EqasimConfigGroup eqasimConfigGroup, CalibrationConfigGroup calibrationConfig,
+                                                                VariablesWriter variablesWriter){
+        if (calibrationConfig.getActivated()){
+            // this is to write all the tours and their corresponding utilities to the output
+            // this is needed for the calibration to work properly
             discreteModeChoiceConfigGroup.getMultinomialLogitSelectorConfig().setWriteDetailedUtilities(true);
         }
-        return new VariablesWriterHandler(discreteModeChoiceConfigGroup, outputDirectoryHierarchy, eqasimConfigGroup, calibrationConfig);
+        return new VariablesWriterHandler(discreteModeChoiceConfigGroup, outputDirectoryHierarchy, eqasimConfigGroup, calibrationConfig, variablesWriter);
     }
 
     @Provides
     @Singleton
     public OptimizerHandler provideCalibrationHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
-                                                      EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, Optimizer optimizer) {
+                                                      EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, StandardOptimizer optimizer) {
         return new OptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
     }
 
     @Provides
     @Singleton
-    public Optimizer provideOptimizer(CalibrationConfigGroup calibrationConfig) {
-        return new Optimizer(calibrationConfig);
+    public StandardOptimizer provideOptimizer(CalibrationConfigGroup calibrationConfig) {
+        return new StandardOptimizer(calibrationConfig);
     }
 
 }

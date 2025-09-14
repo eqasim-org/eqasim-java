@@ -20,7 +20,6 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private static final Logger logger = LogManager.getLogger(AlphaCantonCalibrator.class);
 
     private final Map<String, Map<String, Double>> targetModeSharesByCanton;
-    private final Map<String, Double> targetGlobalModeShares;
 
     private final Map<String, Double> shares = new HashMap<>();
     private final Map<String, Map<String, Double>> sharesByCanton = new HashMap<>();
@@ -50,17 +49,18 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
 
     private final boolean isActivated;
+    private final List<String> modesToCalibrate;
 
     public AlphaCantonCalibrator(Scenario scenario,
                                  OutputDirectoryHierarchy outputHierarchy,
                                  SwissModeParameters modeParameters,
                                  TripListConverter tripListConverter,
-                                 Map<String, Double> targetModeShares,
+                                 List<String> modesToCalibrate,
                                  double beta,
                                  String filePath,
                                  boolean isActivated) {
 
-        this.targetGlobalModeShares = targetModeShares;
+        this.modesToCalibrate = modesToCalibrate;
         this.scenario = scenario;
         this.outputHierarchy = outputHierarchy;
         this.modeParameters = modeParameters;
@@ -68,16 +68,25 @@ public class AlphaCantonCalibrator implements FastCalibration {
         this.beta = beta;
         this.isActivated = isActivated;
         this.cantonsModeShareFile = filePath;
-        // assert if file exists
+        if (isActivated) {
+            // assert if file exists
+            assertIfFileExists();
+            // read the target mode shares by canton from the file
+            this.targetModeSharesByCanton = readCantonsModeShares();
+            this.cantons = targetModeSharesByCanton.keySet();
+            resetPlansCreationFlag();
+        } else {
+            this.targetModeSharesByCanton = new HashMap<>();
+            this.cantons = new HashSet<>();
+        }
+        logger.info("AlphaCantonCalibrator initialized.");
+    }
+
+    private void assertIfFileExists() {
         File file = new File(cantonsModeShareFile);
         if (!file.exists()) {
             throw new IllegalArgumentException("Cantons mode share file does not exist: " + cantonsModeShareFile);
         }
-        // read the target mode shares by canton from file
-        this.targetModeSharesByCanton = readCantonsModeShares();
-        this.cantons = targetModeSharesByCanton.keySet();
-        resetPlansCreationFlag();
-        logger.info("AlphaCantonCalibrator initialized.");
     }
 
     @Override
@@ -250,7 +259,10 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
                 newAlphas.put("pt", 0.0);
                 // update alphas for other modes (car, walk, bike)
-                for (String mode : new String[]{"car", "walk", "bike"}) {
+                for (String mode : modesToCalibrate) {
+                    if (mode.equals("pt")) {
+                        continue; // Skip the reference mode
+                    }
                     double mi = Math.max(cantonShares.get(mode), epsilon);
                     double zi = Math.max(targetCantonShares.get(mode), epsilon);
                     double alpha = alphas.get(mode);
@@ -292,14 +304,16 @@ public class AlphaCantonCalibrator implements FastCalibration {
         alphas.put("pt", modeParameters.swissCanton.pt.getOrDefault(canton, 0.0));
         alphas.put("walk", modeParameters.swissCanton.walk.getOrDefault(canton, 0.0));
         alphas.put("bike", modeParameters.swissCanton.bike.getOrDefault(canton, 0.0));
+        alphas.put("car_passenger", modeParameters.swissCanton.cp.getOrDefault(canton, 0.0));
         return alphas;
     }
 
     private void setAlphas(String canton, Map<String, Double> alphas) {
-        modeParameters.swissCanton.car.put(canton, alphas.get("car"));
-        modeParameters.swissCanton.pt.put(canton, alphas.get("pt"));
-        modeParameters.swissCanton.walk.put(canton, alphas.get("walk"));
-        modeParameters.swissCanton.bike.put(canton, alphas.get("bike"));
+        if(alphas.containsKey("car")) {modeParameters.swissCanton.car.put(canton, alphas.get("car"));}
+        if(alphas.containsKey("pt")) {modeParameters.swissCanton.pt.put(canton, alphas.get("pt"));}
+        if(alphas.containsKey("walk")) {modeParameters.swissCanton.walk.put(canton, alphas.get("walk"));}
+        if(alphas.containsKey("bike")) {modeParameters.swissCanton.bike.put(canton, alphas.get("bike"));}
+        if(alphas.containsKey("car_passenger")) {modeParameters.swissCanton.cp.put(canton, alphas.get("car_passenger"));}
     }
 
     private void saveAlphasToFile(int iteration) {

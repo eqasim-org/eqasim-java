@@ -2,6 +2,7 @@ package org.eqasim.core.components.calibration.writer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.calibration.VariablesWriter;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -11,26 +12,34 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class VariablesWriter {
-    private static final Logger logger = LogManager.getLogger(VariablesWriter.class);
+public class StandardVariablesWriter implements VariablesWriter {
+    protected final Logger logger = LogManager.getLogger(StandardVariablesWriter.class);
 
-    private static final Object LOCK = new Object();
-    private static BufferedWriter ptWriter = null;
-    private static BufferedWriter carWriter = null;
-    private static BufferedWriter bikeWriter = null;
-    private static BufferedWriter walkWriter = null;
-    private static BufferedWriter cpWriter = null;
-    private static final AtomicInteger selectionCounter = new AtomicInteger(0);
-    private static String csvFilePath = null;
-    private static boolean initiated = false;
+    protected final Object LOCK;
+    protected BufferedWriter ptWriter = null;
+    protected BufferedWriter carWriter = null;
+    protected BufferedWriter bikeWriter = null;
+    protected BufferedWriter walkWriter = null;
+    protected BufferedWriter cpWriter = null;
+    protected final AtomicInteger selectionCounter;
+    protected String csvFilePath = null;
+    protected boolean initiated = false;
 
-    public static void init(String filePath) {
+    public StandardVariablesWriter() {
+        LOCK = new Object();
+        selectionCounter = new AtomicInteger(0);
+    }
+
+    public void init(String filePath) {
         if (filePath == null) {
             return;
         }
 
         synchronized (LOCK) {
-            if (filePath.equals(csvFilePath)) {return;} // if it is the same file, do nothing.
+            if (filePath.equals(csvFilePath) && initiated) {return;} // if it is the same file, do nothing.
+            if (initiated) {
+                close(); // close the previous files if are initiated.
+            }
             try {
                 initWriters(filePath);
                 csvFilePath = filePath;
@@ -41,19 +50,23 @@ public class VariablesWriter {
         }
     }
 
-    public static void close() throws IOException {
-        ptWriter.close();
-        carWriter.close();
-        walkWriter.close();
-        bikeWriter.close();
-        cpWriter.close();
+    public void close() {
+        try {
+            if (ptWriter != null) ptWriter.close();
+            if (carWriter != null) carWriter.close();
+            if (walkWriter != null) walkWriter.close();
+            if (bikeWriter != null) bikeWriter.close();
+            if (cpWriter != null) cpWriter.close();
+        } catch (IOException e) {
+            logger.error("Failed to close writer: {}", e.getMessage());
+        }
         initiated = false;
         logger.info("Variables writer closed.");
     }
 
-    public static boolean isInitiated() {return initiated;}
+    public boolean isInitiated() {return initiated;}
 
-    private static void initWriters(String basePath) throws IOException {
+    protected void initWriters(String basePath) throws IOException {
         // Extract parent directory and base filename
         Path baseDir = Path.of(basePath).getParent();
         String baseName = Path.of(basePath).getFileName().toString();
@@ -74,16 +87,16 @@ public class VariablesWriter {
         cpWriter = newBufferedWriterForMode(baseDir, baseName, "car_passenger");
         writeHeader(cpWriter, "car_passenger");
 
-        logger.info("Variables writer initialized for base path: " + basePath);
+        logger.info("Variables writer initialized for base path: {}", basePath);
     }
 
-    private static BufferedWriter newBufferedWriterForMode(Path baseDir, String baseName, String mode) throws IOException {
+    protected BufferedWriter newBufferedWriterForMode(Path baseDir, String baseName, String mode) throws IOException {
         String newFilename = baseName.replace(".csv", "_" + mode + ".csv");
         Path fullPath = baseDir == null ? Path.of(newFilename) : baseDir.resolve(newFilename);
         return Files.newBufferedWriter(fullPath);
     }
 
-    private static void writeHeader(BufferedWriter writer, String mode) {
+    protected void writeHeader(BufferedWriter writer, String mode) {
         try {
             switch (mode) {
                 case "pt" -> writer.write("person_id;trip_index;departure_time;utility;accessEgressTime_min;inVehicleTime_min;waitingTime_min;numberOfLineSwitches;cost_MU;euclideanDistance_km\n");
@@ -99,7 +112,7 @@ public class VariablesWriter {
         }
     }
 
-    public static void writeVariables(String mode, String personId, int tripIndex, double departureTime,
+    public void writeVariables(String mode, String personId, int tripIndex, double departureTime,
                                       double utility, Map<String, String> attributes){
         if (!initiated) {return;}
 

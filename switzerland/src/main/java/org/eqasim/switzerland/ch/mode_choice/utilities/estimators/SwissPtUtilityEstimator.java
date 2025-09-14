@@ -1,7 +1,8 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.calibration.writer.VariablesWriter;
+import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
@@ -18,12 +19,14 @@ import java.util.Map;
 public class SwissPtUtilityEstimator extends PtUtilityEstimator {
     private final SwissModeParameters parameters;
     private final PtPredictor predictor;
+    private final VariablesWriter variablesWriter;
 
     @Inject
-    public SwissPtUtilityEstimator(SwissModeParameters parameters, PtPredictor predictor) {
+    public SwissPtUtilityEstimator(SwissModeParameters parameters, PtPredictor predictor, VariablesWriter variablesWriter) {
         super(parameters, predictor);
         this.predictor  = predictor;
         this.parameters = parameters;
+        this.variablesWriter = variablesWriter;
     }
 
     protected double estimateCantonUtility(Person person) {
@@ -41,7 +44,7 @@ public class SwissPtUtilityEstimator extends PtUtilityEstimator {
         utility += super.estimateUtility(person, trip, elements);
         utility += estimateCantonUtility(person);
 
-        if(VariablesWriter.isInitiated()) {
+        if(variablesWriter.isInitiated()) {
             PtVariables variables = predictor.predictVariables(person, trip, elements);
             writeVariablesToCsv(person, trip, variables, utility);
         }
@@ -61,7 +64,7 @@ public class SwissPtUtilityEstimator extends PtUtilityEstimator {
         ptAttributes.put("cost_MU", String.valueOf(variables.cost_MU));
         ptAttributes.put("euclideanDistance_km", String.valueOf(variables.euclideanDistance_km));
 
-        VariablesWriter.writeVariables("pt", personId, tripIndex, departureTime, utility, ptAttributes);
+        variablesWriter.writeVariables("pt", personId, tripIndex, departureTime, utility, ptAttributes);
     }
 
 }

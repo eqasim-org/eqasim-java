@@ -1,7 +1,8 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.calibration.writer.VariablesWriter;
+import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
@@ -20,15 +21,17 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 	private final SwissModeParameters parameters;
 	private final SwissPersonPredictor predictor;
 	private final CarPredictor carPredictor;
+	private final VariablesWriter variablesWriter;
 
 	@Inject
 	public SwissCarUtilityEstimator(SwissModeParameters parameters, CarPredictor carPredictor,
-			SwissPersonPredictor personPredictor) {
+			SwissPersonPredictor personPredictor, VariablesWriter variablesWriter) {
 		super(parameters, carPredictor);
 
 		this.predictor = personPredictor;
 		this.parameters = parameters;
 		this.carPredictor = carPredictor;
+		this.variablesWriter = variablesWriter;
 	}
 
 	protected double estimateRegionalUtility(SwissPersonVariables variables) {
@@ -59,7 +62,7 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 		utility += estimateRegionalUtility(personVariables);
 		utility += estimateCantonUtility(person);
 
-		if(VariablesWriter.isInitiated()) {
+		if(variablesWriter.isInitiated()) {
 			CarVariables carVariable = carPredictor.predictVariables(person, trip, elements);
 			writeVariablesToCsv(person, trip, carVariable, personVariables, utility);
 		}
@@ -80,6 +83,6 @@ public class SwissCarUtilityEstimator extends CarUtilityEstimator {
 		carAttributes.put("cost_MU", String.valueOf(carVariable.cost_MU));
 		carAttributes.put("statedPreferenceRegion", String.valueOf(personVariables.statedPreferenceRegion));
 
-		VariablesWriter.writeVariables("car", personId, tripIndex, departureTime, utility, carAttributes);
+		variablesWriter.writeVariables("car", personId, tripIndex, departureTime, utility, carAttributes);
 	}
 }

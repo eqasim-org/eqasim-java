@@ -1,8 +1,11 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
+import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
@@ -11,22 +14,26 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final SwissPersonPredictor personPredictor;
     private final BikePredictor bikePredictor;
+    private final VariablesWriter variablesWriter;
 
     @Inject
     public SwissBikeDetailedUtilityEstimator(SwissCmdpModeParameters parameters, SwissPersonPredictor personPredictor,
-                                             BikePredictor bikePredictor) {
+                                             BikePredictor bikePredictor, VariablesWriter variablesWriter) {
         super(parameters, personPredictor.delegate, bikePredictor);
 
         this.parameters = parameters;
         this.personPredictor = personPredictor;
         this.bikePredictor = bikePredictor;
+        this.variablesWriter = variablesWriter;
     }
 
     protected double estimateConstantUtility() {
@@ -71,6 +78,11 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return Utils.destinationIsWork(trip) ? parameters.bike.betaDestinationWork_u : 0.0;
     }
 
+    protected double estimatedLongDistanceUtility(DiscreteModeChoiceTrip trip) {
+        double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+        return distance_km>20.0 ? -1e3 : 0.0;
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
@@ -87,8 +99,36 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         utility += estimateShortDistanceUtility(trip);
         utility += estimateUrbanDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
+        utility += estimatedLongDistanceUtility(trip);
+
+        if(variablesWriter.isInitiated()) {
+            writeVariablesToCsv(person, trip, bikeVariables, personVariables, utility);
+        }
 
         return utility;
+    }
+
+    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, BikeVariables bikevariable,
+                                     SwissPersonVariables personVariables, double utility) {
+        double departureTime = trip.getDepartureTime();
+        int tripIndex = trip.getIndex();
+        String personId = person.getId().toString();
+        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+
+        Map<String, String> bikeAttributes = new HashMap<>();
+
+        bikeAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
+        bikeAttributes.put("age", String.valueOf(personVariables.age_a));
+        bikeAttributes.put("sex", String.valueOf(personVariables.sex));
+        bikeAttributes.put("region", String.valueOf(personVariables.cantonCluster));
+        bikeAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
+        bikeAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
+        bikeAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
+        bikeAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
+
+        bikeAttributes.put("travelTime_min", String.valueOf(bikevariable.travelTime_min));
+
+        variablesWriter.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);
     }
 
 }

@@ -1,7 +1,9 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
+import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
@@ -11,20 +13,26 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final PtPredictor ptPredictor;
     private final SwissPersonPredictor personPredictor;
+    private final VariablesWriter variablesWriter;
 
     @Inject
-    public SwissPtDetailedUtilityEstimator(SwissCmdpModeParameters parameters, PtPredictor predictor, SwissPersonPredictor personPredictor) {
+    public SwissPtDetailedUtilityEstimator(SwissCmdpModeParameters parameters, PtPredictor predictor,
+                                           SwissPersonPredictor personPredictor,
+                                           VariablesWriter variablesWriter) {
         super(parameters, predictor);
         this.ptPredictor  = predictor;
         this.parameters = parameters;
         this.personPredictor = personPredictor;
+        this.variablesWriter = variablesWriter;
     }
 
 
@@ -111,7 +119,40 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         utility += estimateHomeOriginUtility(trip);
         utility += estimateShortDistanceUtility(variables);
 
+        if(variablesWriter.isInitiated()) {
+            writeVariablesToCsv(person, trip, variables, personVariables, utility);
+        }
+
         return utility;
+    }
+
+    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, PtVariables ptVariables,
+                                     SwissPersonVariables personVariables, double utility) {
+        double departureTime = trip.getDepartureTime();
+        int tripIndex = trip.getIndex();
+        String personId = person.getId().toString();
+        double euclideanDistance_km = ptVariables.euclideanDistance_km;
+
+        Map<String, String> ptAttributes = new HashMap<>();
+
+        ptAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
+        ptAttributes.put("age", String.valueOf(personVariables.age_a));
+        ptAttributes.put("sex", String.valueOf(personVariables.sex));
+        ptAttributes.put("region", String.valueOf(personVariables.cantonCluster));
+        ptAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
+        ptAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
+        ptAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
+        ptAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
+
+        ptAttributes.put("income", String.valueOf(personVariables.income));
+
+        ptAttributes.put("inVehicleTime_min", String.valueOf(ptVariables.inVehicleTime_min));
+        ptAttributes.put("accessEgressTime_min", String.valueOf(ptVariables.accessEgressTime_min));
+        ptAttributes.put("waitingTime_min", String.valueOf(ptVariables.waitingTime_min));
+        ptAttributes.put("numberOfLineSwitches", String.valueOf(ptVariables.numberOfLineSwitches));
+        ptAttributes.put("cost_MU", String.valueOf(ptVariables.cost_MU));
+
+        variablesWriter.writeVariables("pt", personId, tripIndex, departureTime, utility, ptAttributes);
     }
 
 }

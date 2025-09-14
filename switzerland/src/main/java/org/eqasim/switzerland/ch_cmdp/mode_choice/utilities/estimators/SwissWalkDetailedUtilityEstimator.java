@@ -1,7 +1,9 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
+import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.WalkVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
@@ -11,21 +13,25 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final WalkPredictor walkPredictor;
     private final SwissPersonPredictor personPredictor;
+    private final VariablesWriter variablesWriter;
 
     @Inject
     public SwissWalkDetailedUtilityEstimator(SwissCmdpModeParameters parameters, WalkPredictor predictor,
-                                             SwissPersonPredictor personPredictor) {
+                                             SwissPersonPredictor personPredictor, VariablesWriter variablesWriter) {
         super(parameters, predictor);
 
         this.walkPredictor = predictor;
         this.parameters = parameters;
         this.personPredictor = personPredictor;
+        this.variablesWriter = variablesWriter;
     }
 
     protected double estimateConstantUtility() {
@@ -70,6 +76,11 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         return Utils.destinationIsWork(trip) ? parameters.walk.betaDestinationWork_u : 0.0;
     }
 
+    protected double estimatedLongDistanceUtility(DiscreteModeChoiceTrip trip) {
+        double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+        return distance_km>5.0 ? -1e3 : 0.0;
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         WalkVariables variables = walkPredictor.predictVariables(person, trip, elements);
@@ -87,8 +98,36 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         utility += estimateHomeOriginUtility(trip);
         utility += estimateUrbanDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
+        utility += estimatedLongDistanceUtility(trip);
+
+        if(variablesWriter.isInitiated()) {
+            writeVariablesToCsv(person, trip, variables, personVariables, utility);
+        }
 
         return utility;
+    }
+
+    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, WalkVariables walkVariables,
+                                     SwissPersonVariables personVariables, double utility) {
+        double departureTime = trip.getDepartureTime();
+        int tripIndex = trip.getIndex();
+        String personId = person.getId().toString();
+        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+
+        Map<String, String> walkAttributes = new HashMap<>();
+
+        walkAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
+        walkAttributes.put("age", String.valueOf(personVariables.age_a));
+        walkAttributes.put("sex", String.valueOf(personVariables.sex));
+        walkAttributes.put("region", String.valueOf(personVariables.cantonCluster));
+        walkAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
+        walkAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
+        walkAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
+        walkAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
+
+        walkAttributes.put("travelTime_min", String.valueOf(walkVariables.travelTime_min));
+
+        variablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
     }
 
 }

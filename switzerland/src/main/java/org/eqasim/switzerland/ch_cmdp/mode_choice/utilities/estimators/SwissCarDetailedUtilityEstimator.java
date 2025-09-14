@@ -1,8 +1,10 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
+import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
@@ -12,23 +14,29 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final SwissPersonPredictor personPredictor;
     private final CarPredictor carPredictor;
     private final SwissParkingCostModel parkingCostModel;
+    private final VariablesWriter variablesWriter;
 
     @Inject
     public SwissCarDetailedUtilityEstimator(SwissCmdpModeParameters parameters, CarPredictor carPredictor,
-                                            SwissPersonPredictor personPredictor, SwissParkingCostModel parkingCostModel) {
+                                            SwissPersonPredictor personPredictor,
+                                            SwissParkingCostModel parkingCostModel,
+                                            VariablesWriter variablesWriter) {
         super(parameters, carPredictor);
 
         this.personPredictor = personPredictor;
         this.parameters = parameters;
         this.carPredictor = carPredictor;
         this.parkingCostModel = parkingCostModel;
+        this.variablesWriter = variablesWriter;
     }
 
     protected double estimateConstantUtility() {
@@ -108,7 +116,36 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         utility += estimateHomeOriginUtility(trip);
         utility += estimateShortDistanceUtility(variables);
 
+        if(variablesWriter.isInitiated()) {
+            writeVariablesToCsv(person, trip, variables, personVariables, utility);
+        }
+
         return utility;
+    }
+
+    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, CarVariables carVariables,
+                                     SwissPersonVariables personVariables, double utility) {
+        double departureTime = trip.getDepartureTime();
+        int tripIndex = trip.getIndex();
+        String personId = person.getId().toString();
+        double euclideanDistance_km = carVariables.euclideanDistance_km;
+
+        Map<String, String> carAttributes = new HashMap<>();
+
+        carAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
+        carAttributes.put("age", String.valueOf(personVariables.age_a));
+        carAttributes.put("sex", String.valueOf(personVariables.sex));
+        carAttributes.put("region", String.valueOf(personVariables.cantonCluster));
+        carAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
+        carAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
+        carAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
+        carAttributes.put("subUrbanDestination", Utils.destinationIsSuburban(trip) ? "1" : "0");
+        carAttributes.put("shortDistance", Utils.isShortDistanceTrip(carVariables.euclideanDistance_km) ? "1" : "0");
+        carAttributes.put("income", String.valueOf(personVariables.income));
+
+        carAttributes.put("travelTime_min", String.valueOf(carVariables.travelTime_min));
+        carAttributes.put("cost_MU", String.valueOf(carVariables.cost_MU + parkingCostModel.getParkingPrice_CFH(trip, carVariables)));
+        variablesWriter.writeVariables("car", personId, tripIndex, departureTime, utility, carAttributes);
     }
 
 }

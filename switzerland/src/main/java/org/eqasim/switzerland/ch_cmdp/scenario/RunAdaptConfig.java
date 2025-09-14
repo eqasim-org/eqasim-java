@@ -8,14 +8,12 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoic
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
-import org.matsim.core.config.groups.ReplanningConfigGroup;
 import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
-import org.matsim.core.config.groups.ScoringConfigGroup;
-import org.matsim.core.config.groups.VehiclesConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultSelector;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
+import org.matsim.pt.config.TransitRouterConfigGroup;
 
 import java.util.Arrays;
 
@@ -93,6 +91,21 @@ public class RunAdaptConfig {
 		qsimConfig.setVehiclesSource(VehiclesSource.fromVehiclesData);
 		VehiclesConfigGroup vehiclesConfig = config.vehicles();
 		vehiclesConfig.setVehiclesFile(SwissConfigAdapter.prefix + "vehicles.xml.gz");
+
+		// adjust routing parameters
+		RoutingConfigGroup routingConfig = config.routing();
+
+		RoutingConfigGroup.TeleportedModeParams bikeParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.bike);
+		bikeParams.setBeelineDistanceFactor(1.4);
+		bikeParams.setTeleportedModeSpeed(4.0);
+
+		RoutingConfigGroup.TeleportedModeParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
+		walkParams.setBeelineDistanceFactor(1.3);
+		walkParams.setTeleportedModeSpeed(1.3);
+
+		// transit router
+		TransitRouterConfigGroup transitRouterParams = config.transitRouter();
+		transitRouterParams.setDirectWalkFactor(3.0);
 
 	}
 

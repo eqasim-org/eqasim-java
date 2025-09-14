@@ -1,7 +1,8 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
-import org.eqasim.core.components.calibration.writer.VariablesWriter;
+import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
@@ -21,15 +22,17 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 	private final SwissModeParameters parameters;
 	private final SwissPersonPredictor personPredictor;
 	private final BikePredictor bikePredictor;
+	private final VariablesWriter variablesWriter;
 
 	@Inject
 	public SwissBikeUtilityEstimator(SwissModeParameters parameters, SwissPersonPredictor personPredictor,
-			BikePredictor bikePredictor) {
+									 BikePredictor bikePredictor, VariablesWriter variablesWriter) {
 		super(parameters, personPredictor.delegate, bikePredictor);
 
 		this.parameters = parameters;
 		this.personPredictor = personPredictor;
 		this.bikePredictor = bikePredictor;
+		this.variablesWriter = variablesWriter;
 	}
 
 	protected double estimateRegionalUtility(SwissPersonVariables variables) {
@@ -54,7 +57,7 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 		utility += estimateRegionalUtility(personVariables);
 		utility += estimateCantonUtility(person);
 
-		if(VariablesWriter.isInitiated()) {
+		if(variablesWriter.isInitiated()) {
 			BikeVariables bikeVariables = bikePredictor.predictVariables(person, trip, elements);
 			writeVariablesToCsv(person, trip, bikeVariables, personVariables, utility);
 		}
@@ -74,6 +77,6 @@ public class SwissBikeUtilityEstimator extends BikeUtilityEstimator {
 		bikeAttributes.put("age_a", String.valueOf(personVariables.age_a));
 		bikeAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
 
-		VariablesWriter.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);
+		variablesWriter.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);
 	}
 }

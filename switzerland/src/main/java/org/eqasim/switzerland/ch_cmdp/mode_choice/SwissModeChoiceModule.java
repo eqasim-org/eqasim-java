@@ -2,6 +2,11 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import org.eqasim.core.components.calibration.CalibrationConfigGroup;
+import org.eqasim.core.components.calibration.Optimizer;
+import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.core.components.calibration.optimizer.StandardOptimizer;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
@@ -9,6 +14,9 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
+import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizer;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpVariablesWriter;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissPtDetailedCostModel;
@@ -26,6 +34,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public class SwissModeChoiceModule extends AbstractEqasimExtension {
@@ -47,6 +56,9 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	@Override
 	protected void installEqasimExtension() {
+
+		bind(VariablesWriter.class).to(CmdpVariablesWriter.class).asEagerSingleton();
+		bind(Optimizer.class).to(CmdpOptimizer.class).asEagerSingleton();
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissDetailedModeAvailability.class);
@@ -110,19 +122,19 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 															  SwissCmdpModeParameters modeParameters,
 															  TripListConverter tripListConverter) {
 		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
-		double beta = calConfig.getBeta();
-		Map<String, Double> targetModeShares = Map.of(
-				"car", calConfig.getCarModeShare(),
-				"pt", calConfig.getPtModeShare(),
-				"walk", calConfig.getWalkModeShare(),
-				"bike", calConfig.getBikeModeShare(),
-				"car_passenger", calConfig.getCarPassengerModeShare()
-		);
+
 		String filePath = calConfig.getFilePath();
 		if (filePath.isEmpty()) {
 			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
 		}
 		return new AlphaCantonCalibrator(scenario,outputHierarchy,modeParameters,
-				tripListConverter,targetModeShares,beta, filePath, calConfig.isActivate());
+				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate());
+	}
+
+	@Provides
+	@Singleton
+	public CmdpOptimizer provideCmdpOptimizer() {
+		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.getOrCreate(getConfig());
+		return new CmdpOptimizer(calibrationConfig);
 	}
 }

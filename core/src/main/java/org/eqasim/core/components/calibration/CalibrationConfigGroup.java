@@ -9,7 +9,8 @@ import java.util.Map;
 public class CalibrationConfigGroup extends ReflectiveConfigGroup {
     static public final String GROUP_NAME = "eqasim:calibration";
 
-    private boolean runCalibration = true;
+    private boolean activate = false;
+    private boolean runCalibration = false;
     private int startIteration = 2;
 
     private String repoUrl = "https://github.com/Dib-AEK/EqasimParametersCalibration.git";
@@ -39,6 +40,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     private String pythonPath = "python3";
 
+    public static final String ACTIVATE = "activate";
     public static final String RUN_CALIBRATION = "runCalibration";
     public static final String START_ITERATION = "startIteration";
     public static final String OPTIMIZER = "optimizer";
@@ -66,8 +68,9 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
     @Override
     public Map<String, String> getComments() {
         Map<String, String> comments = new HashMap<>();
+        comments.put(ACTIVATE, "Activate calibration modules (save utilities).");
         comments.put(RUN_CALIBRATION,
-                "If True, the parameters of the discrete mode will be calibrated.");
+                "If True, the parameters of the discrete mode will be calibrated by running the optimizer at each MATSim iteration.");
         comments.put(START_ITERATION,
                 "The iteration from which the simulation starts (better if it starts after mode shares start converging).");
         comments.put(OPTIMIZER,
@@ -108,6 +111,9 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     @StringSetter(RUN_CALIBRATION)
     public void setRunCalibration(boolean runCalibration) {
+        if (runCalibration) {
+            this.activate = true; // Activate if calibration is to be run.
+        }
         this.runCalibration = runCalibration;
     }
 
@@ -116,8 +122,13 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
         return runCalibration;
     }
 
-    public boolean isActivated() {
-        return runCalibration;
+    @StringGetter(ACTIVATE)
+    public boolean getActivated() {
+        return activate;
+    }
+    @StringSetter(ACTIVATE)
+    public void setActivated(boolean activate) {
+        this.activate = activate;
     }
 
     @StringSetter(DISTANCE_BINS)

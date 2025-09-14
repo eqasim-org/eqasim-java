@@ -3,6 +3,7 @@ package org.eqasim.core.components.calibration.optimizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
+import org.eqasim.core.components.calibration.Optimizer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,18 +16,20 @@ import java.util.List;
 
 import java.util.*;
 
-public class Optimizer {
-    private final Logger logger = LogManager.getLogger(Optimizer.class.getName());
+public class StandardOptimizer implements Optimizer {
+    protected final Logger logger = LogManager.getLogger(StandardOptimizer.class.getName());
 
-    private final CalibrationConfigGroup calibrationConfig;
-    private final int startIteration;
-    private final String repoUrl;
-    private final String repoBranch;
-    private final String repoCommit;
-    private final String optimizerPath;
-    private final String runScript;
-    private final String pythonPath;
-    public Optimizer(CalibrationConfigGroup calibrationConfig){
+    protected final CalibrationConfigGroup calibrationConfig;
+    protected final int startIteration;
+    protected final String repoUrl;
+    protected final String repoBranch;
+    protected final String repoCommit;
+    protected final String optimizerPath;
+    protected final String runScript;
+    protected final String pythonPath;
+
+
+    public StandardOptimizer(CalibrationConfigGroup calibrationConfig){
         this.calibrationConfig = calibrationConfig;
         this.startIteration = calibrationConfig.getStartIteration();
         this.repoUrl = calibrationConfig.getRepoUrl();
@@ -36,12 +39,12 @@ public class Optimizer {
         this.runScript = optimizerPath + "/run.py";
         this.pythonPath = calibrationConfig.getPythonPath();
 
-        if (calibrationConfig.isActivated()){
+        if (calibrationConfig.getRunCalibration()){
             getOptimizerIfMissing();
         }
     }
 
-    private void getOptimizerIfMissing() {
+    protected void getOptimizerIfMissing() {
         Path path = Paths.get(runScript);
         if (Files.notExists(path)) {
             logger.info("Optimizer path not found. Attempting to clone repository...");
@@ -53,7 +56,7 @@ public class Optimizer {
         checkoutRepoBranch();
     }
 
-    private void cloneRepository() {
+    protected void cloneRepository() {
         try {
             ProcessBuilder builder = new ProcessBuilder("git", "clone", repoUrl, optimizerPath);
             builder.redirectErrorStream(true);
@@ -77,7 +80,7 @@ public class Optimizer {
         }
     }
 
-    private void checkoutRepoBranch() {
+    protected void checkoutRepoBranch() {
         try {
             // Always fetch latest before checkout to ensure commit exists
             ProcessBuilder fetchBuilder = new ProcessBuilder("git", "-C", optimizerPath, "fetch", "--all");
@@ -135,7 +138,7 @@ public class Optimizer {
     /**
      * Executes the external Python script with dynamically built arguments.
      */
-    private void runPythonScript(int iteration, String newParametersFilePath, String lastParametersFilePath, String variablesIterationPath) {
+    protected void runPythonScript(int iteration, String newParametersFilePath, String lastParametersFilePath, String variablesIterationPath) {
         try {
             List<String> command = new ArrayList<>();
             command.add(pythonPath);
