@@ -27,6 +27,13 @@ public class BikeUtilityEstimator implements UtilityEstimator {
 		this.personPredictor = personPredictor;
 	}
 
+	public PersonPredictor getPersonPredictor() {
+		return personPredictor;
+	}
+	public BikePredictor getBikePredictor() {
+		return bikePredictor;
+	}
+
 	protected double estimateConstantUtility() {
 		return parameters.bike.alpha_u;
 	}

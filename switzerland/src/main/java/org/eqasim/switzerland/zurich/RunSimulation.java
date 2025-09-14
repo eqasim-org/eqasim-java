@@ -31,11 +31,13 @@ public class RunSimulation {
 				.requireOptions("config-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic") //
 				.build();
-		ZurichConfigurator zurichConfigurator = new ZurichConfigurator(cmd);
 
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), zurichConfigurator.getConfigGroups());
+		ZurichConfigurator zurichConfigurator = new ZurichConfigurator(cmd);
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		zurichConfigurator.updateConfig(config);
 		zurichConfigurator.configure(config);
 		cmd.applyConfiguration(config);
+
 		if (cmd.hasOption("preventwaitingtoentertraffic")) {
 			if (cmd.getOption("preventwaitingtoentertraffic").get().equals("y")) {
 				((QSimConfigGroup) config.getModules().get(QSimConfigGroup.GROUP_NAME))

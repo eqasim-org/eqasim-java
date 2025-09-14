@@ -1,8 +1,10 @@
 package org.eqasim.core.components.traffic;
 
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdSet;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.vehicles.Vehicle;
 
 public class DefaultCrossingPenalty implements CrossingPenalty {
     private final IdSet<Link> active;
@@ -14,7 +16,7 @@ public class DefaultCrossingPenalty implements CrossingPenalty {
     }
 
     @Override
-    public double calculateCrossingPenalty(Link link) {
+    public double calculateCrossingPenalty(Link link, double time, Id<Vehicle> vehicleId) {
         return active.contains(link.getId()) ? crossingPenalty : 0.0;
     }
 

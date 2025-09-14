@@ -3,11 +3,9 @@ package org.matsim.contribs.discrete_mode_choice.modules.config;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.matsim.core.config.groups.QSimConfigGroup.VehicleBehavior;
-
 /**
  * Config group for the MultinomialLogitSelector
- * 
+ *
  * @author sebhoerl
  *
  */
@@ -15,13 +13,12 @@ public class MultinomialLogitSelectorConfigGroup extends ComponentConfigGroup {
 	private double minimumUtility = -700.0;
 	private double maximumUtility = 700.0;
 	private boolean considerMinimumUtility = false;
-	public enum RandomNumbers {random, fixed}
-	private RandomNumbers randomNumbers = RandomNumbers.random;
+	private boolean writeDetailedUtilities = false;
 
 	public static final String MINIMUM_UTILITY = "minimumUtility";
 	public static final String MAXIMUM_UTILITY = "maximumUtility";
 	public static final String CONSIDER_MINIMUM_UTILITY = "considerMinimumUtility";
-	public static final String RANDOM_NUMBERS = "randomNumbers";
+	public static final String WRITE_DETAILED_UTILITIES = "writeDetailedUtilities";
 
 	public MultinomialLogitSelectorConfigGroup(String componentType, String componentName) {
 		super(componentType, componentName);
@@ -36,9 +33,8 @@ public class MultinomialLogitSelectorConfigGroup extends ComponentConfigGroup {
 		comments.put(MAXIMUM_UTILITY, "Candidates with a utility above that threshold will be cut off to this value.");
 		comments.put(CONSIDER_MINIMUM_UTILITY,
 				"Defines whether candidates with a utility lower than the minimum utility should be filtered out.");
-		comments.put(RANDOM_NUMBERS,
-				"Should random numbers used for selection be generated randomly or should they be fixed per person and tour. Default [random], otehr options [fixed]");
-
+		comments.put(WRITE_DETAILED_UTILITIES,
+			"If True, the selector writes the utilities of the tour candidates to a csv file called detailed_utilities.csv." );
 		return comments;
 	}
 
@@ -71,14 +67,12 @@ public class MultinomialLogitSelectorConfigGroup extends ComponentConfigGroup {
 	public boolean getConsiderMinimumUtility() {
 		return considerMinimumUtility;
 	}
-	
-	@StringSetter(RANDOM_NUMBERS)
-	public void setRandomNumbers(RandomNumbers randomNumbers) {
-		this.randomNumbers = randomNumbers;
-	}
 
-	@StringGetter(RANDOM_NUMBERS)
-	public RandomNumbers getRandomNumbers() {
-		return this.randomNumbers;
+	@StringSetter(WRITE_DETAILED_UTILITIES)
+	public void setWriteDetailedUtilities(boolean writeDetailedUtilities) {this.writeDetailedUtilities = writeDetailedUtilities;}
+
+	@StringGetter(WRITE_DETAILED_UTILITIES)
+	public boolean getWriteDetailedUtilities() {
+		return writeDetailedUtilities;
 	}
 }

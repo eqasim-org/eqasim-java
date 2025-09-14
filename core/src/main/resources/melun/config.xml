@@ -672,9 +672,9 @@
 		<param name="linkDynamics" value="FIFO" />
 		<!-- The (initial) width of the links of the network. Use positive floating point values. This is used only for visualisation. -->
 		<param name="linkWidth" value="30.0" />
-		<!-- [comma-separated list] Defines which modes are congested modes. Technically, these are the modes that the departure handler of the netsimengine handles.  Effective cell size, effective lane width, flow capacity factor, and storage capacity factor need to be set with diligence.  Need to be vehicular modes to make sense. -->
+		<!-- [comma-separated list] Defines which modes are congested modes. Technically, these are the modes that the departure handler of the netsimengine handles.  Effective cell size, effective lane width, flowDataSet capacity factor, and storage capacity factor need to be set with diligence.  Need to be vehicular modes to make sense. -->
 		<param name="mainMode" value="car" />
-		<!-- Shortens a link in the visualization, i.e. its start and end point are moved into towards the center. Does not affect traffic flow.  -->
+		<!-- Shortens a link in the visualization, i.e. its start and end point are moved into towards the center. Does not affect traffic flowDataSet.  -->
 		<param name="nodeOffset" value="0.0" />
 		<!-- Number of threads used for the QSim.  Note that this setting is independent from the "global" threads setting.  In contrast to earlier versions, the non-parallel special version is no longer there. -->
 		<param name="numberOfThreads" value="12" />
@@ -700,7 +700,7 @@
 		<param name="useLanes" value="false" />
 		<!-- If a route does not reference a vehicle, agents will use the vehicle with the same id as their own. -->
 		<param name="usePersonIdForMissingVehicleId" value="true" />
-		<!-- If false, the qsim accumulates fractional flows up to one flow unit in every time step.  If true, flows are updated only if an agent wants to enter the link or an agent is added to buffer. Default is true. -->
+		<!-- If false, the qsim accumulates fractional flows up to one flowDataSet unit in every time step.  If true, flows are updated only if an agent wants to enter the link or an agent is added to buffer. Default is true. -->
 		<param name="usingFastCapacityUpdate" value="true" />
 		<!-- Defines what happens if an agent wants to depart, but the specified vehicle is not available. One of: teleport wait exception  -->
 		<param name="vehicleBehavior" value="teleport" />

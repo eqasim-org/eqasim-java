@@ -4,15 +4,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.MaximumSelector;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.MultinomialLogitSelector;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.RandomSelector;
-import org.matsim.contribs.discrete_mode_choice.model.utilities.RandomValueGenerator;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.UtilitySelectorFactory;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.MultinomialLogitSelectorConfigGroup;
-import org.matsim.core.config.groups.GlobalConfigGroup;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
@@ -20,7 +17,7 @@ import com.google.inject.Singleton;
 
 /**
  * Internal module that manages all built-in selectors.
- * 
+ *
  * @author sebhoerl
  *
  */
@@ -40,11 +37,8 @@ public class SelectorModule extends AbstractDiscreteModeChoiceExtension {
 
 	@Provides
 	public UtilitySelectorFactory provideTourSelectorFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			Map<String, Provider<UtilitySelectorFactory>> components, Scenario scenario) {
+			Map<String, Provider<UtilitySelectorFactory>> components) {
 		Provider<UtilitySelectorFactory> provider = components.get(dmcConfig.getSelector());
-		RandomValueGenerator
-				.setGlobalSeed(((GlobalConfigGroup) scenario.getConfig().getModules().get(GlobalConfigGroup.GROUP_NAME))
-						.getRandomSeed());
 
 		if (provider != null) {
 			return provider.get();
@@ -66,7 +60,7 @@ public class SelectorModule extends AbstractDiscreteModeChoiceExtension {
 			DiscreteModeChoiceConfigGroup dmcConfig) {
 		MultinomialLogitSelectorConfigGroup config = dmcConfig.getMultinomialLogitSelectorConfig();
 		return new MultinomialLogitSelector.Factory(config.getMinimumUtility(), config.getMaximumUtility(),
-				config.getConsiderMinimumUtility(), config.getRandomNumbers().toString());
+				config.getConsiderMinimumUtility(), config.getWriteDetailedUtilities());
 	}
 
 	@Provides
