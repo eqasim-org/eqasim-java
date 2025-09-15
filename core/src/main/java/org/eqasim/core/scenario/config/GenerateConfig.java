@@ -4,7 +4,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
+import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.TransportMode;
@@ -199,6 +202,21 @@ public class GenerateConfig {
 		config.facilities().setInputFile(prefix + "facilities.xml.gz");
 		config.transit().setTransitScheduleFile(prefix + "transit_schedule.xml.gz");
 		config.transit().setVehiclesFile(prefix + "transit_vehicles.xml.gz");
+
+		// deactivate the delays
+		DelaysConfigGroup delaysConfig = DelaysConfigGroup.getOrCreate(config);
+		delaysConfig.setActivate(false);
+		delaysConfig.setActivateTl(false);
+		delaysConfig.setActivateUnsignalized(false);
+
+		// calibration
+		AlphaCalibratorConfig alphaCalibratorConfig = AlphaCalibratorConfig.getOrCreate(config);
+		alphaCalibratorConfig.setActivate(false);
+
+		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.getOrCreate(config);
+		calibrationConfig.setActivated(false);
+		calibrationConfig.setRunCalibration(false);
+
 	}
 
 	public void run(Config config) throws ConfigurationException {
