@@ -140,12 +140,14 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
     }
 
 
-    @Override
-    protected SwissPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-
+    public SwissPtVariables predictPtVariables(List<? extends PlanElement> elements){
         SwissPtVariables tripDescription = new SwissPtVariables();
 
         Set<Zone> zones = new HashSet<>();
+
+        if (elements == null || elements.isEmpty()){
+            return tripDescription;
+        }
 
         for (PlanElement element : elements) {
 			if (element instanceof Leg) {
@@ -218,6 +220,11 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 		}
 
         return tripDescription;
+    }
+
+    @Override
+    protected SwissPtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+        return predictPtVariables(elements);
     }
     
 }
