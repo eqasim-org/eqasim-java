@@ -5,7 +5,9 @@ import java.util.Random;
 import java.util.Set;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
+import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.SwissModeChoiceModule;
@@ -16,7 +18,6 @@ import org.eqasim.switzerland.zurich.mode_choice.utilities.estimators.ZurichBike
 import org.eqasim.switzerland.zurich.mode_choice.utilities.estimators.ZurichCarUtilityEstimator;
 import org.eqasim.switzerland.zurich.mode_choice.utilities.estimators.ZurichPtUtilityEstimator;
 import org.eqasim.switzerland.zurich.mode_choice.utilities.estimators.ZurichWalkUtilityEstimator;
-import org.eqasim.switzerland.zurich.travel_time.SmoothingTravelTimeModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -38,7 +39,7 @@ public class ZurichConfigurator extends EqasimConfigurator {
 		super(cmd);
 		registerModule(new SwissModeChoiceModule(cmd));
 		registerModule(new ZurichModeChoiceModule(cmd));
-		registerModule(new SmoothingTravelTimeModule());
+		//registerModule(new SmoothingTravelTimeModule());
 	}
 
 	public ConfigGroup[] getConfigGroups() {
@@ -46,7 +47,10 @@ public class ZurichConfigurator extends EqasimConfigurator {
 				new SwissRailRaptorConfigGroup(), //
 				new EqasimConfigGroup(), //
 				new DiscreteModeChoiceConfigGroup(), //
-				new EqasimTerminationConfigGroup(), new EqasimRaptorConfigGroup() };
+				new EqasimTerminationConfigGroup(),
+				new EqasimRaptorConfigGroup(),
+				new AlphaCalibratorConfig(),
+				new DelaysConfigGroup()};
 	}
 
 	public void configure(Config config) {

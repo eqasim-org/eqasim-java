@@ -8,6 +8,9 @@ import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 /**
  * The MultinomialLogitSelector collects a set of candidates with given
@@ -30,18 +33,21 @@ public class MultinomialLogitSelector implements UtilitySelector {
 	private final double maximumUtility;
 	private final double minimumUtility;
 	private final boolean considerMinimumUtility;
-	private final String randomNumbers;
-
+	private final boolean writeDetailedUtilities;
+	private final Id<Person> personId;
+	private final List<DiscreteModeChoiceTrip> tourTrips;
 	/**
 	 * Creates a MultinomialSelector. The utility cutoff value defines the maximum
 	 * utility possible.
 	 */
-	public MultinomialLogitSelector(double maximumUtility, double minimumUtility, boolean considerMinimumUtility,
-			String randomNumbers) {
+	public MultinomialLogitSelector(double maximumUtility, double minimumUtility, boolean considerMinimumUtility, boolean writeDetailedUtilities,
+									Person person, List<DiscreteModeChoiceTrip> tourTrips) {
 		this.maximumUtility = maximumUtility;
 		this.minimumUtility = minimumUtility;
 		this.considerMinimumUtility = considerMinimumUtility;
-		this.randomNumbers = randomNumbers;
+		this.writeDetailedUtilities = writeDetailedUtilities;
+		this.personId = person.getId();
+		this.tourTrips = tourTrips;
 	}
 
 	@Override
@@ -50,7 +56,7 @@ public class MultinomialLogitSelector implements UtilitySelector {
 	}
 
 	@Override
-	public Optional<UtilityCandidate> select(Random random, long personId, int tripIndex) {
+	public Optional<UtilityCandidate> select(Random random) {
 		// I) If not candidates are available, give back nothing
 		if (candidates.isEmpty()) {
 			return Optional.empty();
@@ -99,32 +105,40 @@ public class MultinomialLogitSelector implements UtilitySelector {
 		}
 
 		// V) Perform a selection using the CDF
-
-		double pointer = this.randomNumbers.equals("fixed")
-				? RandomValueGenerator.randomForTour(personId, tripIndex) * totalDensity
-				: random.nextDouble() * totalDensity;
+		double pointer = random.nextDouble() * totalDensity;
 
 		int selection = (int) cumulativeDensity.stream().filter(f -> f < pointer).count();
-		return Optional.of(filteredCandidates.get(selection));
+		UtilityCandidate selectedCandidate = filteredCandidates.get(selection);
+
+		// ===== WRITE TO CSV HERE IF REQUESTED IN THE CONFIG =====
+		if (writeDetailedUtilities && UtilityWriter.isWriterInitialized()) {
+			UtilityWriter.writeCandidate(personId, tourTrips, filteredCandidates, selection);
+		}
+		// ================== END OF CSV WRITING ==================
+
+		return Optional.of(selectedCandidate);
 	}
 
 	public static class Factory implements UtilitySelectorFactory {
 		private final double minimumUtility;
 		private final double maximumUtility;
 		private final boolean considerMinimumUtility;
-		private final String randomNumbers;
+		private final boolean writeDetailedUtilities;
 
-		public Factory(double minimumUtility, double maximumUtility, boolean considerMinimumUtility,
-				String randomNumbers) {
+		public Factory(double minimumUtility, double maximumUtility, boolean considerMinimumUtility, boolean writeDetailedUtilities) {
 			this.minimumUtility = minimumUtility;
 			this.maximumUtility = maximumUtility;
 			this.considerMinimumUtility = considerMinimumUtility;
-			this.randomNumbers = randomNumbers;
+			this.writeDetailedUtilities = writeDetailedUtilities;
+		}
+
+		public Factory(double minimumUtility, double maximumUtility, boolean considerMinimumUtility) {
+			this(minimumUtility, maximumUtility, considerMinimumUtility, false);
 		}
 
 		@Override
-		public MultinomialLogitSelector createUtilitySelector() {
-			return new MultinomialLogitSelector(maximumUtility, minimumUtility, considerMinimumUtility, randomNumbers);
+		public MultinomialLogitSelector createUtilitySelector(Person person, List<DiscreteModeChoiceTrip> tourTrips) {
+			return new MultinomialLogitSelector(maximumUtility, minimumUtility, considerMinimumUtility, writeDetailedUtilities, person, tourTrips);
 		}
 	}
 }

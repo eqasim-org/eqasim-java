@@ -12,7 +12,13 @@ import java.util.function.BiConsumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.EqasimComponentsModule;
+import org.eqasim.core.components.calibration.CalibrationConfigGroup;
+import org.eqasim.core.components.calibration.CalibrationModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
+import org.eqasim.core.components.fast_calibration.FastCalibrationModule;
+import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
+import org.eqasim.core.components.traffic_light.DelaysModule;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorModule;
 import org.eqasim.core.components.traffic.EqasimTrafficModule;
@@ -149,6 +155,16 @@ public abstract class EqasimConfigurator {
 		// Emissions
 		registerConfigGroup(new EmissionsConfigGroup(), true);
 
+		// Delays functionality (traffic light and other delays)
+		registerConfigGroup(new DelaysConfigGroup(), true);
+		registerModule(new DelaysModule(), DelaysConfigGroup.GROUP_NAME);
+
+		// calibration functionality
+		registerConfigGroup(new AlphaCalibratorConfig(), true);
+		registerModule(new FastCalibrationModule(), AlphaCalibratorConfig.GROUP_NAME);
+
+		registerConfigGroup(new CalibrationConfigGroup(), true);
+		registerModule(new CalibrationModule(), CalibrationConfigGroup.GROUP_NAME);
 		// Policies
 		registerConfigGroup(new PoliciesConfigGroup(), true);
 		registerModule(new PolicyModule());

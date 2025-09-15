@@ -1,5 +1,9 @@
 package org.matsim.contribs.discrete_mode_choice.model.utilities;
 
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -7,7 +11,7 @@ import java.util.Random;
  * The maximum utility selector collects a set of candidates with a given
  * utility value and then selects the one with the highest utility. Internally,
  * always only the best candidate is held.
- * 
+ *
  * @author sebhoerl
  */
 public class MaximumSelector implements UtilitySelector {
@@ -23,7 +27,7 @@ public class MaximumSelector implements UtilitySelector {
 	}
 
 	@Override
-	public Optional<UtilityCandidate> select(Random random, long personId, int tripIndex) {
+	public Optional<UtilityCandidate> select(Random random) {
 		if (bestCandidate == null) {
 			return Optional.empty();
 		}
@@ -33,7 +37,7 @@ public class MaximumSelector implements UtilitySelector {
 
 	public static class Factory implements UtilitySelectorFactory {
 		@Override
-		public UtilitySelector createUtilitySelector() {
+		public UtilitySelector createUtilitySelector(Person person, List<DiscreteModeChoiceTrip> tourTrips) {
 			return new MaximumSelector();
 		}
 	}
