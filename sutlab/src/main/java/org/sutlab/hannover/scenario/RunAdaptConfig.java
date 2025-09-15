@@ -39,11 +39,9 @@ public class RunAdaptConfig {
 		networkModes.add(HannoverModeChoiceModule.CAR_PASSENGER);
 		config.routing().setNetworkModes(networkModes);
 
-		TeleportedModeParams bicycleRouteParams = new TeleportedModeParams();
-		bicycleRouteParams.setMode("bike");
+		TeleportedModeParams bicycleRouteParams = config.routing().getTeleportedModeParams().get(TransportMode.bike);
 		bicycleRouteParams.setTeleportedModeSpeed(15.0 / 3.6);
 		bicycleRouteParams.setBeelineDistanceFactor(1.3);
-		config.routing().addTeleportedModeParams(bicycleRouteParams);
 		
 		TeleportedModeParams walkRouteParams = config.routing().getTeleportedModeParams().get(TransportMode.walk);
 		walkRouteParams.setTeleportedModeSpeed(4.5 / 3.6);
