@@ -4,7 +4,7 @@ import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.eqasim.ile_de_france.parking.IDFParkingModule;
 import org.eqasim.ile_de_france.probing.ProbeConfigGroup;
-import org.eqasim.ile_de_france.probing.ProbeRoutingModule;
+import org.eqasim.ile_de_france.probing.ProbeModule;
 import org.matsim.core.config.CommandLine;
 
 public class IDFConfigurator extends EqasimConfigurator {
@@ -15,6 +15,6 @@ public class IDFConfigurator extends EqasimConfigurator {
 		registerModule(new IDFParkingModule());
 
 		registerConfigGroup(new ProbeConfigGroup(), false);
-		registerModule(new ProbeRoutingModule());
+		registerModule(new ProbeModule());
 	}
 }

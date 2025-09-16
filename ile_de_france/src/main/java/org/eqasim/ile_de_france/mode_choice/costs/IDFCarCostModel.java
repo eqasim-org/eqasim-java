@@ -19,6 +19,7 @@ import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.Trip
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.core.utils.timing.TimeTracker;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
@@ -86,9 +87,32 @@ public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
 	}
 
 	private final double FIRST_LAST_DURATION = 8.0 * 3600.0;
+	static public final String IS_FIRST_TRIP = "isFirstTrip";
+	static public final String IS_LAST_TRIP = "isLastTrip";
+
+	private boolean isFirstTrip(DiscreteModeChoiceTrip trip, List<TripCandidate> previousTrips) {
+		Boolean attribute = (Boolean) trip.getTripAttributes().getAttribute(IS_FIRST_TRIP);
+
+		if (attribute == null) {
+			return previousTrips.size() == 0;
+		} else {
+			return attribute;
+		}
+	}
+
+	private boolean isLastTrip(DiscreteModeChoiceTrip trip, Person person) {
+		Boolean attribute = (Boolean) trip.getTripAttributes().getAttribute(IS_LAST_TRIP);
+
+		if (attribute == null) {
+			List<? extends PlanElement> planElements = person.getSelectedPlan().getPlanElements();
+			return planElements.get(planElements.size() - 1) == trip.getDestinationActivity();
+		} else {
+			return attribute;
+		}
+	}
 
 	private double getOriginDuration(Person person, DiscreteModeChoiceTrip trip, List<TripCandidate> previousTrips) {
-		if (previousTrips.size() == 0) {
+		if (isFirstTrip(trip, previousTrips)) {
 			return FIRST_LAST_DURATION;
 		} else {
 			TimeTracker timeTracker = new TimeTracker(timeInterpretation);
@@ -105,14 +129,14 @@ public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
 			timeTracker.addActivity(trip.getOriginActivity());
 			double departureTime = timeTracker.getTime().seconds();
 
+			Preconditions.checkState(arrivalTime <= departureTime);
 			return departureTime - arrivalTime;
 		}
 	}
 
 	private double getDestinationDuration(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> tripElements) {
-		List<? extends PlanElement> planElements = person.getSelectedPlan().getPlanElements();
-		if (planElements.get(planElements.size() - 1) == trip.getDestinationActivity()) {
+		if (isLastTrip(trip, person)) {
 			return FIRST_LAST_DURATION;
 		} else {
 			TimeTracker timeTracker = new TimeTracker(timeInterpretation);
@@ -123,6 +147,7 @@ public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
 			timeTracker.addActivity(trip.getDestinationActivity());
 			double departureTime = timeTracker.getTime().seconds();
 
+			Preconditions.checkState(arrivalTime <= departureTime);
 			return departureTime - arrivalTime;
 		}
 	}
