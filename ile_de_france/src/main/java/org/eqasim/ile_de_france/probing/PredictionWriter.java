@@ -74,6 +74,7 @@ public class PredictionWriter {
 
         for (Person person : population.getPersons().values()) {
             DiscreteModeChoiceTrip trip = new TripListConverter().convert(person.getSelectedPlan()).get(0);
+            trip.setDepartureTime(trip.getOriginActivity().getEndTime().seconds());
 
             Facility originFacility = FacilitiesUtils.toFacility(trip.getOriginActivity(), facilities);
             Facility destinationFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
