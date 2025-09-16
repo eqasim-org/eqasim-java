@@ -17,8 +17,6 @@ import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
-import org.matsim.core.controler.events.StartupEvent;
-import org.matsim.core.controler.listener.StartupListener;
 import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.FacilitiesUtils;
@@ -26,7 +24,7 @@ import org.matsim.facilities.Facility;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class PredictionWriter implements StartupListener {
+public class PredictionWriter {
     private final Population population;
     private final TripRouter tripRouter;
     private final ActivityFacilities facilities;
@@ -68,8 +66,7 @@ public class PredictionWriter implements StartupListener {
         return this;
     }
 
-    @Override
-    public void notifyStartup(StartupEvent event) {
+    public void run() {
         List<PersonEntry> result = new LinkedList<>();
 
         ParallelProgress progress = new ParallelProgress("Writing predictions ...", population.getPersons().size());

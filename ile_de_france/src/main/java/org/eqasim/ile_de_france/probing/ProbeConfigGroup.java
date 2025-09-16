@@ -9,9 +9,6 @@ public class ProbeConfigGroup extends ReflectiveConfigGroup {
     @Parameter
     public boolean useProbeTravelTimes = false;
 
-    @Parameter
-    public boolean writePredictions = false;
-
     public ProbeConfigGroup() {
         super(NAME);
     }
