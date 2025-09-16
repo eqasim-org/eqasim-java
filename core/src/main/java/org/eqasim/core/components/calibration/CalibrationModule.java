@@ -54,7 +54,7 @@ public class CalibrationModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     public OptimizerHandler provideCalibrationHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
-                                                      EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, StandardOptimizer optimizer) {
+                                                      EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, Optimizer optimizer) {
         return new OptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
     }
 
