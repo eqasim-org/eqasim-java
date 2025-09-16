@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.eqasim.core.misc.ParallelProgress;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.VariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.VariablePredictorWithPreviousTrips;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
@@ -71,6 +72,9 @@ public class PredictionWriter implements StartupListener {
     public void notifyStartup(StartupEvent event) {
         List<PersonEntry> result = new LinkedList<>();
 
+        ParallelProgress progress = new ParallelProgress("Writing predictions ...", population.getPersons().size());
+        progress.start();
+
         for (Person person : population.getPersons().values()) {
             DiscreteModeChoiceTrip trip = new TripListConverter().convert(person.getSelectedPlan()).get(0);
 
@@ -114,11 +118,18 @@ public class PredictionWriter implements StartupListener {
             }
 
             result.add(new PersonEntry(person.getId().toString(), predictions));
+            progress.update(1);
         }
 
         try {
             new ObjectMapper().writeValue(outputPath, result);
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            progress.close();
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
