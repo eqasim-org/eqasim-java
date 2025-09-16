@@ -33,6 +33,7 @@ public class CmdpOptimizerHandler extends StandardOptimizerHandler {
             logger.info(String.format("%s bike alpha : %f", label, swissParameters.bike.alpha_u));
             logger.info(String.format("%s walk alpha : %f", label, swissParameters.walk.alpha_u));
             logger.info(String.format("%s pt alpha   : %f", label, swissParameters.pt.alpha_u));
+            logger.info(String.format("%s car_passenger alpha   : %f", label, swissParameters.cp.alpha_u));
         } else {
             logger.warn("Parameters file does not exist at: " + parameterFilePath);
         }

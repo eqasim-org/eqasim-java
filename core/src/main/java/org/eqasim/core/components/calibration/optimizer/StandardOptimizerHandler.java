@@ -61,30 +61,11 @@ public class StandardOptimizerHandler implements OptimizerHandler {
     }
 
     protected String getNewParametersFilePath(int iteration) {
-        return outputDirectoryHierarchy.getIterationFilename(iteration, "optimized_parameters.yml");
+        return outputDirectoryHierarchy.getIterationFilename(iteration, "optimal_parameters.yml");
     }
 
     protected String getLastParametersFilePath(int iteration) {
-        String lastPath = outputDirectoryHierarchy.getIterationFilename(iteration - 1, "optimized_parameters.yml");
-        File lastFile = new File(lastPath);
-        int startIteration = calibrationConfig.getStartIteration();
-
-        if (iteration == startIteration || !lastFile.exists()) {
-            if (iteration>startIteration) {
-                logger.warn("Parameters files that is supposed to be located in" + lastFile + " is not found. Using initial parameters instead. This may affect calibration results.");
-            } else {
-                logger.info("Using initial parameters file as no previous iteration exists.");
-            }
-            String modeParametersPath = eqasimConfigGroup.getModeParametersPath();
-            if (modeParametersPath == null || modeParametersPath.isEmpty()) {
-                logger.warn("No mode parameters path is set in the configuration. It should be specified in the EqasimConfigGroup.");
-                logger.warn("This behavior should be changed here in the code, to create the file if it doesn't exist.");
-                throw new IllegalStateException("No mode parameters path is set in the configuration. It should be specified in the EqasimConfigGroup.");
-            }
-            return modeParametersPath;
-        }
-
-        return lastPath;
+        return eqasimConfigGroup.getModeParametersPath();
     }
 
     protected String getVariablesIterationPath(int iteration) {

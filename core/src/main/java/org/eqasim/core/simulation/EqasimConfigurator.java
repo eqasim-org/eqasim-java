@@ -91,7 +91,7 @@ public abstract class EqasimConfigurator {
 		registerModule(new EqasimRaptorModule());
 		registerModule(new EqasimModeChoiceModule());
 		registerModule(new EqasimTrafficModule());
-		registerModule(new EqasimAnalysisModule());
+		// registerModule(new EqasimAnalysisModule());
 
 		registerQSimModule(new EqasimTransitQSimModule());
 		registerQSimModule(new EqasimTrafficQSimModule());

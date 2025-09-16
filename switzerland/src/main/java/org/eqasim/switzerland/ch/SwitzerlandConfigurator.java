@@ -79,8 +79,6 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 		eqasimConfig.setEstimator("pt", "SwissPtEstimator");
 		eqasimConfig.setEstimator("bike", "SwissBikeEstimator");
 		eqasimConfig.setEstimator("walk", "SwissWalkEstimator");
-		// eqasimConfig.setEstimator("outsider", "SwissZeroUtilityEstimator");
 		eqasimConfig.setEstimator("car_passenger", "SwissZeroUtilityEstimator");
-		// eqasimConfig.setEstimator("truck", "SwissZeroUtilityEstimator");
 	}
 }

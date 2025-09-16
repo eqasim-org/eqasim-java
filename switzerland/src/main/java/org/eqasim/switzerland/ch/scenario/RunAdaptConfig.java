@@ -157,7 +157,7 @@ public class RunAdaptConfig {
 
 		// Transit direct walk factor
 		TransitRouterConfigGroup transitConfig = config.transitRouter();
-		transitConfig.setDirectWalkFactor( 3.0);
+		transitConfig.setDirectWalkFactor(3.0);
 
 	}
 

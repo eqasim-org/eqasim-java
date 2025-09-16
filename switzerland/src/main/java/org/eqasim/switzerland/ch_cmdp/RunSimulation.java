@@ -1,5 +1,10 @@
 package org.eqasim.switzerland.ch_cmdp;
 
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
+import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
+import org.eqasim.switzerland.ch.PTLinkVolumesModule;
+import org.eqasim.switzerland.ch.PTPassengerCountsModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -9,7 +14,9 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+
 public class RunSimulation {
+	@SuppressWarnings("deprecation")
 	static public void main(String[] args) throws ConfigurationException {
 		// set preventwaitingtoentertraffic to y if you want to to prevent that waiting traffic has to wait for space in the link buffer
 		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.
@@ -32,7 +39,9 @@ public class RunSimulation {
 		}
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		
+
+		SwissRailRaptorConfigGroup srrConfigGroup = (SwissRailRaptorConfigGroup) config.getModules().getOrDefault("swissRailRaptor", null);
+		System.out.println("Found the following transfer penalties: " + srrConfigGroup.getModeToModeTransferPenaltyParameterSets());
 
 		configurator.configureScenario(scenario);
 		ScenarioUtils.loadScenario(scenario);
@@ -40,6 +49,16 @@ public class RunSimulation {
 		configurator.adjustPTpcu(scenario);
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
+		controller.addOverridingModule(new PTPassengerCountsModule());
+		controller.addOverridingModule(new PTLinkVolumesModule());
+
+		// To use the deterministic pt simulation (Part 1 of 2):
+		controller.addOverridingModule(new SBBTransitModule());
+		// To use the deterministic pt simulation (Part 2 of 2):
+		controller.configureQSimComponents(components -> {
+			new SBBTransitEngineQSimModule().configure(components);
+
+		});
 		controller.run();
 	}
 }
