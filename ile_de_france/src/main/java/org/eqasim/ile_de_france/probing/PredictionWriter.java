@@ -87,14 +87,14 @@ public class PredictionWriter {
                         trip.getDepartureTime(), person, trip.getTripAttributes());
 
                 for (var entry : predictorEntries) {
-                    if (entry.mode.equals(mode)) {
+                    if (mode.equals(entry.mode)) {
                         predictions.add(new PredictionEntry<>(entry.name, entry.mode,
                                 entry.predictor.predictVariables(person, trip, tripElements)));
                     }
                 }
 
                 for (var entry : predictorEntriesWithPreviousTrips) {
-                    if (entry.mode.equals(mode)) {
+                    if (mode.equals(entry.mode)) {
                         predictions.add(new PredictionEntry<>(entry.name, entry.mode,
                                 entry.predictor.predictVariables(person, trip, tripElements, Collections.emptyList())));
                     }
