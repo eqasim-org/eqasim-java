@@ -17,7 +17,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
     private String repoBranch = "polars";
     private String repoCommit = "1de98c60cf0ca5c3f48d2342ea776f54cad05ffd";
 
-    private String optimizerPath = "C:/Users/dabdelkader/Desktop/work/codes/zurichScenario/optimizer";
+    private String optimizerPath = "optimizer";
     private String optimizer = "cmaes";
     private String metric = "mse";
     private String selector = "MultinomialLogit";

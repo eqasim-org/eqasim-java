@@ -4,7 +4,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eqasim.core.components.calibration.optimizer.OptimizerHandler;
+import org.eqasim.core.components.calibration.optimizer.StandardOptimizerHandler;
 import org.eqasim.core.components.calibration.optimizer.StandardOptimizer;
 import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.components.calibration.writer.VariablesWriterHandler;
@@ -24,9 +24,10 @@ public class CalibrationModule extends AbstractEqasimExtension {
             logger.info("Activate calibration module");
             bind(VariablesWriter.class).to(StandardVariablesWriter.class).asEagerSingleton();
             bind(Optimizer.class).to(StandardOptimizer.class).asEagerSingleton();
+            bind(OptimizerHandler.class).to(StandardOptimizerHandler.class).asEagerSingleton();
 
-            addControlerListenerBinding().to(VariablesWriterHandler.class).asEagerSingleton();
-            addControlerListenerBinding().to(OptimizerHandler.class).asEagerSingleton();
+            addControllerListenerBinding().to(VariablesWriterHandler.class).asEagerSingleton();
+            addControllerListenerBinding().to(OptimizerHandler.class).asEagerSingleton();
         } else {
             logger.info("Calibration module is not activated.");
         }
@@ -53,9 +54,9 @@ public class CalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public OptimizerHandler provideCalibrationHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
-                                                      EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, Optimizer optimizer) {
-        return new OptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
+    public StandardOptimizerHandler provideCalibrationHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
+                                                              EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, Optimizer optimizer) {
+        return new StandardOptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
     }
 
     @Provides

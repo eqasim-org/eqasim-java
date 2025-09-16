@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.calibration.Optimizer;
+import org.eqasim.core.components.calibration.OptimizerHandler;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -17,17 +18,17 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 
 import java.io.File;
 
-public class OptimizerHandler implements IterationStartsListener {
-    private final Logger logger = LogManager.getLogger(OptimizerHandler.class);
-    private final OutputDirectoryHierarchy outputDirectoryHierarchy;
-    private final CalibrationConfigGroup calibrationConfig;
-    private final Optimizer optimizer;
-    private final ModeParameters parameters;
-    private final EqasimConfigGroup eqasimConfigGroup;
+public class StandardOptimizerHandler implements OptimizerHandler {
+    protected final Logger logger = LogManager.getLogger(OptimizerHandler.class);
+    protected final OutputDirectoryHierarchy outputDirectoryHierarchy;
+    protected final CalibrationConfigGroup calibrationConfig;
+    protected final Optimizer optimizer;
+    protected final ModeParameters parameters;
+    protected final EqasimConfigGroup eqasimConfigGroup;
 
     @Inject
-    public OptimizerHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
-                            EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, Optimizer optimizer){
+    public StandardOptimizerHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
+                                    EqasimConfigGroup eqasimConfigGroup, ModeParameters parameters, Optimizer optimizer){
         this.calibrationConfig = calibrationConfig;
         this.outputDirectoryHierarchy = outputDirectoryHierarchy;
         this.optimizer = optimizer;
@@ -52,18 +53,18 @@ public class OptimizerHandler implements IterationStartsListener {
         applyParameters(parametersFileToUse, optimizationSucceeded);
     }
 
-    private boolean shouldRunCalibration(IterationStartsEvent event) {
+    protected boolean shouldRunCalibration(IterationStartsEvent event) {
         boolean runCalibration = calibrationConfig.getRunCalibration();
         int iteration = event.getIteration();
         int startIteration = calibrationConfig.getStartIteration();
         return runCalibration && iteration >= startIteration;
     }
 
-    private String getNewParametersFilePath(int iteration) {
+    protected String getNewParametersFilePath(int iteration) {
         return outputDirectoryHierarchy.getIterationFilename(iteration, "optimized_parameters.yml");
     }
 
-    private String getLastParametersFilePath(int iteration) {
+    protected String getLastParametersFilePath(int iteration) {
         String lastPath = outputDirectoryHierarchy.getIterationFilename(iteration - 1, "optimized_parameters.yml");
         File lastFile = new File(lastPath);
         int startIteration = calibrationConfig.getStartIteration();
@@ -86,7 +87,7 @@ public class OptimizerHandler implements IterationStartsListener {
         return lastPath;
     }
 
-    private String getVariablesIterationPath(int iteration) {
+    protected String getVariablesIterationPath(int iteration) {
         String paths = outputDirectoryHierarchy.getIterationPath(iteration - 1);
         // this would results in a much more stable calibration
         if (iteration > calibrationConfig.getStartIteration()) {
@@ -102,7 +103,7 @@ public class OptimizerHandler implements IterationStartsListener {
         return paths;
     }
 
-    private boolean runOptimizer(int iteration, String newPath, String lastPath, String variablesPath) {
+    protected boolean runOptimizer(int iteration, String newPath, String lastPath, String variablesPath) {
         try {
             optimizer.run(iteration, newPath, lastPath, variablesPath);
             return true;
@@ -112,7 +113,7 @@ public class OptimizerHandler implements IterationStartsListener {
         }
     }
 
-    private void applyParameters(String parameterFilePath, boolean isOptimized) {
+    protected void applyParameters(String parameterFilePath, boolean isOptimized) {
         File file = new File(parameterFilePath);
         if (file.exists() && file.isFile()) {
             eqasimConfigGroup.setModeParametersPath(parameterFilePath);

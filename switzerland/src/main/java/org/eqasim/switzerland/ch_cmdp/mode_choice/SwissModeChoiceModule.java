@@ -4,9 +4,8 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.calibration.Optimizer;
+import org.eqasim.core.components.calibration.OptimizerHandler;
 import org.eqasim.core.components.calibration.VariablesWriter;
-import org.eqasim.core.components.calibration.optimizer.StandardOptimizer;
-import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
@@ -14,8 +13,8 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
-import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizer;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizerHandler;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpVariablesWriter;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
@@ -59,6 +58,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bind(VariablesWriter.class).to(CmdpVariablesWriter.class).asEagerSingleton();
 		bind(Optimizer.class).to(CmdpOptimizer.class).asEagerSingleton();
+		bind(OptimizerHandler.class).to(CmdpOptimizerHandler.class).asEagerSingleton();
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissDetailedModeAvailability.class);
@@ -136,5 +136,12 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	public CmdpOptimizer provideCmdpOptimizer() {
 		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.getOrCreate(getConfig());
 		return new CmdpOptimizer(calibrationConfig);
+	}
+
+	@Provides
+	@Singleton
+	public CmdpOptimizerHandler provideCmdpOptimizerHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
+															  EqasimConfigGroup eqasimConfigGroup, SwissCmdpModeParameters parameters, Optimizer optimizer) {
+		return new CmdpOptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
 	}
 }
