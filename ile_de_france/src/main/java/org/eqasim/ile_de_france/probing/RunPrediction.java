@@ -31,6 +31,7 @@ public class RunPrediction {
         configurator.adjustScenario(scenario);
 
         Controler controller = new Controler(scenario);
+        configurator.configureController(controller);
         controller.getInjector().getInstance(PredictionWriter.class).run();
     }
 }
