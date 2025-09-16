@@ -52,6 +52,10 @@ public class ProbeModule extends AbstractModule {
                 });
             }
         }
+
+        if (config.writePredictions) {
+            addControlerListenerBinding().to(PredictionWriter.class);
+        }
     }
 
     @Provides
