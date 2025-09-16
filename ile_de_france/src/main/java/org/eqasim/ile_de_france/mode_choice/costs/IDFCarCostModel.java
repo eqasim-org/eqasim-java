@@ -87,32 +87,17 @@ public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
 	}
 
 	private final double FIRST_LAST_DURATION = 8.0 * 3600.0;
-	static public final String IS_FIRST_TRIP = "isFirstTrip";
-	static public final String IS_LAST_TRIP = "isLastTrip";
 
-	private boolean isFirstTrip(DiscreteModeChoiceTrip trip, List<TripCandidate> previousTrips) {
-		Boolean attribute = (Boolean) trip.getTripAttributes().getAttribute(IS_FIRST_TRIP);
-
-		if (attribute == null) {
-			return previousTrips.size() == 0;
-		} else {
-			return attribute;
-		}
-	}
-
-	private boolean isLastTrip(DiscreteModeChoiceTrip trip, Person person) {
-		Boolean attribute = (Boolean) trip.getTripAttributes().getAttribute(IS_LAST_TRIP);
-
-		if (attribute == null) {
-			List<? extends PlanElement> planElements = person.getSelectedPlan().getPlanElements();
-			return planElements.get(planElements.size() - 1) == trip.getDestinationActivity();
-		} else {
-			return attribute;
-		}
-	}
+	private final static String PRECEDING_PARKING_DURATION = "precedingParkingDuration";
+	private final static String FOLLOWING_PARKING_DURATION = "followingParkingDuration";
 
 	private double getOriginDuration(Person person, DiscreteModeChoiceTrip trip, List<TripCandidate> previousTrips) {
-		if (isFirstTrip(trip, previousTrips)) {
+		Double precedingParkingDuration = (Double) trip.getTripAttributes().getAttribute(PRECEDING_PARKING_DURATION);
+		if (precedingParkingDuration != null) {
+			return precedingParkingDuration;
+		}
+
+		if (previousTrips.size() == 0) {
 			return FIRST_LAST_DURATION;
 		} else {
 			TimeTracker timeTracker = new TimeTracker(timeInterpretation);
@@ -136,7 +121,13 @@ public class IDFCarCostModel extends AbstractCostModelWithPreviousTrips {
 
 	private double getDestinationDuration(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> tripElements) {
-		if (isLastTrip(trip, person)) {
+		Double followingParkingDuration = (Double) trip.getTripAttributes().getAttribute(FOLLOWING_PARKING_DURATION);
+		if (followingParkingDuration != null) {
+			return followingParkingDuration;
+		}
+
+		List<? extends PlanElement> planElements = person.getSelectedPlan().getPlanElements();
+		if (planElements.get(planElements.size() - 1) == trip.getDestinationActivity()) {
 			return FIRST_LAST_DURATION;
 		} else {
 			TimeTracker timeTracker = new TimeTracker(timeInterpretation);
