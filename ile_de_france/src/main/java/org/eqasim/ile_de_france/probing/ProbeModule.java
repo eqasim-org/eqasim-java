@@ -3,9 +3,16 @@ package org.eqasim.ile_de_france.probing;
 import java.io.File;
 import java.util.Set;
 
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
+import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
+import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBicycleUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarPassengerUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFCarPassengerPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFParkingPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
@@ -61,15 +68,28 @@ public class ProbeModule extends AbstractModule {
         File outputPath = new File(outputHierarchy.getOutputFilename("predictions.json"));
         PredictionWriter writer = new PredictionWriter(population, tripRouter, facilities, outputPath);
 
+        // mode specific predictors
         writer.addPredictor("car", "car", injector.getInstance(CarPredictor.class));
         writer.addPredictor("pt", "pt", injector.getInstance(IDFPtPredictor.class));
         writer.addPredictor("car_passenger", "car_passenger", injector.getInstance(IDFCarPassengerPredictor.class));
         writer.addPredictor("bicycle", "bicycle", injector.getInstance(BikePredictor.class));
         writer.addPredictor("walk", "walk", injector.getInstance(WalkPredictor.class));
 
+        // mode independent predictors
         writer.addPredictor("person", injector.getInstance(IDFPersonPredictor.class));
         writer.addPredictor("spatial", injector.getInstance(IDFSpatialPredictor.class));
         writer.addPredictor("parking", injector.getInstance(IDFParkingPredictor.class));
+
+        // mode estimators
+        writer.addEstimator("car", injector.getInstance(IDFCarUtilityEstimator.class));
+        writer.addEstimator("car_passenger", injector.getInstance(IDFCarPassengerUtilityEstimator.class));
+        writer.addEstimator("pt", injector.getInstance(IDFPtUtilityEstimator.class));
+        writer.addEstimator("bicycle", injector.getInstance(IDFBicycleUtilityEstimator.class));
+        writer.addEstimator("walk", injector.getInstance(WalkUtilityEstimator.class));
+
+        // mode costs
+        writer.addCostModel("car", injector.getInstance(IDFCarCostModel.class));
+        writer.addCostModel("pt", injector.getInstance(IDFPtCostModel.class));
 
         return writer;
     }

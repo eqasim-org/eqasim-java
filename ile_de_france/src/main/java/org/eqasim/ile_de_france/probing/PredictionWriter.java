@@ -3,12 +3,16 @@ package org.eqasim.ile_de_france.probing;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eqasim.core.misc.ParallelProgress;
+import org.eqasim.core.simulation.mode_choice.cost.CostModel;
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.VariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.VariablePredictorWithPreviousTrips;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
@@ -33,6 +37,8 @@ public class PredictionWriter {
     private final Set<String> modes = new HashSet<>();
     private final List<PredictorEntry<?>> predictorEntries = new LinkedList<>();
     private final List<PredictorEntryWithPreviousTrip<?>> predictorEntriesWithPreviousTrips = new LinkedList<>();
+    private final List<EstimatorEntry> estimatorEntries = new LinkedList<>();
+    private final List<CostModelEntry> costModelEntries = new LinkedList<>();
 
     public PredictionWriter(Population population, TripRouter tripRouter, ActivityFacilities facilities,
             File outputPath) {
@@ -67,6 +73,16 @@ public class PredictionWriter {
         return this;
     }
 
+    public PredictionWriter addEstimator(String mode, UtilityEstimator estimator) {
+        estimatorEntries.add(new EstimatorEntry(mode, estimator));
+        return this;
+    }
+
+    public PredictionWriter addCostModel(String mode, CostModel model) {
+        costModelEntries.add(new CostModelEntry(mode, model));
+        return this;
+    }
+
     public void run() {
         List<PersonEntry> result = new LinkedList<>();
 
@@ -81,6 +97,8 @@ public class PredictionWriter {
             Facility destinationFacility = FacilitiesUtils.toFacility(trip.getDestinationActivity(), facilities);
 
             List<PredictionEntry<?>> predictions = new LinkedList<>();
+            Map<String, Double> utilities = new HashMap<>();
+            Map<String, Double> costs = new HashMap<>();
 
             for (String mode : modes) {
                 List<? extends PlanElement> tripElements = tripRouter.calcRoute(mode, originFacility,
@@ -100,6 +118,18 @@ public class PredictionWriter {
                                 entry.predictor.predictVariables(person, trip, tripElements, Collections.emptyList())));
                     }
                 }
+
+                for (var entry : estimatorEntries) {
+                    if (mode.equals(entry.mode)) {
+                        utilities.put(mode, entry.estimator.estimateUtility(person, trip, tripElements));
+                    }
+                }
+
+                for (var entry : costModelEntries) {
+                    if (mode.equals(entry.mode)) {
+                        costs.put(mode, entry.model.calculateCost_MU(person, trip, tripElements));
+                    }
+                }
             }
 
             for (var entry : predictorEntries) {
@@ -116,7 +146,7 @@ public class PredictionWriter {
                 }
             }
 
-            result.add(new PersonEntry(person.getId().toString(), predictions));
+            result.add(new PersonEntry(person.getId().toString(), predictions, utilities, costs));
             progress.update(1);
         }
 
@@ -141,10 +171,19 @@ public class PredictionWriter {
             String name, String mode, VariablePredictor<T> predictor) {
     }
 
+    public record EstimatorEntry(
+            String mode, UtilityEstimator estimator) {
+    }
+
+    public record CostModelEntry(
+            String mode, CostModel model) {
+    }
+
     public record PredictionEntry<T extends BaseVariables>(
             String name, String mode, T variables) {
     }
 
-    public record PersonEntry(String personId, List<PredictionEntry<?>> predictions) {
+    public record PersonEntry(String personId, List<PredictionEntry<?>> predictions, Map<String, Double> utilities,
+            Map<String, Double> costs) {
     }
 }
