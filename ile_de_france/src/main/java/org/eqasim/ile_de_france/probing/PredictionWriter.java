@@ -13,6 +13,7 @@ import java.util.Set;
 import org.eqasim.core.misc.ParallelProgress;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimatorWithPreviousTrips;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.VariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.VariablePredictorWithPreviousTrips;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
@@ -131,7 +132,12 @@ public class PredictionWriter {
 
                 for (var entry : estimatorEntries) {
                     if (mode.equals(entry.mode)) {
-                        utilities.put(mode, entry.estimator.estimateUtility(person, trip, tripElements));
+                        if (entry.estimator instanceof UtilityEstimatorWithPreviousTrips) {
+                            utilities.put(mode, ((UtilityEstimatorWithPreviousTrips) entry.estimator)
+                                    .estimateUtility(person, trip, tripElements, Collections.emptyList()));
+                        } else {
+                            utilities.put(mode, entry.estimator.estimateUtility(person, trip, tripElements));
+                        }
                     }
                 }
 
