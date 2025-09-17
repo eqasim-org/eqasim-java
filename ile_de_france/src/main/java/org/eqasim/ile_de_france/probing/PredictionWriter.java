@@ -57,6 +57,7 @@ public class PredictionWriter {
     public <T extends BaseVariables> PredictionWriter addPredictor(String name, String mode,
             VariablePredictorWithPreviousTrips<T> predictor) {
         predictorEntriesWithPreviousTrips.add(new PredictorEntryWithPreviousTrip<>(name, mode, predictor));
+        modes.add(mode);
         return this;
     }
 
