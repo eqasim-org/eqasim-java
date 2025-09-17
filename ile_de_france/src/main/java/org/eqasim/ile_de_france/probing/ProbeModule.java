@@ -7,6 +7,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEs
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
+import org.eqasim.ile_de_france.mode_choice.IDFModeAvailability;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBicycleUtilityEstimator;
@@ -90,6 +91,9 @@ public class ProbeModule extends AbstractModule {
         // mode costs
         writer.addCostModel("car", injector.getInstance(IDFCarCostModel.class));
         writer.addCostModel("pt", injector.getInstance(IDFPtCostModel.class));
+
+        // availability
+        writer.addAvailability("standard", injector.getInstance(IDFModeAvailability.class));
 
         return writer;
     }

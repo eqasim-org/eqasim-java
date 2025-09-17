@@ -20,6 +20,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.router.TripRouter;
 import org.matsim.facilities.ActivityFacilities;
@@ -39,6 +40,7 @@ public class PredictionWriter {
     private final List<PredictorEntryWithPreviousTrip<?>> predictorEntriesWithPreviousTrips = new LinkedList<>();
     private final List<EstimatorEntry> estimatorEntries = new LinkedList<>();
     private final List<CostModelEntry> costModelEntries = new LinkedList<>();
+    private final List<AvailabilityEntry> availabilityEntries = new LinkedList<>();
 
     public PredictionWriter(Population population, TripRouter tripRouter, ActivityFacilities facilities,
             File outputPath) {
@@ -75,11 +77,18 @@ public class PredictionWriter {
 
     public PredictionWriter addEstimator(String mode, UtilityEstimator estimator) {
         estimatorEntries.add(new EstimatorEntry(mode, estimator));
+        modes.add(mode);
         return this;
     }
 
     public PredictionWriter addCostModel(String mode, CostModel model) {
         costModelEntries.add(new CostModelEntry(mode, model));
+        modes.add(mode);
+        return this;
+    }
+
+    public PredictionWriter addAvailability(String name, ModeAvailability availability) {
+        availabilityEntries.add(new AvailabilityEntry(name, availability));
         return this;
     }
 
@@ -99,6 +108,7 @@ public class PredictionWriter {
             List<PredictionEntry<?>> predictions = new LinkedList<>();
             Map<String, Double> utilities = new HashMap<>();
             Map<String, Double> costs = new HashMap<>();
+            Map<String, Set<String>> availabilities = new HashMap<>();
 
             for (String mode : modes) {
                 List<? extends PlanElement> tripElements = tripRouter.calcRoute(mode, originFacility,
@@ -146,7 +156,12 @@ public class PredictionWriter {
                 }
             }
 
-            result.add(new PersonEntry(person.getId().toString(), predictions, utilities, costs));
+            for (var entry : availabilityEntries) {
+                availabilities.put(entry.name,
+                        new HashSet<>(entry.availability.getAvailableModes(person, Collections.singletonList(trip))));
+            }
+
+            result.add(new PersonEntry(person.getId().toString(), predictions, utilities, costs, availabilities));
             progress.update(1);
         }
 
@@ -179,11 +194,15 @@ public class PredictionWriter {
             String mode, CostModel model) {
     }
 
+    public record AvailabilityEntry(
+            String name, ModeAvailability availability) {
+    }
+
     public record PredictionEntry<T extends BaseVariables>(
             String name, String mode, T variables) {
     }
 
     public record PersonEntry(String personId, List<PredictionEntry<?>> predictions, Map<String, Double> utilities,
-            Map<String, Double> costs) {
+            Map<String, Double> costs, Map<String, Set<String>> availabilities) {
     }
 }
