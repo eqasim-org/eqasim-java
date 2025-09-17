@@ -82,17 +82,25 @@ public class ProbeModule extends AbstractModule {
         writer.addPredictor("parking", injector.getInstance(IDFParkingPredictor.class));
 
         // mode estimators
+        bind(IDFCarUtilityEstimator.class); // explicit bindings are required
         writer.addEstimator("car", injector.getInstance(IDFCarUtilityEstimator.class));
+        bind(IDFCarPassengerUtilityEstimator.class); // explicit bindings are required
         writer.addEstimator("car_passenger", injector.getInstance(IDFCarPassengerUtilityEstimator.class));
+        bind(IDFPtUtilityEstimator.class); // explicit bindings are required
         writer.addEstimator("pt", injector.getInstance(IDFPtUtilityEstimator.class));
+        bind(IDFBicycleUtilityEstimator.class); // explicit bindings are required
         writer.addEstimator("bicycle", injector.getInstance(IDFBicycleUtilityEstimator.class));
+        bind(WalkUtilityEstimator.class); // explicit bindings are required
         writer.addEstimator("walk", injector.getInstance(WalkUtilityEstimator.class));
 
         // mode costs
+        bind(IDFCarCostModel.class); // explicit bindings are required
         writer.addCostModel("car", injector.getInstance(IDFCarCostModel.class));
+        bind(IDFPtCostModel.class); // explicit bindings are required
         writer.addCostModel("pt", injector.getInstance(IDFPtCostModel.class));
 
         // availability
+        bind(IDFModeAvailability.class); // explicit bindings are required
         writer.addAvailability("standard", injector.getInstance(IDFModeAvailability.class));
 
         return writer;
