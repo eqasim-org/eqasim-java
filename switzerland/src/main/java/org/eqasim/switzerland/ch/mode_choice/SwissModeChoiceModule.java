@@ -2,7 +2,6 @@ package org.eqasim.switzerland.ch.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Collection;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;

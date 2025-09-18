@@ -15,6 +15,7 @@ public class PTLinkVolumesWriter implements IterationEndsListener {
         this.filename = outputPath;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
         int current = event.getIteration();

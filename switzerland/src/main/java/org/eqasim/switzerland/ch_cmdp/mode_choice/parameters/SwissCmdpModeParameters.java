@@ -2,9 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.parameters;
 
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class SwissCmdpModeParameters extends SwissModeParameters {
