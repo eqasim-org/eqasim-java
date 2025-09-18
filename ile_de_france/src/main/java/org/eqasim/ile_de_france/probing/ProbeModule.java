@@ -20,6 +20,7 @@ import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredic
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.NetworkRoutingProvider;
@@ -69,6 +70,10 @@ public class ProbeModule extends AbstractModule {
             bind(IDFCarCostModel.class);
             bind(IDFPtCostModel.class);
             bind(IDFModeAvailability.class);
+        }
+
+        if (config.useProbeAvailability) {
+            bind(ModeAvailability.class).toInstance(new ProbeModeAvailability());
         }
     }
 
