@@ -15,7 +15,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     private String repoUrl = "https://github.com/Dib-AEK/EqasimParametersCalibration.git";
     private String repoBranch = "polars";
-    private String repoCommit = "1de98c60cf0ca5c3f48d2342ea776f54cad05ffd";
+    private String repoCommit = "f6c7dc4f97f9f797f255a6421d8856dde3f494ea";
 
     private String optimizerPath = "optimizer";
     private String optimizer = "cmaes";

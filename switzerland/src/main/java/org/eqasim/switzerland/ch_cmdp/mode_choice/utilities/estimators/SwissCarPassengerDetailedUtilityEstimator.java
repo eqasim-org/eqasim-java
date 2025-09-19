@@ -82,6 +82,14 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         return Utils.isShortDistanceTrip(variables.euclideanDistance_km)? parameters.cp.betaShortDistance_u :0.0;
     }
 
+    protected double estimateCantonUtility(Person person) {
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        if (cantonObj instanceof String canton) {
+            return parameters.swissCanton.cp.getOrDefault(canton, 0.0);
+        }
+        return 0.0;
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
@@ -101,6 +109,8 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         utility += estimateRegionalUtility(personVariables);
         utility += estimateHomeOriginUtility(trip);
         utility += estimateShortDistanceUtility(variables);
+
+        utility += estimateCantonUtility(person);
 
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, variables, personVariables, utility);

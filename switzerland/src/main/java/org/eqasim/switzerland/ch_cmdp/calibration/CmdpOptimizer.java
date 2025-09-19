@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CmdpOptimizer extends StandardOptimizer {
+    private double beta = 0.2;
 
     public CmdpOptimizer(CalibrationConfigGroup calibrationConfig) {
         super(calibrationConfig);
@@ -27,6 +28,12 @@ public class CmdpOptimizer extends StandardOptimizer {
             List<String> command = new ArrayList<>();
             command.add(pythonPath);
             command.add(runScript);
+            // this beta will be used to smooth the variations in the parameters
+            if (iteration ==5 ){
+                beta = calibrationConfig.getBetaMomentum();
+            } else if (iteration%30==0 && iteration>0){
+                beta = Math.min(0.98, 1.0 - (1.0-beta)/2.0);
+            }
 
             // Build command-line arguments based on config
             Map<String, String> args = new HashMap<>();
@@ -42,7 +49,7 @@ public class CmdpOptimizer extends StandardOptimizer {
             args.put("--metric", calibrationConfig.getMetric());
             args.put("--optimizer", calibrationConfig.getOptimizer());
             args.put("--momentum", calibrationConfig.getMomentum());
-            args.put("--beta-momentum", String.valueOf(calibrationConfig.getBetaMomentum()));
+            args.put("--beta-momentum", String.valueOf(beta));
             args.put("--max-evals", String.valueOf(calibrationConfig.getMaxEval()));
             args.put("--population-sample", String.valueOf(calibrationConfig.getPopulationSample()));
             args.put("--objectives", calibrationConfig.getObjectives());
@@ -50,7 +57,7 @@ public class CmdpOptimizer extends StandardOptimizer {
             args.put("--distance-bins", calibrationConfig.getDistanceBins());
             args.put("--utilities", "ch_cmdp");
             args.put("--modes-in-loss", "car,pt,walk,bike,car_passenger");
-
+            args.put("--beta-decay-method", "constant");
             // Append to command list
             args.forEach((key, value) -> {
                 command.add(key);

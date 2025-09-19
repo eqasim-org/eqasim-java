@@ -66,6 +66,7 @@ public class RunAdaptConfig {
 		crossBorderStrategy.setSubpopulation("crossborder");
 		replanningConfigGroup.addStrategySettings(crossBorderStrategy);
 
+
 		if (SwissConfigAdapter.downsamplingRate < 1.0) {
 			// adjust the flow and storage capacities based on
 			// the work from T.W. Nicolai Using MATSim as a travel model plug-in to UrbanSim
@@ -80,15 +81,19 @@ public class RunAdaptConfig {
 
 		List<String> LOOP_MODES = new ArrayList<>(Arrays.asList("walk_loop", "pt_loop", "bike_loop", "car_loop", "car_passenger_loop"));
 
-		// also adding loop modes that should not be considered for mode choice
+		// set mode choice model estimators and cost models
 		eqasimConfig.setEstimator(TransportMode.car, SwissModeChoiceModule.CAR_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, SwissModeChoiceModule.BIKE_ESTIMATOR_NAME);
-		for (String mode : LOOP_MODES) {
-			eqasimConfig.setEstimator(mode, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
-		}
+		eqasimConfig.setEstimator(TransportMode.pt, SwissModeChoiceModule.PT_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.walk, SwissModeChoiceModule.WALK_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator("car_passenger", SwissModeChoiceModule.CP_ESTIMATOR_NAME);
 
 		eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, SwissModeChoiceModule.PT_COST_MODEL_NAME);
+		// also adding loop modes that should not be considered for mode choice
+		for (String mode : LOOP_MODES) {
+			eqasimConfig.setEstimator(mode, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+		}
 		for (String mode : LOOP_MODES) {
 			eqasimConfig.setCostModel(mode, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 		}
@@ -96,17 +101,12 @@ public class RunAdaptConfig {
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
-		dmcConfig.setModeAvailability(org.eqasim.switzerland.ch.mode_choice.SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
+		dmcConfig.setModeAvailability(SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
 		Collection<String> cachedModes = dmcConfig.getCachedModes();
 		for (String mode : LOOP_MODES) {
 			cachedModes.add(mode);
 		}
 		dmcConfig.setCachedModes(cachedModes);
-
-		Collection<String> constraints = dmcConfig.getTripConstraints();
-		constraints.add("LoopModesConstraint");
-
-		dmcConfig.setTripConstraints(constraints);
 
 		ScoringConfigGroup scoringConfig1 = config.scoring();
 		RoutingConfigGroup routingConfig  = config.routing();
@@ -118,6 +118,7 @@ public class RunAdaptConfig {
 		RoutingConfigGroup.TeleportedModeParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
 		walkParams.setBeelineDistanceFactor(1.3);
 		walkParams.setTeleportedModeSpeed(1.3);
+
 		//loop modes
 		for (String mode : LOOP_MODES) {
 			ModeParams modeParams = scoringConfig1.getOrCreateModeParams(mode);
@@ -141,20 +142,8 @@ public class RunAdaptConfig {
 			}
 		}
 
-		// set mode choice model estimators and cost models
-		eqasimConfig.setEstimator(TransportMode.car, SwissModeChoiceModule.CAR_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(TransportMode.bike, SwissModeChoiceModule.BIKE_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(TransportMode.pt, SwissModeChoiceModule.PT_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator(TransportMode.walk, SwissModeChoiceModule.WALK_ESTIMATOR_NAME);
-		eqasimConfig.setEstimator("car_passenger", SwissModeChoiceModule.CP_ESTIMATOR_NAME);
-
-		eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_COST_MODEL_NAME);
-		eqasimConfig.setCostModel(TransportMode.pt, SwissModeChoiceModule.PT_COST_MODEL_NAME);
-
-
-		// set trip constraints and mode availability (to remove car passenger constraint)
-		dmcConfig.setModeAvailability(SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
-		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk"));
+		// set trip constraints (to remove car passenger constraint)
+		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk", "LoopModesConstraint"));
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {

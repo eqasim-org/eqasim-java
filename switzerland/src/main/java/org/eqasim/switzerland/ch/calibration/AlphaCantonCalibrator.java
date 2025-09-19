@@ -17,42 +17,45 @@ import java.io.*;
 import java.util.*;
 
 public class AlphaCantonCalibrator implements FastCalibration {
+    // Logging
     private static final Logger logger = LogManager.getLogger(AlphaCantonCalibrator.class);
 
+    // Calibration targets
     private final Map<String, Map<String, Double>> targetModeSharesByCanton;
-
-    private final Map<String, Double> shares = new HashMap<>();
-    private final Map<String, Map<String, Double>> sharesByCanton = new HashMap<>();
-
-    private final Map<String, Double> modeCounts = new HashMap<>();
-    private final Map<String, Map<String, Double>> modeCountsByCanton = new HashMap<>();
-
-    private final Map<String, List<Double>> errors = new HashMap<>();
-
-    private final Map<String, Boolean> doUpdateThisIteration = new HashMap<>();
-    private final Map<String, Integer> numberOfUpdates = new HashMap<>();
-
-    private final Set<String> cantons;
-
-    private final double beta;
-    private final Scenario scenario;
-    private final int batchSizeLimit = 800; // the minimum number of observations before updating the parameters
-    private final String cantonsModeShareFile;
-
+    private final Map<String, Double> targetModeShares;
+    private final List<String> modesToCalibrate;
     private final Set<String> consideredModes = Set.of("car", "pt", "walk", "bike", "car_passenger");
 
+    // Calibration state
+    private final Map<String, Double> shares = new HashMap<>();
+    private final Map<String, Map<String, Double>> sharesByCanton = new HashMap<>();
+    private final Map<String, Double> modeCounts = new HashMap<>();
+    private final Map<String, Map<String, Double>> modeCountsByCanton = new HashMap<>();
+    private final Map<String, List<Double>> errors = new HashMap<>();
+    private final Map<String, Boolean> doUpdateThisIteration = new HashMap<>();
+    private final Map<String, Integer> numberOfUpdates = new HashMap<>();
+    private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
+    private int replannedTripsCount = 0;
+    private int changedUtilityCount = 0;
+    private int numGlobalUpdates = 0;
+    private final int lastIteration;
+
+    // Configuration
+    private final Set<String> cantons;
+    private final double beta;
+    private final int batchSizeLimit = 800; // the minimum number of observations before updating the parameters
+    private final boolean isActivated;
+    private final String cantonsModeShareFile;
+
+    // External dependencies
+    private final Scenario scenario;
     private final OutputDirectoryHierarchy outputHierarchy;
     private final SwissModeParameters modeParameters;
     private final TripListConverter tripListConverter;
-    private int replannedTripsCount = 0;
-    private int changedUtilityCount = 0;
-    private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
-
-    private final boolean isActivated;
-    private final List<String> modesToCalibrate;
 
     public AlphaCantonCalibrator(Scenario scenario,
                                  OutputDirectoryHierarchy outputHierarchy,
+                                 Map<String, Double> targetModeShares,
                                  SwissModeParameters modeParameters,
                                  TripListConverter tripListConverter,
                                  List<String> modesToCalibrate,
@@ -62,12 +65,14 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
         this.modesToCalibrate = modesToCalibrate;
         this.scenario = scenario;
+        this.targetModeShares = targetModeShares;
         this.outputHierarchy = outputHierarchy;
         this.modeParameters = modeParameters;
         this.tripListConverter = tripListConverter;
         this.beta = beta;
         this.isActivated = isActivated;
         this.cantonsModeShareFile = filePath;
+        this.lastIteration = scenario.getConfig().controller().getLastIteration();
         if (isActivated) {
             // assert if file exists
             assertIfFileExists();
@@ -89,6 +94,11 @@ public class AlphaCantonCalibrator implements FastCalibration {
         }
     }
 
+    private boolean updateGlobal(int iteration) {
+        // update only global parameters in the last 20 iterations
+        return iteration>=lastIteration-30;
+    }
+
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
         if (!isActivated) {
@@ -106,13 +116,48 @@ public class AlphaCantonCalibrator implements FastCalibration {
             // update the shares based on the previous counts, and reset the counts
             updateShares();
             // update the alphas based on the updated shares
-            updateAlphas(iteration);
+            if (updateGlobal(iteration)){
+                logger.info("Iteration {}: Updating Global ASCs", iteration);
+                updateGlobalAlphas(iteration);
+                numGlobalUpdates += 1;
+            }else{
+                logger.info("Iteration {}: Updating Regional ASCs", iteration);
+                updateRegionalAlphas(iteration);
+            }
             // reset the counts for the cantons whose parameters were updated
             resetCounts();
             // writing
             saveSharesToFile(iteration);
             saveAlphasToFile(iteration);
         }
+    }
+
+    private void updateGlobalAlphas(int iteration) {
+        Map<String, Double> newAlphas = new HashMap<>();
+        double epsilon = 0.0001; // Small value to avoid log(0) issues
+        // Reference mode is pt, its alpha remains unchanged, 0.0
+        double mo = Math.max(shares.get("pt"), epsilon);
+        double zo = Math.max(targetModeShares.get("pt"), epsilon);
+        newAlphas.put("pt", 0.0);
+        // update alphas for other modes
+        for (String mode : modesToCalibrate) {
+            if (mode.equals("pt")) {
+                continue; // Skip the reference mode
+            }
+
+            double mi = Math.max(shares.get(mode), epsilon);
+            double zi = Math.max(targetModeShares.get(mode), epsilon);
+            double alpha = 0.0;
+            // Calculate the new alpha value based on the current share and the target share
+            double newAlpha = alpha + (Math.log(zi)-Math.log(mi)) - (Math.log(zo)-Math.log(mo));
+            // update it using EMA
+            double effectiveBeta = getEffectiveBeta(0, iteration);
+            newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
+            // put the new alpha in the map
+            newAlphas.put(mode, newAlpha);
+        }
+        // Update the alphas in the mode parameters
+        setAlphas("all", newAlphas);
     }
 
     private void resetPlansCreationFlag() {
@@ -191,7 +236,6 @@ public class AlphaCantonCalibrator implements FastCalibration {
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
             Plan plan = person.getSelectedPlan();
-            String canton = (String) person.getAttributes().getAttribute("cantonName");
 
             if ((Boolean) plan.getAttributes().getAttribute("createdLastIteration")) {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);
@@ -203,6 +247,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
                     if (consideredModes.contains(mode) && !sameLocation) {
                         modeCounts.put(mode, modeCounts.getOrDefault(mode, 0.0) + 1.0);
 
+                        String canton = (String) person.getAttributes().getAttribute("cantonName");
                         Map<String, Double> cantonModeCounts = modeCountsByCanton.computeIfAbsent(canton, k -> new HashMap<>());
                         cantonModeCounts.put(mode, cantonModeCounts.getOrDefault(mode, 0.0) + 1.0);
                         replannedTripsCount += 1; // Count the number of replanned plans
@@ -240,7 +285,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
         modeCounts.clear();
     }
 
-    private void updateAlphas(int matsimIteration) {
+    private void updateRegionalAlphas(int matsimIteration) {
         for (String canton : sharesByCanton.keySet()) {
             // check if there are improvements from last 3 iterations
             boolean hasImproved = true ; //checkIfItImproved(canton);
@@ -283,19 +328,30 @@ public class AlphaCantonCalibrator implements FastCalibration {
     }
 
     private double getEffectiveBeta(int iteration, int matsimIteration) {
-        double effectiveBeta;
-        if (matsimIteration >= 110) {
-            effectiveBeta = 0.998;
-        } else if (matsimIteration > 90) {
-            effectiveBeta = 0.98;
-        } else if (matsimIteration > 70) {
-            effectiveBeta = 0.95;
-        } else {
-            effectiveBeta = (iteration < 5)
-                    ? 0.0
-                    : Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2 * iteration + 1.0)));
+        // For global updates, use a staged beta based on the number of global updates
+        if (updateGlobal(matsimIteration)) {
+            if (numGlobalUpdates < 3) {
+                return 0.2;
+            } else if (numGlobalUpdates < 6) {
+                return 0.5;
+            } else if (numGlobalUpdates < 10) {
+                return 0.8;
+            } else {
+                return 0.95;
+            }
         }
-        return effectiveBeta;
+
+        // For regional updates, use beta based on iteration number
+        if (matsimIteration >= 120) {
+            return 0.99;
+        } else if (matsimIteration > 90) {
+            return 0.95;
+        } else if (matsimIteration < 5) {
+            return 0.0;
+        } else {
+            // Gradually increase beta as iterations progress
+            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.08 * iteration + 1.0)));
+        }
     }
 
     private Map<String, Double> getAlphas(String canton) {
@@ -309,11 +365,42 @@ public class AlphaCantonCalibrator implements FastCalibration {
     }
 
     private void setAlphas(String canton, Map<String, Double> alphas) {
-        if(alphas.containsKey("car")) {modeParameters.swissCanton.car.put(canton, alphas.get("car"));}
-        if(alphas.containsKey("pt")) {modeParameters.swissCanton.pt.put(canton, alphas.get("pt"));}
-        if(alphas.containsKey("walk")) {modeParameters.swissCanton.walk.put(canton, alphas.get("walk"));}
-        if(alphas.containsKey("bike")) {modeParameters.swissCanton.bike.put(canton, alphas.get("bike"));}
-        if(alphas.containsKey("car_passenger")) {modeParameters.swissCanton.cp.put(canton, alphas.get("car_passenger"));}
+        if (canton.equals("all")) {
+            // set for all cantons
+            for (String c : cantons) {
+                if (alphas.containsKey("car")) {
+                    modeParameters.swissCanton.car.put(c, modeParameters.swissCanton.car.getOrDefault(c, 0.0) + alphas.get("car"));
+                }
+                if (alphas.containsKey("pt")) {
+                    modeParameters.swissCanton.pt.put(c, modeParameters.swissCanton.pt.getOrDefault(c, 0.0) + alphas.get("pt"));
+                }
+                if (alphas.containsKey("walk")) {
+                    modeParameters.swissCanton.walk.put(c, modeParameters.swissCanton.walk.getOrDefault(c, 0.0) + alphas.get("walk"));
+                }
+                if (alphas.containsKey("bike")) {
+                    modeParameters.swissCanton.bike.put(c, modeParameters.swissCanton.bike.getOrDefault(c, 0.0) + alphas.get("bike"));
+                }
+                if (alphas.containsKey("car_passenger")) {
+                    modeParameters.swissCanton.cp.put(c, modeParameters.swissCanton.cp.getOrDefault(c, 0.0) + alphas.get("car_passenger"));
+                }
+            }
+        } else {
+            if (alphas.containsKey("car")) {
+                modeParameters.swissCanton.car.put(canton, alphas.get("car"));
+            }
+            if (alphas.containsKey("pt")) {
+                modeParameters.swissCanton.pt.put(canton, alphas.get("pt"));
+            }
+            if (alphas.containsKey("walk")) {
+                modeParameters.swissCanton.walk.put(canton, alphas.get("walk"));
+            }
+            if (alphas.containsKey("bike")) {
+                modeParameters.swissCanton.bike.put(canton, alphas.get("bike"));
+            }
+            if (alphas.containsKey("car_passenger")) {
+                modeParameters.swissCanton.cp.put(canton, alphas.get("car_passenger"));
+            }
+        }
     }
 
     private void saveAlphasToFile(int iteration) {

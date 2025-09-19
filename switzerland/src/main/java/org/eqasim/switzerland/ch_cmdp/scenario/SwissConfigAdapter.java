@@ -1,10 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.scenario;
 
 import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
-import org.matsim.core.config.CommandLine;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.ConfigWriter;
+import org.matsim.core.config.*;
 
 import java.util.Arrays;
 import java.util.List;

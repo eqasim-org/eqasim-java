@@ -81,6 +81,14 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         return distance_km>5.0 ? -1e3 : 0.0;
     }
 
+    protected double estimateCantonUtility(Person person) {
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        if (cantonObj instanceof String canton) {
+            return parameters.swissCanton.walk.getOrDefault(canton, 0.0);
+        }
+        return 0.0;
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         WalkVariables variables = walkPredictor.predictVariables(person, trip, elements);
@@ -99,6 +107,8 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         utility += estimateUrbanDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
         utility += estimatedLongDistanceUtility(trip);
+
+        utility += estimateCantonUtility(person);
 
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, variables, personVariables, utility);

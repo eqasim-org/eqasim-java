@@ -2,17 +2,24 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.opencsv.exceptions.CsvValidationException;
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.calibration.Optimizer;
 import org.eqasim.core.components.calibration.OptimizerHandler;
 import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.fast_calibration.AlphaCalibrator;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
+import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
+import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.*;
+import org.eqasim.switzerland.ch_cmdp.calibration.AlphaClusterCalibrator;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizer;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizerHandler;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpVariablesWriter;
@@ -33,6 +40,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +57,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String WALK_ESTIMATOR_NAME = "SwissDetailedWalkEstimator";
 	static public final String CP_ESTIMATOR_NAME = "SwissDetailedCpEstimator";
 
+	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
+
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
 	}
@@ -59,6 +69,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bind(VariablesWriter.class).to(CmdpVariablesWriter.class).asEagerSingleton();
 		bind(Optimizer.class).to(CmdpOptimizer.class).asEagerSingleton();
 		bind(OptimizerHandler.class).to(CmdpOptimizerHandler.class).asEagerSingleton();
+
+		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissDetailedModeAvailability.class);
@@ -76,8 +88,21 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		// Calibration
 		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
-		if (calConfig.isActivate() && calConfig.getLevel().equalsIgnoreCase("canton")) {
-			bind(FastCalibration.class).to(AlphaCantonCalibrator.class).asEagerSingleton();
+		if (calConfig.isActivate()) {
+			String level = calConfig.getLevel().toLowerCase();
+			switch (level) {
+				case "global":
+					bind(FastCalibration.class).to(AlphaCalibrator.class).asEagerSingleton();
+					break;
+				case "canton":
+					bind(FastCalibration.class).to(AlphaCantonCalibrator.class).asEagerSingleton();
+					break;
+				case "cluster":
+					bind(FastCalibration.class).to(AlphaClusterCalibrator.class).asEagerSingleton();
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown calibration level: " + level);
+			}
 		}
 	}
 
@@ -127,7 +152,39 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		if (filePath.isEmpty()) {
 			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
 		}
-		return new AlphaCantonCalibrator(scenario,outputHierarchy,modeParameters,
+		Map<String, Double> targetModeShares = Map.of(
+				"car", calConfig.getCarModeShare(),
+				"pt", calConfig.getPtModeShare(),
+				"walk", calConfig.getWalkModeShare(),
+				"bike", calConfig.getBikeModeShare(),
+				"car_passenger", calConfig.getCarPassengerModeShare()
+		);
+
+		return new AlphaCantonCalibrator(scenario,outputHierarchy,targetModeShares, modeParameters,
+				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate());
+	}
+
+	@Provides
+	@Singleton
+	public AlphaClusterCalibrator provideAlphaClusterCalibrator(Scenario scenario,
+															    OutputDirectoryHierarchy outputHierarchy,
+															    SwissCmdpModeParameters modeParameters,
+															    TripListConverter tripListConverter) {
+		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
+
+		String filePath = calConfig.getFilePath();
+		if (filePath.isEmpty()) {
+			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
+		}
+		Map<String, Double> targetModeShares = Map.of(
+				"car", calConfig.getCarModeShare(),
+				"pt", calConfig.getPtModeShare(),
+				"walk", calConfig.getWalkModeShare(),
+				"bike", calConfig.getBikeModeShare(),
+				"car_passenger", calConfig.getCarPassengerModeShare()
+		);
+
+		return new AlphaClusterCalibrator(scenario,outputHierarchy, targetModeShares, modeParameters,
 				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate());
 	}
 
@@ -144,4 +201,65 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 															  EqasimConfigGroup eqasimConfigGroup, SwissCmdpModeParameters parameters, Optimizer optimizer) {
 		return new CmdpOptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
 	}
+
+	@Provides
+	//@Singleton
+	public ZonalRegistry provideZonalRegistry() throws IOException, CsvValidationException {
+		SwissPTZonesConfigGroup ptZonesConfig = SwissPTZonesConfigGroup.getOrCreate(getConfig());
+
+		String file_path = "";
+		ZonalReader zonalReader = new ZonalReader();
+		ZonalRegistry zonalRegistry = null;
+		ZonalRegistry sbbZonalRegistry = null;
+
+		if (ptZonesConfig.getZonePath() != null){
+			file_path = ptZonesConfig.getZonePath();
+			File path = new File(file_path);
+			Collection<Authority> authorities = zonalReader.readTarifNetworks(path);
+			Collection<Zone> zones = zonalReader.readZones(path, authorities);
+			zonalRegistry = new ZonalRegistry(authorities, zones);
+		}
+		else{
+			throw new IOException("No input file detected to create the zonal registry.");
+		}
+
+		if (ptZonesConfig.getSBBDistancesPath() != null) {
+			file_path = ptZonesConfig.getSBBDistancesPath();
+			File path = new File(file_path);
+			Zone sbbZone = SBBDistanceReader.createZone(path);
+			sbbZonalRegistry = SBBDistanceReader.createZonalRegistry(sbbZone);
+			zonalRegistry.merge(sbbZonalRegistry);
+		}
+		else{
+			throw new IOException("No input file detected to create the SBB network.");
+		}
+
+		return zonalRegistry;
+	}
+
+	@Provides
+	public NetworkOfDistances provideNetworkOfDistances() throws IOException, CsvValidationException{
+		SwissPTZonesConfigGroup ptZonesConfig = SwissPTZonesConfigGroup.getOrCreate(getConfig());
+
+		String file_path = "";
+		NetworkOfDistances sbbNetwork = new NetworkOfDistances();
+
+		if (ptZonesConfig.getSBBDistancesPath() != null){
+			file_path = ptZonesConfig.getSBBDistancesPath();
+			File path = new File(file_path);
+			sbbNetwork = SBBDistanceReader.createNetworkOfDistances(path);
+		}
+		else{
+			throw new IOException("No input file detected to create the SBB network.");
+		}
+
+		return sbbNetwork;
+
+	}
+
+	@Provides
+	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(){
+		return new SwissPtStageCostCalculator();
+	}
+
 }

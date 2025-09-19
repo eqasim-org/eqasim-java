@@ -83,6 +83,14 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return distance_km>20.0 ? -1e3 : 0.0;
     }
 
+    protected double estimateCantonUtility(Person person) {
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        if (cantonObj instanceof String canton) {
+            return parameters.swissCanton.bike.getOrDefault(canton, 0.0);
+        }
+        return 0.0;
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
@@ -100,6 +108,8 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         utility += estimateUrbanDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
         utility += estimatedLongDistanceUtility(trip);
+
+        utility += estimateCantonUtility(person);
 
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, bikeVariables, personVariables, utility);

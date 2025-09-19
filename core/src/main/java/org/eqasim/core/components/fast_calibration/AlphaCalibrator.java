@@ -195,13 +195,27 @@ public class AlphaCalibrator implements FastCalibration {
             // Calculate the new alpha value based on the current share and the target share
             double newAlpha = alpha + (Math.log(zi)-Math.log(mi)) - (Math.log(zo)-Math.log(mo));
             // update it using EMA
-            double effectiveBeta = Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.2*iteration + 1.0)));
+            double effectiveBeta = getEffectiveBeta(iteration);
             newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
             // put the new alpha in the map
             newAlphas.put(mode, newAlpha);
         }
         // Update the alphas in the mode parameters
         setAlphas(newAlphas);
+    }
+
+    private double getEffectiveBeta(int iteration) {
+        // For regional updates, use beta based on iteration number
+        if (iteration >= 120) {
+            return 0.99;
+        } else if (iteration > 90) {
+            return 0.95;
+        } else if (iteration < 5) {
+            return 0.0;
+        } else {
+            // Gradually increase beta as iterations progress
+            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.08 * (iteration - 5) + 1.0)));
+        }
     }
 
     private Map<String, Double> getAlphas() {
@@ -228,7 +242,7 @@ public class AlphaCalibrator implements FastCalibration {
     private void saveSharesToFile(int iteration) {
         File outputFile = new File(outputHierarchy.getIterationFilename(iteration, "shares.csv"));
         try (PrintWriter writer = new PrintWriter(outputFile)) {
-            writer.println("mode,share,formula_share,tracker_share,replanned_trips_count,changed_utility_count");
+            writer.println("mode,share,replanned_trips_count,changed_utility_count");
             for (Map.Entry<String, Double> entry : shares.entrySet()) {
                 String mode = entry.getKey();
                 writer.printf("%s,%.4f,%d,%d%n", mode, entry.getValue(), replannedTripsCount, changedUtilityCount);

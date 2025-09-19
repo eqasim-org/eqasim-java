@@ -14,10 +14,12 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import java.io.IOException;
+
 
 public class RunSimulation {
 	@SuppressWarnings("deprecation")
-	static public void main(String[] args) throws ConfigurationException {
+	static public void main(String[] args) throws ConfigurationException, IOException {
 		// set preventwaitingtoentertraffic to y if you want to to prevent that waiting traffic has to wait for space in the link buffer
 		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.
 		CommandLine cmd = new CommandLine.Builder(args) //

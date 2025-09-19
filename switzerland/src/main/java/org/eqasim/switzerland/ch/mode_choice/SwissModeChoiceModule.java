@@ -128,7 +128,15 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		if (filePath.isEmpty()) {
 			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
 		}
-		return new AlphaCantonCalibrator(scenario,outputHierarchy,modeParameters,
+		Map<String, Double> targetModeShares = Map.of(
+				"car", calConfig.getCarModeShare(),
+				"pt", calConfig.getPtModeShare(),
+				"walk", calConfig.getWalkModeShare(),
+				"bike", calConfig.getBikeModeShare(),
+				"car_passenger", calConfig.getCarPassengerModeShare()
+		);
+
+		return new AlphaCantonCalibrator(scenario,outputHierarchy,targetModeShares,modeParameters,
 				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate());
 	}
 

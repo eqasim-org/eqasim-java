@@ -36,6 +36,7 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 					copyAttribute(household, person, "cantonId");
 					copyAttribute(household, person, "municipalityType");
 					copyAttribute(household, person, "incomePerCapita");
+					copyAttribute(household, person, "cantonName");
 				}
 			}
 		}

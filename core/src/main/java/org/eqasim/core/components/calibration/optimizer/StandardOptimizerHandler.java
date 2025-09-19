@@ -12,13 +12,17 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationStartsEvent;
+import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.listener.IterationStartsListener;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.matsim.core.controler.listener.ShutdownListener;
 
 
 import java.io.File;
 
-public class StandardOptimizerHandler implements OptimizerHandler {
+import static org.apache.commons.io.FileUtils.copyFile;
+
+public class StandardOptimizerHandler implements OptimizerHandler, ShutdownListener {
     protected final Logger logger = LogManager.getLogger(OptimizerHandler.class);
     protected final OutputDirectoryHierarchy outputDirectoryHierarchy;
     protected final CalibrationConfigGroup calibrationConfig;
@@ -44,7 +48,7 @@ public class StandardOptimizerHandler implements OptimizerHandler {
 
         int iteration = event.getIteration();
         String newParametersFilePath = getNewParametersFilePath(iteration);
-        String lastParametersFilePath = getLastParametersFilePath(iteration);
+        String lastParametersFilePath = getLastParametersFilePath();
         String variablesIterationPath = getVariablesIterationPath(iteration);
 
         boolean optimizationSucceeded = runOptimizer(iteration, newParametersFilePath, lastParametersFilePath, variablesIterationPath);
@@ -64,7 +68,7 @@ public class StandardOptimizerHandler implements OptimizerHandler {
         return outputDirectoryHierarchy.getIterationFilename(iteration, "optimal_parameters.yml");
     }
 
-    protected String getLastParametersFilePath(int iteration) {
+    protected String getLastParametersFilePath() {
         return eqasimConfigGroup.getModeParametersPath();
     }
 
@@ -110,4 +114,18 @@ public class StandardOptimizerHandler implements OptimizerHandler {
         }
     }
 
+    @Override
+    public void notifyShutdown(ShutdownEvent shutdownEvent) {
+        String finalParametersPath = getLastParametersFilePath();
+        // copy the file to the output directory
+        String outputPath = outputDirectoryHierarchy.getOutputFilename("final_mode_parameters.yml");
+        try {
+            File source = new File(finalParametersPath);
+            File target = new File(outputPath);
+            copyFile(source, target);
+            logger.info("Final parameters copied to: " + outputPath);
+        } catch (Exception e) {
+            logger.warn("Could not copy final parameters to output directory: " + outputPath);
+        }
+    }
 }

@@ -206,20 +206,21 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
     @Override
     public Map<String, Double> getASCs() {
         Map<String, Double> alphas = new HashMap<>();
-        alphas.put("car", car.alpha_u);
-        alphas.put("pt", pt.alpha_u);
-        alphas.put("walk", walk.alpha_u);
-        alphas.put("bike", bike.alpha_u);
-        alphas.put("car_passenger", cp.alpha_u);
+        alphas.put("car", this.car.alpha_u);
+        alphas.put("pt", this.pt.alpha_u);
+        alphas.put("walk", this.walk.alpha_u);
+        alphas.put("bike", this.bike.alpha_u);
+        alphas.put("car_passenger", this.cp.alpha_u);
         return alphas;
     }
 
     @Override
     public void setASCs(Map<String, Double> alphas) {
-        car.alpha_u = alphas.getOrDefault("car", car.alpha_u);
-        pt.alpha_u = alphas.getOrDefault("pt", pt.alpha_u);
-        walk.alpha_u = alphas.getOrDefault("walk", walk.alpha_u);
-        bike.alpha_u = alphas.getOrDefault("bike", bike.alpha_u);
-        cp.alpha_u = alphas.getOrDefault("car_passenger", cp.alpha_u);
+        this.car.alpha_u = alphas.getOrDefault("car", this.car.alpha_u);
+        this.pt.alpha_u = alphas.getOrDefault("pt", this.pt.alpha_u);
+        this.walk.alpha_u = alphas.getOrDefault("walk", this.walk.alpha_u);
+        this.bike.alpha_u = alphas.getOrDefault("bike", this.bike.alpha_u);
+        this.cp.alpha_u = alphas.getOrDefault("car_passenger", this.cp.alpha_u);
     }
+
 }

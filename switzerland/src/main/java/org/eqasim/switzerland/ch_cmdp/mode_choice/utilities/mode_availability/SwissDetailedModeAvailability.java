@@ -6,11 +6,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.population.PersonUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-
+import java.util.*;
 
 public class SwissDetailedModeAvailability implements ModeAvailability {
     @Override
@@ -69,6 +65,20 @@ public class SwissDetailedModeAvailability implements ModeAvailability {
 
         if (carPassengerAvailability) {
             modes.add("car_passenger");
+        }
+
+        // Add special modes "*_loop" if applicable
+        List<String> LOOP_MODES      = new ArrayList<>(Arrays.asList("walk_loop", "pt_loop", "bike_loop", "car_loop", "car_passenger_loop"));
+        List<String> LOOP_ATTRIBUTES = new ArrayList<>(Arrays.asList("hasWalkLoopTrip", "hasPtLoopTrip", "hasBikeLoopTrip", "hasCarLoopTrip", "hasCarPassengerLoopTrip"));
+
+        for (int i = 0; i < LOOP_MODES.size(); i++){
+            String mode = LOOP_MODES.get(i);
+            String attribute = LOOP_ATTRIBUTES.get(i);
+
+            Boolean hasLoopTrip = (Boolean) person.getAttributes().getAttribute(attribute);
+            if (hasLoopTrip != null && hasLoopTrip) {
+                modes.add(mode);
+            }
         }
 
         return modes;
