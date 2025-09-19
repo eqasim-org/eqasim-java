@@ -2,7 +2,6 @@ package org.eqasim.switzerland.ch.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
-import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;

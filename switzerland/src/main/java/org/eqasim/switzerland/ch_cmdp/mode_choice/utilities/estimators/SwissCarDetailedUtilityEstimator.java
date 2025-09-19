@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;

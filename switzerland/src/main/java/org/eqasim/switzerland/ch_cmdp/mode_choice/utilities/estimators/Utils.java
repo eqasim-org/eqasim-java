@@ -2,11 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
-import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissCarPassengerVariables;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
 public class Utils {

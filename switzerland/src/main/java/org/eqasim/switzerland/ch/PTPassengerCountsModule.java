@@ -20,7 +20,8 @@ import com.google.inject.Singleton;
 
 public class PTPassengerCountsModule extends AbstractModule{
 
-	@Override
+	@SuppressWarnings("deprecation")
+    @Override
 	public void install() {
 		addControlerListenerBinding().to(PTPassengerAnalyser.class);
 		

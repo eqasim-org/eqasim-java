@@ -3,7 +3,6 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;

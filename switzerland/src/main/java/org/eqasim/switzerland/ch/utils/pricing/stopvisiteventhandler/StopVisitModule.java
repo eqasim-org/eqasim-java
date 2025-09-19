@@ -15,6 +15,7 @@ public class StopVisitModule extends AbstractModule {
         this.zonalRegistry = zonalRegistry;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
 	public void install() {
 		addControlerListenerBinding().to(StopVisitAnalyzer.class);

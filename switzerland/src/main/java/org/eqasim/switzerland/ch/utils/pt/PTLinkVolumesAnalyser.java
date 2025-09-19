@@ -34,7 +34,8 @@ public class PTLinkVolumesAnalyser implements IterationStartsListener, Iteration
     	if (analysisActive) {
     		analysisActive = false;
             event.getServices().getEvents().removeHandler(ptLinkVolumesHandler);
-    		String fullPath = event.getServices().getControlerIO().getOutputFilename(PT_FILE_NAME);
+    		@SuppressWarnings("deprecation")
+            String fullPath = event.getServices().getControlerIO().getOutputFilename(PT_FILE_NAME);
     		try {
 				ptLinkVolumesHandler.writeCSV(fullPath);
 	            System.out.println("✔ PT link volumes written to: " + fullPath);

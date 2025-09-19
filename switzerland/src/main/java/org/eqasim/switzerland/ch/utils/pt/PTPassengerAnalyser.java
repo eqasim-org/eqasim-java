@@ -34,7 +34,8 @@ public class PTPassengerAnalyser implements IterationStartsListener, IterationEn
     	if (analysisActive) {
     		analysisActive = false;
             event.getServices().getEvents().removeHandler(ptPassengerCountingHandler);
-    		String fullPath = event.getServices().getControlerIO().getOutputFilename(PT_FILE_NAME);
+    		@SuppressWarnings("deprecation")
+            String fullPath = event.getServices().getControlerIO().getOutputFilename(PT_FILE_NAME);
     		try {
 				ptPassengerCountingHandler.writeCSV(fullPath);
 	            System.out.println("✔ PT passenger counts written to: " + fullPath);
