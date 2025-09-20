@@ -3,6 +3,7 @@ package org.eqasim.core.components.fast_calibration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -15,31 +16,37 @@ import org.matsim.core.controler.events.IterationStartsEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class AlphaCalibrator implements FastCalibration {
     // This class tracks the mode share at the beginning of each iteration and calibrates the alpha value
     // based on the mode share from the previous iteration and the target mode shares.
 
+    // Logging
     private static final Logger logger = LogManager.getLogger(AlphaCalibrator.class);
 
+    // Calibration parameters
     private final Map<String, Double> targetModeShares;
     private final double beta;
+    private final boolean isActivated;
+    private final List<String> modesToCalibrate;
+
+    // MATSim scenario and utilities
     private final Scenario scenario;
+    private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
+    private final Map<Id<Person>, List<Integer>> personsTracker = new HashMap<>();
+
+    // Mode share tracking
     private final Map<String, Double> shares = new HashMap<>();
     private final Set<String> consideredModes = Set.of("car", "pt", "walk", "bike", "car_passenger");
+    private int replannedTripsCount = 0;
+    private int changedUtilityCount = 0;
 
+
+    // Output and mode choice
     private final OutputDirectoryHierarchy outputHierarchy;
     private final ModeParameters modeParameters;
     private final TripListConverter tripListConverter;
-    private int replannedTripsCount = 0;
-    private int changedUtilityCount = 0;
-    private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
-    private final boolean isActivated;
-    private final List<String> modesToCalibrate;
 
     public AlphaCalibrator(Scenario scenario,
                            OutputDirectoryHierarchy outputHierarchy,
@@ -140,22 +147,37 @@ public class AlphaCalibrator implements FastCalibration {
         }
     }
 
+    private Boolean isConsideredPerson(Person person) {
+        Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
+        Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
+        return !((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
+    }
+
     private Map<String, Double> getEstimatedModeSharesFromPlans(){
         Map<String, Double> estimatedShares = new HashMap<>();
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
+            if (!isConsideredPerson(person)) {
+                continue; // Skip cross-border and freight agents
+            }
+
+            // Check if the plan was created in the last iteration
             Plan plan = person.getSelectedPlan();
             if ((Boolean) plan.getAttributes().getAttribute("createdLastIteration")) {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);
+                List<Integer> tripIdx = personsTracker.getOrDefault(person.getId(), new ArrayList<>());
+
                 for (DiscreteModeChoiceTrip trip : trips) {
                     String mode = trip.getInitialMode();
                     boolean sameLocation = trip.getOriginActivity().getCoord().equals(trip.getDestinationActivity().getCoord());
                     // only consider trips with considered modes and different locations
                     if (consideredModes.contains(mode) && !sameLocation) {
                         estimatedShares.put(mode, estimatedShares.getOrDefault(mode, 0.0) + 1.0);
+                        tripIdx.add(trip.getIndex());
                         replannedTripsCount += 1; // Count the number of replanned plans
                     }
                 }
+                personsTracker.put(person.getId(), tripIdx);
             }
         }
 
@@ -210,11 +232,11 @@ public class AlphaCalibrator implements FastCalibration {
             return 0.99;
         } else if (iteration > 90) {
             return 0.95;
-        } else if (iteration < 5) {
+        } else if (iteration < 10) {
             return 0.0;
         } else {
             // Gradually increase beta as iterations progress
-            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.08 * (iteration - 5) + 1.0)));
+            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.08 * (iteration - 10.0) + 1.0)));
         }
     }
 
@@ -250,6 +272,20 @@ public class AlphaCalibrator implements FastCalibration {
         } catch (IOException e) {
             throw new RuntimeException("Error writing shares to file: " + outputFile.getAbsolutePath(), e);
         }
+
+        File outputFile2 = new File(outputHierarchy.getIterationFilename(iteration, "replannedAgents.csv"));
+        try (PrintWriter writer2 = new PrintWriter(outputFile2)) {
+            writer2.println("person;replanned_trips_indices");
+            for (Map.Entry<Id<Person>, List<Integer>> entry : personsTracker.entrySet()) {
+                Id<Person> personId = entry.getKey();
+                List<Integer> tripIndices = entry.getValue();
+                writer2.printf("%s;%s%n", personId.toString(), tripIndices.toString());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing shares to file: " + outputFile.getAbsolutePath(), e);
+        }
+
+
     }
 
 }

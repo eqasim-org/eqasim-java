@@ -150,11 +150,20 @@ public class AlphaClusterCalibrator implements FastCalibration {
         }
     }
 
+    private Boolean isConsideredPerson(Person person) {
+        Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
+        Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
+        return !((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
+    }
+
     private void updateCounts(){
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
-            Plan plan = person.getSelectedPlan();
+            if (!isConsideredPerson(person)) {
+                continue; // Skip cross-border and freight persons
+            }
 
+            Plan plan = person.getSelectedPlan();
             if ((Boolean) plan.getAttributes().getAttribute("createdLastIteration")) {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);
 
@@ -303,11 +312,11 @@ public class AlphaClusterCalibrator implements FastCalibration {
             return 0.99;
         } else if (matsimIteration > 90) {
             return 0.95;
-        } else if (matsimIteration < 5) {
+        } else if (matsimIteration < 10) {
             return 0.0;
         } else {
             // Gradually increase beta as iterations progress
-            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.08 * (matsimIteration - 5) + 1.0)));
+            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.08 * (matsimIteration - 10.0) + 1.0)));
         }
     }
 

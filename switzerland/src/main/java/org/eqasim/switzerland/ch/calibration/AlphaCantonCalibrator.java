@@ -43,7 +43,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
     // Configuration
     private final Set<String> cantons;
     private final double beta;
-    private final int batchSizeLimit = 800; // the minimum number of observations before updating the parameters
+    private final int batchSizeLimit = 500; // the minimum number of observations before updating the parameters
     private final boolean isActivated;
     private final String cantonsModeShareFile;
 
@@ -232,11 +232,20 @@ public class AlphaCantonCalibrator implements FastCalibration {
         }
     }
 
+    private Boolean isConsideredPerson(Person person) {
+        Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
+        Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
+        return !((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
+    }
+
     private void updateCounts(){
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
-            Plan plan = person.getSelectedPlan();
+            if (!isConsideredPerson(person)) {
+                continue; // Skip cross-border and freight agents
+            }
 
+            Plan plan = person.getSelectedPlan();
             if ((Boolean) plan.getAttributes().getAttribute("createdLastIteration")) {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);
 
@@ -346,7 +355,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
             return 0.99;
         } else if (matsimIteration > 90) {
             return 0.95;
-        } else if (matsimIteration < 5) {
+        } else if (matsimIteration < 10) {
             return 0.0;
         } else {
             // Gradually increase beta as iterations progress
