@@ -40,6 +40,7 @@ public class RunPopulationRouting {
 				.orElse(Runtime.getRuntime().availableProcessors());
 
 		Scenario scenario = ScenarioUtils.loadScenario(config);
+		configurator.adjustScenario(scenario);
 
 		if (scenario.getActivityFacilities() != null) {
 			for (ActivityFacility facility : scenario.getActivityFacilities().getFacilities().values()) {
