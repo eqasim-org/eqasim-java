@@ -120,9 +120,11 @@ public class SwissPredictorUtils {
 	public static int getCluster(Person person) {
 		int cantonId = getCantonId(person);
 		if (cantonId == 1 || cantonId == 12 || cantonId == 25) {
+		//if (cantonId == 23 || cantonId == 21) {
 			return 2;
 		}
 		if (cantonId == 5 || cantonId == 10 || cantonId == 18 || cantonId == 21 || cantonId == 22 || cantonId == 23 || cantonId == 24) {
+		// if (cantonId == 4 || cantonId == 8 || cantonId == 17 || cantonId == 20 || cantonId == 7 || cantonId == 9 || cantonId == 11|| cantonId == 26) {
 			return 1;
 		}
 		return 0;
