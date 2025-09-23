@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.costs.pt.PtStageCostCalculator;
@@ -217,9 +218,78 @@ public class RunComputeTransitPrices {
         return Math.max(originHomeDistance_km, destinationHomeDistance_km);
     }
 
+
+    public static double processPriceRequest(int id, CSVRequest request, Network network, SwissRailRaptor router, SwissPtRoutePredictor ptRoutePredictor, 
+        SwissPtStageCostCalculator swissPtStageCostCalculator){
+
+            Coord fromCoord = new Coord(request.originX, request.originY);
+            Coord toCoord   = new Coord(request.destinationX, request.destinationY);
+
+            Link fromLink = NetworkUtils.getNearestLink(network, fromCoord);
+            Link toLink   = NetworkUtils.getNearestLink(network, toCoord);
+
+            Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
+            Facility toFacility = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
+
+            try {
+                List<? extends PlanElement> route = router.calcRoute(
+                    DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, request.departureTime_s, null));
+
+                if (route == null || route.isEmpty()){
+                    return Double.NaN;
+                }
+                
+                SwissPtVariables ptVariables = ptRoutePredictor.predictPtVariables(route);
+                Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
+
+                if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()){
+                    return Double.NaN;
+                }
+
+                double price = 0.0;
+
+                // Junior abo should only be for kids and teens travelling with at least one parent...
+                if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)){
+                    return 0.0;
+                }
+
+                // TODO improve later
+                if (request.hasVerbundAbo) {
+                    double homeDistance_km = calculateHomeDistance_km(request);
+
+                    if (homeDistance_km <= 15.0) {
+                        return 0.0;
+                    }
+                }
+
+                if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo){
+                    return 0.0;
+                }
+
+                boolean halfFareTariff = request.hasHalbtaxSubscription || (request.age < 16);
+
+                for (Map.Entry<String, List<SwissPtLegVariables>> legEntry : groupedByAuthority.entrySet()){
+                    String authority                        = legEntry.getKey();
+                    List<SwissPtLegVariables> authorityLegs = legEntry.getValue();
+                    PtStageCostCalculator calculator        = swissPtStageCostCalculator.priceCalculators.get("None");
+
+                    if (swissPtStageCostCalculator.priceCalculators.containsKey(authority)){
+                        calculator = swissPtStageCostCalculator.priceCalculators.get(authority);				
+                    }
+
+                    price += calculator.calculatePrice(authorityLegs, halfFareTariff);
+                }
+
+                return price;
+            }
+            catch (Exception e){
+                System.err.println("Routing failed for request " + id + ": " + e.getMessage());
+                return Double.NaN;
+            }
+    }
+
     static public void main(String[] args) throws ConfigurationException, IOException, CsvValidationException {
-		// set preventwaitingtoentertraffic to y if you want to to prevent that waiting traffic has to wait for space in the link buffer
-		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.
+        
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "requests-path", "output-path") //
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
@@ -261,80 +331,25 @@ public class RunComputeTransitPrices {
         SwissRailRaptorData srrData = SwissRailRaptorData.create(transitSchedule,
 				scenario.getTransitVehicles(), srrStaticConfig, network, occupancyData);
 
-        SwissRailRaptor router = new SwissRailRaptor.Builder(srrData, config).build();
-        SwissPtRoutePredictor ptRoutePredictor = new SwissPtRoutePredictor(transitSchedule, zonalRegistry, sbbNetwork);
-        SwissPtStageCostCalculator swissPtStageCostCalculator = new SwissPtStageCostCalculator();
+        ThreadLocal<SwissRailRaptor> threadLocalRouter = ThreadLocal.withInitial(() -> new SwissRailRaptor.Builder(srrData, config).build()); 
+        ThreadLocal<SwissPtRoutePredictor> threadLocalPtRoutePredictor = ThreadLocal.withInitial(() -> new SwissPtRoutePredictor(transitSchedule, zonalRegistry, sbbNetwork)); 
+        ThreadLocal<SwissPtStageCostCalculator> threadLocalPtStageCalculator = ThreadLocal.withInitial(() -> new SwissPtStageCostCalculator()); 
 
         CSVRequestReader csvRequestReader = new RunComputeTransitPrices.CSVRequestReader(cmd.getOptionStrict("requests-path"));
         csvRequestReader.readCSV();
 
-        Map<Integer, Double> prices = new HashMap<>();
-        for (Map.Entry<Integer, CSVRequest> entry : csvRequestReader.requests.entrySet()) {
-            int id = entry.getKey();
-            CSVRequest request = entry.getValue();
-
-            Coord fromCoord = new Coord(request.originX, request.originY);
-            Coord toCoord   = new Coord(request.destinationX, request.destinationY);
-
-            Link fromLink = NetworkUtils.getNearestLink(network, fromCoord);
-            Link toLink   = NetworkUtils.getNearestLink(network, toCoord);
-
-            Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
-            Facility toFacility = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
-
-            List<? extends PlanElement> route = router.calcRoute(
-				DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, request.departureTime_s, null));
-
-            SwissPtVariables ptVariables = ptRoutePredictor.predictPtVariables(route);
-            Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
-
-            if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()){
-                prices.put(id, Double.NaN);
-                continue;
-            }
-
-            double legPrice = 0.0;
-            double price = 0.0;
-
-            // Junior abo should only be for kids and teens travelling with at least one parent...
-            if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)){
-                prices.put(id, 0.0);
-                continue;
-            }
-
-            // TODO improve later
-            if (request.hasVerbundAbo) {
-                double homeDistance_km = calculateHomeDistance_km(request);
-
-                if (homeDistance_km <= 15.0) {
-                    prices.put(id, 0.0);
-                    continue;
-                }
-            }
-
-            if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo){
-                prices.put(id, 0.0);
-                continue;
-            }
-
-            boolean halfFareTariff = request.hasHalbtaxSubscription || (request.age < 16);
-
-            for (Map.Entry<String, List<SwissPtLegVariables>> legEntry : groupedByAuthority.entrySet()){
-                String authority                        = legEntry.getKey();
-                List<SwissPtLegVariables> authorityLegs = legEntry.getValue();
-                PtStageCostCalculator calculator        = swissPtStageCostCalculator.priceCalculators.get("None");
-
-                if (swissPtStageCostCalculator.priceCalculators.containsKey(authority)){
-                    calculator = swissPtStageCostCalculator.priceCalculators.get(authority);				
-                }
-
-                legPrice = calculator.calculatePrice(authorityLegs, halfFareTariff);
-                price += legPrice;
-            }
-
-            prices.put(id, price);
-
-        }
+        Map<Integer, Double> prices = csvRequestReader.requests.entrySet().parallelStream()  
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> processPriceRequest(
+                    entry.getKey(),
+                    entry.getValue(),
+                    network,
+                    threadLocalRouter.get(),
+                    threadLocalPtRoutePredictor.get(),
+                    threadLocalPtStageCalculator.get()
+                )
+            ));
 
         CSVRequestWriter writer = new RunComputeTransitPrices.CSVRequestWriter(cmd.getOptionStrict("output-path"));
         writer.writeCSV(csvRequestReader.requests, prices);
