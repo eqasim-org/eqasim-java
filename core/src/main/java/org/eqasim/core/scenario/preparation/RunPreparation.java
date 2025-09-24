@@ -3,6 +3,8 @@ package org.eqasim.core.scenario.preparation;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.scenario.preparation.FacilityPlacement.OSMFacilityPlacementVoter;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.ConfigUtils;
@@ -13,6 +15,9 @@ import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.facilities.FacilitiesWriter;
 import org.matsim.facilities.MatsimFacilitiesReader;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class RunPreparation {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException {
@@ -37,6 +42,15 @@ public class RunPreparation {
 		OSMFacilityPlacementVoter voter = new OSMFacilityPlacementVoter(roadNetwork);
 		FacilityPlacement facilityPlacement = new FacilityPlacement(numberOfThreads, batchSize, roadNetwork, voter);
 		facilityPlacement.run(scenario.getActivityFacilities());
+
+		// add motorcycle mode
+		for (Link link : roadNetwork.getLinks().values()) {
+			Set<String> modes = new HashSet<>(link.getAllowedModes());
+			if (modes.contains("car")) {
+				modes.add("motorcycle");
+				link.setAllowedModes(modes);
+			}
+		}
 
 		// Fix freight activities (TODO: should go to the pipeline)
 		FreightAssignment freightAssignment = new FreightAssignment(scenario.getNetwork(),

@@ -56,48 +56,6 @@ public class IDFConfigurator extends EqasimConfigurator {
             EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
             eqasimConfig.setEstimator(TransportMode.motorcycle, IDFModeChoiceModule.MOTORCYCLE_ESTIMATOR_NAME);
             eqasimConfig.setCostModel(TransportMode.motorcycle, IDFModeChoiceModule.MOTORCYCLE_COST_MODEL_NAME);
-
-            // TODO : do we need to add motorcycles to this ?
-            // 	<module name="eqasim:termination" >
-            //		<param name="modes" value="walk,bike,pt,car,car_passenger,truck,outside" />
-        }
-		{ // Scoring
-			ScoringConfigGroup.ModeParams modeParameters = new ScoringConfigGroup.ModeParams("motorcycle");
-			modeParameters.setConstant(0.0);
-			modeParameters.setMarginalUtilityOfDistance(0.0);
-			modeParameters.setMonetaryDistanceRate(0.0);
-			config.scoring().addModeParams(modeParameters);
-		}
-        { // Routing
-            List<String> networkModes = new ArrayList<>(config.routing().getNetworkModes());
-            networkModes.add("motorcycle");
-            config.routing().setNetworkModes(networkModes);
-        }
-        { // Network
-            Network network = scenario.getNetwork();
-            for (Link link : network.getLinks().values()) {
-                Set<String> modes = new HashSet<>(link.getAllowedModes());
-                if (modes.contains("car")) {
-                    modes.add("motorcycle");
-                    link.setAllowedModes(modes);
-                }
-            }
-        }
-        { // Population ; force motorcycle starting mode
-//            Population population = scenario.getPopulation();
-//            for (Person person : population.getPersons().values()) {
-//                String motorcycleAvailability = (String) person.getAttributes().getAttribute("motorcycleAvailability");
-//                if ("some".equals(motorcycleAvailability) | "all".equals(motorcycleAvailability)) {
-//                    Plan plan = person.getSelectedPlan();
-//                    for (PlanElement element : plan.getPlanElements()) {
-//                        if (element instanceof Leg) {
-//                            Leg leg = (Leg) element;
-//                            leg.setMode(TransportMode.motorcycle);
-//                            leg.setRoutingMode(TransportMode.motorcycle);
-//                        }
-//                    }
-//                }
-//            }
         }
     }
 }
