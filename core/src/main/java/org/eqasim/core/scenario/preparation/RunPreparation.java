@@ -44,7 +44,7 @@ public class RunPreparation {
 		facilityPlacement.run(scenario.getActivityFacilities());
 
 		// add motorcycle mode
-		for (Link link : roadNetwork.getLinks().values()) {
+		for (Link link : scenario.getNetwork().getLinks().values()) {
 			Set<String> modes = new HashSet<>(link.getAllowedModes());
 			if (modes.contains("car")) {
 				modes.add("motorcycle");
