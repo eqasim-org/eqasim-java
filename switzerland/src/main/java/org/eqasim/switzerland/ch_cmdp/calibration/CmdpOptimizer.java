@@ -29,11 +29,12 @@ public class CmdpOptimizer extends StandardOptimizer {
             command.add(pythonPath);
             command.add(runScript);
             // this beta will be used to smooth the variations in the parameters
-            if (iteration ==5 ){
+            if (iteration <= startIteration ){
                 beta = calibrationConfig.getBetaMomentum();
-            } else if (iteration%30==0 && iteration>0){
+            } else if (iteration%30==0){
                 beta = Math.min(0.98, 1.0 - (1.0-beta)/2.0);
             }
+            logger.info("Using beta = " + beta + " for iteration " + iteration);
 
             // Build command-line arguments based on config
             Map<String, String> args = new HashMap<>();

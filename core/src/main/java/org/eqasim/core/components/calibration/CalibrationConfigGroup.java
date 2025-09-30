@@ -15,7 +15,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     private String repoUrl = "https://github.com/Dib-AEK/EqasimParametersCalibration.git";
     private String repoBranch = "polars";
-    private String repoCommit = "f6c7dc4f97f9f797f255a6421d8856dde3f494ea";
+    private String repoCommit = "b72fae6c3860169f5a837d4648dbf4b2dc7ac3a0";
 
     private String optimizerPath = "optimizer";
     private String optimizer = "cmaes";
@@ -29,8 +29,8 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
                             "bike.betaTravelTime_u_min:0.5," +
                             "pt.betaInVehicleTime_u_min:0.5";
 
-    private int maxEval = 3000;
-    private int populationSample = 1000000;
+    private int maxEval = 4000;
+    private int populationSample = 100000000;
     private String momentum = "ema";
 
     private double betaMomentum = 0.8;

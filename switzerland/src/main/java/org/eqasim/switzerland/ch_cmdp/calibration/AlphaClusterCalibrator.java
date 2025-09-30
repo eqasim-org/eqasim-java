@@ -322,7 +322,13 @@ public class AlphaClusterCalibrator implements FastCalibration {
 
     private boolean updateGlobal(int iteration) {
         // update only global parameters in the last 20 iterations
-        return iteration>=lastIteration-30;
+        int iterationLimit = Math.min(60, lastIteration/2);
+
+        if ((iteration%7 == 0) && (iteration<iterationLimit)) {
+            numGlobalUpdates = 0; // keep it 0, these global updates are not counted
+            return true;
+        }
+        return iteration>=iterationLimit;
     }
 
     private void updateRegionalAlphas(int matsimIteration) {

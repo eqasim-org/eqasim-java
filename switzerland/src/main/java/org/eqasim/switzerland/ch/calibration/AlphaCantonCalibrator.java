@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -31,7 +32,6 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private final Map<String, Map<String, Double>> sharesByCanton = new HashMap<>();
     private final Map<String, Double> modeCounts = new HashMap<>();
     private final Map<String, Map<String, Double>> modeCountsByCanton = new HashMap<>();
-    private final Map<String, List<Double>> errors = new HashMap<>();
     private final Map<String, Boolean> doUpdateThisIteration = new HashMap<>();
     private final Map<String, Integer> numberOfUpdates = new HashMap<>();
     private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
@@ -43,7 +43,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
     // Configuration
     private final Set<String> cantons;
     private final double beta;
-    private final int batchSizeLimit = 500; // the minimum number of observations before updating the parameters
+    private final int batchSizeLimit = 300; // the minimum number of observations before updating the parameters
     private final boolean isActivated;
     private final String cantonsModeShareFile;
 
@@ -78,8 +78,10 @@ public class AlphaCantonCalibrator implements FastCalibration {
             assertIfFileExists();
             // read the target mode shares by canton from the file
             this.targetModeSharesByCanton = readCantonsModeShares();
-            this.cantons = targetModeSharesByCanton.keySet();
+            this.cantons = new HashSet<>(targetModeSharesByCanton.keySet());
+            for (String canton : cantons) doUpdateThisIteration.put(canton, false);
             resetPlansCreationFlag();
+            resetAllAlphasToZeros();
         } else {
             this.targetModeSharesByCanton = new HashMap<>();
             this.cantons = new HashSet<>();
@@ -96,7 +98,13 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
     private boolean updateGlobal(int iteration) {
         // update only global parameters in the last 20 iterations
-        return iteration>=lastIteration-30;
+        int iterationLimit = Math.min(60, lastIteration/2);
+
+        if ((iteration%10 == 0) && (iteration<iterationLimit)) {
+            numGlobalUpdates = 0; // keep it 0, these global updates are not counted
+            return true;
+        }
+        return iteration>=iterationLimit;
     }
 
     @Override
@@ -216,18 +224,9 @@ public class AlphaCantonCalibrator implements FastCalibration {
             Map<String, Double> cantonShares = estimatedSharesByCanton.get(canton);
             Map<String, Double> storedCantonShares = sharesByCanton.computeIfAbsent(canton, k -> new HashMap<>());
 
-            double error = 0.0;
             for (String mode : consideredModes) {
                 double replannedTripsShare = cantonShares.getOrDefault(mode, 0.0); //0.0 because maybe no trip was recorded for this mode
-                double storedShare = storedCantonShares.getOrDefault(mode, 0.0);
-                error += Math.abs(replannedTripsShare - storedShare);
-
                 storedCantonShares.put(mode, replannedTripsShare);
-            }
-            if (doUpdateThisIteration.get(canton)){
-                List<Double> cantonImprovements = errors.computeIfAbsent(canton, k -> new java.util.ArrayList<>());
-                error = 0.3*error+0.7* (cantonImprovements.isEmpty() ? error : cantonImprovements.getLast()); // smoothing the error, beta = 0.7ast(); // smoothing the error, beta = 0.7
-                cantonImprovements.add(error);
             }
         }
     }
@@ -271,6 +270,9 @@ public class AlphaCantonCalibrator implements FastCalibration {
     }
 
     private void updateCantonsToUpdate(){
+        // make sure all cantons are included
+        cantons.addAll(modeCountsByCanton.keySet());
+        // check canton by canton, if we update canton parameters this iteration
         for (String canton : cantons){
             Map<String, Double> cantonCounts = modeCountsByCanton.getOrDefault(canton, new HashMap<>());
             int total = (int) cantonCounts.values().stream().mapToDouble(Double::doubleValue).sum();
@@ -298,7 +300,8 @@ public class AlphaCantonCalibrator implements FastCalibration {
         for (String canton : sharesByCanton.keySet()) {
             // check if there are improvements from last 3 iterations
             boolean hasImproved = true ; //checkIfItImproved(canton);
-            if (doUpdateThisIteration.get(canton) && hasImproved) {
+            boolean updateThisCanton = doUpdateThisIteration.getOrDefault(canton, false);
+            if (updateThisCanton && hasImproved) {
                 logger.info("Updating alphas for canton {}", canton);
                 Map<String, Double> alphas = getAlphas(canton);
                 Map<String, Double> cantonShares = sharesByCanton.get(canton);
@@ -355,7 +358,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
             return 0.99;
         } else if (matsimIteration > 90) {
             return 0.95;
-        } else if (matsimIteration < 10) {
+        } else if (matsimIteration < 10 || iteration < 5) {
             return 0.0;
         } else {
             // Gradually increase beta as iterations progress
@@ -482,5 +485,25 @@ public class AlphaCantonCalibrator implements FastCalibration {
             throw new RuntimeException("Error reading cantons mode shares file: " + file.getAbsolutePath(), e);
         }
         return result;
+    }
+
+    private void resetAllAlphasToZeros(){
+        // if we use canton level calibration, we need to have canton set all alphas to 0.0
+        Map<String, Double> zerosAlphas = new HashMap<>();
+        for (String mode : consideredModes) zerosAlphas.put(mode, 0.0);
+        modeParameters.setASCs(zerosAlphas);
+        // if cmdp set regional alphas to zero too
+        if (modeParameters instanceof SwissCmdpModeParameters cmdpParams){
+            cmdpParams.car.betaRegion1_u = 0.0;
+            cmdpParams.car.betaRegion2_u = 0.0;
+            cmdpParams.pt.betaRegion1_u = 0.0;
+            cmdpParams.pt.betaRegion2_u = 0.0;
+            cmdpParams.walk.betaRegion1_u = 0.0;
+            cmdpParams.walk.betaRegion2_u = 0.0;
+            cmdpParams.bike.betaRegion1_u = 0.0;
+            cmdpParams.bike.betaRegion2_u = 0.0;
+            cmdpParams.cp.betaRegion1_u = 0.0;
+            cmdpParams.cp.betaRegion2_u = 0.0;
+        }
     }
 }
