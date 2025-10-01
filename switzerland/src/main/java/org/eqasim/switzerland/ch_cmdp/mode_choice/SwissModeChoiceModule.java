@@ -18,6 +18,7 @@ import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
 import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.*;
 import org.eqasim.switzerland.ch_cmdp.calibration.AlphaClusterCalibrator;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizer;
@@ -83,6 +84,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bind(SwissPersonPredictor.class);
 		bind(CarPassengerPredictor.class);
+		bind(SwissPtRoutePredictor.class);
+
 		bind(ModeParameters.class).to(SwissCmdpModeParameters.class).asEagerSingleton();
 
 		// Calibration

@@ -1,6 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors;
 
 import com.google.inject.Inject;
+
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;

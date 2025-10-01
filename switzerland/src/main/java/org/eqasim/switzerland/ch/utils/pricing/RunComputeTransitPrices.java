@@ -281,7 +281,7 @@ public class RunComputeTransitPrices {
                         calculator = swissPtStageCostCalculator.priceCalculators.get(authority);				
                     }
 
-                    price += calculator.calculatePrice(authorityLegs, halfFareTariff);
+                    price += calculator.calculatePrice(authorityLegs, halfFareTariff, authority);
                 }
 
                 return price;

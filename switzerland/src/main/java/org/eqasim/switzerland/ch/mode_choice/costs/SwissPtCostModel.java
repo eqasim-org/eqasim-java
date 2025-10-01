@@ -79,7 +79,7 @@ public class SwissPtCostModel extends AbstractCostModel {
 				calculator = this.calculators.priceCalculators.get(authority);				
 			}
 
-			legPrice = calculator.calculatePrice(authorityLegs, halfFareTariff);
+			legPrice = calculator.calculatePrice(authorityLegs, halfFareTariff, authority);
 			price += legPrice;
 			//System.out.println("  Computed price for authority " + authority + ": " + legPrice);
 

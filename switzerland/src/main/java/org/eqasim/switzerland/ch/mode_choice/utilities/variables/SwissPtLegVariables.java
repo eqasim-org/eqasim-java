@@ -1,26 +1,31 @@
 package org.eqasim.switzerland.ch.mode_choice.utilities.variables;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 
 public class SwissPtLegVariables implements BaseVariables {
 
-    public Set<Zone> zones;
+    public Map<String, List<Zone>> zones;
     public double    departureTime;
     public double    arrivalTime;
     public double    sbbDistance;
     public double    networkDistance;
     public String    fromNode;
     public String    toNode;
+    public String    fromNodeName;
+    public String    toNodeName;
 
-    public SwissPtLegVariables(Set<Zone> visitedZones, double departureTime, double arrivalTime, double networkDistance, double sbbDistance, String fromNode, String toNode) {
+    public SwissPtLegVariables(Map<String, List<Zone>> visitedZones, double departureTime, double arrivalTime, double networkDistance, double sbbDistance, String fromNode, String toNode, String fromNodeName, String toNodeName) {
 		this.departureTime = departureTime;
 		this.arrivalTime   = arrivalTime;
         this.sbbDistance   = sbbDistance;
         this.fromNode      = fromNode;
         this.toNode        = toNode;
+        this.fromNodeName  = fromNodeName;
+        this.toNodeName    = toNodeName;
         this.networkDistance = networkDistance;
 
         this.zones = visitedZones;
@@ -42,7 +47,7 @@ public class SwissPtLegVariables implements BaseVariables {
         return networkDistance;
     }
 
-    public Set<Zone> getZones() {
+    public Map<String, List<Zone>> getZones() {
         return this.zones;
     }
 
