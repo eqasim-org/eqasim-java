@@ -70,6 +70,12 @@ public class SaoPauloModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
+	public SaoPauloModeAvailability provideModeAvailability(EqasimConfigGroup config) {
+		return new SaoPauloModeAvailability(config.getAdditionalAvailableModes());
+	}
+
+	@Provides
+	@Singleton
 	public SaoPauloModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
 		SaoPauloModeParameters parameters = SaoPauloModeParameters.buildDefault();

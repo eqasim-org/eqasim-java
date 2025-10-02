@@ -8,7 +8,6 @@ import java.util.Set;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
-import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
 import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
@@ -98,9 +97,6 @@ public class RunCorsicaDrtSimulation {
 		{ // Add the DRT mode to the choice model
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 
-			// Add DRT to the available modes
-			dmcConfig.setModeAvailability(CorsicaDrtModeAvailability.NAME);
-
 			// Add DRT to cached modes
 			Set<String> cachedModes = new HashSet<>();
 			cachedModes.addAll(dmcConfig.getCachedModes());
@@ -111,6 +107,9 @@ public class RunCorsicaDrtSimulation {
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 			eqasimConfig.setCostModel("drt", "drt");
 			eqasimConfig.setEstimator("drt", "drt");
+
+			// Add DRT to the available modes
+			eqasimConfig.setAdditionalAvailableModes(Set.of("drt"));
 
 			// Add rejection constraint
 			if (cmd.getOption("use-rejection-constraint").map(Boolean::parseBoolean).orElse(false)) {

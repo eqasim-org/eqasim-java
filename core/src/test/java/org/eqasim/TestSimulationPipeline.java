@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
-import org.eqasim.TestConfigurator.TestModeAvailability;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
@@ -21,17 +20,13 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtPassengerAnalysis;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtVehicleAnalysis;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
 import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.eqasim.core.simulation.modes.feeder_drt.analysis.run.RunFeederDrtPassengerAnalysis;
-import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
@@ -53,7 +48,6 @@ import org.junit.Test;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -62,9 +56,6 @@ import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
-
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class TestSimulationPipeline {
 
@@ -110,22 +101,6 @@ public class TestSimulationPipeline {
 
         Controler controller = new Controler(scenario);
         eqasimConfigurator.configureController(controller);
-        controller.addOverridingModule(new AbstractEqasimExtension() {
-            @Override
-            protected void installEqasimExtension() {
-                bind(ModeParameters.class);
-                bindModeAvailability("DefaultModeAvailability").toProvider(new Provider<>() {
-                    @Inject
-                    private Config config;
-
-                    @Override
-                    public ModeAvailability get() {
-                        FeederDrtModeAvailabilityWrapper feederDrtModeAvailabilityWrapper = new FeederDrtModeAvailabilityWrapper(config, new TestModeAvailability());
-                        return new TransitWithAbstractAccessModeAvailabilityWrapper(config, feederDrtModeAvailabilityWrapper);
-                    }
-                }).asEagerSingleton();
-            }
-        });
         controller.run();
     }
 
