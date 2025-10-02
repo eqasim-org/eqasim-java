@@ -3,6 +3,7 @@ package org.eqasim.san_francisco.mode_choice;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
@@ -11,6 +12,12 @@ import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvai
 import org.matsim.core.population.PersonUtils;
 
 public class SanFranciscoModeAvailability implements ModeAvailability {
+	private final Set<String> additionalModes;
+
+	public SanFranciscoModeAvailability(Set<String> additionalModes) {
+		this.additionalModes = additionalModes;
+	}
+
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = new HashSet<>();
@@ -57,6 +64,9 @@ public class SanFranciscoModeAvailability implements ModeAvailability {
 		if (isCarPassenger != null && isCarPassenger) {
 			modes.add("car_passenger");
 		}
+
+		// Add additional modes
+		modes.addAll(additionalModes);
 
 		return modes;
 	}

@@ -91,25 +91,6 @@ public class TestEmissions {
 
 		Controler controller = new Controler(scenario);
 		eqasimConfigurator.configureController(controller);
-		controller.addOverridingModule(new AbstractEqasimExtension() {
-			@Override
-			protected void installEqasimExtension() {
-				bind(ModeParameters.class);
-				bindModeAvailability("DefaultModeAvailability").toProvider(() -> (person, trips) -> {
-					Set<String> modes = new HashSet<>();
-					modes.add(TransportMode.walk);
-					modes.add(TransportMode.pt);
-					modes.add(TransportMode.car);
-					modes.add(TransportMode.bike);
-					// Add special mode "car_passenger" if applicable
-					Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-					if (isCarPassenger) {
-						modes.add("car_passenger");
-					}
-					return modes;
-				}).asEagerSingleton();
-			}
-		});
 		controller.run();
 	}
 

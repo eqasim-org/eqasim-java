@@ -11,6 +11,8 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ScoringConfigGroup;
 
+import com.google.common.collect.Sets;
+
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,6 +51,9 @@ public class AdaptConfigForTransitWithAbstractAccess {
         Path path = Path.of(outputConfigPath).getParent().toAbsolutePath().relativize(Path.of(commandLine.getOptionStrict("accesses-file-path")).toAbsolutePath());
         transitWithAbstractAbstractAccessModuleConfigGroup.setAccessItemsFilePath(path.toString());
         config.addModule(transitWithAbstractAbstractAccessModuleConfigGroup);
+
+        EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+        eqasimConfig.setAdditionalAvailableModes(Sets.union(eqasimConfig.getAdditionalAvailableModes(), Set.of(mode)));
 
         ConfigUtils.writeConfig(config, outputConfigPath);
     }

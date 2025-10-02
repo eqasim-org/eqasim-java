@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
@@ -15,9 +16,11 @@ import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvai
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 
+import com.google.inject.Provides;
+
 public class TestConfigurator extends EqasimConfigurator {
     public TestConfigurator() throws ConfigurationException {
-        super(new CommandLine.Builder(new String[0]).build());
+        this(new CommandLine.Builder(new String[0]).build());
     }
 
     public TestConfigurator(CommandLine commandLine) {
@@ -29,10 +32,21 @@ public class TestConfigurator extends EqasimConfigurator {
                 bind(ModeParameters.class);
                 bindModeAvailability("DefaultModeAvailability").to(TestModeAvailability.class);
             }
+
+            @Provides
+            TestModeAvailability provideTestModeAvailability(EqasimConfigGroup eqasimConfig) {
+                return new TestModeAvailability(eqasimConfig.getAdditionalAvailableModes());
+            }
         });
     }
 
     public static class TestModeAvailability implements ModeAvailability {
+        private final Set<String> additionalModes;
+
+        public TestModeAvailability(Set<String> additionalModes) {
+            this.additionalModes = additionalModes;
+        }
+
         @Override
         public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
             Set<String> modes = new HashSet<>();
@@ -45,6 +59,7 @@ public class TestConfigurator extends EqasimConfigurator {
             if (isCarPassenger) {
                 modes.add("car_passenger");
             }
+            modes.addAll(additionalModes);
             return modes;
         }
     }

@@ -44,9 +44,11 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.utils.misc.Time;
 
+import com.google.common.collect.Sets;
+
 public class AdaptConfigForDrt {
 
-    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime, String modeAvailability) {
+    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime) {
         if(!config.getModules().containsKey(DvrpConfigGroup.GROUP_NAME)) {
             config.addModule(new DvrpConfigGroup());
         }
@@ -60,10 +62,8 @@ public class AdaptConfigForDrt {
         List<LegTimeConstraintSingleLegConfigGroup> legTimeConstraintSingleLegConfigGroups = new ArrayList<>();
 
         // Add DRT to the available modes
-        if(modeAvailability != null) {
-            dmcConfig.setModeAvailability(modeAvailability);
-        }
-
+        EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+        eqasimConfig.setAdditionalAvailableModes(Sets.union(eqasimConfig.getAdditionalAvailableModes(), vehiclesPathByDrtMode.keySet()));
 
         // Add DRT to cached modes
         Set<String> cachedModes = new HashSet<>(dmcConfig.getCachedModes());
@@ -102,7 +102,6 @@ public class AdaptConfigForDrt {
             multiModeDrtConfigGroup.addParameterSet(drtConfigGroup);
 
             // Set up choice model
-            EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
             eqasimConfig.setCostModel(drtMode, drtCostModels.get(drtMode));
             eqasimConfig.setEstimator(drtMode, drtUtilityEstimators.get(drtMode));
 
@@ -177,7 +176,6 @@ public class AdaptConfigForDrt {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("input-config-path", "output-config-path", "vehicles-paths")
                 .allowOptions("mode-names")
-                .allowOptions("mode-availability")
                 .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .allowOptions("operational-schemes")
                 .allowOptions("cost-models", "estimators")
@@ -211,7 +209,7 @@ public class AdaptConfigForDrt {
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);
         
-        adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), info.get("add-leg-time-constraint"), qsimEndtime, cmd.getOption("mode-availability").orElse(null));
+        adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), info.get("add-leg-time-constraint"), qsimEndtime);
 
         cmd.applyConfiguration(config);
 
