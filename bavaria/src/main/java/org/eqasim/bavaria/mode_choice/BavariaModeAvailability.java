@@ -11,6 +11,12 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 
 public class BavariaModeAvailability implements ModeAvailability {
+	private final Set<String> additionalModes;
+
+	public IDFModeAvailability(Set<String> additionalModes) {
+		this.additionalModes = additionalModes;
+	}
+
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = new HashSet<>();
@@ -37,6 +43,9 @@ public class BavariaModeAvailability implements ModeAvailability {
 		if (BavariaPredictorUtils.isOutside(person)) {
 			modes.add("outside");
 		}
+
+		// Add additional modes
+		modes.addAll(additionalModes);
 
 		return modes;
 	}

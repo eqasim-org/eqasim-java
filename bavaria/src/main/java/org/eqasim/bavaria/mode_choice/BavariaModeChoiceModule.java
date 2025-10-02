@@ -75,6 +75,12 @@ public class BavariaModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
+	public BavariaModeAvailability provideModeAvailability(EqasimConfigGroup config) {
+		return new BavariaModeAvailability(config.getAdditionalAvailableModes());
+	}
+
+	@Provides
+	@Singleton
 	public BavariaModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
 		BavariaModeParameters parameters = BavariaModeParameters.buildDefault();
