@@ -25,8 +25,11 @@ import org.matsim.core.utils.gis.ShapeFileWriter;
 import org.matsim.pt.transitSchedule.api.*;
 import org.geotools.api.feature.simple.SimpleFeature;
 
+@Deprecated
 public class ExportTransitLinesToShapefile {
 	public static void main(String[] args) throws Exception {
+        System.err.println("THIS SCRIPT IS DEPRECATED SINCE JUNE 2025");
+		
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("schedule-path", "network-path", "output-path", "crs")
 				.allowOptions("modes", "transit-lines", "transit-routes")

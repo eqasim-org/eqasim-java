@@ -4,13 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
-import org.eqasim.TestConfigurator.TestModeAvailability;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.traffic.AttributeCrossingPenalty;
 import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
@@ -19,17 +20,13 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.routing.RunPopulationRouting;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.epsilon.AdaptConfigForEpsilon;
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtPassengerAnalysis;
 import org.eqasim.core.simulation.modes.drt.analysis.run.RunDrtVehicleAnalysis;
 import org.eqasim.core.simulation.modes.drt.utils.AdaptConfigForDrt;
 import org.eqasim.core.simulation.modes.drt.utils.CreateDrtVehicles;
 import org.eqasim.core.simulation.modes.feeder_drt.analysis.run.RunFeederDrtPassengerAnalysis;
-import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.FeederDrtModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.feeder_drt.utils.AdaptConfigForFeederDrt;
-import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeAvailabilityWrapper;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.AdaptConfigForTransitWithAbstractAccess;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.utils.CreateAbstractAccessItemsForTransitLines;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
@@ -38,18 +35,19 @@ import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.utils.AdaptConfigForVDF;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
-import org.eqasim.core.tools.ExportActivitiesToShapefile;
+import org.eqasim.core.tools.ExportActivitiesToGeopackage;
 import org.eqasim.core.tools.ExportNetworkRoutesToGeopackage;
-import org.eqasim.core.tools.ExportNetworkToShapefile;
+import org.eqasim.core.tools.ExportNetworkToGeopackage;
 import org.eqasim.core.tools.ExportPopulationToCSV;
-import org.eqasim.core.tools.ExportTransitLinesToShapefile;
-import org.eqasim.core.tools.ExportTransitStopsToShapefile;
+import org.eqasim.core.tools.ExportTransitLinesToGeopackage;
+import org.eqasim.core.tools.ExportTransitStopsToGeopackage;
+import org.eqasim.core.tools.sampling.RunDownsampling;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -58,9 +56,6 @@ import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.CRCChecksum;
-
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class TestSimulationPipeline {
 
@@ -106,22 +101,6 @@ public class TestSimulationPipeline {
 
         Controler controller = new Controler(scenario);
         eqasimConfigurator.configureController(controller);
-        controller.addOverridingModule(new AbstractEqasimExtension() {
-            @Override
-            protected void installEqasimExtension() {
-                bind(ModeParameters.class);
-                bindModeAvailability("DefaultModeAvailability").toProvider(new Provider<>() {
-                    @Inject
-                    private Config config;
-
-                    @Override
-                    public ModeAvailability get() {
-                        FeederDrtModeAvailabilityWrapper feederDrtModeAvailabilityWrapper = new FeederDrtModeAvailabilityWrapper(config, new TestModeAvailability());
-                        return new TransitWithAbstractAccessModeAvailabilityWrapper(config, feederDrtModeAvailabilityWrapper);
-                    }
-                }).asEagerSingleton();
-            }
-        });
         controller.run();
     }
 
@@ -153,14 +132,14 @@ public class TestSimulationPipeline {
     }
 
     private void runExports() throws Exception {
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
                 "--output-path", "melun_test/exports/lines.shp"
         });
 
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
@@ -168,7 +147,7 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/lines_rail.shp"
         });
 
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
@@ -176,7 +155,7 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/lines_line_ids.shp"
         });
 
-        ExportTransitLinesToShapefile.main(new String[]{
+        ExportTransitLinesToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
@@ -184,19 +163,19 @@ public class TestSimulationPipeline {
                 "--output-path", "melun_test/exports/lines_route_ids.shp"
         });
 
-        ExportTransitStopsToShapefile.main(new String[]{
+        ExportTransitStopsToGeopackage.main(new String[]{
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
                 "--crs", "EPSG:2154",
                 "--output-path", "melun_test/exports/stops.shp"
         });
 
-        ExportNetworkToShapefile.main(new String[]{
+        ExportNetworkToGeopackage.main(new String[]{
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--crs", "EPSG:2154",
                 "--output-path", "melun_test/exports/network.shp"
         });
 
-        ExportActivitiesToShapefile.main(new String[]{
+        ExportActivitiesToGeopackage.main(new String[]{
                 "--plans-path", "melun_test/input/population.xml.gz",
                 "--output-path", "melun_test/exports/activities.shp",
                 "--crs", "EPSG:2154"
@@ -229,7 +208,7 @@ public class TestSimulationPipeline {
         runMelunSimulation("melun_test/cutter/center_config.xml", "melun_test/output_cutter");
     }
 
-    public void runCutterV2() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+    public void runCutterV2() throws CommandLine.ConfigurationException, IOException, InterruptedException, ExecutionException {
         RunScenarioCutterV2.main(new String[] {
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--events-path", "melun_test/output_vdf/output_events.xml.gz",
@@ -278,7 +257,7 @@ public class TestSimulationPipeline {
 
         ScenarioExtent updateExtent = new ShapeScenarioExtent.Builder(new File(updateExtentPath), Optional.empty(), Optional.empty()).build();
 
-        CrossingPenalty crossingPenalty = DefaultCrossingPenalty.build(scenario.getNetwork(), eqasimConfigGroup.getCrossingPenalty());
+        CrossingPenalty crossingPenalty = new AttributeCrossingPenalty(new IdMap<>(Link.class), DefaultCrossingPenalty.build(scenario.getNetwork(), eqasimConfigGroup.getCrossingPenalty()));
 
         VDFTravelTime leftTravelTime = new VDFTravelTime(vdfScope, vdfConfigGroup.getMinimumSpeed(), vdfConfigGroup.getCapacityFactor(), eqasimConfigGroup.getSampleSize(), scenario.getNetwork(), bprFunction, crossingPenalty, updateExtent);
         leftTravelTime.readFrom(new File(leftTravelTimesPath).toURI().toURL());
@@ -423,7 +402,7 @@ public class TestSimulationPipeline {
         runMelunSimulation("melun_test/input/config_abstract_access.xml", "melun_test/output_abstract_access");
     }
 
-    public void runVdf() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+    public void runVdf() throws CommandLine.ConfigurationException, IOException, InterruptedException, ExecutionException {
         // This one will use the SparseHorizon handler
         AdaptConfigForVDF.main(new String[] {
                 "--input-config-path", "melun_test/input/config.xml",
@@ -479,6 +458,7 @@ public class TestSimulationPipeline {
     @Test
     public void testPipeline() throws Exception {
         runMelunSimulation("melun_test/input/config.xml", "melun_test/output");
+        runSampling();
         runPopulationRouting();
         runStandaloneModeChoice();
         runVdf();
@@ -503,7 +483,23 @@ public class TestSimulationPipeline {
         }
     }
 
-    public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException {
+    public void runSampling() throws ConfigurationException {
+        RunDownsampling.main(new String[] {
+                "--config-path", "melun_test/input/config.xml",
+                "--sampling-rate", "0.1",
+                "--suffix", "10pct",
+                "--update", "vehicles,facilities,households",
+                "--eqasim-configurator", TestConfigurator.class.getName()
+        });
+
+        assert new File("melun_test/input/config_10pct.xml").exists();
+        assert new File("melun_test/input/households_10pct.xml.gz").exists();
+        assert new File("melun_test/input/vehicles_10pct.xml.gz").exists();
+        assert new File("melun_test/input/population_10pct.xml.gz").exists();
+        assert new File("melun_test/input/facilities_10pct.xml.gz").exists();
+    }
+
+    public void runPopulationRouting() throws CommandLine.ConfigurationException, InterruptedException, ExecutionException {
         RunPopulationRouting.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
                 "--output-path", "melun_test/output/routed_population.xml",
@@ -516,8 +512,8 @@ public class TestSimulationPipeline {
         });
         assert CRCChecksum.getCRCFromFile("melun_test/output/routed_population.xml") == CRCChecksum.getCRCFromFile("melun_test/output/routed_population_again.xml");
     }
-    
-    public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException {
+
+    public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException, ExecutionException {
         RunStandaloneModeChoice.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
                 "--recorded-travel-times-path", "melun_test/output/eqasim_travel_times.bin",

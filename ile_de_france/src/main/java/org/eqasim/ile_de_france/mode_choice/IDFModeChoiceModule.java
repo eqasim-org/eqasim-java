@@ -9,7 +9,6 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.tour_finder.ActivityTourFinderWithExcludedActivities;
-import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFCarCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
@@ -19,8 +18,10 @@ import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarPassenger
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFCarPassengerPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFParkingPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.matsim.contribs.discrete_mode_choice.components.tour_finder.ActivityTourFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.ActivityTourFinderConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -59,6 +60,8 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bind(IDFPersonPredictor.class);
 		bind(IDFCarPassengerPredictor.class);
 		bind(IDFPtPredictor.class);
+		bind(IDFSpatialPredictor.class);
+		bind(IDFParkingPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(IDFCarCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(IDFPtCostModel.class);
@@ -71,6 +74,12 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 
 		bindTourFinder(ISOLATED_OUTSIDE_TOUR_FINDER_NAME).to(ActivityTourFinderWithExcludedActivities.class);
+	}
+
+	@Provides
+	@Singleton
+	public IDFModeAvailability provideModeAvailability(EqasimConfigGroup config) {
+		return new IDFModeAvailability(config.getAdditionalAvailableModes());
 	}
 
 	@Provides

@@ -10,12 +10,11 @@ public class IDFPtVariables implements BaseVariables {
 	public final double euclideanDistance_km;
 
 	public final boolean isOnlyBus;
-	public final boolean hasOnlySubwayAndBus;
-	public final boolean isWithinParis;
+	public final boolean isWithoutRail;
 
 	public IDFPtVariables(double inVehicleTime_min, double waitingTime_min, double accessEgressTime_min,
 			int numberOfLineSwitches, double euclideanDistance_km, boolean isOnlyBus,
-			boolean hasOnlySubwayAndBus, boolean isWithinParis) {
+			boolean isWithoutRail) {
 		this.inVehicleTime_min = inVehicleTime_min;
 		this.waitingTime_min = waitingTime_min;
 		this.accessEgressTime_min = accessEgressTime_min;
@@ -23,7 +22,6 @@ public class IDFPtVariables implements BaseVariables {
 		this.euclideanDistance_km = euclideanDistance_km;
 
 		this.isOnlyBus = isOnlyBus;
-		this.hasOnlySubwayAndBus = hasOnlySubwayAndBus;
-		this.isWithinParis = isWithinParis;
+		this.isWithoutRail = isWithoutRail;
 	}
 }

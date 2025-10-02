@@ -3,6 +3,7 @@ package org.eqasim.ile_de_france.mode_choice;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPredictorUtils;
 import org.matsim.api.core.v01.TransportMode;
@@ -11,6 +12,12 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 
 public class IDFModeAvailability implements ModeAvailability {
+	private final Set<String> additionalModes;
+
+	public IDFModeAvailability(Set<String> additionalModes) {
+		this.additionalModes = additionalModes;
+	}
+
 	@Override
 	public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
 		Collection<String> modes = new HashSet<>();
@@ -37,6 +44,9 @@ public class IDFModeAvailability implements ModeAvailability {
 		if (IDFPredictorUtils.isOutside(person)) {
 			modes.add("outside");
 		}
+
+		// Add additional modes
+		modes.addAll(additionalModes);
 
 		return modes;
 	}

@@ -44,20 +44,20 @@ public class VDFModule extends AbstractEqasimExtension {
 		bind(VolumeDelayFunction.class).to(BPRFunction.class);
 
 		switch (vdfConfig.getHandler()) {
-		case Horizon:
-			bind(VDFTrafficHandler.class).to(VDFHorizonHandler.class);
-			addEventHandlerBinding().to(VDFHorizonHandler.class);
-			break;
-		case SparseHorizon:
-			bind(VDFTrafficHandler.class).to(VDFSparseHorizonHandler.class);
-			addEventHandlerBinding().to(VDFSparseHorizonHandler.class);
-			break;
-		case Interpolation:
-			bind(VDFTrafficHandler.class).to(VDFInterpolationHandler.class);
-			addEventHandlerBinding().to(VDFInterpolationHandler.class);
-			break;
-		default:
-			throw new IllegalStateException();
+			case Horizon:
+				bind(VDFTrafficHandler.class).to(VDFHorizonHandler.class);
+				addEventHandlerBinding().to(VDFHorizonHandler.class);
+				break;
+			case SparseHorizon:
+				bind(VDFTrafficHandler.class).to(VDFSparseHorizonHandler.class);
+				addEventHandlerBinding().to(VDFSparseHorizonHandler.class);
+				break;
+			case Interpolation:
+				bind(VDFTrafficHandler.class).to(VDFInterpolationHandler.class);
+				addEventHandlerBinding().to(VDFInterpolationHandler.class);
+				break;
+			default:
+				throw new IllegalStateException();
 		}
 	}
 
@@ -69,7 +69,8 @@ public class VDFModule extends AbstractEqasimExtension {
 		URL inputFile = config.getInputFlowFile() == null ? null
 				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFlowFile());
 		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
-				config.getWriteFlowInterval(), config.getWriteTravelTimesInterval(), controllerConfig.getFirstIteration(), inputFile);
+				config.getWriteFlowInterval(), config.getWriteTravelTimesInterval(),
+				controllerConfig.getFirstIteration(), inputFile);
 	}
 
 	@Provides
@@ -90,7 +91,7 @@ public class VDFModule extends AbstractEqasimExtension {
 
 		VDFTravelTime vdfTravelTime = new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
 				eqasimConfig.getSampleSize(), network, vdf, crossingPenalty, updateExtent);
-		if(config.getInputTravelTimesFile() != null) {
+		if (config.getInputTravelTimesFile() != null) {
 			LOGGER.info("Reading VDF travel times");
 			URL inputTimeFile = ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputTravelTimesFile());
 			vdfTravelTime.readFrom(inputTimeFile);
@@ -107,8 +108,10 @@ public class VDFModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public VDFSparseHorizonHandler provideVDFSparseHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope) {
-		return new VDFSparseHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads());
+	public VDFSparseHorizonHandler provideVDFSparseHorizonHandler(VDFConfigGroup config, Network network,
+			VDFScope scope) {
+		return new VDFSparseHorizonHandler(network, scope, config.getHorizon(),
+				getConfig().global().getNumberOfThreads());
 	}
 
 	@Provides

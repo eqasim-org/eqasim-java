@@ -6,24 +6,32 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.RunInsertVehicles;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
+import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.ConfigWriter;
+import org.matsim.core.config.groups.RoutingConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
+import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.population.io.PopulationReader;
@@ -48,12 +56,31 @@ public class TestCorisica {
 		configurator.updateConfig(config);
 		config.vehicles().setVehiclesFile("corsica_vehicles.xml.gz");
 		config.qsim().setVehiclesSource(VehiclesSource.fromVehiclesData);
+
+		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+		eqasimConfig.setEstimator("bike", IDFModeChoiceModule.BICYCLE_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator("bicycle", IDFModeChoiceModule.BICYCLE_ESTIMATOR_NAME);
+
+		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
+		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
+
+		RoutingConfigGroup routingConfig = config.routing();
+
+		TeleportedModeParams bicycleRoutingParams = new TeleportedModeParams("bicycle");
+		bicycleRoutingParams.setBeelineDistanceFactor(1.3);
+		bicycleRoutingParams.setTeleportedModeSpeed(9.3 / 3.6);
+		routingConfig.addTeleportedModeParams(bicycleRoutingParams);
+
+		ScoringConfigGroup scoringConfig = config.scoring();
+		ModeParams bicycleScoringParams = new ModeParams("bicycle");
+		scoringConfig.addModeParams(bicycleScoringParams);
+
 		new ConfigWriter(config).write("corsica_test/corsica_config.xml");
 	}
 
 	@Test
 	public void testCorsicaPipeline()
-			throws ConfigurationException, InterruptedException, MalformedURLException, IOException {
+			throws ConfigurationException, InterruptedException, MalformedURLException, IOException, ExecutionException {
 
 		Assert.assertEquals(389, countPersons("corsica_test/corsica_population.xml.gz"));
 

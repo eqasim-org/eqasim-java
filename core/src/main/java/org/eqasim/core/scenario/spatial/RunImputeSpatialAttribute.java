@@ -26,8 +26,9 @@ public class RunImputeSpatialAttribute {
 			throws ConfigurationException, MalformedURLException, IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.allowOptions("input-population-path", "input-network-path", "output-population-path",
-						"output-network-path", "input-schedule-path", "output-schedule-path") //
-				.requireOptions("shape-path", "shape-attribute", "shape-value", "attribute", EqasimConfigurator.CONFIGURATOR) //
+						"output-network-path", "input-schedule-path", "output-schedule-path",
+						EqasimConfigurator.CONFIGURATOR) //
+				.requireOptions("shape-path", "shape-attribute", "shape-value", "attribute") //
 				.build();
 
 		if (cmd.hasOption("input-population-path") ^ cmd.hasOption("output-population-path")) {

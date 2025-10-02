@@ -1,8 +1,12 @@
 package org.eqasim.core.components.config;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eqasim.core.analysis.DistanceUnit;
 import org.matsim.core.config.Config;
@@ -29,6 +33,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private final static String USE_PSEUDO_RANDOM_ERRORS = "usePseudoRandomErrors";
 
+	private final static String ADDITIONAL_AVAILABLE_MODES = "additionalAvailableModes";
+
 	private double sampleSize = 1.0;
 	private DistanceUnit distanceUnit = DistanceUnit.meter;
 
@@ -46,8 +52,19 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private boolean usePseudoRandomErrors = false;
 
+	private final Set<String> additionalAvailableModes = new HashSet<>();
+
 	public EqasimConfigGroup() {
 		super(GROUP_NAME);
+	}
+	
+	@Override
+	public final Map<String, String> getComments() {
+		Map<String, String> map = super.getComments();
+		map.put(SAMPLE_SIZE,
+				"The sample size of the population you are simulating. This is normally set by the synthesis pipeline.");
+		
+		return map;
 	}
 
 	@StringGetter(CROSSING_PENALTY)
@@ -264,5 +281,30 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(USE_SCHEDULE_BASED_TRANSPORT)
 	public void setUseScheduleBasedTransport(boolean useScheduleBasedTransport) {
 		this.useScheduleBasedTransport = useScheduleBasedTransport;
+	}
+
+	@StringSetter(ADDITIONAL_AVAILABLE_MODES)
+	public void setAdditionalAvailableModesAsString(String val) {
+		additionalAvailableModes.clear();
+
+		for (var item : val.split(",")) {
+			if (item.trim().length() > 0) {
+				additionalAvailableModes.add(item.trim());
+			}
+		}
+	}
+
+	@StringGetter(ADDITIONAL_AVAILABLE_MODES)
+	public String getAdditionalAvailableModesAsString() {
+		return additionalAvailableModes.stream().collect(Collectors.joining(", "));
+	}
+
+	public Set<String> getAdditionalAvailableModes() {
+		return Collections.unmodifiableSet(additionalAvailableModes);
+	}
+
+	public void setAdditionalAvailableModes(Set<String> val) {
+		additionalAvailableModes.clear();
+		additionalAvailableModes.addAll(val);
 	}
 }

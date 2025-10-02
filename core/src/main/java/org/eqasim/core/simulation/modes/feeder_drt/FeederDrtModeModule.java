@@ -45,10 +45,10 @@ public class FeederDrtModeModule extends AbstractDvrpModeModule {
 		DrtConfigGroup coveredDrtConfig = multiModeDrtConfigGroup.getModalElements().stream().filter(drtConfigGroup -> drtConfigGroup.getMode().equals(this.config.accessEgressModeName)).findFirst().get();
 
 		ScenarioExtent serviceAreaExtent = null;
-		if(coveredDrtConfig.operationalScheme.equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
+		if(coveredDrtConfig.getOperationalScheme().equals(DrtConfigGroup.OperationalScheme.serviceAreaBased)) {
 			URI extentPath;
 			try {
-				extentPath = ConfigGroup.getInputFileURL(getConfig().getContext(), coveredDrtConfig.drtServiceAreaShapeFile).toURI();
+				extentPath = ConfigGroup.getInputFileURL(getConfig().getContext(), coveredDrtConfig.getDrtServiceAreaShapeFile()).toURI();
 			} catch (URISyntaxException e) {
 				throw new RuntimeException(e);
 			}

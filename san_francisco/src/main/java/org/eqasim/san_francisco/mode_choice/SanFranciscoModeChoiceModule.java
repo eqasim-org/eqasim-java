@@ -62,6 +62,12 @@ public class SanFranciscoModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
+	public SanFranciscoModeAvailability provideModeAvailability(EqasimConfigGroup config) {
+		return new SanFranciscoModeAvailability(config.getAdditionalAvailableModes());
+	}
+
+	@Provides
+	@Singleton
 	public SanFranciscoModeParameters provideModeChoiceParameters(EqasimConfigGroup config) throws IOException, ConfigurationException {
 		SanFranciscoModeParameters parameters = SanFranciscoModeParameters.buildDefault();
 		

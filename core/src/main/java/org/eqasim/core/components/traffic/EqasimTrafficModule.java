@@ -8,14 +8,20 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class EqasimTrafficModule extends AbstractModule {
-	@Override
-	public void install() {
-		bind(CrossingPenalty.class).to(DefaultCrossingPenalty.class);
-	}
+    @Override
+    public void install() {
+        bind(CrossingPenalty.class).to(AttributeCrossingPenalty.class);
+    }
 
-	@Provides
-	@Singleton
-	public DefaultCrossingPenalty provideDefaultCrossingPenalty(Network network, EqasimConfigGroup eqasimConfig) {
-		return DefaultCrossingPenalty.build(network, eqasimConfig.getCrossingPenalty());
-	}
+    @Provides
+    @Singleton
+    AttributeCrossingPenalty providAttributeCrossingPenalty(Network network, DefaultCrossingPenalty delegate) {
+        return AttributeCrossingPenalty.sbuild(network, delegate);
+    }
+
+    @Provides
+    @Singleton
+    DefaultCrossingPenalty provideDefaultCrossingPenalty(Network network, EqasimConfigGroup eqasimConfig) {
+        return DefaultCrossingPenalty.build(network, eqasimConfig.getCrossingPenalty());
+    }
 }

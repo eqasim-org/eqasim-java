@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -34,7 +35,7 @@ public class RunScenarioCutterV2 {
     public static final String[] SHAPEFILE_EXTENSIONS = new String[]{".shp", ".cpg", ".dbf", ".qmd", ".shx", ".prj"};
 
     static public void main(String[] args)
-            throws ConfigurationException, IOException, InterruptedException {
+            throws ConfigurationException, IOException, InterruptedException, ExecutionException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "output-path", "extent-path", "vdf-travel-times-path") //
                 .allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
@@ -151,7 +152,7 @@ public class RunScenarioCutterV2 {
         Network subNetwork = NetworkUtils.createNetwork();
         new TransportModeNetworkFilter(network).filter(subNetwork, Set.of(mode));
 
-        NetworkUtils.runNetworkCleaner(subNetwork);
+        NetworkUtils.cleanNetwork(subNetwork, Set.of(mode));
 
         for(Link link: network.getLinks().values()) {
             if(link.getAllowedModes().contains(mode) && !subNetwork.getLinks().containsKey(link.getId())) {

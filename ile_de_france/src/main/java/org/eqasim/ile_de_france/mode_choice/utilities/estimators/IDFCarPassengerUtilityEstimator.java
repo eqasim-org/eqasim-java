@@ -6,9 +6,10 @@ import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFCarPassengerPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFCarPassengerVariables;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
-import org.matsim.api.core.v01.population.Activity;
+import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -19,13 +20,15 @@ public class IDFCarPassengerUtilityEstimator implements UtilityEstimator {
 	private final IDFModeParameters parameters;
 	private final IDFCarPassengerPredictor predictor;
 	private final IDFPersonPredictor personPredictor;
+	private final IDFSpatialPredictor spatialPredictor;
 
 	@Inject
 	public IDFCarPassengerUtilityEstimator(IDFModeParameters parameters, IDFCarPassengerPredictor predictor,
-			IDFPersonPredictor personPredictor) {
+			IDFPersonPredictor personPredictor, IDFSpatialPredictor spatialPredictor) {
 		this.parameters = parameters;
 		this.predictor = predictor;
 		this.personPredictor = personPredictor;
+		this.spatialPredictor = spatialPredictor;
 	}
 
 	protected double estimateConstantUtility() {
@@ -44,10 +47,15 @@ public class IDFCarPassengerUtilityEstimator implements UtilityEstimator {
 		return variables.hasDrivingPermit ? parameters.idfCarPassenger.betaDrivingPermit_u : 0.0;
 	}
 
+	protected double estimateInsideParisUtility(IDFSpatialVariables spatialVariables) {
+		return spatialVariables.isInsideParisBoundary ? parameters.betaRoadInsideParis_u : 0.0;
+	}
+
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		IDFCarPassengerVariables variables = predictor.predictVariables(person, trip, elements);
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
+		IDFSpatialVariables spatialVariables = spatialPredictor.predictVariables(person, trip, elements);
 
 		double utility = 0.0;
 
@@ -55,20 +63,8 @@ public class IDFCarPassengerUtilityEstimator implements UtilityEstimator {
 		utility += estimateTravelTimeUtility(variables);
 		utility += estimateAccessEgressTimeUtility(variables);
 		utility += estimateDrivingPermit(personVariables);
-
-		if (isParis(trip)) {
-			utility += parameters.idfParis.carPassenger_u;
-		}
+		utility += estimateInsideParisUtility(spatialVariables);
 
 		return utility;
-	}
-
-	static private boolean isParis(DiscreteModeChoiceTrip trip) {
-		return isParis(trip.getOriginActivity()) || isParis(trip.getDestinationActivity());
-	}
-
-	static private boolean isParis(Activity activity) {
-		Boolean isParis = (Boolean) activity.getAttributes().getAttribute("isParis");
-		return isParis != null && isParis;
 	}
 }

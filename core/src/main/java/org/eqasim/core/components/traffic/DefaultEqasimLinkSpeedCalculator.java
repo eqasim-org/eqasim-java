@@ -4,7 +4,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
 
 public class DefaultEqasimLinkSpeedCalculator implements EqasimLinkSpeedCalculator {
-	private final CrossingPenalty crossingPenalty;
+	final private CrossingPenalty crossingPenalty;
 
 	public DefaultEqasimLinkSpeedCalculator(CrossingPenalty crossingPenalty) {
 		this.crossingPenalty = crossingPenalty;

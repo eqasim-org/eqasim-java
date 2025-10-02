@@ -8,12 +8,11 @@ import java.util.Set;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
 import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
-import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.rejections.RejectionConstraint;
 import org.eqasim.examples.corsica_drt.rejections.RejectionModule;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
+import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.selective.SelectiveInsertionSearchParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
@@ -71,15 +70,16 @@ public class RunCorsicaDrtSimulation {
 			config.addModule(multiModeDrtConfig);
 
 			DrtConfigGroup drtConfig = new DrtConfigGroup();
-			drtConfig.mode = "drt";
-			drtConfig.operationalScheme = OperationalScheme.door2door;
-			drtConfig.stopDuration = 15.0;
-			DefaultDrtOptimizationConstraintsSet defaultDrtOptimizationConstraintsSet = new DefaultDrtOptimizationConstraintsSet();
-			defaultDrtOptimizationConstraintsSet.maxWaitTime = 3600;
-			defaultDrtOptimizationConstraintsSet.maxTravelTimeAlpha = 3;
-			defaultDrtOptimizationConstraintsSet.maxTravelTimeBeta = 3600;
-			drtConfig.addOrGetDrtOptimizationConstraintsParams().addParameterSet(defaultDrtOptimizationConstraintsSet);
-			drtConfig.vehiclesFile = Resources.getResource("corsica_drt/drt_vehicles.xml").toString();
+			drtConfig.setMode("drt");
+			drtConfig.setOperationalScheme(OperationalScheme.door2door);
+			drtConfig.setStopDuration(15.0);
+
+			DrtOptimizationConstraintsSetImpl constraints = new DrtOptimizationConstraintsSetImpl();
+			constraints.setMaxWaitTime(3600);
+			constraints.setMaxTravelTimeAlpha(3);
+			constraints.setMaxTravelTimeBeta(3600);
+			drtConfig.addOrGetDrtOptimizationConstraintsParams().addParameterSet(constraints);
+			drtConfig.setVehiclesFile(Resources.getResource("corsica_drt/drt_vehicles.xml").toString());
 
 			DrtInsertionSearchParams searchParams = new SelectiveInsertionSearchParams();
 			drtConfig.setDrtInsertionSearchParams(searchParams);
@@ -97,9 +97,6 @@ public class RunCorsicaDrtSimulation {
 		{ // Add the DRT mode to the choice model
 			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
 
-			// Add DRT to the available modes
-			dmcConfig.setModeAvailability(CorsicaDrtModeAvailability.NAME);
-
 			// Add DRT to cached modes
 			Set<String> cachedModes = new HashSet<>();
 			cachedModes.addAll(dmcConfig.getCachedModes());
@@ -110,6 +107,9 @@ public class RunCorsicaDrtSimulation {
 			EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 			eqasimConfig.setCostModel("drt", "drt");
 			eqasimConfig.setEstimator("drt", "drt");
+
+			// Add DRT to the available modes
+			eqasimConfig.setAdditionalAvailableModes(Set.of("drt"));
 
 			// Add rejection constraint
 			if (cmd.getOption("use-rejection-constraint").map(Boolean::parseBoolean).orElse(false)) {

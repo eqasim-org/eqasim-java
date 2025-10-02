@@ -37,8 +37,6 @@ public class RunComputeEmissionsEvents {
 
         EmissionsConfigGroup emissionsConfig = (EmissionsConfigGroup) config.getModules().get("emissions");
         emissionsConfig.setHbefaVehicleDescriptionSource(EmissionsConfigGroup.HbefaVehicleDescriptionSource.asEngineInformationAttributes);
-        emissionsConfig.setDetailedVsAverageLookupBehavior(
-                EmissionsConfigGroup.DetailedVsAverageLookupBehavior.tryDetailedThenTechnologyAverageThenAverageTable);
         emissionsConfig.setNonScenarioVehicles(EmissionsConfigGroup.NonScenarioVehicles.abort);
         emissionsConfig.setHbefaTableConsistencyCheckingLevel(EmissionsConfigGroup.HbefaTableConsistencyCheckingLevel.consistent);
 
@@ -48,6 +46,12 @@ public class RunComputeEmissionsEvents {
         if (cmd.hasOption("hbefa-cold-detailed") && cmd.hasOption("hbefa-hot-detailed")) {
             emissionsConfig.setDetailedColdEmissionFactorsFile(cmd.getOptionStrict("hbefa-cold-detailed"));
             emissionsConfig.setDetailedWarmEmissionFactorsFile(cmd.getOptionStrict("hbefa-hot-detailed"));
+            emissionsConfig.setDetailedVsAverageLookupBehavior(
+                    EmissionsConfigGroup.DetailedVsAverageLookupBehavior.tryDetailedThenTechnologyAverageThenAverageTable);
+        }
+        else {
+            emissionsConfig.setDetailedVsAverageLookupBehavior(
+                    EmissionsConfigGroup.DetailedVsAverageLookupBehavior.directlyTryAverageTable);
         }
 
         Scenario scenario = ScenarioUtils.createScenario(config);

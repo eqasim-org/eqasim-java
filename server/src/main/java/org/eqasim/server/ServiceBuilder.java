@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 import org.eqasim.core.misc.InjectorBuilder;
+import org.eqasim.core.scenario.freeflow.FreeflowConfigurator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
@@ -88,13 +89,15 @@ public class ServiceBuilder {
 			travelTime = new InjectorBuilder(scenario, configurator).build().getInstance(VDFTravelTime.class);
 		}
 
+		FreeflowConfigurator freeflowConfigurator = FreeflowConfigurator.create(roadNetwork);
+
 		final RoadRouterService roadRouterService;
 		final RoadIsochroneService roadIsochroneService;
 		final TransitRouterService transitRouterService;
 		final TransitIsochroneService transitIsochroneService;
 
 		roadRouterService = RoadRouterService.create(config, roadNetwork, configuration.walk,
-				threads, travelTime);
+				threads, travelTime, freeflowConfigurator);
 
 		roadIsochroneService = RoadIsochroneService.create(config, roadNetwork,
 				configuration.walk);

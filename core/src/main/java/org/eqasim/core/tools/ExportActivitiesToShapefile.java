@@ -19,6 +19,7 @@ import org.geotools.api.feature.simple.SimpleFeature;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class ExportActivitiesToShapefile {
 
     public static void exportActivitiesToShapeFile(Population population, String crsString, Set<String> ignoredActivityTypesSet, String outputPath) {
@@ -72,6 +73,8 @@ public class ExportActivitiesToShapefile {
 
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
+        System.err.println("THIS SCRIPT IS DEPRECATED SINCE JUNE 2025");
+        
         CommandLine commandLine = new CommandLine.Builder(args).requireOptions("plans-path", "output-path", "crs")
                 .allowOptions("ignored-activity-types").build();
 

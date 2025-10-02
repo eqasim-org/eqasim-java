@@ -8,8 +8,10 @@ import org.eqasim.core.simulation.mode_choice.utilities.estimators.EstimatorUtil
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPersonVariables;
 import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFPtVariables;
+import org.eqasim.ile_de_france.mode_choice.utilities.variables.IDFSpatialVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -21,13 +23,16 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 	private final IDFModeParameters parameters;
 	private final IDFPersonPredictor personPredictor;
 	private final IDFPtPredictor idfPtPredictor;
+	private final IDFSpatialPredictor spatialPredictor;
 	private final CostModel costModel;
 
 	@Inject
 	public IDFPtUtilityEstimator(IDFModeParameters parameters, IDFPtPredictor idfPtPredictor,
-			IDFPersonPredictor personPredictor, @Named("pt") CostModel costModel) {
+			IDFPersonPredictor personPredictor, IDFSpatialPredictor spatialPredictor,
+			@Named("pt") CostModel costModel) {
 		this.personPredictor = personPredictor;
 		this.idfPtPredictor = idfPtPredictor;
+		this.spatialPredictor = spatialPredictor;
 		this.parameters = parameters;
 		this.costModel = costModel;
 	}
@@ -48,9 +53,14 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		return parameters.pt.betaWaitingTime_u_min * variables.waitingTime_min;
 	}
 
-	protected double estimateMonetaryCostUtility(IDFPtVariables variables, double cost_EUR) {
-		return parameters.betaCost_u_MU * EstimatorUtils.interaction(variables.euclideanDistance_km,
-				parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) * cost_EUR;
+	protected double estimateMonetaryCostUtility(IDFPtVariables variables, IDFPersonVariables personVariables,
+			double cost_EUR) {
+		return parameters.betaCost_u_MU * //
+				EstimatorUtils.interaction(variables.euclideanDistance_km,
+						parameters.referenceEuclideanDistance_km, parameters.lambdaCostEuclideanDistance) //
+				* EstimatorUtils.interaction(personVariables.householdIncomePerCU_EUR,
+						parameters.referenceIncomePerCU_EUR, parameters.lambdaCostIncome) //
+				* cost_EUR;
 	}
 
 	protected double estimateInVehicleTimeUtility(IDFPtVariables variables) {
@@ -61,14 +71,19 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		return variables.hasDrivingPermit ? parameters.idfPt.betaDrivingPermit_u : 0.0;
 	}
 
-	protected double estimateOnlyBus(IDFPtVariables variables) {
-		return variables.isOnlyBus ? parameters.idfPt.onlyBus_u : 0.0;
+	protected double estimateOnlyBusUtility(IDFPtVariables variables) {
+		return variables.isOnlyBus ? parameters.idfPt.betaOnlyBus_u : 0.0;
+	}
+
+	protected double estimateCrossingParisBoundaryUtility(IDFSpatialVariables variables) {
+		return variables.isCrossingParisBoundary ? parameters.idfPt.betaCrossingParisBorder_u : 0.0;
 	}
 
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		IDFPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 		IDFPtVariables ptVariables = idfPtPredictor.predictVariables(person, trip, elements);
+		IDFSpatialVariables spatialVariables = spatialPredictor.predictVariables(person, trip, elements);
 
 		double cost_EUR = costModel.calculateCost_MU(person, trip, elements);
 
@@ -78,11 +93,13 @@ public class IDFPtUtilityEstimator implements UtilityEstimator {
 		utility += estimateAccessEgressTimeUtility(ptVariables);
 		utility += estimateLineSwitchUtility(ptVariables);
 		utility += estimateWaitingTimeUtility(ptVariables);
-		utility += estimateMonetaryCostUtility(ptVariables, cost_EUR);
+		utility += estimateMonetaryCostUtility(ptVariables, personVariables, cost_EUR);
 		utility += estimateInVehicleTimeUtility(ptVariables);
 
-		utility += estimateOnlyBus(ptVariables);
+		utility += estimateOnlyBusUtility(ptVariables);
 		utility += estimateDrivingPermitUtility(personVariables);
+
+		utility += estimateCrossingParisBoundaryUtility(spatialVariables);
 
 		return utility;
 	}

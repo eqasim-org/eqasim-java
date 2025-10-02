@@ -8,6 +8,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.dvrp.fleet.*;
+import org.matsim.contrib.dvrp.load.IntegerLoadType;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
@@ -61,6 +62,6 @@ public class CreateDrtVehicles {
             DvrpVehicleSpecification dvrpVehicleSpecification = ImmutableDvrpVehicleSpecification.newBuilder().id(vehicleId).startLinkId(linkId).serviceBeginTime(serviceBeginTime).serviceEndTime(serviceEndTime).capacity(vehiclesCapacity).build();
             fleetSpecification.addVehicleSpecification(dvrpVehicleSpecification);
         }
-        new FleetWriter(fleetSpecification.getVehicleSpecifications().values().stream()).write(cmd.getOptionStrict("output-vehicles-path"));
+        new FleetWriter(fleetSpecification.getVehicleSpecifications().values().stream(), new IntegerLoadType("passengers")).write(cmd.getOptionStrict("output-vehicles-path"));
     }
 }
