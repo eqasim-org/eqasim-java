@@ -158,7 +158,7 @@ public class GenerateConfig {
 
 		dmcConfig.setTripEstimator(EqasimModeChoiceModule.UTILITY_ESTIMATOR_NAME);
 		dmcConfig.setTourEstimator(EstimatorModule.CUMULATIVE);
-		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck"));
+		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck", "motorcycle"));
 
 		dmcConfig.setTourFinder(TourFinderModule.ACTIVITY_BASED);
 		dmcConfig.getActivityTourFinderConfigGroup().setActivityTypes(Arrays.asList("home", "outside"));
@@ -170,7 +170,7 @@ public class GenerateConfig {
 				EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME, EqasimModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
 
 		dmcConfig.setHomeFinder(EqasimModeChoiceModule.HOME_FINDER);
-		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
+		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike", "motorcycle"));
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,
 				EqasimModeChoiceModule.TOUR_LENGTH_FILTER_NAME));
@@ -178,6 +178,7 @@ public class GenerateConfig {
 		// Set up modes
 
 		eqasimConfig.setEstimator(TransportMode.car, EqasimModeChoiceModule.CAR_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.motorcycle, EqasimModeChoiceModule.MOTORCYCLE_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.pt, EqasimModeChoiceModule.PT_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, EqasimModeChoiceModule.BIKE_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.walk, EqasimModeChoiceModule.WALK_ESTIMATOR_NAME);
@@ -187,6 +188,7 @@ public class GenerateConfig {
 		}
 
 		eqasimConfig.setCostModel(TransportMode.car, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+		eqasimConfig.setCostModel(TransportMode.motorcycle, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 
 		// To make sure trips arriving later than the next activity end time are taken into account when routing the next trip during mode choice

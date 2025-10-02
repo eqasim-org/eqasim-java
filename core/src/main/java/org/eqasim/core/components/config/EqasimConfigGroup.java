@@ -44,6 +44,8 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private boolean useScheduleBasedTransport = true;
 
+	private boolean useMotorcycles = false;
+
 	private boolean usePseudoRandomErrors = false;
 
 	public EqasimConfigGroup() {
