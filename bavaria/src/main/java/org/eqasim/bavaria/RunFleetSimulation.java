@@ -2,8 +2,7 @@ package org.eqasim.bavaria;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
-import org.matsim.contrib.drt.optimizer.constraints.DefaultDrtOptimizationConstraintsSet;
-import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsParams;
+import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
 import org.matsim.contrib.drt.optimizer.insertion.extensive.ExtensiveInsertionSearchParams;
 import org.matsim.contrib.drt.routing.DrtRoute;
@@ -66,7 +65,7 @@ public class RunFleetSimulation {
 		config.addModule(dvrpConfig);
 
 		SquareGridZoneSystemParams zoneSystemParams = new SquareGridZoneSystemParams();
-		zoneSystemParams.cellSize = 100.0;
+		zoneSystemParams.setCellSize(100.0);
 
 		DvrpTravelTimeMatrixParams matrixParams = DvrpConfigGroup.get(config).getTravelTimeMatrixParams();
 		matrixParams.addParameterSet(zoneSystemParams);
@@ -77,22 +76,18 @@ public class RunFleetSimulation {
 		DrtConfigGroup drtConfig = new DrtConfigGroup();
 		multiModeDrtConfig.addParameterSet(drtConfig);
 
-		drtConfig.mode = "drt";
-		drtConfig.stopDuration = 30.0;
-		drtConfig.vehiclesFile = cmd.getOptionStrict("fleet-path");
+		drtConfig.setMode("drt");
+		drtConfig.setStopDuration(30.0);
+		drtConfig.setVehiclesFile(cmd.getOptionStrict("fleet-path"));
 
 		DrtInsertionSearchParams insertionParams = new ExtensiveInsertionSearchParams();
 		drtConfig.addParameterSet(insertionParams);
 
-		DrtOptimizationConstraintsParams constraintsContainer = new DrtOptimizationConstraintsParams();
-		drtConfig.addParameterSet(constraintsContainer);
-
-		DefaultDrtOptimizationConstraintsSet constraints = new DefaultDrtOptimizationConstraintsSet();
-		constraints.name = "default";
-		constraints.maxWaitTime = 300.0;
-		constraints.maxTravelTimeBeta = 1.0;
-		constraints.maxTravelTimeAlpha = 600.0;
-		constraintsContainer.addParameterSet(constraints);
+		DrtOptimizationConstraintsSetImpl constraints = drtConfig.addOrGetDrtOptimizationConstraintsParams()
+				.addOrGetDefaultDrtOptimizationConstraintsSet();
+		constraints.setMaxWaitTime(300.0);
+		constraints.setMaxDetourBeta(1.0);
+		constraints.setMaxDetourAlpha(600.0);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		scenario.getPopulation().getFactory().getRouteFactories().setRouteFactory(DrtRoute.class,
