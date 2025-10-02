@@ -53,7 +53,10 @@ public class AdaptConfigForFeederDrt {
 
         // Add DRT to the available modes
         EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
-        eqasimConfig.setAdditionalAvailableModes(Sets.union(eqasimConfig.getAdditionalAvailableModes(), basePtModes.keySet()));
+        Set<String> availableModes = new HashSet<>(eqasimConfig.getAdditionalAvailableModes());
+        availableModes.addAll(baseDrtModes.keySet()); // add new modes
+        availableModes.removeAll(baseDrtModes.values());
+        eqasimConfig.setAdditionalAvailableModes(availableModes);
 
         //This constraint need to be added
         dmcConfig.getTripConstraints().add(FeederDrtConstraint.NAME);
