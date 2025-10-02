@@ -20,6 +20,7 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
 import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
@@ -69,6 +70,12 @@ public class AdaptConfigForDrt {
         Set<String> cachedModes = new HashSet<>(dmcConfig.getCachedModes());
         cachedModes.addAll(vehiclesPathByDrtMode.keySet());
         dmcConfig.setCachedModes(cachedModes);
+
+        // Add DRT to termination criteria
+        EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+        List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
+        terminationModes.addAll(vehiclesPathByDrtMode.keySet());
+        terminationConfig.setModes(terminationModes);
 
         boolean serviceAreaDrt = false;
 

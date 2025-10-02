@@ -1,5 +1,6 @@
 package org.eqasim.core.simulation.modes.feeder_drt.utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import org.eqasim.core.simulation.modes.feeder_drt.mode_choice.constraints.Feede
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.CompositeAccessEgressStopSearchParameterSet;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByIdAccessEgressStopSearchParameterSet;
 import org.eqasim.core.simulation.modes.feeder_drt.router.access_egress_stop_search.TransitStopByModeAccessEgressStopSearchParameterSet;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -51,12 +53,19 @@ public class AdaptConfigForFeederDrt {
             singleLegParameterSetByMainModeByLegMode = legTimeConstraintConfigGroup.getSingleLegParameterSetByMainModeByLegMode();
         }
 
-        // Add DRT to the available modes
+        // Add feeder to the available modes
         EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
         Set<String> availableModes = new HashSet<>(eqasimConfig.getAdditionalAvailableModes());
         availableModes.addAll(baseDrtModes.keySet()); // add new modes
         availableModes.removeAll(baseDrtModes.values());
         eqasimConfig.setAdditionalAvailableModes(availableModes);
+
+        // Update termination modes
+        EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+        List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
+        terminationModes.removeAll(baseDrtModes.values());
+        terminationModes.addAll(baseDrtModes.keySet());
+        terminationConfig.setModes(terminationModes);
 
         //This constraint need to be added
         dmcConfig.getTripConstraints().add(FeederDrtConstraint.NAME);
