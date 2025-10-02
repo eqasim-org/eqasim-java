@@ -43,6 +43,10 @@
 			<id>matsim</id>
 			<url>https://repo.matsim.org/repository/matsim</url>
 		</repository>
+		<repository> <!-- added to integrate matsim-fleetpy -->
+		    <id>jitpack.io</id>
+		    <url>https://www.jitpack.io</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -117,6 +121,12 @@
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim-examples</artifactId>
 			<version>${matsim.version}</version>
+		</dependency>
+
+		<dependency> <!-- dependency added for matsim-fleetpy -->
+			<groupId>com.github.sebhoerl</groupId>
+			<artifactId>matsim-fleetpy</artifactId>
+			<version>aecb348998</version>
 		</dependency>
 
 		<dependency>
