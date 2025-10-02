@@ -69,6 +69,12 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
+	public IDFModeAvailability provideModeAvailability(EqasimConfigGroup config) {
+		return new IDFModeAvailability(config.getAdditionalAvailableModes());
+	}
+
+	@Provides
+	@Singleton
 	public IDFModeParameters provideModeChoiceParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
 		IDFModeParameters parameters = IDFModeParameters.buildDefault();

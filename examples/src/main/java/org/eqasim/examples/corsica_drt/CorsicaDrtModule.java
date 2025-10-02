@@ -11,7 +11,6 @@ import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DefaultDrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.utilities.estimators.DrtUtilityEstimator;
-import org.eqasim.examples.corsica_drt.mode_choice.CorsicaDrtModeAvailability;
 import org.eqasim.examples.corsica_drt.mode_choice.cost.DrtCostModel;
 import org.eqasim.examples.corsica_drt.mode_choice.parameters.CorsicaDrtCostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
@@ -31,9 +30,6 @@ public class CorsicaDrtModule extends AbstractEqasimExtension {
 
 	@Override
 	protected void installEqasimExtension() {
-		// Configure mode availability
-		bindModeAvailability(CorsicaDrtModeAvailability.NAME).to(CorsicaDrtModeAvailability.class);
-
 		// Configure choice alternative for DRT
 		bindUtilityEstimator("drt").to(DrtUtilityEstimator.class);
 		bindCostModel("drt").to(DrtCostModel.class);
