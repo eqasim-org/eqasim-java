@@ -119,8 +119,8 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
 
     private double calcAbstractAccessLegRoutingCost(DefaultAbstractAccessRoute accessRoute, Person person) {
         RaptorParameters raptorParameters = this.raptorParametersForPerson.getRaptorParameters(person);
-        double routingCost = accessRoute.getTravelTime().seconds() * raptorParameters.getMarginalUtilityOfTravelTime_utl_s("bus");
-        routingCost += accessRoute.getWaitTime() * raptorParameters.getMarginalUtilityOfWaitingPt_utl_s();
+        double routingCost = -accessRoute.getTravelTime().seconds() * raptorParameters.getMarginalUtilityOfTravelTime_utl_s("bus");
+        routingCost -= accessRoute.getWaitTime() * raptorParameters.getMarginalUtilityOfWaitingPt_utl_s();
         return routingCost;
     }
 
