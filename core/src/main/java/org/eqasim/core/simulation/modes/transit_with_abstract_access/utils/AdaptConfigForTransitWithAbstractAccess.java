@@ -26,7 +26,8 @@ public class AdaptConfigForTransitWithAbstractAccess {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args)
-                .requireOptions("input-config-path", "output-config-path", "mode-name", "accesses-file-path", "update-termination-modes")
+                .requireOptions("input-config-path", "output-config-path", "mode-name", "accesses-file-path")
+                .allowOptions("update-termination-modes")
                 .build();
 
         Config config = ConfigUtils.loadConfig(commandLine.getOptionStrict("input-config-path"), new DiscreteModeChoiceConfigGroup(), new EqasimConfigGroup());
