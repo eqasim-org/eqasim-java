@@ -182,12 +182,11 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                     }
                     plan.add(element);
                 }
-            } // Otherwise the pt route from the origin to the egress center has already been computed in the else block above
-
-            Activity activity = this.populationFactory.createActivityFromLinkId("pt interaction", egressItem.getCenterStop().getLinkId());
-            activity.setStartTime(departureTime);
-            activity.setEndTime(departureTime);
-            plan.add(activity);
+                Activity activity = this.populationFactory.createActivityFromLinkId("pt interaction", egressItem.getCenterStop().getLinkId());
+                activity.setStartTime(departureTime);
+                activity.setEndTime(departureTime);
+                plan.add(activity);
+            } // Otherwise the pt route from the origin to the egress center as well as the interaction activity has already been computed in the else block above
             Leg leg = this.createAbstractAccessLeg(egressItem, false, routingRequest.getToFacility().getLinkId(), departureTime, routingRequest.getPerson());
             plan.add(leg);
             routingCost += calcAbstractAccessLegRoutingCost((DefaultAbstractAccessRoute) leg.getRoute(), routingRequest.getPerson());
