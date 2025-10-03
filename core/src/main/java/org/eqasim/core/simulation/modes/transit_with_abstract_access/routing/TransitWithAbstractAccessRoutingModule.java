@@ -39,7 +39,6 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
     private final IdMap<TransitStopFacility, Id<Link>> transitStopFacilityLinks;
     private final TransitWithAbstractAccessData transitWithAbstractAccessData;
     private final RaptorParametersForPerson raptorParametersForPerson;
-    private final RaptorStaticConfig raptorStaticConfig;
 
     public TransitWithAbstractAccessRoutingModule(TransitWithAbstractAccessData transitWithAbstractAccessData, AbstractAccesses abstractAccesses, RoutingModule transitRoutingModule, PopulationFactory populationFactory, RaptorParametersForPerson raptorParametersForPerson, RaptorStaticConfig raptorStaticConfig) {
 
@@ -84,8 +83,6 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
         this.populationFactory = populationFactory;
 
         this.raptorParametersForPerson = raptorParametersForPerson;
-
-        this.raptorStaticConfig = raptorStaticConfig;
     }
 
 
@@ -175,22 +172,18 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             if(accessItem != null) {
                 ptRoute = this.transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessItem.getCenterStop(), egressItem.getCenterStop(), departureTime, routingRequest.getPerson()));
                 routingCost += calcPtRoutingCost(ptRoute, accessItem.getCenterStop(), egressItem.getCenterStop(), routingRequest.getPerson());
-            } else {
-                ptRoute = this.transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(routingRequest.getFromFacility(), egressItem.getCenterStop(), departureTime, routingRequest.getPerson()));
-                routingCost += calcPtRoutingCost(ptRoute, routingRequest.getFromFacility(), egressItem.getCenterStop(), routingRequest.getPerson());
-            }
-
-            for(PlanElement element: ptRoute) {
-                if(element instanceof Leg leg) {
-                    if(leg.getMode().equals("pt")) {
-                        foundPtLeg = true;
+                for(PlanElement element: ptRoute) {
+                    if(element instanceof Leg leg) {
+                        if(leg.getMode().equals("pt")) {
+                            foundPtLeg = true;
+                        }
+                        departureTime = leg.getDepartureTime().seconds();
+                        departureTime += leg.getTravelTime().seconds();
                     }
-                    departureTime = leg.getDepartureTime().seconds();
-                    departureTime += leg.getTravelTime().seconds();
+                    plan.add(element);
                 }
-            }
+            } // Otherwise the pt route from the origin to the egress center has already been computed in the else block above
 
-            plan.addAll(ptRoute);
             Activity activity = this.populationFactory.createActivityFromLinkId("pt interaction", egressItem.getCenterStop().getLinkId());
             activity.setStartTime(departureTime);
             activity.setEndTime(departureTime);
