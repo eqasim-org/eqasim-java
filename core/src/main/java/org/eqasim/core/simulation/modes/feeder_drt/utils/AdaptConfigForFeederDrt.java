@@ -33,7 +33,7 @@ import com.google.common.collect.Sets;
 
 public class AdaptConfigForFeederDrt {
 
-    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, Map<String, String> accessEgressTransitStopModes, Map<String, String> accessEgressTransitStopIds) {
+    public static void adapt(Config config, Map<String, String> basePtModes, Map<String, String> baseDrtModes, Map<String, String> utilityEstimators, Map<String, String> accessEgressTransitStopModes, Map<String, String> accessEgressTransitStopIds, boolean updateTerminationModes) {
         if(!config.getModules().containsKey(MultiModeDrtConfigGroup.GROUP_NAME)) {
             throw new IllegalStateException(String.format("Cannot add module '%s' if module '%s' is not present already. You can use '%s' to configure it.", MultiModeFeederDrtConfigGroup.GROUP_NAME, MultiModeDrtConfigGroup.GROUP_NAME, AdaptConfigForDrt.class.getCanonicalName()));
         }
@@ -61,11 +61,13 @@ public class AdaptConfigForFeederDrt {
         eqasimConfig.setAdditionalAvailableModes(availableModes);
 
         // Update termination modes
-        EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
-        List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
-        terminationModes.removeAll(baseDrtModes.values());
-        terminationModes.addAll(baseDrtModes.keySet());
-        terminationConfig.setModes(terminationModes);
+        if (updateTerminationModes) {
+            EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+            List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
+            terminationModes.removeAll(baseDrtModes.values());
+            terminationModes.addAll(baseDrtModes.keySet());
+            terminationConfig.setModes(terminationModes);
+        }
 
         //This constraint need to be added
         dmcConfig.getTripConstraints().add(FeederDrtConstraint.NAME);
@@ -144,6 +146,7 @@ public class AdaptConfigForFeederDrt {
                 .allowOptions("estimators")
                 .allowOptions("access-egress-transit-stop-modes")
                 .allowOptions("access-egress-transit-stop-ids")
+                .allowOptions("update-termination-modes")
                 .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .build();
 
@@ -170,7 +173,8 @@ public class AdaptConfigForFeederDrt {
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);
 
-        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), info.get("access-egress-transit-stop-ids"));
+        boolean updateTerminationModes = cmd.getOption("update-termination-modes").map(Boolean::parseBoolean).orElse(config.getModules().containsKey(EqasimTerminationConfigGroup.GROUP_NAME));
+        adapt(config, info.get("base-pt-modes"), info.get("base-drt-modes"), info.get("estimators"), info.get("access-egress-transit-stop-modes"), info.get("access-egress-transit-stop-ids"), updateTerminationModes);
 
         ConfigUtils.writeConfig(config, outputConfigPath);
     }
