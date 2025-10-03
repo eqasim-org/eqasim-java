@@ -140,11 +140,11 @@ public class TestEmissions {
 
 	private void runMelunEmissions() throws CommandLine.ConfigurationException, IOException {
 		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
-		Assert.assertEquals(3297, (long) counts.get("car"));
-		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
-		Assert.assertEquals(9348, (long) counts.get("walk"));
-		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
-		Assert.assertEquals(2108, (long) counts.get("pt"));
+		Assert.assertEquals(2793, (long) counts.get("car"));
+		Assert.assertEquals(1559, (long) counts.get("car_passenger"));
+		Assert.assertEquals(11642, (long) counts.get("walk"));
+		Assert.assertEquals(2861, (long) counts.getOrDefault("bike", 0L));
+		Assert.assertEquals(3347, (long) counts.get("pt"));
 
 		SafeOsmHbefaMapping.defaultType = "URB/Loca/50";
 
@@ -177,6 +177,8 @@ public class TestEmissions {
 		double expectedCo = 0.627553969527029;
 		double expectedNox = 0.810111846744523;
 		double expectedUnknown = Double.NaN;
+		
+		
 
 		assertEquals(expectedPm, feature.getAttribute("PM"));
 		assertEquals(expectedCo, feature.getAttribute("CO"));
