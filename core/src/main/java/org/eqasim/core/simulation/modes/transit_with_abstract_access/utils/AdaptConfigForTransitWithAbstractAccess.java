@@ -5,6 +5,7 @@ import org.eqasim.core.simulation.modes.transit_with_abstract_access.TransitWith
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.TransitWithAbstractAccessModeChoiceModule;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.mode_choice.constraints.TransitWithAbstractAccessConstraint;
 import org.eqasim.core.simulation.modes.transit_with_abstract_access.routing.TransitWithAbstractAccessRoutingModule;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
@@ -14,7 +15,9 @@ import org.matsim.core.config.groups.ScoringConfigGroup;
 import com.google.common.collect.Sets;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class AdaptConfigForTransitWithAbstractAccess {
@@ -54,6 +57,12 @@ public class AdaptConfigForTransitWithAbstractAccess {
 
         EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
         eqasimConfig.setAdditionalAvailableModes(Sets.union(eqasimConfig.getAdditionalAvailableModes(), Set.of(mode)));
+
+        // Update termination modes
+        EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+        List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
+        terminationModes.add(mode);
+        terminationConfig.setModes(terminationModes);
 
         ConfigUtils.writeConfig(config, outputConfigPath);
     }
