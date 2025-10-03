@@ -26,7 +26,7 @@ public class AdaptConfigForTransitWithAbstractAccess {
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
         CommandLine commandLine = new CommandLine.Builder(args)
-                .requireOptions("input-config-path", "output-config-path", "mode-name", "accesses-file-path")
+                .requireOptions("input-config-path", "output-config-path", "mode-name", "accesses-file-path", "update-termination-modes")
                 .build();
 
         Config config = ConfigUtils.loadConfig(commandLine.getOptionStrict("input-config-path"), new DiscreteModeChoiceConfigGroup(), new EqasimConfigGroup());
@@ -59,10 +59,13 @@ public class AdaptConfigForTransitWithAbstractAccess {
         eqasimConfig.setAdditionalAvailableModes(Sets.union(eqasimConfig.getAdditionalAvailableModes(), Set.of(mode)));
 
         // Update termination modes
-        EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
-        List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
-        terminationModes.add(mode);
-        terminationConfig.setModes(terminationModes);
+        boolean updateTerminationModes = commandLine.getOption("update-termination-modes").map(Boolean::parseBoolean).orElse(config.getModules().containsKey(EqasimTerminationConfigGroup.GROUP_NAME));
+        if (updateTerminationModes) {
+            EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+            List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
+            terminationModes.add(mode);
+            terminationConfig.setModes(terminationModes);
+        }
 
         ConfigUtils.writeConfig(config, outputConfigPath);
     }
