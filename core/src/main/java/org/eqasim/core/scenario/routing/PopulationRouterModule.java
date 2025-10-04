@@ -13,6 +13,7 @@ public class PopulationRouterModule extends AbstractModule {
 	private final int batchSize;
 	private final boolean replaceExistingRoutes;
 	private final Set<String> modes;
+	private final boolean fixOnlyWalk;
 
 	public PopulationRouterModule(int numberOfThreads, int batchSize, boolean replaceExistingRoute) {
 		this(numberOfThreads, batchSize, replaceExistingRoute, Collections.emptySet());
@@ -20,10 +21,16 @@ public class PopulationRouterModule extends AbstractModule {
 
 	public PopulationRouterModule(int numberOfThreads, int batchSize, boolean replaceExistingRoutes,
 			Set<String> modes) {
+		this(numberOfThreads, batchSize, replaceExistingRoutes, modes, true);
+	}
+
+	public PopulationRouterModule(int numberOfThreads, int batchSize, boolean replaceExistingRoutes,
+								  Set<String> modes, boolean fixOnlyWalk) {
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
 		this.replaceExistingRoutes = replaceExistingRoutes;
 		this.modes = modes;
+		this.fixOnlyWalk = fixOnlyWalk;
 	}
 
 	@Override
@@ -33,6 +40,6 @@ public class PopulationRouterModule extends AbstractModule {
 
 	@Provides
 	public PopulationRouter providePopulationRouter(Provider<PlanRouter> routerProvider) {
-		return new PopulationRouter(numberOfThreads, batchSize, replaceExistingRoutes, modes, routerProvider);
+		return new PopulationRouter(numberOfThreads, batchSize, replaceExistingRoutes, modes, routerProvider, fixOnlyWalk);
 	}
 }

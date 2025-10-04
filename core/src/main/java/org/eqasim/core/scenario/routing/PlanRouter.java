@@ -29,7 +29,7 @@ public class PlanRouter {
 		this.facilities = facilities;
 	}
 
-	public void run(Plan plan, boolean replaceExistingRoutes, Set<String> modes) {
+	public void run(Plan plan, boolean replaceExistingRoutes, Set<String> modes, boolean fixOnlyWalk) {
 		List<Trip> trips = TripStructureUtils.getTrips(plan);
 
 		for (Trip trip : trips) {
@@ -58,9 +58,11 @@ public class PlanRouter {
 					List<? extends PlanElement> newElements = tripRouter.calcRoute(mainMode, fromFacility, toFacility,
 							departureTime.seconds(), plan.getPerson(), trip.getTripAttributes());
 
-					// Fix in case we have a transit trip that is only walk
-					newElements = fixOnlyWalk(mainMode, fromFacility, toFacility, departureTime.seconds(),
-							plan.getPerson(), newElements, trip.getTripAttributes());
+					// Fix in case we have a transit trip that is only walk, if enabled
+					if(fixOnlyWalk) {
+						newElements = fixOnlyWalk(mainMode, fromFacility, toFacility, departureTime.seconds(),
+								plan.getPerson(), newElements, trip.getTripAttributes());
+					}
 
 					TripRouter.insertTrip(plan, trip.getOriginActivity(), newElements, trip.getDestinationActivity());
 				}

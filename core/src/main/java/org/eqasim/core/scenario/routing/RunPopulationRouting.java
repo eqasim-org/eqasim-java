@@ -25,6 +25,7 @@ public class RunPopulationRouting {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "output-path") //
 				.allowOptions("threads", "batch-size", "modes", EqasimConfigurator.CONFIGURATOR) //
+				.allowOptions("fix-only-walk")
 				.build();
 
 		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
@@ -57,9 +58,11 @@ public class RunPopulationRouting {
 			}
 		}
 
+		boolean fixOnlyWalk = cmd.getOption("fix-only-walk").map(Boolean::parseBoolean).orElse(true);
+
 		// TODO: Check what we can remove here
 		Injector injector = new InjectorBuilder(scenario, configurator) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
+				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes, fixOnlyWalk)) //
 				.addOverridingModule(new TimeInterpretationModule()).build();
 
 		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);

@@ -23,14 +23,16 @@ public class PopulationRouter {
 	private final boolean replaceExistingRoutes;
 	private final Provider<PlanRouter> routerProvider;
 	private final Set<String> modes;
+	private final boolean fixOnlyWalk;
 
 	public PopulationRouter(int numberOfThreads, int batchSize, boolean replaceExistingRoutes, Set<String> modes,
-			Provider<PlanRouter> routerProvider) {
+			Provider<PlanRouter> routerProvider, boolean fixOnlyWalk) {
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
 		this.routerProvider = routerProvider;
 		this.replaceExistingRoutes = replaceExistingRoutes;
 		this.modes = modes;
+		this.fixOnlyWalk = fixOnlyWalk;
 	}
 
 	public void run(Population population) throws InterruptedException {
@@ -60,7 +62,7 @@ public class PopulationRouter {
 					PlanRouter router = routerLocal.get();
 					for (Person p : chunk) {
 						for (Plan plan : p.getPlans()) {
-							router.run(plan, replaceExistingRoutes, modes);
+							router.run(plan, replaceExistingRoutes, modes, fixOnlyWalk);
 						}
 					}
 					progress.update(chunk.size());
