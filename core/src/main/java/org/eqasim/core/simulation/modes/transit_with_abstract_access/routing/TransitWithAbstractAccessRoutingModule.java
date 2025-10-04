@@ -86,10 +86,10 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
     }
 
 
-    private double calcPtRoutingCost(List<? extends PlanElement> planElements, Facility fromFacility, Facility toFacility, Person person) {
+    public static double calcPtRoutingCost(List<? extends PlanElement> planElements, Facility fromFacility, Facility toFacility, Person person, RaptorParametersForPerson raptorParametersForPerson) {
         Double routingCost = null;
-        if(planElements.size() == 1) {
-            RaptorParameters raptorParameters = this.raptorParametersForPerson.getRaptorParameters(person);
+        if(planElements.size() == 1) { // In this case the elemnt can only be a walk leg
+            RaptorParameters raptorParameters = raptorParametersForPerson.getRaptorParameters(person);
             Leg leg = (Leg) planElements.get(0);
             if (!leg.getMode().equals("walk")) {
                 throw new IllegalStateException();
@@ -128,7 +128,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
 
         if(accessItem == null && egressItem == null) {
             plan.addAll(this.transitRoutingModule.calcRoute(routingRequest));
-            return new TransitWithAbstractAccessRouteAlternative(plan, calcPtRoutingCost(plan, routingRequest.getFromFacility(), routingRequest.getToFacility(), routingRequest.getPerson()), accessItem, egressItem);
+            return new TransitWithAbstractAccessRouteAlternative(plan, calcPtRoutingCost(plan, routingRequest.getFromFacility(), routingRequest.getToFacility(), routingRequest.getPerson(), this.raptorParametersForPerson), accessItem, egressItem);
         }
 
         double routingCost = 0;
@@ -160,7 +160,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                 }
                 plan.add(element);
             }
-            routingCost += calcPtRoutingCost(plan, routingRequest.getFromFacility(), egressItem.getCenterStop(), routingRequest.getPerson());
+            routingCost += calcPtRoutingCost(plan, routingRequest.getFromFacility(), egressItem.getCenterStop(), routingRequest.getPerson(), this.raptorParametersForPerson);
             Activity activity = this.populationFactory.createActivityFromLinkId("pt interaction", egressItem.getCenterStop().getLinkId());
             activity.setStartTime(departureTime);
             activity.setEndTime(departureTime);
@@ -171,7 +171,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             List<? extends PlanElement> ptRoute;
             if(accessItem != null) {
                 ptRoute = this.transitRoutingModule.calcRoute(DefaultRoutingRequest.withoutAttributes(accessItem.getCenterStop(), egressItem.getCenterStop(), departureTime, routingRequest.getPerson()));
-                routingCost += calcPtRoutingCost(ptRoute, accessItem.getCenterStop(), egressItem.getCenterStop(), routingRequest.getPerson());
+                routingCost += calcPtRoutingCost(ptRoute, accessItem.getCenterStop(), egressItem.getCenterStop(), routingRequest.getPerson(), this.raptorParametersForPerson);
                 for(PlanElement element: ptRoute) {
                     if(element instanceof Leg leg) {
                         if(leg.getMode().equals("pt")) {
@@ -200,7 +200,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
                     break;
                 }
             }
-            routingCost += calcPtRoutingCost(ptRoute, accessItem.getCenterStop(), routingRequest.getToFacility(), routingRequest.getPerson());
+            routingCost += calcPtRoutingCost(ptRoute, accessItem.getCenterStop(), routingRequest.getToFacility(), routingRequest.getPerson(), this.raptorParametersForPerson);
             plan.addAll(ptRoute);
         }
         if(!foundPtLeg) {
