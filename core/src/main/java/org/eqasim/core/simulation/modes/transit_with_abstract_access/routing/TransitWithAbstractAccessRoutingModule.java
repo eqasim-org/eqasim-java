@@ -87,6 +87,10 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
 
 
     public static double calcPtRoutingCost(List<? extends PlanElement> planElements, Facility fromFacility, Facility toFacility, Person person, RaptorParametersForPerson raptorParametersForPerson) {
+        return calcPtRoutingCost(planElements, fromFacility.getCoord(), toFacility.getCoord(), person, raptorParametersForPerson);
+    }
+
+    public static double calcPtRoutingCost(List<? extends PlanElement> planElements, Coord fromCoord, Coord toCoord, Person person, RaptorParametersForPerson raptorParametersForPerson) {
         Double routingCost = null;
         if(planElements.size() == 1) { // In this case the elemnt can only be a walk leg
             RaptorParameters raptorParameters = raptorParametersForPerson.getRaptorParameters(person);
@@ -94,7 +98,7 @@ public class TransitWithAbstractAccessRoutingModule implements RoutingModule {
             if (!leg.getMode().equals("walk")) {
                 throw new IllegalStateException();
             }
-            double beelineDistance = CoordUtils.calcEuclideanDistance(fromFacility.getCoord(), toFacility.getCoord());
+            double beelineDistance = CoordUtils.calcEuclideanDistance(fromCoord, toCoord);
             double walkTime = beelineDistance / raptorParameters.getBeelineWalkSpeed();
             double walkCost_per_s = - raptorParameters.getMarginalUtilityOfTravelTime_utl_s(TransportMode.walk);
             routingCost = walkTime * walkCost_per_s;
