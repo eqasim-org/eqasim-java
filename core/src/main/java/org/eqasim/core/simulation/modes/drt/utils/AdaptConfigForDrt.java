@@ -20,6 +20,7 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
 import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
@@ -48,7 +49,7 @@ import com.google.common.collect.Sets;
 
 public class AdaptConfigForDrt {
 
-    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime) {
+    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime, boolean updateTerminationModes) {
         if(!config.getModules().containsKey(DvrpConfigGroup.GROUP_NAME)) {
             config.addModule(new DvrpConfigGroup());
         }
@@ -69,6 +70,14 @@ public class AdaptConfigForDrt {
         Set<String> cachedModes = new HashSet<>(dmcConfig.getCachedModes());
         cachedModes.addAll(vehiclesPathByDrtMode.keySet());
         dmcConfig.setCachedModes(cachedModes);
+
+        // Add DRT to termination criteria
+        if (updateTerminationModes) {
+            EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+            List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
+            terminationModes.addAll(vehiclesPathByDrtMode.keySet());
+            terminationConfig.setModes(terminationModes);
+        }
 
         boolean serviceAreaDrt = false;
 
@@ -181,6 +190,7 @@ public class AdaptConfigForDrt {
                 .allowOptions("cost-models", "estimators")
                 .allowOptions("qsim-endtime")
                 .allowOptions("add-leg-time-constraint")
+                .allowOptions("update-termination-modes")
                 .build();
 
 
@@ -209,7 +219,8 @@ public class AdaptConfigForDrt {
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);
         
-        adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), info.get("add-leg-time-constraint"), qsimEndtime);
+        boolean updateTerminationModes = cmd.getOption("update-termination-modes").map(Boolean::parseBoolean).orElse(config.getModules().containsKey(EqasimTerminationConfigGroup.GROUP_NAME));
+        adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), info.get("add-leg-time-constraint"), qsimEndtime, updateTerminationModes);
 
         cmd.applyConfiguration(config);
 
