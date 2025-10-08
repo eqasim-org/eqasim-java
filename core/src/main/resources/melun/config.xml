@@ -4,7 +4,7 @@
 	<module name="DiscreteModeChoice" >
 		<param name="accumulateEstimationDelays" value="true" />
 		<!-- Trips tested with the modes listed here will be cached for each combination of trip and agent during one replanning pass. -->
-		<param name="cachedModes" value="pt, car, truck, car_passenger, walk, bike" />
+		<param name="cachedModes" value="pt, car, truck, car_passenger, walk, bike, motorcycle" />
 		<!-- Defines whether to run a runtime check that verifies that everything is set up correctl for a 'mode-choice-in-the-loop' setup. -->
 		<param name="enforceSinglePlan" value="true" />
 		<!-- Defines what happens if there is no feasible choice alternative for an agent: IGNORE_AGENT, INITIAL_CHOICE, EXCEPTION -->
@@ -59,7 +59,7 @@
 		</parameterset>
 		<parameterset type="tourConstraint:VehicleContinuity" >
 			<!-- Defines which modes must fulfill continuity constraints (can only be used where they have been brough to before) -->
-			<param name="restrictedModes" value="car, bike" />
+			<param name="restrictedModes" value="car, bike, motorcycle" />
 		</parameterset>
 		<parameterset type="tourFilter:TourLength" >
 			<!-- Defines the maximum allowed length of a tour. -->
@@ -197,6 +197,10 @@
 		<param name="sampleSize" value="0.1" />
 		<param name="useScheduleBasedTransport" value="true" />
 		<parameterset type="cost_model" >
+			<param name="mode" value="motorcycle" />
+			<param name="model" value="ZeroCostModel" />
+		</parameterset>
+		<parameterset type="cost_model" >
 			<param name="mode" value="car" />
 			<param name="model" value="ZeroCostModel" />
 		</parameterset>
@@ -207,6 +211,10 @@
 		<parameterset type="estimator" >
 			<param name="estimator" value="CarUtilityEstimator" />
 			<param name="mode" value="car" />
+		</parameterset>
+		<parameterset type="estimator" >
+			<param name="estimator" value="CarUtilityEstimator" />
+			<param name="mode" value="motorcycle" />
 		</parameterset>
 		<parameterset type="estimator" >
 			<param name="estimator" value="PtUtilityEstimator" />
@@ -542,6 +550,15 @@
 				<param name="dailyUtilityConstant" value="0.0" />
 				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
 				<param name="marginalUtilityOfTraveling_util_hr" value="-1.0" />
+				<param name="mode" value="motorcycle" />
+				<param name="monetaryDistanceRate" value="0.0" />
+			</parameterset>
+			<parameterset type="modeParams" >
+				<param name="constant" value="0.0" />
+				<param name="dailyMonetaryConstant" value="0.0" />
+				<param name="dailyUtilityConstant" value="0.0" />
+				<param name="marginalUtilityOfDistance_util_m" value="0.0" />
+				<param name="marginalUtilityOfTraveling_util_hr" value="-1.0" />
 				<param name="mode" value="pt" />
 				<param name="monetaryDistanceRate" value="0.0" />
 			</parameterset>
@@ -633,7 +650,7 @@
 		<!-- Some typical teleportation routing params are set by default, such as for walk and bike.  Setting this switch to "true" will clear them.  Note that this will also clear settings for helper modes such as for non_network_walk -->
 		<param name="clearDefaultTeleportedModeParams" value="false" />
 		<!-- All the modes for which the router is supposed to generate network routes (like car) -->
-		<param name="networkModes" value="car,car_passenger,truck" />
+		<param name="networkModes" value="car,car_passenger,truck,motorcycle" />
 		<!-- strength of the randomness for the utility of money in routing under toll.  Leads to Pareto-optimal route with randomly drawn money-vs-other-attributes tradeoff. Technically the width parameter of a log-normal distribution. 3.0 seems to be a good value.  -->
 		<param name="routingRandomness" value="0.0" />
 		<parameterset type="teleportedModeParameters" >
