@@ -92,7 +92,7 @@ public class SwissPtVariables implements BaseVariables  {
                 chosen = authorities.stream().max(Comparator.comparingInt(Authority::getPriority)).orElseThrow(() -> new RuntimeException("No authority found"));
             }
 
-            System.out.println("   The following authority applies for the leg from " + legVariable.fromNodeName + " to " + legVariable.toNodeName + ": " + chosen.getId());
+            //System.out.println("   The following authority applies for the leg from " + legVariable.fromNodeName + " to " + legVariable.toNodeName + ": " + chosen.getId());
             groupedByAuthority.computeIfAbsent(chosen.getId(), k -> new ArrayList<>()).add(legVariable);
         }
 
