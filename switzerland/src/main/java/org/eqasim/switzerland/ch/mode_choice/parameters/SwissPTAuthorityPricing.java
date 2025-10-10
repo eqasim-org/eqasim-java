@@ -79,7 +79,18 @@ public class SwissPTAuthorityPricing {
             new double[]{1.50, 2.20, 2.50}, 
             Set.of()),
 
-        // TODO add Z-Pass
+        ZPassOstwind(new double[]{6.40, 6.4, 7.4, 10.20, 12.80, 15.00, 17.80, 21.20, 24.20, 26.60, 29.00},
+            new double[]{3.20, 3.20, 3.70, 5.10, 6.40, 7.50, 8.90, 10.60, 12.10, 13.30, 14.50},
+            Set.of("110", "120")),
+
+        ZPassAwelle(new double[]{7.00, 7.00, 8.60, 11.20, 14.00, 16.80, 20.20, 23.60, 26.80, 29.60, 31.40},
+            new double[]{3.50, 3.50, 4.30, 5.60, 7.00, 8.40, 10.10, 11.80, 13.40, 14.80, 15.70},
+            Set.of("110", "120")),
+
+        ZPassSchwyzZug(new double[]{6.60, 6.60, 7.20, 9.60, 12.20, 14.40, 18.00, 20.60, 22.80, 25.40, 28.00, 30.20, 32.80, 33.60},
+            new double[]{3.30, 3.30, 3.60, 4.80, 6.10, 7.20, 9.00, 10.30, 11.40, 12.70, 14.00, 15.10, 16.40, 16.80},
+            Set.of("110", "120")),
+
             
         // TODO these shouldn't be the correct prices for Unireso/LemanPass but I don't understand right now
         Unireso(new double[]{3.00, 4.60, 6.20, 7.80}, 
@@ -99,16 +110,18 @@ public class SwissPTAuthorityPricing {
         }
 
         @Override
-        public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax) {
+        public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authority) {
             double[] prices = this.fullPrices;
             if (hasHalbtax){
                 prices = this.halbTaxPrices;
             }
 
             Set<String> visitedZoneIds = legs.stream()
-                .flatMap(leg -> leg.zones.stream())
+                .flatMap(leg -> leg.zones.get(authority).stream())
                 .map(Zone::getZoneId)
                 .collect(Collectors.toSet());
+
+            //System.out.println("  Visited zones for authority " + authority + ": " + visitedZoneIds.toString());
 
             if (visitedZoneIds == null || visitedZoneIds.isEmpty()) {
                 throw new IllegalArgumentException("At least one zone must be visited");

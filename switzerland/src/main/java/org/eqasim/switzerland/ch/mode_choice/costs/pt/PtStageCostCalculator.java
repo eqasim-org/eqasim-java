@@ -11,5 +11,5 @@ public interface PtStageCostCalculator {
      * @param legs the list of PT legs (e.g. one trip can contain multiple legs)
      * @return the total ticket price
      */
-    double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax);
+    double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authorityId);
 }

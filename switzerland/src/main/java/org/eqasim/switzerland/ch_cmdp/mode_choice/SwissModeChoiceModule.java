@@ -18,6 +18,7 @@ import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
 import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.*;
 import org.eqasim.switzerland.ch_cmdp.calibration.AlphaClusterCalibrator;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizer;
@@ -25,7 +26,7 @@ import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizerHandler;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpVariablesWriter;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissPtDetailedCostModel;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissPtCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.*;
@@ -41,14 +42,13 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
 	static public final String CAR_COST_MODEL_NAME = "SwissCarCostModel";
-	static public final String PT_COST_MODEL_NAME = "SwissDetailedPtCostModel";
+	static public final String PT_COST_MODEL_NAME = "SwissPtCostModel";//"SwissDetailedPtCostModel";
 
 	static public final String MODE_AVAILABILITY_NAME = "SwissDetailedModeAvailability";
 	static public final String CAR_ESTIMATOR_NAME = "SwissDetailedCarEstimator";
@@ -80,10 +80,12 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator(WALK_ESTIMATOR_NAME).to(SwissWalkDetailedUtilityEstimator.class);
 		bindUtilityEstimator(CP_ESTIMATOR_NAME).to(SwissCarPassengerDetailedUtilityEstimator.class);
 
-		bindCostModel(PT_COST_MODEL_NAME).to(SwissPtDetailedCostModel.class);
+		bindCostModel(PT_COST_MODEL_NAME).to(SwissPtCostModel.class);
 
 		bind(SwissPersonPredictor.class);
 		bind(CarPassengerPredictor.class);
+		bind(SwissPtRoutePredictor.class);
+
 		bind(ModeParameters.class).to(SwissCmdpModeParameters.class).asEagerSingleton();
 
 		// Calibration

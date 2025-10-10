@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.mode_choice.costs;
+package org.eqasim.switzerland.ch_cmdp.mode_choice.costs;
 
 import java.util.List;
 import java.util.Map;
@@ -6,10 +6,10 @@ import java.util.Map;
 import org.eqasim.core.simulation.mode_choice.cost.AbstractCostModel;
 import org.eqasim.switzerland.ch.mode_choice.costs.pt.PtStageCostCalculator;
 import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
-import org.eqasim.switzerland.ch.mode_choice.parameters.SwissCostParameters;
-import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
-import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
-import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPersonVariables;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtLegVariables;
 import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtVariables;
 import org.matsim.api.core.v01.population.Person;
@@ -94,7 +94,7 @@ public class SwissPtCostModel extends AbstractCostModel {
 		}
 		oldPriceModel = Math.round(oldPriceModel * 100.0) / 100.0;
 
-        //System.out.println("\nTotal price: " + price);
+        //System.out.println("Total price: " + price + "\n\n");
 		//System.out.println("Old cost model (0.6*distance): " + oldPriceModel + "\n");
 
 		return price;

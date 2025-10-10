@@ -41,7 +41,12 @@ public class ZonalReader {
                     
                     for (String authID : authorityIds){
                         if (!authID.isEmpty() & !authID.equals("nan")){
-                            authorities.putIfAbsent(authID, new Authority(authID, 1, "ZoneBased"));
+                            if (authID.contains("ZPass")){
+                                authorities.putIfAbsent(authID, new Authority(authID, 1, "ZoneBased"));
+                            }
+                            else{
+                                authorities.putIfAbsent(authID, new Authority(authID, 2, "ZoneBased"));
+                            }
                         }
                     }
                 }

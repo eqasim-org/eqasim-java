@@ -56,7 +56,11 @@ public class SwissPredictorUtils {
 	}
 
 	static public Double getIncomePerCapita(Person person) {
-        return (Double) person.getAttributes().getAttribute("incomePerCapita");
+		try{
+        	return (Double) person.getAttributes().getAttribute("incomePerCapita");
+		} catch(Exception e){
+			return 0.0;
+		}
 	}
 
 	static public Integer getCantonId(Person person) {
