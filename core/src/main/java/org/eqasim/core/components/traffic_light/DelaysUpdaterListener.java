@@ -101,6 +101,9 @@ public class DelaysUpdaterListener implements IterationEndsListener {
                 writeDelayData(event, "unsignalized");
             }
         }
+
+        // at the end, reset the conter for the next iteration
+        counter.reset(iteration);
     }
 
     private void writeDelayData(IterationEndsEvent event, String delayType) {

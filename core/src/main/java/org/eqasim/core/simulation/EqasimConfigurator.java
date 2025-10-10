@@ -17,6 +17,8 @@ import org.eqasim.core.components.calibration.CalibrationModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.fast_calibration.FastCalibrationModule;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
+import org.eqasim.core.components.network_calibration.networkCalibrationModule;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.traffic_light.DelaysModule;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
@@ -165,6 +167,10 @@ public abstract class EqasimConfigurator {
 
 		registerConfigGroup(new CalibrationConfigGroup(), true);
 		registerModule(new CalibrationModule(), CalibrationConfigGroup.GROUP_NAME);
+
+		registerConfigGroup(new NetworkCalibrationConfigGroup(), true);
+		registerModule(new networkCalibrationModule(), NetworkCalibrationConfigGroup.GROUP_NAME);
+
 		// Policies
 		registerConfigGroup(new PoliciesConfigGroup(), true);
 		registerModule(new PolicyModule());
