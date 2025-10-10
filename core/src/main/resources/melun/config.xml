@@ -12,7 +12,7 @@
 		<!-- Defines how home activities are identified. Built-in choices: FirstActivity, ActivityBased -->
 		<param name="homeFinder" value="EqasimHomeFinder" />
 		<!-- Defines which ModeAvailability component to use. Built-in choices: Default, Car -->
-		<param name="modeAvailability" value="unknown" />
+		<param name="modeAvailability" value="DefaultModeAvailability" />
 		<!-- Main model type: Trip, Tour, EfficientTour -->
 		<param name="modelType" value="Tour" />
 		<!-- Defines whether the DiscreteModeChoice strategy should be followed by a rerouting of all trips. If the estimator returns alternatives with routes attached this is not necessary. -->
