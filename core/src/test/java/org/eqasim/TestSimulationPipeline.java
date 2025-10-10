@@ -395,7 +395,8 @@ public class TestSimulationPipeline {
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_abstract_access.xml",
                 "--mode-name", "ptWithAbstractAccess",
-                "--accesses-file-path", "melun_test/input/access_items.xml"
+                "--accesses-file-path", "melun_test/input/access_items.xml",
+                "--update-termination-modes", "false"
         });
 
 
