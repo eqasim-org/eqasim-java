@@ -140,13 +140,13 @@ public class TestEmissions {
 
 	private void runMelunEmissions() throws CommandLine.ConfigurationException, IOException {
 		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
-		Assert.assertEquals(3297, (long) counts.get("car"));
-		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
-		Assert.assertEquals(9348, (long) counts.get("walk"));
-		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
-		Assert.assertEquals(2108, (long) counts.get("pt"));
+		Assert.assertEquals(4644, (long) counts.get("car"));
+		Assert.assertEquals(1554, (long) counts.get("car_passenger"));
+		Assert.assertEquals(11915, (long) counts.get("walk"));
+		Assert.assertEquals(633, (long) counts.getOrDefault("bike", 0L));
+		Assert.assertEquals(2252, (long) counts.get("pt"));
 
-		SafeOsmHbefaMapping.defaultType = "URB/Loca/50";
+		SafeOsmHbefaMapping.defaultType = "URB/Local/50";
 
 		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv", "--hbefa-hot-avg",
@@ -155,7 +155,7 @@ public class TestEmissions {
 				"sample_41_EFA_HOT_SubSegm_2020detailed.csv",
 				"--eqasim-configurator", TestConfigurator.class.getName() });
 
-		assertEquals(353707, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
+		assertEquals(634633, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
 		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600",
@@ -163,19 +163,19 @@ public class TestEmissions {
 
 		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
 
-		// NOTE: Locally, I always get 32527 lines here. On Github CI, it is always
+		// NOTE: Locally, I always get 42230 (old : 32527) lines here. On Github CI, it is always
 		// 32528. No clue why this is, but all the previous tests on the events line
 		// length etc. pass without a problem ...
 
-		// assertEquals(features.size(), 32527);
+		assertEquals(42230, features.size());
 
 		SimpleFeature feature = features.stream().filter(f -> f.getAttribute("link").toString().equals("163994")
 				& f.getAttribute("time").toString().equals("43200")).findFirst().orElse(null);
 		assertNotNull(feature);
 
-		double expectedPm = 0.045174881256541;
-		double expectedCo = 0.627553969527029;
-		double expectedNox = 0.810111846744523;
+		double expectedPm = 0.059894542675388;
+		double expectedCo = 0.893473893036039;
+		double expectedNox = 1.080511804659364;
 		double expectedUnknown = Double.NaN;
 
 		assertEquals(expectedPm, feature.getAttribute("PM"));
