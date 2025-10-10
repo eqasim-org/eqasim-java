@@ -52,17 +52,17 @@ public class TestMotorcycles {
 	@Before
 	public void setUp() throws IOException {
 		URL fixtureUrl = getClass().getResource("/melun");
-		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
+		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test_motorcycle/input"));
 	}
 
 	@After
 	public void tearDown() throws IOException {
-		 FileUtils.deleteDirectory(new File("melun_test"));
+		 FileUtils.deleteDirectory(new File("melun_test_motorcycle"));
 	}
 
 	private void runAddMotorcycles() {
 		Vehicles vehicles = VehicleUtils.createVehiclesContainer();
-		new MatsimVehicleReader(vehicles).readFile("melun_test/input/vehicles.xml.gz");
+		new MatsimVehicleReader(vehicles).readFile("melun_test_motorcycle/input/vehicles.xml.gz");
 
 		VehicleType motorcycleType = VehicleUtils.createVehicleType(Id.create("motorcycleType", VehicleType.class));
 		motorcycleType.setNetworkMode(TransportMode.motorcycle);
@@ -78,12 +78,12 @@ public class TestMotorcycles {
 		}
 
 		MatsimVehicleWriter writer = new MatsimVehicleWriter(vehicles);
-		writer.writeFile("melun_test/input/vehicles.xml.gz");
+		writer.writeFile("melun_test_motorcycle/input/vehicles.xml.gz");
 	}
 
 	private void runModifyConfig() {
-		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
-		config.controller().setOutputDirectory("melun_test/output");
+		Config config = ConfigUtils.loadConfig("melun_test_motorcycle/input/config.xml");
+		config.controller().setOutputDirectory("melun_test_motorcycle/output");
 
 		Collection<String> mainModes = new HashSet<>(config.qsim().getMainModes());
 		mainModes.add(TransportMode.motorcycle);
@@ -95,11 +95,11 @@ public class TestMotorcycles {
 		seepModes.add(TransportMode.motorcycle);
 		config.qsim().setSeepModes(seepModes);
 
-		ConfigUtils.writeConfig(config, "melun_test/input/config.xml");
+		ConfigUtils.writeConfig(config, "melun_test_motorcycle/input/config.xml");
 	}
 
 	private void runModifyNetwork() {
-		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+		Config config = ConfigUtils.loadConfig("melun_test_motorcycle/input/config.xml");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Network network = scenario.getNetwork();
 		for (Link link : network.getLinks().values()) {
@@ -109,11 +109,11 @@ public class TestMotorcycles {
 				link.setAllowedModes(modes);
 			}
 		}
-		NetworkUtils.writeNetwork(network, "melun_test/input/network.xml.gz");
+		NetworkUtils.writeNetwork(network, "melun_test_motorcycle/input/network.xml.gz");
 	}
 	
 	private void runModifyPlans() {
-		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+		Config config = ConfigUtils.loadConfig("melun_test_motorcycle/input/config.xml");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Population population = scenario.getPopulation();
 
@@ -142,15 +142,15 @@ public class TestMotorcycles {
 		}
 
 		PopulationWriter writer = new PopulationWriter(population);
-		writer.write("melun_test/input/population.xml.gz");
+		writer.write("melun_test_motorcycle/input/population.xml.gz");
 	}
 
 	private void runMelunSimulation() throws ConfigurationException {
 		EqasimConfigurator eqasimConfigurator = new TestConfigurator();
-		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+		Config config = ConfigUtils.loadConfig("melun_test_motorcycle/input/config.xml");
 		eqasimConfigurator.updateConfig(config);
 		((ControllerConfigGroup) config.getModules().get(ControllerConfigGroup.GROUP_NAME))
-				.setOutputDirectory("melun_test/output");
+				.setOutputDirectory("melun_test_motorcycle/output");
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		eqasimConfigurator.configureScenario(scenario);
@@ -161,7 +161,7 @@ public class TestMotorcycles {
 		eqasimConfigurator.configureController(controller);
 		controller.run();
 
-		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
+		Map<String, Long> counts = countLegs("melun_test_motorcycle/output/output_events.xml.gz");
 		Assert.assertEquals(427, (long) counts.get("motorcycle"));
 	}
 
