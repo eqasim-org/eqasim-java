@@ -126,7 +126,7 @@
 		<!-- Default=0. First Iteration of a simulation. -->
 		<param name="firstIteration" value="0" />
 		<!-- Default=1000. Last Iteration of a simulation. -->
-		<param name="lastIteration" value="1000" />
+		<param name="lastIteration" value="2" />
 		<!-- Defines in which iterations the legDurations analysis is run (iterationNumber % interval == 0). Use 0 to disable this analysis. -->
 		<param name="legDurationsInterval" value="1" />
 		<!-- Defines in which iterations the legHistogram analysis is run (iterationNumber % interval == 0). Use 0 to disable this analysis. -->

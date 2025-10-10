@@ -90,7 +90,7 @@ public class TestMotorcycles {
 		config.qsim().setMainModes(mainModes);
 		
 		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
-		
+
 		Collection<String> seepModes = new HashSet<>(config.qsim().getSeepModes());
 		seepModes.add(TransportMode.motorcycle);
 		config.qsim().setSeepModes(seepModes);
@@ -117,17 +117,24 @@ public class TestMotorcycles {
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Population population = scenario.getPopulation();
 
+		int replaceOnceEvery = 10;
+		int counter = 0;
+
 		for (Person person : population.getPersons().values()) {
 			Id<Person> personId = person.getId();
 			PersonVehicles person_vehicles = (PersonVehicles) person.getAttributes().getAttribute("vehicles");
 			person_vehicles.addModeVehicleIfAbsent(TransportMode.motorcycle, Id.create(personId.toString() + ":motorcycle", Vehicle.class));
-		
+
 			for (Plan plan : person.getPlans()) {
 				for (PlanElement element : plan.getPlanElements()) {
 					if (element instanceof Leg) {
 						Leg leg = (Leg) element;
 						if (leg.getMode().equals("car")) {
-							leg.setMode("motorcycle");
+							counter += 1;
+							if (counter >= replaceOnceEvery) {
+								counter = 0;
+								leg.setMode("motorcycle");
+							}
 						}
 					}
 				}
@@ -155,7 +162,7 @@ public class TestMotorcycles {
 		controller.run();
 
 		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
-		Assert.assertEquals(16, (long) counts.get("motorcycle"));
+		Assert.assertEquals(427, (long) counts.get("motorcycle"));
 	}
 
 	@Test
