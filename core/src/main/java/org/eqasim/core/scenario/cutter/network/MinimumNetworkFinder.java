@@ -12,8 +12,8 @@ import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.router.AStarLandmarksFactory;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
+import org.matsim.core.router.speedy.SpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculator.Path;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
@@ -44,7 +44,7 @@ public class MinimumNetworkFinder {
 
 		Set<Id<Link>> minimumSet = Collections.synchronizedSet(new HashSet<>());
 
-		LeastCostPathCalculatorFactory factory = new AStarLandmarksFactory(numberOfThreads);
+		LeastCostPathCalculatorFactory factory = new SpeedyALTFactory();
 
 		for (int i = 0; i < numberOfThreads; i++) {
 			Thread thread = new Thread(new Worker(linkIterator, progress, minimumSet, factory));
@@ -104,14 +104,14 @@ public class MinimumNetworkFinder {
 					}
 
 					if (!forwardTabuSet.contains(testLinkId)) {
-						Path result = calculator.calcLeastCostPath(testLink.getToNode(), referenceLink.getFromNode(),
+						Path result = calculator.calcLeastCostPath(testLink, referenceLink,
 								0.0, null, null);
 
 						result.links.forEach(l -> forwardTabuSet.add(l.getId()));
 					}
 
 					if (!backwardTabuSet.contains(testLinkId)) {
-						Path result = calculator.calcLeastCostPath(referenceLink.getToNode(), testLink.getFromNode(),
+						Path result = calculator.calcLeastCostPath(referenceLink, testLink,
 								0.0, null, null);
 
 						result.links.forEach(l -> backwardTabuSet.add(l.getId()));
