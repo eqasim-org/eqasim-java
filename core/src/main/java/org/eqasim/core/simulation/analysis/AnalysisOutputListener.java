@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.DistanceUnit;
 import org.eqasim.core.analysis.activities.ActivityListener;
 import org.eqasim.core.analysis.activities.ActivityWriter;
@@ -29,6 +31,9 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class AnalysisOutputListener implements IterationStartsListener, IterationEndsListener, ShutdownListener {
+
+	private final static Logger log = LogManager.getLogger(AnalysisOutputListener.class);
+
 	private static final String TRIPS_FILE_NAME = "eqasim_trips.csv";
 	private static final String LEGS_FILE_NAME = "eqasim_legs.csv";
 	private static final String PT_FILE_NAME = "eqasim_pt.csv";
@@ -52,6 +57,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private final DistanceUnit scenarioDistanceUnit;
 	private final DistanceUnit analysisDistanceUnit;
 
+	private final boolean enablePtLegsAnalysis;
+
 	@Inject
 	public AnalysisOutputListener(EqasimConfigGroup config, OutputDirectoryHierarchy outputDirectory,
 			TripListener tripListener, LegListener legListener, PublicTransportLegListener ptListener,
@@ -69,6 +76,12 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		this.ptAnalysisListener = ptListener;
 		this.activityAnalysisListener = activityAnalysisListener;
 		this.travelTimeRecorder = travelTimeRecorder;
+
+		this.enablePtLegsAnalysis = config.getUseScheduleBasedTransport();
+
+		if(!enablePtLegsAnalysis) {
+			log.warn(String.format("PT analysis is disabled when eqasim.useScheduleBasedTransport is set to false. %s files will not be generated", PT_FILE_NAME));
+		}
 	}
 
 	@Override
@@ -81,7 +94,9 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				isAnalysisActive = true;
 				event.getServices().getEvents().addHandler(tripAnalysisListener);
 				event.getServices().getEvents().addHandler(legAnalysisListener);
-				event.getServices().getEvents().addHandler(ptAnalysisListener);
+				if(enablePtLegsAnalysis) {
+					event.getServices().getEvents().addHandler(ptAnalysisListener);
+				}
 				event.getServices().getEvents().addHandler(activityAnalysisListener);
 			}
 		}
@@ -100,7 +115,6 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 			if (isAnalysisActive) {
 				event.getServices().getEvents().removeHandler(tripAnalysisListener);
 				event.getServices().getEvents().removeHandler(legAnalysisListener);
-				event.getServices().getEvents().removeHandler(ptAnalysisListener);
 				event.getServices().getEvents().removeHandler(activityAnalysisListener);
 
 				new TripWriter(tripAnalysisListener.getTripItems(), scenarioDistanceUnit, analysisDistanceUnit)
@@ -112,8 +126,12 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				new ActivityWriter(activityAnalysisListener.getActivityItems())
 						.write(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME));
 
-				new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
-						.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
+
+				if(enablePtLegsAnalysis) {
+					event.getServices().getEvents().removeHandler(ptAnalysisListener);
+					new PublicTransportLegWriter(ptAnalysisListener.getTripItems())
+							.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME));
+				}
 			}
 
 			if (isTravelTimeActive) {
@@ -135,8 +153,10 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 					new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME)).toPath());
 			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME)).toPath(),
 					new File(outputDirectory.getOutputFilename(LEGS_FILE_NAME)).toPath());
-			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
-					new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
+			if(enablePtLegsAnalysis) {
+				Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME)).toPath(),
+						new File(outputDirectory.getOutputFilename(PT_FILE_NAME)).toPath());
+			}
 			Files.copy(
 					new File(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME)).toPath(),
 					new File(outputDirectory.getOutputFilename(ACTIVITIES_FILE_NAME)).toPath());
