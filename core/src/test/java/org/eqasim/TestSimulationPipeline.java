@@ -470,6 +470,15 @@ public class TestSimulationPipeline {
     }
 
     @Test
+    public void testDisableScheduleBasedTransportSimulation() throws ConfigurationException {
+        Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
+        new TestConfigurator().updateConfig(config);
+        EqasimConfigGroup eqasimConfigGroup = EqasimConfigGroup.get(config);
+        eqasimConfigGroup.setUseScheduleBasedTransport(false);
+        runMelunSimulation(config, "melun_test/output_disabled_schedule_based_transport", null, 2);
+    }
+
+    @Test
     public void testBaseDeterminism() throws ConfigurationException {
         Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
         runMelunSimulation(config, "melun_test/output_determinism_1", null, 2);

@@ -22,7 +22,7 @@
 	<properties>
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
-		<matsim.version>2026.0-2025w41</matsim.version>
+		<matsim.version>2026.0-2025w43</matsim.version>
 	</properties>
 
 	<distributionManagement>
@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-geopkg</artifactId>
-			<version>33.2</version>
+			<version>34.0</version>
 		</dependency>
 
 		<dependency>
