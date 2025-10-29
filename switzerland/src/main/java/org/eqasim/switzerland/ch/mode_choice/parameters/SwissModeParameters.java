@@ -8,16 +8,16 @@ import java.util.List;
 import java.util.Map;
 
 public class SwissModeParameters extends ModeParameters {
-	public class SwissCarParameters {
+	public static class SwissCarParameters {
 		public double betaStatedPreferenceRegion1_u = 0.0;
 		public double betaStatedPreferenceRegion3_u = 0.0;
 	}
 
-	public class SwissBikeParameters {
+	public static class SwissBikeParameters {
 		public double betaStatedPreferenceRegion3_u = 0.0;
 	}
 
-	public class SwissCantonDummies {
+	public static class SwissCantonDummies {
 		public Map<String, Double> car = getCantonDummies();
 		public Map<String, Double> pt = getCantonDummies();
 		public Map<String, Double> bike = getCantonDummies();
@@ -28,10 +28,12 @@ public class SwissModeParameters extends ModeParameters {
 	public static Map<String, Double> getCantonDummies() {
 		// By default all dummies are zeros
 		List<String> cantons = Arrays.asList(
-			"Aargau", "Appenzell Ausserrhoden","Appenzell Innerrhoden","Basel-Landschaft",
-			"Basel-Stadt","Bern","Fribourg","Genève","Glarus","Graubünden","Jura","Luzern",
-			"Neuchâtel","Nidwalden","Obwalden","Schaffhausen","Schwyz","Solothurn","St. Gallen",
-			"Thurgau","Ticino","Uri","Valais","Vaud","Zug","Zürich"
+				"grisons", "bern", "valais", "vaud", "ticino", "st_gallen",
+				"zurich", "fribourg", "luzern", "aargau", "uri", "thurgau",
+				"schwyz", "jura", "neuchatel", "solothurn", "glarus",
+				"basel_landschaft", "obwalden", "nidwalden", "geneva",
+				"schaffhausen", "appenzell_ausserrhoden", "zug",
+				"appenzell_innerrhoden", "basel_stadt"
 		);
 		Map<String, Double> cantonDummies = new HashMap<>();
 		for (String canton : cantons) {
@@ -83,5 +85,19 @@ public class SwissModeParameters extends ModeParameters {
 		parameters.walk.betaTravelTime_u_min = -0.141;
 
 		return parameters;
+	}
+
+	@Override
+	protected Object[][] getParameterObjects() {
+		return new Object[][] {
+				{car, "car"},
+				{pt, "pt"},
+				{bike, "bike"},
+				{walk, "walk"},
+				{cp, "cp"},
+				{swissCar, "swissCar"},
+				{swissBike, "swissBike"},
+				{swissCanton, "swissCanton"}
+		};
 	}
 }

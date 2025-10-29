@@ -443,6 +443,11 @@ public class AlphaClusterCalibrator implements FastCalibration {
         }
     }
 
+    private void saveParametersToYaml(int iteration) throws IOException {
+        String outputFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
+        modeParameters.saveToYamlFile(outputFile);
+    }
+
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
         if (!isActivated) {
@@ -471,6 +476,11 @@ public class AlphaClusterCalibrator implements FastCalibration {
             // writing
             saveSharesToFile(iteration);
             saveAlphasToFile(iteration);
+            try {
+                saveParametersToYaml(iteration);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

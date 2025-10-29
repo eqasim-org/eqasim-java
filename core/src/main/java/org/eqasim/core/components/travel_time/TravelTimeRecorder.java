@@ -89,8 +89,11 @@ public class TravelTimeRecorder implements LinkEnterEventHandler, LinkLeaveEvent
 		double travelTime = exitTime - enterTime;
 		int index = getIndex(enterTime);
 
-		cumulativeTraversalTimes.get(linkId).set(index, cumulativeTraversalTimes.get(linkId).get(index) + travelTime);
-		traversalCounts.get(linkId).set(index, traversalCounts.get(linkId).get(index) + 1);
+		List<Double> linkTt= cumulativeTraversalTimes.get(linkId);
+		if (linkTt != null) {
+			linkTt.set(index, cumulativeTraversalTimes.get(linkId).get(index) + travelTime);
+			traversalCounts.get(linkId).set(index, traversalCounts.get(linkId).get(index) + 1);
+		}
 	}
 
 	public RecordedTravelTime getTravelTime() {

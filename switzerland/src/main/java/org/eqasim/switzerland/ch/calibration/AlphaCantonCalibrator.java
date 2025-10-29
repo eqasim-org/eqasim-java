@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -43,7 +42,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
     // Configuration
     private final Set<String> cantons;
     private final double beta;
-    private final int batchSizeLimit = 300; // the minimum number of observations before updating the parameters
+    private final int batchSizeLimit = 400; // the minimum number of observations before updating the parameters
     private final boolean isActivated;
     private final String cantonsModeShareFile;
 
@@ -81,7 +80,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
             this.cantons = new HashSet<>(targetModeSharesByCanton.keySet());
             for (String canton : cantons) doUpdateThisIteration.put(canton, false);
             resetPlansCreationFlag();
-            resetAllAlphasToZeros();
+            // resetAllAlphasToZeros(); // adding cantons alphas as offset instead.
         } else {
             this.targetModeSharesByCanton = new HashMap<>();
             this.cantons = new HashSet<>();
@@ -96,9 +95,14 @@ public class AlphaCantonCalibrator implements FastCalibration {
         }
     }
 
-    private boolean updateGlobal(int iteration) {
-        // update only global parameters in the last 20 iterations
-        int iterationLimit = Math.min(60, lastIteration/2);
+    private boolean doUpdateGlobal(int iteration) {
+        // first 6 iterations: update only global parameters
+        if (iteration <= 6) {
+            numGlobalUpdates = 0; // keep it 0, these global updates are not counted
+            return true;
+        }
+        // update only global parameters in the last iterations
+        int iterationLimit = Math.min(80, 3*lastIteration/4);
 
         if ((iteration%10 == 0) && (iteration<iterationLimit)) {
             numGlobalUpdates = 0; // keep it 0, these global updates are not counted
@@ -124,7 +128,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
             // update the shares based on the previous counts, and reset the counts
             updateShares();
             // update the alphas based on the updated shares
-            if (updateGlobal(iteration)){
+            if (doUpdateGlobal(iteration)){
                 logger.info("Iteration {}: Updating Global ASCs", iteration);
                 updateGlobalAlphas(iteration);
                 numGlobalUpdates += 1;
@@ -137,35 +141,12 @@ public class AlphaCantonCalibrator implements FastCalibration {
             // writing
             saveSharesToFile(iteration);
             saveAlphasToFile(iteration);
-        }
-    }
-
-    private void updateGlobalAlphas(int iteration) {
-        Map<String, Double> newAlphas = new HashMap<>();
-        double epsilon = 0.0001; // Small value to avoid log(0) issues
-        // Reference mode is pt, its alpha remains unchanged, 0.0
-        double mo = Math.max(shares.get("pt"), epsilon);
-        double zo = Math.max(targetModeShares.get("pt"), epsilon);
-        newAlphas.put("pt", 0.0);
-        // update alphas for other modes
-        for (String mode : modesToCalibrate) {
-            if (mode.equals("pt")) {
-                continue; // Skip the reference mode
+            try {
+                saveParametersToYaml(iteration);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-
-            double mi = Math.max(shares.get(mode), epsilon);
-            double zi = Math.max(targetModeShares.get(mode), epsilon);
-            double alpha = 0.0;
-            // Calculate the new alpha value based on the current share and the target share
-            double newAlpha = alpha + (Math.log(zi)-Math.log(mi)) - (Math.log(zo)-Math.log(mo));
-            // update it using EMA
-            double effectiveBeta = getEffectiveBeta(0, iteration);
-            newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
-            // put the new alpha in the map
-            newAlphas.put(mode, newAlpha);
         }
-        // Update the alphas in the mode parameters
-        setAlphas("all", newAlphas);
     }
 
     private void resetPlansCreationFlag() {
@@ -296,57 +277,73 @@ public class AlphaCantonCalibrator implements FastCalibration {
         modeCounts.clear();
     }
 
+    private void updateGlobalAlphas(int matsimIteration) {
+        Map<String, Double> currentAlphas = getAlphas("all");
+        Map<String, Double> newAlphas = estimateOptimalAlphas(currentAlphas, shares, targetModeShares, 0, matsimIteration);
+        setAlphas("all", newAlphas);
+    }
+
     private void updateRegionalAlphas(int matsimIteration) {
         for (String canton : sharesByCanton.keySet()) {
-            // check if there are improvements from last 3 iterations
-            boolean hasImproved = true ; //checkIfItImproved(canton);
             boolean updateThisCanton = doUpdateThisIteration.getOrDefault(canton, false);
-            if (updateThisCanton && hasImproved) {
+            if (updateThisCanton) {
                 logger.info("Updating alphas for canton {}", canton);
                 Map<String, Double> alphas = getAlphas(canton);
                 Map<String, Double> cantonShares = sharesByCanton.get(canton);
                 Map<String, Double> targetCantonShares = targetModeSharesByCanton.get(canton);
-
-                Map<String, Double> newAlphas = new HashMap<>();
-                double epsilon = 0.0001; // Small value to avoid log(0) issues
-
-                // Reference mode is pt, its alpha remains unchanged, 0.0
-                double mo = Math.max(cantonShares.get("pt"), epsilon);
-                double zo = Math.max(targetCantonShares.get("pt"), epsilon);
-
-                newAlphas.put("pt", 0.0);
-                // update alphas for other modes (car, walk, bike)
-                for (String mode : modesToCalibrate) {
-                    if (mode.equals("pt")) {
-                        continue; // Skip the reference mode
-                    }
-                    double mi = Math.max(cantonShares.get(mode), epsilon);
-                    double zi = Math.max(targetCantonShares.get(mode), epsilon);
-                    double alpha = alphas.get(mode);
-
-                    // Calculate the new alpha value based on the current share and the target share
-                    double newAlpha = alpha + (Math.log(zi) - Math.log(mi)) - (Math.log(zo) - Math.log(mo));
-                    // update it using EMA
-                    int iteration = numberOfUpdates.getOrDefault(canton, 0);
-                    double effectiveBeta = getEffectiveBeta(iteration, matsimIteration);
-                    newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
-                    // put the new alpha in the map
-                    newAlphas.put(mode, newAlpha);
-                }
+                int iteration = numberOfUpdates.getOrDefault(canton, 0);
+                // Estimate new alphas
+                Map<String, Double> newAlphas = estimateOptimalAlphas(alphas, cantonShares, targetCantonShares, iteration, matsimIteration);
                 // Update the alphas in the mode parameters
                 setAlphas(canton, newAlphas);
             }
         }
     }
 
+    private Map<String, Double> estimateOptimalAlphas(Map<String, Double> currentAlphas,
+                                                      Map<String, Double> estimatedShares,
+                                                      Map<String, Double> targetShares,
+                                                      int iteration,
+                                                      int matsimIteration) {
+        Map<String, Double> newAlphas = new HashMap<>();
+        double epsilon = 0.0001; // Small value to avoid log(0) issues
+
+        // Reference mode is pt, its alpha remains unchanged, 0.0
+        double mo = Math.max(estimatedShares.get("pt"), epsilon);
+        double zo = Math.max(targetShares.get("pt"), epsilon);
+        newAlphas.put("pt", 0.0);
+
+        // update alphas for other modes
+        for (String mode : modesToCalibrate) {
+            if (mode.equals("pt")) {
+                continue; // Skip the reference mode
+            }
+
+            double mi = Math.max(estimatedShares.get(mode), epsilon);
+            double zi = Math.max(targetShares.get(mode), epsilon);
+            double alpha = currentAlphas.get(mode);
+
+            // Calculate the new alpha value based on the current share and the target share
+            double newAlpha = alpha + (Math.log(zi) - Math.log(mi)) - (Math.log(zo) - Math.log(mo));
+
+            // update it using EMA
+            double effectiveBeta = getEffectiveBeta(iteration, matsimIteration);
+            newAlpha = effectiveBeta * alpha + (1.0 - effectiveBeta) * newAlpha;
+
+            // put the new alpha in the map
+            newAlphas.put(mode, newAlpha);
+        }
+        return newAlphas;
+    }
+
     private double getEffectiveBeta(int iteration, int matsimIteration) {
         // For global updates, use a staged beta based on the number of global updates
-        if (updateGlobal(matsimIteration)) {
+        if (doUpdateGlobal(matsimIteration)) {
             if (numGlobalUpdates < 3) {
                 return 0.2;
-            } else if (numGlobalUpdates < 6) {
+            } else if (numGlobalUpdates < 8) {
                 return 0.5;
-            } else if (numGlobalUpdates < 10) {
+            } else if (numGlobalUpdates < 12) {
                 return 0.8;
             } else {
                 return 0.95;
@@ -355,18 +352,21 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
         // For regional updates, use beta based on iteration number
         if (matsimIteration >= 120) {
-            return 0.99;
+            return 0.98;
         } else if (matsimIteration > 90) {
             return 0.95;
-        } else if (matsimIteration < 10 || iteration < 5) {
-            return 0.0;
+        } else if (matsimIteration < 20 || iteration < 5) {
+            return 0.1;
         } else {
             // Gradually increase beta as iterations progress
-            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.08 * iteration + 1.0)));
+            return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.1 * iteration + 1.0)));
         }
     }
 
     private Map<String, Double> getAlphas(String canton) {
+        if (canton.equals("all")) {
+            return modeParameters.getASCs();
+        }
         Map<String, Double> alphas = new HashMap<>();
         alphas.put("car", modeParameters.swissCanton.car.getOrDefault(canton, 0.0));
         alphas.put("pt", modeParameters.swissCanton.pt.getOrDefault(canton, 0.0));
@@ -378,24 +378,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
     private void setAlphas(String canton, Map<String, Double> alphas) {
         if (canton.equals("all")) {
-            // set for all cantons
-            for (String c : cantons) {
-                if (alphas.containsKey("car")) {
-                    modeParameters.swissCanton.car.put(c, modeParameters.swissCanton.car.getOrDefault(c, 0.0) + alphas.get("car"));
-                }
-                if (alphas.containsKey("pt")) {
-                    modeParameters.swissCanton.pt.put(c, modeParameters.swissCanton.pt.getOrDefault(c, 0.0) + alphas.get("pt"));
-                }
-                if (alphas.containsKey("walk")) {
-                    modeParameters.swissCanton.walk.put(c, modeParameters.swissCanton.walk.getOrDefault(c, 0.0) + alphas.get("walk"));
-                }
-                if (alphas.containsKey("bike")) {
-                    modeParameters.swissCanton.bike.put(c, modeParameters.swissCanton.bike.getOrDefault(c, 0.0) + alphas.get("bike"));
-                }
-                if (alphas.containsKey("car_passenger")) {
-                    modeParameters.swissCanton.cp.put(c, modeParameters.swissCanton.cp.getOrDefault(c, 0.0) + alphas.get("car_passenger"));
-                }
-            }
+            modeParameters.setASCs(alphas);
         } else {
             if (alphas.containsKey("car")) {
                 modeParameters.swissCanton.car.put(canton, alphas.get("car"));
@@ -459,6 +442,11 @@ public class AlphaCantonCalibrator implements FastCalibration {
         }
     }
 
+    private void saveParametersToYaml(int iteration) throws IOException {
+        String outputFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
+        modeParameters.saveToYamlFile(outputFile);
+    }
+
     private Map<String, Map<String, Double>> readCantonsModeShares() {
         Map<String, Map<String, Double>> result = new HashMap<>();
         File file = new File(cantonsModeShareFile);
@@ -487,23 +475,4 @@ public class AlphaCantonCalibrator implements FastCalibration {
         return result;
     }
 
-    private void resetAllAlphasToZeros(){
-        // if we use canton level calibration, we need to have canton set all alphas to 0.0
-        Map<String, Double> zerosAlphas = new HashMap<>();
-        for (String mode : consideredModes) zerosAlphas.put(mode, 0.0);
-        modeParameters.setASCs(zerosAlphas);
-        // if cmdp set regional alphas to zero too
-        if (modeParameters instanceof SwissCmdpModeParameters cmdpParams){
-            cmdpParams.car.betaRegion1_u = 0.0;
-            cmdpParams.car.betaRegion2_u = 0.0;
-            cmdpParams.pt.betaRegion1_u = 0.0;
-            cmdpParams.pt.betaRegion2_u = 0.0;
-            cmdpParams.walk.betaRegion1_u = 0.0;
-            cmdpParams.walk.betaRegion2_u = 0.0;
-            cmdpParams.bike.betaRegion1_u = 0.0;
-            cmdpParams.bike.betaRegion2_u = 0.0;
-            cmdpParams.cp.betaRegion1_u = 0.0;
-            cmdpParams.cp.betaRegion2_u = 0.0;
-        }
-    }
 }
