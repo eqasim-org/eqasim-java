@@ -72,7 +72,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
             }
         }
 
-        System.out.println("   Authorities: " + cleanedAuthorities.toString());
+        //System.out.println("   Authorities: " + cleanedAuthorities.toString());
 
         // If a stop is served by only one zone of a cleanedAuthority, add this zone to the filtered list
         for (List<Zone> zones: zonesByStop.values()){
@@ -163,7 +163,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                         TransitStopFacility accessStop = schedule.getFacilities().get(ptRoute.getAccessStopId());
                         TransitStopFacility egressStop = schedule.getFacilities().get(ptRoute.getEgressStopId());
 
-                        System.out.println("\nStarting to extract info for the leg from " + accessStop.getName() + " to " + egressStop.getName());
+                        //System.out.println("\nStarting to extract info for the leg from " + accessStop.getName() + " to " + egressStop.getName());
 
                         List<TransitStopFacility> intermediateStops = transitRoute.getStops().stream()
                             .map(x -> x.getStopFacility())
@@ -200,7 +200,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                         double sbbDistance = computeSBBDistance(zones, accessStopId, egressStopId);
                         double networkDistance = route.getDistance();
 
-                        System.out.println("   We identified the following applicable authorities and zones: " + zones.toString());
+                        //System.out.println("   We identified the following applicable authorities and zones: " + zones.toString());
 
                         SwissPtLegVariables legVariables = new SwissPtLegVariables(zones, departureTime, arrivalTime, networkDistance, sbbDistance, accessStopId, egressStopId, accessStop.getName(), egressStop.getName());
                         tripDescription.addStage(legVariables);
