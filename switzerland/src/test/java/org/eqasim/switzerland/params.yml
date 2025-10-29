@@ -1,0 +1,100 @@
+car.alpha_u: 3.21365
+car.betaTravelTime_u_min: 3.21365
+car.travelTimeExponent: 0.6433510105960759
+car.betaAge_u: 0.0035310067078649083
+car.betaSex_u: -0.3141860696195194
+car.betaRegion1_u: 0.16790919974349566
+car.betaRegion2_u: -0.5042635872026866
+car.betaOriginHome_u: 0.06229229422678974
+car.betaDestinationWork_u: 0.43520076806099467
+car.betaUrbanDestination_u: -0.11305683578193775
+car.betaShortDistance_u: 0.0014894064151999055
+car.additionalAccessEgressWalkTime_min: 0.0
+car.constantParkingSearchPenalty_min: 0.0
+pt.alpha_u: 0.0
+pt.betaLineSwitch_u: -0.5505256814270415
+pt.betaInVehicleTime_u_min: -4.1198749011308846E-4
+pt.betaWaitingTime_u_min: 1.796219382910962E-4
+pt.betaAccessEgressTime_u_min: -0.07734382604678935
+pt.betaDistance_u_km: -0.44037913563170084
+pt.inVehicleTimeExponent: 1.9250586758953079
+pt.waitingTimeExponent: 1.0
+pt.accessEgressTimeExponent: 0.8635888700054031
+pt.lineSwitchExponent: 1.1074047623637953
+pt.distanceExponent: 0.9789542267209345
+pt.betaAge_u: -0.008563561688468354
+pt.betaSex_u: 0.20602019088679152
+pt.betaRegion1_u: 0.0
+pt.betaRegion2_u: 0.0
+pt.betaOriginHome_u: -0.01106249552173931
+pt.betaDestinationWork_u: 0.10047425351694984
+pt.betaUrbanDestination_u: 0.5208463122475635
+pt.betaShortDistance_u: -0.36299525852010806
+bike.alpha_u: 4.49243634582002
+bike.betaTravelTime_u_min: -0.8566142999818513
+bike.travelTimeExponent: 0.5618774653314881
+bike.betaAge_u: 0.002887604600585483
+bike.betaSex_u: -0.21656357067399193
+bike.betaRegion1_u: -1.0152934666383386
+bike.betaRegion2_u: -0.5132123209894008
+bike.betaOriginHome_u: 0.039074702359104145
+bike.betaShortDistance_u: 0.15435727710538502
+bike.betaDestinationWork_u: 0.3089944496762585
+bike.betaUrbanDestination_u: -0.2517193568167992
+walk.alpha_u: 9.910109669379558
+walk.betaTravelTime_u_min: -4.051627407199102
+walk.travelTimeExponent: 0.275689348069039
+walk.betaAge_u: -0.004181639977603846
+walk.betaSex_u: 0.010109399413600487
+walk.betaRegion1_u: 0.1626899433239513
+walk.betaRegion2_u: -0.24732026303968818
+walk.betaOriginHome_u: 0.11323725893038335
+walk.betaShortDistance_u: 0.28604921848184117
+walk.betaDestinationWork_u: -0.015746828461997594
+walk.betaUrbanDestination_u: -0.07677613348575689
+cp.alpha_u: 2.8383476435353088
+cp.betaTravelTime_u_min: -0.4274200311527101
+cp.travelTimeExponent: 0.7039824608056751
+cp.betaDistance_km: 0.0
+cp.distanceExponent: 1.0
+cp.betaAge_u: 0.006326590364129841
+cp.betaSex_u: 0.31462004999324333
+cp.betaRegion1_u: 0.05637768146838739
+cp.betaRegion2_u: -0.4832722814719359
+cp.betaOriginHome_u: -0.0789571715409773
+cp.betaDestinationWork_u: -0.8289226427922092
+cp.betaUrbanDestination_u: -0.07929398616315597
+cp.betaDrivingLicense_u: -1.870841635161752
+cp.betaShortDistance_u: -0.07890064348228691
+parking.urbanParkingSearchDuration_min: 2.0
+parking.suburbanParkingSearchDuration_min: 1.0
+swissCanton.car: {solothurn: 0.0, Bern: 3.21365, zurich: 0.0, fribourg: 0.0, luzern: 0.0,
+  geneva: 0.0, appenzell_innerrhoden: 0.0, jura: 0.0, vaud: 0.0, appenzell_ausserrhoden: 0.0,
+  zug: 0.0, bern: 0.0, basel_stadt: 0.0, neuchatel: 0.0, glarus: 0.0, grisons: 0.0,
+  thurgau: 0.0, aargau: 0.0, basel_landschaft: 0.0, schwyz: 0.0, obwalden: 0.0, st_gallen: 0.0,
+  uri: 0.0, valais: 0.0, schaffhausen: 0.0, ticino: 0.0, nidwalden: 0.0}
+swissCanton.pt: {solothurn: 0.0, zurich: 0.0, fribourg: 0.0, luzern: 0.0, geneva: 0.0,
+  appenzell_innerrhoden: 0.0, jura: 0.0, vaud: 0.0, appenzell_ausserrhoden: 0.0, zug: 0.0,
+  bern: 0.0, basel_stadt: 0.0, neuchatel: 0.0, glarus: 0.0, grisons: 0.0, thurgau: 0.0,
+  aargau: 0.0, basel_landschaft: 0.0, Aargau: 3.21365, schwyz: 0.0, obwalden: 0.0,
+  st_gallen: 0.0, uri: 0.0, valais: 0.0, schaffhausen: 0.0, ticino: 0.0, nidwalden: 0.0}
+swissCanton.bike: {solothurn: 0.0, zurich: 0.0, fribourg: 0.0, luzern: 0.0, geneva: 0.0,
+  appenzell_innerrhoden: 0.0, jura: 0.0, vaud: 0.0, appenzell_ausserrhoden: 0.0, zug: 0.0,
+  Uri: 3.21365, bern: 0.0, basel_stadt: 0.0, neuchatel: 0.0, glarus: 0.0, grisons: 0.0,
+  thurgau: 0.0, aargau: 0.0, basel_landschaft: 0.0, schwyz: 0.0, obwalden: 0.0, st_gallen: 0.0,
+  uri: 0.0, valais: 0.0, schaffhausen: 0.0, ticino: 0.0, nidwalden: 0.0}
+swissCanton.walk: {solothurn: 0.0, zurich: 0.0, fribourg: 0.0, luzern: 0.0, geneva: 0.0,
+  appenzell_innerrhoden: 0.0, jura: 0.0, vaud: 0.0, appenzell_ausserrhoden: 0.0, zug: 0.0,
+  bern: 0.0, basel_stadt: 0.0, neuchatel: 0.0, glarus: 0.0, grisons: 0.0, thurgau: 0.0,
+  aargau: 0.0, basel_landschaft: 0.0, schwyz: 0.0, obwalden: 0.0, st_gallen: 0.0,
+  uri: 0.0, valais: 0.0, schaffhausen: 0.0, ticino: 0.0, nidwalden: 0.0}
+swissCanton.cp: {solothurn: 0.0, zurich: 0.0, fribourg: 0.0, luzern: 0.0, geneva: 0.0,
+  appenzell_innerrhoden: 0.0, jura: 0.0, vaud: 0.0, appenzell_ausserrhoden: 0.0, zug: 0.0,
+  bern: 0.0, basel_stadt: 0.0, neuchatel: 0.0, glarus: 0.0, grisons: 0.0, thurgau: 0.0,
+  aargau: 0.0, basel_landschaft: 0.0, schwyz: 0.0, obwalden: 0.0, st_gallen: 0.0,
+  uri: 0.0, valais: 0.0, schaffhausen: 0.0, ticino: 0.0, nidwalden: 0.0}
+lambdaCostIncome: -0.10073050052533078
+referenceIncome: 3700.0
+lambdaCostEuclideanDistance: -0.2568457559803551
+referenceEuclideanDistance_km: 8.0
+betaCost_u_MU: -0.1664802185519009
