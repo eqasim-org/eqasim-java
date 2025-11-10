@@ -8,13 +8,10 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.contribs.discrete_mode_choice.modules.ConstraintModule;
-import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceConfigurator;
-import org.matsim.contribs.discrete_mode_choice.modules.EstimatorModule;
+import org.matsim.contribs.discrete_mode_choice.modules.*;
 import org.matsim.contribs.discrete_mode_choice.modules.ModelModule.ModelType;
-import org.matsim.contribs.discrete_mode_choice.modules.SelectorModule;
-import org.matsim.contribs.discrete_mode_choice.modules.TourFinderModule;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.modules.config.TourLengthFilterConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -173,7 +170,10 @@ public class GenerateConfig {
 		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,
-				EqasimModeChoiceModule.TOUR_LENGTH_FILTER_NAME));
+				FilterModule.TOUR_LENGTH));
+
+		TourLengthFilterConfigGroup tourLengthFilterConfigGroup = dmcConfig.getTourLengthFilterConfigGroup();
+		tourLengthFilterConfigGroup.setMaximumLength(6);
 
 		// Set up modes
 
