@@ -11,6 +11,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.*;
 import org.matsim.contribs.discrete_mode_choice.modules.ModelModule.ModelType;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.modules.config.TourLengthFilterConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -170,6 +171,9 @@ public class GenerateConfig {
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,
 				FilterModule.TOUR_LENGTH));
+
+		TourLengthFilterConfigGroup tourLengthFilterConfigGroup = dmcConfig.getTourLengthFilterConfigGroup();
+		tourLengthFilterConfigGroup.setMaximumLength(6);
 
 		// Set up modes
 
