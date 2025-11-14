@@ -34,7 +34,9 @@ public class SwissPtStageCostCalculator {
         priceCalculators.put("TVSZ", SwissPTAuthorityPricing.ZonalAuthorityPricing.TVSZ);
         priceCalculators.put("Unireso", SwissPTAuthorityPricing.ZonalAuthorityPricing.Unireso);
         priceCalculators.put("ZVB", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZVB);
-        priceCalculators.put("ZPass", new DefaultDistanceBasedCalculator(0.19, 2.04, -0.00011));
+        priceCalculators.put("ZPassOstwind", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZPassOstwind);
+        priceCalculators.put("ZPassAwelle", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZPassAwelle);
+        priceCalculators.put("ZPassSchwyzZug", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZPassSchwyzZug);
         priceCalculators.put("ZVV", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZVV);
     }
     

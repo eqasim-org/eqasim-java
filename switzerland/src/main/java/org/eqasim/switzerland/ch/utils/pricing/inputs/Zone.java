@@ -39,7 +39,7 @@ public class Zone {
 
 	@Override
 	public String toString() {
-		return String.format("Zone(%s, %s)", authority.toString(), zoneId);
+		return String.format("%s:%s", authority.toString(), zoneId);
 	}
 
 	static public class Builder {

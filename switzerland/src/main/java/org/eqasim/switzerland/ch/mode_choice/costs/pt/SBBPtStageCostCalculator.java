@@ -40,7 +40,7 @@ public class SBBPtStageCostCalculator implements PtStageCostCalculator {
         }
     }
 
-    public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax){
+    public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authority){
         double distance = 0;
         double price    = 0;
 
