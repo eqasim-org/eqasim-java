@@ -149,6 +149,7 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         carAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         carAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
         carAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
+        carAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
         carAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
         carAttributes.put("subUrbanDestination", Utils.destinationIsSuburban(trip) ? "1" : "0");
         carAttributes.put("shortDistance", Utils.isShortDistanceTrip(carVariables.euclideanDistance_km) ? "1" : "0");

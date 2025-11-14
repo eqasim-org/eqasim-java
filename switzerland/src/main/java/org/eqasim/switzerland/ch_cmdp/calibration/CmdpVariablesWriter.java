@@ -21,7 +21,7 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
                 case "pt" -> writer.write(commonHeader +
                                               "accessEgressTime_min;inVehicleTime_min;waitingTime_min;numberOfLineSwitches;" +
                                               "cost_MU;income\n");
-                case "car" -> writer.write(commonHeader + "travelTime_min;cost_MU;income;subUrbanDestination\n");
+                case "car" -> writer.write(commonHeader + "travelTime_min;cost_MU;income;subUrbanDestination;destinationHome\n");
                 case "bike", "walk" -> writer.write(commonHeader + "travelTime_min\n");
                 case "car_passenger" -> writer.write(commonHeader + "travelTime_min;drivingLicense\n");
                 default -> System.err.println("Unknown mode: " + mode);
@@ -71,11 +71,12 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
                             break;
 
                         case "car":
-                            sb.append(String.format(";%s;%s;%s;%s\n",
+                            sb.append(String.format(";%s;%s;%s;%s;%s\n",
                                     attributes.get("travelTime_min"),
                                     attributes.get("cost_MU"),
                                     attributes.get("income"),
-                                    attributes.get("subUrbanDestination")
+                                    attributes.get("subUrbanDestination"),
+                                    attributes.get("destinationHome")
                             ));
                             carWriter.write(sb.toString());
                             carWriter.flush();
