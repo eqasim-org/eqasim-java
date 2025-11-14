@@ -35,7 +35,7 @@ public class TripsRouter {
     public static final Logger logger = LogManager.getLogger(TripsRouter.class);
 
     public static final Collection<String> REQUIRED_ARGS = Set.of("config-path", "events-path", "trips-path");
-    public static final Collection<String> OPTIONAL_ARGS = Set.of("threads","start-time","end-time","interval","output-path");
+    public static final Collection<String> OPTIONAL_ARGS = Set.of("threads","start-time","end-time","interval","output-path", "departure-time");
 
     public static void main(String[] args) throws Exception {
         CommandLine cmd = new CommandLine.Builder(args)
@@ -48,6 +48,15 @@ public class TripsRouter {
 
         // Read trips
         List<Trip> trips = readTrips(cmd.getOptionStrict("trips-path"));
+
+        // if departure time is provided, give all trips that departure time
+        double departureTime = Double.parseDouble(cmd.getOption("departure-time").orElse("-1"));
+        if (departureTime >= 0) {
+            for (Trip trip : trips) {
+                trip.departureTime = departureTime;
+            }
+            logger.info("All trips set to departure time: {} seconds", departureTime);
+        }
 
         // Prepare network
         Network network = loadNetwork(cmd.getOptionStrict("config-path"), cmd);
