@@ -48,7 +48,9 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
     }
 
     protected double getParkingSearchDuration(DiscreteModeChoiceTrip trip){
-        if (Utils.destinationIsUrban(trip)){
+        if (Utils.destinationIsHome(trip) || Utils.destinationIsWork(trip)){
+            return 0.0;
+        } else if (Utils.destinationIsUrban(trip)){
             return parameters.parking.urbanParkingSearchDuration_min;
         } else if (Utils.destinationIsSuburban(trip)){
             return parameters.parking.suburbanParkingSearchDuration_min;

@@ -50,9 +50,9 @@ public class SwissParkingCostModel {
         double parking_duration_h = Math.min(parkingDuration / 3600.0, 11.0) ; // Cap parking duration at 11 hours (from 8am to 7pm)
 
         if (destinationType.equals("urban") && parking_duration_h>1.0){
-            return parameters.urbanParkingCost_CHF_h * parking_duration_h;
+            return Math.min(40, parameters.urbanParkingCost_CHF_h * parking_duration_h);
         } else if (destinationType.equals("suburban") && parking_duration_h>1.0){
-            return parameters.suburbanParkingCost_CHF_h * parking_duration_h;
+            return Math.min(40, parameters.suburbanParkingCost_CHF_h * parking_duration_h);
         }
         return 0.0;
     }
