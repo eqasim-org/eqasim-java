@@ -20,9 +20,9 @@
 	</modules>
 
 	<properties>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
-		<matsim.version>2026.0-2025w46</matsim.version>
+		<maven.compiler.source>25</maven.compiler.source>
+		<maven.compiler.target>25</maven.compiler.target>
+		<matsim.version>2026.0-2025w47</matsim.version>
 	</properties>
 
 	<distributionManagement>
