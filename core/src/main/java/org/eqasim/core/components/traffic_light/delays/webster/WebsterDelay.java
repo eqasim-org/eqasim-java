@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class WebsterDelay {
     private final Logger logger = LogManager.getLogger(WebsterDelay.class);
@@ -123,28 +124,34 @@ public class WebsterDelay {
         int numGroups = groupedLinks.size();
 
         Map<Link, Double> flowMap = computeFlowMap(inLinks, time); // Real flow, limited by capacity
-        Map<Link, Double> yiMap = computeYiMap(inLinks, flowMap);
 
         double maxIntersectionCapacity = 1800.0;
         double intersectionCapacity = inLinks.stream().mapToDouble(
                 l-> l.getCapacity()/l.getNumberOfLanes()).max().orElse(0.0);
         intersectionCapacity = Math.min(intersectionCapacity, maxIntersectionCapacity);
 
-        double totalYi = getSumOf(yiMap)/intersectionCapacity;
-
-        double cOpt = webster.cOpt(totalYi, numGroups); // Optimal cycle time
+        double totalY = computeTotalY(flowMap, groupedLinks, intersectionCapacity);
+        double cOpt = webster.cOpt(totalY, numGroups); // Optimal cycle time
         double G = webster.gOpt(cOpt, numGroups); // Effective green time
+
         // assign green time to each group
-        Map<Link, Double> gMap = assignGreenTimes(groupedLinks, yiMap, G);
-        // correct cOpt based on the assigned green times
+        Map<Link, Double> gMap = assignGreenTimes(groupedLinks, flowMap, G);
+
+        // correct cOpt based on the assigned green times (happen when min/max green times are hit)
         double newG = groupedLinks.stream()
                                   .map(group -> gMap.get(group.getFirst()))
                                   .mapToDouble(Double::doubleValue)
                                   .sum();
         double newC = newG + webster.L(numGroups);
 
+        // it is obvious that within each group, it might exist some turn conflicts that we cannot solve here
+        // this means that we have fewer groups than actual phases, and thus lower delays and losses, and higher green times.
+        Map<Link, Double> correctedGmap = correctGreenTimes(gMap, node, numGroups);
+
         // Compute the delays for each link using Webster's formula
-        Map<Link, Double> delayMap = computeDelays(inLinks, flowMap, gMap, newC, numGroups, intersectionCapacity, time, newG);
+        Map<Link, Double> delayMap = computeDelays(inLinks, flowMap, correctedGmap, newC, numGroups, intersectionCapacity,
+                time, newG, totalY, G);
+
         // Apply the computed delays to the trafficLightDelays map
         applyDelays(delayMap, time);
     }
@@ -167,13 +174,34 @@ public class WebsterDelay {
         return yiMap;
     }
 
+    private double computeTotalY(Map<Link, Double> flowMap, List<List<Link>> groupedLinks, double intersectionCapacity) {
+        // total Yi is the sum of the demands for each phase divided by the capacity of the phase capacity
+        double totalYi = 0.0;
+        for (List<Link> group : groupedLinks) {
+            double groupFlow = 0.0;
+            double groupCapacity = 1e-3; // to avoid division by zero
+            for (Link link : group) {
+                if (link.getAllowedModes().contains("car")) {
+                    // only consider car flows, other pt modes could bias the results
+                    groupFlow += flowMap.get(link);
+                    groupCapacity += Math.min(link.getCapacity(),
+                            intersectionCapacity * link.getNumberOfLanes()); // this is always respected
+                }
+            }
+            totalYi += (groupFlow / groupCapacity);
+        }
+        return totalYi;
+    }
+
     private double getSumOf(Map<Link, Double> inputMap) {
         return inputMap.values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
     private Map<Link, Double> assignGreenTimes(List<List<Link>> groupedLinks,
-                                               Map<Link, Double> yiMap,
+                                               Map<Link, Double> flowMap,
                                                double G) {
+        // In this method, we assign green times to each group of links based on their flow / intersection flow ratio
+
         Map<Link, Double> gMap = new HashMap<>();
 
         double minGreen = webster.getMinimumGreenTime(); // this is the minimum green time per phase
@@ -198,27 +226,21 @@ public class WebsterDelay {
 
         // Step 2: Compute effective ratios per group (above threshold only)
         List<Double> ratios = new ArrayList<>();
-        double totalY = getSumOf(yiMap);
+        double totalIntersectionFlow = getSumOf(flowMap);
         for (List<Link> group : groupedLinks) {
-            double groupRatio = group.stream().mapToDouble(yiMap::get).sum()/totalY;
+            double groupRatio = group.stream().mapToDouble(flowMap::get).sum()/totalIntersectionFlow;
             double adjustedRatio = Math.max(0.0, groupRatio - minRatio);
             ratios.add(adjustedRatio);
         }
 
-        double totalRatios = ratios.stream().mapToDouble(Double::doubleValue).sum();
-
-        if (totalRatios == 0.0) {
-            // No group has enough pressure to gain extra time — all stay at minGreen
-            return gMap;
-        }
-
         // Step 3: Distribute remaining green time proportionally
+        double totalRatios = ratios.stream().mapToDouble(Double::doubleValue).sum();
         for (int i = 0; i < groupedLinks.size(); i++) {
             double extraGreen = (ratios.get(i) / totalRatios) * greenRemaining;
             List<Link> group = groupedLinks.get(i);
             double groupGreen = minGreen + extraGreen;
 
-            // Clamp to maxGreen if needed
+            // Cap to maxGreen if needed
             groupGreen = Math.min(groupGreen, maxGreen);
 
             for (Link link : group) {
@@ -229,9 +251,32 @@ public class WebsterDelay {
         return gMap;
     }
 
+    private Map<Link, Double> correctGreenTimes(Map<Link, Double> gMap, Node node, double numGroups) {
+        // here we correct the green times, this might come from the fact that within a group,
+        // there are turn conflicts that are not considered when grouping the links.
+        List<Link> outLinks = node.getOutLinks().values().stream()
+                .filter(l -> l.getAllowedModes().contains("car"))
+                .collect(Collectors.toList());
+
+        if (outLinks.isEmpty() | outLinks.size()<=numGroups) {
+            return gMap; // no correction needed
+        } else {
+            Map<Link, Double> correctedGMap = new HashMap<>();
+            double minGreen = webster.getMinimumGreenTime(); // this is the minimum green time per phase
+            double maxGreen = webster.getMaximumGreenTime(); // this is the maximum green time per phase
+            for (Link link : gMap.keySet()) {
+                double g = Math.max(gMap.get(link) - minGreen, minGreen);
+                g = Math.min(g, maxGreen);
+                correctedGMap.put(link, Math.max(minGreen, Math.min(maxGreen, g)) );
+            }
+            return correctedGMap;
+        }
+
+    }
 
     private Map<Link, Double> computeDelays(List<Link> inLinks, Map<Link, Double> flowMap, Map<Link, Double> gMap, double cOpt,
-                                            int numGroups, double intersectionCapacity, double time, double Gopt) {
+                                            int numGroups, double intersectionCapacity, double time, double Gopt, double totalYi,
+                                            double Gold) {
         Map<Link, Double> delayMap = new HashMap<>();
         double minFlow = webster.getMinimumFlowRate(); // Minimum flow to avoid division by zero (one vehicle per hour)
         double maxSat = webster.getMaximumSaturatedRatio(); // Maximum saturation to avoid division by zero in Webster's formula
@@ -242,19 +287,6 @@ public class WebsterDelay {
             double x = Math.min(flowMap.get(link) / cap, maxSat);
             double q = Math.max((flowMap.get(link) / 3600.0), minFlow); // in veh/s
             double delay = webster.delay(cOpt, g, x, q);
-            if (Double.isNaN(delay) || Double.isInfinite(delay)) {
-                logger.warn("   Computed delay is not a valid double for link {} at time {}: {}", link.getId(), time, delay);
-                logger.warn("   inputs: c=" + cOpt + ", g=" + g + ", x=" + x + ", q=" + q+"\n");
-                delay = 0.0;
-            }
-            if (delay>60.0){
-                logger.warn("   Computed delay is greater than 60 seconds for link {} at time {}: {}", link.getId(), time, delay);
-                logger.warn("   inputs: c=" + cOpt + ", g=" + g + ", x=" + x + ", q=" + q+ ", phases="+numGroups+"\n");
-            }
-            if (delay<1.0){
-                logger.warn("   Computed delay is less than 1 second for link {} at time {}: {}", link.getId(), time, delay);
-                logger.warn("   inputs: c=" + cOpt + ", g=" + g + ", x=" + x + ", q=" + q+ ", phases="+numGroups+"\n");
-            }
             delayMap.put(link, delay);
             // just for debugging purposes
             if (timeBinManager.getTlBinIndex(time) == 3) {
@@ -268,7 +300,9 @@ public class WebsterDelay {
                         ";" + String.format("%.3f", x) +
                         ";" + String.format("%.3f", q) +
                         ";" + String.format("%.3f", delay)+
-                        ";" + String.format("%.3f", Gopt);
+                        ";" + String.format("%.3f", Gopt)+
+                        ";" + String.format("%.3f", totalYi)+
+                        ";" + String.format("%.3f", Gold);
                 debuggingMap.put(link.getId(), row);
             }
         }
@@ -321,11 +355,10 @@ public class WebsterDelay {
         String debugFilename = filename.replace(".csv", "_debug.csv");
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(debugFilename))) {
             // Write header
-            String header = "linkId;nodeId;cOpt;numPhases;intersectionCapacity;numLanes;g;capacity;x;q;delay;Gopt\n";
+            String header = "linkId;nodeId;cOpt;numPhases;intersectionCapacity;numLanes;g;capacity;x;q;delay;Gopt;totalYi;Gold\n";
             writer.write(header);
             // Write each link's debug info as a row
-            for (Map.Entry<Id<Link>, String> entry : debuggingMap.entrySet()) {
-                String params = entry.getValue();
+            for (String params : debuggingMap.values()) {
                 writer.write(params + "\n");
             }
         }

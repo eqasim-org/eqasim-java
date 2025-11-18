@@ -18,10 +18,10 @@ public class WebsterConfigGroup extends ReflectiveConfigGroup {
     public static final String MINIMUM_FLOW_RATE = "minimumFlowRate";
 
     private double totalLostTime = 0.0;
-    private double minimumGreenTime = 10.0;
+    private double minimumGreenTime = 5.0;
     private double maximumCycleLength = 120.0;
     private double lostTimePerPhase = 4.0;
-    private double allRedTime = 0.0;
+    private double allRedTime = 3.0;
     private double maximumSaturatedFlow = 0.95;
     private double minimumFlowRate = 5.0/3600;
     private double maximumGreenTime = 60.0;

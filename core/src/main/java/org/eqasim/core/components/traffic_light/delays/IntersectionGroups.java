@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class IntersectionGroups {
 
-    private static final double BEARING_TOLERANCE_DEGREES = 15.0;
+    private static final double BEARING_TOLERANCE_DEGREES = 10.0;
 
     /**
      * Groups incoming links at a node based on their names and bearings.
@@ -108,10 +108,11 @@ public class IntersectionGroups {
         return (angleDeg + 360) % 360;
     }
 
-    // Smallest angular difference (0 to 180)
+    // Smallest angular difference (0 to 90 degrees)
+    // two links in opposite directions have 0 degree difference (same group)
     private static double angleDifference(double a, double b) {
-        double diff = Math.abs(a - b) % 360;
-        return diff > 180 ? 360 - diff : diff;
+        double diff = Math.abs(a - b) % 180;
+        return diff > 90 ? 180 - diff : diff;
     }
 
     private static String getLinkName(Link link) {
