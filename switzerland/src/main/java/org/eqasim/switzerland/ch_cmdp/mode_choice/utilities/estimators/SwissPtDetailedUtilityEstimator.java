@@ -22,6 +22,7 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     private final PtPredictor ptPredictor;
     private final SwissPersonPredictor personPredictor;
     private final VariablesWriter variablesWriter;
+    private final boolean correctPtVariables = true;
 
     @Inject
     public SwissPtDetailedUtilityEstimator(SwissCmdpModeParameters parameters, PtPredictor predictor,
@@ -40,19 +41,41 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     }
 
     protected double estimateAccessEgressTimeUtility(PtVariables variables) {
-        return parameters.pt.betaAccessEgressTime_u_min * Math.pow(variables.accessEgressTime_min, parameters.pt.accessEgressTimeExponent);
+        double accessEgressTime = variables.accessEgressTime_min;
+        if (correctPtVariables) {
+            accessEgressTime = 3.0 * Math.pow(accessEgressTime, 0.55);
+            if (variables.euclideanDistance_km < 1.6) {
+                accessEgressTime = accessEgressTime * 0.92;
+            }
+            if (variables.euclideanDistance_km < 1.0) {
+                accessEgressTime = accessEgressTime * 0.85;
+            }
+        }
+        return parameters.pt.betaAccessEgressTime_u_min * Math.pow(accessEgressTime, parameters.pt.accessEgressTimeExponent);
     }
 
     protected double estimateInVehicleTimeUtility(PtVariables variables) {
-        return parameters.pt.betaInVehicleTime_u_min * Math.pow(variables.inVehicleTime_min, parameters.pt.inVehicleTimeExponent);
+        double inVehicleTime = variables.inVehicleTime_min;
+        if (correctPtVariables) {
+            inVehicleTime = 1.2 * Math.pow(inVehicleTime, 0.95);
+        }
+        return parameters.pt.betaInVehicleTime_u_min * Math.pow(inVehicleTime, parameters.pt.inVehicleTimeExponent);
     }
 
     protected double estimateWaitingTimeUtility(PtVariables variables) {
-        return parameters.pt.betaWaitingTime_u_min * Math.pow(variables.waitingTime_min, parameters.pt.waitingTimeExponent);
+        double waitingTime = variables.waitingTime_min;
+        if (correctPtVariables) {
+            waitingTime = 0.45 * Math.pow(waitingTime, 1.17);
+        }
+        return parameters.pt.betaWaitingTime_u_min * Math.pow(waitingTime, parameters.pt.waitingTimeExponent);
     }
 
     protected double estimateLineSwitchUtility(PtVariables variables) {
-        return parameters.pt.betaLineSwitch_u * Math.pow(variables.numberOfLineSwitches, parameters.pt.lineSwitchExponent);
+        double lineSwitches = variables.numberOfLineSwitches;
+        if (correctPtVariables) {
+            lineSwitches = 0.3 * Math.pow(lineSwitches, 1.9);
+        }
+        return parameters.pt.betaLineSwitch_u * Math.pow(lineSwitches, parameters.pt.lineSwitchExponent);
     }
 
     protected double estimateMonetaryCostUtility(PtVariables variables, SwissPersonVariables personVariables) {

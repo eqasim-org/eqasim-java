@@ -20,7 +20,7 @@ public interface ParameterDefinition {
 	final static Logger logger = LogManager.getLogger(ParameterDefinition.class);
 
 	static public void applyCommandLine(String prefix, CommandLine cmd, ParameterDefinition parameterDefinition) {
-		Map<String, String> values = new HashMap<>();
+		Map<String, Object> values = new HashMap<>();
 
 		for (String option : cmd.getAvailableOptions()) {
 			if (option.startsWith(prefix + ":")) {
@@ -36,11 +36,11 @@ public interface ParameterDefinition {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	static public void applyMap(ParameterDefinition parameterDefinition, Map<String, String> values) {
-		for (Map.Entry<String, String> entry : values.entrySet()) {
+	static public void applyMap(ParameterDefinition parameterDefinition, Map<String, Object> values) {
+		for (Map.Entry<String, Object> entry : values.entrySet()) {
 			String option = entry.getKey();
-			String value = entry.getValue();
-
+			Object objValue = entry.getValue();
+			String value = String.valueOf(objValue);
 			try {
 				String[] parts = option.split("\\.");
 				int numberOfParts = parts.length;
@@ -67,7 +67,14 @@ public interface ParameterDefinition {
 							field.set(activeObject, Enum.valueOf(enumType, value));
 						} else if (field.getType() == Boolean.class || field.getType() == boolean.class) {
 							field.setBoolean(activeObject, Boolean.parseBoolean(value));
-						} else {
+						} else if (field.getType() == Map.class) {
+							// We assume that the map is of type Map<String, Double>
+							Map map = (Map) field.get(activeObject);
+							Map<String, Double> mapValue= (Map<String, Double>) objValue;
+							for (String mapPart : mapValue.keySet()) {
+								map.put(mapPart, mapValue.get(mapPart));
+							}
+						}else {
 							throw new IllegalStateException(
 									String.format("Cannot convert parameter %s because type %s is not supported",
 											option, field.getType().toString()));
@@ -89,11 +96,11 @@ public interface ParameterDefinition {
 	}
 
 	static public MapType mapType = TypeFactory.defaultInstance().constructMapType(HashMap.class, String.class,
-			String.class);
+			Object.class);
 
 	static public void applyFile(File path, ParameterDefinition definition) {
 		try {
-			Map<String, String> values = new ObjectMapper(new YAMLFactory()).readValue(path, mapType);
+			Map<String, Object> values = new ObjectMapper(new YAMLFactory()).readValue(path, mapType);
 			applyMap(definition, values);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

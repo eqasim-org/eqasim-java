@@ -1,11 +1,24 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.parameters;
 
+import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class SwissCmdpModeParameters extends SwissModeParameters {
+
+    public final SwissBikeParameters bike = new SwissBikeParameters();
+    public final SwissCarParameters car = new SwissCarParameters();
+    public final SwissPTParameters pt = new SwissPTParameters();
+    public final SwissWalkParameters walk = new SwissWalkParameters();
+    public final SwissCarPassengerParameters cp = new SwissCarPassengerParameters();
+
+    public final SwissParking parking = new SwissParking();
+
+    public double lambdaCostIncome = 0.0;
+    public double referenceIncome = 0.0;
+
 
     public static class SwissBikeParameters {
         public double alpha_u = 0.0;
@@ -104,17 +117,6 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaDrivingLicense_u = 0.0;
         public double betaShortDistance_u = 0.0;
     }
-
-    public final SwissBikeParameters bike = new SwissBikeParameters();
-    public final SwissCarParameters car = new SwissCarParameters();
-    public final SwissParking parking = new SwissParking();
-    public final SwissPTParameters pt = new SwissPTParameters();
-    public final SwissWalkParameters walk = new SwissWalkParameters();
-    public final SwissCarPassengerParameters cp = new SwissCarPassengerParameters();
-
-
-    public double lambdaCostIncome = 0.0;
-    public double referenceIncome = 0.0;
 
     public static SwissCmdpModeParameters buildDefault() {
         SwissCmdpModeParameters parameters = new SwissCmdpModeParameters();
@@ -222,4 +224,16 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         this.cp.alpha_u = alphas.getOrDefault("car_passenger", this.cp.alpha_u);
     }
 
+    @Override
+    protected Object[][] getParameterObjects() {
+        return new Object[][] {
+                {car, "car"},
+                {pt, "pt"},
+                {bike, "bike"},
+                {walk, "walk"},
+                {cp, "cp"},
+                {parking, "parking"},
+                {swissCanton, "swissCanton"}
+        };
+    }
 }
