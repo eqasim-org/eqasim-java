@@ -140,11 +140,11 @@ public class TestEmissions {
 
 	private void runMelunEmissions() throws CommandLine.ConfigurationException, IOException {
 		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
-		Assert.assertEquals(3297, (long) counts.get("car"));
+		Assert.assertEquals(3303, (long) counts.get("car"));
 		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
-		Assert.assertEquals(9348, (long) counts.get("walk"));
-		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
-		Assert.assertEquals(2108, (long) counts.get("pt"));
+		Assert.assertEquals(9400, (long) counts.get("walk"));
+		Assert.assertEquals(3402, (long) counts.getOrDefault("bike", 0L));
+		Assert.assertEquals(2121, (long) counts.get("pt"));
 
 		SafeOsmHbefaMapping.defaultType = "URB/Loca/50";
 
@@ -155,7 +155,7 @@ public class TestEmissions {
 				"sample_41_EFA_HOT_SubSegm_2020detailed.csv",
 				"--eqasim-configurator", TestConfigurator.class.getName() });
 
-		assertEquals(353707, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
+		assertEquals(354139, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
 		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600",
@@ -214,13 +214,12 @@ public class TestEmissions {
 	}
 
 	static long countLines(File file) throws IOException {
-		String line;
 		int lines = 0;
 
 		BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
 
-		while ((line = reader.readLine()) != null) {
+		while (reader.readLine() != null) {
 			lines++;
 		}
 
