@@ -54,6 +54,15 @@ public class FlowDataSet {
         }
     }
 
+    private double getBetaEffective() {
+        if (updatesCounter==0) {
+            return 0.0; // First update uses only new data
+        } else if (updatesCounter<=5) {
+            return 0.2; // Use a lower beta for the first few updates to adapt quickly
+        }
+        return this.beta;
+    }
+
     public void updateFlow(int iteration, TrafficCounter counts) {
         logger.info("Iteration {}: Updating iteration flow data", iteration);
 
@@ -62,14 +71,14 @@ public class FlowDataSet {
             return;
         }
 
-        double betaEffective = (updatesCounter == 0) ? 1.0 : this.beta;
+        double betaEffective = getBetaEffective();
 
         for (Id<Link> linkId : network.getLinks().keySet()) {
             List<Double> existingFlow = flowMap.get(linkId);
             List<Double> newFlow = counts.getLinkCounts(linkId);
 
             for (int i = 0; i < timeBinManager.getNumberOfBins(); i++) {
-                double updated = betaEffective * newFlow.get(i) + (1.0 - betaEffective) * existingFlow.get(i);
+                double updated = betaEffective * existingFlow.get(i) + (1.0 - betaEffective) * newFlow.get(i);
                 existingFlow.set(i, updated);
             }
         }

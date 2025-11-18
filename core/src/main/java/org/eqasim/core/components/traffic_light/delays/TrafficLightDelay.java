@@ -22,9 +22,7 @@ public class TrafficLightDelay {
     // flags
     public static final double NO_TL = -1; // No traffic light
     public static final double OUT_OF_BOUNDS = -2; // Time out of bounds
-    public static final double BEFORE_TL = -3; // Before the traffic light module starts
-    public static final double INCORRECT_DELAY = -4; // After the traffic light module ends
-    public static final double NO_DELAY = -5; // No delay set (vehicle got a delay in the last 'threshold' meters)
+    public static final double INCORRECT_DELAY = -3; // After the traffic light module ends
 
     public TrafficLightDelay(Network network, TimeBinManager timeBinManager,
                              DelaysConfigGroup delaysConfigGroup,

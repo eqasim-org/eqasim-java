@@ -66,7 +66,7 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
 
         map.put(BIN_SIZE, "Size of the time bins in seconds (default: 3600.0, other values are not tested)");
         map.put(BETA, "Beta parameter for the flow updater (default: 0.5)" +
-                " (0.0 means no flow update, 1.0 means full flow update)");
+                " (1.0 means no flow update, 0.0 means full flow update)");
         map.put(WRITE_FLOW_INTERVAL, "Write flow interval in iterations (default: 1)");
         map.put(WRITE_DELAY_INTERVAL, "Write traffic light delays interval in iterations (default: 1)");
         map.put(STARTING_ITERATION, "Iteration from which the module starts to apply crossing penalties (default: 3)");

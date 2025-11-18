@@ -23,13 +23,15 @@ public class WebsterDelay {
     private final Logger logger = LogManager.getLogger(WebsterDelay.class);
 
     static public String TL_ATTRIBUTE = TrafficLightDelay.TL_ATTRIBUTE;
-    private final IdMap<Link, List<Double>> trafficLightDelays = new IdMap<>(Link.class);;
+    private final IdMap<Link, List<Double>> trafficLightDelays = new IdMap<>(Link.class);
     private final TimeBinManager timeBinManager;
     private final Network network;
     private final WebsterFormula webster;
     private final FlowDataSet flow;
     private final double flowRatio; // Ratio to convert flow to hours, based on the time bin size
     private final double sampleSize;
+
+    private final IdMap<Link, String> debuggingMap = new IdMap<>(Link.class);;
 
     public WebsterDelay(Network network, TimeBinManager timeBinManager,
                         WebsterFormula webster, FlowDataSet flow, double sampleSize) {
@@ -82,12 +84,12 @@ public class WebsterDelay {
      * of the intersection that was assumed will also need to be adjusted. Therefore, instead of that, we adjust only the flow because it is
      * the only parameter that is dependent on the time interval. It is scaled to 1 hour so that the formula can be applied correctly without any changes.
      * and to 100% sample size.
+     * We do not adjust the capacity, as the capacity here is not scaled by the sample size.
      */
     public double getFlow(Link link, double time) {
         return Math.min(flow.getFlow(link.getId(), time)*flowRatio/sampleSize,
-                link.getCapacity()); // Adjust flow based on the time bin size, rescale it to 100%, and cap it by the capacity of the link.
+                        link.getCapacity()); // Adjust flow based on the time bin size, rescale it to 100%, and cap it by the capacity of the link.
     }
-
 
     /**
      * Builds the traffic light trafficLightDelays based on the provided flow data set.
@@ -142,7 +144,7 @@ public class WebsterDelay {
         double newC = newG + webster.L(numGroups);
 
         // Compute the delays for each link using Webster's formula
-        Map<Link, Double> delayMap = computeDelays(inLinks, flowMap, gMap, newC, numGroups, intersectionCapacity, time);
+        Map<Link, Double> delayMap = computeDelays(inLinks, flowMap, gMap, newC, numGroups, intersectionCapacity, time, newG);
         // Apply the computed delays to the trafficLightDelays map
         applyDelays(delayMap, time);
     }
@@ -174,29 +176,24 @@ public class WebsterDelay {
                                                double G) {
         Map<Link, Double> gMap = new HashMap<>();
 
-        double minGreen = webster.getMinimumGreenTime();
-        double maxGreen = webster.getMaximumGreenTime();
-        double minRatio = minGreen/G; // Set this to your desired threshold
+        double minGreen = webster.getMinimumGreenTime(); // this is the minimum green time per phase
+        double maxGreen = webster.getMaximumGreenTime(); // this is the maximum green time per phase
+        double minRatio = minGreen/G;
 
         int groupCount = groupedLinks.size();
-        double greenReserved = minGreen * groupCount;
-        double greenRemaining = G - greenReserved;
-
-        if (greenRemaining <= 0.0) {
-            // Not enough total green time — fallback to equal minimums
-            for (List<Link> group : groupedLinks) {
-                for (Link link : group) {
-                    gMap.put(link, minGreen);
-                }
-            }
-            return gMap;
-        }
+        double greenReserved = minGreen * groupCount; // This is the green time reserved for minimums
+        double greenRemaining = G - greenReserved; // This is the green time left to distribute
 
         // Step 1: Assign minGreen to all
         for (List<Link> group : groupedLinks) {
             for (Link link : group) {
                 gMap.put(link, minGreen);
             }
+        }
+
+        // If no green time is remaining, return the map with minGreen assigned to each group
+        if (greenRemaining <= 0.0) {
+            return gMap;
         }
 
         // Step 2: Compute effective ratios per group (above threshold only)
@@ -234,7 +231,7 @@ public class WebsterDelay {
 
 
     private Map<Link, Double> computeDelays(List<Link> inLinks, Map<Link, Double> flowMap, Map<Link, Double> gMap, double cOpt,
-                                            int numGroups, double intersectionCapacity, double time) {
+                                            int numGroups, double intersectionCapacity, double time, double Gopt) {
         Map<Link, Double> delayMap = new HashMap<>();
         double minFlow = webster.getMinimumFlowRate(); // Minimum flow to avoid division by zero (one vehicle per hour)
         double maxSat = webster.getMaximumSaturatedRatio(); // Maximum saturation to avoid division by zero in Webster's formula
@@ -243,7 +240,7 @@ public class WebsterDelay {
             double g = gMap.get(link);
             double cap = intersectionCapacity * link.getNumberOfLanes();//link.getCapacity();
             double x = Math.min(flowMap.get(link) / cap, maxSat);
-            double q = Math.max((flowMap.get(link) / 3600.0), minFlow); // scale flow to 100% sample
+            double q = Math.max((flowMap.get(link) / 3600.0), minFlow); // in veh/s
             double delay = webster.delay(cOpt, g, x, q);
             if (Double.isNaN(delay) || Double.isInfinite(delay)) {
                 logger.warn("   Computed delay is not a valid double for link {} at time {}: {}", link.getId(), time, delay);
@@ -259,6 +256,21 @@ public class WebsterDelay {
                 logger.warn("   inputs: c=" + cOpt + ", g=" + g + ", x=" + x + ", q=" + q+ ", phases="+numGroups+"\n");
             }
             delayMap.put(link, delay);
+            // just for debugging purposes
+            if (timeBinManager.getTlBinIndex(time) == 3) {
+                String row = link.getId().toString() + ";" + link.getToNode().getId().toString() +
+                        ";" + String.format("%.3f", cOpt) +
+                        ";" + String.format("%d", numGroups) +
+                        ";" + String.format("%.3f", intersectionCapacity) +
+                        ";" + String.format("%.3f", link.getNumberOfLanes()) +
+                        ";" + String.format("%.3f", g) +
+                        ";" + String.format("%.3f", cap) +
+                        ";" + String.format("%.3f", x) +
+                        ";" + String.format("%.3f", q) +
+                        ";" + String.format("%.3f", delay)+
+                        ";" + String.format("%.3f", Gopt);
+                debuggingMap.put(link.getId(), row);
+            }
         }
         return delayMap;
     }
@@ -302,6 +314,19 @@ public class WebsterDelay {
                     row.append(String.format(";%.1f", binFlows.get(bin)));
                 }
                 writer.write(row.toString() + "\n");
+            }
+        }
+
+        // Export the debug list
+        String debugFilename = filename.replace(".csv", "_debug.csv");
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(debugFilename))) {
+            // Write header
+            String header = "linkId;nodeId;cOpt;numPhases;intersectionCapacity;numLanes;g;capacity;x;q;delay;Gopt\n";
+            writer.write(header);
+            // Write each link's debug info as a row
+            for (Map.Entry<Id<Link>, String> entry : debuggingMap.entrySet()) {
+                String params = entry.getValue();
+                writer.write(params + "\n");
             }
         }
     }

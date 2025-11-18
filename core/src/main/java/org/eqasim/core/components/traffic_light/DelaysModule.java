@@ -30,8 +30,11 @@ public class DelaysModule extends AbstractEqasimExtension {
         DelaysConfigGroup delaysConfig = DelaysConfigGroup.getOrCreate(getConfig());
         if (delaysConfig.isActivated()) {
             logger.info("Traffic light module is enabled.");
+            // This part manages the flow data collection
             addEventHandlerBinding().to(TrafficCounter.class).asEagerSingleton();
-            addControlerListenerBinding().to(DelaysUpdaterListener.class).asEagerSingleton();
+            addControllerListenerBinding().to(TrafficCounter.class).asEagerSingleton();
+            // This part manages the delay calculation and updating
+            addControllerListenerBinding().to(DelaysUpdaterListener.class).asEagerSingleton();
         } else {
             logger.info("Traffic light is disabled, skipping installation.");
         }
@@ -60,8 +63,9 @@ public class DelaysModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public TrafficCounter provideTrafficCounter(Network network, TimeBinManager timeBinManager) {
-        return new TrafficCounter(network, timeBinManager);
+    public TrafficCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
+                                                OutputDirectoryHierarchy outputHierarchy, DelaysConfigGroup delaysConfigGroup) {
+        return new TrafficCounter(network, flowDataSet, timeBinManager, outputHierarchy, delaysConfigGroup);
     }
 
 

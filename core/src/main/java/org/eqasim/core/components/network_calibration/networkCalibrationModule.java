@@ -8,6 +8,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.network_calibration.capacities_calibration.CapacitiesAdapter;
 import org.eqasim.core.components.network_calibration.capacities_calibration.FlowByLinkCategory;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
+import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
 import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
 import org.eqasim.core.components.traffic_light.flow.TrafficCounter;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -32,8 +33,10 @@ public class networkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public TrafficCounter provideTrafficCounter(Network network, TimeBinManager timeBinManager) {
-        return new TrafficCounter(network, timeBinManager);
+    public TrafficCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
+                                                OutputDirectoryHierarchy outputHierarchy) {
+        DelaysConfigGroup config = DelaysConfigGroup.getOrCreate(getConfig());
+        return new TrafficCounter(network, flowDataSet, timeBinManager, outputHierarchy, config);
     }
 
     @Provides

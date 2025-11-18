@@ -64,8 +64,8 @@ public class ShahparDelay {
                 assignFfToNode(node);
                 // Step 3: Assign ROW to each in-link of each intersection node
                 assignRowToInLinks(node);
-                mapsAreInitialized = true;
             }
+            mapsAreInitialized = true;
         }
         // limit memory usage by removing the links with 0 delay from memory
         for (Link link : network.getLinks().values()) {
