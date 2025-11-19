@@ -51,6 +51,7 @@ public class IntersectionDelay implements CrossingPenalty {
         }
 
         if (!couldAddDelayBasedOnLastIntersection(link, vehicleId)) {
+            // only add a delay if the vehicle has not crossed an intersection recently
             return 0.0;
         }
         // At this point, we know that at least one of the delays is activated and that we can add a delay based on the last intersection, time, iteration

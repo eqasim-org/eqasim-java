@@ -11,10 +11,12 @@ public class ShahparConfigGroup extends ReflectiveConfigGroup {
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
     public static final String ETA = "eta";
+    public static final String MAXIMUM_SATURATION = "maximumSaturation";
 
     private double alpha = 3.5;
     private double beta = 4.85;
     private double eta = 1.48;
+    private double maximumSaturation = 0.95;
 
     public ShahparConfigGroup() {
         super(GROUP_NAME);
@@ -26,6 +28,7 @@ public class ShahparConfigGroup extends ReflectiveConfigGroup {
         comments.put(ALPHA, "Alpha parameter for the Shahpar delay model (default: 3.5)");
         comments.put(BETA, "Beta parameter for the Shahpar delay model (default: 4.85)");
         comments.put(ETA, "Eta parameter for the Shahpar delay model (default: 1.48)");
+        comments.put(MAXIMUM_SATURATION, "Maximum saturation level for the Shahpar delay model (default: 0.95)");
         return comments;
     }
 
@@ -56,4 +59,12 @@ public class ShahparConfigGroup extends ReflectiveConfigGroup {
         this.eta = eta;
     }
 
+    @StringGetter(MAXIMUM_SATURATION)
+    public double getMaximumSaturation() {
+        return maximumSaturation;
+    }
+    @StringSetter(MAXIMUM_SATURATION)
+    public void setMaximumSaturation(double maximumSaturation) {
+        this.maximumSaturation = maximumSaturation;
+    }
 }

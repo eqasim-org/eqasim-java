@@ -24,7 +24,7 @@ public class ShahparDelay {
     private double alpha; // constant for the formula of the dalay
     private double beta; // constant for the formula of the delay
     private double eta;  // exponent for the formula of the delay
-    private final double maximumSaturation = 1.0; // maximum saturation ratio for the intersection
+    private final double maximumSaturation; // maximum saturation ratio for the intersection
 
     private final IdMap<Node, Double> ffMap = new IdMap<>(Node.class);
     private final IdMap<Link, Double> rowMap = new IdMap<>(Link.class);
@@ -43,6 +43,7 @@ public class ShahparDelay {
         this.alpha = config.getAlpha();
         this.beta = config.getBeta();
         this.eta = config.getEta();
+        this.maximumSaturation = config.getMaximumSaturation();
         this.flow = flow;
         this.network = network;
         this.timeBinManager = timeBinManager;
@@ -69,12 +70,15 @@ public class ShahparDelay {
         }
         // limit memory usage by removing the links with 0 delay from memory
         for (Link link : network.getLinks().values()) {
-            if (link.getAllowedModes().contains("car")) {
-                if (getNodeDegree(link.getToNode().getId())>2) {
+            if (considerLink(link)) {
                     delays.put(link.getId(), new ArrayList<>(Collections.nCopies(timeBinManager.getNumberOfBins(), 0.0)));
                 }
             }
-        }
+    }
+
+    public boolean considerLink(Link link) {
+        return (link.getAllowedModes().contains("car") &&
+                getNodeDegree(link.getToNode().getId()) > 2);
     }
 
     public void resetDelays(){
@@ -90,16 +94,14 @@ public class ShahparDelay {
 
     public void buildDelays(){
         for (Link link : network.getLinks().values()) {
-            if (link.getAllowedModes().contains("car")) {
-                if (getNodeDegree(link.getToNode().getId())>2) {
-                    List<Double> delayList = delays.get(link.getId());
-                    if (delayList != null) {
-                        double[] binCenters = timeBinManager.getBinsCenters();
-                        for (int i = 0; i < timeBinManager.getNumberOfBins(); i++) {
-                            double time = binCenters[i];
-                            double delay = computeDelay(link, time);
-                            delayList.set(i, delay);
-                        }
+            if (considerLink(link)) {
+                List<Double> delayList = delays.get(link.getId());
+                if (delayList != null) {
+                    double[] binCenters = timeBinManager.getBinsCenters();
+                    for (int i = 0; i < timeBinManager.getNumberOfBins(); i++) {
+                        double time = binCenters[i];
+                        double delay = computeDelay(link, time);
+                        delayList.set(i, delay);
                     }
                 }
             }
@@ -108,16 +110,6 @@ public class ShahparDelay {
 
     public Double getDelay(Link link, double time){
         return delays.get(link.getId()).get(timeBinManager.getBinIndex(time));
-    }
-
-    public void setAlpha(double alpha) {
-        this.alpha = alpha;
-    }
-    public void setBeta(double beta) {
-        this.beta = beta;
-    }
-    public void setEta(double eta) {
-        this.eta = eta;
     }
 
     public Double getNodeDegree(Id<Node> nodeId) {
@@ -144,13 +136,13 @@ public class ShahparDelay {
         Collection<Link> inLinks = getLinksCar(intersectionNode, "in").values();
         double intersectionCapacity = Collections.max(inLinks.stream().map(Link::getCapacity).toList());
         double intersectionFlow = inLinks.stream().mapToDouble(l -> getFlow(l, time)).sum();
-        double intersectionSaturation = Math.min(intersectionFlow / intersectionCapacity,maximumSaturation); // saturation ratio capped at 1.2
+        double intersectionSaturation = Math.min(intersectionFlow / intersectionCapacity, maximumSaturation); // saturation ratio capped at 1.2
 
         // 3. Calculate the delay using the Shahpar formula
         double delay = FF*ROW*(alpha+beta*Math.pow(intersectionSaturation, eta));
         if (!Double.isFinite(delay)||delay<0.0){
             logger.warn("The computed delay for link {} at time {} is wrong ({}). Returning 0.0", link.getId(), time, delay);
-            delay = 0.0; // Return 0.0 if the delay is not finite or negative
+            return 0.0; // Return 0.0 if the delay is not finite or negative
         }
         return delay;
     }
@@ -223,7 +215,7 @@ public class ShahparDelay {
             for (Link inLink : inLinksCar.values()) {
                 Id<Link> inId = inLink.getId();
                 Node fromNode = inLink.getFromNode();
-                // U-turns (in-link to same in-link)
+                // U-turns
                 for (Link outLink : outLinksCar.values()) {
                     // U-turn check
                     if (fromNode.equals(outLink.getToNode())) {
@@ -236,12 +228,10 @@ public class ShahparDelay {
         // Step 4: Calculate FF value
         int numProhibited = prohibitedTurnPairs.size();
         int numTurns = Math.max((nEntries * nExits - numProhibited), minimumTurns); // ensure at least minimum turns
-        if (numTurns < 2 || numTurns > 20) {
-            // print all values
-            logger.warn("Found {} turns for intersection {} with {} entries and {} exits and {} prohibited turns.",
-                        numTurns, intersectionNode.getId(), nEntries, nExits, numProhibited);
-        }
         double ffValue = numTurns * Math.min(1.2, (nEntries + 1.0) / (nExits + 1.0));
+
+        // step 5: clip ffValue
+        ffValue = Math.max(Math.min(ffValue, 10.0), 2.0);
         ffMap.put(intersectionNode.getId(), ffValue);
     }
 
@@ -296,6 +286,18 @@ public class ShahparDelay {
             }
         }
     }
+
+
+    // these might be useful for calibration within the simulation
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+    }
+    public void setBeta(double beta) {
+        this.beta = beta;
+    }
+    public void setEta(double eta) {
+        this.eta = eta;
+    }
 }
 
 //public static void main(String[] args) {
@@ -312,7 +314,7 @@ public class ShahparDelay {
 //    long end = System.nanoTime();
 //    logger.info("Reading network took: " + (end - start)/1_000_000_000.0 + " s");
 //    // Simple confirmation output
-//    logger.info("✅ Network loaded with " + scenario.getNetwork().getNodes().size() + " nodes and " +
+//    logger.info("Network loaded with " + scenario.getNetwork().getNodes().size() + " nodes and " +
 //            scenario.getNetwork().getLinks().size() + " links.");
 //
 //    Network network = scenario.getNetwork();

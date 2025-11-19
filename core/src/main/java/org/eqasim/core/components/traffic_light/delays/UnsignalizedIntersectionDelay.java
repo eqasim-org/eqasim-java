@@ -15,19 +15,14 @@ public class UnsignalizedIntersectionDelay {
     private final Logger logger = LogManager.getLogger(UnsignalizedIntersectionDelay.class);
     private final ShahparDelay intersectionDelayFormula;
 
-    public UnsignalizedIntersectionDelay(ShahparDelay intersectionDelay) {
-        this.intersectionDelayFormula = intersectionDelay;
+    public UnsignalizedIntersectionDelay(ShahparDelay delayFormula) {
+        this.intersectionDelayFormula = delayFormula;
         logger.info("Unsignalized intersection delay initialized with Shahpar formula.");
     }
 
     public double getDelay(Link link, double time){
         // 1. Check if the intersection node has a degree assigned, and this degree is higher then 2 (otherwise it is a simple connection)
-        Double intersectionNodeDegree = intersectionDelayFormula.getNodeDegree(link.getToNode().getId());
-        if (intersectionNodeDegree == null || intersectionNodeDegree <= 2) {
-            return 0.0;
-        }
-        // 2. Check if the link has car mode (delays only set for cars)
-        if (!link.getAllowedModes().contains("car")) {
+        if (!intersectionDelayFormula.considerLink(link)) {
             return 0.0;
         }
         // 3. return the delay using the formula
