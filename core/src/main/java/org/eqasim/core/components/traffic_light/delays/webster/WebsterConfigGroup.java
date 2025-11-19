@@ -44,9 +44,9 @@ public class WebsterConfigGroup extends ReflectiveConfigGroup {
         comments.put(MAXIMUM_CYCLE_LENGTH,
                 "The maximum cycle length in seconds, default value is 120.0 seconds (Flotterod & Behrisch, SUMO, 2018). ");
         comments.put(LOST_TIME_PER_PHASE,
-                "Is the lost time per phase in seconds, only used if the totalLostTime is 0. Default value is 3.0 seconds");
+                "Is the lost time per phase in seconds, only used if the totalLostTime is 0. Default value is 4.0 seconds");
         comments.put(ALL_RED_TIME,
-                "Is the all red time in seconds, only used if the totalLostTime is 0. Default value is 0.0 seconds");
+                "Is the all red time in seconds, only used if the totalLostTime is 0. Default value is 3.0 seconds");
         comments.put(MAXIMUM_SATURATED_RATIO,
                 "Is the maximum saturated flow ratio, this value is used to avoid division by zero in the delay function. Default value is 0.95");
         comments.put(MINIMUM_FLOW_RATE,

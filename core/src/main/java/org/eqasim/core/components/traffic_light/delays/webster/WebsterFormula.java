@@ -5,14 +5,14 @@ public class WebsterFormula {
     // Total lost time in seconds, this default value is obtained from:
     // Automated generation of traffic signals and lanes for MATSim based on OpenStreetMap
     // Theresa Ziemke, Sohnke Braun, 2021, section 3.4
-    private final double minimumGreenTime;// default 10.0 - same source as above
+    private final double minimumGreenTime;// default 5.0 - same source as above
     private final double maximumGreenTime; // default 60.0 - same source as above
     private final double maximumCycleLength;
 
     // source: //https://www.apsed.in/post/traffic-signal-design-webster-s-formula-for-optimum-cycle-length#:~:text=All%20red%20time%20is%20usually,ratio%20at%20all%20the%20phases
     // same formula used in: Investigating Parameter Interactions with the Factorial Design Method: Webster’s Optimal Cycle Length Model, Ali Payıdar AKGÜNGÖR, Ersin KORKMAZ, 2018
-    private final double lostTimePerPhase; //default 3.0;
-    private final double allRedTime; // default 0.0
+    private final double lostTimePerPhase; //default 4.0; usually between 2 and 5 seconds per phase
+    private final double allRedTime; // default 3.0; usually 0
 
     private final double maximumSaturatedRatio; // default 0.98; Maximum saturated ratio, this value is used to avoid division by zero in the cOpt function
     private final double minimumFlowRate; // default 1.0/3600; Minimum flow rate, this value is used to avoid division by zero in the delay function
