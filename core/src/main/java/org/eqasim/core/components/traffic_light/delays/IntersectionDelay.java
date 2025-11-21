@@ -98,7 +98,9 @@ public class IntersectionDelay implements CrossingPenalty {
         }
 
         // Calculate distance from last intersection where a delay was applied
-        double distanceSinceLastDelay = CoordUtils.calcEuclideanDistance(lastDelayLocation, nextIntersectionLocation);
+        double xDiff = lastDelayLocation.getX() - nextIntersectionLocation.getX();
+        double yDiff = lastDelayLocation.getY() - nextIntersectionLocation.getY();
+        double distanceSinceLastDelay = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
 
         // if distance higher than the threshold, we should apply the traffic light delay, and update the last known traffic light position
         if (distanceSinceLastDelay > minimumDistanceBetweenDelays){
