@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch.mode_choice;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Map;
 
@@ -25,22 +26,24 @@ import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissPtUtility
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissWalkUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissZeroUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
+import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
-import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
 import com.opencsv.exceptions.CsvValidationException;
 
 public class SwissModeChoiceModule extends AbstractEqasimExtension {
@@ -91,12 +94,13 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public SwissModeParameters provideSwissModeParameters(EqasimConfigGroup config)
+	public SwissModeParameters provideSwissModeParameters(EqasimConfigGroup config, Config mainConfig)
 			throws IOException, ConfigurationException {
 		SwissModeParameters parameters = SwissModeParameters.buildDefault();
 
 		if (config.getModeParametersPath() != null) {
-			ParameterDefinition.applyFile(new File(config.getModeParametersPath()), parameters);
+			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), config.getModeParametersPath());
+			ParameterDefinition.applyFile(new File(url.getPath()), parameters);
 		}
 
 		ParameterDefinition.applyCommandLine("mode-parameter", commandLine, parameters);
@@ -105,11 +109,12 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public SwissCostParameters provideCostParameters(EqasimConfigGroup config) {
+	public SwissCostParameters provideCostParameters(EqasimConfigGroup config, Config mainConfig) {
 		SwissCostParameters parameters = SwissCostParameters.buildDefault();
 
 		if (config.getCostParametersPath() != null) {
-			ParameterDefinition.applyFile(new File(config.getCostParametersPath()), parameters);
+			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), config.getCostParametersPath());
+			ParameterDefinition.applyFile(new File(url.getPath()), parameters);
 		}
 
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
@@ -142,15 +147,14 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	//@Singleton
-	public ZonalRegistry provideZonalRegistry(SwissPTZonesConfigGroup ptZonesConfig) throws IOException, CsvValidationException{
-		String file_path = "";
+	public ZonalRegistry provideZonalRegistry(SwissPTZonesConfigGroup ptZonesConfig, Config mainConfig) throws IOException, CsvValidationException{
 		ZonalReader zonalReader = new ZonalReader();
 		ZonalRegistry zonalRegistry = null;
 		ZonalRegistry sbbZonalRegistry = null;
 
 		if (ptZonesConfig.getZonePath() != null){
-			file_path = ptZonesConfig.getZonePath();
-			File path = new File(file_path);
+			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), ptZonesConfig.getZonePath());
+			File path = new File(url.getPath());
 			Collection<Authority> authorities = zonalReader.readTarifNetworks(path);
 			Collection<Zone> zones = zonalReader.readZones(path, authorities);
 			zonalRegistry = new ZonalRegistry(authorities, zones);
@@ -160,8 +164,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		}
 
 		if (ptZonesConfig.getSBBDistancesPath() != null) {
-			file_path = ptZonesConfig.getSBBDistancesPath();
-			File path = new File(file_path);
+			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), ptZonesConfig.getSBBDistancesPath());
+			File path = new File(url.getPath());
 			Zone sbbZone = SBBDistanceReader.createZone(path);
 			sbbZonalRegistry = SBBDistanceReader.createZonalRegistry(sbbZone);
 			zonalRegistry.merge(sbbZonalRegistry);
