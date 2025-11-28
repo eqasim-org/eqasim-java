@@ -249,7 +249,7 @@ public class WebsterDelay {
             return C; // no correction needed
         } else {
             double minGreen = webster.getMinimumGreenTime();
-            double additionalGreen = outLinks.size()<2*numGroups? minGreen:2*minGreen;
+            double additionalGreen = outLinks.size()<=2*numGroups? minGreen:2*minGreen;
             return C + additionalGreen;
         }
 

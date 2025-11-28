@@ -76,7 +76,7 @@ public class WebsterFormula {
         // Term 3: 0.65 * (C / q^2)^(1/3) * x^(2 + 5*g/C)
         double term3 = 0.65 * Math.pow(c / Math.pow(q, 2.0), 1.0 / 3.0) * Math.pow(x, 2.0 + 5.0 * (g / c));
         // Combine all terms
-        return term1 + term2 - term3;
+        return Math.min(term1 + term2 - term3, 40.0); // Return the total delay, capped at 40 seconds
 
     }
 

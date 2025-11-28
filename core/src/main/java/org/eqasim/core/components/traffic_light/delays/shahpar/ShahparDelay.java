@@ -144,7 +144,7 @@ public class ShahparDelay {
             logger.warn("The computed delay for link {} at time {} is wrong ({}). Returning 0.0", link.getId(), time, delay);
             return 0.0; // Return 0.0 if the delay is not finite or negative
         }
-        return delay;
+        return Math.min(delay, 40.0); // cap the delay at 40 seconds
     }
 
 

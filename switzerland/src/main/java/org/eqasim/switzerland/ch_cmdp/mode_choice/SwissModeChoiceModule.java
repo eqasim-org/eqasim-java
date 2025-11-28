@@ -10,6 +10,7 @@ import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.calibration.Optimizer;
 import org.eqasim.core.components.calibration.OptimizerHandler;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibrator;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
@@ -79,10 +80,6 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 
-		bind(VariablesWriter.class).to(CmdpVariablesWriter.class).asEagerSingleton();
-		bind(Optimizer.class).to(CmdpOptimizer.class).asEagerSingleton();
-		bind(OptimizerHandler.class).to(CmdpOptimizerHandler.class).asEagerSingleton();
-
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
@@ -102,6 +99,10 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bind(ModeParameters.class).to(SwissCmdpModeParameters.class).asEagerSingleton();
 
 		// Calibration
+		bind(Optimizer.class).to(CmdpOptimizer.class).asEagerSingleton();
+		bind(VariablesWriter.class).to(CmdpVariablesWriter.class).asEagerSingleton();
+		bind(OptimizerHandler.class).to(CmdpOptimizerHandler.class).asEagerSingleton();
+
 		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
 		if (calConfig.isActivate()) {
 			String level = calConfig.getLevel().toLowerCase();
@@ -119,6 +120,12 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 					throw new IllegalArgumentException("Unknown calibration level: " + level);
 			}
 		}
+	}
+
+	@Provides
+	@Singleton
+	public CmdpVariablesWriter provideCmdpVariablesWriter(){
+		return new CmdpVariablesWriter();
 	}
 
 	@Provides
@@ -215,8 +222,10 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public CmdpOptimizerHandler provideCmdpOptimizerHandler(CalibrationConfigGroup calibrationConfig, OutputDirectoryHierarchy outputDirectoryHierarchy,
-															  EqasimConfigGroup eqasimConfigGroup, SwissCmdpModeParameters parameters, Optimizer optimizer) {
+	public CmdpOptimizerHandler provideCmdpOptimizerHandler(OutputDirectoryHierarchy outputDirectoryHierarchy,
+															EqasimConfigGroup eqasimConfigGroup, SwissCmdpModeParameters parameters,
+															Optimizer optimizer) {
+		CalibrationConfigGroup calibrationConfig = CalibrationConfigGroup.getOrCreate(getConfig());
 		return new CmdpOptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
 	}
 
