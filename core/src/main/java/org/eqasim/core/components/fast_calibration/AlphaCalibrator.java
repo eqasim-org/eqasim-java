@@ -6,6 +6,7 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -145,24 +146,18 @@ public class AlphaCalibrator implements FastCalibration {
     }
 
     private void updateShares() {
-        Map<String, Double> estimatedShares = getEstimatedModeSharesFromPlans();
+        Map<String, Double> estimatedShares = computeModeSharesFromPlans();
         for (String mode : targetModeShares.keySet()) {
             double replannedTripsShare = estimatedShares.getOrDefault(mode, 0.0); //0.0 because maybe no trip was recorded for this mode
             shares.put(mode, replannedTripsShare);
         }
     }
 
-    private Boolean isConsideredPerson(Person person) {
-        Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
-        Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
-        return !((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
-    }
-
-    private Map<String, Double> getEstimatedModeSharesFromPlans(){
+    private Map<String, Double> computeModeSharesFromPlans(){
         Map<String, Double> estimatedShares = new HashMap<>();
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
-            if (!isConsideredPerson(person)) {
+            if (!AlphaCalibrationUtils.isConsideredPerson(person)) {
                 continue; // Skip cross-border and freight agents
             }
 
@@ -175,8 +170,9 @@ public class AlphaCalibrator implements FastCalibration {
                 for (DiscreteModeChoiceTrip trip : trips) {
                     String mode = trip.getInitialMode();
                     boolean sameLocation = trip.getOriginActivity().getCoord().equals(trip.getDestinationActivity().getCoord());
+                    boolean consideredTrip = AlphaCalibrationUtils.isConsideredTrip(trip);
                     // only consider trips with considered modes and different locations
-                    if (consideredModes.contains(mode) && !sameLocation) {
+                    if (consideredTrip && consideredModes.contains(mode) && !sameLocation) {
                         estimatedShares.put(mode, estimatedShares.getOrDefault(mode, 0.0) + 1.0);
                         tripIdx.add(trip.getIndex());
                         replannedTripsCount += 1; // Count the number of replanned plans

@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.fast_calibration.AlphaCalibrationUtils;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils;
@@ -150,16 +151,10 @@ public class AlphaClusterCalibrator implements FastCalibration {
         }
     }
 
-    private Boolean isConsideredPerson(Person person) {
-        Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
-        Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
-        return !((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
-    }
-
     private void updateCounts(){
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
-            if (!isConsideredPerson(person)) {
+            if (!AlphaCalibrationUtils.isConsideredPerson(person)) {
                 continue; // Skip cross-border and freight persons
             }
 
@@ -170,8 +165,9 @@ public class AlphaClusterCalibrator implements FastCalibration {
                 for (DiscreteModeChoiceTrip trip : trips) {
                     String mode = trip.getInitialMode();
                     boolean sameLocation = trip.getOriginActivity().getCoord().equals(trip.getDestinationActivity().getCoord());
+                    boolean consideredTrip = AlphaCalibrationUtils.isConsideredTrip(trip);
 
-                    if (consideredModes.contains(mode) && !sameLocation) {
+                    if (consideredTrip && consideredModes.contains(mode) && !sameLocation) {
                         modeCounts.put(mode, modeCounts.getOrDefault(mode, 0.0) + 1.0);
 
                         int cluster = SwissPredictorUtils.getCluster(person);
