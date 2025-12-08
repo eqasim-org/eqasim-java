@@ -9,6 +9,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.EqasimVehicleTourConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.PassengerConstraint;
+import org.eqasim.core.simulation.mode_choice.constraints.TripDepartureTimeConstraint;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
@@ -52,6 +53,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String OUTSIDE_CONSTRAINT_NAME = "OutsideConstraint";
 	public static final String DRT_WALK_CONSTRAINT = "DrtWalkConstraint";
 	public static final String DRT_SERVICE_AREA_CONSTRAINT = "DrtServiceAreaConstraint";
+	public static final String TRIP_DEPARTURE_TIME_CONSTRAINT = "TripDepartureTimeConstraint";
 	public static final String OUTSIDE_FILTER_NAME = "OutsideFilter";
 
 	public static final String UTILITY_ESTIMATOR_NAME = "EqasimUtilityEstimator";
@@ -96,6 +98,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindCostModel(ZERO_COST_MODEL_NAME).to(ZeroCostModel.class);
 
 		bindTourConstraintFactory(VEHICLE_TOUR_CONSTRAINT).to(EqasimVehicleTourConstraint.Factory.class);
+		bindTourConstraintFactory(TRIP_DEPARTURE_TIME_CONSTRAINT).to(TripDepartureTimeConstraint.Factory.class);
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
 
 		install(new EpsilonModule());
@@ -145,6 +148,12 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
 		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
 		return new EqasimVehicleTourConstraint.Factory(config.getRestrictedModes(), homeFinder);
+	}
+
+	@Provides
+	@Singleton
+	public TripDepartureTimeConstraint.Factory provideTripDepartureTimeConstraintFactory(TimeInterpretation timeInterpretation) {
+		return new TripDepartureTimeConstraint.Factory(timeInterpretation);
 	}
 
 	@Provides
