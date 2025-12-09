@@ -58,7 +58,7 @@ public class TrafficCounter implements LinkEnterEventHandler, IterationEndsListe
     }
 
     public void processEnterLink(double time, Id<Link> linkId) {
-        if (time >= timeBinManager.getStartTime() && time <= timeBinManager.getEndTime()) {
+        if (time >= timeBinManager.getStartTime() && time < timeBinManager.getEndTime()) {
             int idx = timeBinManager.getBinIndex(time);
             List<Double> linkCounts = counts.get(linkId);
             linkCounts.set(idx, linkCounts.get(idx) + 1);

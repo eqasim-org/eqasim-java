@@ -17,48 +17,45 @@ import java.util.Map;
 public class CapacitiesAdapter implements IterationEndsListener, IterationStartsListener {
 
     private final Network network;
-    private final FlowByLinkCategory flowsEstimator;
+    private final FlowProcessor flowsEstimator;
     private final double sampleSize;
     private final int updateInterval;
     private final int saveNetworkInterval;
     private final boolean correctCapacities;
-    private final Map<Integer, Double> linkCatCapacities = new HashMap<>();
-    private final Map<Integer, Double> linkCatActualFlows = new HashMap<>();
     private final OutputDirectoryHierarchy outputHierarchy;
-
+    private final CountsProcessor countsProcessor;
+    private final Map<Integer, Double> capacityPerCategory = new HashMap<>();
     private final double minSpeed; // km/h (used in capacity correction)
     private final double maxCapacity; // veh/h/lane (for the highest category, used to scale all capacities)
-    private final double minCapacity = 300.0; // veh/h/lane (minimum capacity allowed for any category)
+    private final double minCapacity; // veh/h/lane (minimum capacity allowed for any category)
+    private final double beta;
 
-    public CapacitiesAdapter(Network network, FlowByLinkCategory flowsEstimator, NetworkCalibrationConfigGroup config,
+    public CapacitiesAdapter(Network network, FlowProcessor flowsEstimator, CountsProcessor countsProcessor,
+                             NetworkCalibrationConfigGroup config,
                              EqasimConfigGroup eqasimConfig, OutputDirectoryHierarchy outputHierarchy) {
         this.network = network;
         this.flowsEstimator = flowsEstimator;
+        this.countsProcessor = countsProcessor;
         this.updateInterval = config.getUpdateInterval();
         this.saveNetworkInterval = config.getSaveNetworkInterval();
         this.sampleSize = eqasimConfig.getSampleSize();
         this.minSpeed = config.getMinSpeed();
         this.correctCapacities = config.getCorrectCapacities();
         this.maxCapacity = config.getMaxCapacity();
-
-        linkCatActualFlows.put(1,config.getCat1Flow());
-        linkCatActualFlows.put(2,config.getCat2Flow());
-        linkCatActualFlows.put(3,config.getCat3Flow());
-        linkCatActualFlows.put(4,config.getCat4Flow());
-        linkCatActualFlows.put(5,config.getCat5Flow());
-
+        this.minCapacity = config.getMinCapacity();
+        this.beta = config.getBeta();
         this.outputHierarchy = outputHierarchy;
-        initLinkCatCapacities();
+        initCapacityPerCategory();
     }
 
-    private void initLinkCatCapacities() {
+    private void initCapacityPerCategory() {
         Map<Integer, Double> totalCapacities = new HashMap<>();
         Map<Integer, Integer> categoryCounts = new HashMap<>();
 
         for (Link link : network.getLinks().values()) {
-            int category = Utils.getCategory(link);
+            Integer category = countsProcessor.getLinkCategory(link.getId());
 
-            if (category == Utils.unknownCategory) {
+            if ((category == null)||(category == NetworkCalibrationUtils.UNKNOWN_CATEGORY)) {
                 continue; // skip links with unknown category
             }
 
@@ -66,7 +63,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
             double numberOfLanes = link.getNumberOfLanes();
             double length = link.getLength();
             double freeSpeed = link.getFreespeed();
-            double correctedCapacity = Utils.minimumSpeedBasedCapacity(length, minSpeed, sampleSize);
+            double correctedCapacity = NetworkCalibrationUtils.getMinimumSpeedBasedCapacity(length, minSpeed, sampleSize);
 
             // skip links that have a corrected capacity based on their length
             // since very short lengths are corrected at some stage we need to avoid them too, these links have a free speed equal to their length
@@ -89,7 +86,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         for (Map.Entry<Integer, Double> entry : totalCapacities.entrySet()) {
             int category = entry.getKey();
             double averageCapacity = entry.getValue() / categoryCounts.get(category);
-            linkCatCapacities.put(category, averageCapacity);
+            capacityPerCategory.put(category, averageCapacity);
         }
     }
 
@@ -98,11 +95,11 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         flowsEstimator.updateAndSaveCounts(iterationEndsEvent);
 
         int iteration = iterationEndsEvent.getIteration();
-        if (iteration % updateInterval == 0 && iteration > 0) {
+        if (updateInterval>0 && iteration % updateInterval == 0 && iteration > 0) {
             updateCapacities();
             saveCapacities(iteration);
         }
-        if (iteration % saveNetworkInterval == 0 && iteration > 0) {
+        if (saveNetworkInterval>0 && iteration % saveNetworkInterval == 0 && iteration > 0) {
             saveNetwork(iteration);
         }
     }
@@ -115,17 +112,17 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     private void updateCapacities() {
         // the updated link capacity is computed as:
         // newCapacity = oldCapacity * (targetFlow / simulatedFlow) * ratio
-        // where ratio is maximumCapacity / cat1NewCapacity to ensure cat1 links have the highest capacity,
+        // the ratio is computed so that the highest category does not exceed maxCapacity, and lowest category does not go below minCapacity
         // all other categories are scaled accordingly, otherwise we might end up with unrealistic capacities and non-unique solutions
-        double ratio = computeAdvancedRation();
+        double ratio = computeRatio();
 
         // compute new capacities for all categories and scale them using ratio
         Map<Integer, Double> capacities = new HashMap<>();
         for (int category = 1; category <= 5; category++) {
             double newCapacity = getNewCapacity(category, ratio, true);
             // smooth the capacities to avoid large jumps
-            double currentCapacity = linkCatCapacities.get(category);
-            newCapacity = 0.5 * currentCapacity + 0.5 * newCapacity;
+            double currentCapacity = capacityPerCategory.get(category);
+            newCapacity = beta * currentCapacity + (1.0-beta) * newCapacity;
             // store the new capacity
             capacities.put(category, newCapacity);
         }
@@ -135,16 +132,11 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
         // update the capacities that are stored
         for (int category : capacities.keySet()) {
-            linkCatCapacities.put(category, capacities.get(category));
+            capacityPerCategory.put(category, capacities.get(category));
         }
     }
 
-    private double computeSimpleRatio() {
-        double cat1NewCapacity = getNewCapacity(1, 1.0, true);
-        return maxCapacity/cat1NewCapacity;
-    }
-
-    private double computeAdvancedRation() {
+    private double computeRatio() {
         // first compute ration corresponding to capping the highest category to maxCapacity
         double cat1NewCapacity = getNewCapacity(1, 1.0, false);
         double cat2NewCapacity = getNewCapacity(2, 1.0, false);
@@ -164,9 +156,9 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     }
 
     private double getNewCapacity(int category, double ratio, boolean clipIt) {
-        double targetFlow = linkCatActualFlows.get(category);
+        double targetFlow = countsProcessor.getAverageCountForCategory(category);
         double simulatedFlow = flowsEstimator.getFlowByCategory(category, sampleSize);
-        double currentCapacity = linkCatCapacities.get(category);
+        double currentCapacity = capacityPerCategory.get(category);
         // if the difference between target and simulated flow is within 3%, do not change the capacity
         if (Math.abs(targetFlow - simulatedFlow)/targetFlow <= 0.03) {
             return currentCapacity; // no change if within tolerance
@@ -181,19 +173,19 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
     private void applyCapacity(Map<Integer, Double> capacities) {
         for (Link link : network.getLinks().values()) {
-            int linkCategory = Utils.getCategory(link);
-            if (linkCategory > 0) {
+            Integer linkCategory = countsProcessor.getLinkCategory(link.getId());
+            if ((linkCategory != null) && (linkCategory != NetworkCalibrationUtils.UNKNOWN_CATEGORY)) {
                 double numberOfLanes = link.getNumberOfLanes();
-                double linkCapacity = Math.min(capacities.get(linkCategory), 1800.0) * numberOfLanes;
+                double linkCapacity = capacities.get(linkCategory) * numberOfLanes;
 
                 // Correct for ramps
-                if (Utils.isRamp(link)) {
-                    linkCapacity = linkCapacity * 0.75; // reduce capacity by 25% for ramps
+                if (NetworkCalibrationUtils.isRamp(link)) {
+                    linkCapacity = linkCapacity * 0.7; // reduce capacity by 30% for ramps
                 }
 
                 // correct capacity for very short links, similar to how it is done in eqasim-python/Switzerland
                 if (correctCapacities) {
-                    double correctedCapacity = Utils.minimumSpeedBasedCapacity(link.getLength(), minSpeed, sampleSize);
+                    double correctedCapacity = NetworkCalibrationUtils.getMinimumSpeedBasedCapacity(link.getLength(), minSpeed, sampleSize);
                     linkCapacity = Math.max(linkCapacity, correctedCapacity);
                 }
 
@@ -206,8 +198,8 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         String filename = outputHierarchy.getIterationFilename(iteration, "link_category_capacities.csv");
         try (java.io.BufferedWriter writer = org.matsim.core.utils.io.IOUtils.getBufferedWriter(filename)) {
             writer.write("Category;Capacity(veh/h/lane)\n");
-            for (int category : linkCatCapacities.keySet()) {
-                writer.write(category + ";" + String.format("%.2f", linkCatCapacities.get(category)) + "\n");
+            for (int category : capacityPerCategory.keySet()) {
+                writer.write(category + ";" + String.format("%.2f", capacityPerCategory.get(category)) + "\n");
             }
         } catch (Exception e) {
             throw new RuntimeException("Error writing link category capacities to file: " + filename);

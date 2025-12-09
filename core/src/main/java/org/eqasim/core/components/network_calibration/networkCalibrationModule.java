@@ -6,7 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.network_calibration.capacities_calibration.CapacitiesAdapter;
-import org.eqasim.core.components.network_calibration.capacities_calibration.FlowByLinkCategory;
+import org.eqasim.core.components.network_calibration.capacities_calibration.CountsProcessor;
+import org.eqasim.core.components.network_calibration.capacities_calibration.FlowProcessor;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
 import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
@@ -48,19 +49,27 @@ public class networkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public FlowByLinkCategory provideFlowByLinkCategory(Network network, TrafficCounter counter, TimeBinManager timeBinManager,
-                                                        OutputDirectoryHierarchy outputHierarchy) {
-        return new FlowByLinkCategory(network, counter, timeBinManager, outputHierarchy);
+    public FlowProcessor provideFlowByLinkCategory(Network network, TrafficCounter counter, TimeBinManager timeBinManager,
+                                                   CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy) {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
+        return new FlowProcessor(network, counter, timeBinManager, countsProcessor, outputHierarchy, config);
     }
 
     @Provides
     @Singleton
-    public CapacitiesAdapter provideCapacitiesAdapter(Network network, FlowByLinkCategory flowsEstimator,
+    public CapacitiesAdapter provideCapacitiesAdapter(Network network, FlowProcessor flowsEstimator,
+                                                      CountsProcessor countsProcessor,
                                                       NetworkCalibrationConfigGroup config,
                                                       EqasimConfigGroup eqasimConfig,
                                                       OutputDirectoryHierarchy outputHierarchy) {
-        return new CapacitiesAdapter(network, flowsEstimator, config, eqasimConfig, outputHierarchy);
+        return new CapacitiesAdapter(network, flowsEstimator, countsProcessor, config, eqasimConfig, outputHierarchy);
     }
 
+    @Provides
+    @Singleton
+    public CountsProcessor provideCountsProcessor(Network network, OutputDirectoryHierarchy outputHierarchy) {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
+        return new CountsProcessor(network, config, outputHierarchy);
+    }
 
 }

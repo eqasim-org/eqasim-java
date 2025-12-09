@@ -13,12 +13,16 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String CORRECT_CAPACITIES = "correctCapacities";
     static private final String MIN_SPEED = "minSpeed";
     static private final String MAX_CAPACITY = "maxCapacity";
-
+    static private final String MIN_CAPACITY = "minCapacity";
+    static private final String BETA = "beta";
+    static private final String HOUR_START_COUNTS = "hourStartCounts";
+    static private final String HOUR_END_COUNTS = "hourEndCounts";
     static private final String CAT1FLOW = "cat1Flow";
     static private final String CAT2FLOW = "cat2Flow";
     static private final String CAT3FLOW = "cat3Flow";
     static private final String CAT4FLOW = "cat4Flow";
     static private final String CAT5FLOW = "cat5Flow";
+    static private final String COUNTS_FILE = "countsFile";
 
     private boolean activate = false;
     private double cat1Flow = 380.0;
@@ -28,10 +32,14 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double cat5Flow = 30.0;
     private int updateInterval = 5;
     private int saveNetworkInterval = 5;
-
+    private String countsFile = "";
+    private double beta = 0.5;
+    private int hourStartCounts = 0;
+    private int hourEndCounts = 24;
     private boolean correctCapacities = true;
-    private double minSpeed = 3.0; // km/h
+    private double minSpeed = 2.0; // km/h
     private double maxCapacity = 1800.0; // veh/h/lane (for the highest category, used to scale all capacities)
+    private double minCapacity = 300.0; // veh/h/lane (for the lowest category)
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -46,11 +54,17 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(CORRECT_CAPACITIES, "Whether to correct capacities for short links (default: true)");
         map.put(MIN_SPEED, "Minimum speed (in km/h) used in capacity correction (default: 3.0 km/h)");
         map.put(MAX_CAPACITY, "Maximum capacity (in veh/h/lane) used to scale all capacities (default: 1800 veh/h/lane)");
+        map.put(MIN_CAPACITY, "Minimum capacity (in veh/h/lane) used to scale all capacities (default: 300 veh/h/lane)");
         map.put(CAT1FLOW, "Target flow for link category 1 (default: 800 veh/h/lane)");
         map.put(CAT2FLOW, "Target flow for link category 2 (default: 600 veh/h/lane)");
         map.put(CAT3FLOW, "Target flow for link category 3 (default: 400 veh/h/lane)");
         map.put(CAT4FLOW, "Target flow for link category 4 (default: 200 veh/h/lane)");
         map.put(CAT5FLOW, "Target flow for link category 5 (default: 100 veh/h/lane)");
+        map.put(COUNTS_FILE, "Path to the csv counts file (default: empty), it should contain columns 'linkId' and 'count', the counts are in veh/h/lane");
+        map.put(BETA, "Beta of the exponential moving average used to update capacities (default: 0.5)");
+        map.put(HOUR_START_COUNTS, "Hour of the day to start considering counts (default: 0), 24-hour format. "
+                + "This class uses timeBin manager from intersection delay, thus the start and end hours should be within the time bin range.");
+        map.put(HOUR_END_COUNTS, "Hour of the day to end considering counts (default: 24), 24-hour format.");
         return map;
     }
 
@@ -61,6 +75,43 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(ACTIVATE)
     public void setActivate(boolean inputActivate) {
         activate = inputActivate;
+    }
+
+    @StringGetter(BETA)
+    public double getBeta() {
+        return beta;
+    }
+    @StringSetter(BETA)
+    public void setBeta(double inputBeta) {
+        beta = inputBeta;
+    }
+
+    @StringGetter(COUNTS_FILE)
+    public String getCountsFile() {
+        return countsFile;
+    }
+    @StringSetter(COUNTS_FILE)
+    public void setCountsFile(String inputCountsFile) {
+        countsFile = inputCountsFile;
+    }
+    public boolean hasCountsFile() {
+        return !countsFile.isEmpty() && countsFile.endsWith(".csv");
+    }
+    @StringGetter(HOUR_START_COUNTS)
+    public int getHourStartCounts() {
+        return hourStartCounts;
+    }
+    @StringSetter(HOUR_START_COUNTS)
+    public void setHourStartCounts(int inputHourStartCounts) {
+        hourStartCounts = inputHourStartCounts;
+    }
+    @StringGetter(HOUR_END_COUNTS)
+    public int getHourEndCounts() {
+        return hourEndCounts;
+    }
+    @StringSetter(HOUR_END_COUNTS)
+    public void setHourEndCounts(int inputHourEndCounts) {
+        hourEndCounts = inputHourEndCounts;
     }
 
     @StringGetter(CORRECT_CAPACITIES)
@@ -80,6 +131,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     public void setMinSpeed(double inputMinSpeed) {
         minSpeed = inputMinSpeed;
     }
+
     @StringGetter(MAX_CAPACITY)
     public double getMaxCapacity() {
         return maxCapacity;
@@ -87,6 +139,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(MAX_CAPACITY)
     public void setMaxCapacity(double inputMaxCapacity) {
         maxCapacity = inputMaxCapacity;
+    }
+
+    @StringGetter(MIN_CAPACITY)
+    public double getMinCapacity() {
+        return minCapacity;
+    }
+    @StringSetter(MIN_CAPACITY)
+    public void setMinCapacity(double inputMinCapacities) {
+        minCapacity = inputMinCapacities;
     }
 
     @StringGetter(UPDATE_INTERVAL)
