@@ -66,17 +66,19 @@ public class RunAdaptConfig {
 		crossBorderStrategy.setSubpopulation("crossborder");
 		replanningConfigGroup.addStrategySettings(crossBorderStrategy);
 
+		// set the main mode in qsim to car and truck
+		QSimConfigGroup qsimConfigGroup = config.qsim();
+		qsimConfigGroup.setMainModes(Arrays.asList(TransportMode.car, "truck"));
 
+		// downsampling adjustments
 		if (SwissConfigAdapter.downsamplingRate < 1.0) {
 			// adjust the flow and storage capacities based on
 			// the work from T.W. Nicolai Using MATSim as a travel model plug-in to UrbanSim
 			// VSP Working Paper (2012), pp. 12-29 TU Berlin, Transport Systems Planning
-
-			QSimConfigGroup qsimConfigGroup = config.qsim();
 			qsimConfigGroup.setFlowCapFactor(SwissConfigAdapter.downsamplingRate);
 			qsimConfigGroup.setStorageCapFactor(Math.pow(SwissConfigAdapter.downsamplingRate, RunAdaptConfig.storageCapExponent));
-
 		}
+
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
 		List<String> LOOP_MODES = new ArrayList<>(Arrays.asList("walk_loop", "pt_loop", "bike_loop", "car_loop", "car_passenger_loop"));
