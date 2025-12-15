@@ -12,6 +12,7 @@ import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CapacitiesAdapter implements IterationEndsListener, IterationStartsListener {
@@ -29,6 +30,9 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     private final double maxCapacity; // veh/h/lane (for the highest category, used to scale all capacities)
     private final double minCapacity; // veh/h/lane (minimum capacity allowed for any category)
     private final double beta;
+    private final List<Integer> categoriesToCalibrate;
+    private final double rampCapacityFactor;
+    private final double trunkCapacityFactor;
 
     public CapacitiesAdapter(Network network, FlowProcessor flowsEstimator, CountsProcessor countsProcessor,
                              NetworkCalibrationConfigGroup config,
@@ -44,6 +48,9 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         this.maxCapacity = config.getMaxCapacity();
         this.minCapacity = config.getMinCapacity();
         this.beta = config.getBeta();
+        this.rampCapacityFactor = config.getRampCapacityFactor();
+        this.trunkCapacityFactor = config.getTrunkCapacityFactor();
+        this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.outputHierarchy = outputHierarchy;
         initCapacityPerCategory();
     }
@@ -85,8 +92,10 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
         for (Map.Entry<Integer, Double> entry : totalCapacities.entrySet()) {
             int category = entry.getKey();
-            double averageCapacity = entry.getValue() / categoryCounts.get(category);
-            capacityPerCategory.put(category, averageCapacity);
+            if (considersCategory(category)) {
+                double averageCapacity = entry.getValue() / categoryCounts.get(category);
+                capacityPerCategory.put(category, averageCapacity);
+            }
         }
     }
 
@@ -109,6 +118,10 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         flowsEstimator.resetCounts(iterationStartsEvent.getIteration());
     }
 
+    public boolean considersCategory(int category) {
+        return categoriesToCalibrate.contains(category);
+    }
+
     private void updateCapacities() {
         // the updated link capacity is computed as:
         // newCapacity = oldCapacity * (targetFlow / simulatedFlow) * ratio
@@ -118,7 +131,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
         // compute new capacities for all categories and scale them using ratio
         Map<Integer, Double> capacities = new HashMap<>();
-        for (int category = 1; category <= 5; category++) {
+        for (int category: categoriesToCalibrate) {
             double newCapacity = getNewCapacity(category, ratio, true);
             // smooth the capacities to avoid large jumps
             double currentCapacity = capacityPerCategory.get(category);
@@ -138,16 +151,25 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
     private double computeRatio() {
         // first compute ration corresponding to capping the highest category to maxCapacity
-        double cat1NewCapacity = getNewCapacity(1, 1.0, false);
-        double cat2NewCapacity = getNewCapacity(2, 1.0, false);
-        double maxNewCapacity = Math.max(cat1NewCapacity, cat2NewCapacity);
+        double maxNewCapacity = 0.0;
+        for (int category: categoriesToCalibrate) {
+            double catNewCapacity = getNewCapacity(category, 1.0, false);
+            if (catNewCapacity > maxNewCapacity){
+                maxNewCapacity = catNewCapacity;
+            }
+        }
+
         if (maxNewCapacity > maxCapacity){
             return maxCapacity/maxNewCapacity;
         }
         // if the highest capacity is already below maxCapacity, compute the ratio that ensures that the lowest category does not go below minCapacity
-        double cat5NewCapacity = getNewCapacity(5, 1.0, false);
-        double cat4NewCapacity = getNewCapacity(4, 1.0, false);
-        double minNewCapacity = Math.min(cat5NewCapacity, cat4NewCapacity);
+        double minNewCapacity = Double.MAX_VALUE;
+        for (int category: categoriesToCalibrate) {
+            double catNewCapacity = getNewCapacity(category, 1.0, false);
+            if (catNewCapacity < minNewCapacity){
+                minNewCapacity = catNewCapacity;
+            }
+        }
         if (minNewCapacity < minCapacity){
             return minCapacity/minNewCapacity;
         }
@@ -174,13 +196,19 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     private void applyCapacity(Map<Integer, Double> capacities) {
         for (Link link : network.getLinks().values()) {
             Integer linkCategory = countsProcessor.getLinkCategory(link.getId());
-            if ((linkCategory != null) && (linkCategory != NetworkCalibrationUtils.UNKNOWN_CATEGORY)) {
+            if ((linkCategory != null) &&
+                (linkCategory != NetworkCalibrationUtils.UNKNOWN_CATEGORY) &&
+                (capacities.containsKey(linkCategory))) {
                 double numberOfLanes = link.getNumberOfLanes();
                 double linkCapacity = capacities.get(linkCategory) * numberOfLanes;
 
                 // Correct for ramps
                 if (NetworkCalibrationUtils.isRamp(link)) {
-                    linkCapacity = linkCapacity * 0.7; // reduce capacity by 30% for ramps
+                    linkCapacity = linkCapacity * rampCapacityFactor; // reduce capacity by 30% for ramps
+                }
+                // Correct for trunks
+                if (NetworkCalibrationUtils.isTrunk(link)) {
+                    linkCapacity = linkCapacity * trunkCapacityFactor; // reduce capacity by 10% for trunks compared to motorways
                 }
 
                 // correct capacity for very short links, similar to how it is done in eqasim-python/Switzerland

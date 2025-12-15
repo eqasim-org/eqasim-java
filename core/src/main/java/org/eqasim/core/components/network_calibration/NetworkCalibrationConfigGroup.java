@@ -3,7 +3,9 @@ package org.eqasim.core.components.network_calibration;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static public final String GROUP_NAME = "eqasim:networkCalibration";
@@ -23,6 +25,10 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String CAT4FLOW = "cat4Flow";
     static private final String CAT5FLOW = "cat5Flow";
     static private final String COUNTS_FILE = "countsFile";
+    static private final String CATEGORIES_TO_CALIBRATE = "categoriesToCalibrate";
+    static private final String RAMP_CAPACITY_FACTOR = "rampCapacityFactor";
+    static private final String TRUNK_CAPACITY_FACTOR = "trunkCapacityFactor";
+
 
     private boolean activate = false;
     private double cat1Flow = 380.0;
@@ -40,6 +46,9 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double minSpeed = 2.0; // km/h
     private double maxCapacity = 1800.0; // veh/h/lane (for the highest category, used to scale all capacities)
     private double minCapacity = 300.0; // veh/h/lane (for the lowest category)
+    private String categoriesToCalibrate = "1,2,3,4,5";
+    private double rampCapacityFactor = 0.7;
+    private double trunkCapacityFactor = 0.9;
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -65,6 +74,9 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(HOUR_START_COUNTS, "Hour of the day to start considering counts (default: 0), 24-hour format. "
                 + "This class uses timeBin manager from intersection delay, thus the start and end hours should be within the time bin range.");
         map.put(HOUR_END_COUNTS, "Hour of the day to end considering counts (default: 24), 24-hour format.");
+        map.put(CATEGORIES_TO_CALIBRATE, "Comma-separated list of link categories to calibrate (default: '1,2,3,4,5')");
+        map.put(RAMP_CAPACITY_FACTOR, "Capacity factor for ramp links (default: 0.7)");
+        map.put(TRUNK_CAPACITY_FACTOR, "Capacity factor (compared to motorway) for trunk links (default: 0.9)");
         return map;
     }
 
@@ -206,6 +218,41 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(CAT5FLOW)
     public void setCat5Flow(double inputCat5Flow) {
         cat5Flow = inputCat5Flow;
+    }
+
+    public List<Integer> getCategoriesToCalibrationAsList() {
+        return Stream.of(categoriesToCalibrate.split(","))
+            .map(String::trim)
+            .map(Integer::valueOf)
+            .toList();
+    }
+
+    @StringGetter(CATEGORIES_TO_CALIBRATE)
+    public String getCategoriesToCalibrate() {
+        return categoriesToCalibrate;
+    }
+
+    @StringSetter(CATEGORIES_TO_CALIBRATE)
+    public void setCategoriesToCalibrate(String inputCategoriesToCalibrate) {
+        categoriesToCalibrate = inputCategoriesToCalibrate;
+    }
+
+    @StringGetter(RAMP_CAPACITY_FACTOR)
+    public double getRampCapacityFactor() {
+        return rampCapacityFactor;
+    }
+    @StringSetter(RAMP_CAPACITY_FACTOR)
+    public void setRampCapacityFactor(double inputRampCapacityFactor) {
+        rampCapacityFactor = inputRampCapacityFactor;
+    }
+
+    @StringGetter(TRUNK_CAPACITY_FACTOR)
+    public double getTrunkCapacityFactor() {
+        return trunkCapacityFactor;
+    }
+    @StringSetter(TRUNK_CAPACITY_FACTOR)
+    public void setTrunkCapacityFactor(double inputTrunkCapacityFactor) {
+        trunkCapacityFactor = inputTrunkCapacityFactor;
     }
 
     public static NetworkCalibrationConfigGroup getOrCreate(Config config) {

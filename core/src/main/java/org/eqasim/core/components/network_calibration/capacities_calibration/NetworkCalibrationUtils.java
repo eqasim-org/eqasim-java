@@ -43,12 +43,17 @@ public class NetworkCalibrationUtils {
 
     public static final int UNKNOWN_CATEGORY = 0;
 
-    public static int getCategoryFromOsmHighway(String osmHighway) {
+    public static int getCategoryFromOsmHighway(String osmHighway, Link link) {
         if (CATEGORY_1_HIGHWAY_TYPES.contains(osmHighway)) return 1;
         if (CATEGORY_2_HIGHWAY_TYPES.contains(osmHighway)) return 2;
         if (CATEGORY_3_HIGHWAY_TYPES.contains(osmHighway)) return 3;
         if (CATEGORY_4_HIGHWAY_TYPES.contains(osmHighway)) return 4;
-        if (CATEGORY_5_HIGHWAY_TYPES.contains(osmHighway)) return 5;
+        if (CATEGORY_5_HIGHWAY_TYPES.contains(osmHighway)){
+            if (link.getNumberOfLanes()>1 || link.getFreespeed() > 45/3.6) {
+                return 4; // treat as tertiary if more than 1 lane or freespeed > 45 km/h
+            }
+            return 5;
+        }
         return UNKNOWN_CATEGORY; // unknown category
     }
 
@@ -56,7 +61,7 @@ public class NetworkCalibrationUtils {
         if (link.getAllowedModes().contains("car")) {
             Object osmHighway = link.getAttributes().getAttribute("osm:way:highway");
             if (osmHighway != null) {
-                return getCategoryFromOsmHighway(osmHighway.toString());
+                return getCategoryFromOsmHighway(osmHighway.toString(), link);
             }
         }
         return UNKNOWN_CATEGORY;
@@ -66,6 +71,14 @@ public class NetworkCalibrationUtils {
         if (link.getAllowedModes() != null && link.getAllowedModes().contains("car")) {
             Object osmHighway = link.getAttributes().getAttribute("osm:way:highway");
             return osmHighway != null && osmHighway.toString().contains("_link");
+        }
+        return false;
+    }
+
+    public static boolean isTrunk(Link link) {
+        if (link.getAllowedModes() != null && link.getAllowedModes().contains("car")) {
+            Object osmHighway = link.getAttributes().getAttribute("osm:way:highway");
+            return osmHighway != null && osmHighway.toString().contains("trunk");
         }
         return false;
     }
