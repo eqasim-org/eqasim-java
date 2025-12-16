@@ -56,5 +56,7 @@ public class RunAdaptConfig {
 			activityParams.setScoringThisActivityAtAll(false);
 		}
 
+		// CRS
+		config.global().setCoordinateSystem("EPSG:2227");
 	}
 }
