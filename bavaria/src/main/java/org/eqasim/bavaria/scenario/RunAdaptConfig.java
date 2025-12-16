@@ -97,5 +97,8 @@ public class RunAdaptConfig {
 		// Convergence
 		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
 		terminationConfig.setModes(Arrays.asList("car", "car_passenger", "pt", "bicycle", "walk"));
+
+		// CRS
+		config.global().setCoordinateSystem("EPSG:25832");
 	}
 }
