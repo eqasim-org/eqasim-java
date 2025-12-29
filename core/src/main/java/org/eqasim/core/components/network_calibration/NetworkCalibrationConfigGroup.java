@@ -26,12 +26,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String CAT5FLOW = "cat5Flow";
     static private final String COUNTS_FILE = "countsFile";
     static private final String CATEGORIES_TO_CALIBRATE = "categoriesToCalibrate";
-    static private final String RAMP_CAPACITY_FACTOR = "rampCapacityFactor";
-    static private final String TRUNK_CAPACITY_FACTOR = "trunkCapacityFactor";
-
+    static private final String RAMP_FACTOR = "rampFactor";
+    static private final String TRUNK_FACTOR = "trunkFactor";
+    static private final String OBJECTIVE = "objective";
+    static private final String MAX_PENALTY = "maxPenalty";
+    static private final String MIN_PENALTY = "minPenalty";
+    static private final String PENALTIES_FILE = "penaltiesFile";
 
     private boolean activate = false;
-    private double cat1Flow = 380.0;
+    private double cat1Flow = 400.0;
     private double cat2Flow = 300.0;
     private double cat3Flow = 200.0;
     private double cat4Flow = 100.0;
@@ -45,10 +48,14 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private boolean correctCapacities = true;
     private double minSpeed = 2.0; // km/h
     private double maxCapacity = 1800.0; // veh/h/lane (for the highest category, used to scale all capacities)
-    private double minCapacity = 300.0; // veh/h/lane (for the lowest category)
+    private double minCapacity = 600.0; // veh/h/lane (for the lowest category)
     private String categoriesToCalibrate = "1,2,3,4,5";
-    private double rampCapacityFactor = 0.7;
-    private double trunkCapacityFactor = 0.9;
+    private double rampFactor = 1.0;
+    private double trunkFactor = 1.0;
+    private String objective = "capacity";
+    private double maxPenalty = 0.3;
+    private double minPenalty = -0.2;
+    private String penaltiesFile = "";
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -61,23 +68,55 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(UPDATE_INTERVAL, "Interval (in iterations) at which the capacities are updated (default: 5)");
         map.put(SAVE_NETWORK_INTERVAL, "Interval (in iterations) at which the network is saved (default: 5)");
         map.put(CORRECT_CAPACITIES, "Whether to correct capacities for short links (default: true)");
-        map.put(MIN_SPEED, "Minimum speed (in km/h) used in capacity correction (default: 3.0 km/h)");
+        map.put(MIN_SPEED, "Minimum speed (in km/h) used in capacity correction (default: 2.0 km/h)");
         map.put(MAX_CAPACITY, "Maximum capacity (in veh/h/lane) used to scale all capacities (default: 1800 veh/h/lane)");
-        map.put(MIN_CAPACITY, "Minimum capacity (in veh/h/lane) used to scale all capacities (default: 300 veh/h/lane)");
-        map.put(CAT1FLOW, "Target flow for link category 1 (default: 800 veh/h/lane)");
-        map.put(CAT2FLOW, "Target flow for link category 2 (default: 600 veh/h/lane)");
-        map.put(CAT3FLOW, "Target flow for link category 3 (default: 400 veh/h/lane)");
-        map.put(CAT4FLOW, "Target flow for link category 4 (default: 200 veh/h/lane)");
-        map.put(CAT5FLOW, "Target flow for link category 5 (default: 100 veh/h/lane)");
+        map.put(MIN_CAPACITY, "Minimum capacity (in veh/h/lane) used to scale all capacities (default: 600 veh/h/lane)");
+        map.put(CAT1FLOW, "Target flow for link category 1 (default: 400 veh/h/lane)");
+        map.put(CAT2FLOW, "Target flow for link category 2 (default: 300 veh/h/lane)");
+        map.put(CAT3FLOW, "Target flow for link category 3 (default: 200 veh/h/lane)");
+        map.put(CAT4FLOW, "Target flow for link category 4 (default: 100 veh/h/lane)");
+        map.put(CAT5FLOW, "Target flow for link category 5 (default: 30 veh/h/lane)");
         map.put(COUNTS_FILE, "Path to the csv counts file (default: empty), it should contain columns 'linkId' and 'count', the counts are in veh/h/lane");
         map.put(BETA, "Beta of the exponential moving average used to update capacities (default: 0.5)");
         map.put(HOUR_START_COUNTS, "Hour of the day to start considering counts (default: 0), 24-hour format. "
                 + "This class uses timeBin manager from intersection delay, thus the start and end hours should be within the time bin range.");
         map.put(HOUR_END_COUNTS, "Hour of the day to end considering counts (default: 24), 24-hour format.");
         map.put(CATEGORIES_TO_CALIBRATE, "Comma-separated list of link categories to calibrate (default: '1,2,3,4,5')");
-        map.put(RAMP_CAPACITY_FACTOR, "Capacity factor for ramp links (default: 0.7)");
-        map.put(TRUNK_CAPACITY_FACTOR, "Capacity factor (compared to motorway) for trunk links (default: 0.9)");
+        map.put(RAMP_FACTOR, "Factor for ramp links (default: 1.0)");
+        map.put(TRUNK_FACTOR, "Factor (compared to motorway) for trunk links (default: 1.0)");
+        map.put(OBJECTIVE, "What should be calibrated (capacity, penalty)");
+        map.put(MAX_PENALTY, "Maximum penalty to be applied to link categories when objective is penalty (default: 0.3)");
+        map.put(MIN_PENALTY, "Minimum penalty to be applied to link categories when objective is penalty (default: -0.2)");
+        map.put(PENALTIES_FILE, "Path to the csv penalties file (default: empty), used to initialize link category penalties"+
+                ", it should contain columns 'category' and 'penalty'. When it is provided, the penalties will not be updated during the simulation.");
         return map;
+    }
+
+    @StringGetter(MAX_PENALTY)
+    public double getMaxPenalty() {
+        return maxPenalty;
+    }
+    @StringSetter(MAX_PENALTY)
+    public void setMaxPenalty(double inputMaxPenalty) {
+        maxPenalty = inputMaxPenalty;
+    }
+
+    @StringGetter(MIN_PENALTY)
+    public double getMinPenalty() {
+        return minPenalty;
+    }
+    @StringSetter(MIN_PENALTY)
+    public void setMinPenalty(double inputMinPenalty) {
+        minPenalty = inputMinPenalty;
+    }
+
+    @StringGetter(PENALTIES_FILE)
+    public String getPenaltiesFile() {
+        return penaltiesFile;
+    }
+    @StringSetter(PENALTIES_FILE)
+    public void setPenaltiesFile(String inputPenaltiesFile) {
+        penaltiesFile = inputPenaltiesFile;
     }
 
     @StringGetter(ACTIVATE)
@@ -87,6 +126,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(ACTIVATE)
     public void setActivate(boolean inputActivate) {
         activate = inputActivate;
+    }
+
+    @StringGetter(OBJECTIVE)
+    public String getObjective() {
+        return objective;
+    }
+    @StringSetter(OBJECTIVE)
+    public void setObjective(String inputObjective) {
+        this.objective = inputObjective;
     }
 
     @StringGetter(BETA)
@@ -237,22 +285,22 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         categoriesToCalibrate = inputCategoriesToCalibrate;
     }
 
-    @StringGetter(RAMP_CAPACITY_FACTOR)
-    public double getRampCapacityFactor() {
-        return rampCapacityFactor;
+    @StringGetter(RAMP_FACTOR)
+    public double getRampFactor() {
+        return rampFactor;
     }
-    @StringSetter(RAMP_CAPACITY_FACTOR)
-    public void setRampCapacityFactor(double inputRampCapacityFactor) {
-        rampCapacityFactor = inputRampCapacityFactor;
+    @StringSetter(RAMP_FACTOR)
+    public void setRampFactor(double inputRampCapacityFactor) {
+        rampFactor = inputRampCapacityFactor;
     }
 
-    @StringGetter(TRUNK_CAPACITY_FACTOR)
-    public double getTrunkCapacityFactor() {
-        return trunkCapacityFactor;
+    @StringGetter(TRUNK_FACTOR)
+    public double getTrunkFactor() {
+        return trunkFactor;
     }
-    @StringSetter(TRUNK_CAPACITY_FACTOR)
-    public void setTrunkCapacityFactor(double inputTrunkCapacityFactor) {
-        trunkCapacityFactor = inputTrunkCapacityFactor;
+    @StringSetter(TRUNK_FACTOR)
+    public void setTrunkFactor(double inputTrunkCapacityFactor) {
+        trunkFactor = inputTrunkCapacityFactor;
     }
 
     public static NetworkCalibrationConfigGroup getOrCreate(Config config) {

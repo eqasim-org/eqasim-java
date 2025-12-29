@@ -8,15 +8,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
+import java.net.URL;
 
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutilityFactory;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
-import org.matsim.core.scenario.ScenarioUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,8 +76,9 @@ public class TripsRouter {
     public static Network loadNetwork(String configPath, CommandLine cmd) throws CommandLine.ConfigurationException {
         Config config = ConfigUtils.loadConfig(configPath);
         cmd.applyConfiguration(config);
-        String networkPath = config.network().getInputFile();
-        Network network = NetworkUtils.readNetwork(networkPath, config);
+        URL networkPath = config.network().getInputFileURL(config.getContext());
+
+        Network network = NetworkUtils.readNetwork(networkPath.getPath(), config);
         logger.info("Loaded network: {} links, {} nodes.", network.getLinks().size(), network.getNodes().size());
         return network;
     }

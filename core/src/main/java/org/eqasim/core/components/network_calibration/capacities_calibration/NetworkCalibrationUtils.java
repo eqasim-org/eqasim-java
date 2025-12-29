@@ -1,10 +1,14 @@
 package org.eqasim.core.components.network_calibration.capacities_calibration;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 
 import java.util.List;
 
 public class NetworkCalibrationUtils {
+    private static final Logger logger = LogManager.getLogger(NetworkCalibrationUtils.class);
 
     // Category 1 – Motorways / Freeways / Trunk / Expressways (highest capacity)
     public static final List<String> CATEGORY_1_HIGHWAY_TYPES = List.of(
@@ -84,7 +88,34 @@ public class NetworkCalibrationUtils {
     }
 
     public static double getMinimumSpeedBasedCapacity(double length, double minSpeed, double sampleSize) {
-        return 3600.0 * (minSpeed/3.6)/(length * sampleSize);
+        return Math.min(3600.0 * (minSpeed/3.6)/(length * sampleSize), 1800 * 3.0); // max 3 times the theoretical capacity
+    }
+
+    public static void adjustNetworkCapacities(Network network, double minimumCapacity, double maximumCapacity,
+                                               double sampleSize, boolean correctForSampleSize, double minSpeed) {
+        logger.info("Adjusting network capacities with minCapacity={}, maxCapacity={}, sampleSize={}, correctForSampleSize={}, minSpeed={}",
+                minimumCapacity, maximumCapacity, sampleSize, correctForSampleSize, minSpeed);
+
+        List<Integer> linkCategories = List.of(1,2,3,4,5);
+        for (Link link : network.getLinks().values()) {
+            int category = getCategory(link);
+            if (linkCategories.contains(category)) {
+                double capacity = link.getCapacity();
+                double numberOfLanes = link.getNumberOfLanes();
+                double length = link.getLength();
+                // get the min and max capacities for that link
+                double minCapacity = correctForSampleSize ?
+                        getMinimumSpeedBasedCapacity(length, minSpeed, sampleSize) * numberOfLanes :
+                        minimumCapacity * numberOfLanes;
+                double maxCapacity = maximumCapacity * numberOfLanes;
+                // adjust the capacity if needed
+                if (capacity < minCapacity) {
+                    link.setCapacity(minCapacity);
+                } else if (capacity > maxCapacity) {
+                    link.setCapacity(maxCapacity);
+                }
+            }
+        }
     }
 
 }

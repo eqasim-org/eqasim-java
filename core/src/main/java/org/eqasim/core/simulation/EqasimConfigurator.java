@@ -18,7 +18,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.fast_calibration.FastCalibrationModule;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
-import org.eqasim.core.components.network_calibration.networkCalibrationModule;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationModule;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.traffic_light.DelaysModule;
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
@@ -27,7 +27,6 @@ import org.eqasim.core.components.traffic.EqasimTrafficModule;
 import org.eqasim.core.components.traffic.EqasimTrafficQSimModule;
 import org.eqasim.core.components.transit.EqasimTransitModule;
 import org.eqasim.core.components.transit.EqasimTransitQSimModule;
-import org.eqasim.core.simulation.analysis.EqasimAnalysisModule;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
@@ -157,6 +156,10 @@ public abstract class EqasimConfigurator {
 		// Emissions
 		registerConfigGroup(new EmissionsConfigGroup(), true);
 
+		// Policies
+		registerConfigGroup(new PoliciesConfigGroup(), true);
+		registerModule(new PolicyModule());
+
 		// Delays functionality (traffic light and other delays)
 		registerConfigGroup(new DelaysConfigGroup(), true);
 		registerModule(new DelaysModule(), DelaysConfigGroup.GROUP_NAME);
@@ -169,11 +172,7 @@ public abstract class EqasimConfigurator {
 		registerModule(new CalibrationModule(), CalibrationConfigGroup.GROUP_NAME);
 
 		registerConfigGroup(new NetworkCalibrationConfigGroup(), true);
-		registerModule(new networkCalibrationModule(), NetworkCalibrationConfigGroup.GROUP_NAME);
-
-		// Policies
-		registerConfigGroup(new PoliciesConfigGroup(), true);
-		registerModule(new PolicyModule());
+		registerModule(new NetworkCalibrationModule(), NetworkCalibrationConfigGroup.GROUP_NAME);
 	}
 
 	private record ConfigGroupItem(ConfigGroup configGroup, boolean isOptional) {

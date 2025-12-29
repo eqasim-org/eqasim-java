@@ -48,10 +48,14 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         this.maxCapacity = config.getMaxCapacity();
         this.minCapacity = config.getMinCapacity();
         this.beta = config.getBeta();
-        this.rampCapacityFactor = config.getRampCapacityFactor();
-        this.trunkCapacityFactor = config.getTrunkCapacityFactor();
+        this.rampCapacityFactor = config.getRampFactor();
+        this.trunkCapacityFactor = config.getTrunkFactor();
         this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.outputHierarchy = outputHierarchy;
+
+        // adjust initial capacities
+        NetworkCalibrationUtils.adjustNetworkCapacities(network, minCapacity, maxCapacity, sampleSize, correctCapacities, minSpeed);
+        // initialize average capacities per category
         initCapacityPerCategory();
     }
 
@@ -139,6 +143,8 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
             // store the new capacity
             capacities.put(category, newCapacity);
         }
+        // Correct capacities
+        capacities = correctCapacities(capacities);
 
         // apply the new capacities to the network
         applyCapacity(capacities);
@@ -147,6 +153,26 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         for (int category : capacities.keySet()) {
             capacityPerCategory.put(category, capacities.get(category));
         }
+    }
+
+    private Map<Integer, Double> correctCapacities(Map<Integer, Double> capacities) {
+        // ensure that the order is respected, meaning that higher categories have higher capacities
+        // if not, adjust the capacities accordingly
+        Map<Integer, Double> sortedCapacities = new HashMap<>(capacities);
+        for (int category = 5; category >= 1; category--) {
+            if (categoriesToCalibrate.contains(category)) {
+                int upperCategory = category - 1;
+
+                if (categoriesToCalibrate.contains(upperCategory)) {
+                    if (sortedCapacities.get(category)>sortedCapacities.get(upperCategory)) {
+                        double adjustedCapacity = sortedCapacities.get(upperCategory)*0.95; // set 5% lower than upper category
+                        sortedCapacities.put(category, adjustedCapacity);
+                    }
+
+                }
+            }
+        }
+        return sortedCapacities;
     }
 
     private double computeRatio() {
@@ -162,6 +188,12 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         if (maxNewCapacity > maxCapacity){
             return maxCapacity/maxNewCapacity;
         }
+
+        // second, compute ratio corresponding to ensuring that the highest capacity should be in (maxCapacity-100,maxCapacity)
+        if (maxNewCapacity < (maxCapacity - 100.0)){
+            return (maxCapacity - 100.0)/maxNewCapacity;
+        }
+
         // if the highest capacity is already below maxCapacity, compute the ratio that ensures that the lowest category does not go below minCapacity
         double minNewCapacity = Double.MAX_VALUE;
         for (int category: categoriesToCalibrate) {
