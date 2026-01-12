@@ -177,7 +177,7 @@ public class RestartConfigurator {
     }
 
     static public void setup(CommandLine cmd, Config config) {
-        if (cmd.getOption("restart").map(Boolean::parseBoolean).orElse(false)) {
+        if (cmd.getOption(CMD).map(Boolean::parseBoolean).orElse(false)) {
             RestartConfigurator configurator = new RestartConfigurator();
             configurator.addDefaultMappings(config);
             configurator.apply(config);
