@@ -12,6 +12,7 @@ import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.eqasim.core.simulation.termination.EqasimTerminationModule;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.VDFUpdateListener;
+import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
@@ -28,6 +29,7 @@ public class RestartConfigurator {
     private final static Logger logger = LogManager.getLogger(RestartConfigurator.class);
 
     static public final String PREFIX = "restart_";
+    static public final String CMD = "restart";
 
     private record Mapping(boolean isIteration, String sourcePath, Function<Config, Consumer<String>> mapper) {
     }
@@ -158,19 +160,27 @@ public class RestartConfigurator {
 
     public void addDefaultMappings(Config config) {
         // plans
-        addMapping(true, "plans.xml", c -> c.plans()::setInputFile);
+        addMapping(false, "plans.xml", c -> c.plans()::setInputFile);
 
         // termination
         if (config.getModules().containsKey(EqasimTerminationConfigGroup.GROUP_NAME)) {
-            addMapping(false, EqasimTerminationModule.TERMINATION_CSV_FILE,
+            addMapping(true, EqasimTerminationModule.TERMINATION_CSV_FILE,
                     c -> EqasimTerminationConfigGroup.getOrCreate(c)::setHistoryFile);
         }
 
         // vdf
         if (config.getModules().containsKey(VDFConfigGroup.GROUP_NAME)) {
-            addMapping(false, VDFUpdateListener.FLOW_FILE, c -> VDFConfigGroup.getOrCreate(c)::setInputFlowFile);
-            addMapping(false, VDFUpdateListener.TRAVEL_TIMES_FILE,
+            addMapping(true, VDFUpdateListener.FLOW_FILE, c -> VDFConfigGroup.getOrCreate(c)::setInputFlowFile);
+            addMapping(true, VDFUpdateListener.TRAVEL_TIMES_FILE,
                     c -> VDFConfigGroup.getOrCreate(c)::setInputTravelTimesFile);
+        }
+    }
+
+    static public void setup(CommandLine cmd, Config config) {
+        if (cmd.getOption("restart").map(Boolean::parseBoolean).orElse(false)) {
+            RestartConfigurator configurator = new RestartConfigurator();
+            configurator.addDefaultMappings(config);
+            configurator.apply(config);
         }
     }
 }

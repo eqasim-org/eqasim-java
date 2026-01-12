@@ -1,6 +1,7 @@
 package org.eqasim.ile_de_france;
 
 import org.eqasim.core.scenario.validation.VehiclesValidator;
+import org.eqasim.core.simulation.restart.RestartConfigurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -13,6 +14,7 @@ public class RunSimulation {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
+				.allowOptions(RestartConfigurator.CMD) //
 				.allowPrefixes("mode-choice-parameter", "cost-parameter") //
 				.build();
 
@@ -21,6 +23,7 @@ public class RunSimulation {
 		configurator.updateConfig(config);
 
 		cmd.applyConfiguration(config);
+		RestartConfigurator.setup(cmd, config);
 		VehiclesValidator.validate(config);
 
 		Scenario scenario = ScenarioUtils.createScenario(config);
