@@ -26,9 +26,9 @@ import com.google.common.io.Files;
 public class VDFUpdateListener implements IterationEndsListener, StartupListener, ShutdownListener {
 	private final static Logger logger = LogManager.getLogger(VDFUpdateListener.class);
 
-	private final String VDF_FILE = "vdf.bin";
-	private final String FLOW_FILE = "vdf_flow.csv";
-	private final String TRAVEL_TIMES_FILE = "vdf_travel_times.bin";
+	static public final String VDF_FILE = "vdf.bin";
+	static public final String FLOW_FILE = "vdf_flow.csv";
+	static public final String TRAVEL_TIMES_FILE = "vdf_travel_times.bin";
 
 	private final VDFScope scope;
 	private final VDFTrafficHandler handler;
