@@ -2,8 +2,8 @@ package org.eqasim.core.components.traffic_light.delays.webster;
 
 import org.eqasim.core.components.traffic_light.delays.IntersectionGroups;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
-import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
-import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
+import org.eqasim.core.components.flow.FlowDataSet;
+import org.eqasim.core.components.flow.TimeBinManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;

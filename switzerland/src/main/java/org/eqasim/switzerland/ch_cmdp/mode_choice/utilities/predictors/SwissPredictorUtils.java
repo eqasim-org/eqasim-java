@@ -5,6 +5,8 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 
+import java.util.Locale;
+
 public class SwissPredictorUtils {
 	static public boolean hasGeneralSubscription(Person person) {
 		Boolean hasGeneralSubscription = (Boolean) person.getAttributes().getAttribute("ptHasGA");
@@ -58,6 +60,14 @@ public class SwissPredictorUtils {
 	static public Double getIncomePerCapita(Person person) {
 		try{
         	return (Double) person.getAttributes().getAttribute("incomePerCapita");
+		} catch(Exception e){
+			return 0.0;
+		}
+	}
+
+	static public Double getCarOwnershipRatio(Person person) {
+		try{
+			return (Double) person.getAttributes().getAttribute("carOwnershipRatio");
 		} catch(Exception e){
 			return 0.0;
 		}
@@ -132,6 +142,15 @@ public class SwissPredictorUtils {
 			return 1;
 		}
 		return 0;
+	}
+
+	static public String getOvgk(Person person) {
+		String ovgk = (String) person.getAttributes().getAttribute("ovgk");
+		if (ovgk != null) {
+			return ovgk;
+		} else {
+			return "none";
+		}
 	}
 
 }

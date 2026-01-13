@@ -1,10 +1,11 @@
-package org.eqasim.core.components.network_calibration.capacities_calibration;
+package org.eqasim.core.components.network_calibration.Processors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
-import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
-import org.eqasim.core.components.traffic_light.flow.TrafficCounter;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
+import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -21,7 +22,7 @@ public class FlowProcessor {
 
     private final static Logger logger = LogManager.getLogger(FlowProcessor.class);
     private final Network network;
-    private final TrafficCounter trafficCounter;
+    private final LinkFlowCounter linkFlowCounter;
     private final OutputDirectoryHierarchy outputHierarchy;
     private final CountsProcessor countsProcessor;
 
@@ -31,11 +32,11 @@ public class FlowProcessor {
     private final int indexOfEndingCounts;
     private final double totalNumberOfHours;
 
-    public FlowProcessor(Network network, TrafficCounter trafficCounter, TimeBinManager timeBinManager,
+    public FlowProcessor(Network network, LinkFlowCounter linkFlowCounter, TimeBinManager timeBinManager,
                          CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy,
                          NetworkCalibrationConfigGroup config) {
         this.network = network;
-        this.trafficCounter = trafficCounter;
+        this.linkFlowCounter = linkFlowCounter;
         this.outputHierarchy = outputHierarchy;
         this.countsProcessor = countsProcessor;
 
@@ -53,7 +54,7 @@ public class FlowProcessor {
 
     private void updateCounts() {
         // get the counts from the traffic counter
-        IdMap<Link, List<Double>> countsMap = trafficCounter.getCounts();
+        IdMap<Link, List<Double>> countsMap = linkFlowCounter.getCounts();
         // aggregate the counts by link category
         for (Id<Link> linkId : countsMap.keySet()) {
             if (!countsProcessor.contains(linkId)) {
@@ -71,8 +72,8 @@ public class FlowProcessor {
             // only consider links with positive flow
             if (totalFlow>1) {
                 // normalize the flow by number of hours and number of lanes to get (veh/h/lane)
-                totalFlow = totalFlow / totalNumberOfHours; // normalize by number of hours
-                totalFlow = totalFlow / network.getLinks().get(linkId).getNumberOfLanes(); // normalize by number of lanes
+                totalFlow = totalFlow / Math.max(1.0, totalNumberOfHours); // normalize by number of hours
+                totalFlow = totalFlow / Math.max(network.getLinks().get(linkId).getNumberOfLanes(),1.0); // normalize by number of lanes
                 // put the flow in the map
                 flowPerCategory.put(linkCategory, flowPerCategory.getOrDefault(linkCategory, 0.0) + totalFlow);
                 linksPerCategory.put(linkCategory, linksPerCategory.getOrDefault(linkCategory, 0) + 1);
@@ -82,6 +83,9 @@ public class FlowProcessor {
         for (int category : flowPerCategory.keySet()) {
             double totalFlow = flowPerCategory.get(category);
             int numLinks = linksPerCategory.get(category);
+            if (numLinks == 0) {
+                continue;
+            }
             double avgFlow = (totalFlow / numLinks);
             flowPerCategory.put(category, avgFlow);
         }
@@ -90,7 +94,7 @@ public class FlowProcessor {
     public void resetCounts(int iteration) {
         flowPerCategory.clear();
         linksPerCategory.clear();
-        trafficCounter.reset(iteration);
+        linkFlowCounter.reset(iteration);
     }
 
     public double getFlowByCategory(int category) {

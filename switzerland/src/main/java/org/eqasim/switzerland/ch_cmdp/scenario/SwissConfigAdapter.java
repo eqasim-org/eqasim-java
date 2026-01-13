@@ -17,11 +17,13 @@ public class SwissConfigAdapter {
 
     protected static String prefix = "";
 
+    protected static String carCostModel = "simple";
+
     public static void run(String[] args, SwitzerlandConfigurator configurator, Consumer<Config> adapter)
             throws CommandLine.ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("input-path", "output-path", "downsamplingRate", "replanningRate", "prefix") //
-                .allowOptions("activity-list", "hasFreight") //
+                .allowOptions("activity-list", "hasFreight", "carCostModel") //
                 .build();
 
         if (cmd.hasOption("activity-list")) {
@@ -30,6 +32,10 @@ public class SwissConfigAdapter {
 
         if (cmd.hasOption("hasFreight")) {
             hasFreight = true;
+        }
+
+        if (cmd.hasOption("carCostModel")) {
+            carCostModel = cmd.getOption("carCostModel").get();
         }
 
         replanningRate = Double.parseDouble(cmd.getOptionStrict("replanningRate"));

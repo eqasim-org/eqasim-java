@@ -13,13 +13,15 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationStartsEvent;
+import org.matsim.core.controler.events.ShutdownEvent;
+import org.matsim.core.controler.listener.ShutdownListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-public class AlphaCalibrator implements FastCalibration {
+public class AlphaCalibrator implements FastCalibration, ShutdownListener {
     // This class tracks the mode share at the beginning of each iteration and calibrates the alpha value
     // based on the mode share from the previous iteration and the target mode shares.
 
@@ -48,6 +50,7 @@ public class AlphaCalibrator implements FastCalibration {
     private final OutputDirectoryHierarchy outputHierarchy;
     private final ModeParameters modeParameters;
     private final TripListConverter tripListConverter;
+    private String lastParametersFile = "";
 
     public AlphaCalibrator(Scenario scenario,
                            OutputDirectoryHierarchy outputHierarchy,
@@ -274,23 +277,37 @@ public class AlphaCalibrator implements FastCalibration {
             throw new RuntimeException("Error writing shares to file: " + outputFile.getAbsolutePath(), e);
         }
 
-        File outputFile2 = new File(outputHierarchy.getIterationFilename(iteration, "replannedAgents.csv"));
-        try (PrintWriter writer2 = new PrintWriter(outputFile2)) {
-            writer2.println("person;replanned_trips_indices");
-            for (Map.Entry<Id<Person>, List<Integer>> entry : personsTracker.entrySet()) {
-                Id<Person> personId = entry.getKey();
-                List<Integer> tripIndices = entry.getValue();
-                writer2.printf("%s;%s%n", personId.toString(), tripIndices.toString());
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error writing shares to file: " + outputFile.getAbsolutePath(), e);
-        }
+//        File outputFile2 = new File(outputHierarchy.getIterationFilename(iteration, "replannedAgents.csv"));
+//        try (PrintWriter writer2 = new PrintWriter(outputFile2)) {
+//            writer2.println("person;replanned_trips_indices");
+//            for (Map.Entry<Id<Person>, List<Integer>> entry : personsTracker.entrySet()) {
+//                Id<Person> personId = entry.getKey();
+//                List<Integer> tripIndices = entry.getValue();
+//                writer2.printf("%s;%s%n", personId.toString(), tripIndices.toString());
+//            }
+//        } catch (IOException e) {
+//            throw new RuntimeException("Error writing shares to file: " + outputFile.getAbsolutePath(), e);
+//        }
 
 
     }
 
     private void saveParametersToYaml(int iteration) throws IOException {
-        String outputFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
-        modeParameters.saveToYamlFile(outputFile);
+        lastParametersFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
+        modeParameters.saveToYamlFile(lastParametersFile);
+    }
+
+    @Override
+    public void notifyShutdown(ShutdownEvent shutdownEvent) {
+        // copy the last parameters file to the main output directory
+        if (isActivated && !lastParametersFile.isEmpty()) {
+            File sourceFile = new File(lastParametersFile);
+            File destFile = new File(outputHierarchy.getOutputFilenameWithOutputPrefix("mode_parameters.yml"));
+            try {
+                java.nio.file.Files.copy(sourceFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new RuntimeException("Error copying mode parameters file to main output directory.", e);
+            }
+        }
     }
 }

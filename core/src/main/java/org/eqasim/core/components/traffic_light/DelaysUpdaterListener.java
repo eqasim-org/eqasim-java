@@ -3,12 +3,10 @@ package org.eqasim.core.components.traffic_light;
 import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
 import org.eqasim.core.components.traffic_light.delays.UnsignalizedIntersectionDelay;
-import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
-import org.eqasim.core.components.traffic_light.flow.TrafficCounter;
+import org.eqasim.core.components.flow.FlowDataSet;
+import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
-import org.matsim.core.controler.listener.IterationEndsListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.core.controler.listener.IterationStartsListener;
@@ -38,7 +36,7 @@ public class DelaysUpdaterListener implements IterationStartsListener {
     private final boolean activateUnsignalizedDelays;
     private final boolean moduleActivated;
 
-    public DelaysUpdaterListener(DelaysConfigGroup delaysConfigGroup, FlowDataSet flowDataSet, TrafficCounter trafficCounter,
+    public DelaysUpdaterListener(DelaysConfigGroup delaysConfigGroup, FlowDataSet flowDataSet, LinkFlowCounter linkFlowCounter,
                                  TrafficLightDelay trafficLightDelay, UnsignalizedIntersectionDelay unsignalizedIntersectionDelay,
                                  OutputDirectoryHierarchy outputHierarchy, IntersectionDelay intersectionDelay) {
 

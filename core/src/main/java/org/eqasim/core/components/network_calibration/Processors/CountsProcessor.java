@@ -1,4 +1,4 @@
-package org.eqasim.core.components.network_calibration.capacities_calibration;
+package org.eqasim.core.components.network_calibration.Processors;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -27,21 +28,34 @@ public class CountsProcessor {
     private static final Logger logger = LogManager.getLogger(CountsProcessor.class);
 
     private final String countsFile;
+    private final String averageCountsPerCategoryFile;
     private final Network network;
     private final NetworkCalibrationConfigGroup config;
     private final Map<Integer, Double> AverageCountsPerCategory =  new HashMap<>();
     private final Set<Id<Link>> allLinks =  new java.util.HashSet<>();
     private final IdMap<Link, Integer> roadCategories = new IdMap<>(Link.class);
     private final boolean hasCountsFile;
+    private final boolean hasAverageCountsPerCategoryFile;
     private final OutputDirectoryHierarchy outputHierarchy;
 
     public CountsProcessor(Network network, NetworkCalibrationConfigGroup config,
                            OutputDirectoryHierarchy outputHierarchy) {
-        this.countsFile = config.getCountsFile();
         this.hasCountsFile = config.hasCountsFile();
+        this.hasAverageCountsPerCategoryFile = config.hasAverageCountsPerCategoryFile();
+        // check that at least one of the files is provided
+        if (!hasCountsFile && !hasAverageCountsPerCategoryFile) {
+            throw new IllegalArgumentException("Either counts file or average counts per category file must be provided.");
+        }
+        // csv files that contain counts and average counts per category
+        this.countsFile = config.getCountsFile();
+        this.averageCountsPerCategoryFile = config.getAverageCountsPerCategoryFile();
+        // network and output
         this.network = network;
         this.outputHierarchy = outputHierarchy;
         this.config = config;
+
+        // set whether we separate urban and rural links
+        NetworkCalibrationUtils.setSeparateUrban(config.getSeparateUrbanRoads());
         try {
             build();
             saveAverageCounts();
@@ -58,15 +72,9 @@ public class CountsProcessor {
         }
         // read counts file and process
         if (hasCountsFile) {
-            read();
+            readCounts();
         } else {
-            // in case counts are not provided, set default average counts per category
-            logger.info("No counts file provided, using the average counts provided in the config file.");
-            AverageCountsPerCategory.put(1, config.getCat1Flow());
-            AverageCountsPerCategory.put(2, config.getCat2Flow());
-            AverageCountsPerCategory.put(3, config.getCat3Flow());
-            AverageCountsPerCategory.put(4, config.getCat4Flow());
-            AverageCountsPerCategory.put(5, config.getCat5Flow());
+            readAverageCountsPerCategory();
         }
     }
 
@@ -74,7 +82,7 @@ public class CountsProcessor {
         return roadCategories.getOrDefault(linkId, null);
     }
 
-    private void read() throws IOException {
+    private void readCounts() throws IOException {
         // Read counts file
         File inputFile = new File(countsFile);
         if (!inputFile.exists()) {
@@ -115,8 +123,28 @@ public class CountsProcessor {
         }
     }
 
+    private void readAverageCountsPerCategory() throws IOException {
+        // Read average counts per category file
+        File inputFile = new File(averageCountsPerCategoryFile);
+        if (!inputFile.exists()) {
+            throw new IOException("Average counts per category file " + averageCountsPerCategoryFile + " does not exist.");
+        }
+
+        CsvMapper mapper = new CsvMapper();
+        CsvSchema taskSchema = mapper.typedSchemaFor(OutputPoint.class).withHeader().withColumnSeparator(',').withComments()
+                .withColumnReordering(true);
+        MappingIterator<OutputPoint> taskIterator = mapper.readerWithTypedSchemaFor(OutputPoint.class).with(taskSchema)
+                .readValues(inputFile);
+        List<OutputPoint> averageCounts = taskIterator.readAll();
+        for (OutputPoint point : averageCounts) {
+            int category = Integer.parseInt(point.category);
+            AverageCountsPerCategory.put(category, point.averageCount);
+            logger.info("Average traffic count for category {}: {}", category, AverageCountsPerCategory.get(category));
+        }
+    }
+
     public boolean contains(Id<Link> linkId) {
-        return hasCountsFile ? allLinks.contains(linkId): true;
+        return hasCountsFile ? allLinks.contains(linkId): true; // if counts file is not provided, assume all links are contained
     }
 
     public Double getAverageCountForCategory(int category) {
@@ -153,7 +181,7 @@ public class CountsProcessor {
     }
 
     static public class OutputPoint {
-        @JsonProperty("Category")
+        @JsonProperty("category")
         public String category;
 
         @JsonProperty("averageCount")

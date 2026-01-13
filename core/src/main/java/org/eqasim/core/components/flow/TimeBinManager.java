@@ -1,4 +1,4 @@
-package org.eqasim.core.components.traffic_light.flow;
+package org.eqasim.core.components.flow;
 
 
 import org.apache.logging.log4j.LogManager;

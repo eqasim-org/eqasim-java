@@ -16,12 +16,15 @@ public class SwissPersonVariables extends PersonVariables {
 	public final Integer drivingLicense;
 	public final Integer cantonCluster;
 	public final boolean detailedDataAvailable;
+	public final Double carOwnershipRatio;
+	public final String ovgk;
 
 	public SwissPersonVariables(PersonVariables delegate, Coord homeLocation, boolean hasGeneralSubscription,
                                 boolean hasHalbtaxSubscription, boolean hasRegionalSubscription,
 								boolean hasJuniorSubscription, boolean hasGleis7Subscription,
 								int statedPreferenceRegion,
-                                Integer sex, Double income, Integer drivingLicense, Integer cantonCluster) {
+                                Integer sex, Double income, Integer drivingLicense, Integer cantonCluster,
+								Double carOwnershipRatio, String ovgk) {
 		super(delegate.age_a);
 		this.homeLocation = homeLocation;
 		this.hasGeneralSubscription = hasGeneralSubscription;
@@ -34,12 +37,14 @@ public class SwissPersonVariables extends PersonVariables {
 		this.income = income;
         this.drivingLicense = drivingLicense;
 		this.cantonCluster = cantonCluster;
+		this.carOwnershipRatio = carOwnershipRatio;
+		this.ovgk = ovgk;
         this.detailedDataAvailable = ((sex != null) && (income != null) && (drivingLicense != null) && (cantonCluster != null));
 	}
 
 	public SwissPersonVariables(PersonVariables delegate, Coord homeLocation, boolean hasGeneralSubscription,
                                 boolean hasHalbtaxSubscription, boolean hasRegionalSubscription, int statedPreferenceRegion) {
 		this(delegate, homeLocation, hasGeneralSubscription, hasHalbtaxSubscription, hasRegionalSubscription, false, false,
-				statedPreferenceRegion,null, null, null, null);
+				statedPreferenceRegion,null, null, null, null, null, null);
 	}
 }

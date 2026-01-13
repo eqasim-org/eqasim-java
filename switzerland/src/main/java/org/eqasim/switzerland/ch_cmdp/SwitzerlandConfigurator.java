@@ -12,6 +12,8 @@ import org.matsim.core.config.Config;
 import org.matsim.households.Household;
 import org.matsim.vehicles.VehicleType;
 
+import java.util.Objects;
+
 public class SwitzerlandConfigurator extends EqasimConfigurator {
 	private CommandLine cmd;
 	public SwitzerlandConfigurator(CommandLine cmd) {
@@ -37,6 +39,18 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 					copyAttribute(household, person, "municipalityType");
 					copyAttribute(household, person, "incomePerCapita");
 					copyAttribute(household, person, "cantonName");
+					copyAttribute(household, person, "ovgk");
+					// Compute and set car ownership ratio
+					int numAdults = household.getMemberIds().stream()
+							.map(id -> scenario.getPopulation().getPersons().get(id))
+							.filter(Objects::nonNull)
+							.mapToInt(p -> (int) p.getAttributes().getAttribute("age"))
+							.filter(age -> age >= 18)
+							.sum();
+					String numCarsStr = (String) household.getAttributes().getAttribute("numberOfCars");
+					double numCars = Double.parseDouble(numCarsStr.replace("+", ""));
+					double carRatio = numAdults > 0 ? (1.0 - numCars / numAdults) : 0.0;
+					person.getAttributes().putAttribute("carOwnershipRatio", Math.min(Math.max(0.0, carRatio), 1.0));
 				}
 			}
 		}

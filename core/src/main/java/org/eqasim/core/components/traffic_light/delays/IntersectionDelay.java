@@ -2,12 +2,11 @@ package org.eqasim.core.components.traffic_light.delays;
 
 import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
-import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
+import org.eqasim.core.components.flow.TimeBinManager;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.vehicles.Vehicle;
 
 public class IntersectionDelay implements CrossingPenalty {

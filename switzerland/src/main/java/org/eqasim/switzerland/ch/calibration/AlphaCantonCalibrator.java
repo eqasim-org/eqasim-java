@@ -13,11 +13,13 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationStartsEvent;
+import org.matsim.core.controler.events.ShutdownEvent;
+import org.matsim.core.controler.listener.ShutdownListener;
 
 import java.io.*;
 import java.util.*;
 
-public class AlphaCantonCalibrator implements FastCalibration {
+public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener {
     // Logging
     private static final Logger logger = LogManager.getLogger(AlphaCantonCalibrator.class);
 
@@ -52,6 +54,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
     private final OutputDirectoryHierarchy outputHierarchy;
     private final SwissModeParameters modeParameters;
     private final TripListConverter tripListConverter;
+    private String lastParametersFile = "";
 
     public AlphaCantonCalibrator(Scenario scenario,
                                  OutputDirectoryHierarchy outputHierarchy,
@@ -439,8 +442,8 @@ public class AlphaCantonCalibrator implements FastCalibration {
     }
 
     private void saveParametersToYaml(int iteration) throws IOException {
-        String outputFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
-        modeParameters.saveToYamlFile(outputFile);
+        lastParametersFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
+        modeParameters.saveToYamlFile(lastParametersFile);
     }
 
     private Map<String, Map<String, Double>> readCantonsModeShares() {
@@ -471,4 +474,17 @@ public class AlphaCantonCalibrator implements FastCalibration {
         return result;
     }
 
+    @Override
+    public void notifyShutdown(ShutdownEvent shutdownEvent) {
+        // copy the last parameters file to the main output directory
+        if (isActivated && !lastParametersFile.isEmpty()) {
+            File sourceFile = new File(lastParametersFile);
+            File destFile = new File(outputHierarchy.getOutputFilenameWithOutputPrefix("mode_parameters.yml"));
+            try {
+                java.nio.file.Files.copy(sourceFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new RuntimeException("Error copying mode parameters file to main output directory.", e);
+            }
+        }
+    }
 }

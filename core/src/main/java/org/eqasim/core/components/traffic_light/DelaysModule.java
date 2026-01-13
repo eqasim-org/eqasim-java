@@ -7,13 +7,12 @@ import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
 import org.eqasim.core.components.traffic_light.delays.UnsignalizedIntersectionDelay;
-import org.eqasim.core.components.traffic_light.delays.shahpar.ShahparConfigGroup;
 import org.eqasim.core.components.traffic_light.delays.shahpar.ShahparDelay;
 import org.eqasim.core.components.traffic_light.delays.webster.WebsterDelay;
 import org.eqasim.core.components.traffic_light.delays.webster.WebsterFormula;
-import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
-import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
-import org.eqasim.core.components.traffic_light.flow.TrafficCounter;
+import org.eqasim.core.components.flow.FlowDataSet;
+import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -31,8 +30,8 @@ public class DelaysModule extends AbstractEqasimExtension {
         if (delaysConfig.isActivated()) {
             logger.info("Traffic light module is enabled.");
             // This part manages the flow data collection
-            addEventHandlerBinding().to(TrafficCounter.class).asEagerSingleton();
-            addControllerListenerBinding().to(TrafficCounter.class).asEagerSingleton();
+            addEventHandlerBinding().to(LinkFlowCounter.class).asEagerSingleton();
+            addControllerListenerBinding().to(LinkFlowCounter.class).asEagerSingleton();
             // This part manages the delay calculation and updating
             addControllerListenerBinding().to(DelaysUpdaterListener.class).asEagerSingleton();
         } else {
@@ -42,11 +41,11 @@ public class DelaysModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public DelaysUpdaterListener provideTrafficLightListener(DelaysConfigGroup delaysConfigGroup, FlowDataSet flowDataSet, TrafficCounter trafficCounter,
+    public DelaysUpdaterListener provideTrafficLightListener(DelaysConfigGroup delaysConfigGroup, FlowDataSet flowDataSet, LinkFlowCounter linkFlowCounter,
                                                              TrafficLightDelay trafficLightDelay, UnsignalizedIntersectionDelay unsignalizedIntersectionDelay,
                                                              OutputDirectoryHierarchy outputHierarchy, IntersectionDelay intersectionDelay) {
         return new DelaysUpdaterListener(
-                delaysConfigGroup, flowDataSet, trafficCounter, trafficLightDelay, unsignalizedIntersectionDelay, outputHierarchy, intersectionDelay);
+                delaysConfigGroup, flowDataSet, linkFlowCounter, trafficLightDelay, unsignalizedIntersectionDelay, outputHierarchy, intersectionDelay);
     }
 
     @Provides
@@ -63,9 +62,9 @@ public class DelaysModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public TrafficCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
-                                                OutputDirectoryHierarchy outputHierarchy, DelaysConfigGroup delaysConfigGroup) {
-        return new TrafficCounter(network, flowDataSet, timeBinManager, outputHierarchy, delaysConfigGroup);
+    public LinkFlowCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
+                                                 OutputDirectoryHierarchy outputHierarchy, DelaysConfigGroup delaysConfigGroup) {
+        return new LinkFlowCounter(network, flowDataSet, timeBinManager, outputHierarchy, delaysConfigGroup);
     }
 
 

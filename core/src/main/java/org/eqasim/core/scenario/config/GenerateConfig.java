@@ -59,7 +59,7 @@ public class GenerateConfig {
 	 * criterion is never fulfilled. Otherwise, the simulation is stopped when the
 	 * termination criterion kicks in.
 	 */
-	private final static int DEFAULT_ITERATIONS = 1000;
+	private final static int DEFAULT_ITERATIONS = 100;
 
 	protected void adaptConfiguration(Config config) {
 		// General settings

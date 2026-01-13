@@ -34,7 +34,10 @@ public class TripsRouter {
     public static final Logger logger = LogManager.getLogger(TripsRouter.class);
 
     public static final Collection<String> REQUIRED_ARGS = Set.of("config-path", "events-path", "trips-path");
-    public static final Collection<String> OPTIONAL_ARGS = Set.of("threads","start-time","end-time","interval","output-path", "departure-time");
+    public static final Collection<String> OPTIONAL_ARGS = Set.of("threads","start-time","end-time","interval","output-path",
+            "departure-time", "return-links");
+
+    private static boolean returnLinks;
 
     public static void main(String[] args) throws Exception {
         CommandLine cmd = new CommandLine.Builder(args)
@@ -44,9 +47,15 @@ public class TripsRouter {
 
         int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
                 .orElse(Runtime.getRuntime().availableProcessors());
+        numberOfThreads = Math.min(Math.max(1, numberOfThreads),12);
+        // whether to return links in the output
+        returnLinks = cmd.getOption("return-links").map(Boolean::parseBoolean).orElse(false);
+        logger.info("Return links option set to: {}", returnLinks);
 
         // Read trips
+        logger.info("Reading trips...");
         List<Trip> trips = readTrips(cmd.getOptionStrict("trips-path"));
+        logger.info("Total trips to route: {}", trips.size());
 
         // if departure time is provided, give all trips that departure time
         double departureTime = Double.parseDouble(cmd.getOption("departure-time").orElse("-1"));
@@ -58,14 +67,19 @@ public class TripsRouter {
         }
 
         // Prepare network
-        Network network = loadNetwork(cmd.getOptionStrict("config-path"), cmd);
-        RoadNetwork roadNetwork = new RoadNetwork(network);
+        logger.info("Loading network...");
+        RoadNetwork roadNetwork = new RoadNetwork(
+                loadNetwork(cmd.getOptionStrict("config-path"), cmd)
+        );
 
         // Load travel time
+        logger.info("Loading recorded travel times from events...");
         RecordedTravelTime travelTime = loadTravelTime(cmd, roadNetwork);
 
         // ROUTING SECTION
+        logger.info("Routing {} trips using {} threads...", trips.size(), numberOfThreads);
         List<RoutedTrip> routedTrips = routeTrips(trips, roadNetwork, travelTime, numberOfThreads);
+
         // Write results
         String outputPath = cmd.getOption("output-path").orElse("routed_trips.csv");
         writeRoutedTrips(outputPath, routedTrips);
@@ -97,26 +111,29 @@ public class TripsRouter {
             throws InterruptedException, ExecutionException {
 
         TravelDisutilityFactory disutilityFactory = new OnlyTimeDependentTravelDisutilityFactory();
+
         ExecutorService executor = Executors.newFixedThreadPool(threads);
-        List<Future<RoutedTrip>> futures = new ArrayList<>();
+        CompletionService<RoutedTrip> completion = new ExecutorCompletionService<>(executor);
+
         AtomicInteger completed = new AtomicInteger(0);
         int total = trips.size();
-        int progressInterval = Math.max(1, total / 20); // Log progress every 5%
+        int progressInterval = Math.max(1, total / 40);
 
+        // submit all tasks, but do NOT retain Futures (CompletionService holds minimal bookkeeping)
         for (Trip trip : trips) {
-            futures.add(executor.submit(() -> {
+            completion.submit(() -> {
                 RoutedTrip routed = routeTrip(trip, network, travelTime, disutilityFactory);
                 int progress = completed.incrementAndGet();
                 if (progress % progressInterval == 0 || progress == total) {
                     logger.info("Progress ({}%): {}/{} trips routed.", (progress * 100 / total), progress, total);
                 }
                 return routed;
-            }));
+            });
         }
 
         List<RoutedTrip> results = new ArrayList<>(total);
-        for (Future<RoutedTrip> f : futures) {
-            results.add(f.get());
+        for (int i = 0; i < total; i++) {
+            results.add(completion.take().get());
         }
 
         executor.shutdown();
@@ -141,10 +158,12 @@ public class TripsRouter {
         double travelDistanceMeters = path.links.stream().mapToDouble(Link::getLength).sum();
         double access_distance = CoordUtils.calcEuclideanDistance(fromCoord,fromNode.getCoord());
         double egress_distance = CoordUtils.calcEuclideanDistance(toCoord,toNode.getCoord());
+        String links = returnLinks? String.join("-", path.links.stream().map(Link::getId).map(Object::toString).toArray(String[]::new)) : "";
+
         return new RoutedTrip(trip.identifier, trip.originX, trip.originY,
                               trip.destinationX, trip.destinationY, trip.departureTime,
                               travelTimeSeconds, travelDistanceMeters, access_distance,
-                              egress_distance, path.links.size());
+                              egress_distance, path.links.size(), links);
     }
 
     // === DOMAIN CLASSES ===
@@ -169,11 +188,12 @@ public class TripsRouter {
         @JsonProperty("access_distance") public double accessDistance;
         @JsonProperty("egress_distance") public double egressDistance;
         @JsonProperty("link_count") public int linkCount;
+        @JsonProperty("links") public String links;
 
         public RoutedTrip() {}
 
         public RoutedTrip(String id, double ox, double oy, double dx, double dy, double dep, double tt, double td,
-                          double ad, double ed, int links) {
+                          double ad, double ed, int numLinks, String links) {
             this.identifier = id;
             this.originX = ox;
             this.originY = oy;
@@ -184,7 +204,8 @@ public class TripsRouter {
             this.travelDistance = td;
             this.accessDistance = ad;
             this.egressDistance = ed;
-            this.linkCount = links;
+            this.linkCount = numLinks;
+            this.links = links;
         }
     }
 

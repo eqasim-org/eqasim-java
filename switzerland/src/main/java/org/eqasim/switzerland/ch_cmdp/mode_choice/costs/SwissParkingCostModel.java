@@ -13,8 +13,7 @@ public class SwissParkingCostModel {
     }
 
     public double getParkingPrice_CFH(DiscreteModeChoiceTrip trip, CarVariables variables){
-        String destinationType = Utils.getDestinationMunicipalityType(trip);
-        if (destinationType.equals("none") || destinationType.equals("rural") || Utils.destinationIsHome(trip)){
+        if (Utils.destinationIsNone(trip) || Utils.destinationIsRural(trip) || Utils.destinationIsHome(trip)){
             return 0.0;
         }
 
@@ -47,13 +46,23 @@ public class SwissParkingCostModel {
         }
 
         parkingDuration = Math.max(parkingDuration - unpaidDuration, 0.0);
-        double parking_duration_h = Math.min(parkingDuration / 3600.0, 11.0) ; // Cap parking duration at 11 hours (from 8am to 7pm)
+        double parking_duration_h = Math.min(parkingDuration / 3600.0, 11.0) ; // Cap parking duration at 11 hours (from 8am to 7pm), this should never happen due to previous checks
 
-        if (destinationType.equals("urban") && parking_duration_h>1.0){
-            return Math.min(40, parameters.urbanParkingCost_CHF_h * parking_duration_h);
-        } else if (destinationType.equals("suburban") && parking_duration_h>1.0){
-            return Math.min(40, parameters.suburbanParkingCost_CHF_h * parking_duration_h);
+        double parkingPrice_CHF;
+        if (Utils.destinationIsUrban(trip) && parking_duration_h>1.0) {
+            parkingPrice_CHF = Math.min(40, parameters.urbanParkingCost_CHF_h * (parking_duration_h - 1.0));
+        } else if (Utils.destinationIsUrbanCore(trip) && parking_duration_h>1.0){
+            parkingPrice_CHF = Math.min(40, parameters.urbancoreParkingCost_CHF_h * (parking_duration_h - 1.0));
+        } else if (Utils.destinationIsSuburban(trip) && parking_duration_h>1.0){
+            parkingPrice_CHF = Math.min(40, parameters.suburbanParkingCost_CHF_h * (parking_duration_h - 1.0));
+        } else {
+            parkingPrice_CHF = 0.0;
         }
-        return 0.0;
+        // if destination is work, we apply the reduction factor
+        if (Utils.destinationIsWork(trip)) {
+            parkingPrice_CHF *= parameters.parkingPriceReductionForWork;
+        }
+
+        return parkingPrice_CHF;
     }
 }

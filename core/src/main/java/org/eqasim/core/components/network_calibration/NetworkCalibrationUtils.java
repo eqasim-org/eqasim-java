@@ -1,4 +1,4 @@
-package org.eqasim.core.components.network_calibration.capacities_calibration;
+package org.eqasim.core.components.network_calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +9,7 @@ import java.util.List;
 
 public class NetworkCalibrationUtils {
     private static final Logger logger = LogManager.getLogger(NetworkCalibrationUtils.class);
+    private static boolean separateUrban = false;
 
     // Category 1 – Motorways / Freeways / Trunk / Expressways (highest capacity)
     public static final List<String> CATEGORY_1_HIGHWAY_TYPES = List.of(
@@ -48,17 +49,42 @@ public class NetworkCalibrationUtils {
     public static final int UNKNOWN_CATEGORY = 0;
 
     public static int getCategoryFromOsmHighway(String osmHighway, Link link) {
-        if (CATEGORY_1_HIGHWAY_TYPES.contains(osmHighway)) return 1;
-        if (CATEGORY_2_HIGHWAY_TYPES.contains(osmHighway)) return 2;
-        if (CATEGORY_3_HIGHWAY_TYPES.contains(osmHighway)) return 3;
-        if (CATEGORY_4_HIGHWAY_TYPES.contains(osmHighway)) return 4;
-        if (CATEGORY_5_HIGHWAY_TYPES.contains(osmHighway)){
-            if (link.getNumberOfLanes()>1 || link.getFreespeed() > 45/3.6) {
-                return 4; // treat as tertiary if more than 1 lane or freespeed > 45 km/h
+        int baseCategory;
+        if (CATEGORY_1_HIGHWAY_TYPES.contains(osmHighway)) {
+            baseCategory = 1;
+        } else if (CATEGORY_2_HIGHWAY_TYPES.contains(osmHighway)) {
+            baseCategory = 2;
+        } else if (CATEGORY_3_HIGHWAY_TYPES.contains(osmHighway)) {
+            baseCategory = 3;
+        } else if (CATEGORY_4_HIGHWAY_TYPES.contains(osmHighway)) {
+            baseCategory = 4;
+        } else if (CATEGORY_5_HIGHWAY_TYPES.contains(osmHighway)) {
+            if (link.getNumberOfLanes() > 1 || link.getFreespeed() > 45 / 3.6) {
+                baseCategory = 4; // treat as tertiary if more than 1 lane or freespeed > 45 km/h
+            } else {
+                baseCategory = 5;
             }
-            return 5;
+        } else {
+            return UNKNOWN_CATEGORY; // unknown category
         }
-        return UNKNOWN_CATEGORY; // unknown category
+
+    if (separateUrban && isUrbanLink(link)) {
+        return baseCategory + 10; // Urban categories are 11-15
+    }
+    return baseCategory;
+}
+
+    public static void setSeparateUrban(boolean separateUrbanFlag) {
+        logger.info("setSeparateUrban flag: {}", separateUrbanFlag);
+        separateUrban = separateUrbanFlag;
+    }
+
+    public static boolean isUrbanLink(Link link) {
+        Object municipalityTypeObj = link.getAttributes().getAttribute("municipalityType");
+        if (municipalityTypeObj instanceof String municipalityType) {
+            return municipalityType.equalsIgnoreCase("urban") || municipalityType.equalsIgnoreCase("urbancore");
+        }
+        return false;
     }
 
     public static int getCategory(Link link) {

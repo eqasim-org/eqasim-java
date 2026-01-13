@@ -2,8 +2,8 @@ package org.eqasim.core.components.traffic_light.delays.shahpar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
-import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
+import org.eqasim.core.components.flow.FlowDataSet;
+import org.eqasim.core.components.flow.TimeBinManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;

@@ -6,14 +6,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.network_calibration.capacities_calibration.CapacitiesAdapter;
-import org.eqasim.core.components.network_calibration.capacities_calibration.CountsProcessor;
-import org.eqasim.core.components.network_calibration.capacities_calibration.FlowProcessor;
+import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
+import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltiesAdapter;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
-import org.eqasim.core.components.traffic_light.flow.FlowDataSet;
-import org.eqasim.core.components.traffic_light.flow.TimeBinManager;
-import org.eqasim.core.components.traffic_light.flow.TrafficCounter;
+import org.eqasim.core.components.flow.FlowDataSet;
+import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
@@ -32,7 +32,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
         if (config.isActivated()) {
             logger.info("Network calibration is activated. Installing components.");
-            addEventHandlerBinding().to(TrafficCounter.class).asEagerSingleton();
+            addEventHandlerBinding().to(LinkFlowCounter.class).asEagerSingleton();
 
             if (objective.equals("capacity")) {
                 logger.info("Network capacity calibration is activated");
@@ -58,10 +58,10 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public TrafficCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
-                                                OutputDirectoryHierarchy outputHierarchy) {
+    public LinkFlowCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
+                                                 OutputDirectoryHierarchy outputHierarchy) {
         DelaysConfigGroup config = DelaysConfigGroup.getOrCreate(getConfig());
-        return new TrafficCounter(network, flowDataSet, timeBinManager, outputHierarchy, config);
+        return new LinkFlowCounter(network, flowDataSet, timeBinManager, outputHierarchy, config);
     }
 
     @Provides
@@ -73,7 +73,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public FlowProcessor provideFlowByLinkCategory(Network network, TrafficCounter counter, TimeBinManager timeBinManager,
+    public FlowProcessor provideFlowByLinkCategory(Network network, LinkFlowCounter counter, TimeBinManager timeBinManager,
                                                    CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         return new FlowProcessor(network, counter, timeBinManager, countsProcessor, outputHierarchy, config);

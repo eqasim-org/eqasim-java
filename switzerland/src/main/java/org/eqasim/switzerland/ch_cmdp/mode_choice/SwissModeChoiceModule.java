@@ -35,6 +35,7 @@ import org.eqasim.switzerland.ch_cmdp.calibration.CmdpVariablesWriter;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissPtCostModel;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissWeissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissBikeDetailedUtilityEstimator;
@@ -62,6 +63,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
 
 	static public final String CAR_COST_MODEL_NAME = "SwissCarCostModel";
+	static public final String CAR_WEISS_COST_MODEL_NAME = "SwissWeissCarCostModel";
 	static public final String PT_COST_MODEL_NAME = "SwissPtCostModel";//"SwissDetailedPtCostModel";
 
 	static public final String MODE_AVAILABILITY_NAME = "SwissDetailedModeAvailability";
@@ -83,6 +85,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
+		bindCostModel(CAR_WEISS_COST_MODEL_NAME).to(SwissWeissCarCostModel.class);
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissDetailedModeAvailability.class);
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(SwissCarDetailedUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(SwissBikeDetailedUtilityEstimator.class);

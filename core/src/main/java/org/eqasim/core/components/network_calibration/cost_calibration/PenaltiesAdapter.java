@@ -4,9 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
-import org.eqasim.core.components.network_calibration.capacities_calibration.CountsProcessor;
-import org.eqasim.core.components.network_calibration.capacities_calibration.FlowProcessor;
-import org.eqasim.core.components.network_calibration.capacities_calibration.NetworkCalibrationUtils;
+import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
+import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -42,7 +42,8 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private final double rampFactor;
     private final double trunkFactor;
     private final String penaltiesFile;
-    private boolean calibrate;
+    private final boolean calibrate;
+
     public PenaltiesAdapter(CountsProcessor countsProcessor, FlowProcessor flowProcessor, Network network,
                             NetworkCalibrationConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
                             EqasimConfigGroup eqasimConfig) {
@@ -60,11 +61,13 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         this.rampFactor = config.getRampFactor();
         this.trunkFactor = config.getTrunkFactor();
         this.penaltiesFile = config.getPenaltiesFile();
-        if (penaltiesFile == null || penaltiesFile.isEmpty() || penaltiesFile.equals("none")) {
-            calibrate = true;
-        } else {
+        this.calibrate = config.getCalibrate();
+
+        // If penalties file is provided, read it. But if calibration is disabled and no file is provided, throw error
+        if (this.penaltiesFile != null && !this.penaltiesFile.isEmpty() && !this.penaltiesFile.equals("none")) {
             readPenaltiesFromFile();
-            calibrate = false;
+        } else if (!calibrate) {
+            throw new IllegalArgumentException("Penalties file must be provided if calibration is disabled.");
         }
 
         // Adjust network capacities initially
@@ -91,7 +94,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         return travelTime * penalty;
     }
 
-    double getEffectiveBeta(double percentageError, int iteration) {
+    private double getEffectiveBeta(double percentageError, int iteration) {
         // double error = Math.abs(percentageError);
         // Linear scaling from 0.2 to 2.0 as error goes from 0 to 0.2, capped beyond
         // double factor = 0.2 + 1.4 * Math.min(1.0, Math.pow(error,1.5) / 0.2);
@@ -114,9 +117,12 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
             double penalty = penalties.getOrDefault(category, 0.0);
             // Get average count for this category
             double count = countsProcessor.getAverageCountForCategory(category);
-            if (count > 0.0) {
+            if ((count > 0.0) && Double.isFinite(count)) {
                 // Get flow for this category
                 double flow = flowProcessor.getFlowByCategory(category, sampleSize);
+                if (flow < 0.0 || !Double.isFinite(flow)) {
+                    continue; // skip if flow is invalid, but this never happens
+                }
                 // compute percentage difference
                 double percentageDifference = (flow - count) / count;
                 // get effective beta
@@ -152,7 +158,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private void savePenalties(int iteration) {
         String filename = outputHierarchy.getIterationFilename(iteration, "link_category_penalties.csv");
         try (BufferedWriter writer = getBufferedWriter(filename)) {
-            writer.write("Category;Penalty(%)\n");
+            writer.write("category;penalty(%)\n");
             for (int category : penalties.keySet()) {
                 writer.write(category + ";" + String.format("%.2f", penalties.get(category)) + "\n");
             }

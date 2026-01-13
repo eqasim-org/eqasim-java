@@ -1,6 +1,5 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.parameters;
 
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 
 import java.util.HashMap;
@@ -19,6 +18,8 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
     public double lambdaCostIncome = 0.0;
     public double referenceIncome = 0.0;
 
+    public double timeScale_min = 1.0;
+    public double distanceScale_km = 1.0;
 
     public static class SwissBikeParameters {
         public double alpha_u = 0.0;
@@ -27,12 +28,21 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
 
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
+        public double betaLowIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
         public double betaShortDistance_u = 0.0;
         public double betaDestinationWork_u = 0.0;
         public double betaUrbanDestination_u = 0.0;
+        public double betaUrbancoreDestination_u = 0.0;
+        public double betaDestinationHome_u = 0.0;
+        public double betaDestinationEducation_u = 0.0;
+        public double betaDestinationShopping_u = 0.0;
+        public double betaDestinationLeisure_u = 0.0;
+        public double betaDestinationOther_u = 0.0;
+        public double betaRetired_u = 0.0;
+        public double betaLongDistance_u = 0.0;
     }
 
     public static class SwissCarParameters {
@@ -42,18 +52,29 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
 
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
+        public double betaLowIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
         public double betaDestinationWork_u = 0.0;
         public double betaUrbanDestination_u = 0.0;
+        public double betaUrbancoreDestination_u = 0.0;
+        public double betaDestinationHome_u = 0.0;
+        public double betaDestinationEducation_u = 0.0;
+        public double betaDestinationShopping_u = 0.0;
+        public double betaDestinationLeisure_u = 0.0;
+        public double betaDestinationOther_u = 0.0;
+        public double betaRetired_u = 0.0;
+        public double betaCarOwnershipRatio_u = 0.0;
         public double betaShortDistance_u = 0.0;
-        // just because are used for calculating travel times
+        public double betaLongDistance_u = 0.0;
+        // just because are used for calculating travel times in car predictor
         public double additionalAccessEgressWalkTime_min = 0.0;
         public double constantParkingSearchPenalty_min = 0.0;
     }
 
     public static class SwissParking {
+        public double urbancoreParkingSearchDuration_min = 0.0;
         public double urbanParkingSearchDuration_min = 0.0;
         public double suburbanParkingSearchDuration_min = 0.0;
     }
@@ -76,12 +97,23 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
 
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
+        public double betaLowIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
         public double betaDestinationWork_u = 0.0;
         public double betaUrbanDestination_u = 0.0;
+        public double betaUrbancoreDestination_u = 0.0;
+        public double betaDestinationHome_u = 0.0;
+        public double betaDestinationEducation_u = 0.0;
+        public double betaDestinationShopping_u = 0.0;
+        public double betaDestinationLeisure_u = 0.0;
+        public double betaDestinationOther_u = 0.0;
         public double betaShortDistance_u = 0.0;
+        public double betaRetired_u = 0.0;
+        public double betaLongDistance_u = 0.0;
+        public double betaGoodService_u = 0.0;
+        public double betaMediumService_u = 0.0;
     }
 
     public static class SwissWalkParameters {
@@ -91,12 +123,21 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
 
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
+        public double betaLowIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
         public double betaShortDistance_u = 0.0;
         public double betaDestinationWork_u = 0.0;
         public double betaUrbanDestination_u = 0.0;
+        public double betaUrbancoreDestination_u = 0.0;
+        public double betaDestinationHome_u = 0.0;
+        public double betaDestinationEducation_u = 0.0;
+        public double betaDestinationShopping_u = 0.0;
+        public double betaDestinationLeisure_u = 0.0;
+        public double betaDestinationOther_u = 0.0;
+        public double betaRetired_u = 0.0;
+        public double betaLongDistance_u = 0.0;
     }
 
     public static class SwissCarPassengerParameters {
@@ -104,18 +145,24 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaTravelTime_u_min = 0.0;
         public double travelTimeExponent = 1.0;
 
-        public double betaDistance_km = 0.0;
-        public double distanceExponent = 1.0;
-
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
+        public double betaLowIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
         public double betaDestinationWork_u = 0.0;
         public double betaUrbanDestination_u = 0.0;
+        public double betaUrbancoreDestination_u = 0.0;
+        public double betaDestinationHome_u = 0.0;
+        public double betaDestinationEducation_u = 0.0;
+        public double betaDestinationShopping_u = 0.0;
+        public double betaDestinationLeisure_u = 0.0;
+        public double betaDestinationOther_u = 0.0;
         public double betaDrivingLicense_u = 0.0;
         public double betaShortDistance_u = 0.0;
+        public double betaRetired_u = 0.0;
+        public double betaLongDistance_u = 0.0;
     }
 
     public static SwissCmdpModeParameters buildDefault() {
@@ -156,7 +203,6 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         parameters.cp.alpha_u= 2.8383476435353088;
         parameters.cp.betaAge_u= 0.006326590364129841;
         parameters.cp.betaDestinationWork_u= -0.8289226427922092;
-        parameters.cp.betaDistance_km= 0.0;
         parameters.cp.betaDrivingLicense_u= -1.870841635161752;
         parameters.cp.betaOriginHome_u= -0.0789571715409773;
         parameters.cp.betaRegion1_u= 0.05637768146838739;
@@ -165,8 +211,9 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         parameters.cp.betaShortDistance_u= -0.07890064348228691;
         parameters.cp.betaTravelTime_u_min= -0.4274200311527101;
         parameters.cp.betaUrbanDestination_u= -0.07929398616315597;
-        parameters.cp.distanceExponent= 1.0;
         parameters.cp.travelTimeExponent= 0.7039824608056751;
+        // parking
+        parameters.parking.urbancoreParkingSearchDuration_min= 3.0;
         parameters.parking.suburbanParkingSearchDuration_min= 1.0;
         parameters.parking.urbanParkingSearchDuration_min= 2.0;
         // pt

@@ -1,4 +1,4 @@
-package org.eqasim.core.components.traffic_light.flow;
+package org.eqasim.core.components.flow;
 
 
 import org.apache.logging.log4j.LogManager;
@@ -63,7 +63,7 @@ public class FlowDataSet {
         return this.beta;
     }
 
-    public void updateFlow(int iteration, TrafficCounter counts) {
+    public void updateFlow(int iteration, LinkFlowCounter counts) {
         logger.info("Iteration {}: Updating iteration flow data", iteration);
 
         if (counts.getCounts().size() != network.getLinks().size()) {

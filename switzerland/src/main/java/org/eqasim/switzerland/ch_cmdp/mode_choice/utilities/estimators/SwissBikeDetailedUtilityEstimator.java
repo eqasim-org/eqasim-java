@@ -40,11 +40,12 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     }
 
     protected double estimateTravelTimeUtility(BikeVariables variables) {
-        return parameters.bike.betaTravelTime_u_min * Math.pow(variables.travelTime_min, parameters.bike.travelTimeExponent);
+        double tt = variables.travelTime_min / parameters.timeScale_min;
+        return parameters.bike.betaTravelTime_u_min * Math.pow(tt, parameters.bike.travelTimeExponent);
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.bike.betaAge_u * Math.max(0.0, personVariables.age_a - 18);
+        return parameters.bike.betaAge_u * Math.max(0.0, personVariables.age_a - 17);
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
@@ -69,17 +70,48 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return Utils.isShortDistanceTrip(trip)? parameters.bike.betaShortDistance_u :0.0;
     }
 
+    protected double estimatedLongDistanceUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.isLongDistanceTrip(trip)? parameters.bike.betaLongDistance_u :0.0;
+    }
+
     protected double estimateUrbanDestinationUtility(DiscreteModeChoiceTrip trip) {
         return Utils.destinationIsUrban(trip) ? parameters.bike.betaUrbanDestination_u : 0.0;
+    }
+
+    protected double estimateUrbancoreDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsUrbanCore(trip) ? parameters.bike.betaUrbancoreDestination_u : 0.0;
     }
 
     protected double estimateWorkDestinationUtility(DiscreteModeChoiceTrip trip) {
         return Utils.destinationIsWork(trip) ? parameters.bike.betaDestinationWork_u : 0.0;
     }
 
-    protected double estimatedLongDistanceUtility(DiscreteModeChoiceTrip trip) {
-        double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return distance_km>20.0 ? -1e3 : 0.0;
+    protected double estimateHomeDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsHome(trip) ? parameters.bike.betaDestinationHome_u : 0.0;
+    }
+
+    protected double estimateEducationDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsEducation(trip) ? parameters.bike.betaDestinationEducation_u : 0.0;
+    }
+
+    protected double estimateShoppingDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsShopping(trip) ? parameters.bike.betaDestinationShopping_u : 0.0;
+    }
+
+    protected double estimateLeisureDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsLeisure(trip) ? parameters.bike.betaDestinationLeisure_u : 0.0;
+    }
+
+    protected double estimateOtherDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsOther(trip) ? parameters.bike.betaDestinationOther_u : 0.0;
+    }
+
+    protected double estimateRetiredUtility(SwissPersonVariables personVariables) {
+        return Utils.isRetired(personVariables) ? parameters.bike.betaRetired_u : 0.0;
+    }
+
+    protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
+        return Utils.isLowIncome(personVariables) ? parameters.bike.betaLowIncome_u : 0.0;
     }
 
     protected double estimateCantonUtility(Person person) {
@@ -98,16 +130,29 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         double utility = 0.0;
         utility += estimateConstantUtility();
         utility += estimateTravelTimeUtility(bikeVariables);
-
+        // person attributes
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
-        utility += estimateRegionalUtility(personVariables);
-        utility += estimateHomeOriginUtility(trip);
-        utility += estimateShortDistanceUtility(trip);
-        utility += estimateUrbanDestinationUtility(trip);
+        utility += estimateRetiredUtility(personVariables);
+        utility += estimateLowIncomeUtility(personVariables);
+        // purposes
+        utility += estimateHomeDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
+        utility += estimateEducationDestinationUtility(trip);
+        utility += estimateShoppingDestinationUtility(trip);
+        utility += estimateLeisureDestinationUtility(trip);
+        utility += estimateOtherDestinationUtility(trip);
+        // origin
+        utility += estimateHomeOriginUtility(trip);
+        // region
+        utility += estimateRegionalUtility(personVariables);
+        // distance
+        utility += estimateShortDistanceUtility(trip);
         utility += estimatedLongDistanceUtility(trip);
-
+        // location
+        utility += estimateUrbanDestinationUtility(trip);
+        utility += estimateUrbancoreDestinationUtility(trip);
+        // canton
         utility += estimateCantonUtility(person);
 
         if(variablesWriter.isInitiated()) {
@@ -127,14 +172,31 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         Map<String, String> bikeAttributes = new HashMap<>();
 
         bikeAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
+
+        // person attributes used in utility
         bikeAttributes.put("age", String.valueOf(personVariables.age_a));
         bikeAttributes.put("sex", String.valueOf(personVariables.sex));
         bikeAttributes.put("region", String.valueOf(personVariables.cantonCluster));
+        bikeAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
+        bikeAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
+        bikeAttributes.put("income", String.valueOf(personVariables.income));
+
+        // purposes used in utility
         bikeAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
         bikeAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
-        bikeAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
-        bikeAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
+        bikeAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
+        bikeAttributes.put("destinationEducation", Utils.destinationIsEducation(trip) ? "1" : "0");
+        bikeAttributes.put("destinationShopping", Utils.destinationIsShopping(trip) ? "1" : "0");
+        bikeAttributes.put("destinationLeisure", Utils.destinationIsLeisure(trip) ? "1" : "0");
+        bikeAttributes.put("destinationOther", Utils.destinationIsOther(trip) ? "1" : "0");
 
+        // location/distance used in utility
+        bikeAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
+        bikeAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
+        bikeAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
+        bikeAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+
+        // main level-of-service term used in utility
         bikeAttributes.put("travelTime_min", String.valueOf(bikevariable.travelTime_min));
 
         variablesWriter.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);

@@ -1,4 +1,4 @@
-package org.eqasim.core.components.traffic_light.flow;
+package org.eqasim.core.components.flow;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,9 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.SequencedCollection;
 
-public class TrafficCounter implements LinkEnterEventHandler, IterationEndsListener {
+public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsListener {
 
     private final TimeBinManager timeBinManager;
     private final Network network;
@@ -30,11 +29,11 @@ public class TrafficCounter implements LinkEnterEventHandler, IterationEndsListe
     private final int writeFlowInterval;
 
     private final IdMap<Link, List<Double>> counts = new IdMap<>(Link.class);
-    private final static Logger logger = LogManager.getLogger(TrafficCounter.class);
+    private final static Logger logger = LogManager.getLogger(LinkFlowCounter.class);
     private final String FLOW_FILE = "traffic_flow.csv";
 
-    public TrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
-                          OutputDirectoryHierarchy outputHierarchy, DelaysConfigGroup delaysConfigGroup) {
+    public LinkFlowCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
+                           OutputDirectoryHierarchy outputHierarchy, DelaysConfigGroup delaysConfigGroup) {
         this.timeBinManager = timeBinManager;
         this.network = network;
         this.flowDataSet = flowDataSet;

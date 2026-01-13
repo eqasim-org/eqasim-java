@@ -16,14 +16,15 @@ public class EqasimComponentsModule extends AbstractModule {
 		bind(MainModeIdentifier.class).to(RoutingModeMainModeIdentifier.class);
 
 		// OnlyTimeDependentTravelDisutilityFactory
-		addTravelDisutilityFactoryBinding(TransportMode.car).to(EqasimTravelDisutilityFactory.class);
-		addTravelDisutilityFactoryBinding("car_passenger").to(EqasimTravelDisutilityFactory.class);
+		//addTravelDisutilityFactoryBinding(TransportMode.car).to(EqasimTravelDisutilityFactory.class);
+		//addTravelDisutilityFactoryBinding("car_passenger").to(EqasimTravelDisutilityFactory.class);
+		//addTravelDisutilityFactoryBinding("truck").to(EqasimTravelDisutilityFactory.class);
 
 	}
 
-	@Provides
-	@Singleton
-	EqasimTravelDisutilityFactory providePolicyTravelDisutilityFactory(RoutingPenalty linkPenalty) {
-		return new EqasimTravelDisutilityFactory(linkPenalty);
-	}
+	//@Provides
+	//@Singleton
+	//EqasimTravelDisutilityFactory providePolicyTravelDisutilityFactory(RoutingPenalty linkPenalty) {
+	//	return new EqasimTravelDisutilityFactory(linkPenalty);
+	//}
 }

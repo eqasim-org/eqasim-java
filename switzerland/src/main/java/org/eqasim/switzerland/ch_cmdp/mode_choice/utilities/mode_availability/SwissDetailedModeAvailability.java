@@ -57,11 +57,12 @@ public class SwissDetailedModeAvailability implements ModeAvailability {
         }
 
         // Add special mode "car_passenger" if applicable
-        boolean carPassengerAvailability = !"never".equals(PersonUtils.getCarAvail(person));
-        Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isCarPassenger");
-        if (isCarPassenger != null && isCarPassenger) {
-            carPassengerAvailability = true;
-        }
+        boolean carPassengerAvailability = true;
+        // boolean carPassengerAvailability = !"never".equals(PersonUtils.getCarAvail(person));
+        // Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isCarPassenger");
+        // if (isCarPassenger != null && isCarPassenger) {
+        //     carPassengerAvailability = true;
+        // }
 
         if (carPassengerAvailability) {
             modes.add("car_passenger");

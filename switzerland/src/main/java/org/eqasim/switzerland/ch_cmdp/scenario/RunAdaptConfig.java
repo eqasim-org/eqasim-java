@@ -66,6 +66,27 @@ public class RunAdaptConfig {
 		crossBorderStrategy.setSubpopulation("crossborder");
 		replanningConfigGroup.addStrategySettings(crossBorderStrategy);
 
+		// Adding reroute for all other subpopulations
+		StrategySettings generalStrategy = new StrategySettings();
+		generalStrategy.setStrategyName(DefaultStrategy.ReRoute);
+		generalStrategy.setWeight(SwissConfigAdapter.replanningRate);
+		replanningConfigGroup.addStrategySettings(generalStrategy);
+
+		// Calculate total weight for reroute and DMC strategies
+		double dmcAndRerouteRates = SwissConfigAdapter.replanningRate;
+		for (StrategySettings strategy : replanningConfigGroup.getStrategySettings()) {
+			if ("DiscreteModeChoice".equals(strategy.getStrategyName())) {
+				dmcAndRerouteRates += strategy.getWeight();
+			}
+		}
+
+		// Adjust KeepLastSelected weight for general subpopulation
+		for (StrategySettings strategy : replanningConfigGroup.getStrategySettings()) {
+			if (DefaultSelector.KeepLastSelected.equals(strategy.getStrategyName()) && strategy.getSubpopulation() == null) {
+				strategy.setWeight(1.0 - dmcAndRerouteRates);
+				break;
+			}
+		}
 		// set the main mode in qsim to car and truck
 		QSimConfigGroup qsimConfigGroup = config.qsim();
 		qsimConfigGroup.setMainModes(Arrays.asList(TransportMode.car, "truck"));
@@ -90,8 +111,15 @@ public class RunAdaptConfig {
 		eqasimConfig.setEstimator(TransportMode.walk, SwissModeChoiceModule.WALK_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator("car_passenger", SwissModeChoiceModule.CP_ESTIMATOR_NAME);
 
-		eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_COST_MODEL_NAME);
+		if (SwissConfigAdapter.carCostModel.equals("simple")) {
+			eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_COST_MODEL_NAME);
+		} else if (SwissConfigAdapter.carCostModel.equals("weiss")) {
+			eqasimConfig.setCostModel(TransportMode.car, SwissModeChoiceModule.CAR_WEISS_COST_MODEL_NAME);
+		} else {
+			throw new IllegalArgumentException("Unknown car passenger cost model: " + SwissConfigAdapter.carCostModel);
+		}
 		eqasimConfig.setCostModel(TransportMode.pt, SwissModeChoiceModule.PT_COST_MODEL_NAME);
+
 		// also adding loop modes that should not be considered for mode choice
 		for (String mode : LOOP_MODES) {
 			eqasimConfig.setEstimator(mode, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);

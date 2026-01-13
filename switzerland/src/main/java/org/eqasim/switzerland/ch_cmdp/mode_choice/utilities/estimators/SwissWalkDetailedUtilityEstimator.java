@@ -39,7 +39,8 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
     }
 
     protected double estimateTravelTimeUtility(WalkVariables variables) {
-        return parameters.walk.betaTravelTime_u_min * Math.pow(variables.travelTime_min, parameters.walk.travelTimeExponent);
+        double tt = variables.travelTime_min / parameters.timeScale_min;
+        return parameters.walk.betaTravelTime_u_min * Math.pow(tt, parameters.walk.travelTimeExponent);
     }
 
     protected double estimateRegionalUtility(SwissPersonVariables personVariables) {
@@ -53,7 +54,7 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.walk.betaAge_u * Math.max(0.0, personVariables.age_a - 18);
+        return parameters.walk.betaAge_u * Math.max(0.0, personVariables.age_a - 17);
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
@@ -76,9 +77,8 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         return Utils.destinationIsWork(trip) ? parameters.walk.betaDestinationWork_u : 0.0;
     }
 
-    protected double estimatedLongDistanceUtility(DiscreteModeChoiceTrip trip) {
-        double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return distance_km>5.0 ? -1e3 : 0.0;
+    protected double estimateLongDistanceUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.isLongDistanceTrip(trip)? parameters.walk.betaLongDistance_u :0.0;
     }
 
     protected double estimateCantonUtility(Person person) {
@@ -89,25 +89,69 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         return 0.0;
     }
 
+    protected double estimateHomeDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsHome(trip) ? parameters.walk.betaDestinationHome_u : 0.0;
+    }
+
+    protected double estimateEducationDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsEducation(trip) ? parameters.walk.betaDestinationEducation_u : 0.0;
+    }
+
+    protected double estimateShoppingDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsShopping(trip) ? parameters.walk.betaDestinationShopping_u : 0.0;
+    }
+
+    protected double estimateLeisureDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsLeisure(trip) ? parameters.walk.betaDestinationLeisure_u : 0.0;
+    }
+
+    protected double estimateOtherDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsOther(trip) ? parameters.walk.betaDestinationOther_u : 0.0;
+    }
+
+    protected double estimateUrbancoreDestinationUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsUrbanCore(trip) ? parameters.walk.betaUrbancoreDestination_u : 0.0;
+    }
+
+    protected double estimateRetiredUtility(SwissPersonVariables personVariables) {
+        return Utils.isRetired(personVariables) ? parameters.walk.betaRetired_u : 0.0;
+    }
+
+    protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
+        return Utils.isLowIncome(personVariables) ? parameters.walk.betaLowIncome_u : 0.0;
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         WalkVariables variables = walkPredictor.predictVariables(person, trip, elements);
         SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
 
         double utility = 0.0;
-
         utility += estimateConstantUtility();
         utility += estimateTravelTimeUtility(variables);
-
+        // person attributes
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
-        utility += estimateRegionalUtility(personVariables);
-        utility += estimateShortDistanceUtility(trip);
-        utility += estimateHomeOriginUtility(trip);
-        utility += estimateUrbanDestinationUtility(trip);
+        utility += estimateRetiredUtility(personVariables);
+        utility += estimateLowIncomeUtility(personVariables);
+        // purposes
+        utility += estimateHomeDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
-        utility += estimatedLongDistanceUtility(trip);
-
+        utility += estimateEducationDestinationUtility(trip);
+        utility += estimateShoppingDestinationUtility(trip);
+        utility += estimateLeisureDestinationUtility(trip);
+        utility += estimateOtherDestinationUtility(trip);
+        // origin
+        utility += estimateHomeOriginUtility(trip);
+        // region
+        utility += estimateRegionalUtility(personVariables);
+        // distance
+        utility += estimateShortDistanceUtility(trip);
+        utility += estimateLongDistanceUtility(trip);
+        // location
+        utility += estimateUrbanDestinationUtility(trip);
+        utility += estimateUrbancoreDestinationUtility(trip);
+        // canton
         utility += estimateCantonUtility(person);
 
         if(variablesWriter.isInitiated()) {
@@ -127,14 +171,31 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         Map<String, String> walkAttributes = new HashMap<>();
 
         walkAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
+
+        // person attributes used in utility
         walkAttributes.put("age", String.valueOf(personVariables.age_a));
         walkAttributes.put("sex", String.valueOf(personVariables.sex));
         walkAttributes.put("region", String.valueOf(personVariables.cantonCluster));
+        walkAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
+        walkAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
+        walkAttributes.put("income", String.valueOf(personVariables.income));
+
+        // purposes used in utility
         walkAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
         walkAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
-        walkAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
-        walkAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
+        walkAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
+        walkAttributes.put("destinationEducation", Utils.destinationIsEducation(trip) ? "1" : "0");
+        walkAttributes.put("destinationShopping", Utils.destinationIsShopping(trip) ? "1" : "0");
+        walkAttributes.put("destinationLeisure", Utils.destinationIsLeisure(trip) ? "1" : "0");
+        walkAttributes.put("destinationOther", Utils.destinationIsOther(trip) ? "1" : "0");
 
+        // location/distance used in utility
+        walkAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
+        walkAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
+        walkAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
+        walkAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+
+        // main level-of-service term used in utility
         walkAttributes.put("travelTime_min", String.valueOf(walkVariables.travelTime_min));
 
         variablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
