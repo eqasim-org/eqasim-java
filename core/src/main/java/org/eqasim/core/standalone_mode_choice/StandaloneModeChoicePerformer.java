@@ -88,15 +88,18 @@ public class StandaloneModeChoicePerformer {
                     "Splitting %d plans into %d chunks (%,d each) over %d threads",
                     total, numChunks, chunkSize, numberOfThreads));
             
+            Random random = new Random(this.seed);
             for (int chunk = 0; chunk < numChunks; chunk++) {
                 final int from = chunk * chunkSize;
                 final int to   = Math.min(from + chunkSize, total);
 
                 List<Plan> subList = selectedPlans.subList(from, to);
+                Random chunkRandom = new Random(random.nextInt());
+
                 futures.add(exec.submit(() -> {
                     PlanAlgoThread worker = new PlanAlgoThread(
                         new DiscreteModeChoiceAlgorithm(
-                            new Random(seed),
+                            chunkRandom,
                             discreteModeChoiceModelProvider.get(),
                             population.getFactory(),
                             new TripListConverter()
