@@ -5,6 +5,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contribs.discrete_mode_choice.modules.ModelModule.ModelType;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -33,6 +34,7 @@ public class RunAdaptConfig {
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
+		dmcConfig.setModelType(ModelType.EfficientTour);
 
 		// Calibration results for 5%
 
