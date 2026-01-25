@@ -55,7 +55,7 @@ public class ParallelProgress {
 					waitingForStart = false;
 				}
 
-				if (currentCount > lastCount) {
+				if (currentCount > lastCount && currentCount > 0) {
 					List<String> message = new LinkedList<>();
 					message.add(description);
 					message.add(String.format("%d/%d", currentCount, totalCount));
