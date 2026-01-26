@@ -42,13 +42,17 @@ public class PTLinkVolumesHandler implements PersonEntersVehicleEventHandler, Pe
         String lineId;
         String lineName;
         String routeId;
+        String routeDirection;
+        String lineMainDirection;
 
-        LinkBinKey(int timeBin, Id<Link> linkId, String lineId, String lineName, String routeId){
+        LinkBinKey(int timeBin, Id<Link> linkId, String lineId, String lineName, String routeId, String routeDirection, String lineMainDirection){
             this.timeBin = timeBin;
             this.linkId = linkId;
             this.lineId = lineId;
             this.routeId = routeId;
             this.lineName = lineName;
+            this.routeDirection = routeDirection;
+            this.lineMainDirection = lineMainDirection;
         }
 
         @Override
@@ -73,16 +77,18 @@ public class PTLinkVolumesHandler implements PersonEntersVehicleEventHandler, Pe
         int timeBin = (int) event.getTime() / BIN_SIZE;
         Id<Vehicle> vehicleId = event.getVehicleId();
 
-        TransitTripInfo lineInfo = this.vehicleToLineRoute.get(vehicleId);
-        if (lineInfo == null) {
-            return;
-        }
-
         int currentNbPassengers = vehicleNbPassengers.getOrDefault(vehicleId, 0);
-        LinkBinKey currentKey   = new LinkBinKey(timeBin, event.getLinkId(), lineInfo.lineId, lineInfo.lineName, lineInfo.routeId);
+        
+        if (currentNbPassengers > 0){
+            TransitTripInfo lineInfo = this.vehicleToLineRoute.get(vehicleId);
+            if (lineInfo == null) {
+                return;
+            }
+            LinkBinKey currentKey   = new LinkBinKey(timeBin, event.getLinkId(), lineInfo.lineId, lineInfo.lineName, lineInfo.routeId, lineInfo.routeDirection, lineInfo.routeMainDirection);
 
-        int updatedCount = linkNbPassengers.getOrDefault(currentKey, 0) + currentNbPassengers;
-        linkNbPassengers.put(currentKey, updatedCount);
+            int updatedCount = linkNbPassengers.getOrDefault(currentKey, 0) + currentNbPassengers;
+            linkNbPassengers.put(currentKey, updatedCount);
+        }
     }
 
     @Override
@@ -117,7 +123,7 @@ public class PTLinkVolumesHandler implements PersonEntersVehicleEventHandler, Pe
             : new FileOutputStream(filePath);
 
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
-            writer.write("timeBin,linkId,lineId,lineName,routeId,passengers\n");
+            writer.write("timeBin;linkId;lineId;lineName;routeId;route_direction;line_main_direction;passengers\n");
 
             List<Map.Entry<LinkBinKey, Integer>> sorted = new ArrayList<>(linkNbPassengers.entrySet());
             sorted.sort(Comparator.comparing(e -> e.getKey().timeBin));
@@ -129,12 +135,14 @@ public class PTLinkVolumesHandler implements PersonEntersVehicleEventHandler, Pe
                 String formattedTime = formatTime(key.timeBin * BIN_SIZE);
 
                 writer.write(String.format(
-                    "%s,%s,%s,%s,%s,%d\n",
+                    "%s;%s;%s;%s;%s;%s;%s;%d\n",
                     formattedTime,
                     key.linkId.toString(),
                     key.lineId,
                     key.lineName,
                     key.routeId,
+                    key.routeDirection,
+                    key.lineMainDirection,
                     count
                 ));
             }

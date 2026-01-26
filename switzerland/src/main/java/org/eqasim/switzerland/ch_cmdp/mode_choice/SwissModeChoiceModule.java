@@ -10,7 +10,6 @@ import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.calibration.Optimizer;
 import org.eqasim.core.components.calibration.OptimizerHandler;
 import org.eqasim.core.components.calibration.VariablesWriter;
-import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibrator;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;

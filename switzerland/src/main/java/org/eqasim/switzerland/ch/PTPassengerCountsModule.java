@@ -1,6 +1,7 @@
 package org.eqasim.switzerland.ch;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eqasim.switzerland.ch.utils.pt.PTPassengerAnalyser;
@@ -35,6 +36,7 @@ public class PTPassengerCountsModule extends AbstractModule{
 
         for (TransitLine line : schedule.getTransitLines().values()) {
             for (TransitRoute route : line.getRoutes().values()) {
+                List<String> routeLineInfo = TransitTripInfo.findLineRouteInfo(line, route);
                 for (Departure dep : route.getDepartures().values()) {
                     Id<Vehicle> vehicleId = dep.getVehicleId();
                     if (vehicleId != null) {
@@ -42,7 +44,9 @@ public class PTPassengerCountsModule extends AbstractModule{
                             line.getId().toString(),
                             line.getName().toString(),
                             route.getId().toString(),
-                            dep.getId().toString()
+                            dep.getId().toString(),
+                            routeLineInfo.get(0),
+                            routeLineInfo.get(1)
                         ));
                     }
                 }

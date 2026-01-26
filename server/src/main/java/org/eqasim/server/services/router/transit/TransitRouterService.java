@@ -110,6 +110,7 @@ public class TransitRouterService {
 			response.transferWalkTime_min = travelTime / 60.0;
 			response.totalTravelTime_min = travelTime / 60.0;
 			response.arrivalTime_s = request.departureTime_s + travelTime;
+			response.total_distance_km = distance * 1e-3;
 
 			if (request.provideItinerary) {
 				TransitRouterResponse.Itinerary.ItineraryLeg leg = new TransitRouterResponse.Itinerary.ItineraryLeg();
@@ -145,6 +146,7 @@ public class TransitRouterService {
 			response.transferWalkTime_min = travelTime / 60.0;
 			response.totalTravelTime_min = travelTime / 60.0;
 			response.arrivalTime_s = request.departureTime_s + travelTime;
+			response.total_distance_km = distance * 1e-3;
 
 			if (request.provideItinerary) {
 				TransitRouterResponse.Itinerary.ItineraryLeg leg = new TransitRouterResponse.Itinerary.ItineraryLeg();
@@ -181,6 +183,7 @@ public class TransitRouterService {
 					double travelTime = routeLeg.getRoute().getTravelTime().seconds();
 
 					response.totalTravelTime_min += travelTime / 60.0;
+					response.total_distance_km += distance * 1e-3;
 
 					final Type legType;
 
@@ -275,6 +278,7 @@ public class TransitRouterService {
 					response.inVehicleTravelTime_min += inVehicleTime / 60.0;
 					response.inVehicleDistance_km += distance * 1e-3;
 					response.modesSequence.addLast(mode);
+					response.total_distance_km += distance * 1e-3;
 
 					if (vehiclarLegs == 1) {
 						response.initialWaitTime_min += waitTime / 60.0;

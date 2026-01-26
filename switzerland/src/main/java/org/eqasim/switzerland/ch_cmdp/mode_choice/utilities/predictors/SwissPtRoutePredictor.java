@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
-import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtLegVariables;
-import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtVariables;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtVariables;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;

@@ -61,6 +61,9 @@ public class TransitRouterResponse {
 	@JsonProperty("total_travel_time_min")
 	public double totalTravelTime_min;
 
+	@JsonProperty("total_distance_km")
+	public double total_distance_km;
+
 	@JsonProperty("arrivalTime_s")
 	public double arrivalTime_s;
 

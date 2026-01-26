@@ -27,6 +27,7 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -38,6 +39,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.facilities.FacilitiesUtils;
 import org.matsim.facilities.Facility;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
 import com.opencsv.CSVReader;
@@ -170,23 +172,36 @@ public class RunComputeTransitPrices {
             this.csvOuptputPath = csvPath;
         }
 
-        public void writeCSV(Map<Integer, CSVRequest> requests, Map<Integer, Double> prices, Map<Integer, Double> oldPrices, Map<Integer, Double> distances) throws IOException {
+        public void writeCSV(Map<Integer, CSVRequest> requests, Map<Integer, Double> prices, Map<Integer, Double> oldPrices, Map<Integer, Double> distances,
+             Map<Integer, Double> travelTimes,
+             Map<Integer, Double> inVehicleTimes,
+             Map<Integer, Double> accessEgressTimes,
+             Map<Integer, Double> waitingTimes,
+             Map<Integer, Integer> nbTransfers
+            ) throws IOException {
             try (CSVWriter writer = new CSVWriter(new FileWriter(this.csvOuptputPath))){
                 String[] header = { "id",
                     "originX", "originY", "destinationX", "destinationY", "departureTime_s",
                     "homeX", "homeY",
                     "hasGA", "hasHalbtaxSubscription", "hasVerbundAbo",
                     "hasStreckenAbo", "hasGleis7Abo", "hasJuniorAbo", "age",
-                    "price", "priceOldModel", "networkDistance"
+                    "price", "priceOldModel", "networkDistance", "total_travel_time_min",
+                    "in_vehicle_time_min", "access_egress_time_min", "waiting_time_min", "number_of_line_switches"
                 };
                 writer.writeNext(header);
 
                 for (Map.Entry<Integer, CSVRequest> entry : requests.entrySet()){
-                    int id = entry.getKey();
+                    int id         = entry.getKey();
                     CSVRequest req = entry.getValue();
-                    double price = prices.getOrDefault(id, Double.NaN);
-                    double oldPrice = oldPrices.getOrDefault(id, Double.NaN);
-                    double distance = distances.getOrDefault(id, Double.NaN);
+
+                    double price            = prices.getOrDefault(id, Double.NaN);
+                    double oldPrice         = oldPrices.getOrDefault(id, Double.NaN);
+                    double distance         = distances.getOrDefault(id, Double.NaN);
+                    double travelTime       = travelTimes.getOrDefault(id, Double.NaN);
+                    double invehicleTime    = inVehicleTimes.getOrDefault(id, Double.NaN);
+                    double accessEgressTime = accessEgressTimes.getOrDefault(id, Double.NaN);
+                    double waitingTime      = waitingTimes.getOrDefault(id, Double.NaN);
+                    int nbLineSwitches      = nbTransfers.getOrDefault(id, 0);
 
                     String[] row = {
                         req.requestId,
@@ -206,13 +221,182 @@ public class RunComputeTransitPrices {
                         Integer.toString(req.age),
                         Double.toString(price),
                         Double.toString(oldPrice),
-                        Double.toString(distance)
+                        Double.toString(distance),
+                        Double.toString(travelTime),
+                        Double.toString(invehicleTime),
+                        Double.toString(accessEgressTime),
+                        Double.toString(waitingTime),
+                        Integer.toString(nbLineSwitches)
                     };
                     writer.writeNext(row);
                 }
             }
         }
     }
+
+    public static class RouteResult {
+        public final double price;
+        public final double oldPrice;
+        public final double distance_km;
+        public final double totalTravelTime_min;
+        public final double inVehicleTime_min;
+        public final double accessEgressTime_min;
+        public final double waitingTime_min;
+        public final int numberTransfers;
+
+        public RouteResult(double price, double oldPrice, double distance_km, double travelTime_min,
+            double inVehicleTime_min, double access_egress_time_min, double waiting_time_min, int numberTransfers
+        ) {
+            this.price = price;
+            this.oldPrice = oldPrice;
+            this.distance_km = distance_km;
+            this.totalTravelTime_min = travelTime_min;
+            this.inVehicleTime_min = inVehicleTime_min;
+            this.accessEgressTime_min = access_egress_time_min;
+            this.waitingTime_min = waiting_time_min;
+            this.numberTransfers = numberTransfers;
+        }
+    }
+
+
+    public static RouteResult processRequest(
+        int id, CSVRequest request,
+        Network network,
+        SwissRailRaptor router,
+        SwissPtRoutePredictor ptRoutePredictor,
+        SwissPtStageCostCalculator swissPtStageCostCalculator
+    ) {
+        try {
+            Coord fromCoord = new Coord(request.originX, request.originY);
+            Coord toCoord   = new Coord(request.destinationX, request.destinationY);
+
+            Link fromLink = NetworkUtils.getNearestLink(network, fromCoord);
+            Link toLink   = NetworkUtils.getNearestLink(network, toCoord);
+
+            Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
+            Facility toFacility   = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
+
+            List<? extends PlanElement> route = router.calcRoute(
+                DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, request.departureTime_s, null));
+
+            if (route == null || route.isEmpty()) {
+                return new RouteResult(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0);
+            }
+
+            // Compute travel time
+            double travelTime_s         = 0.0;
+            double in_vehicle_time_s    = 0.0;
+            double waiting_time_s       = 0.0;
+            double access_egress_time_s = 0.0;
+            int nb_vehicular_legs       = 0;
+            double currentTime          = request.departureTime_s;
+
+            int cpt = 0;
+
+            for (PlanElement pe : route) {
+                if (pe instanceof Leg leg) {
+                    if (leg.getMode().equals("walk")) {
+                        double travelTime = leg.getRoute().getTravelTime().seconds();
+                        travelTime_s         += travelTime;
+                        if (cpt == 0){
+                            access_egress_time_s += travelTime;
+                        }
+                        else if (cpt == route.size() - 1 ){
+                            access_egress_time_s += travelTime;
+                        }
+                        currentTime += travelTime;
+                    } else if (leg.getRoute() instanceof TransitPassengerRoute passengerRoute) {
+                        double boardingTime = passengerRoute.getBoardingTime().seconds();
+                        double waitTime     = boardingTime - currentTime;
+                        double travelTime   = passengerRoute.getTravelTime().seconds();
+
+                        nb_vehicular_legs += 1;
+                        travelTime_s      += travelTime;
+                        in_vehicle_time_s += travelTime - waitTime;
+                        waiting_time_s    += waitTime;
+
+                        currentTime += travelTime ;
+                    }
+                }
+                cpt += 1;
+            }
+
+            double travelTime_min         = travelTime_s / 60.0;
+            double access_egress_time_min = access_egress_time_s / 60.0;
+            double waiting_time_min       = waiting_time_s / 60.0;
+            double in_vehicle_time_min    = in_vehicle_time_s / 60.0;
+            int number_of_line_switches   = 0;
+            if (nb_vehicular_legs >= 2){
+                number_of_line_switches = nb_vehicular_legs - 1;
+            }
+
+            // Predict PT variables once
+            SwissPtVariables ptVariables = ptRoutePredictor.predictPtVariables(route);
+            if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()) {
+                return new RouteResult(Double.NaN, Double.NaN, Double.NaN, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
+            }
+
+            Map<String, List<SwissPtLegVariables>> groupedByAuthority = ptVariables.getPricingStrategy();
+
+            // Compute network distance
+            double distance_m = groupedByAuthority.values().stream()
+                .flatMap(List::stream)
+                .mapToDouble(lv -> lv.networkDistance)
+                .sum();
+
+            double distance_km = distance_m / 1000.0;
+
+            // === Apply pricing logic once ===
+            double price = 0.0;
+            double oldPrice = 0.0;
+
+            if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)) {
+                return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
+            }
+
+            if (request.hasVerbundAbo) {
+                double homeDist = calculateHomeDistance_km(request);
+                if (homeDist <= 15.0) {
+                    return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
+                }
+            }
+
+            if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo) {
+                return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
+            }
+
+            boolean halfFare = request.hasHalbtaxSubscription || (request.age < 16);
+
+            // New model price
+            for (var entry : groupedByAuthority.entrySet()) {
+                String authority = entry.getKey();
+                List<SwissPtLegVariables> legs = entry.getValue();
+
+                PtStageCostCalculator calc =
+                    swissPtStageCostCalculator.priceCalculators.getOrDefault(authority,
+                        swissPtStageCostCalculator.priceCalculators.get("None"));
+
+                price += calc.calculatePrice(legs, halfFare, authority);
+            }
+
+            // Old model price
+            oldPrice = 0.6 * distance_km;
+            if (halfFare) oldPrice /= 2.0;
+            oldPrice = Math.round(oldPrice * 100.0) / 100.0;
+            price    = Math.round(price * 100.0) / 100.0;
+
+            //if (id % 1000 == 0){
+            //    System.out.println("Computed price: " + price);
+            //}
+
+            return new RouteResult(price, oldPrice, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
+
+        } catch (Exception e) {
+            System.err.println("Routing failed for request " + id + ": " + e.getMessage());
+            return new RouteResult(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0);
+        }
+    }
+
 
     public static double calculateHomeDistance_km(CSVRequest request){
         double originHomeDistance_km = CoordUtils.calcEuclideanDistance(
@@ -221,196 +405,6 @@ public class RunComputeTransitPrices {
             new Coord(request.destinationX, request.destinationY), new Coord(request.homeX, request.homeY));
         return Math.max(originHomeDistance_km, destinationHomeDistance_km);
     }
-
-
-    public static double processPriceRequest(int id, CSVRequest request, Network network, SwissRailRaptor router, SwissPtRoutePredictor ptRoutePredictor, 
-        SwissPtStageCostCalculator swissPtStageCostCalculator){
-
-            Coord fromCoord = new Coord(request.originX, request.originY);
-            Coord toCoord   = new Coord(request.destinationX, request.destinationY);
-
-            Link fromLink = NetworkUtils.getNearestLink(network, fromCoord);
-            Link toLink   = NetworkUtils.getNearestLink(network, toCoord);
-
-            Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
-            Facility toFacility = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
-
-            try {
-                List<? extends PlanElement> route = router.calcRoute(
-                    DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, request.departureTime_s, null));
-
-                if (route == null || route.isEmpty()){
-                    return Double.NaN;
-                }
-                
-                SwissPtVariables ptVariables = ptRoutePredictor.predictPtVariables(route);
-                Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
-
-                if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()){
-                    return Double.NaN;
-                }
-
-                double price = 0.0;
-
-                // Junior abo should only be for kids and teens travelling with at least one parent...
-                if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)){
-                    return 0.0;
-                }
-
-                // TODO improve later
-                if (request.hasVerbundAbo) {
-                    double homeDistance_km = calculateHomeDistance_km(request);
-
-                    if (homeDistance_km <= 15.0) {
-                        return 0.0;
-                    }
-                }
-
-                if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo){
-                    return 0.0;
-                }
-
-                boolean halfFareTariff = request.hasHalbtaxSubscription || (request.age < 16);
-
-                for (Map.Entry<String, List<SwissPtLegVariables>> legEntry : groupedByAuthority.entrySet()){
-                    String authority                        = legEntry.getKey();
-                    List<SwissPtLegVariables> authorityLegs = legEntry.getValue();
-                    PtStageCostCalculator calculator        = swissPtStageCostCalculator.priceCalculators.get("None");
-
-                    if (swissPtStageCostCalculator.priceCalculators.containsKey(authority)){
-                        calculator = swissPtStageCostCalculator.priceCalculators.get(authority);				
-                    }
-
-                    price += calculator.calculatePrice(authorityLegs, halfFareTariff, authority);
-                }
-
-                return price;
-            }
-            catch (Exception e){
-                System.err.println("Routing failed for request " + id + ": " + e.getMessage());
-                return Double.NaN;
-            }
-    }
-
-
-    public static double processPriceRequestBefore(int id, CSVRequest request, Network network, SwissRailRaptor router, SwissPtRoutePredictor ptRoutePredictor, 
-        SwissPtStageCostCalculator swissPtStageCostCalculator){
-
-            Coord fromCoord = new Coord(request.originX, request.originY);
-            Coord toCoord   = new Coord(request.destinationX, request.destinationY);
-
-            Link fromLink = NetworkUtils.getNearestLink(network, fromCoord);
-            Link toLink   = NetworkUtils.getNearestLink(network, toCoord);
-
-            Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
-            Facility toFacility = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
-
-            try {
-                List<? extends PlanElement> route = router.calcRoute(
-                    DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, request.departureTime_s, null));
-
-                if (route == null || route.isEmpty()){
-                    return Double.NaN;
-                }
-                
-                SwissPtVariables ptVariables = ptRoutePredictor.predictPtVariables(route);
-                Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
-
-                if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()){
-                    return Double.NaN;
-                }
-
-                double distance = 0.0;
-
-                // Junior abo should only be for kids and teens travelling with at least one parent...
-                if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)){
-                    return 0.0;
-                }
-
-                // TODO improve later
-                if (request.hasVerbundAbo) {
-                    double homeDistance_km = calculateHomeDistance_km(request);
-
-                    if (homeDistance_km <= 15.0) {
-                        return 0.0;
-                    }
-                }
-
-                if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo){
-                    return 0.0;
-                }
-
-                boolean halfFareTariff = request.hasHalbtaxSubscription || (request.age < 16);
-
-                for (Map.Entry<String, List<SwissPtLegVariables>> legEntry : groupedByAuthority.entrySet()){
-                    List<SwissPtLegVariables> authorityLegs = legEntry.getValue();
-
-                    for (SwissPtLegVariables legVar : authorityLegs){
-                        distance += legVar.networkDistance;
-                    }
-                }
-
-                distance = distance / 1000.0;
-
-                double oldPriceModel = 0.6 * distance;
-                if (halfFareTariff){
-                    oldPriceModel /= 2;
-                }
-                oldPriceModel = Math.round(oldPriceModel * 100.0) / 100.0;
-
-                return oldPriceModel;
-            }
-            catch (Exception e){
-                System.err.println("Routing failed for request " + id + ": " + e.getMessage());
-                return Double.NaN;
-            }
-    }
-
-    public static double computeNetworkDistance(int id, CSVRequest request, Network network, SwissRailRaptor router, SwissPtRoutePredictor ptRoutePredictor, 
-        SwissPtStageCostCalculator swissPtStageCostCalculator){
-
-            Coord fromCoord = new Coord(request.originX, request.originY);
-            Coord toCoord   = new Coord(request.destinationX, request.destinationY);
-
-            Link fromLink = NetworkUtils.getNearestLink(network, fromCoord);
-            Link toLink   = NetworkUtils.getNearestLink(network, toCoord);
-
-            Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
-            Facility toFacility = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
-
-            try {
-                List<? extends PlanElement> route = router.calcRoute(
-                    DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, request.departureTime_s, null));
-
-                if (route == null || route.isEmpty()){
-                    return Double.NaN;
-                }
-                
-                SwissPtVariables ptVariables = ptRoutePredictor.predictPtVariables(route);
-                Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
-
-                if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()){
-                    return Double.NaN;
-                }
-
-                double distance = 0.0;
-
-                for (Map.Entry<String, List<SwissPtLegVariables>> legEntry : groupedByAuthority.entrySet()){
-                    List<SwissPtLegVariables> authorityLegs = legEntry.getValue();
-
-                    for (SwissPtLegVariables legVar : authorityLegs){
-                        distance += legVar.networkDistance;
-                    }
-                }
-
-                return distance;
-            }
-            catch (Exception e){
-                System.err.println("Routing failed for request " + id + ": " + e.getMessage());
-                return Double.NaN;
-            }
-    }
-
 
     static public void main(String[] args) throws ConfigurationException, IOException, CsvValidationException {
 
@@ -462,46 +456,33 @@ public class RunComputeTransitPrices {
         CSVRequestReader csvRequestReader = new RunComputeTransitPrices.CSVRequestReader(cmd.getOptionStrict("requests-path"));
         csvRequestReader.readCSV();
 
-        Map<Integer, Double> prices = csvRequestReader.requests.entrySet().parallelStream()  
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> processPriceRequest(
-                    entry.getKey(),
-                    entry.getValue(),
-                    network,
-                    threadLocalRouter.get(),
-                    threadLocalPtRoutePredictor.get(),
-                    threadLocalPtStageCalculator.get()
-                )
-            ));
+        System.out.println("CSV read.");
 
-        Map<Integer, Double> oldPrices = csvRequestReader.requests.entrySet().parallelStream()  
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> processPriceRequestBefore(
-                    entry.getKey(),
-                    entry.getValue(),
-                    network,
-                    threadLocalRouter.get(),
-                    threadLocalPtRoutePredictor.get(),
-                    threadLocalPtStageCalculator.get()
-                )
-            ));
+        Map<Integer, RouteResult> results = csvRequestReader.requests.entrySet()
+        .parallelStream()
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> processRequest(
+                entry.getKey(),
+                entry.getValue(),
+                network,
+                threadLocalRouter.get(),
+                threadLocalPtRoutePredictor.get(),
+                threadLocalPtStageCalculator.get()
+            )
+        ));
 
-        Map<Integer, Double> distances = csvRequestReader.requests.entrySet().parallelStream()  
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> computeNetworkDistance(
-                    entry.getKey(),
-                    entry.getValue(),
-                    network,
-                    threadLocalRouter.get(),
-                    threadLocalPtRoutePredictor.get(),
-                    threadLocalPtStageCalculator.get()
-                )
-            ));
+        Map<Integer, Double> prices            = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().price));
+        Map<Integer, Double> oldPrices         = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().oldPrice));
+        Map<Integer, Double> distances         = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().distance_km));
+        Map<Integer, Double> travelTimes       = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().totalTravelTime_min));
+        Map<Integer, Double> inVehicleTimes    = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().inVehicleTime_min));
+        Map<Integer, Double> accessEgressTimes = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().accessEgressTime_min));
+        Map<Integer, Double> waitingTimes      = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().waitingTime_min));
+        Map<Integer, Integer> nbTransfers      = results.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().numberTransfers));
+
 
         CSVRequestWriter writer = new RunComputeTransitPrices.CSVRequestWriter(cmd.getOptionStrict("output-path"));
-        writer.writeCSV(csvRequestReader.requests, prices, oldPrices, distances);
+        writer.writeCSV(csvRequestReader.requests, prices, oldPrices, distances, travelTimes, inVehicleTimes, accessEgressTimes, waitingTimes, nbTransfers);
     }    
 }
