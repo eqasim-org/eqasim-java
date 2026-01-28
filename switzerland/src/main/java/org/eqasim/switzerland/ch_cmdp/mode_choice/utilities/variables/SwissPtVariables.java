@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
 
 public class SwissPtVariables implements BaseVariables  {
     

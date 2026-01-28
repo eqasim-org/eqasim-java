@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
 
 public class SwissPtLegVariables implements BaseVariables {
 

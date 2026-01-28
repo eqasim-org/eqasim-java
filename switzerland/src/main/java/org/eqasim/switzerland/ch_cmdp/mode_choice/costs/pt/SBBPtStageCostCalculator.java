@@ -5,9 +5,9 @@ import java.util.List;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
 
 public class SBBPtStageCostCalculator implements PtStageCostCalculator {
-    private static final double MIN_PRICE     = 3.0;
-    private static final double MIN_PRICE_HT  = 2.20;
-    private static final double[][] DIST_BINS = {
+    public double mininumPrice     = 3.0;
+    public double mininumPriceHalbtax  = 2.20;
+    private double[][] distancesAndPrices = {
         {1, 4, 0.4623},
         {5, 14, 0.4393},
         {15, 48, 0.3867},
@@ -21,6 +21,22 @@ public class SBBPtStageCostCalculator implements PtStageCostCalculator {
 
     public SBBPtStageCostCalculator() {
     }
+
+
+    public void setMinimumPrice(double price){
+        this.mininumPrice = price;
+    }
+
+
+    public void setMinimumPriceHalbtax(double price){
+        this.mininumPriceHalbtax = price;
+    }
+
+
+    public void setDistancePrices(double[][] prices){
+        this.distancesAndPrices = prices;
+    }
+
 
     private static double SBBDistanceRounding(double d) {
         if (d <= 8) {
@@ -50,7 +66,7 @@ public class SBBPtStageCostCalculator implements PtStageCostCalculator {
 
         double roundedDistance = SBBDistanceRounding(distance);
 
-        for (double[] bracket : DIST_BINS) {
+        for (double[] bracket : this.distancesAndPrices) {
             int lower = (int) bracket[0];
             int upper = (int) bracket[1];
             double rate = bracket[2];
@@ -71,10 +87,10 @@ public class SBBPtStageCostCalculator implements PtStageCostCalculator {
 
         if (hasHalbtax){
             price = price / 2.0;
-            price = Math.max(price, MIN_PRICE_HT);
+            price = Math.max(price, this.mininumPriceHalbtax);
         }
         else{
-            price = Math.max(price, MIN_PRICE);
+            price = Math.max(price, this.mininumPrice);
         }
 
         return Math.round(price * 100.0) / 100.0;

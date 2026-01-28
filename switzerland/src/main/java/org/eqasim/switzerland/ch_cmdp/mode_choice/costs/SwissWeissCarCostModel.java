@@ -10,6 +10,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import java.util.List;
 
 public class SwissWeissCarCostModel extends AbstractCostModel {
+    @SuppressWarnings("unused")
     private final SwissCostParameters parameters;
 
     @Inject

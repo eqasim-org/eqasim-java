@@ -8,8 +8,12 @@ public class SwissPtStageCostCalculator {
 
     public Map<String, PtStageCostCalculator> priceCalculators = new HashMap<>();
 
+    public SwissPtStageCostCalculator(Map<String, PtStageCostCalculator> map){
+        this.priceCalculators = map;
+    }
+
     public SwissPtStageCostCalculator(){
-        DefaultDistanceBasedCalculator calculator = new DefaultDistanceBasedCalculator(0.19, 2.04, -0.00011);
+        DefaultDistanceBasedCalculator calculator = new DefaultDistanceBasedCalculator(0.38, 4.08, -0.00022);
         priceCalculators.put("None", calculator);
 
         SBBPtStageCostCalculator sbbCalculator = new SBBPtStageCostCalculator();
