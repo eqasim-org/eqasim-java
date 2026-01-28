@@ -1,0 +1,27 @@
+package org.sutlab.seville.mode_choice.utilities.variables;
+
+import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
+
+public class SevillePtVariables implements BaseVariables {
+    public final double inVehicleTime_min;
+	public final double waitingTime_min;
+	public final double accessEgressTime_min;
+	public final int numberOfLineSwitches;
+	public final double euclideanDistance_km;
+
+	public final boolean isOnlyBus;
+	public final boolean hasOnlySubwayAndBus;
+
+    public SevillePtVariables(double inVehicleTime_min, double waitingTime_min,
+                              double accessEgressTime_min, int numberOfLineSwitches, double euclideanDistance_km,
+                              boolean isOnlyBus, boolean hasOnlySubwayAndBus){
+           
+        this.inVehicleTime_min = inVehicleTime_min;
+        this.waitingTime_min = waitingTime_min;
+        this.accessEgressTime_min = accessEgressTime_min;
+        this.numberOfLineSwitches = numberOfLineSwitches;
+        this.euclideanDistance_km = euclideanDistance_km;
+        this.isOnlyBus = isOnlyBus;
+        this.hasOnlySubwayAndBus = hasOnlySubwayAndBus;
+     }
+}
