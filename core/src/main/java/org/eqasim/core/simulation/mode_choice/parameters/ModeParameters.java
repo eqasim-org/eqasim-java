@@ -1,6 +1,14 @@
 package org.eqasim.core.simulation.mode_choice.parameters;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.io.FileWriter;
+import java.lang.reflect.Field;
+
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
+import org.matsim.contrib.ev.charging.ChargeUpToMaxSocStrategy;
+import org.yaml.snakeyaml.Yaml;
 
 public class ModeParameters implements ParameterDefinition {
 	public class CarParameters {
@@ -37,6 +45,11 @@ public class ModeParameters implements ParameterDefinition {
 		public double betaAccessEgressTime_u_min = 0.0;
 	}
 
+	public class CarPassengerParameters {
+		public double alpha_u;
+		public double betaInVehicleTravelTime_u_min;
+	}
+
 
 	public double lambdaCostEuclideanDistance = 0.0;
 	public double referenceEuclideanDistance_km = 0.0;
@@ -48,4 +61,6 @@ public class ModeParameters implements ParameterDefinition {
 	public final BikeParameters bike = new BikeParameters();
 	public final WalkParameters walk = new WalkParameters();
 	public final DrtParameters drt = new DrtParameters();
-}
+	public final CarPassengerParameters carPassenger = new CarPassengerParameters();
+
+	}
