@@ -11,11 +11,10 @@ public class HannoverPtVariables implements BaseVariables {
 
 	public final boolean isOnlyBus;
 	public final boolean hasOnlySubwayAndBus;
-    public final boolean isWithinParis;
 
     public HannoverPtVariables(double inVehicleTime_min, double waitingTime_min, 
         double accessEgressTime_min, int numberOfLineSwitches, double euclideanDistance_km, 
-        boolean isOnlyBus, boolean hasOnlySubwayAndBus, boolean isWithinParis){
+        boolean isOnlyBus, boolean hasOnlySubwayAndBus){
            
         this.inVehicleTime_min = inVehicleTime_min;
         this.waitingTime_min = waitingTime_min;
@@ -24,6 +23,5 @@ public class HannoverPtVariables implements BaseVariables {
         this.euclideanDistance_km = euclideanDistance_km;
         this.isOnlyBus = isOnlyBus;
         this.hasOnlySubwayAndBus = hasOnlySubwayAndBus;
-        this.isWithinParis = isWithinParis;
      }
 }

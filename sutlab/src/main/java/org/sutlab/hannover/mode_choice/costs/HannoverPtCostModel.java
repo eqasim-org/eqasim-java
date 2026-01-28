@@ -48,6 +48,10 @@ public class HannoverPtCostModel implements CostModel {
 
 		double ageFactor = generalPersonVariables.age_a <= 14 ? 0.5 : 1.0;
 
+		if (generalPersonVariables.age_a <= 6) {
+			return 0.0;
+		}
+
 		if (personVariables.hasSubscription) {
 			return 0.0;
 		}
@@ -72,8 +76,9 @@ public class HannoverPtCostModel implements CostModel {
 
 		double travelTime = timeTracker.getTime().seconds() - trip.getDepartureTime();
 
-		if (travelTime <= 3600.0) {
-			// maybe short distance ticket
+		if (travelTime <= 30*60) {
+			// maybe short distance ticket for 30 minutes, trips are valid up to 5 or 3 stops and only by bus or tram
+			//https://www.uestra.de/en/tickets-prices/tickets-and-subscriptions/ticket-detail/short-trip-ticket/
 
 			boolean isValid = true;
 			int stopCount = 0;
@@ -83,8 +88,10 @@ public class HannoverPtCostModel implements CostModel {
 					TransitLine transitLine = schedule.getTransitLines().get(route.getLineId());
 					TransitRoute transitRoute = transitLine.getRoutes().get(route.getRouteId());
 
-					if (transitRoute.getTransportMode().equals("subway")
-							|| transitRoute.getTransportMode().equals("bus")) {
+					if (transitRoute.getTransportMode().equals("tram")
+							|| transitRoute.getTransportMode().equals("bus")
+						||transitRoute.getTransportMode().equals("Tram")
+							|| transitRoute.getTransportMode().equals("Bus")) {
 						TransitStopFacility accessFacility = schedule.getFacilities().get(route.getAccessStopId());
 						TransitStopFacility egressFacility = schedule.getFacilities().get(route.getEgressStopId());
 
@@ -96,12 +103,18 @@ public class HannoverPtCostModel implements CostModel {
 
 						stopCount += egressStopIndex - accessStopIndex;
 
-						if (stopCount > 4) {
+						if (stopCount > 3 && (transitRoute.getTransportMode().equals("tram")
+							|| transitRoute.getTransportMode().equals("Tram"))) {
+							isValid = false;
+							break;
+						}
+						if (stopCount > 5 && (transitRoute.getTransportMode().equals("bus")
+							|| transitRoute.getTransportMode().equals("Bus"))) {
 							isValid = false;
 							break;
 						}
 					} else {
-						isValid = false;
+						isValid = false;     
 						break;
 					}
 				}
@@ -125,6 +138,12 @@ public class HannoverPtCostModel implements CostModel {
 		Integer lastMinimumZone = (Integer) lastFacility.getAttributes().getAttribute("minimumZone");
 		Integer lastMaximumZone = (Integer) lastFacility.getAttributes().getAttribute("maximumZone");
 
+		//Hannover city belongs to one zone system, so using that for zonal pricing
+		firstMinimumZone = 0;
+		firstMaximumZone = 0;
+		lastMinimumZone = 0;
+		lastMaximumZone = 0;
+
 		if (firstMinimumZone != null && lastMinimumZone != null) {
 			// we have a zonal trip
 			return ageFactor * getZonalPrice(firstMinimumZone, firstMaximumZone, lastMinimumZone, lastMaximumZone);
@@ -134,15 +153,15 @@ public class HannoverPtCostModel implements CostModel {
 		}
 	}
 
-	private final static double shortPrice = 1.9;
-	private final static double basePrice_h = 8.0;
+	private final static double shortPrice = 1.8;
+	private final static double basePrice_h = 3.6; //8.0;
 
 	private final static double[] prices = new double[] { //
 			3.9, 3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2 //
 	};
 
 	private final static double[] pricesM = new double[] { //
-			3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 23.9, 25.5 //
+			3.6, 3.9, 5.8, 7.7, 9.7, 11.6, 13.6, 15.4, 17.1, 18.8, 20.5, 22.2, 23.9, 25.5 // [0] = 0 zones, for hannover city trips
 	};
 
 	private double getZonalPrice(int firstMinimumZone, int firstMaximumZone, int lastMinimumZone, int lastMaximumZone) {

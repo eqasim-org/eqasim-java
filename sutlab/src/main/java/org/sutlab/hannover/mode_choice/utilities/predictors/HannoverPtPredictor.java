@@ -44,7 +44,7 @@ public class HannoverPtPredictor extends CachedVariablePredictor<HannoverPtVaria
 
 		// Track Hannover variables
 		int busCount = 0;
-		int subwayCount = 0;
+		int tramCount = 0;
 		int otherCount = 0;
 
 		TransitPassengerRoute firstRoute = null;
@@ -59,6 +59,12 @@ public class HannoverPtPredictor extends CachedVariablePredictor<HannoverPtVaria
 					break;
 				case TransportMode.transit_walk:
 					// different than standard estimator
+					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
+					break;
+				case TransportMode.bike:
+					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
+					break;
+				case "scooter":
 					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
 					break;
 				case TransportMode.pt:
@@ -84,8 +90,8 @@ public class HannoverPtPredictor extends CachedVariablePredictor<HannoverPtVaria
 
 					if (transportMode.equals("bus")) {
 						busCount++;
-					} else if (transportMode.equals("subway")) {
-						subwayCount++;
+					} else if (transportMode.equals("tram")) {
+						tramCount++;
 					} else {
 						otherCount++;
 					}
@@ -103,22 +109,11 @@ public class HannoverPtPredictor extends CachedVariablePredictor<HannoverPtVaria
 
 		double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
 
-		boolean isOnlyBus = busCount > 0 && subwayCount == 0 && otherCount == 0;
-		boolean hasOnlySubwayAndBus = (busCount > 0 || subwayCount > 0) && otherCount == 0;
+		boolean isOnlyBus = busCount > 0 && tramCount == 0 && otherCount == 0;
+		boolean hasOnlyTramAndBus = (busCount > 0 || tramCount > 0) && otherCount == 0;
 
-		boolean isWithinParis = false;
-
-		if (firstRoute != null) {
-			TransitStopFacility startFacility = schedule.getFacilities().get(firstRoute.getAccessStopId());
-			TransitStopFacility endFacility = schedule.getFacilities().get(lastRoute.getEgressStopId());
-
-			Boolean startParis = (Boolean) startFacility.getAttributes().getAttribute(HANNOVER_ATTRIBUTE);
-			Boolean endParis = (Boolean) endFacility.getAttributes().getAttribute(HANNOVER_ATTRIBUTE);
-
-			isWithinParis = startParis != null && endParis != null && startParis && endParis;
-		}
 
 		return new HannoverPtVariables(inVehicleTime_min, waitingTime_min, accessEgressTime_min, numberOfLineSwitches,
-				euclideanDistance_km, isOnlyBus, hasOnlySubwayAndBus, isWithinParis);
+				euclideanDistance_km, isOnlyBus, hasOnlyTramAndBus);
 	}
 }
