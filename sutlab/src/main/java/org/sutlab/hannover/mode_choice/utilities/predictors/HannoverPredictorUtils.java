@@ -26,5 +26,11 @@ public class HannoverPredictorUtils {
 		return !"none".equals((String) person.getAttributes().getAttribute("bicycleAvailability"));
 	}
 
+	public static int getCluster(Person person) {
+		//this is a specific design. see swiss calibration setup in cmdp for switzerland. Here it is clustered according to cantonal regions. 
+		// since we are working at city level we only calibrate to  the whole region
+		return 0;
+	}
+
 	
 }
