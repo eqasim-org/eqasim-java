@@ -117,6 +117,10 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         return Utils.isRetired(personVariables) ? parameters.walk.betaRetired_u : 0.0;
     }
 
+    protected double estimateJuniorUtility(SwissPersonVariables personVariables) {
+        return Utils.isJunior(personVariables) ? parameters.walk.betaJunior_u : 0.0;
+    }
+
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
         return Utils.isLowIncome(personVariables) ? parameters.walk.betaLowIncome_u : 0.0;
     }
@@ -133,6 +137,7 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
         utility += estimateRetiredUtility(personVariables);
+        utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);

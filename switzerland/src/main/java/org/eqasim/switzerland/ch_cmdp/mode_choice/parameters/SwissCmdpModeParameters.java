@@ -42,6 +42,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaDestinationLeisure_u = 0.0;
         public double betaDestinationOther_u = 0.0;
         public double betaRetired_u = 0.0;
+        public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
     }
 
@@ -65,6 +66,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaDestinationLeisure_u = 0.0;
         public double betaDestinationOther_u = 0.0;
         public double betaRetired_u = 0.0;
+        public double betaJunior_u = 0.0;
         public double betaCarOwnershipRatio_u = 0.0;
         public double betaShortDistance_u = 0.0;
         public double betaLongDistance_u = 0.0;
@@ -111,6 +113,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaDestinationOther_u = 0.0;
         public double betaShortDistance_u = 0.0;
         public double betaRetired_u = 0.0;
+        public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
         public double betaGoodService_u = 0.0;
         public double betaMediumService_u = 0.0;
@@ -137,6 +140,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaDestinationLeisure_u = 0.0;
         public double betaDestinationOther_u = 0.0;
         public double betaRetired_u = 0.0;
+        public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
     }
 
@@ -162,6 +166,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaDrivingLicense_u = 0.0;
         public double betaShortDistance_u = 0.0;
         public double betaRetired_u = 0.0;
+        public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
     }
 

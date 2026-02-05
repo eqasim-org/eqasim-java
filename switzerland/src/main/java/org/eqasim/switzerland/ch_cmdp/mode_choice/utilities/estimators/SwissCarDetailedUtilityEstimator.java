@@ -124,6 +124,10 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         return Utils.isRetired(personVariables) ? parameters.car.betaRetired_u : 0.0;
     }
 
+    protected double estimateJuniorUtility(SwissPersonVariables personVariables) {
+        return Utils.isJunior(personVariables) ? parameters.car.betaJunior_u : 0.0;
+    }
+
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
         return Utils.isLowIncome(personVariables) ? parameters.car.betaLowIncome_u : 0.0;
     }
@@ -161,6 +165,7 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
         utility += estimateRetiredUtility(personVariables);
+        utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);

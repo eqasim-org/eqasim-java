@@ -147,6 +147,10 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         return Utils.isRetired(personVariables) ? parameters.pt.betaRetired_u : 0.0;
     }
 
+    protected double estimateJuniorUtility(SwissPersonVariables personVariables) {
+        return Utils.isJunior(personVariables) ? parameters.pt.betaJunior_u : 0.0;
+    }
+
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
         return Utils.isLowIncome(personVariables) ? parameters.pt.betaLowIncome_u : 0.0;
     }
@@ -191,6 +195,7 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
         utility += estimateRetiredUtility(personVariables);
+        utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);

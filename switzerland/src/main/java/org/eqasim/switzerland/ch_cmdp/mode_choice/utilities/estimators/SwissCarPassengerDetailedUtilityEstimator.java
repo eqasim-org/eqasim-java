@@ -99,6 +99,10 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         return Utils.isRetired(personVariables) ? parameters.cp.betaRetired_u : 0.0;
     }
 
+    protected double estimateJuniorUtility(SwissPersonVariables personVariables) {
+        return Utils.isJunior(personVariables) ? parameters.cp.betaJunior_u : 0.0;
+    }
+
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
         return Utils.isLowIncome(personVariables) ? parameters.cp.betaLowIncome_u : 0.0;
     }
@@ -135,6 +139,7 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
         utility += estimateRetiredUtility(personVariables);
+        utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
         utility += estimateDrivingLicenseUtility(personVariables);
         // purposes

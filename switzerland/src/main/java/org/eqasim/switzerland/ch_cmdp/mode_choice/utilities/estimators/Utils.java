@@ -29,6 +29,7 @@ public class Utils {
     public static double SHORT_DISTANCE_TRIP_KM = 1.0;
     public static double LONG_DISTANCE_TRIP_KM = 13.0;
     public static double RETIRED_AGE_THRESHOLD = 65.0;
+    public static double JUNIOR_AGE_THRESHOLD = 16.0;
 
     public static boolean originIsHome(DiscreteModeChoiceTrip trip) {
         return HOME.equals(trip.getOriginActivity().getType()) || HOME_SECONDARY.equals(trip.getOriginActivity().getType());
@@ -103,7 +104,7 @@ public class Utils {
     }
 
     public static boolean isLowIncome(double income_CHF){
-        return (income_CHF<LOW_INCOME_LIMIT_CHF);
+        return (income_CHF<=LOW_INCOME_LIMIT_CHF);
     }
 
     public static boolean isLowIncome(SwissPersonVariables person){
@@ -115,6 +116,14 @@ public class Utils {
     }
     public static boolean isRetired(SwissPersonVariables person){
         return isRetired(person.age_a);
+    }
+
+
+    public static boolean isJunior(double age){
+        return (age<JUNIOR_AGE_THRESHOLD);
+    }
+    public static boolean isJunior(SwissPersonVariables person){
+        return isJunior(person.age_a);
     }
 
     public static boolean isGoodPtService(String ovgk){

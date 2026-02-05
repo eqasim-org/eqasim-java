@@ -110,6 +110,10 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return Utils.isRetired(personVariables) ? parameters.bike.betaRetired_u : 0.0;
     }
 
+    protected double estimateJuniorUtility(SwissPersonVariables personVariables) {
+        return Utils.isJunior(personVariables) ? parameters.bike.betaJunior_u : 0.0;
+    }
+
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
         return Utils.isLowIncome(personVariables) ? parameters.bike.betaLowIncome_u : 0.0;
     }
@@ -134,6 +138,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         utility += estimateAgeUtility(personVariables);
         utility += estimateSexUtility(personVariables);
         utility += estimateRetiredUtility(personVariables);
+        utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);
