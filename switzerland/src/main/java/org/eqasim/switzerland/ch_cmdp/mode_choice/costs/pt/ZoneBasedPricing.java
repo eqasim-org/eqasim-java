@@ -62,7 +62,7 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
             .map(Zone::getZoneId)
             .collect(Collectors.toSet());        
 
-        System.out.println("  Visited zones for authority " + authority + ": " + visitedZoneIds.toString());
+        //System.out.println("  Visited zones for authority " + authority + ": " + visitedZoneIds.toString());
 
         if (visitedZoneIds == null || visitedZoneIds.isEmpty()) {
             throw new IllegalArgumentException("At least one zone must be visited");
@@ -78,7 +78,7 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
 
             for (String zone : visitedZoneIds) {
                 effectiveZones++; 
-                if (zonesCountingDouble.contains(zone)) {
+                if (this.zonesCountingDouble != null && this.zonesCountingDouble.contains(zone)) {
                     effectiveZones++; 
                 }
             }
