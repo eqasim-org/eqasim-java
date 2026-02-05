@@ -143,7 +143,11 @@ public class SwissPTAuthorityPricing {
                 return Math.round(prices[prices.length - 1] * 100.0) / 100.0;
             }
 
-            return Math.round(prices[effectiveZones - 1] * 100.0) / 100.0; 
+            double price = Math.round(prices[effectiveZones - 1] * 100.0) / 100.0;
+
+            System.out.println("Trip info: visited " + effectiveZones + "zones, price: " + price);
+
+            return price;
 
         }
 

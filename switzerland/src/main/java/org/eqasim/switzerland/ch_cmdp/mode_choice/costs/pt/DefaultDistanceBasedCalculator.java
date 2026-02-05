@@ -38,8 +38,6 @@ public class DefaultDistanceBasedCalculator implements PtStageCostCalculator {
         this.priceDecreasePerKm2 = n;
     }
 
-
-
     public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authority){
         double distance = 0;
 

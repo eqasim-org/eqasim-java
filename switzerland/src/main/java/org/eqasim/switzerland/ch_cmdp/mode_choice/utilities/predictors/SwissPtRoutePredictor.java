@@ -46,69 +46,37 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
     private Map<String, List<Zone>> cleanZoneInfo(Map<String, List<Zone>> zonesByStop) {
         Map<String, List<Zone>> filtered = new HashMap<String, List<Zone>>();
 
-        Set<Authority> authorities = new HashSet<Authority>();
+        for (List<Zone> zonesAtStop : zonesByStop.values()) {
 
-        // Get all authorities
-        for (List<Zone> zones : zonesByStop.values()){
-            for (Zone zone : zones){
-                authorities.add(zone.getAuthority());
-            }
-        }
+            int maxPriority = zonesAtStop.stream()
+                .mapToInt(z -> z.getAuthority().getPriority())
+                .max()
+                .orElse(Integer.MIN_VALUE);
 
-        // Get all authorities serving all visited stops
-        Set<Authority> cleanedAuthorities = new HashSet<>();
-        for (Authority authority : authorities) {
-            boolean servesAllStops = true;
-
-            for (List<Zone> zones : zonesByStop.values()) {
-                boolean servedHere = zones.stream().anyMatch(z -> z.getAuthority().equals(authority));
-                if (!servedHere) {
-                    servesAllStops = false;
-                    break;
-                }
-            }
-            if (servesAllStops) {
-                cleanedAuthorities.add(authority);
-            }
-        }
-
-        //System.out.println("   Authorities: " + cleanedAuthorities.toString());
-
-        // If a stop is served by only one zone of a cleanedAuthority, add this zone to the filtered list
-        for (List<Zone> zones: zonesByStop.values()){
-            List<Zone> matchingZones = zones.stream()
-                .filter(z -> cleanedAuthorities.contains(z.getAuthority()))
-                .collect(Collectors.toList());
-            if (matchingZones.size() == 1) {
-                Zone uniqueZone = matchingZones.get(0);
-                filtered.computeIfAbsent(uniqueZone.getAuthority().getId(), a -> new ArrayList<>()).add(uniqueZone);
-            }
-        }
-
-        // Now that the identified unique zones are identified, add the multiple zones by selecting only the relevant ones
-        for (List<Zone> zones : zonesByStop.values()) {
-            List<Zone> matchingZones = zones.stream()
-                .filter(z -> cleanedAuthorities.contains(z.getAuthority()))
+            List<Zone> highestPriorityZones = zonesAtStop.stream()
+                .filter(z -> z.getAuthority().getPriority() == maxPriority)
                 .collect(Collectors.toList());
 
-            if (matchingZones.size() > 1) {
-                // group zones by authority
-                Map<Authority, List<Zone>> groupedByAuth = matchingZones.stream()
+            // group zones by authority at this stop
+            Map<Authority, List<Zone>> byAuth = highestPriorityZones.stream()
                     .collect(Collectors.groupingBy(Zone::getAuthority));
 
-                for (Map.Entry<Authority, List<Zone>> entry : groupedByAuth.entrySet()) {
-                    String authId = entry.getKey().getId();
-                    List<Zone> zonesForAuth = entry.getValue();
-                    List<Zone> already = filtered.getOrDefault(authId, Collections.emptyList());
+            for (Map.Entry<Authority, List<Zone>> e : byAuth.entrySet()) {
 
-                    boolean hasIntersection = zonesForAuth.stream().anyMatch(already::contains);
-                    if (!hasIntersection) {
-                        filtered.computeIfAbsent(authId, a -> new ArrayList<>()).addAll(zonesForAuth);
-                    }
+                Authority auth = e.getKey();
+                List<Zone> zones = e.getValue();
+
+                // If exactly one zone covers this stop for this authority,
+                // this zone is definitely crossed
+                if (zones.size() == 1) {
+                    Zone z = zones.get(0);
+                    filtered
+                        .computeIfAbsent(auth.getId(), a -> new ArrayList<>())
+                        .add(z);
                 }
             }
         }
-
+        
         return filtered;
         
     }
@@ -171,9 +139,6 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                         TransitStopFacility accessStop = schedule.getFacilities().get(ptRoute.getAccessStopId());
                         TransitStopFacility egressStop = schedule.getFacilities().get(ptRoute.getEgressStopId());
 
-                        //System.out.println("\nStarting to extract info for the leg from " + accessStop.getName() + " to " + egressStop.getName());
-                        //System.out.println("   From " + departureTime + " to " + arrivalTime);
-
                         List<TransitStopFacility> intermediateStops = transitRoute.getStops().stream()
                             .map(x -> x.getStopFacility())
                             .collect(Collectors.toList());
@@ -193,8 +158,6 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                             visitedStopIds.add(stop.getName());
                         }
                         
-                        //System.out.println("  Visited stops: " + visitedStopIds.toString());
-
                         List<String> stopsVisited = intermediateStops.stream()
                             .map(stop -> stop.getId().toString().replaceAll("\\.link.*$", ""))
                             .collect(Collectors.toList());
@@ -216,7 +179,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                         double sbbDistance = computeSBBDistance(zones, accessStopId, egressStopId);
                         double networkDistance = route.getDistance();
 
-                        //System.out.println("   We identified the following applicable authorities and zones: " + zones.toString() + "\n\n");
+                        //System.out.println("   We identified the following applicable authorities and zones: " + zones.toString());
 
                         SwissPtLegVariables legVariables = new SwissPtLegVariables(zones, departureTime, arrivalTime, networkDistance, sbbDistance, accessStopId, egressStopId, accessStop.getName(), egressStop.getName());
                         tripDescription.addStage(legVariables);

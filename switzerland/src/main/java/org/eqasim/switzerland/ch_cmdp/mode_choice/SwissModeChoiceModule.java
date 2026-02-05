@@ -290,7 +290,6 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	@Provides
 	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(Config mainConfig) throws Exception{
 		SwissPTZonesConfigGroup ptZonesConfig = SwissPTZonesConfigGroup.getOrCreate(getConfig());
-		System.out.println(ptZonesConfig.getPricingDescriptionPath());
 
 		SwissPtStageCostCalculator swissPtStageCostCalculator = new SwissPtStageCostCalculator();
 
@@ -298,11 +297,6 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), ptZonesConfig.getPricingDescriptionPath());
 			File path = new File(url.getPath());
 			swissPtStageCostCalculator = PricingDescriptionReader.readPriceDescription(path);
-		}
-
-		for (Map.Entry<String, PtStageCostCalculator> mapEntry : swissPtStageCostCalculator.priceCalculators.entrySet()){
-			String key = mapEntry.getKey();
-			System.out.println(key);
 		}
 
 		return swissPtStageCostCalculator;
