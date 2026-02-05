@@ -119,7 +119,11 @@ public class WebsterDelay {
     // in the trafficLightDelays map, which is indexed by link Id and time bin index.
 
     private void computeNodeDelays(Node node, double time) {
-        List<Link> inLinks = new ArrayList<>(node.getInLinks().values());
+        List<Link> inLinks = node.getInLinks().values().stream()
+                .filter(link -> link.getNumberOfLanes() > 0 && link.getCapacity() > 0)
+                .collect(Collectors.toList());
+        if (inLinks.isEmpty()) return;  // Skip if no valid links
+
         List<List<Link>> groupedLinks = IntersectionGroups.groupInLinks(inLinks);
         int numGroups = groupedLinks.size();
 

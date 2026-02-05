@@ -113,26 +113,29 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
     public void updatePenalties(int iteration) {
         for (Integer category : categoriesToCalibrate) {
-            // get current penalty for this category
-            double penalty = penalties.getOrDefault(category, 0.0);
-            // Get average count for this category
-            double count = countsProcessor.getAverageCountForCategory(category);
-            if ((count > 0.0) && Double.isFinite(count)) {
-                // Get flow for this category
-                double flow = flowProcessor.getFlowByCategory(category, sampleSize);
-                if (flow < 0.0 || !Double.isFinite(flow)) {
-                    continue; // skip if flow is invalid, but this never happens
+            // only categories that exist in the network
+            if (NetworkCalibrationUtils.getAllCategories().contains(category)) {
+                // get current penalty for this category
+                double penalty = penalties.getOrDefault(category, 0.0);
+                // Get average count for this category
+                double count = countsProcessor.getAverageCountForCategory(category);
+                if ((count > 0.0) && Double.isFinite(count)) {
+                    // Get flow for this category
+                    double flow = flowProcessor.getFlowByCategory(category, sampleSize);
+                    if (flow < 0.0 || !Double.isFinite(flow)) {
+                        continue; // skip if flow is invalid, but this never happens
+                    }
+                    // compute percentage difference
+                    double percentageDifference = (flow - count) / count;
+                    // get effective beta
+                    double effectiveBeta = getEffectiveBeta(percentageDifference, iteration);
+                    // update penalty
+                    penalty += (effectiveBeta * percentageDifference);
+                    // ensure penalty is non-negative
+                    penalty = Math.min(Math.max(penalty, minPenalty), maxPenalty);
                 }
-                // compute percentage difference
-                double percentageDifference = (flow - count) / count;
-                // get effective beta
-                double effectiveBeta = getEffectiveBeta(percentageDifference, iteration);
-                // update penalty
-                penalty += (effectiveBeta * percentageDifference);
-                // ensure penalty is non-negative
-                penalty = Math.min(Math.max(penalty, minPenalty),maxPenalty);
+                penalties.put(category, penalty);
             }
-            penalties.put(category, penalty);
         }
     }
 

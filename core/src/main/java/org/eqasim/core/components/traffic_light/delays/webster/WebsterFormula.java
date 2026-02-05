@@ -64,9 +64,10 @@ public class WebsterFormula {
         // x: ratio of green time to cycle time
         // q: flow rate
         // Validate inputs to avoid division by zero or invalid operations
-        if (c == 0.0 || q == 0.0 || x == 1.0 || g*x/c == 1.0) {
+        if (c == 0.0 || q == 0.0 || x == 1.0 || g * x / c == 1.0 ||
+                Double.isNaN(c) || Double.isNaN(g) || Double.isNaN(x) || Double.isNaN(q)) {
             System.err.println("Invalid inputs: c=" + c + ", g=" + g + ", x=" + x + ", q=" + q);
-            throw new IllegalArgumentException("Invalid input: C, q, or x cannot be zero or x cannot be 1.");
+            throw new IllegalArgumentException("Invalid input: C, q, or x cannot be zero/NaN, or x cannot be 1.");
         }
         // Calculate each term step-by-step
         // Term 1: C * (1 - g/C)^2 / (2 * (1 - g/C * x))
@@ -101,7 +102,7 @@ public class WebsterFormula {
     }
 
     public double gOpt(double C, int n) {
-        return C-L(n); // Optimal green time
+        return Math.max(C-L(n), 10.0); // Optimal green time (using max to avoid very low green times)
     }
 
 

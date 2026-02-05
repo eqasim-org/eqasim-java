@@ -48,6 +48,14 @@ public class NetworkCalibrationUtils {
 
     public static final int UNKNOWN_CATEGORY = 0;
 
+    public static List<Integer> getAllCategories() {
+        if (separateUrban) {
+            return List.of(1, 2, 3, 4, 5, 11, 12, 13, 14, 15);
+        } else {
+            return List.of(1, 2, 3, 4, 5);
+        }
+    }
+
     public static int getCategoryFromOsmHighway(String osmHighway, Link link) {
         int baseCategory;
         if (CATEGORY_1_HIGHWAY_TYPES.contains(osmHighway)) {

@@ -126,7 +126,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     }
 
     public boolean considersCategory(int category) {
-        return categoriesToCalibrate.contains(category);
+        return categoriesToCalibrate.contains(category) && NetworkCalibrationUtils.getAllCategories().contains(category);
     }
 
     private void updateCapacities() {
@@ -139,12 +139,15 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         // compute new capacities for all categories and scale them using ratio
         Map<Integer, Double> capacities = new HashMap<>();
         for (int category: categoriesToCalibrate) {
-            double newCapacity = getNewCapacity(category, ratio, true);
-            // smooth the capacities to avoid large jumps
-            double currentCapacity = capacityPerCategory.get(category);
-            newCapacity = beta * currentCapacity + (1.0-beta) * newCapacity;
-            // store the new capacity
-            capacities.put(category, newCapacity);
+            // only update categories that are present in the network
+            if (NetworkCalibrationUtils.getAllCategories().contains(category)) {
+                double newCapacity = getNewCapacity(category, ratio, true);
+                // smooth the capacities to avoid large jumps
+                double currentCapacity = capacityPerCategory.get(category);
+                newCapacity = beta * currentCapacity + (1.0 - beta) * newCapacity;
+                // store the new capacity
+                capacities.put(category, newCapacity);
+            }
         }
         // Correct capacities
         capacities = correctCapacities(capacities);
@@ -162,11 +165,11 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         // ensure that the order is respected, meaning that higher categories have higher capacities
         // if not, adjust the capacities accordingly
         Map<Integer, Double> sortedCapacities = new HashMap<>(capacities);
-        for (int category = 5; category >= 1; category--) {
-            if (categoriesToCalibrate.contains(category)) {
+        for (int category: List.of(15,5,14,4,13,3,12,2)) {
+            if (categoriesToCalibrate.contains(category) && capacities.containsKey(category)) {
                 int upperCategory = category - 1;
 
-                if (categoriesToCalibrate.contains(upperCategory)) {
+                if (categoriesToCalibrate.contains(upperCategory) && capacities.containsKey(upperCategory)) {
                     if (sortedCapacities.get(category)>sortedCapacities.get(upperCategory)) {
                         double adjustedCapacity = sortedCapacities.get(upperCategory)*0.95; // set 5% lower than upper category
                         sortedCapacities.put(category, adjustedCapacity);
@@ -182,9 +185,11 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         // first compute ration corresponding to capping the highest category to maxCapacity
         double maxNewCapacity = 0.0;
         for (int category: categoriesToCalibrate) {
-            double catNewCapacity = getNewCapacity(category, 1.0, false);
-            if (catNewCapacity > maxNewCapacity){
-                maxNewCapacity = catNewCapacity;
+            if (considersCategory(category)) {
+                double catNewCapacity = getNewCapacity(category, 1.0, false);
+                if (catNewCapacity > maxNewCapacity) {
+                    maxNewCapacity = catNewCapacity;
+                }
             }
         }
 
@@ -200,9 +205,11 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         // if the highest capacity is already below maxCapacity, compute the ratio that ensures that the lowest category does not go below minCapacity
         double minNewCapacity = Double.MAX_VALUE;
         for (int category: categoriesToCalibrate) {
-            double catNewCapacity = getNewCapacity(category, 1.0, false);
-            if (catNewCapacity < minNewCapacity){
-                minNewCapacity = catNewCapacity;
+            if (considersCategory(category)) {
+                double catNewCapacity = getNewCapacity(category, 1.0, false);
+                if (catNewCapacity < minNewCapacity) {
+                    minNewCapacity = catNewCapacity;
+                }
             }
         }
         if (minNewCapacity < minCapacity){
