@@ -1,8 +1,8 @@
 package org.eqasim.switzerland.ch_cmdp;
 
-import org.eqasim.core.components.config.EqasimConfigGroup;
+//import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -73,7 +73,7 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 	}
 
 	public void configure(Config config) {
-		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+		//EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
 
 		config.qsim().setNumberOfThreads(Math.min(12, Runtime.getRuntime().availableProcessors()));
 		config.global().setNumberOfThreads(Runtime.getRuntime().availableProcessors());

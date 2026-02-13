@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.eqasim.core.simulation.mode_choice.cost.AbstractCostModel;
-import org.eqasim.switzerland.ch.mode_choice.costs.pt.PtStageCostCalculator;
-import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.PtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
-import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtLegVariables;
-import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtVariables;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;

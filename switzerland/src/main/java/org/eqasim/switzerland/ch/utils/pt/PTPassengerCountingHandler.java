@@ -47,6 +47,8 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         String routeId;  
         String departureId; 
         Id<Vehicle> vehicleId;
+        String routeDirection;
+        String lineMainDirection;
     }
 
     static class BinKey {
@@ -58,8 +60,10 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         String routeId;
         String departureId;
         Id<Vehicle> vehicleId; 
+        String routeDirection;
+        String lineMainDirection;
 
-        BinKey(int bin, double time, Id<TransitStopFacility> stopId, String lineId, String lineName, String routeId, String departureId, Id<Vehicle> vehicleId) {
+        BinKey(int bin, double time, Id<TransitStopFacility> stopId, String lineId, String lineName, String routeId, String departureId, Id<Vehicle> vehicleId, String routeDirection, String lineMainDirection) {
             this.timeBin = bin;
             this.time = (int) time;
             this.stopId = stopId;
@@ -68,6 +72,8 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
             this.routeId = routeId;
             this.departureId = departureId;
             this.vehicleId = vehicleId;
+            this.routeDirection = routeDirection;
+            this.lineMainDirection = lineMainDirection;
         }
 
         @Override
@@ -106,10 +112,12 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         info.lineName = (lineRoute != null) ? lineRoute.lineName : "unknown";
         info.routeId = (lineRoute != null) ? lineRoute.routeId : "unknown";
         info.departureId = (lineRoute != null) ? lineRoute.departureId : "unknown";
+        info.routeDirection = (lineRoute != null) ? lineRoute.routeDirection : "unknown";
+        info.lineMainDirection = (lineRoute != null) ? lineRoute.routeMainDirection : "unknown";
 
         vehicleArrivalMap.put(event.getVehicleId(), info);
 
-        BinKey key = new BinKey(timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId);
+        BinKey key = new BinKey(timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId, info.routeDirection, info.lineMainDirection);
         binCounts.putIfAbsent(key, new Counter()); 
     }
 
@@ -124,7 +132,7 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         ArrivalInfo info = vehicleArrivalMap.get(event.getVehicleId());
         if (info == null) return; // not a PT vehicle
 
-        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId);
+        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId, info.routeDirection, info.lineMainDirection);
         binCounts.computeIfAbsent(key, k -> new Counter()).boardings++;
     }
 
@@ -133,7 +141,7 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         ArrivalInfo info = vehicleArrivalMap.get(event.getVehicleId());
         if (info == null) return;
 
-        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId);
+        BinKey key = new BinKey(info.timeBin, info.time, info.stopId, info.lineId, info.lineName, info.routeId, info.departureId, info.vehicleId, info.routeDirection, info.lineMainDirection);
         binCounts.computeIfAbsent(key, k -> new Counter()).alightings++;
     }
 
@@ -158,7 +166,7 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
 
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
             // Header
-            writer.write("time_bin,stop_id,line_id,line_name,route_id,vehicle_id,boardings,alightings\n");
+            writer.write("time_bin;stop_id;line_id;line_name;route_id;route_direction;line_main_direction;vehicle_id;boardings;alightings\n");
 
             // Sort entries by time
             List<Map.Entry<BinKey, Counter>> sortedEntries = new ArrayList<>(binCounts.entrySet());
@@ -168,9 +176,11 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
                 BinKey k = entry.getKey();
                 Counter c = entry.getValue();
                 String timeStr = formatTime(k.timeBin * BIN_SIZE);
-                writer.write(String.format("%s,%s,%s,%s,%s,%s,%d,%d\n",
-                    timeStr, k.stopId, k.lineId, k.lineName, k.routeId, k.vehicleId,
-                    c.boardings, c.alightings));
+                if (c.boardings > 0 || c.alightings > 0){
+                    writer.write(String.format("%s;%s;%s;%s;%s;%s;%s;%s;%d;%d\n",
+                        timeStr, k.stopId, k.lineId, k.lineName, k.routeId, k.routeDirection, k.lineMainDirection, k.vehicleId,
+                        c.boardings, c.alightings));
+                }
             }
             writer.flush();
             writer.close();

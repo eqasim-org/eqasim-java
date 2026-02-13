@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.utils.pricing;
+package org.eqasim.switzerland.ch_cmdp.utils.pricing;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -11,18 +11,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
-import org.eqasim.switzerland.ch.mode_choice.costs.pt.PtStageCostCalculator;
-import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
-import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
-import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtLegVariables;
-import org.eqasim.switzerland.ch.mode_choice.utilities.variables.SwissPtVariables;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.PtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtVariables;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.NetworkOfDistances;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.SBBDistanceReader;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalReader;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalRegistry;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
@@ -53,7 +53,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 
 public class RunComputeTransitPrices {
-    public static double ptRegionalRadius_km = 10.0;
+
     public static class CSVRequest{
         public final String requestId;
         public final double originX;
@@ -410,14 +410,11 @@ public class RunComputeTransitPrices {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "requests-path", "output-path") //
-				.allowPrefixes("ptRegionalRadius_km") //
+				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
 				.build();
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         Scenario scenario = ScenarioUtils.loadScenario(config);
-        if (cmd.hasOption("ptRegionalRadius_km")){
-            ptRegionalRadius_km = Double.parseDouble(cmd.getOptionStrict("ptRegionalRadius_km"));
-        }
 
         SwissPTZonesConfigGroup ptZonesConfig = ConfigUtils.addOrGetModule(config, SwissPTZonesConfigGroup.class);        
         String ptZonesFilePath = ptZonesConfig.getZonePath();

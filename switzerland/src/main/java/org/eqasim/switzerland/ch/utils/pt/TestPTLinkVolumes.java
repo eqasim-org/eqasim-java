@@ -48,8 +48,9 @@ public class TestPTLinkVolumes {
             for (TransitRoute route : line.getRoutes().values()) {
                 for (Departure dep : route.getDepartures().values()) {
                     Id<Vehicle> vehicleId = dep.getVehicleId();
+                    List<String> routeLineInfo = TransitTripInfo.findLineRouteInfo(line, route);
                     if (vehicleId != null) {
-                        vehicleToTripInfo.put(vehicleId, new TransitTripInfo(line.getId().toString(), line.getName().toString() , route.getId().toString(), dep.getId().toString()));
+                        vehicleToTripInfo.put(vehicleId, new TransitTripInfo(line.getId().toString(), line.getName().toString() , route.getId().toString(), dep.getId().toString(), routeLineInfo.get(0), routeLineInfo.get(1)));
                     }
                 }
             }

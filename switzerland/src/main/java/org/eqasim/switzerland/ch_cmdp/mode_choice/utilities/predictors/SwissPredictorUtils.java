@@ -5,7 +5,7 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 
-import java.util.Locale;
+//import java.util.Locale;
 
 public class SwissPredictorUtils {
 	static public boolean hasGeneralSubscription(Person person) {

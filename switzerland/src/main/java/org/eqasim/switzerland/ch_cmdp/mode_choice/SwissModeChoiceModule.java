@@ -10,7 +10,6 @@ import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.calibration.Optimizer;
 import org.eqasim.core.components.calibration.OptimizerHandler;
 import org.eqasim.core.components.calibration.VariablesWriter;
-import org.eqasim.core.components.calibration.writer.StandardVariablesWriter;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibrator;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
@@ -19,15 +18,16 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
-import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
-import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.NetworkOfDistances;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.SBBDistanceReader;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalReader;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalRegistry;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.PricingDescriptionReader;
 import org.eqasim.switzerland.ch_cmdp.calibration.AlphaClusterCalibrator;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizer;
 import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizerHandler;
@@ -59,6 +59,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.opencsv.exceptions.CsvValidationException;
+
 
 public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	private final CommandLine commandLine;
@@ -288,8 +289,18 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(){
-		return new SwissPtStageCostCalculator();
+	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(Config mainConfig) throws Exception{
+		SwissPTZonesConfigGroup ptZonesConfig = SwissPTZonesConfigGroup.getOrCreate(getConfig());
+
+		SwissPtStageCostCalculator swissPtStageCostCalculator = new SwissPtStageCostCalculator();
+
+		if (ptZonesConfig.getPricingDescriptionPath() != null){
+			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), ptZonesConfig.getPricingDescriptionPath());
+			File path = new File(url.getPath());
+			swissPtStageCostCalculator = PricingDescriptionReader.readPriceDescription(path);
+		}
+
+		return swissPtStageCostCalculator;
 	}
 
 }

@@ -16,6 +16,7 @@ import java.util.List;
 
 
 public class CarPassengerPredictor extends CachedVariablePredictor<SwissCarPassengerVariables> {
+    @SuppressWarnings("unused")
     private final ModeParameters parameters;
 
     @Inject
