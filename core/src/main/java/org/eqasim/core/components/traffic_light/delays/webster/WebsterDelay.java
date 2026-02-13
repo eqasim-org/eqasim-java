@@ -217,10 +217,11 @@ public class WebsterDelay {
 
         // Step 2: Compute effective ratios per group (above threshold only)
         List<Double> ratios = new ArrayList<>();
-        double totalIntersectionFlow = getSumOf(flowMap);
+        double minFlow = webster.getMinimumFlowRate();
+        double totalIntersectionFlow = Math.max(getSumOf(flowMap),minFlow); // to avoid division by zero
         for (List<Link> group : groupedLinks) {
             double groupRatio = group.stream().mapToDouble(flowMap::get).sum()/totalIntersectionFlow;
-            double adjustedRatio = Math.max(0.0, groupRatio - minRatio);
+            double adjustedRatio = Math.max(1e-3, groupRatio - minRatio); // Adjust the ratio by subtracting the minimum ratio, and ensure it is not negative or zero
             ratios.add(adjustedRatio);
         }
 

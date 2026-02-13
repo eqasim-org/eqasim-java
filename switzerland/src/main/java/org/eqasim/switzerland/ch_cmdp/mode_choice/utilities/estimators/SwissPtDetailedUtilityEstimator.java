@@ -6,6 +6,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEsti
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
@@ -23,16 +24,19 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     private final SwissPersonPredictor personPredictor;
     private final VariablesWriter variablesWriter;
     private final boolean correctPtVariables = false;
+    private final SwissCostParameters swissCostParameters;
 
     @Inject
     public SwissPtDetailedUtilityEstimator(SwissCmdpModeParameters parameters, PtPredictor predictor,
                                            SwissPersonPredictor personPredictor,
-                                           VariablesWriter variablesWriter) {
+                                           VariablesWriter variablesWriter,
+                                           SwissCostParameters swissCostParameters) {
         super(parameters, predictor);
         this.ptPredictor  = predictor;
         this.parameters = parameters;
         this.personPredictor = personPredictor;
         this.variablesWriter = variablesWriter;
+        this.swissCostParameters = swissCostParameters;
     }
 
     protected double estimateRegionalUtility(SwissPersonVariables personVariables) {
@@ -91,7 +95,7 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     }
 
     protected double estimateMonetaryCostUtility(PtVariables variables, SwissPersonVariables personVariables) {
-        double distance = Math.max(10.0 / parameters.distanceScale_km -variables.euclideanDistance_km / parameters.distanceScale_km, 0.0);
+        double distance = Math.max(swissCostParameters.ptRegionalRadius_km-variables.euclideanDistance_km, 0.0) / parameters.distanceScale_km ;
         double costCorrection = parameters.pt.betaDistance_u_km * Math.pow(distance, parameters.pt.distanceExponent);
         double cost = variables.cost_MU + costCorrection;
         double interaction = Utils.interaction(variables.euclideanDistance_km, personVariables.income, parameters);

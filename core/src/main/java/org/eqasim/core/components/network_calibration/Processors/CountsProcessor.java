@@ -9,8 +9,8 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
-import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -19,10 +19,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CountsProcessor {
     private static final Logger logger = LogManager.getLogger(CountsProcessor.class);
@@ -37,9 +34,11 @@ public class CountsProcessor {
     private final boolean hasCountsFile;
     private final boolean hasAverageCountsPerCategoryFile;
     private final OutputDirectoryHierarchy outputHierarchy;
+    private final LinkCategorizer categorizer;
+    private final Map<Integer, Integer> numCountsByCategory = new HashMap<>();
 
     public CountsProcessor(Network network, NetworkCalibrationConfigGroup config,
-                           OutputDirectoryHierarchy outputHierarchy) {
+                           OutputDirectoryHierarchy outputHierarchy, LinkCategorizer categorizer) {
         this.hasCountsFile = config.hasCountsFile();
         this.hasAverageCountsPerCategoryFile = config.hasAverageCountsPerCategoryFile();
         // check that at least one of the files is provided
@@ -54,8 +53,8 @@ public class CountsProcessor {
         this.outputHierarchy = outputHierarchy;
         this.config = config;
 
-        // set whether we separate urban and rural links
-        NetworkCalibrationUtils.setSeparateUrban(config.getSeparateUrbanRoads());
+        // Initialize categorizer with separate urban flag
+        this.categorizer = categorizer;
         try {
             build();
             saveAverageCounts();
@@ -67,14 +66,44 @@ public class CountsProcessor {
     private void build() throws IOException {
         // init road categories
         for (Link link : network.getLinks().values()) {
-            int category = NetworkCalibrationUtils.getCategory(link);
+            int category = categorizer.getCategory(link);
             roadCategories.put(link.getId(), category);
         }
+
         // read counts file and process
         if (hasCountsFile) {
             readCounts();
         } else {
             readAverageCountsPerCategory();
+        }
+
+
+        // when distinction is made between urban and rural, and counts are provided, categories with less than 20 counts are merged (merge urban into rural)
+        boolean merged = false;
+        if (hasCountsFile && categorizer.isSeparateUrban()) {
+            for (Map.Entry<Integer, Integer> entry : numCountsByCategory.entrySet()) {
+                int category = entry.getKey();
+                int count = entry.getValue();
+                if (count < 20) {
+                    logger.warn("Merging category {} into rural due to insufficient number of roads: {}", category, count);
+                    int category1 = category % 10;
+                    int category2 = category1 + 10;
+                    categorizer.mergeCategories(category1, category2);
+                    for (Id<Link> linkId:roadCategories.keySet()) {
+                        if (roadCategories.get(linkId).equals(category2)) {
+                            roadCategories.put(linkId, category1);
+                        }
+                    }
+                    merged = true;
+                }
+            }
+            // re-compute average counts per category after merging
+            if (merged){
+                AverageCountsPerCategory.clear();
+                numCountsByCategory.clear();
+                allLinks.clear();
+                readCounts();
+            }
         }
     }
 
@@ -99,17 +128,15 @@ public class CountsProcessor {
         List<CountPoint> counts = taskIterator.readAll();
 
         // assign average counts to each category
-        Map<Integer, Integer> categoryCounts = new HashMap<>();
-
         for (CountPoint point : counts) {
             Id<Link> linkId = Id.create(point.linkId, Link.class);
             Integer category = getLinkCategory(linkId);
             if (category == null) {
                 throw new IOException("Link with ID " + point.linkId + " not found in the network.");
             }
-            if (category != NetworkCalibrationUtils.UNKNOWN_CATEGORY) {
+            if (category != LinkCategorizer.UNKNOWN_CATEGORY) {
                 AverageCountsPerCategory.put(category, AverageCountsPerCategory.getOrDefault(category, 0.0) + point.count);
-                categoryCounts.put(category, categoryCounts.getOrDefault(category, 0) + 1);
+                numCountsByCategory.put(category, numCountsByCategory.getOrDefault(category, 0) + 1);
                 //  register the links
                 allLinks.add(linkId);
             }
@@ -118,7 +145,7 @@ public class CountsProcessor {
         // Compute averages
         for (Map.Entry<Integer, Double> entry : AverageCountsPerCategory.entrySet()) {
             int category = entry.getKey();
-            AverageCountsPerCategory.put(category, entry.getValue() / categoryCounts.get(category));
+            AverageCountsPerCategory.put(category, entry.getValue() / numCountsByCategory.get(category));
             logger.info("Average traffic count for category {}: {}", category, AverageCountsPerCategory.get(category));
         }
     }
@@ -131,7 +158,7 @@ public class CountsProcessor {
         }
 
         CsvMapper mapper = new CsvMapper();
-        CsvSchema taskSchema = mapper.typedSchemaFor(OutputPoint.class).withHeader().withColumnSeparator(',').withComments()
+        CsvSchema taskSchema = mapper.typedSchemaFor(OutputPoint.class).withHeader().withColumnSeparator(';').withComments()
                 .withColumnReordering(true);
         MappingIterator<OutputPoint> taskIterator = mapper.readerWithTypedSchemaFor(OutputPoint.class).with(taskSchema)
                 .readValues(inputFile);

@@ -51,7 +51,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 
 public class RunComputeTransitPrices {
-
+    public static double ptRegionalRadius_km = 10.0;
     public static class CSVRequest{
         public final String requestId;
         public final double originX;
@@ -250,28 +250,28 @@ public class RunComputeTransitPrices {
                     return Double.NaN;
                 }
 
-                double price = 0.0;
-
-                // Junior abo should only be for kids and teens travelling with at least one parent...
-                if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)){
+                boolean isGleis7 = request.departureTime_s < 5 * 3600 || request.departureTime_s >= 19 * 3600;
+                boolean hasGleis7FreeTravel = request.age < 25 && request.hasGleis7Abo && isGleis7;
+                boolean hasFreePublicTransport = request.hasGA
+                                                || request.age < 6
+                                                || (request.age < 16 && request.hasJuniorAbo)
+                                                || hasGleis7FreeTravel;
+                if (hasFreePublicTransport) {
                     return 0.0;
                 }
 
                 // TODO improve later
-                if (request.hasVerbundAbo) {
+                boolean hasRegionalSubscription = request.hasVerbundAbo || request.hasStreckenAbo;
+                if (hasRegionalSubscription) {
                     double homeDistance_km = calculateHomeDistance_km(request);
-
-                    if (homeDistance_km <= 15.0) {
+                    if (homeDistance_km <= ptRegionalRadius_km) {
                         return 0.0;
                     }
                 }
 
-                if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo){
-                    return 0.0;
-                }
 
                 boolean halfFareTariff = request.hasHalbtaxSubscription || (request.age < 16);
-
+                double price = 0.0;
                 for (Map.Entry<String, List<SwissPtLegVariables>> legEntry : groupedByAuthority.entrySet()){
                     String authority                        = legEntry.getKey();
                     List<SwissPtLegVariables> authorityLegs = legEntry.getValue();
@@ -284,7 +284,8 @@ public class RunComputeTransitPrices {
                     price += calculator.calculatePrice(authorityLegs, halfFareTariff, authority);
                 }
 
-                return price;
+                double maximumPrice = halfFareTariff? 35.0 : 60.0;
+                return Math.min(price,maximumPrice);
             }
             catch (Exception e){
                 System.err.println("Routing failed for request " + id + ": " + e.getMessage());
@@ -322,22 +323,23 @@ public class RunComputeTransitPrices {
 
                 double distance = 0.0;
 
-                // Junior abo should only be for kids and teens travelling with at least one parent...
-                if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)){
+                boolean isGleis7 = request.departureTime_s < 5 * 3600 || request.departureTime_s >= 19 * 3600;
+                boolean hasGleis7FreeTravel = request.age < 25 && request.hasGleis7Abo && isGleis7;
+                boolean hasFreePublicTransport = request.hasGA
+                        || request.age < 6
+                        || (request.age < 16 && request.hasJuniorAbo)
+                        || hasGleis7FreeTravel;
+                if (hasFreePublicTransport) {
                     return 0.0;
                 }
 
                 // TODO improve later
-                if (request.hasVerbundAbo) {
+                boolean hasRegionalSubscription = request.hasVerbundAbo || request.hasStreckenAbo;
+                if (hasRegionalSubscription) {
                     double homeDistance_km = calculateHomeDistance_km(request);
-
-                    if (homeDistance_km <= 15.0) {
+                    if (homeDistance_km <= ptRegionalRadius_km) {
                         return 0.0;
                     }
-                }
-
-                if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo){
-                    return 0.0;
                 }
 
                 boolean halfFareTariff = request.hasHalbtaxSubscription || (request.age < 16);
@@ -352,13 +354,14 @@ public class RunComputeTransitPrices {
 
                 distance = distance / 1000.0;
 
-                double oldPriceModel = 0.6 * distance;
+                double oldPrice = Math.max(2.8, 2*(0.21 * distance - 0.00015 * Math.pow(distance,2) ));
                 if (halfFareTariff){
-                    oldPriceModel /= 2;
+                    oldPrice /= 2;
                 }
-                oldPriceModel = Math.round(oldPriceModel * 100.0) / 100.0;
+                oldPrice = Math.round(oldPrice * 100.0) / 100.0;
 
-                return oldPriceModel;
+                double maximumPrice = halfFareTariff? 35.0 : 60.0;
+                return Math.min(oldPrice,maximumPrice);
             }
             catch (Exception e){
                 System.err.println("Routing failed for request " + id + ": " + e.getMessage());
@@ -416,11 +419,14 @@ public class RunComputeTransitPrices {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "requests-path", "output-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
+				.allowPrefixes("ptRegionalRadius_km") //
 				.build();
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         Scenario scenario = ScenarioUtils.loadScenario(config);
+        if (cmd.hasOption("ptRegionalRadius_km")){
+            ptRegionalRadius_km = Double.parseDouble(cmd.getOptionStrict("ptRegionalRadius_km"));
+        }
 
         SwissPTZonesConfigGroup ptZonesConfig = ConfigUtils.addOrGetModule(config, SwissPTZonesConfigGroup.class);        
         String ptZonesFilePath = ptZonesConfig.getZonePath();

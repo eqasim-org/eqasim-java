@@ -7,6 +7,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissBikePredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
@@ -21,12 +22,12 @@ import java.util.Map;
 public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final SwissPersonPredictor personPredictor;
-    private final BikePredictor bikePredictor;
+    private final SwissBikePredictor bikePredictor;
     private final VariablesWriter variablesWriter;
 
     @Inject
     public SwissBikeDetailedUtilityEstimator(SwissCmdpModeParameters parameters, SwissPersonPredictor personPredictor,
-                                             BikePredictor bikePredictor, VariablesWriter variablesWriter) {
+                                             SwissBikePredictor bikePredictor, VariablesWriter variablesWriter) {
         super(parameters, personPredictor.delegate, bikePredictor);
 
         this.parameters = parameters;

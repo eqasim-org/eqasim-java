@@ -46,30 +46,41 @@ public class SwissPtCostModel extends AbstractCostModel {
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SwissPersonVariables personVariables = predictor.predictVariables(person, trip, elements);
-		SwissPtVariables ptVariables         = ptRoutePredictor.predictVariables(person, trip, elements);
 		double price                         = 0;
-		double legPrice                      = 0;
-		double totalDistance                 = 0;
 
-		if (personVariables.hasGeneralSubscription || personVariables.age_a < 6) {
+		boolean isGleis7 = trip.getDepartureTime() < 5 * 3600 || trip.getDepartureTime() >= 19 * 3600;
+		boolean hasGleis7FreeTravel = personVariables.age_a < 25 && personVariables.hasGleis7Subscription && isGleis7;
+		boolean hasFreePublicTransport = personVariables.hasGeneralSubscription
+										|| personVariables.age_a < 6
+										|| (personVariables.age_a < 16 && personVariables.hasJuniorSubscription)
+										|| hasGleis7FreeTravel;
+		if (hasFreePublicTransport) {
 			return 0.0;
 		}
 
-		boolean halfFareTariff = personVariables.hasHalbtaxSubscription || (personVariables.age_a <= 16);
+		// for testing purposes, we give ga to 70% of long distances trips
+		double euclideanDistance_km = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(), trip.getDestinationActivity().getCoord()) * 1e-3;
+		if (euclideanDistance_km>20.0) {
+			double randomValue = Math.random();
+			if (randomValue > 0.3) {
+				return 0.0;
+			}
+		}
 
 		// TODO find a better way to identify which regional subscription the agent has access to
 		if (personVariables.hasRegionalSubscription) {
 			double homeDistance_km = calculateHomeDistance_km(personVariables, trip);
-
 			if (homeDistance_km <= parameters.ptRegionalRadius_km) {
 				return 0.0;
 			}
 		}
-		
+
+		SwissPtVariables ptVariables         = ptRoutePredictor.predictVariables(person, trip, elements);
 		Map<String, List<SwissPtLegVariables>> groupedByAuthority =  ptVariables.getPricingStrategy();
 
-		//System.out.println("\nStarting to compute the price for a trip from " + trip.getOriginActivity().getCoord().toString() + " to " + trip.getDestinationActivity().getCoord().toString());
-
+		boolean halfFareTariff = personVariables.hasHalbtaxSubscription || (personVariables.age_a <= 16);
+		double legPrice                      = 0;
+		double totalDistance                 = 0;
 		for (Map.Entry<String, List<SwissPtLegVariables>> entry : groupedByAuthority.entrySet()){
             String authority                        = entry.getKey();
             List<SwissPtLegVariables> authorityLegs = entry.getValue();
@@ -81,22 +92,13 @@ public class SwissPtCostModel extends AbstractCostModel {
 
 			legPrice = calculator.calculatePrice(authorityLegs, halfFareTariff, authority);
 			price += legPrice;
-			//System.out.println("  Computed price for authority " + authority + ": " + legPrice);
 
 			for (SwissPtLegVariables leg : authorityLegs){
 				totalDistance += leg.networkDistance / 1000.0;
 			}
         }
 
-		double oldPriceModel = 0.6 * totalDistance;
-		if (halfFareTariff){
-			oldPriceModel /= 2;
-		}
-		oldPriceModel = Math.round(oldPriceModel * 100.0) / 100.0;
-
-        //System.out.println("Total price: " + price + "\n\n");
-		//System.out.println("Old cost model (0.6*distance): " + oldPriceModel + "\n");
-
-		return price;
+		double maximumPrice = halfFareTariff? 35.0 : 60.0;
+		return Math.min(price, maximumPrice);
 	}
 }

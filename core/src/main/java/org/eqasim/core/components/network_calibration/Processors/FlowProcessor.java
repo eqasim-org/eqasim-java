@@ -2,6 +2,7 @@ package org.eqasim.core.components.network_calibration.Processors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
 import org.eqasim.core.components.flow.TimeBinManager;
@@ -62,11 +63,11 @@ public class FlowProcessor {
             }
 
             Integer linkCategory = countsProcessor.getLinkCategory(linkId);
-            if ((linkCategory==null) || (linkCategory == NetworkCalibrationUtils.UNKNOWN_CATEGORY)) {
+            if ((linkCategory==null) || (linkCategory == LinkCategorizer.UNKNOWN_CATEGORY)) {
                 continue; // skip links with unknown category
             }
 
-            // sum the flow between 6am and 10pm
+            // sum the flow of the day
             double totalFlow = countsMap.get(linkId).subList(indexOfStartingCounts, indexOfEndingCounts+1).stream().mapToDouble(Double::doubleValue).sum();
 
             // only consider links with positive flow

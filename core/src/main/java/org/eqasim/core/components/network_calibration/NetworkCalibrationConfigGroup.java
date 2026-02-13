@@ -43,13 +43,13 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private boolean correctCapacities = true;
     private double minSpeed = 2.0; // km/h
     private double maxCapacity = 1800.0; // veh/h/lane (for the highest category, used to scale all capacities)
-    private double minCapacity = 600.0; // veh/h/lane (for the lowest category)
+    private double minCapacity = 700.0; // veh/h/lane (for the lowest category)
     private String categoriesToCalibrate = "1,2,3,4,5,11,12,13,14,15";
     private double rampFactor = 1.0;
     private double trunkFactor = 1.0;
     private String objective = "capacity";
     private double maxPenalty = 0.3;
-    private double minPenalty = 0.0;
+    private double minPenalty = -0.1;
     private String penaltiesFile = "";
     private boolean separateUrbanRoads = false;
 
@@ -67,7 +67,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(CORRECT_CAPACITIES, "Whether to correct capacities for short links (default: true)");
         map.put(MIN_SPEED, "Minimum speed (in km/h) used in capacity correction (default: 2.0 km/h)");
         map.put(MAX_CAPACITY, "Maximum capacity (in veh/h/lane) used to scale all capacities (default: 1800 veh/h/lane)");
-        map.put(MIN_CAPACITY, "Minimum capacity (in veh/h/lane) used to scale all capacities (default: 600 veh/h/lane)");
+        map.put(MIN_CAPACITY, "Minimum capacity (in veh/h/lane) used to scale all capacities (default: 700 veh/h/lane)");
         map.put(COUNTS_FILE, "Path to the csv counts file (default: empty), it should contain columns 'linkId' and 'count', the counts are in veh/h/lane");
         map.put(AVERAGE_COUNTS_PER_CATEGORY_FILE, "Path to the csv average counts per category file (default: empty), it should contain columns 'category' and 'averageCount'");
         map.put(BETA, "Beta of the exponential moving average used to update capacities (default: 0.5)");
@@ -79,7 +79,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(TRUNK_FACTOR, "Factor (compared to motorway) for trunk links (default: 1.0)");
         map.put(OBJECTIVE, "What should be calibrated (capacity, penalty)");
         map.put(MAX_PENALTY, "Maximum penalty to be applied to link categories when objective is penalty (default: 0.3)");
-        map.put(MIN_PENALTY, "Minimum penalty to be applied to link categories when objective is penalty (default: 0.0)");
+        map.put(MIN_PENALTY, "Minimum penalty to be applied to link categories when objective is penalty (default: -0.1)");
         map.put(PENALTIES_FILE, "Path to the csv penalties file (default: empty), used to initialize link category penalties"+
                 ", it should contain columns 'category' and 'penalty'. When it is provided, the penalties will not be updated during the simulation.");
         map.put(SEPARATE_URBAN_ROADS, "Whether to treat urban roads (links within urban areas) as a separate category for calibration (default: false)");

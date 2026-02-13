@@ -6,26 +6,20 @@ import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.modules.config.ModeAvailabilityConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.*;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
-import org.matsim.core.config.groups.ReplanningConfigGroup;
-import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
-import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
-import org.matsim.core.config.groups.VehiclesConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultSelector;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
 import org.matsim.pt.config.TransitRouterConfigGroup;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class RunAdaptConfig {
 
@@ -130,7 +124,8 @@ public class RunAdaptConfig {
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
-
+		dmcConfig.getDefaultModeAvailabilityConfig().getAvailableModes().add("car_passenger");
+		dmcConfig.getCarModeAvailabilityConfig().getAvailableModes().add("car_passenger");
 		dmcConfig.setModeAvailability(SwissModeChoiceModule.MODE_AVAILABILITY_NAME);
 		Collection<String> cachedModes = dmcConfig.getCachedModes();
 		for (String mode : LOOP_MODES) {
@@ -138,20 +133,41 @@ public class RunAdaptConfig {
 		}
 		dmcConfig.setCachedModes(cachedModes);
 
-		ScoringConfigGroup scoringConfig1 = config.scoring();
-		RoutingConfigGroup routingConfig  = config.routing();
 		// adjust routing parameters
-		RoutingConfigGroup.TeleportedModeParams bikeParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.bike);
-		bikeParams.setBeelineDistanceFactor(1.4);
-		bikeParams.setTeleportedModeSpeed(4.0);
+		RoutingConfigGroup routingConfig  = config.routing();
+		routingConfig.setRoutingRandomness(1.0); // small randomness to avoid ties in route choice
 
 		RoutingConfigGroup.TeleportedModeParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
 		walkParams.setBeelineDistanceFactor(1.3);
 		walkParams.setTeleportedModeSpeed(1.3);
 
+		TravelTimeCalculatorConfigGroup ttcConfig = config.travelTimeCalculator();
+		ttcConfig.setTravelTimeGetterType("linearinterpolation");
+		// if routing bike in the network, we include it in the routing module
+		if (SwissConfigAdapter.routeBikeInNetwork) {
+			List<String> networkModes = new ArrayList<>(routingConfig.getNetworkModes());
+			if (!networkModes.contains(TransportMode.bike)) {
+				networkModes.add(TransportMode.bike);
+				routingConfig.setNetworkModes(networkModes);
+	    	}
+			routingConfig.removeTeleportedModeParams(TransportMode.bike);
+			// If routing bike in the network, we need to change qsim link dynamics to seepageQ
+			qsimConfigGroup.setLinkDynamics(QSimConfigGroup.LinkDynamics.PassingQ);
+			qsimConfigGroup.setSeepModes(Collections.singletonList(TransportMode.bike));
+			qsimConfigGroup.setSeepModeStorageFree(true);
+			ttcConfig.getAnalyzedModes().add(TransportMode.bike);
+			qsimConfigGroup.setMainModes(Arrays.asList(TransportMode.car, TransportMode.bike, "truck"));
+		} else {
+			// if not routing bike in the network, we set the beeline factor and speed for bike mode
+			RoutingConfigGroup.TeleportedModeParams bikeParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.bike);
+			bikeParams.setBeelineDistanceFactor(1.4);
+			bikeParams.setTeleportedModeSpeed(4.0);
+		}
+
 		//loop modes
+		ScoringConfigGroup scoringConfig = config.scoring();
 		for (String mode : LOOP_MODES) {
-			ModeParams modeParams = scoringConfig1.getOrCreateModeParams(mode);
+			ModeParams modeParams = scoringConfig.getOrCreateModeParams(mode);
 
 			modeParams.setConstant(0.0);
 			modeParams.setMarginalUtilityOfDistance(0.0);
@@ -177,8 +193,6 @@ public class RunAdaptConfig {
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {
-			ScoringConfigGroup scoringConfig = config.scoring();
-
 			for (String activityType : SwissConfigAdapter.activityTypes) {
 				ScoringConfigGroup.ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
 

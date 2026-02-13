@@ -54,7 +54,7 @@ public class TrafficLightDelay {
             } else  {
                 // if it is just a road connected, this must be ignored
                 boolean validIntersectionNodeDegree = link.getToNode().getInLinks().size()>1 || link.getToNode().getOutLinks().size()>1;
-                boolean hasTlAsBool = validIntersectionNodeDegree && Boolean.parseBoolean(hasTl.toString()); // Safer conversion
+                boolean hasTlAsBool = validIntersectionNodeDegree && Boolean.parseBoolean(hasTl.toString());
                 link.getAttributes().putAttribute(TL_ATTRIBUTE, hasTlAsBool);
             }
         }
@@ -66,7 +66,11 @@ public class TrafficLightDelay {
 
     public boolean hasTrafficLight(Link link) {
         // Check if the link has a traffic light attribute set to true
-        return (boolean) link.getAttributes().getAttribute(TL_ATTRIBUTE);
+        Object hasTl = link.getAttributes().getAttribute(TL_ATTRIBUTE);
+        if (hasTl == null) {
+            return false; // No attribute means no traffic light
+        }
+        return Boolean.parseBoolean(hasTl.toString()); // Safer conversion
     }
 
     public void resetDelays() {

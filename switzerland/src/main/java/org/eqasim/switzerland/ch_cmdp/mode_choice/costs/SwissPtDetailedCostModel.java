@@ -37,9 +37,8 @@ public class SwissPtDetailedCostModel extends AbstractCostModel {
     public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         SwissPersonVariables variables = predictor.predictVariables(person, trip, elements);
 
-        boolean isGleis7 = trip.getDepartureTime() < 5 * 3600 || trip.getDepartureTime() > 19 * 3600;
+        boolean isGleis7 = trip.getDepartureTime() < 5 * 3600 || trip.getDepartureTime() >= 19 * 3600;
         boolean hasGleis7FreeTravel = variables.age_a < 25 && variables.hasGleis7Subscription && isGleis7;
-
         boolean hasFreePublicTransport = variables.hasGeneralSubscription
                 || variables.age_a < 6
                 || (variables.age_a < 16 && variables.hasJuniorSubscription)
@@ -57,17 +56,13 @@ public class SwissPtDetailedCostModel extends AbstractCostModel {
         }
 
         double inVehicleDistance = getInVehicleDistance_km(elements);
-        double fullCost_CHF = Math.max(parameters.ptMinimumCost_CHF,
+        double cost_CHF = Math.max(parameters.ptMinimumCost_CHF,
                 parameters.ptCost_CHF_km * inVehicleDistance + parameters.ptCost_CHF_km2 * Math.pow(inVehicleDistance,2));
-
-        if (variables.hasHalbtaxSubscription) {
-            return Math.min(fullCost_CHF * 0.5 , 50.0);
+        boolean halfFareTariff = variables.hasHalbtaxSubscription || (variables.age_a <= 16);
+        if (halfFareTariff) {
+            cost_CHF *= 0.5;
         }
-
-        if (variables.age_a < 16) {
-            return Math.min(fullCost_CHF * 0.5 , 50.0);
-        }
-
-        return Math.min(fullCost_CHF, 50.0);
+        double maximumPrice = halfFareTariff? 35.0 : 60.0;
+        return Math.min(cost_CHF, maximumPrice);
     }
 }

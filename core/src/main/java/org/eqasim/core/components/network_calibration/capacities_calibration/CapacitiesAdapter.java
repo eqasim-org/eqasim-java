@@ -1,6 +1,7 @@
 package org.eqasim.core.components.network_calibration.capacities_calibration;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
@@ -36,10 +37,12 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     private final List<Integer> categoriesToCalibrate;
     private final double rampCapacityFactor;
     private final double trunkCapacityFactor;
+    private final LinkCategorizer categorizer;
 
     public CapacitiesAdapter(Network network, FlowProcessor flowsEstimator, CountsProcessor countsProcessor,
                              NetworkCalibrationConfigGroup config,
-                             EqasimConfigGroup eqasimConfig, OutputDirectoryHierarchy outputHierarchy) {
+                             EqasimConfigGroup eqasimConfig, OutputDirectoryHierarchy outputHierarchy,
+                             LinkCategorizer categorizer) {
         this.network = network;
         this.flowsEstimator = flowsEstimator;
         this.countsProcessor = countsProcessor;
@@ -55,9 +58,10 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         this.trunkCapacityFactor = config.getTrunkFactor();
         this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.outputHierarchy = outputHierarchy;
+        this.categorizer = categorizer;
 
         // adjust initial capacities
-        NetworkCalibrationUtils.adjustNetworkCapacities(network, minCapacity, maxCapacity, sampleSize, correctCapacities, minSpeed);
+        NetworkCalibrationUtils.adjustNetworkCapacities(network, minCapacity, maxCapacity, sampleSize, correctCapacities, minSpeed, categorizer);
         // initialize average capacities per category
         initCapacityPerCategory();
     }
@@ -69,7 +73,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         for (Link link : network.getLinks().values()) {
             Integer category = countsProcessor.getLinkCategory(link.getId());
 
-            if ((category == null)||(category == NetworkCalibrationUtils.UNKNOWN_CATEGORY)) {
+            if ((category == null)||(category == LinkCategorizer.UNKNOWN_CATEGORY)) {
                 continue; // skip links with unknown category
             }
 
@@ -126,7 +130,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     }
 
     public boolean considersCategory(int category) {
-        return categoriesToCalibrate.contains(category) && NetworkCalibrationUtils.getAllCategories().contains(category);
+        return categoriesToCalibrate.contains(category) && categorizer.getAllCategories().contains(category);
     }
 
     private void updateCapacities() {
@@ -140,7 +144,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         Map<Integer, Double> capacities = new HashMap<>();
         for (int category: categoriesToCalibrate) {
             // only update categories that are present in the network
-            if (NetworkCalibrationUtils.getAllCategories().contains(category)) {
+            if (categorizer.getAllCategories().contains(category)) {
                 double newCapacity = getNewCapacity(category, ratio, true);
                 // smooth the capacities to avoid large jumps
                 double currentCapacity = capacityPerCategory.get(category);
@@ -239,7 +243,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         for (Link link : network.getLinks().values()) {
             Integer linkCategory = countsProcessor.getLinkCategory(link.getId());
             if ((linkCategory != null) &&
-                (linkCategory != NetworkCalibrationUtils.UNKNOWN_CATEGORY) &&
+                (linkCategory != LinkCategorizer.UNKNOWN_CATEGORY) &&
                 (capacities.containsKey(linkCategory))) {
                 double numberOfLanes = link.getNumberOfLanes();
                 double linkCapacity = capacities.get(linkCategory) * numberOfLanes;
@@ -266,14 +270,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
     private void saveCapacities(int iteration) {
         String filename = outputHierarchy.getIterationFilename(iteration, "link_category_capacities.csv");
-        try (java.io.BufferedWriter writer = org.matsim.core.utils.io.IOUtils.getBufferedWriter(filename)) {
-            writer.write("Category;Capacity(veh/h/lane)\n");
-            for (int category : capacityPerCategory.keySet()) {
-                writer.write(category + ";" + String.format("%.2f", capacityPerCategory.get(category)) + "\n");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error writing link category capacities to file: " + filename);
-        }
+        CapacityCsvHandler.writeCapacitiesToFile(filename, capacityPerCategory);
     }
 
     private void saveNetwork(int iteration) {

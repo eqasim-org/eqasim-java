@@ -9,6 +9,7 @@ import org.eqasim.core.components.network_calibration.capacities_calibration.Cap
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltiesAdapter;
+import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.flow.FlowDataSet;
@@ -85,23 +86,26 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                                                       CountsProcessor countsProcessor,
                                                       NetworkCalibrationConfigGroup config,
                                                       EqasimConfigGroup eqasimConfig,
-                                                      OutputDirectoryHierarchy outputHierarchy) {
-        return new CapacitiesAdapter(network, flowsEstimator, countsProcessor, config, eqasimConfig, outputHierarchy);
+                                                      OutputDirectoryHierarchy outputHierarchy,
+                                                      LinkCategorizer categorizer) {
+        return new CapacitiesAdapter(network, flowsEstimator, countsProcessor, config, eqasimConfig, outputHierarchy, categorizer);
     }
 
     @Provides
     @Singleton
-    public CountsProcessor provideCountsProcessor(Network network, OutputDirectoryHierarchy outputHierarchy) {
+    public CountsProcessor provideCountsProcessor(Network network, OutputDirectoryHierarchy outputHierarchy, LinkCategorizer categorizer) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new CountsProcessor(network, config, outputHierarchy);
+        return new CountsProcessor(network, config, outputHierarchy, categorizer);
     }
 
     @Provides
     @Singleton
     public PenaltiesAdapter providePenaltiesAdapter(CountsProcessor countsProcessor, FlowProcessor flowProcessor, Network network,
                                                     NetworkCalibrationConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
-                                                    EqasimConfigGroup eqasimConfig) {
-        return new PenaltiesAdapter(countsProcessor, flowProcessor, network, config, outputHierarchy, eqasimConfig);
+                                                    EqasimConfigGroup eqasimConfig,
+                                                    LinkCategorizer categorizer,
+                                                    PenaltyManager penaltyManager) {
+        return new PenaltiesAdapter(countsProcessor, flowProcessor, network, config, outputHierarchy, eqasimConfig, categorizer, penaltyManager);
     }
 
     @Provides
@@ -109,6 +113,20 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     public RoutingPenaltyByLinkCategory provideRoutingPenaltyByLinkCategory(PenaltiesAdapter penalties,
                                                                             RoutingPenalty delegate){
         return new RoutingPenaltyByLinkCategory(penalties, delegate);
+    }
+
+    @Provides
+    @Singleton
+    public LinkCategorizer provideLinkCategorizer() {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
+        return new LinkCategorizer(config.getSeparateUrbanRoads());
+    }
+
+    @Provides
+    @Singleton
+    public PenaltyManager providePenaltyManager() {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
+        return new PenaltyManager(config.getMinPenalty(), config.getMaxPenalty(), config.getCalibrate());
     }
 
 }

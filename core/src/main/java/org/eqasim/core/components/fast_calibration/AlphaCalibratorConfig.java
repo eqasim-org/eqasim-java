@@ -30,7 +30,7 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
     private double carPassengerModeShare = 0.092;
     private String filePath = "";
     private String level = "global";
-    private String calibratedModes = "car,pt,walk,bike";
+    private String calibratedModes = "car,pt,walk,bike,car_passenger";
 
     public AlphaCalibratorConfig() {
         super(GROUP_NAME);
@@ -48,8 +48,8 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
         map.put(CAR_PASSENGER_MODE_SHARE, "Target mode share for car passengers");
         map.put(FILE_PATH, "In case of using canton level calibration, this is the path to the csv file containing modes shares per canton");
         map.put(LEVEL, "Level of calibration: current implementation contains either 'global', 'canton', or 'cluster'");
-        map.put(CALIBRATED_MODES, "Comma-separated list of modes to be calibrated (default: car,pt,walk,bike)," +
-                "When car passenger is simulated, it can be added to the list as 'car_passenger'");
+        map.put(CALIBRATED_MODES, "Comma-separated list of modes to be calibrated (default: car,pt,walk,bike,car_passenger)," +
+                "in the default case, pt is used as reference mode, while the other modes are calibrated to match the target mode shares");
         return map;
     }
 

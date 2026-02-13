@@ -127,16 +127,16 @@ public class ShahparDelay {
         // 1. estimate the FF and ROW of the delay Shahpar formula
         Double FF = ffMap.get(intersectionNode.getId());
         Double ROW = rowMap.get(link.getId());
-        if (FF == null || ROW == null) {
+        if (FF == null || ROW == null || !Double.isFinite(FF) || !Double.isFinite(ROW) || FF <= 0.0 || ROW < 0.0) {
             logger.warn("FF or ROW not assigned for intersection node {} or link {}. Returning 0.0 delay.", intersectionNode.getId(), link.getId());
             return 0.0; // Return 0.0 if FF or ROW is not assigned
         }
 
         // 2. Get the saturation ration of the intersection
-        Collection<Link> inLinks = getLinksCar(intersectionNode, "in").values();
-        double intersectionCapacity = Collections.max(inLinks.stream().map(Link::getCapacity).toList());
+        Collection<Link> inLinks = getCarLinks(intersectionNode, "in").values();
+        double intersectionCapacity = Math.max(Collections.max(inLinks.stream().map(Link::getCapacity).toList()), 600.0); // Ensure a minimum capacity to avoid division by zero and unrealistic saturation
         double intersectionFlow = inLinks.stream().mapToDouble(l -> getFlow(l, time)).sum();
-        double intersectionSaturation = Math.min(intersectionFlow / intersectionCapacity, maximumSaturation); // saturation ratio capped at 1.2
+        double intersectionSaturation = Math.min(intersectionFlow / intersectionCapacity, maximumSaturation);
 
         // 3. Calculate the delay using the Shahpar formula
         double delay = FF*ROW*(alpha+beta*Math.pow(intersectionSaturation, eta));
@@ -148,7 +148,7 @@ public class ShahparDelay {
     }
 
 
-    private Map<Id<Link>, Link> getLinksCar(Node node, String direction) {
+    private Map<Id<Link>, Link> getCarLinks(Node node, String direction) {
         // Returns a map of car-allowed in-links for the given node
         if (direction.equalsIgnoreCase("out")) {
             return node.getOutLinks().values().stream()
@@ -163,8 +163,8 @@ public class ShahparDelay {
     public void assignDegreeToNode(Node node) {
         // The degree here is the degree of undirected graph, i.e. the number of neighboring nodes.
         // but this is only for car allowed links, so we need to filter them first
-        Map<Id<Link>, Link> inLinksCar = getLinksCar(node, "in");
-        Map<Id<Link>, Link> outLinksCar = getLinksCar(node, "out");
+        Map<Id<Link>, Link> inLinksCar = getCarLinks(node, "in");
+        Map<Id<Link>, Link> outLinksCar = getCarLinks(node, "out");
 
         Set<Id<Node>> neighboringNodeIds = new HashSet<>();
         neighboringNodeIds.addAll(inLinksCar.values().stream().map(Link::getFromNode).map(Node::getId).collect(Collectors.toSet()));
@@ -174,8 +174,8 @@ public class ShahparDelay {
 
     public void assignFfToNode(Node intersectionNode) {
         // Step 1: Filter car-allowed in-links and out-links
-        Map<Id<Link>, Link> inLinksCar = getLinksCar(intersectionNode, "in");
-        Map<Id<Link>, Link> outLinksCar = getLinksCar(intersectionNode, "out");
+        Map<Id<Link>, Link> inLinksCar = getCarLinks(intersectionNode, "in");
+        Map<Id<Link>, Link> outLinksCar = getCarLinks(intersectionNode, "out");
         int nEntries = inLinksCar.size();
         int nExits = outLinksCar.size();
         int minimumTurns = Math.max(nEntries, nExits); // this should be the minimum number of turns to consider at the intersection
@@ -240,14 +240,14 @@ public class ShahparDelay {
     }
 
     private void assignRowToInLinks(Node node) {
-        List<Link> inLinks = new ArrayList<>(getLinksCar(node, "in").values());
+        List<Link> inLinks = new ArrayList<>(getCarLinks(node, "in").values());
         if (inLinks.isEmpty()) {
             return;
         }
         List<Double> capacities = inLinks.stream().map(Link::getCapacity).toList();
         double maxCapacity = Collections.max(capacities);
         double minCapacity = Collections.min(capacities);
-        if (maxCapacity == minCapacity) {
+        if (Math.abs(maxCapacity - minCapacity)<100) { // if all capacities are the same, assign 0.25 to all in-links
             for (Link link : inLinks) {
                 rowMap.put(link.getId(), 0.25);
             }
