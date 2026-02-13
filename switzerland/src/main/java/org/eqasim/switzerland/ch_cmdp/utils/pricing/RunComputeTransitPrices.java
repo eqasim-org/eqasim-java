@@ -53,6 +53,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 
 public class RunComputeTransitPrices {
+    public static double ptRegionalRadius_km = 10.0;
 
     public static class CSVRequest{
         public final String requestId;
@@ -350,19 +351,23 @@ public class RunComputeTransitPrices {
             double price = 0.0;
             double oldPrice = 0.0;
 
-            if (request.hasGA || request.age < 6 || (request.hasJuniorAbo && request.age < 16)) {
+            boolean isGleis7 = request.departureTime_s < 5 * 3600 || request.departureTime_s >= 19 * 3600;
+            boolean hasGleis7FreeTravel = request.age < 25 && request.hasGleis7Abo && isGleis7;
+            boolean hasFreePublicTransport = request.hasGA
+                    || request.age < 6
+                    || (request.age < 16 && request.hasJuniorAbo)
+                    || hasGleis7FreeTravel;
+
+            if (hasFreePublicTransport) {
                 return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
             }
 
-            if (request.hasVerbundAbo) {
+            boolean hasRegionalSubscription = request.hasVerbundAbo || request.hasStreckenAbo;
+            if (hasRegionalSubscription) {
                 double homeDist = calculateHomeDistance_km(request);
-                if (homeDist <= 15.0) {
+                if (homeDist <= ptRegionalRadius_km) {
                     return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
                 }
-            }
-
-            if (request.departureTime_s >= 19*3600 && request.age < 25 && request.hasGleis7Abo) {
-                return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
             }
 
             boolean halfFare = request.hasHalbtaxSubscription || (request.age < 16);
@@ -380,7 +385,7 @@ public class RunComputeTransitPrices {
             }
 
             // Old model price
-            oldPrice = 0.6 * distance_km;
+            oldPrice = Math.max(2.8, 2*(0.21 * distance_km - 0.00015 * Math.pow(distance_km,2) ));
             if (halfFare) oldPrice /= 2.0;
             oldPrice = Math.round(oldPrice * 100.0) / 100.0;
             price    = Math.round(price * 100.0) / 100.0;
@@ -388,6 +393,9 @@ public class RunComputeTransitPrices {
             //if (id % 1000 == 0){
             //    System.out.println("Computed price: " + price);
             //}
+            double maximumPrice = halfFare? 35.0 : 60.0;
+            price = Math.min(price, maximumPrice);
+            oldPrice = Math.min(oldPrice, maximumPrice);
 
             return new RouteResult(price, oldPrice, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
 
@@ -410,11 +418,14 @@ public class RunComputeTransitPrices {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "requests-path", "output-path") //
-				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
+                .allowPrefixes("ptRegionalRadius_km") //
 				.build();
 
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
         Scenario scenario = ScenarioUtils.loadScenario(config);
+        if (cmd.hasOption("ptRegionalRadius_km")){
+            ptRegionalRadius_km = Double.parseDouble(cmd.getOptionStrict("ptRegionalRadius_km"));
+        }
 
         SwissPTZonesConfigGroup ptZonesConfig = ConfigUtils.addOrGetModule(config, SwissPTZonesConfigGroup.class);        
         String ptZonesFilePath = ptZonesConfig.getZonePath();

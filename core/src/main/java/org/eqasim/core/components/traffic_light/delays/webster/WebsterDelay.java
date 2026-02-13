@@ -57,7 +57,11 @@ public class WebsterDelay {
 
     public Double getDelay(Link link, double time) {
         int binIdx = timeBinManager.getTlBinIndex(time);
-        return trafficLightDelays.get(link.getId()).get(binIdx);
+        List<Double> linkDelay = trafficLightDelays.get(link.getId());
+        if (linkDelay == null) {
+            return 0.0; // Default to 0 if no delay is set for this link (e.g., if it does not have a traffic light)
+        }
+        return linkDelay.get(binIdx);
     }
 
     public void clearDelays() {
