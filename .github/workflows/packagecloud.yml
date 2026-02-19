@@ -1,0 +1,21 @@
+name: packagecloud
+
+on:
+  workflow_dispatch:
+
+jobs:
+  packagecloud:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+          cache: maven
+      - name: Build
+        run: mvn package -DskipTests
+      - name: Deploy to packagecloud
+        run: mvn --settings .github/settings.xml deploy -DskipTests
+        env:
+          PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
