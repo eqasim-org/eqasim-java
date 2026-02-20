@@ -21,6 +21,7 @@ import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.*;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.NetworkOfDistances;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.SBBDistanceReader;
@@ -44,10 +45,6 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissCarP
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissPtDetailedUtilityEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissWalkDetailedUtilityEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.mode_availability.SwissDetailedModeAvailability;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.CarPassengerPredictor;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissBikePredictor;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
-import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.config.CommandLine;
@@ -99,6 +96,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bind(SwissPersonPredictor.class);
 		bind(CarPassengerPredictor.class);
+		bind(SwissCarPredictor.class);
 		bind(SwissBikePredictor.class);
 		bind(SwissPtRoutePredictor.class);
 

@@ -168,6 +168,10 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaRetired_u = 0.0;
         public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
+        public double betaCarOwnershipRatio_u = 0.0;
+        public double betaHasCar_u = 0.0;
+        public double betaVeryLongDistance_u = 0.0;
+        public double betaDistance_u_km = 0.0;
     }
 
     public static SwissCmdpModeParameters buildDefault() {

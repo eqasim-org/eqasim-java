@@ -9,47 +9,56 @@ import org.matsim.api.core.v01.population.PlanElement;
 
 public class SwissPredictorUtils {
 	static public boolean hasGeneralSubscription(Person person) {
-		Boolean hasGeneralSubscription = (Boolean) person.getAttributes().getAttribute("ptHasGA");
-		return hasGeneralSubscription != null && hasGeneralSubscription;
+		// Boolean hasGeneralSubscription = (Boolean) person.getAttributes().getAttribute("ptHasGA");
+		// return hasGeneralSubscription != null && hasGeneralSubscription;
+		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
+        return "GA".equalsIgnoreCase(subscriptions);
 	}
 
 	static public boolean hasHalbtaxSubscription(Person person) {
-		Boolean hasHalbtaxSubscription = (Boolean) person.getAttributes().getAttribute("ptHasHalbtax");
-		return hasHalbtaxSubscription != null && hasHalbtaxSubscription;
+		// Boolean hasHalbtaxSubscription = (Boolean) person.getAttributes().getAttribute("ptHasHalbtax");
+		// return hasHalbtaxSubscription != null && hasHalbtaxSubscription;
+		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
+		return "HT".equalsIgnoreCase(subscriptions) || "VA+HT".equalsIgnoreCase(subscriptions);
 	}
 
 	static public boolean hasRegionalSubscription(Person person) {
-		boolean hasRegionalSubscription = false;
+//		boolean hasRegionalSubscription = false;
+//
+//		Boolean ptHasVerbund = (Boolean) person.getAttributes().getAttribute("ptHasVerbund");
+//		if (ptHasVerbund != null && ptHasVerbund) {
+//			hasRegionalSubscription = true;
+//		}
+//
+//		Boolean ptHasStrecke = (Boolean) person.getAttributes().getAttribute("ptHasStrecke");
+//		if (ptHasStrecke != null && ptHasStrecke) {
+//			hasRegionalSubscription = true;
+//		}
+//		return hasRegionalSubscription;
 
-		Boolean ptHasVerbund = (Boolean) person.getAttributes().getAttribute("ptHasVerbund");
-		if (ptHasVerbund != null && ptHasVerbund) {
-			hasRegionalSubscription = true;
-		}
-
-		Boolean ptHasStrecke = (Boolean) person.getAttributes().getAttribute("ptHasStrecke");
-		if (ptHasStrecke != null && ptHasStrecke) {
-			hasRegionalSubscription = true;
-		}
-
-		return hasRegionalSubscription;
+		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
+		return "VA".equalsIgnoreCase(subscriptions) || "VA+HT".equalsIgnoreCase(subscriptions);
 	}
 
 	static public boolean hasJuniorSubscription(Person person) {
-		boolean hasJuniorSubscription = false;
-		Boolean ptHasJunior = (Boolean) person.getAttributes().getAttribute("ptHasJunior");
-		if (ptHasJunior != null && ptHasJunior) {
-			hasJuniorSubscription = true;
-		}
-		return hasJuniorSubscription;
+//		boolean hasJuniorSubscription = false;
+//		Boolean ptHasJunior = (Boolean) person.getAttributes().getAttribute("ptHasJunior");
+//		if (ptHasJunior != null && ptHasJunior) {
+//			hasJuniorSubscription = true;
+//		}
+//		return hasJuniorSubscription;
+		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
+		return "GA".equalsIgnoreCase(subscriptions);
 	}
 
 	static public boolean hasGleis7Subscription(Person person) {
-		boolean hasGleis7Subscription = false;
-		Boolean ptHasGleis7 = (Boolean) person.getAttributes().getAttribute("ptHasGleis7");
-		if (ptHasGleis7 != null && ptHasGleis7) {
-			hasGleis7Subscription = true;
-		}
-		return hasGleis7Subscription;
+//		boolean hasGleis7Subscription = false;
+//		Boolean ptHasGleis7 = (Boolean) person.getAttributes().getAttribute("ptHasGleis7");
+//		if (ptHasGleis7 != null && ptHasGleis7) {
+//			hasGleis7Subscription = true;
+//		}
+//		return hasGleis7Subscription;
+		return false;
 	}
 
 	static public int getStatedPreferenceRegion(Person person) {
@@ -151,6 +160,12 @@ public class SwissPredictorUtils {
 		} else {
 			return "none";
 		}
+	}
+
+	static public boolean getIfHasCar(Person person) {
+		String numCarsStr = (String) person.getAttributes().getAttribute("numberOfCars");
+		double numCars = Double.parseDouble(numCarsStr.replace("+", ""));
+		return numCars > 0;
 	}
 
 }

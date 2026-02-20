@@ -3,10 +3,10 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
-import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissCarPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
@@ -20,12 +20,12 @@ import java.util.Map;
 public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final SwissPersonPredictor personPredictor;
-    private final CarPredictor carPredictor;
+    private final SwissCarPredictor carPredictor;
     private final SwissParkingCostModel parkingCostModel;
     private final VariablesWriter variablesWriter;
 
     @Inject
-    public SwissCarDetailedUtilityEstimator(SwissCmdpModeParameters parameters, CarPredictor carPredictor,
+    public SwissCarDetailedUtilityEstimator(SwissCmdpModeParameters parameters, SwissCarPredictor carPredictor,
                                             SwissPersonPredictor personPredictor,
                                             SwissParkingCostModel parkingCostModel,
                                             VariablesWriter variablesWriter) {

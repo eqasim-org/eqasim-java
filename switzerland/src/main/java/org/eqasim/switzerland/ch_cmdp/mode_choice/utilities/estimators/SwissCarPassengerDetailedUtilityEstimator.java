@@ -3,6 +3,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.CarPassengerPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
@@ -119,6 +120,24 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         return Utils.isLongDistanceTrip(trip)? parameters.cp.betaLongDistance_u :0.0;
     }
 
+    protected double estimateVeryLongDistanceUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.isVeryLongDistanceTrip(trip)? parameters.cp.betaVeryLongDistance_u :0.0;
+    }
+
+    protected double estimateDistanceUtility(DiscreteModeChoiceTrip trip) {
+        double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+        return parameters.cp.betaDistance_u_km * Math.max(distance_km-35.0,0.0) / parameters.distanceScale_km ;
+    }
+
+    protected double estimateCarOwnershipUtility(SwissPersonVariables personVariables) {
+        return personVariables.carOwnershipRatio * parameters.cp.betaCarOwnershipRatio_u;
+    }
+
+    protected double estimateHasCarUtility(SwissPersonVariables personVariables) {
+        return personVariables.hasCar? parameters.cp.betaHasCar_u:0.0;
+    }
+
+
     protected double estimateCantonUtility(Person person) {
         Object cantonObj = person.getAttributes().getAttribute("cantonName");
         if (cantonObj instanceof String canton) {
@@ -156,11 +175,16 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         // distance
         utility += estimateShortDistanceUtility(trip);
         utility += estimateLongDistanceUtility(trip);
+        utility += estimateVeryLongDistanceUtility(trip);
+        utility += estimateDistanceUtility(trip);
         // location
         utility += estimateUrbanDestinationUtility(trip);
         utility += estimateUrbancoreDestinationUtility(trip);
         // canton
         utility += estimateCantonUtility(person);
+        // car ownership
+        utility += estimateCarOwnershipUtility(personVariables);
+        utility += estimateHasCarUtility(personVariables);
 
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, variables, personVariables, utility);

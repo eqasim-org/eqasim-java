@@ -41,7 +41,7 @@ public class SwissDetailedModeAvailability implements ModeAvailability {
         // Check bike availability
         boolean bikeAvailability = true;
 
-        if (person.getAttributes().getAttribute("bikeAvailability").equals("FOR_NONE")) {
+        if (person.getAttributes().getAttribute("bikeAvail").equals("never")) {
             bikeAvailability = false;
         }
 

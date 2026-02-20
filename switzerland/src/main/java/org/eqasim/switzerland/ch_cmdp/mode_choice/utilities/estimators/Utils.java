@@ -28,6 +28,7 @@ public class Utils {
     public static String NONE = "none";
     public static double SHORT_DISTANCE_TRIP_KM = 1.0;
     public static double LONG_DISTANCE_TRIP_KM = 13.0;
+    public static double VERY_LONG_DISTANCE_TRIP_KM = 25.0;
     public static double RETIRED_AGE_THRESHOLD = 65.0;
     public static double JUNIOR_AGE_THRESHOLD = 16.0;
 
@@ -101,6 +102,11 @@ public class Utils {
     public static boolean isLongDistanceTrip(DiscreteModeChoiceTrip trip){
         double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
         return isLongDistanceTrip(distance_km);
+    }
+
+    public static boolean isVeryLongDistanceTrip(DiscreteModeChoiceTrip trip){
+        double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
+        return (distance_km>VERY_LONG_DISTANCE_TRIP_KM);
     }
 
     public static boolean isLowIncome(double income_CHF){

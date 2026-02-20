@@ -37,9 +37,10 @@ public class SwissPersonPredictor extends CachedVariablePredictor<SwissPersonVar
 		int cantonCluster = SwissPredictorUtils.getCluster(person);
 		Double carOwnershipRatio = SwissPredictorUtils.getCarOwnershipRatio(person);
 		String ovgk = SwissPredictorUtils.getOvgk(person);
+		boolean hasCar = SwissPredictorUtils.getIfHasCar(person);
 
 		return new SwissPersonVariables(delegate.predictVariables(person, trip, elements), homeLocation,
 				hasGeneralSubscription, hasHalbtaxSubscription, hasRegionalSubscription, hasJuniorSubscription, hasGleis7Subscription,
-				statedPreferenceRegion, sex, income, drivingLicense, cantonCluster, carOwnershipRatio, ovgk);
+				statedPreferenceRegion, sex, income, drivingLicense, cantonCluster, carOwnershipRatio, ovgk, hasCar);
 	}
 }

@@ -30,12 +30,12 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 
 		for (Household household : scenario.getHouseholds().getHouseholds().values()) {
 			// Compute car ownership ratio by household
-			int numAdults = household.getMemberIds().stream()
-					.map(id -> scenario.getPopulation().getPersons().get(id))
-					.filter(Objects::nonNull)
-					.mapToInt(p -> (int) p.getAttributes().getAttribute("age"))
-					.filter(age -> age >= 18)
-					.sum();
+			int numAdults = (int) household.getMemberIds().stream()
+				.map(id -> scenario.getPopulation().getPersons().get(id))
+				.filter(Objects::nonNull)
+				.mapToInt(p -> (int) p.getAttributes().getAttribute("age"))
+				.filter(age -> age >= 18)
+				.count();
 			String numCarsStr = (String) household.getAttributes().getAttribute("numberOfCars");
 			double numCars = Double.parseDouble(numCarsStr.replace("+", ""));
 			double carRatio = numAdults > 0 ? (1.0 - numCars / numAdults) : 0.0;
@@ -46,7 +46,7 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 
 				if (person != null) {
 					copyAttribute(household, person, "spRegion");
-					copyAttribute(household, person, "bikeAvailability");
+					copyAttribute(household, person, "numberOfCars");
 					copyAttribute(household, person, "cantonId");
 					copyAttribute(household, person, "municipalityType");
 					copyAttribute(household, person, "incomePerCapita");

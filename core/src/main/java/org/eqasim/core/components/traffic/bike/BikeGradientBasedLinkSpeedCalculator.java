@@ -64,7 +64,9 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeLinkSpeedCalcul
         // this need to be further investigated, but for now, I assume that the crossing penalty is only half as bad for bikes as for cars, because they can more easily maneuver around obstacles and other vehicles
         // TODO: add a proper delay for bikes
         double travelTime = link.getLength() / expectedVelocity;
-        travelTime += (carSpeedCalculator.getCrossingPenalty(link, time, vehicle.getId()) / 2.0);
+        if (!(vehicle == null)) {
+            travelTime += (carSpeedCalculator.getCrossingPenalty(link, time, vehicle.getId()) / 2.0); // the cutter raises an exception, so we need to check if the vehicle is null
+        }
         double adjustedSpeed = link.getLength() / travelTime;
         return Math.max(1.0, Math.min(expectedVelocity, adjustedSpeed)); // Ensure speed is no less than 1 m/s and does not exceed expected velocity
 
