@@ -7,6 +7,7 @@ import java.util.List;
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
@@ -217,6 +218,8 @@ public class GenerateConfig {
 		calibrationConfig.setActivated(false);
 		calibrationConfig.setRunCalibration(false);
 
+		NetworkCalibrationConfigGroup networkCalibrationConfig = NetworkCalibrationConfigGroup.getOrCreate(config);
+		networkCalibrationConfig.setActivate(false);
 	}
 
 	public void run(Config config) throws ConfigurationException {
