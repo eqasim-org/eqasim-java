@@ -70,7 +70,7 @@ public class VDFModule extends AbstractEqasimExtension {
 				: ConfigGroup.getInputFileURL(getConfig().getContext(), config.getInputFlowFile());
 		return new VDFUpdateListener(network, scope, handler, travelTime, outputHierarchy, config.getWriteInterval(),
 				config.getWriteFlowInterval(), config.getWriteTravelTimesInterval(),
-				controllerConfig.getFirstIteration(), inputFile);
+				controllerConfig.getFirstIteration(), inputFile, controllerConfig.getCompressionType());
 	}
 
 	@Provides
