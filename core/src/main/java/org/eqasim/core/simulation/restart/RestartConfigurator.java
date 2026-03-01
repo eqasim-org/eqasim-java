@@ -24,12 +24,21 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
  * restart directory is created and the output files of the last successful
  * iteration of the previous run are set as input for the new restart. See
  * addDefaultMappings for the files that are reconfigured by default.
+ * 
+ * ATTENTION: This class is conceptual, it has not really been tested yet. It
+ * has been added so the code doesn't get lost. If you are willing to test this
+ * thoroughly, feel free to do so!
  */
 public class RestartConfigurator {
     private final static Logger logger = LogManager.getLogger(RestartConfigurator.class);
 
     static public final String PREFIX = "restart_";
     static public final String CMD = "restart";
+
+    public RestartConfigurator() {
+        logger.warn(
+                "ATTENTION: This class is conceptual, it has not really been tested yet. It has been added so the code doesn't get lost. If you are willing to test this thoroughly, feel free to do so!");
+    }
 
     private record Mapping(boolean isIteration, String sourcePath, Function<Config, Consumer<String>> mapper) {
     }
