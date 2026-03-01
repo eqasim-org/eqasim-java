@@ -19,8 +19,8 @@ import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.MapBinder;
 
 public class EqasimTerminationModule extends AbstractEqasimExtension {
-	private static final String TERMINATION_CSV_FILE = "eqasim_termination.csv";
-	private static final String TERMINATION_HTML_FILE = "eqasim_termination.html";
+	public static final String TERMINATION_CSV_FILE = "eqasim_termination.csv";
+	public static final String TERMINATION_HTML_FILE = "eqasim_termination.html";
 
 	@Override
 	protected void installEqasimExtension() {
