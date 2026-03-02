@@ -32,7 +32,7 @@ import org.matsim.core.utils.io.IOUtils;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.core.utils.timing.TimeTracker;
 
-public class TravelTimeComparisionListener
+public class TravelTimeComparisonListener
         implements IterationStartsListener, IterationEndsListener, PersonDepartureEventHandler,
         PersonArrivalEventHandler {
     static public final String DETAILED_OUTPUT_NAME = "detailed_travel_time_comparison.csv";
@@ -52,7 +52,7 @@ public class TravelTimeComparisionListener
     private final Map<String, IdMap<Person, List<FinishedLegItem>>> trackedTimes = new HashMap<>();
     private final IdMap<Person, OngoingLegItem> ongoing = new IdMap<>(Person.class);
 
-    public TravelTimeComparisionListener(Population population, TimeInterpretation timeInterpretation,
+    public TravelTimeComparisonListener(Population population, TimeInterpretation timeInterpretation,
             OutputDirectoryHierarchy outputDirectoryHierarchy, EventsManager eventsManager, int analysisInterval,
             int detailedAnalysisInterval, Set<String> modes) {
         this.population = population;
