@@ -19,6 +19,7 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -93,9 +94,9 @@ public class EqasimAnalysisModule extends AbstractModule {
 	public TravelTimeComparisionListener provideTravelTimeComparisionListener(Population population,
 			TimeInterpretation timeInterpretation,
 			OutputDirectoryHierarchy outputDirectoryHierarchy, EventsManager eventsManager,
-			EqasimConfigGroup eqasimConfig, RoutingConfigGroup routingConfig) {
+			EqasimConfigGroup eqasimConfig, RoutingConfigGroup routingConfig, ControllerConfigGroup controllerConfig) {
 		return new TravelTimeComparisionListener(population, timeInterpretation, outputDirectoryHierarchy,
-				eventsManager, eqasimConfig.getAnalysisInterval(), eqasimConfig.getDetailedTravelTimeAnalysisInterval(), 
+				eventsManager, eqasimConfig.getTravelTimeAnalysisInterval(), eqasimConfig.getAnalysisInterval(),
 				new HashSet<>(routingConfig.getNetworkModes()));
 	}
 }

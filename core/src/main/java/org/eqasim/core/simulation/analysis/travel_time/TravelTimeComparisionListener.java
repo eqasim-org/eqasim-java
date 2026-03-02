@@ -18,6 +18,7 @@ import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -106,19 +107,28 @@ public class TravelTimeComparisionListener
                 eventsManager.removeHandler(this);
 
                 Map<String, DescriptiveStatistics> overallSummary = new HashMap<>();
+                Map<String, DescriptiveStatistics> recentOverallSummary = new HashMap<>();
+
                 Map<String, List<DescriptiveStatistics>> hourlySummary = new HashMap<>();
+                Map<String, List<DescriptiveStatistics>> recentHourlySummary = new HashMap<>();
 
                 for (String mode : modes) {
                     overallSummary.put(mode, new DescriptiveStatistics());
+                    recentOverallSummary.put(mode, new DescriptiveStatistics());
+
                     hourlySummary.put(mode, new LinkedList<>());
+                    recentHourlySummary.put(mode, new LinkedList<>());
 
                     for (int hour = 0; hour < 24; hour++) {
                         hourlySummary.get(mode).add(new DescriptiveStatistics());
+                        recentHourlySummary.get(mode).add(new DescriptiveStatistics());
                     }
                 }
 
                 boolean writeDetails = detailedAnalysisInterval > 0
                         && (event.getIteration() % detailedAnalysisInterval == 0 || event.isLastIteration());
+
+                writeDetails = true;
 
                 BufferedWriter detailsWriter = writeDetails ? IOUtils
                         .getBufferedWriter(
@@ -128,7 +138,7 @@ public class TravelTimeComparisionListener
                 if (detailsWriter != null) {
                     detailsWriter.write(String.join(";", new String[] { //
                             "person_id", "leg_index", "mode", "planned_departure_time", "planned_travel_time",
-                            "tracked_departure_time", "tracked_travel_time"
+                            "tracked_departure_time", "tracked_travel_time", "planned_age"
                     }) + "\n");
                 }
 
@@ -136,7 +146,28 @@ public class TravelTimeComparisionListener
                     TimeTracker timeTracker = new TimeTracker(timeInterpretation);
                     int legIndex = 0;
 
-                    for (PlanElement element : person.getSelectedPlan().getPlanElements()) {
+                    Plan plan = person.getSelectedPlan();
+
+                    // START TODO: This can be much simplified if Plan.getIterationCreated works by
+                    // default: https://github.com/matsim-org/matsim-libs/issues/4762
+
+                    Integer planHash = (Integer) plan.getAttributes().getAttribute("travelTimeHash");
+                    Integer planIteration = (Integer) plan.getAttributes().getAttribute("travelTimeIteration");
+
+                    final int age;
+                    if (planHash == null || planHash != plan.hashCode()) {
+                        age = 0;
+                        plan.getAttributes().putAttribute("travelTimeHash", plan.hashCode());
+                        plan.getAttributes().putAttribute("travelTimeIteration", event.getIteration());
+                    } else {
+                        age = event.getIteration() - planIteration;
+                    }
+
+                    // END TODO
+
+                    boolean isRecent = age == 0;
+
+                    for (PlanElement element : plan.getPlanElements()) {
                         if (element instanceof Leg leg) {
                             if (modes.contains(leg.getMode())) {
                                 List<FinishedLegItem> finished = getList(leg.getMode(), person.getId());
@@ -161,7 +192,8 @@ public class TravelTimeComparisionListener
                                             String.valueOf(plannedDepartureTime), //
                                             String.valueOf(plannedTravelTime), //
                                             String.valueOf(trackedDepartureTime), //
-                                            String.valueOf(trackedTravelTime) //
+                                            String.valueOf(trackedTravelTime), //
+                                            String.valueOf(age) //
                                     }) + "\n");
                                 }
 
@@ -170,9 +202,19 @@ public class TravelTimeComparisionListener
                                     if (hour < 24 && hour >= 0) {
                                         hourlySummary.get(leg.getMode()).get(hour)
                                                 .addValue(plannedTravelTime - trackedTravelTime);
+
+                                        if (isRecent) {
+                                            recentHourlySummary.get(leg.getMode()).get(hour)
+                                                    .addValue(plannedTravelTime - trackedTravelTime);
+                                        }
                                     }
 
                                     overallSummary.get(leg.getMode()).addValue(plannedTravelTime - trackedTravelTime);
+
+                                    if (isRecent) {
+                                        recentOverallSummary.get(leg.getMode())
+                                                .addValue(plannedTravelTime - trackedTravelTime);
+                                    }
                                 }
                             }
 
@@ -191,7 +233,7 @@ public class TravelTimeComparisionListener
                         outputHierarchy.getIterationFilename(event.getIteration(), HOURLY_OUTPUT_NAME));
 
                 hourlyWriter.write(String.join(";", new String[] {
-                        "hour", "mode", "obs", "mean", "median", "q10", "q90", "std"
+                        "hour", "mode", "obs", "mean", "median", "q10", "q90", "std", "is_recent"
                 }) + "\n");
 
                 for (String mode : modes) {
@@ -205,7 +247,21 @@ public class TravelTimeComparisionListener
                                 String.valueOf(summary.getPercentile(50)), //
                                 String.valueOf(summary.getPercentile(10)), //
                                 String.valueOf(summary.getPercentile(90)), //
-                                String.valueOf(summary.getStandardDeviation()) //
+                                String.valueOf(summary.getStandardDeviation()), //
+                                "false" //
+                        }) + "\n");
+
+                        DescriptiveStatistics recentSummary = recentHourlySummary.get(mode).get(hour);
+
+                        hourlyWriter.write(String.join(";", new String[] {
+                                String.valueOf(hour), mode, //
+                                String.valueOf(recentSummary.getN()), //
+                                String.valueOf(recentSummary.getMean()), //
+                                String.valueOf(recentSummary.getPercentile(50)), //
+                                String.valueOf(recentSummary.getPercentile(10)), //
+                                String.valueOf(recentSummary.getPercentile(90)), //
+                                String.valueOf(recentSummary.getStandardDeviation()), //
+                                "true" //
                         }) + "\n");
                     }
                 }
@@ -218,7 +274,7 @@ public class TravelTimeComparisionListener
 
                 if (writeHeader) {
                     overallWriter.write(String.join(";", new String[] {
-                            "iteration", "mode", "mean", "median", "q10", "q90", "std"
+                            "iteration", "mode", "observations", "mean", "median", "q10", "q90", "std", "is_recent"
                     }) + "\n");
                 }
 
@@ -228,12 +284,27 @@ public class TravelTimeComparisionListener
                     overallWriter.write(String.join(";", new String[] { //
                             String.valueOf(event.getIteration()), //
                             mode, //
-                            String.valueOf(summary.getMean()), //
+                            String.valueOf(summary.getN()), //
                             String.valueOf(summary.getMean()), //
                             String.valueOf(summary.getPercentile(50)), //
                             String.valueOf(summary.getPercentile(10)), //
                             String.valueOf(summary.getPercentile(90)), //
                             String.valueOf(summary.getStandardDeviation()), //
+                            "false" //
+                    }) + "\n");
+
+                    DescriptiveStatistics recentSummary = recentOverallSummary.get(mode);
+
+                    overallWriter.write(String.join(";", new String[] { //
+                            String.valueOf(event.getIteration()), //
+                            mode, //
+                            String.valueOf(recentSummary.getN()), //
+                            String.valueOf(recentSummary.getMean()), //
+                            String.valueOf(recentSummary.getPercentile(50)), //
+                            String.valueOf(recentSummary.getPercentile(10)), //
+                            String.valueOf(recentSummary.getPercentile(90)), //
+                            String.valueOf(recentSummary.getStandardDeviation()), //
+                            "true" //
                     }) + "\n");
                 }
 
