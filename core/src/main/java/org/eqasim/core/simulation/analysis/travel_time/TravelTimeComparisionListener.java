@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -100,6 +101,11 @@ public class TravelTimeComparisionListener
         }
     }
 
+    private record PlanHistoryEntry(int hash, int modifiedIteration) {
+    }
+
+    private final Map<Plan, PlanHistoryEntry> planHistory = new HashMap<>();
+
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
         try {
@@ -151,17 +157,13 @@ public class TravelTimeComparisionListener
                     // START TODO: This can be much simplified if Plan.getIterationCreated works by
                     // default: https://github.com/matsim-org/matsim-libs/issues/4762
 
-                    Integer planHash = (Integer) plan.getAttributes().getAttribute("travelTimeHash");
-                    Integer planIteration = (Integer) plan.getAttributes().getAttribute("travelTimeIteration");
-
-                    final int age;
-                    if (planHash == null || planHash != plan.hashCode()) {
-                        age = 0;
-                        plan.getAttributes().putAttribute("travelTimeHash", plan.hashCode());
-                        plan.getAttributes().putAttribute("travelTimeIteration", event.getIteration());
-                    } else {
-                        age = event.getIteration() - planIteration;
+                    PlanHistoryEntry planHistoryEntry = planHistory.get(plan);
+                    if (planHistoryEntry == null || planHistoryEntry.hash != plan.hashCode()) {
+                        planHistoryEntry = new PlanHistoryEntry(plan.hashCode(), event.getIteration());
+                        planHistory.put(plan, planHistoryEntry);
                     }
+
+                    int age = event.getIteration() - planHistoryEntry.modifiedIteration;
 
                     // END TODO
 
@@ -313,5 +315,21 @@ public class TravelTimeComparisionListener
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        // TODO: Clean-up plan history
+        // Not required if code is updated (see above)
+        // (we do this cleanup to free the backreferences for GC)
+
+        Set<Plan> existingPlans = new HashSet<>();
+        for (Person person : population.getPersons().values()) {
+            for (Plan plan : person.getPlans()) {
+                existingPlans.add(plan);
+            }
+        }
+
+        Set<Plan> removePlans = new HashSet<>(planHistory.keySet());
+        removePlans.removeAll(existingPlans);
+
+        removePlans.forEach(planHistory::remove);
     }
 }
