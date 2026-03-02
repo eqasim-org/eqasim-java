@@ -13,6 +13,7 @@ import java.util.Set;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
@@ -38,6 +39,7 @@ public class TravelTimeComparisonListener
     static public final String DETAILED_OUTPUT_NAME = "detailed_travel_time_comparison.csv";
     static public final String HOURLY_OUTPUT_NAME = "hourly_travel_time_comparison.csv";
     static public final String OVERALL_OUTPUT_NAME = "travel_time_comparison.csv";
+    static public final String CAR_OUTPUT_NAME = "car_travel_time_comparison.csv";
 
     private final Population population;
     private final TimeInterpretation timeInterpretation;
@@ -106,8 +108,33 @@ public class TravelTimeComparisonListener
 
     private final Map<Plan, PlanHistoryEntry> planHistory = new HashMap<>();
 
+    private void updatePlanHistory(int iteration) {
+        // TODO: This can be much simplified if Plan.getIterationCreated works by
+        // default: https://github.com/matsim-org/matsim-libs/issues/4762
+
+        Set<Plan> existingPlans = new HashSet<>();
+        for (Person person : population.getPersons().values()) {
+            for (Plan plan : person.getPlans()) {
+                existingPlans.add(plan);
+
+                PlanHistoryEntry planHistoryEntry = planHistory.get(plan);
+                if (planHistoryEntry == null || planHistoryEntry.hash != plan.hashCode()) {
+                    planHistoryEntry = new PlanHistoryEntry(plan.hashCode(), iteration);
+                    planHistory.put(plan, planHistoryEntry);
+                }
+            }
+        }
+
+        Set<Plan> removePlans = new HashSet<>(planHistory.keySet());
+        removePlans.removeAll(existingPlans);
+
+        removePlans.forEach(planHistory::remove);
+    }
+
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
+        updatePlanHistory(event.getIteration());
+
         try {
             if (analysisInterval > 0 && (event.getIteration() % analysisInterval == 0 || event.isLastIteration())) {
                 eventsManager.removeHandler(this);
@@ -154,19 +181,7 @@ public class TravelTimeComparisonListener
 
                     Plan plan = person.getSelectedPlan();
 
-                    // START TODO: This can be much simplified if Plan.getIterationCreated works by
-                    // default: https://github.com/matsim-org/matsim-libs/issues/4762
-
-                    PlanHistoryEntry planHistoryEntry = planHistory.get(plan);
-                    if (planHistoryEntry == null || planHistoryEntry.hash != plan.hashCode()) {
-                        planHistoryEntry = new PlanHistoryEntry(plan.hashCode(), event.getIteration());
-                        planHistory.put(plan, planHistoryEntry);
-                    }
-
-                    int age = event.getIteration() - planHistoryEntry.modifiedIteration;
-
-                    // END TODO
-
+                    int age = event.getIteration() - planHistory.get(plan).modifiedIteration;
                     boolean isRecent = age == 0;
 
                     for (PlanElement element : plan.getPlanElements()) {
@@ -311,25 +326,35 @@ public class TravelTimeComparisonListener
                 }
 
                 overallWriter.close();
+
+                if (modes.contains(TransportMode.car)) {
+                    writeHeader = !new File(outputHierarchy.getOutputFilename(CAR_OUTPUT_NAME)).exists();
+                    BufferedWriter carWriter = IOUtils
+                            .getAppendingBufferedWriter(outputHierarchy.getOutputFilename(CAR_OUTPUT_NAME));
+
+                    if (writeHeader) {
+                        carWriter.write(String.join(";", new String[] {
+                                "iteration", "observations", "mean", "median", "q10", "q90", "std"
+                        }) + "\n");
+                    }
+
+                    DescriptiveStatistics carSummary = overallSummary.get(TransportMode.car);
+
+                    carWriter.write(String.join(";", new String[] { //
+                            String.valueOf(event.getIteration()), //
+                            String.valueOf(carSummary.getN()), //
+                            String.valueOf(carSummary.getMean()), //
+                            String.valueOf(carSummary.getPercentile(50)), //
+                            String.valueOf(carSummary.getPercentile(10)), //
+                            String.valueOf(carSummary.getPercentile(90)), //
+                            String.valueOf(carSummary.getStandardDeviation()), //
+                    }) + "\n");
+
+                    carWriter.close();
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        // TODO: Clean-up plan history
-        // Not required if code is updated (see above)
-        // (we do this cleanup to free the backreferences for GC)
-
-        Set<Plan> existingPlans = new HashSet<>();
-        for (Person person : population.getPersons().values()) {
-            for (Plan plan : person.getPlans()) {
-                existingPlans.add(plan);
-            }
-        }
-
-        Set<Plan> removePlans = new HashSet<>(planHistory.keySet());
-        removePlans.removeAll(existingPlans);
-
-        removePlans.forEach(planHistory::remove);
     }
 }
