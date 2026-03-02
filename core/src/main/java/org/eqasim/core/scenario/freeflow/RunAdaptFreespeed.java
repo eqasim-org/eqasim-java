@@ -18,7 +18,7 @@ public class RunAdaptFreespeed {
     static public void main(String[] args)
             throws ConfigurationException, JacksonException, DatabindException, IOException {
         CommandLine cmd = new CommandLine.Builder(args) //
-                .requireOptions("input-path", "output-path", "configuration-path")
+                .requireOptions("input-path", "output-path", "settings-path")
                 .build();
 
         String inputPath = cmd.getOptionStrict("input-path");

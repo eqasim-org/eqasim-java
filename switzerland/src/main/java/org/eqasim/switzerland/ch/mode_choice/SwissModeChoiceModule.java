@@ -50,6 +50,12 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
+	public SwissModeAvailability provideModeAvailability(EqasimConfigGroup config) {
+		return new SwissModeAvailability(config.getAdditionalAvailableModes());
+	}
+
+	@Provides
+	@Singleton
 	public SwissModeParameters provideSwissModeParameters(EqasimConfigGroup config)
 			throws IOException, ConfigurationException {
 		SwissModeParameters parameters = SwissModeParameters.buildDefault();

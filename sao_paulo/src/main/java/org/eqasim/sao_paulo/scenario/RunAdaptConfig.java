@@ -72,5 +72,7 @@ public class RunAdaptConfig {
 		config.transitRouter().setMaxBeelineWalkConnectionDistance(400.0);
 		config.transitRouter().setSearchRadius(1300.0);
 
+		// CRS
+		config.global().setCoordinateSystem("EPSG:29183");
 	}
 }

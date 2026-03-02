@@ -20,11 +20,13 @@ jobs:
         id: release
         with:
           token: ${{ secrets.RELEASE }}
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+        if: ${{ steps.release.outputs.release_created }}
+      - uses: actions/setup-java@v5
         if: ${{ steps.release.outputs.release_created }}
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
           cache: maven
       - name: Build
         if: ${{ steps.release.outputs.release_created }}

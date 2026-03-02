@@ -86,6 +86,9 @@ public class TravelTimeRecorder implements LinkEnterEventHandler, LinkLeaveEvent
 	}
 
 	private void processTime(Id<Link> linkId, double enterTime, double exitTime) {
+		if(!cumulativeTraversalTimes.containsKey(linkId)) {
+			return;
+		}
 		double travelTime = exitTime - enterTime;
 		int index = getIndex(enterTime);
 

@@ -265,12 +265,13 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 					outputStream.writeInt(slice.size());
 
 					int sliceLinkIndex = 0;
-					for (Id<Link> linkId : linkIds) {
-						LinkState linkState = slice.get(linkId);
+					for (int linkIndex=0; linkIndex < linkIds.size(); linkIndex++) {
+						Id<Link> linkId =  linkIds.get(linkIndex);
+ 						LinkState linkState = slice.get(linkId);
 						if(linkState == null) {
 							continue;
 						}
-						outputStream.writeInt(linkIds.indexOf(linkId));
+						outputStream.writeInt(linkIndex);
 						outputStream.writeInt(linkState.count.size());
 
 						for (int i = 0; i < linkState.count.size(); i++) {

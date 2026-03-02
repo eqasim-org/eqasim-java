@@ -91,45 +91,26 @@ public class TestEmissions {
 
 		Controler controller = new Controler(scenario);
 		eqasimConfigurator.configureController(controller);
-		controller.addOverridingModule(new AbstractEqasimExtension() {
-			@Override
-			protected void installEqasimExtension() {
-				bind(ModeParameters.class);
-				bindModeAvailability("DefaultModeAvailability").toProvider(() -> (person, trips) -> {
-					Set<String> modes = new HashSet<>();
-					modes.add(TransportMode.walk);
-					modes.add(TransportMode.pt);
-					modes.add(TransportMode.car);
-					modes.add(TransportMode.bike);
-					// Add special mode "car_passenger" if applicable
-					Boolean isCarPassenger = (Boolean) person.getAttributes().getAttribute("isPassenger");
-					if (isCarPassenger) {
-						modes.add("car_passenger");
-					}
-					return modes;
-				}).asEagerSingleton();
-			}
-		});
 		controller.run();
 	}
 
 	private void runAddHbefa() {
 		Vehicles vehicles = VehicleUtils.createVehiclesContainer();
 		new MatsimVehicleReader(vehicles).readFile("melun_test/input/vehicles.xml.gz");
-		
+
 		for (VehicleType vehicleType : vehicles.getVehicleTypes().values()) {
 			Attributes hbefa_attributes = vehicleType.getEngineInformation().getAttributes();
-			hbefa_attributes.putAttribute("HbefaVehicleCategory", "PASSENGER_CAR");
+			hbefa_attributes.putAttribute("HbefaVehicleCategory", "pass. car");
 			hbefa_attributes.putAttribute("HbefaTechnology", "diesel");
-			hbefa_attributes.putAttribute("HbefaSizeClass", "&lt;1,4L");
-			hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC diesel Euro-3 (DPF)");
+			hbefa_attributes.putAttribute("HbefaSizeClass", "not specified");
+			hbefa_attributes.putAttribute("HbefaEmissionsConcept", "PC D Euro-3");
 		}
 
 		MatsimVehicleWriter writer = new MatsimVehicleWriter(vehicles);
 		writer.writeFile("melun_test/input/vehicles.xml.gz");
-		
+
 	}
-	
+
 	private void runModifyConfig() {
 		Config config = ConfigUtils.loadConfig("melun_test/input/config.xml");
 		config.controller().setOutputDirectory("melun_test/output");
@@ -159,11 +140,11 @@ public class TestEmissions {
 
 	private void runMelunEmissions() throws CommandLine.ConfigurationException, IOException {
 		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
-		Assert.assertEquals(3297, (long) counts.get("car"));
+		Assert.assertEquals(3303, (long) counts.get("car"));
 		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
-		Assert.assertEquals(9348, (long) counts.get("walk"));
-		Assert.assertEquals(3412, (long) counts.getOrDefault("bike", 0L));
-		Assert.assertEquals(2108, (long) counts.get("pt"));
+		Assert.assertEquals(9400, (long) counts.get("walk"));
+		Assert.assertEquals(3402, (long) counts.getOrDefault("bike", 0L));
+		Assert.assertEquals(2121, (long) counts.get("pt"));
 
 		SafeOsmHbefaMapping.defaultType = "URB/Loca/50";
 
@@ -174,14 +155,14 @@ public class TestEmissions {
 				"sample_41_EFA_HOT_SubSegm_2020detailed.csv",
 				"--eqasim-configurator", TestConfigurator.class.getName() });
 
-		assertEquals(353707, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
+		assertEquals(354139, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
 		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600",
 				"--eqasim-configurator", TestConfigurator.class.getName() });
 
 		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
-		
+
 		// NOTE: Locally, I always get 32527 lines here. On Github CI, it is always
 		// 32528. No clue why this is, but all the previous tests on the events line
 		// length etc. pass without a problem ...
@@ -192,9 +173,9 @@ public class TestEmissions {
 				& f.getAttribute("time").toString().equals("43200")).findFirst().orElse(null);
 		assertNotNull(feature);
 
-		double expectedPm = 0.006847378350421;
-		double expectedCo = 0.456258730331835;
-		double expectedNox = 0.477558671071797;
+		double expectedPm = 0.045174881256541;
+		double expectedCo = 0.627553969527029;
+		double expectedNox = 0.810111846744523;
 		double expectedUnknown = Double.NaN;
 
 		assertEquals(expectedPm, feature.getAttribute("PM"));
@@ -233,13 +214,12 @@ public class TestEmissions {
 	}
 
 	static long countLines(File file) throws IOException {
-		String line;
 		int lines = 0;
 
 		BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
 
-		while ((line = reader.readLine()) != null) {
+		while (reader.readLine() != null) {
 			lines++;
 		}
 

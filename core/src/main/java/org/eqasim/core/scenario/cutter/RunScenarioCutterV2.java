@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
@@ -34,7 +35,7 @@ public class RunScenarioCutterV2 {
     public static final String[] SHAPEFILE_EXTENSIONS = new String[]{".shp", ".cpg", ".dbf", ".qmd", ".shx", ".prj"};
 
     static public void main(String[] args)
-            throws ConfigurationException, IOException, InterruptedException {
+            throws ConfigurationException, IOException, InterruptedException, ExecutionException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "output-path", "extent-path", "vdf-travel-times-path") //
                 .allowOptions("threads", "prefix", "extent-attribute", "extent-value", "plans-path", "events-path") //
@@ -140,11 +141,13 @@ public class RunScenarioCutterV2 {
         VDFConfigGroup vdfConfigGroup = VDFConfigGroup.getOrCreate(config);
         vdfConfigGroup.setUpdateAreaShapefile("extent/" + extentPath.getName());
         // We also set the VDF config to use the vdf.bin file for initial travel times
-        vdfConfigGroup.setInputTravelTimesFile("vdf_travel_times.bin");
+        
+        File travelTimesPath = new File(cmd.getOptionStrict("vdf-travel-times-path"));
+        vdfConfigGroup.setInputTravelTimesFile(travelTimesPath.getName());
 
         new ScenarioWriter(config, scenario, prefix).run(new File(outputPath).getAbsoluteFile());
 
-        FileUtils.copyFile(new File(cmd.getOptionStrict("vdf-travel-times-path")), new File(outputPath, "vdf_travel_times.bin"));
+        FileUtils.copyFile(travelTimesPath, new File(outputPath, travelTimesPath.getName()));
     }
 
     public static void findLargestFullyConnectedSubnetwork(Network network, String mode) {

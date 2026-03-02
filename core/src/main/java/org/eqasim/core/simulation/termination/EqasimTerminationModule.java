@@ -19,8 +19,8 @@ import com.google.inject.binder.LinkedBindingBuilder;
 import com.google.inject.multibindings.MapBinder;
 
 public class EqasimTerminationModule extends AbstractEqasimExtension {
-	private static final String TERMINATION_CSV_FILE = "eqasim_termination.csv";
-	private static final String TERMINATION_HTML_FILE = "eqasim_termination.html";
+	public static final String TERMINATION_CSV_FILE = "eqasim_termination.csv";
+	public static final String TERMINATION_HTML_FILE = "eqasim_termination.html";
 
 	@Override
 	protected void installEqasimExtension() {
@@ -37,15 +37,22 @@ public class EqasimTerminationModule extends AbstractEqasimExtension {
 		int firstIteration = controllerConfig.getFirstIteration();
 		int lastIteration = controllerConfig.getLastIteration();
 
+		List<TerminationData> history = Collections.emptyList();
+
 		if (terminationConfig.getHistoryFile() != null) {
 			URL historyURL = ConfigGroup.getInputFileURL(getConfig().getContext(), terminationConfig.getHistoryFile());
-			new TerminationReader(indicators.keySet(), criteria.keySet()).read(historyURL);
+			history = new TerminationReader(indicators.keySet(), criteria.keySet()).read(historyURL);
 		}
 
 		int minimumIteration = firstIteration + terminationConfig.getMinimumIterations();
 
-		return new EqasimTerminationCriterion(firstIteration, lastIteration, minimumIteration, indicators, criteria,
+		EqasimTerminationCriterion criterion = new EqasimTerminationCriterion(firstIteration, lastIteration,
+				minimumIteration, indicators, criteria,
 				writer);
+
+		criterion.replay(history);
+
+		return criterion;
 	}
 
 	@Provides

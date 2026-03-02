@@ -24,7 +24,7 @@
 		<!-- Defines which TourEstimator component to use. Built-in choices: MATSimDayScoring, Cumulative, Uniform -->
 		<param name="tourEstimator" value="Cumulative" />
 		<!-- Defines a number of TourFilter components that should be activated. Built-in choices: TourLength -->
-		<param name="tourFilters" value="TourLengthFilter, OutsideFilter" />
+		<param name="tourFilters" value="TourLength, OutsideFilter" />
 		<!-- Defines which TourFinder component to use. Built-in choices: PlanBased, ActivityBased, HomeBased -->
 		<param name="tourFinder" value="ActivityBased" />
 		<!-- Defines a number of TripConstraint components that should be activated. Built-in choices: VehicleContinuity, ShapeFile, LinkAttribute, TransitWalk -->
@@ -63,7 +63,7 @@
 		</parameterset>
 		<parameterset type="tourFilter:TourLength" >
 			<!-- Defines the maximum allowed length of a tour. -->
-			<param name="maximumLength" value="10" />
+			<param name="maximumLength" value="6" />
 		</parameterset>
 		<parameterset type="tourFinder:ActivityBased" >
 			<!-- Comma-separated activity types which should be considered as start and end of a tour. If a plan does not start or end with such an activity additional tours are added. -->

@@ -31,7 +31,7 @@ public class RunActivityAnalysis {
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("output-path") //
-				.allowOptions("population-path", "events-path", "network-path", "facilities-path") //
+				.allowOptions("population-path", "events-path", "network-path", "facilities-path", "delimiter") //
 				.build();
 
 		run(cmd, new DefaultPersonAnalysisFilter());
@@ -52,6 +52,7 @@ public class RunActivityAnalysis {
 		}
 
 		String outputPath = cmd.getOptionStrict("output-path");
+		String delimiter = cmd.getOption("delimiter").orElse(";");
 
 		Collection<ActivityItem> activities = null;
 
@@ -84,6 +85,6 @@ public class RunActivityAnalysis {
 					Optional.ofNullable(facilities)).readActivities(populationPath);
 		}
 
-		new ActivityWriter(activities).write(outputPath);
+		new ActivityWriter(activities, delimiter).write(outputPath);
 	}
 }

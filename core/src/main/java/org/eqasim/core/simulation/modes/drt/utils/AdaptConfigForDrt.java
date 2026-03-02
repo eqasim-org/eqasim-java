@@ -20,7 +20,7 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintConfigGroup;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintModule;
 import org.eqasim.core.simulation.mode_choice.constraints.leg_time.LegTimeConstraintSingleLegConfigGroup;
-import org.matsim.contrib.common.zones.ZoneSystemParams;
+import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.contrib.common.zones.systems.grid.square.SquareGridZoneSystemParams;
 import org.matsim.contrib.drt.optimizer.constraints.DrtOptimizationConstraintsSetImpl;
 import org.matsim.contrib.drt.optimizer.insertion.DrtInsertionSearchParams;
@@ -34,7 +34,6 @@ import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.contrib.dvrp.fleet.FleetReader;
 import org.matsim.contrib.dvrp.fleet.FleetSpecification;
 import org.matsim.contrib.dvrp.fleet.FleetSpecificationImpl;
-import org.matsim.contrib.dvrp.load.DefaultDvrpLoadFromFleet;
 import org.matsim.contrib.dvrp.load.IntegerLoadType;
 import org.matsim.contrib.dvrp.run.DvrpConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -46,9 +45,11 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.ScoringConfigGroup;
 import org.matsim.core.utils.misc.Time;
 
+import com.google.common.collect.Sets;
+
 public class AdaptConfigForDrt {
 
-    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime, String modeAvailability) {
+    public static void adapt(Config config, Map<String, String> vehiclesPathByDrtMode, Map<String, String> operationalSchemes, Map<String, String> drtUtilityEstimators, Map<String, String> drtCostModels, Map<String, String> addLegTimeConstraint, String qsimEndtime, boolean updateTerminationModes) {
         if(!config.getModules().containsKey(DvrpConfigGroup.GROUP_NAME)) {
             config.addModule(new DvrpConfigGroup());
         }
@@ -62,15 +63,21 @@ public class AdaptConfigForDrt {
         List<LegTimeConstraintSingleLegConfigGroup> legTimeConstraintSingleLegConfigGroups = new ArrayList<>();
 
         // Add DRT to the available modes
-        if(modeAvailability != null) {
-            dmcConfig.setModeAvailability(modeAvailability);
-        }
-
+        EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+        eqasimConfig.setAdditionalAvailableModes(Sets.union(eqasimConfig.getAdditionalAvailableModes(), vehiclesPathByDrtMode.keySet()));
 
         // Add DRT to cached modes
         Set<String> cachedModes = new HashSet<>(dmcConfig.getCachedModes());
         cachedModes.addAll(vehiclesPathByDrtMode.keySet());
         dmcConfig.setCachedModes(cachedModes);
+
+        // Add DRT to termination criteria
+        if (updateTerminationModes) {
+            EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
+            List<String> terminationModes = new ArrayList<>(terminationConfig.getModes());
+            terminationModes.addAll(vehiclesPathByDrtMode.keySet());
+            terminationConfig.setModes(terminationModes);
+        }
 
         boolean serviceAreaDrt = false;
 
@@ -104,7 +111,6 @@ public class AdaptConfigForDrt {
             multiModeDrtConfigGroup.addParameterSet(drtConfigGroup);
 
             // Set up choice model
-            EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
             eqasimConfig.setCostModel(drtMode, drtCostModels.get(drtMode));
             eqasimConfig.setEstimator(drtMode, drtUtilityEstimators.get(drtMode));
 
@@ -113,7 +119,7 @@ public class AdaptConfigForDrt {
 
             if(Boolean.parseBoolean(addLegTimeConstraint.get(drtMode))) {
                 FleetSpecification fleetSpecification = new FleetSpecificationImpl();
-                new FleetReader(fleetSpecification, new DefaultDvrpLoadFromFleet(new IntegerLoadType("passengers"), "passengers")).parse(ConfigGroup.getInputFileURL(config.getContext(), vehiclesPathByDrtMode.get(drtMode)));
+                new FleetReader(fleetSpecification, new IntegerLoadType("passengers")).parse(ConfigGroup.getInputFileURL(config.getContext(), vehiclesPathByDrtMode.get(drtMode)));
                 DoubleSummaryStatistics serviceTimeSummaryStatistics = fleetSpecification.getVehicleSpecifications().values().stream()
                         .flatMapToDouble(dvrpVehicleSpecification -> DoubleStream.of(dvrpVehicleSpecification.getServiceBeginTime(), dvrpVehicleSpecification.getServiceEndTime()))
                         .summaryStatistics();
@@ -179,12 +185,12 @@ public class AdaptConfigForDrt {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("input-config-path", "output-config-path", "vehicles-paths")
                 .allowOptions("mode-names")
-                .allowOptions("mode-availability")
                 .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .allowOptions("operational-schemes")
                 .allowOptions("cost-models", "estimators")
                 .allowOptions("qsim-endtime")
                 .allowOptions("add-leg-time-constraint")
+                .allowOptions("update-termination-modes")
                 .build();
 
 
@@ -213,7 +219,8 @@ public class AdaptConfigForDrt {
         Config config = ConfigUtils.loadConfig(inputConfigPath);
         configurator.updateConfig(config);
         
-        adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), info.get("add-leg-time-constraint"), qsimEndtime, cmd.getOption("mode-availability").orElse(null));
+        boolean updateTerminationModes = cmd.getOption("update-termination-modes").map(Boolean::parseBoolean).orElse(config.getModules().containsKey(EqasimTerminationConfigGroup.GROUP_NAME));
+        adapt(config, info.get("vehicles-paths"), info.get("operational-schemes"), info.get("estimators"), info.get("cost-models"), info.get("add-leg-time-constraint"), qsimEndtime, updateTerminationModes);
 
         cmd.applyConfiguration(config);
 
