@@ -12,7 +12,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.travel_time.TravelTimeRecorder;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.analysis.stuck.StuckAnalysisModule;
-import org.eqasim.core.simulation.analysis.travel_time.TravelTimeComparisionListener;
+import org.eqasim.core.simulation.analysis.travel_time.TravelTimeComparisonListener;
 import org.eqasim.core.simulation.modes.drt.analysis.DrtAnalysisModule;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
@@ -49,7 +49,7 @@ public class EqasimAnalysisModule extends AbstractModule {
 		install(new StuckAnalysisModule());
 
 		bind(AnalysisMainModeIdentifier.class).toInstance(new RoutingModeMainModeIdentifier());
-		addControlerListenerBinding().to(TravelTimeComparisionListener.class);
+		addControlerListenerBinding().to(TravelTimeComparisonListener.class);
 	}
 
 	@Provides
@@ -91,11 +91,11 @@ public class EqasimAnalysisModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	public TravelTimeComparisionListener provideTravelTimeComparisionListener(Population population,
+	public TravelTimeComparisonListener provideTravelTimeComparisionListener(Population population,
 			TimeInterpretation timeInterpretation,
 			OutputDirectoryHierarchy outputDirectoryHierarchy, EventsManager eventsManager,
 			EqasimConfigGroup eqasimConfig, RoutingConfigGroup routingConfig, ControllerConfigGroup controllerConfig) {
-		return new TravelTimeComparisionListener(population, timeInterpretation, outputDirectoryHierarchy,
+		return new TravelTimeComparisonListener(population, timeInterpretation, outputDirectoryHierarchy,
 				eventsManager, eqasimConfig.getTravelTimeAnalysisInterval(), eqasimConfig.getAnalysisInterval(),
 				new HashSet<>(routingConfig.getNetworkModes()));
 	}
