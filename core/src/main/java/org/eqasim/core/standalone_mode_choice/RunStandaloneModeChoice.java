@@ -49,6 +49,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -303,6 +304,8 @@ public class RunStandaloneModeChoice {
                 throw new RuntimeException(e);
             }
         }
+
+        OutputDirectoryLogging.closeOutputDirLogging();
     }
 
     private static void writeTripsCsv(Population population, String filePath, TripReaderFromPopulation tripReader, String delimiter) {
