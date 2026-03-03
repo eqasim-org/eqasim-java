@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.analysis.run.RunLegAnalysis;
 import org.eqasim.core.analysis.run.RunPublicTransportLegAnalysis;
 import org.eqasim.core.analysis.run.RunTripAnalysis;
@@ -59,16 +61,24 @@ import org.matsim.core.utils.misc.CRCChecksum;
 
 public class TestSimulationPipeline {
 
+    private static final Logger log = LogManager.getLogger(TestSimulationPipeline.class);
+
     @Before
     public void setUp() throws IOException {
+        // Attempt to remove leftover directories from previous runs (Windows file locks eventually release)
+        FileUtils.deleteQuietly(new File("melun_test"));
         URL fixtureUrl = getClass().getClassLoader().getResource("melun");
         FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
         FileUtils.forceMkdir(new File("melun_test/exports"));
     }
 
     @After
-    public void tearDown() throws IOException {
-        FileUtils.deleteDirectory(new File("melun_test"));
+    public void tearDown() {
+        try {
+            FileUtils.deleteDirectory(new File("melun_test"));
+        } catch (IOException e) {
+            log.warn("Could not fully delete melun_test directory: {}", e.getMessage());
+        }
     }
 
     private void runMelunSimulation(String configPath, String outputPath) throws ConfigurationException {
@@ -194,7 +204,7 @@ public class TestSimulationPipeline {
                 "--eqasim-configurator", TestConfigurator.class.getName()
         });
     }
-    
+
     private void runCutter() throws Exception {
         RunScenarioCutter.main(new String[] {
             "--config-path", "melun_test/input/config.xml",
@@ -395,7 +405,8 @@ public class TestSimulationPipeline {
                 "--input-config-path", "melun_test/input/config.xml",
                 "--output-config-path", "melun_test/input/config_abstract_access.xml",
                 "--mode-name", "ptWithAbstractAccess",
-                "--accesses-file-path", "melun_test/input/access_items.xml"
+                "--accesses-file-path", "melun_test/input/access_items.xml",
+                "--update-termination-modes", "false"
         });
 
 

@@ -41,6 +41,12 @@ public class IDFModeAvailability implements ModeAvailability {
 			modes.add(TransportMode.car);
 		}
 
+		// Check motorcycle availability
+		Boolean motorcycleAvailability = (Boolean) person.getAttributes().getAttribute("useMotorcycle");
+		if (motorcycleAvailability != null && motorcycleAvailability) {
+			modes.add(TransportMode.motorcycle);
+		}
+
 		// Check bike availability
 		boolean bikeAvailability = true;
 
