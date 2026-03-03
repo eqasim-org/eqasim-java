@@ -39,7 +39,7 @@ public class SevilleCarPassengerUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateDrivingPermit(SevillePersonVariables variables) {
-		return variables.hasDrivingPermit ? parameters.carPassenger.betaDrivingPermit_u : 0.0;
+		return variables.hasDrivingPermit ? parameters.sevilleCarPassenger.betaDrivingPermit_u : 0.0;
 	}
 
 	@Override

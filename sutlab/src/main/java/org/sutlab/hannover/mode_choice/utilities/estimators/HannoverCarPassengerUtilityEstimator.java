@@ -40,7 +40,7 @@ public class HannoverCarPassengerUtilityEstimator implements UtilityEstimator {
 	}
 
 	protected double estimateDrivingPermit(HannoverPersonVariables variables) {
-		return variables.hasDrivingPermit ? parameters.carPassenger.betaDrivingPermit_u : 0.0;
+		return variables.hasDrivingPermit ? parameters.hannoverCarPassenger.betaDrivingPermit_u : 0.0;
 	}
 
 	@Override

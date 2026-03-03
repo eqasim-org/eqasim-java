@@ -5,12 +5,10 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 public class HannoverModeParameters extends ModeParameters {
 
 	public class HannoverCarPassengerParameters {
-		public double alpha_u;
-		public double betaInVehicleTravelTime_u_min;
 		public double betaDrivingPermit_u;
 	}
 
-	public final HannoverCarPassengerParameters carPassenger = new HannoverCarPassengerParameters();
+	public final HannoverCarPassengerParameters hannoverCarPassenger = new HannoverCarPassengerParameters();
 
 	public class HannoverPtParameters {
 		public double betaDrivingPermit_u;
@@ -38,7 +36,7 @@ public class HannoverModeParameters extends ModeParameters {
 
 		// Car passenger
 		parameters.carPassenger.alpha_u = -1.4; // -1.713201;
-		parameters.carPassenger.betaDrivingPermit_u = -0.835542;
+		parameters.hannoverCarPassenger.betaDrivingPermit_u = -0.835542;
 		parameters.carPassenger.betaInVehicleTravelTime_u_min = -0.069976;
 
 		// PT
