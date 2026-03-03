@@ -41,26 +41,26 @@ public class RunServer {
 					it.anyHost();
 				});
 			});
+
+			ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+			RoadRouterEndpoint roadRouterEndpoint = new RoadRouterEndpoint(executor, services.roadRouterService());
+			config.routes.post("/router/road", roadRouterEndpoint::post);
+
+			RoadIsochroneEndpoint roadIsochroneEndpoint = new RoadIsochroneEndpoint(executor,
+					services.roadIsochroneService());
+			config.routes.post("/isochrone/road", roadIsochroneEndpoint::post);
+
+			if (services.transitRouterService() != null) {
+				TransitRouterEndpoint transitRouterEndpoint = new TransitRouterEndpoint(executor,
+						services.transitRouterService());
+				config.routes.post("/router/transit", transitRouterEndpoint::post);
+
+				TransitIsochroneEndpoint transitIsochroneEndpoint = new TransitIsochroneEndpoint(executor,
+						services.transitIsochroneService());
+				config.routes.post("/isochrone/transit", transitIsochroneEndpoint::post);
+			}
 		});
-
-		ExecutorService executor = Executors.newFixedThreadPool(threads);
-
-		RoadRouterEndpoint roadRouterEndpoint = new RoadRouterEndpoint(executor, services.roadRouterService());
-		app.post("/router/road", roadRouterEndpoint::post);
-
-		RoadIsochroneEndpoint roadIsochroneEndpoint = new RoadIsochroneEndpoint(executor,
-				services.roadIsochroneService());
-		app.post("/isochrone/road", roadIsochroneEndpoint::post);
-
-		if (services.transitRouterService() != null) {
-			TransitRouterEndpoint transitRouterEndpoint = new TransitRouterEndpoint(executor,
-					services.transitRouterService());
-			app.post("/router/transit", transitRouterEndpoint::post);
-
-			TransitIsochroneEndpoint transitIsochroneEndpoint = new TransitIsochroneEndpoint(executor,
-					services.transitIsochroneService());
-			app.post("/isochrone/transit", transitIsochroneEndpoint::post);
-		}
 
 		// Run API
 		int port = cmd.getOption("port").map(Integer::parseInt).orElse(0);

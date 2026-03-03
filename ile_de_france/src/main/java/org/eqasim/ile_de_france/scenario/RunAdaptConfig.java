@@ -5,6 +5,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.ile_de_france.IDFConfigurator;
 import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contribs.discrete_mode_choice.modules.ModelModule.ModelType;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -36,6 +37,9 @@ public class RunAdaptConfig {
 
 		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
 
+		// TODO: Eventually move to core
+		dmcConfig.setModelType(ModelType.EfficientTour);
+
 		// Calibration results for 5%
 
 		if (eqasimConfig.getSampleSize() == 0.05) {
@@ -50,5 +54,8 @@ public class RunAdaptConfig {
 
 		VehiclesConfigGroup vehiclesConfig = config.vehicles();
 		vehiclesConfig.setVehiclesFile(prefix + "vehicles.xml.gz");
+
+		// CRS
+		config.global().setCoordinateSystem("EPSG:2154");
 	}
 }

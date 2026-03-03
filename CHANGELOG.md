@@ -1,5 +1,45 @@
 # Changelog
 
+## [2.1.0](https://github.com/eqasim-org/eqasim-java/compare/v2.0.0...v2.1.0) (2026-02-10)
+
+
+### Features
+
+* add additional modes to termination modes ([#470](https://github.com/eqasim-org/eqasim-java/issues/470)) ([1149b14](https://github.com/eqasim-org/eqasim-java/commit/1149b1448029abdc8548654693f00bc61a31d48a))
+* additional modes ([#466](https://github.com/eqasim-org/eqasim-java/issues/466)) ([fd31bfe](https://github.com/eqasim-org/eqasim-java/commit/fd31bfee91e083cff73edb80f5919d46a5e07548))
+* **core:** standalone mode- and route-choice speed/memory improvements ([#432](https://github.com/eqasim-org/eqasim-java/issues/432)) ([dfff6e8](https://github.com/eqasim-org/eqasim-java/commit/dfff6e8362ddf874cd412c560208c910c737abf5))
+* **core:** tool to split/merge populations ([#412](https://github.com/eqasim-org/eqasim-java/issues/412)) ([56adc45](https://github.com/eqasim-org/eqasim-java/commit/56adc459bb34f774a5968c9d9019b273d56fec38))
+* decouple crossing penalty and freeflow ([#402](https://github.com/eqasim-org/eqasim-java/issues/402)) ([92588db](https://github.com/eqasim-org/eqasim-java/commit/92588dbf4584d281ebf58eccfd89a3175894ba16))
+* downsampling utilities ([#382](https://github.com/eqasim-org/eqasim-java/issues/382)) ([cd156d2](https://github.com/eqasim-org/eqasim-java/commit/cd156d29e3d4453ce0b2a7d20e9fef4f8ba98b96))
+* **drt:** remove standalone drt mode when defining feeder ([#469](https://github.com/eqasim-org/eqasim-java/issues/469)) ([6bb55d8](https://github.com/eqasim-org/eqasim-java/commit/6bb55d8ba2ba7959763470beb67b3b292ac2fd22))
+* fix routing with turn restrictions ([#440](https://github.com/eqasim-org/eqasim-java/issues/440)) ([0c9a0ab](https://github.com/eqasim-org/eqasim-java/commit/0c9a0abf484414b3f6be14d8c4f5dd5924b0a0e8))
+* make ParallelProgress more verbose ([#434](https://github.com/eqasim-org/eqasim-java/issues/434)) ([3acb6ad](https://github.com/eqasim-org/eqasim-java/commit/3acb6ad6110441d3dc6e9b3c024258e3809550a6))
+* provide all geographic tools with gpkg output ([#403](https://github.com/eqasim-org/eqasim-java/issues/403)) ([a80a551](https://github.com/eqasim-org/eqasim-java/commit/a80a5517f7ec728658b5f598abacb9f886361bf6))
+* **server:** optionally provide path to write the listening port ([#386](https://github.com/eqasim-org/eqasim-java/issues/386)) ([0b79020](https://github.com/eqasim-org/eqasim-java/commit/0b79020b6b1a8dbd81bb40f1aea36fa251609e94))
+* set crs for scenarios ([#506](https://github.com/eqasim-org/eqasim-java/issues/506)) ([adcb183](https://github.com/eqasim-org/eqasim-java/commit/adcb183239dcacdc99fa7c03e598e64fbb3bb807))
+* streamline freeflow calibration parameters ([#401](https://github.com/eqasim-org/eqasim-java/issues/401)) ([f7f5122](https://github.com/eqasim-org/eqasim-java/commit/f7f51228dcb4134baa9d4425d37146536359fd3c))
+
+
+### Bug Fixes
+
+* another fix for parallel progress ([#442](https://github.com/eqasim-org/eqasim-java/issues/442)) ([d1c1cd3](https://github.com/eqasim-org/eqasim-java/commit/d1c1cd3c2f0dc0599380dea480dc8f87e0dd6c88))
+* auto-delete output directory in standalone applications ([#431](https://github.com/eqasim-org/eqasim-java/issues/431)) ([655fae2](https://github.com/eqasim-org/eqasim-java/commit/655fae2711bf936dd08a9ab5159743fa93452a66))
+* **core:** Using EqasimConfigurator to avoid generating generic route in RunIsolateAgent ([#505](https://github.com/eqasim-org/eqasim-java/issues/505)) ([d08ff79](https://github.com/eqasim-org/eqasim-java/commit/d08ff793da165221bc85571ef71142c9843cdb09))
+* **emissions:** update detailed vs average lookup behavior ([#394](https://github.com/eqasim-org/eqasim-java/issues/394)) ([d62dca4](https://github.com/eqasim-org/eqasim-java/commit/d62dca4e93ddf56f7c46e78fbd40e914e8cab434))
+* **emissions:** update test with valid hbefa keys ([#413](https://github.com/eqasim-org/eqasim-java/issues/413)) ([4d21bbd](https://github.com/eqasim-org/eqasim-java/commit/4d21bbdfe3d248a2d8ffee3b3dc0f58ff8fc08b4))
+* first view in parallel progress ([#524](https://github.com/eqasim-org/eqasim-java/issues/524)) ([bd791eb](https://github.com/eqasim-org/eqasim-java/commit/bd791ebbf0cd93c636c06a0660c337008484923d))
+* FreeflowConfigurator.apply ([#429](https://github.com/eqasim-org/eqasim-java/issues/429)) ([7f1d48b](https://github.com/eqasim-org/eqasim-java/commit/7f1d48be749bdcb1016e1d9001ef7076a466d0fb))
+* improve random seeds in standalone mode choice ([#523](https://github.com/eqasim-org/eqasim-java/issues/523)) ([be94c55](https://github.com/eqasim-org/eqasim-java/commit/be94c55b0310d08847e0b51dd015c3be9bb4e111))
+* input parameters for RunAdaptFreespeed ([#428](https://github.com/eqasim-org/eqasim-java/issues/428)) ([9b8cc5a](https://github.com/eqasim-org/eqasim-java/commit/9b8cc5adbdc49e126bb0e420a4f9b8896aee69da))
+* make network cutter work with turn restrictions ([#477](https://github.com/eqasim-org/eqasim-java/issues/477)) ([7df856d](https://github.com/eqasim-org/eqasim-java/commit/7df856d983a3247d0e4dcf2e51c81bca1fa7112e))
+* Making sure that setting eqasim.useScheduleBasedTransport=false works ([#478](https://github.com/eqasim-org/eqasim-java/issues/478)) ([71a61d7](https://github.com/eqasim-org/eqasim-java/commit/71a61d7ef8e027a22e4b5baef61afd9ea31538be))
+* parallel progress state writing ([#439](https://github.com/eqasim-org/eqasim-java/issues/439)) ([8321e3e](https://github.com/eqasim-org/eqasim-java/commit/8321e3ea0834d9f9274c14f2aa2fc6f885c02424))
+* progress in standalone mode choice and population router ([#433](https://github.com/eqasim-org/eqasim-java/issues/433)) ([b2006c7](https://github.com/eqasim-org/eqasim-java/commit/b2006c7914e5da7361a5656380ff65a57e0bcc32))
+* **RunDownsampling:** allowing seed command line argument ([#488](https://github.com/eqasim-org/eqasim-java/issues/488)) ([de5c396](https://github.com/eqasim-org/eqasim-java/commit/de5c396cdf8d0c5f3fc736854f9c802d56e1ad2e))
+* **server:** avoid repeated error on 'other' transit parameters ([#388](https://github.com/eqasim-org/eqasim-java/issues/388)) ([babdc67](https://github.com/eqasim-org/eqasim-java/commit/babdc679b4f23f44e3f6580882c0709e24b367b1))
+* **server:** fix display of logging output in maven build ([#389](https://github.com/eqasim-org/eqasim-java/issues/389)) ([1394eb9](https://github.com/eqasim-org/eqasim-java/commit/1394eb949ea896dcfac9605d66b408150e4d3803))
+* some compatibility fixes for France ([#525](https://github.com/eqasim-org/eqasim-java/issues/525)) ([1995b11](https://github.com/eqasim-org/eqasim-java/commit/1995b11b1251189399e0df6daa1b425a0044ca16))
+
 ## [2.0.0](https://github.com/eqasim-org/eqasim-java/compare/v1.5.0...v2.0.0) (2025-05-08)
 
 

@@ -1,12 +1,11 @@
 package org.eqasim.core.analysis.trips;
 
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.Collection;
 
 import org.eqasim.core.analysis.DistanceUnit;
+import org.matsim.core.utils.io.IOUtils;
 
 public class TripWriter {
 	final private Collection<TripItem> trips;
@@ -14,10 +13,6 @@ public class TripWriter {
 
 	final private DistanceUnit inputUnit;
 	final private DistanceUnit outputUnit;
-
-	public TripWriter(Collection<TripItem> trips, DistanceUnit inputUnit, DistanceUnit outputUnit) {
-		this(trips, inputUnit, outputUnit, ";");
-	}
 
 	public TripWriter(Collection<TripItem> trips, DistanceUnit inputUnit, DistanceUnit outputUnit, String delimiter) {
 		this.trips = trips;
@@ -27,7 +22,7 @@ public class TripWriter {
 	}
 
 	public void write(String outputPath) throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputPath);
 
 		writer.write(formatHeader() + "\n");
 		writer.flush();

@@ -90,7 +90,7 @@ public class TestCorisica {
 		{
 			RunStandaloneModeChoice.main(new String[]{
 					"--config-path", "corsica_test/corsica_config.xml",
-					"--recorded-travel-times-path", "corsica_test/simulation_output/eqasim_travel_times.bin",
+					"--recorded-travel-times-path", "corsica_test/simulation_output/eqasim_travel_times.bin.gz",
 					"--write-input-csv-trips", "true",
 					"--write-output-csv-trips", "true",
 					"--config:standaloneModeChoice.outputDirectory", "corsica_test/mode_choice_output",
@@ -134,7 +134,7 @@ public class TestCorisica {
 		{
 			RunStandaloneModeChoice.main(new String[] {
 					"--config-path", "corsica_test/cut_config.xml",
-					"--recorded-travel-times-path", "corsica_test/cut_output/eqasim_travel_times.bin",
+					"--recorded-travel-times-path", "corsica_test/cut_output/eqasim_travel_times.bin.gz",
 					"--config:DiscreteModeChoice.tourFinder", "IsolatedOutsideTrips",
 					"--config:standaloneModeChoice.outputDirectory", "corsica_test/cut_output_mode_choice",
 					"--config:standaloneModeChoice.removePersonsWithNoValidAlternatives", "true",

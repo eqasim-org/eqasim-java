@@ -108,27 +108,27 @@ public class TestSimulationPipeline {
         RunTripAnalysis.main(new String[]{
                 "--events-path", "melun_test/output/output_events.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
-                "--output-path", "melun_test/output/eqasim_trips_post_sim.csv"
+                "--output-path", "melun_test/output/eqasim_trips_post_sim.csv.gz"
         });
 
-        assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_trips.csv") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_trips_post_sim.csv");
+        assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_trips.csv.gz") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_trips_post_sim.csv.gz");
 
         RunLegAnalysis.main(new String[]{
                 "--events-path", "melun_test/output/output_events.xml.gz",
                 "--network-path", "melun_test/input/network.xml.gz",
-                "--output-path", "melun_test/output/eqasim_legs_post_sim.csv"
+                "--output-path", "melun_test/output/eqasim_legs_post_sim.csv.gz"
 
         });
 
-        assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_legs.csv") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_legs_post_sim.csv");
+        assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_legs.csv.gz") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_legs_post_sim.csv.gz");
 
         RunPublicTransportLegAnalysis.main(new String[]{
                 "--events-path", "melun_test/output/output_events.xml.gz",
                 "--schedule-path", "melun_test/input/transit_schedule.xml.gz",
-                "--output-path", "melun_test/output/eqasim_pt_post_sim.csv"
+                "--output-path", "melun_test/output/eqasim_pt_post_sim.csv.gz"
         });
 
-        assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt.csv") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt_post_sim.csv");
+        assert CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt.csv.gz") == CRCChecksum.getCRCFromFile("melun_test/output/eqasim_pt_post_sim.csv.gz");
     }
 
     private void runExports() throws Exception {
@@ -183,7 +183,7 @@ public class TestSimulationPipeline {
 
         ExportPopulationToCSV.main(new String[]{
                 "--plans-path", "melun_test/input/population.xml.gz",
-                "--output-path", "melun_test/exports/persons.csv"
+                "--output-path", "melun_test/exports/persons.csv.gz"
         });
 
         ExportNetworkRoutesToGeopackage.main(new String[]{
@@ -212,7 +212,7 @@ public class TestSimulationPipeline {
         RunScenarioCutterV2.main(new String[] {
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--events-path", "melun_test/output_vdf/output_events.xml.gz",
-                "--vdf-travel-times-path", "melun_test/output_vdf/vdf_travel_times.bin",
+                "--vdf-travel-times-path", "melun_test/output_vdf/vdf_travel_times.bin.gz",
                 "--output-path", "melun_test/cutter_v2",
                 "--prefix", "center_",
                 "--extent-path", "melun_test/input/center.shp",
@@ -239,7 +239,7 @@ public class TestSimulationPipeline {
 
         runMelunSimulation("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_cutter_v2_drt");
 
-        compareVdfTravelTimes("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_vdf/vdf_travel_times.bin", "melun_test/output_cutter_v2_drt/vdf_travel_times.bin", "melun_test/input/center.shp");
+        compareVdfTravelTimes("melun_test/cutter_v2/center_config_drt.xml", "melun_test/output_vdf/vdf_travel_times.bin.gz", "melun_test/output_cutter_v2_drt/vdf_travel_times.bin.gz", "melun_test/input/center.shp");
     }
 
     private void compareVdfTravelTimes(String configPath, String leftTravelTimesPath, String rightTravelTimesPath, String updateExtentPath) throws IOException, ConfigurationException {
@@ -434,7 +434,7 @@ public class TestSimulationPipeline {
         RunStandaloneModeChoice.main(new String[]{
                 "--config-path", "melun_test/input/config_vdf.xml",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_vdf",
-                "--config:eqasim:vdf.inputTravelTimesFile", "../output_vdf/vdf_travel_times.bin", // Relative to the config file
+                "--config:eqasim:vdf.inputTravelTimesFile", "../output_vdf/vdf_travel_times.bin.gz", // Relative to the config file
                 "--eqasim-configurator", TestConfigurator.class.getName(),
                 "--simulate-after", TestRunSimulation.class.getName()
         });
@@ -526,7 +526,7 @@ public class TestSimulationPipeline {
     public void runStandaloneModeChoice() throws CommandLine.ConfigurationException, IOException, InterruptedException, ExecutionException {
         RunStandaloneModeChoice.main(new String[] {
                 "--config-path", "melun_test/input/config.xml",
-                "--recorded-travel-times-path", "melun_test/output/eqasim_travel_times.bin",
+                "--recorded-travel-times-path", "melun_test/output/eqasim_travel_times.bin.gz",
                 "--write-input-csv-trips", "true",
                 "--write-output-csv-trips", "true",
                 "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice",

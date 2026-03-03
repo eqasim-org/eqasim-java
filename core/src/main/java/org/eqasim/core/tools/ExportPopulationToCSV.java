@@ -7,7 +7,9 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.io.IOUtils;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -34,7 +36,7 @@ public class ExportPopulationToCSV {
         }
 
         try {
-            FileWriter fileWriter = new FileWriter(filePath);
+            BufferedWriter fileWriter = IOUtils.getBufferedWriter(filePath);
             fileWriter.write(String.join(";", header) + "\n");
             for(Person person: population.getPersons().values()) {
                 String[] line = new String[attributes.size()+1];

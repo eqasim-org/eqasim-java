@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.eqasim.core.simulation.EqasimConfigurator;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -22,7 +23,9 @@ public class RunIsolateAgent {
 				.build();
 
 		Config config = ConfigUtils.createConfig();
+		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 		Scenario scenario = ScenarioUtils.createScenario(config);
+		configurator.configureScenario(scenario);
 
 		// Load population
 		String inputPath = cmd.getOptionStrict("input-path");

@@ -88,6 +88,8 @@ public class RunAdaptConfig {
 		VehiclesConfigGroup vehiclesConfig = config.vehicles();
 		vehiclesConfig.setVehiclesFile(SwissConfigAdapter.prefix + "vehicles.xml.gz");
 
+		// CRS
+		config.global().setCoordinateSystem("EPSG:2056");
 	}
 
 }
