@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.emissions.RunComputeEmissionsEvents;
 import org.eqasim.core.components.emissions.RunExportEmissionsNetwork;
 import org.eqasim.core.components.emissions.SafeOsmHbefaMapping;
@@ -58,8 +60,12 @@ import org.matsim.vehicles.Vehicles;
 
 public class TestEmissions {
 
+	private static final Logger log = LogManager.getLogger(TestEmissions.class);
+
 	@Before
 	public void setUp() throws IOException {
+		// Attempt to remove leftover directories from previous runs (Windows file locks eventually release)
+		FileUtils.deleteQuietly(new File("melun_test"));
 		URL fixtureUrl = getClass().getResource("/melun");
 		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
 		var coldAverageFile = "sample_41_EFA_ColdStart_vehcat_2020average.csv";
@@ -73,8 +79,12 @@ public class TestEmissions {
 	}
 
 	@After
-	public void tearDown() throws IOException {
-		FileUtils.deleteDirectory(new File("melun_test"));
+	public void tearDown() {
+		try {
+			FileUtils.deleteDirectory(new File("melun_test"));
+		} catch (IOException e) {
+			log.warn("Could not fully delete melun_test directory : {}", e.getMessage());
+		}
 	}
 
 	private void runMelunSimulation() throws ConfigurationException {

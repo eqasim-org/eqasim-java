@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.junit.After;
 import org.junit.Assert;
@@ -49,15 +51,23 @@ import org.matsim.vehicles.Vehicles;
 
 public class TestMotorcycles {
 
+	private static final Logger log = LogManager.getLogger(TestMotorcycles.class);
+
 	@Before
 	public void setUp() throws IOException {
+		// Attempt to remove leftover directories from previous runs (Windows file locks eventually release)
+		FileUtils.deleteQuietly(new File("melun_test_motorcycle"));
 		URL fixtureUrl = getClass().getResource("/melun");
 		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test_motorcycle/input"));
 	}
 
 	@After
-	public void tearDown() throws IOException {
-		 FileUtils.deleteDirectory(new File("melun_test_motorcycle"));
+	public void tearDown() {
+		try {
+			FileUtils.deleteDirectory(new File("melun_test_motorcycle"));
+		} catch (IOException e) {
+			log.warn("Could not fully delete melun_test_motorcycle directory", e.getMessage());
+		}
 	}
 
 	private void runAddMotorcycles() {
@@ -88,7 +98,7 @@ public class TestMotorcycles {
 		Collection<String> mainModes = new HashSet<>(config.qsim().getMainModes());
 		mainModes.add(TransportMode.motorcycle);
 		config.qsim().setMainModes(mainModes);
-		
+
 		config.qsim().setLinkDynamics(LinkDynamics.SeepageQ);
 
 		Collection<String> seepModes = new HashSet<>(config.qsim().getSeepModes());
@@ -111,7 +121,7 @@ public class TestMotorcycles {
 		}
 		NetworkUtils.writeNetwork(network, "melun_test_motorcycle/input/network.xml.gz");
 	}
-	
+
 	private void runModifyPlans() {
 		Config config = ConfigUtils.loadConfig("melun_test_motorcycle/input/config.xml");
 		Scenario scenario = ScenarioUtils.loadScenario(config);
