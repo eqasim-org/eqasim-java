@@ -182,8 +182,13 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         walkAttributes.put("sex", String.valueOf(personVariables.sex));
         walkAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         walkAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
+        walkAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
         walkAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
         walkAttributes.put("income", String.valueOf(personVariables.income));
+
+        // canton attribute
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        walkAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
 
         // purposes used in utility
         walkAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
@@ -205,5 +210,4 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
 
         variablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
     }
-
 }

@@ -184,6 +184,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         bikeAttributes.put("sex", String.valueOf(personVariables.sex));
         bikeAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         bikeAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
+        bikeAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
         bikeAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
         bikeAttributes.put("income", String.valueOf(personVariables.income));
 
@@ -201,6 +202,10 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         bikeAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
         bikeAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
         bikeAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+
+        // canton
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        bikeAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
 
         // main level-of-service term used in utility
         bikeAttributes.put("travelTime_min", String.valueOf(bikevariable.travelTime_min));

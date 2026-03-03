@@ -212,6 +212,7 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         carAttributes.put("sex", String.valueOf(personVariables.sex));
         carAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         carAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
+        carAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
         carAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
         carAttributes.put("income", String.valueOf(personVariables.income));
         carAttributes.put("carOwnershipRatio", String.valueOf(personVariables.carOwnershipRatio));
@@ -231,6 +232,11 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         carAttributes.put("suburbanDestination", Utils.destinationIsSuburban(trip) ? "1" : "0");
         carAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
         carAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+
+        // car ownership and canton used in utility
+        carAttributes.put("carOwnershipRatio", String.valueOf(personVariables.carOwnershipRatio));
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        carAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
 
         // level-of-service + monetary components used in utility
         double parkingSearch_min = getParkingSearchDuration(trip);

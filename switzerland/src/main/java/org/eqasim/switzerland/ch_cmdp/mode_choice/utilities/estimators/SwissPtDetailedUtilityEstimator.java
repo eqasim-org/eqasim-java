@@ -53,44 +53,68 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         return parameters.pt.alpha_u;
     }
 
-    protected double estimateAccessEgressTimeUtility(PtVariables variables) {
+    private double acessEgressTime(PtVariables variables) {
         double accessEgressTime = variables.accessEgressTime_min;
         if (correctPtVariables) {
-            accessEgressTime = 3.0 * Math.pow(accessEgressTime, 0.55);
-            if (variables.euclideanDistance_km < 1.6) {
-                accessEgressTime = accessEgressTime * 0.92;
-            }
-            if (variables.euclideanDistance_km < 1.0) {
-                accessEgressTime = accessEgressTime * 0.85;
-            }
+            accessEgressTime = Math.max(
+                    0.5,
+                    3.74139006e+01 * Math.pow(accessEgressTime, 0.5) - 5.62447737 * accessEgressTime
+                    + 2.74407303e-02 * Math.pow(accessEgressTime, 2) - 5.05288057e+01
+            );
         }
+        return accessEgressTime;
+    }
+
+    private double inVehicleTime(PtVariables variables) {
+        double inVehicleTime = variables.inVehicleTime_min;
+        if (correctPtVariables) {
+            inVehicleTime = Math.max(0.5,
+                    1.25090972 * Math.pow(inVehicleTime, 0.9551884) - 0.64645406
+            );
+        }
+        return inVehicleTime;
+    }
+
+    private double waitingTime(PtVariables variables) {
+        double waitingTime = variables.waitingTime_min;
+        if (correctPtVariables) {
+            waitingTime = Math.max(0.0,
+                    6.788727 * Math.pow(waitingTime, 0.25804366) + 0.23722529
+            );
+        }
+        return waitingTime;
+    }
+
+    private double lineSwitches(PtVariables variables) {
+        double lineSwitches = variables.numberOfLineSwitches;
+        if (correctPtVariables) {
+            lineSwitches = Math.max(0.0,
+                    1.49791876 * Math.pow(lineSwitches, 0.1978368) + 0.05493884
+            );
+        }
+        return lineSwitches;
+    }
+
+    protected double estimateAccessEgressTimeUtility(PtVariables variables) {
+        double accessEgressTime = acessEgressTime(variables);
         accessEgressTime = accessEgressTime / parameters.timeScale_min;
         return parameters.pt.betaAccessEgressTime_u_min * Math.pow(accessEgressTime, parameters.pt.accessEgressTimeExponent);
     }
 
     protected double estimateInVehicleTimeUtility(PtVariables variables) {
-        double inVehicleTime = variables.inVehicleTime_min;
-        if (correctPtVariables) {
-            inVehicleTime = 1.2 * Math.pow(inVehicleTime, 0.95);
-        }
+        double inVehicleTime = inVehicleTime(variables);
         inVehicleTime = inVehicleTime / parameters.timeScale_min;
         return parameters.pt.betaInVehicleTime_u_min * Math.pow(inVehicleTime, parameters.pt.inVehicleTimeExponent);
     }
 
     protected double estimateWaitingTimeUtility(PtVariables variables) {
-        double waitingTime = variables.waitingTime_min;
-        if (correctPtVariables) {
-            waitingTime = 0.45 * Math.pow(waitingTime, 1.17);
-        }
+        double waitingTime = waitingTime(variables);
         waitingTime = waitingTime / parameters.timeScale_min;
         return parameters.pt.betaWaitingTime_u_min * Math.pow(waitingTime, parameters.pt.waitingTimeExponent);
     }
 
     protected double estimateLineSwitchUtility(PtVariables variables) {
-        double lineSwitches = variables.numberOfLineSwitches;
-        if (correctPtVariables) {
-            lineSwitches = 0.3 * Math.pow(lineSwitches, 1.9);
-        }
+        double lineSwitches = lineSwitches(variables);
         return parameters.pt.betaLineSwitch_u * Math.pow(lineSwitches, parameters.pt.lineSwitchExponent);
     }
 
@@ -220,6 +244,9 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         utility += estimateUrbancoreDestinationUtility(trip);
         // canton
         utility += estimateCantonUtility(person);
+        // service quality
+        utility += estimateGoodPtServiceUtility(personVariables);
+        utility += estimateMediumPtServiceUtility(personVariables);
 
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, variables, personVariables, utility);
@@ -244,8 +271,13 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         ptAttributes.put("sex", String.valueOf(personVariables.sex));
         ptAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         ptAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
+        ptAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
         ptAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
         ptAttributes.put("income", String.valueOf(personVariables.income));
+
+        // canton attribute
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        ptAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
 
         // purposes used in utility
         ptAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
@@ -262,16 +294,21 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         ptAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
         ptAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
 
+        // service quality used in utility
+        ptAttributes.put("goodPtService", Utils.isGoodPtService(personVariables.ovgk) ? "1" : "0");
+        ptAttributes.put("mediumPtService", Utils.isMediumPtService(personVariables.ovgk) ? "1" : "0");
+
         // PT level-of-service terms used in utility
-        ptAttributes.put("inVehicleTime_min", String.valueOf(ptVariables.inVehicleTime_min));
-        ptAttributes.put("accessEgressTime_min", String.valueOf(ptVariables.accessEgressTime_min));
-        ptAttributes.put("waitingTime_min", String.valueOf(ptVariables.waitingTime_min));
-        ptAttributes.put("numberOfLineSwitches", String.valueOf(ptVariables.numberOfLineSwitches));
+        ptAttributes.put("inVehicleTime_min", String.valueOf(inVehicleTime(ptVariables)));
+        ptAttributes.put("accessEgressTime_min", String.valueOf(acessEgressTime(ptVariables)));
+        ptAttributes.put("waitingTime_min", String.valueOf(waitingTime(ptVariables)));
+        ptAttributes.put("numberOfLineSwitches", String.valueOf(lineSwitches(ptVariables)));
 
         // monetary terms used in utility
         ptAttributes.put("cost_MU", String.valueOf(ptVariables.cost_MU));
 
         variablesWriter.writeVariables("pt", personId, tripIndex, departureTime, utility, ptAttributes);
     }
+
 
 }

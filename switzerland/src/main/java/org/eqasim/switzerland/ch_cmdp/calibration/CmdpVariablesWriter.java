@@ -17,7 +17,7 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
         try {
             String commonHeader = "person_id;trip_index;departure_time;utility;" +
                     "euclideanDistance_km;" +
-                    "age;sex;region;retired;lowIncome;income;" +
+                    "age;sex;region;retired;junior;lowIncome;income;canton;" +
                     "originHome;" +
                     "destinationWork;destinationHome;destinationEducation;destinationShopping;destinationLeisure;destinationOther;" +
                     "urbanDestination;urbancoreDestination;" +
@@ -25,6 +25,7 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
 
             switch (mode) {
                 case "pt" -> writer.write(commonHeader +
+                        "goodPtService;mediumPtService;" +
                         "accessEgressTime_min;inVehicleTime_min;waitingTime_min;numberOfLineSwitches;" +
                         "cost_MU\n");
 
@@ -38,7 +39,8 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
                         "travelTime_min\n");
 
                 case "car_passenger" -> writer.write(commonHeader +
-                        "drivingLicense;travelTime_min\n");
+                        "drivingLicense;veryLongDistance;carOwnershipRatio;hasCar;" +
+                        "travelTime_min\n");
 
                 default -> System.err.println("Unknown mode: " + mode);
             }
@@ -60,7 +62,7 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
                 StringBuilder sb = new StringBuilder();
 
                 // Common attributes (must match commonHeader ordering)
-                sb.append(String.format("%s;%d;%d;%.3f;%.4f;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
+                sb.append(String.format("%s;%d;%d;%.3f;%.4f;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s",
                         personId,
                         tripIndex,
                         (int) departureTime,
@@ -70,8 +72,10 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
                         attributes.get("sex"),
                         attributes.get("region"),
                         attributes.get("retired"),
+                        attributes.get("junior"),
                         attributes.get("lowIncome"),
                         attributes.get("income"),
+                        attributes.get("canton"),
                         attributes.get("originHome"),
                         attributes.get("destinationWork"),
                         attributes.get("destinationHome"),
@@ -87,7 +91,9 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
 
                 switch (mode) {
                     case "pt":
-                        sb.append(String.format(";%s;%s;%s;%s;%s\n",
+                        sb.append(String.format(";%s;%s;%s;%s;%s;%s;%s\n",
+                                attributes.get("goodPtService"),
+                                attributes.get("mediumPtService"),
                                 attributes.get("accessEgressTime_min"),
                                 attributes.get("inVehicleTime_min"),
                                 attributes.get("waitingTime_min"),
@@ -124,8 +130,11 @@ public class CmdpVariablesWriter extends StandardVariablesWriter {
                         break;
 
                     case "car_passenger":
-                        sb.append(String.format(";%s;%s\n",
+                        sb.append(String.format(";%s;%s;%s;%s;%s\n",
                                 attributes.get("drivingLicense"),
+                                attributes.get("veryLongDistance"),
+                                attributes.get("carOwnershipRatio"),
+                                attributes.get("hasCar"),
                                 attributes.get("travelTime_min")
                         ));
                         cpWriter.write(sb.toString());

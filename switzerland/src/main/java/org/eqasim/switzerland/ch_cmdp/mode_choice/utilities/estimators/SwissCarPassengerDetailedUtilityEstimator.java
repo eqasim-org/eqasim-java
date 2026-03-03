@@ -209,6 +209,7 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         cpAttributes.put("sex", String.valueOf(personVariables.sex));
         cpAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         cpAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
+        cpAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
         cpAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
         cpAttributes.put("income", String.valueOf(personVariables.income));
         cpAttributes.put("drivingLicense", String.valueOf(personVariables.drivingLicense));
@@ -227,6 +228,15 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         cpAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
         cpAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
         cpAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+        cpAttributes.put("veryLongDistance", Utils.isVeryLongDistanceTrip(trip) ? "1" : "0");
+
+        // canton
+        Object cantonObj = person.getAttributes().getAttribute("cantonName");
+        cpAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
+
+        // car ownership used in utility
+        cpAttributes.put("carOwnershipRatio", String.valueOf(personVariables.carOwnershipRatio));
+        cpAttributes.put("hasCar", personVariables.hasCar ? "1" : "0");
 
         // main level-of-service term used in utility
         cpAttributes.put("travelTime_min", String.valueOf(cpVariables.travelTime_min));
