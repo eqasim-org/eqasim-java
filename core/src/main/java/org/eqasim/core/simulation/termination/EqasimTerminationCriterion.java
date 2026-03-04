@@ -104,10 +104,6 @@ public class EqasimTerminationCriterion implements TerminationCriterion {
 	}
 
 	public void replay(List<TerminationData> replayData) {
-		if (replayData.isEmpty()) {
-			return; // no history to replay (fresh start, no history file provided)
-		}
-
 		for (int k = 0; k < replayData.size(); k++) {
 			TerminationData item = replayData.get(k);
 
