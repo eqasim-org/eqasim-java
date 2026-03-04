@@ -22,6 +22,7 @@ import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.api.experimental.events.TeleportationArrivalEvent;
+import org.matsim.core.config.groups.QSimConfigGroup.VehicleBehavior;
 import org.matsim.core.mobsim.framework.HasPerson;
 import org.matsim.core.mobsim.framework.MobsimAgent;
 import org.matsim.core.mobsim.framework.MobsimDriverAgent;
@@ -29,6 +30,10 @@ import org.matsim.core.mobsim.framework.PlanAgent;
 import org.matsim.core.mobsim.qsim.InternalInterface;
 import org.matsim.core.mobsim.qsim.interfaces.DepartureHandler;
 import org.matsim.core.mobsim.qsim.interfaces.MobsimEngine;
+import org.matsim.core.mobsim.qsim.pt.TransitDriverAgent;
+import org.matsim.core.mobsim.qsim.qnetsimengine.QLinkI;
+import org.matsim.core.mobsim.qsim.qnetsimengine.QNetsimEngineI;
+import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.vehicles.Vehicle;
 
@@ -44,24 +49,39 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 
 	private final VDFTrafficHandler handler;
 	private final boolean generateNetworkEvents;
+	
+	private final QNetsimEngineI qNetsimEngine;
 
 	public VDFEngine(Collection<String> modes, VDFTravelTime travelTime, Network network, VDFTrafficHandler handler,
-			boolean generateNetworkEvents) {
+			boolean generateNetworkEvents, QNetsimEngineI qNetsimEngine) {
 		this.modes = new ArrayList<>(modes);
 		this.travelTime = travelTime;
 		this.network = network;
 		this.handler = handler;
 		this.generateNetworkEvents = generateNetworkEvents;
+		this.qNetsimEngine = qNetsimEngine;
 	}
 
 	@Override
 	public boolean handleDeparture(double now, MobsimAgent agent, Id<Link> linkId) {
 		String legMode = agent.getMode();
-		if(!modes.contains(legMode)) {
+		if (!modes.contains(legMode)) {
 			return false;
 		}
 
 		MobsimDriverAgent driverAgent = (MobsimDriverAgent) agent;
+		// TransitDrivers are handled as a car mode and need to be processed through the QLinkI if transit is simulated
+		if (agent instanceof TransitDriverAgent) {
+			Id<Vehicle> vehicleId = ((MobsimDriverAgent)agent).getPlannedVehicleId();
+			QLinkI qlink = (QLinkI) qNetsimEngine.getNetsimNetwork().getNetsimLink(linkId);
+			QVehicle vehicle = qlink.removeParkedVehicle(vehicleId);
+
+			vehicle.setDriver((MobsimDriverAgent)agent);
+			((MobsimDriverAgent)agent).setVehicle(vehicle);
+			qlink.letVehicleDepart(vehicle);
+			return true;
+
+		}
 
 		if (generateNetworkEvents) {
 			EventsManager eventsManager = internalInterface.getMobsim().getEventsManager();
@@ -80,11 +100,12 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 					Id.createVehicleId(agent.getId()), modes.get(traversal.modeIndex), 1.0));
 		} else { // We have a handler and register traversals directly
 			NetworkRoute route;
-			if(agent instanceof PlanAgent planAgent) {
+			if (agent instanceof PlanAgent planAgent) {
 				Leg leg = (Leg) planAgent.getCurrentPlanElement();
 				route = (NetworkRoute) leg.getRoute();
 			} else {
-				throw new IllegalStateException("generateNetworkEvents is set to false while some agents to be processed by the VDF engine are not planAgent instances. Set generateNetworkEvents to false to fix this");
+				throw new IllegalStateException(
+						"generateNetworkEvents is set to false while some agents to be processed by the VDF engine are not planAgent instances. Set generateNetworkEvents to false to fix this");
 			}
 			now += getTraversalTime(now, route.getStartLinkId(), driverAgent);
 
@@ -169,7 +190,7 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 		// The current VDF travel time does not need a person object.
 		// We just pass one to respect the interface.
 		Person person = null;
-		if(agent instanceof HasPerson hasPerson) {
+		if (agent instanceof HasPerson hasPerson) {
 			person = hasPerson.getPerson();
 		}
 		Vehicle vehicle = null; // agent.getVehicle().getVehicle();
