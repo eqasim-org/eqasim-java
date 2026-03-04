@@ -20,7 +20,7 @@
 		<!-- Defines which Selector component to use. Built-in choices: Maximum, MultinomialLogit, Random -->
 		<param name="selector" value="MultinomialLogit" />
 		<!-- Defines a number of TourConstraint components that should be activated. Built-in choices: FromTripBased, VehicleContinuity, SubtourMode -->
-		<param name="tourConstraints" value="FromTripBased, EqasimVehicleTourConstraint" />
+		<param name="tourConstraints" value="FromTripBased, VehicleContinuity" />
 		<!-- Defines which TourEstimator component to use. Built-in choices: MATSimDayScoring, Cumulative, Uniform -->
 		<param name="tourEstimator" value="Cumulative" />
 		<!-- Defines a number of TourFilter components that should be activated. Built-in choices: TourLength -->

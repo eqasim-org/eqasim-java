@@ -64,7 +64,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 	public static final String ZERO_COST_MODEL_NAME = "ZeroCostModel";
 
-	public static final String VEHICLE_TOUR_CONSTRAINT = "EqasimVehicleTourConstraint";
 	public static final String HOME_FINDER = "EqasimHomeFinder";
 
 	@Override
