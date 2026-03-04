@@ -4,14 +4,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic.bike.BikeGradientBasedLinkSpeedCalculator;
-import org.eqasim.core.components.traffic.bike.BikeLinkSpeedCalculator;
+import org.eqasim.core.components.traffic.bike.BikeSpeedCalculator;
 import org.eqasim.core.components.traffic.bike.BikeTravelDisutilityFactory;
 import org.eqasim.core.components.traffic.bike.BikeTravelTime;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
-import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.config.Config;
 import org.matsim.core.controler.AbstractModule;
 
 import com.google.inject.Provides;
@@ -22,7 +23,8 @@ public class EqasimTrafficModule extends AbstractModule {
     @Override
     public void install() {
         // here we check whether the traffic light crossing penalty is based on delays or attributes, and bind the appropriate implementation accordingly
-        DelaysConfigGroup tlConfig = DelaysConfigGroup.getOrCreate(getConfig());
+        Config config = getConfig();
+        DelaysConfigGroup tlConfig = DelaysConfigGroup.getOrCreate(config);
         if (tlConfig.isActivated()) {
             logger.info("Traffic light crossing penalty is enabled.");
             bind(CrossingPenalty.class).to(IntersectionDelay.class);
@@ -31,15 +33,15 @@ public class EqasimTrafficModule extends AbstractModule {
             bind(CrossingPenalty.class).to(AttributeCrossingPenalty.class);
         }
 
-        bind(EqasimLinkSpeedCalculator.class).to(DefaultEqasimLinkSpeedCalculator.class);
+        // this is for bike travel times when it is routed in the network
+        bind(BikeSpeedCalculator.class).to(BikeGradientBasedLinkSpeedCalculator.class);
+        addTravelTimeBinding(TransportMode.bike).to(BikeTravelTime.class).in(Singleton.class);
+        addTravelDisutilityFactoryBinding(TransportMode.bike).to(BikeTravelDisutilityFactory.class).in(Singleton.class);
 
-        // here we check whether the bike is routed in the network or not
-        boolean bikeIsRouted = getConfig().routing().getNetworkModes().contains(TransportMode.bike);
-        if (bikeIsRouted) {
-            logger.info("Bike mode detected in routing configuration. Using bike-specific implementations for link speed and travel disutility.");
-            bind(BikeLinkSpeedCalculator.class).to(BikeGradientBasedLinkSpeedCalculator.class);
-            addTravelTimeBinding(TransportMode.bike).to(BikeTravelTime.class).in(Singleton.class);
-            addTravelDisutilityFactoryBinding(TransportMode.bike).to(BikeTravelDisutilityFactory.class).in(Singleton.class);
+        // if the vdf module is not activated, we need to bind the default link speed calculator, otherwise, it will be bound by the vdf module
+        boolean vdfActivated = config.getModules().get(VDFConfigGroup.GROUP_NAME) != null;
+        if (!vdfActivated) {
+            bind(EqasimLinkSpeedCalculator.class).to(DefaultEqasimLinkSpeedCalculator.class);
         }
     }
 
@@ -57,13 +59,14 @@ public class EqasimTrafficModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BikeGradientBasedLinkSpeedCalculator provideBikeGradientBasedLinkSpeedCalculator(DefaultEqasimLinkSpeedCalculator carSpeedCalculator) {
-        return new BikeGradientBasedLinkSpeedCalculator(carSpeedCalculator);
+    BikeGradientBasedLinkSpeedCalculator provideBikeGradientBasedLinkSpeedCalculator(CrossingPenalty crossingPenalty) {
+        return new BikeGradientBasedLinkSpeedCalculator(crossingPenalty);
     }
+
     @Provides
     @Singleton
-    DefaultEqasimLinkSpeedCalculator provideDefaultEqasimLinkSpeedCalculator(CrossingPenalty crossingPenalty) {
-        return new DefaultEqasimLinkSpeedCalculator(crossingPenalty);
+    DefaultEqasimLinkSpeedCalculator provideDefaultEqasimLinkSpeedCalculator(CrossingPenalty crossingPenalty, BikeSpeedCalculator bikeSpeedCalculator) {
+        return new DefaultEqasimLinkSpeedCalculator(crossingPenalty, bikeSpeedCalculator);
     }
 
     @Provides

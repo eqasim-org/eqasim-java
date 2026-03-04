@@ -1,5 +1,6 @@
 package org.eqasim.core.components.traffic;
 
+import org.eqasim.core.components.traffic.bike.BikeSpeedCalculator;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
@@ -10,13 +11,14 @@ import org.matsim.vehicles.Vehicle;
  */
 public class DefaultEqasimLinkSpeedCalculator implements EqasimLinkSpeedCalculator {
 	final private CrossingPenalty crossingPenalty;
-
+	final private BikeSpeedCalculator bikeSpeedCalculator;
 	/**
 	 * Constructor for DefaultEqasimLinkSpeedCalculator.
 	 * @param crossingPenalty The penalty calculator for crossings.
 	 */
-	public DefaultEqasimLinkSpeedCalculator(CrossingPenalty crossingPenalty) {
+	public DefaultEqasimLinkSpeedCalculator(CrossingPenalty crossingPenalty, BikeSpeedCalculator bikeSpeedCalculator) {
 		this.crossingPenalty = crossingPenalty;
+		this.bikeSpeedCalculator = bikeSpeedCalculator;
 	}
 
 	/**
@@ -40,6 +42,14 @@ public class DefaultEqasimLinkSpeedCalculator implements EqasimLinkSpeedCalculat
 	 */
 	@Override
 	public double getMaximumVelocity(QVehicle vehicle, Link link, double time) {
+		if (isBike(vehicle)) {
+			return getMaximumBikeVelocity(vehicle, link, time);
+		} else {
+			return getMaximumCarVelocity(vehicle, link, time);
+		}
+	}
+
+	private double getMaximumCarVelocity(QVehicle vehicle, Link link, double time) {
 		double maximumVelocity = Math.min(vehicle.getMaximumVelocity(), link.getFreespeed(time));
 		double travelTime = link.getLength() / maximumVelocity;
 
@@ -47,4 +57,10 @@ public class DefaultEqasimLinkSpeedCalculator implements EqasimLinkSpeedCalculat
 		travelTime += getCrossingPenalty(link, time, vehicleId);
 		return link.getLength() / travelTime;
 	}
+
+	private double getMaximumBikeVelocity(QVehicle vehicle, Link link, double time) {
+		return bikeSpeedCalculator.getMaximumBikeVelocity(vehicle.getVehicle(), link, time);
+	}
+
+
 }

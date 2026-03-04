@@ -1,5 +1,6 @@
 package org.eqasim.core.components.traffic.bike;
 
+import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.components.traffic.EqasimLinkSpeedCalculator;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.TransportMode;
@@ -11,31 +12,11 @@ import org.matsim.vehicles.Vehicle;
  * Calculates speeds for bike vehicles with gradient-based adjustments and crossing penalties.
  * Throws an exception for non-bike vehicles.
  */
-public class BikeGradientBasedLinkSpeedCalculator implements BikeLinkSpeedCalculator {
-    private final EqasimLinkSpeedCalculator carSpeedCalculator;
+public class BikeGradientBasedLinkSpeedCalculator implements BikeSpeedCalculator {
+    private final CrossingPenalty crossingPenalty;
 
-    /**
-     * Constructor for BikeGradientBasedLinkSpeedCalculator.
-     * @param carSpeedCalculator The default speed calculator for non-bike vehicles.
-     */
-    public BikeGradientBasedLinkSpeedCalculator(EqasimLinkSpeedCalculator carSpeedCalculator) {
-        this.carSpeedCalculator = carSpeedCalculator;
-    }
-
-    /**
-     * Gets the maximum velocity for a vehicle on a link, handling bikes differently.
-     * @param vehicle The vehicle.
-     * @param link The link.
-     * @param time The time.
-     * @return The maximum velocity.
-     */
-    @Override
-    public double getMaximumVelocity(QVehicle vehicle, Link link, double time) {
-        if (isBike(vehicle)) {
-            return maximumBikeSpeed(vehicle.getVehicle(), link, time);
-        } else {
-            return carSpeedCalculator.getMaximumVelocity(vehicle, link, time);
-        }
+    public BikeGradientBasedLinkSpeedCalculator(CrossingPenalty crossingPenalty) {
+        this.crossingPenalty = crossingPenalty;
     }
 
     /**
@@ -46,7 +27,7 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeLinkSpeedCalcul
      * @return The maximum bike speed.
      */
     @Override
-    public double maximumBikeSpeed(Vehicle vehicle, Link link, double time) {
+    public double getMaximumBikeVelocity(Vehicle vehicle, Link link, double time) {
         double maximumVelocity = link.getFreespeed(time);
         if (!(vehicle == null)){
             maximumVelocity = Math.min(vehicle.getType().getMaximumVelocity(), maximumVelocity);
@@ -65,7 +46,7 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeLinkSpeedCalcul
         // TODO: add a proper delay for bikes
         double travelTime = link.getLength() / expectedVelocity;
         if (!(vehicle == null)) {
-            travelTime += (carSpeedCalculator.getCrossingPenalty(link, time, vehicle.getId()) / 2.0); // the cutter raises an exception, so we need to check if the vehicle is null
+            travelTime += (crossingPenalty.calculateCrossingPenalty(link, time, vehicle.getId()) / 2.0); // the cutter raises an exception, so we need to check if the vehicle is null
         }
         double adjustedSpeed = link.getLength() / travelTime;
         return Math.max(1.0, Math.min(expectedVelocity, adjustedSpeed)); // Ensure speed is no less than 1 m/s and does not exceed expected velocity
@@ -114,13 +95,6 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeLinkSpeedCalcul
             double verticalChange = toZ - fromZ; // in meters
             return (verticalChange / horizontalDistance) * 100.0; // convert to percentage
         }
-    }
-
-    private boolean isBike(QVehicle vehicle) {
-        if (vehicle == null || vehicle.getVehicle() == null || vehicle.getVehicle().getType() == null) {
-            return false; // treat as non-bike if any information is missing
-        }
-        return vehicle.getVehicle().getType().getNetworkMode().equals(TransportMode.bike);
     }
 
 }

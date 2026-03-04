@@ -17,7 +17,7 @@ public class BikeDisutilities {
         String linkType = getLinkType(link);
         switch (linkType){
             case "motorway","motorway_link", "trunk","trunk_link":
-                return 0.4 * travelTime;
+                return 0.6 * travelTime;
             case "primary", "primary_link":
                 return 0.2 * travelTime;
             case "secondary", "secondary_link":

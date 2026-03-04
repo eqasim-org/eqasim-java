@@ -8,15 +8,15 @@ import com.google.inject.Inject;
 
 public class BikeTravelTime implements TravelTime {
 
-    private final BikeLinkSpeedCalculator linkSpeedCalculator;
+    private final BikeSpeedCalculator bikeSpeedCalculator;
 
     @Inject
-    public BikeTravelTime(BikeLinkSpeedCalculator linkSpeedCalculator) {
-        this.linkSpeedCalculator = linkSpeedCalculator;
+    public BikeTravelTime(BikeSpeedCalculator bikeSpeedCalculator) {
+        this.bikeSpeedCalculator = bikeSpeedCalculator;
     }
 
     @Override
     public double getLinkTravelTime(Link link, double v, Person person, Vehicle vehicle) {
-        return link.getLength()/linkSpeedCalculator.maximumBikeSpeed(vehicle, link, v);
+        return link.getLength()/bikeSpeedCalculator.getMaximumBikeVelocity(vehicle, link, v);
     }
 }
