@@ -65,7 +65,7 @@ public class StandardOptimizerHandler implements OptimizerHandler, ShutdownListe
     }
 
     protected String getNewParametersFilePath(int iteration) {
-        return outputDirectoryHierarchy.getIterationFilename(iteration, "optimal_parameters.yml");
+        return outputDirectoryHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
     }
 
     protected String getLastParametersFilePath() {
@@ -98,13 +98,13 @@ public class StandardOptimizerHandler implements OptimizerHandler, ShutdownListe
         }
     }
 
-    protected void applyParameters(String parameterFilePath, boolean isOptimized) {
+    protected void applyParameters(String parameterFilePath, boolean optimizationSucceeded) {
         File file = new File(parameterFilePath);
         if (file.exists() && file.isFile()) {
             eqasimConfigGroup.setModeParametersPath(parameterFilePath);
             ParameterDefinition.applyFile(file, parameters);
 
-            String label = isOptimized ? "New" : "Fallback";
+            String label = optimizationSucceeded ? "New" : "Fallback";
             logger.info(String.format("%s car alpha  : %f", label, parameters.car.alpha_u));
             logger.info(String.format("%s bike alpha : %f", label, parameters.bike.alpha_u));
             logger.info(String.format("%s walk alpha : %f", label, parameters.walk.alpha_u));
@@ -118,7 +118,7 @@ public class StandardOptimizerHandler implements OptimizerHandler, ShutdownListe
     public void notifyShutdown(ShutdownEvent shutdownEvent) {
         String finalParametersPath = getLastParametersFilePath();
         // copy the file to the output directory
-        String outputPath = outputDirectoryHierarchy.getOutputFilename("final_mode_parameters.yml");
+        String outputPath = outputDirectoryHierarchy.getOutputFilenameWithOutputPrefix("mode_parameters.yml");
         try {
             File source = new File(finalParametersPath);
             File target = new File(outputPath);

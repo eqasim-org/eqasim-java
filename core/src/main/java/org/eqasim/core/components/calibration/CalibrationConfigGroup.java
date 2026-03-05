@@ -111,9 +111,6 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     @StringSetter(RUN_CALIBRATION)
     public void setRunCalibration(boolean runCalibration) {
-        if (runCalibration) {
-            this.activate = true; // Activate if calibration is to be run.
-        }
         this.runCalibration = runCalibration;
     }
 
