@@ -37,7 +37,7 @@ public class SelectorModule extends AbstractDiscreteModeChoiceExtension {
 
 	@Provides
 	public UtilitySelectorFactory provideTourSelectorFactory(DiscreteModeChoiceConfigGroup dmcConfig,
-			Map<String, Provider<UtilitySelectorFactory>> components) {
+															 Map<String, Provider<UtilitySelectorFactory>> components) {
 		Provider<UtilitySelectorFactory> provider = components.get(dmcConfig.getSelector());
 
 		if (provider != null) {
@@ -60,7 +60,7 @@ public class SelectorModule extends AbstractDiscreteModeChoiceExtension {
 			DiscreteModeChoiceConfigGroup dmcConfig) {
 		MultinomialLogitSelectorConfigGroup config = dmcConfig.getMultinomialLogitSelectorConfig();
 		return new MultinomialLogitSelector.Factory(config.getMinimumUtility(), config.getMaximumUtility(),
-				config.getConsiderMinimumUtility(), config.getWriteDetailedUtilities());
+				config.getConsiderMinimumUtility(), config.getWriteDetailedUtilities(), config.getRandomNumbers().toString());
 	}
 
 	@Provides

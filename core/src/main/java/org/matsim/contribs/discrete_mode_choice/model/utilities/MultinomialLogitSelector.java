@@ -34,17 +34,19 @@ public class MultinomialLogitSelector implements UtilitySelector {
 	private final double minimumUtility;
 	private final boolean considerMinimumUtility;
 	private final boolean writeDetailedUtilities;
+	private final String randomNumbers;
 	private final Id<Person> personId;
 	private final List<DiscreteModeChoiceTrip> tourTrips;
 	/**
 	 * Creates a MultinomialSelector. The utility cutoff value defines the maximum
 	 * utility possible.
 	 */
-	public MultinomialLogitSelector(double maximumUtility, double minimumUtility, boolean considerMinimumUtility, boolean writeDetailedUtilities,
-									Person person, List<DiscreteModeChoiceTrip> tourTrips) {
+	public MultinomialLogitSelector(double maximumUtility, double minimumUtility, boolean considerMinimumUtility, String randomNumbers,
+									boolean writeDetailedUtilities, Person person, List<DiscreteModeChoiceTrip> tourTrips) {
 		this.maximumUtility = maximumUtility;
 		this.minimumUtility = minimumUtility;
 		this.considerMinimumUtility = considerMinimumUtility;
+		this.randomNumbers = randomNumbers;
 		this.writeDetailedUtilities = writeDetailedUtilities;
 		this.personId = person.getId();
 		this.tourTrips = tourTrips;
@@ -105,7 +107,12 @@ public class MultinomialLogitSelector implements UtilitySelector {
 		}
 
 		// V) Perform a selection using the CDF
-		double pointer = random.nextDouble() * totalDensity;
+		double pointer;
+		if (this.randomNumbers.equals("fixed")) {
+			pointer = RandomValueGenerator.randomForTour(Long.parseLong(personId.toString()), tourTrips.getFirst().getIndex()) * totalDensity;
+		} else {
+			pointer = random.nextDouble() * totalDensity;
+		}
 
 		int selection = (int) cumulativeDensity.stream().filter(f -> f < pointer).count();
 		UtilityCandidate selectedCandidate = filteredCandidates.get(selection);
@@ -124,21 +131,23 @@ public class MultinomialLogitSelector implements UtilitySelector {
 		private final double maximumUtility;
 		private final boolean considerMinimumUtility;
 		private final boolean writeDetailedUtilities;
+		private final String randomNumbers;
 
-		public Factory(double minimumUtility, double maximumUtility, boolean considerMinimumUtility, boolean writeDetailedUtilities) {
+		public Factory(double minimumUtility, double maximumUtility, boolean considerMinimumUtility, boolean writeDetailedUtilities, String randomNumbers) {
 			this.minimumUtility = minimumUtility;
 			this.maximumUtility = maximumUtility;
 			this.considerMinimumUtility = considerMinimumUtility;
 			this.writeDetailedUtilities = writeDetailedUtilities;
+			this.randomNumbers = randomNumbers;
 		}
 
 		public Factory(double minimumUtility, double maximumUtility, boolean considerMinimumUtility) {
-			this(minimumUtility, maximumUtility, considerMinimumUtility, false);
+			this(minimumUtility, maximumUtility, considerMinimumUtility, false, "random");
 		}
 
 		@Override
 		public MultinomialLogitSelector createUtilitySelector(Person person, List<DiscreteModeChoiceTrip> tourTrips) {
-			return new MultinomialLogitSelector(maximumUtility, minimumUtility, considerMinimumUtility, writeDetailedUtilities, person, tourTrips);
+			return new MultinomialLogitSelector(maximumUtility, minimumUtility, considerMinimumUtility, randomNumbers, writeDetailedUtilities, person, tourTrips);
 		}
 	}
 }
