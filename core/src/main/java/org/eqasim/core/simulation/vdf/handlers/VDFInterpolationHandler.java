@@ -26,16 +26,17 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 	private final VDFScope scope;
 
 	private final double updateFactor;
-
-	private final IdMap<Link, List<Double>> interpolatedCounts = new IdMap<>(Link.class);
+	private final int numIntervals;
+	private final IdMap<Link, double[]> interpolatedCounts = new IdMap<>(Link.class);
 	private final IdMap<Link, List<Double>> currentCounts = new IdMap<>(Link.class);
 
 	public VDFInterpolationHandler(Network network, VDFScope scope, double updateFactor) {
 		this.scope = scope;
 		this.updateFactor = updateFactor;
+		this.numIntervals = scope.getIntervals();
 
 		for (Id<Link> linkId : network.getLinks().keySet()) {
-			interpolatedCounts.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
+			interpolatedCounts.put(linkId, new double[numIntervals]);
 			currentCounts.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
 		}
 	}
@@ -52,14 +53,14 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 	}
 
 	@Override
-	public IdMap<Link, List<Double>> aggregate(boolean ignoreIteration) {
+	public IdMap<Link, double[]> aggregate(boolean ignoreIteration) {
 		for (var item : interpolatedCounts.entrySet()) {
 			List<Double> current = currentCounts.get(item.getKey());
-			List<Double> interpolated = item.getValue();
+			double[] interpolated = item.getValue();
 
-			for (int i = 0; i < interpolated.size(); i++) {
+			for (int i = 0; i < numIntervals; i++) {
 				if (!ignoreIteration) {
-					interpolated.set(i, (1.0 - updateFactor) * interpolated.get(i) + updateFactor * current.get(i));
+					interpolated[i] =  (1.0 - updateFactor) * interpolated[i] + updateFactor * current.get(i);
 				}
 
 				current.set(i, 0.0);
@@ -93,9 +94,9 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 				while (inputStream.available() > 0) {
 					Id<Link> linkId = Id.createLinkId(inputStream.readUTF());
 
-					List<Double> values = new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0));
-					for (int i = 0; i < values.size(); i++) {
-						values.set(i, inputStream.readDouble());
+					double[]  values = new double[numIntervals];
+					for (int i = 0; i < numIntervals; i++) {
+						values[i] = inputStream.readDouble();
 					}
 
 					interpolatedCounts.put(linkId, values);
@@ -122,9 +123,9 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 				for (var entry : interpolatedCounts.entrySet()) {
 					outputStream.writeUTF(entry.getKey().toString());
 
-					List<Double> values = entry.getValue();
-					for (int i = 0; i < values.size(); i++) {
-						outputStream.writeDouble(values.get(i));
+					double[] values = entry.getValue();
+					for (int i = 0; i < numIntervals; i++) {
+						outputStream.writeDouble(values[i]);
 					}
 				}
 

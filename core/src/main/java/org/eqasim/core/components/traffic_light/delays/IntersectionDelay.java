@@ -2,7 +2,7 @@ package org.eqasim.core.components.traffic_light.delays;
 
 import org.eqasim.core.components.traffic.CrossingPenalty;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
-import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
@@ -40,7 +40,12 @@ public class IntersectionDelay implements CrossingPenalty {
     }
 
     public double calculateCrossingPenalty(Link link, double time, Id<Vehicle> vehicleId) {
-        // 1. Check if the traffic light delays and unsignalized intersection delays are activated
+        // 1. Check if the input values are valid, if not, return 0.0
+        if (link == null || time < 0 || vehicleId == null) {
+            return 0.0;
+        }
+
+        // 2. Check if the traffic light delays and unsignalized intersection delays are activated
         // and check if a delay should be added based on the previous crossing position
         boolean timeOutOfBounds = time < timeBinManager.getStartTime() || time > timeBinManager.getEndTime();
         boolean noneOfDelaysActivated = !applyUnsignalizedDelays && !applyTrafficLightDelays;
@@ -54,17 +59,17 @@ public class IntersectionDelay implements CrossingPenalty {
             return 0.0;
         }
         // At this point, we know that at least one of the delays is activated and that we can add a delay based on the last intersection, time, iteration
-        // 2. If the traffic light delays are not activated, we return the unsignalized intersection delay
+        // 3. If the traffic light delays are not activated, we return the unsignalized intersection delay
         if (!applyTrafficLightDelays) {
             return unsignalizedIntersectionDelay.getDelay(link, time);
         }
-        // 3. If the traffic light delays are activated, we calculate the delay based on the traffic light delays
+        // 4. If the traffic light delays are activated, we calculate the delay based on the traffic light delays
         // and the unsignalized intersection delays if activated
 
-        //---- 3.1 get first the traffic light delay
+        //---- 4.1 get first the traffic light delay
         double tlValue = trafficLightDelays.getDelay(link, time);
 
-        //---- 3.2 In these cases, we return the crossing penalty of unsignalized intersections if activated or delegate
+        //---- 4.2 In these cases, we return the crossing penalty of unsignalized intersections if activated or delegate
         if (returnUnsignalizedDelayInsteadOfTlDelay(tlValue)) {
             if (applyUnsignalizedDelays) {
                 return unsignalizedIntersectionDelay.getDelay(link, time);
@@ -73,7 +78,7 @@ public class IntersectionDelay implements CrossingPenalty {
             }
         }
 
-        //---- 3.4 Otherwise, the returned value is the actual delay
+        //---- 4.4 Otherwise, the returned value is the actual delay
         return tlValue;
     }
 

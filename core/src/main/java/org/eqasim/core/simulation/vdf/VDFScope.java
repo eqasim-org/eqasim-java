@@ -18,7 +18,7 @@ public class VDFScope {
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.intervalTime = intervalTime;
-		this.intervals = (int) Math.floor((endTime - startTime) / intervalTime) + 1;
+		this.intervals = (int) Math.ceil((endTime - startTime) / intervalTime);
 	}
 
 	public int getIntervals() {
@@ -45,9 +45,15 @@ public class VDFScope {
 		Verify.verify(values.size() == intervals, reason);
 	}
 
-	public void verify(IdMap<Link, List<Double>> values, String reason) {
+//	public void verify(IdMap<Link, List<Double>> values, String reason) {
+//		for (var item : values.values()) {
+//			Verify.verify(item.size() == intervals, reason);
+//		}
+//	}
+
+	public void verify(IdMap<Link, double[]> values, String reason) {
 		for (var item : values.values()) {
-			Verify.verify(item.size() == intervals, reason);
+			Verify.verify(item.length == intervals, reason);
 		}
 	}
 }

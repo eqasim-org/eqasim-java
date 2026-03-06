@@ -1,9 +1,10 @@
 package org.eqasim.core.components.traffic_light.delays.webster;
 
+import org.eqasim.core.components.flow.FlowBinManager;
 import org.eqasim.core.components.traffic_light.delays.IntersectionGroups;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
 import org.eqasim.core.components.flow.FlowDataSet;
-import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -24,12 +25,11 @@ public class WebsterDelay {
     private final Logger logger = LogManager.getLogger(WebsterDelay.class);
 
     static public String TL_ATTRIBUTE = TrafficLightDelay.TL_ATTRIBUTE;
-    private final IdMap<Link, List<Double>> trafficLightDelays = new IdMap<>(Link.class);
+    private final IdMap<Link, double[]> trafficLightDelays = new IdMap<>(Link.class);
     private final TimeBinManager timeBinManager;
     private final Network network;
     private final WebsterFormula webster;
     private final FlowDataSet flow;
-    private final double flowRatio; // Ratio to convert flow to hours, based on the time bin size
     private final double sampleSize;
 
 //    private final IdMap<Link, String> debuggingMap = new IdMap<>(Link.class);;
@@ -40,7 +40,6 @@ public class WebsterDelay {
         this.network = network;
         this.webster = webster;
         this.flow = flow;
-        this.flowRatio = 3600.0 / timeBinManager.getBinSize();
         this.sampleSize = sampleSize;
     }
 
@@ -50,33 +49,32 @@ public class WebsterDelay {
         for (Link link : network.getLinks().values()) {
             boolean hasTl = (boolean) link.getAttributes().getAttribute(TL_ATTRIBUTE);
             if (hasTl) {
-                trafficLightDelays.put(link.getId(), new ArrayList<>(Collections.nCopies(timeBinManager.getNumberOfTlBins(), 0.0)));
+                trafficLightDelays.put(link.getId(), getZeros(timeBinManager.getNumberOfTlBins()));
             }
         }
     }
 
     public Double getDelay(Link link, double time) {
         int binIdx = timeBinManager.getTlBinIndex(time);
-        List<Double> linkDelay = trafficLightDelays.get(link.getId());
+        double[] linkDelay = trafficLightDelays.get(link.getId());
         if (linkDelay == null) {
             return 0.0; // Default to 0 if no delay is set for this link (e.g., if it does not have a traffic light)
         }
-        return linkDelay.get(binIdx);
+        return linkDelay[binIdx];
     }
 
     public void clearDelays() {
         // Reset all trafficLightDelays to 0.0
-        trafficLightDelays.values().forEach(delayList -> Collections.fill(delayList, 0.0));
+        trafficLightDelays.values().forEach(delayList -> Arrays.fill(delayList, 0.0));
     }
 
     public void resetDelays() {
         logger.info("Resetting traffic light delays");
-        logger.info("The average flow before estimating the delays is {}",flow.getAverageFlow()*flowRatio);
+        logger.info("The average flow before estimating the delays is {} v/h",flow.getAverageFlow());
         clearDelays();
         buildDelays();
         double averageDelay = trafficLightDelays.values().stream()
-                .flatMap(List::stream)
-                .mapToDouble(Double::doubleValue)
+                .flatMapToDouble(Arrays::stream)
                 .average()
                 .orElse(0.0);
         logger.info("Average traffic light delay after reset: {}", averageDelay);
@@ -92,7 +90,7 @@ public class WebsterDelay {
      * We do not adjust the capacity, as the capacity here is not scaled by the sample size.
      */
     public double getFlow(Link link, double time) {
-        return Math.min(flow.getFlow(link.getId(), time)*flowRatio/sampleSize,
+        return Math.min(flow.getFlow(link.getId(), time)/sampleSize,
                         link.getCapacity()); // Adjust flow based on the time bin size, rescale it to 100%, and cap it by the capacity of the link.
     }
 
@@ -302,11 +300,17 @@ public class WebsterDelay {
         int index = timeBinManager.getTlBinIndex(time);
         for (Map.Entry<Link, Double> entry : delayMap.entrySet()) {
             Id<Link> linkId = entry.getKey().getId();
-            trafficLightDelays.computeIfAbsent(linkId, k -> new ArrayList<>(Collections.nCopies(timeBinManager.getNumberOfTlBins(), 0.0)));
-            trafficLightDelays.get(linkId).set(index, entry.getValue());
+            trafficLightDelays.computeIfAbsent(linkId, k -> getZeros(timeBinManager.getNumberOfTlBins()));
+            double[] delays = trafficLightDelays.get(linkId);
+            delays[index] = entry.getValue();
         }
     }
 
+    private double[] getZeros(int size) {
+        double[] zeros = new double[size];
+        Arrays.fill(zeros, 0.0);
+        return zeros;
+    }
 
     /**
      * Exports the traffic light trafficLightDelays to a CSV file.
@@ -328,18 +332,17 @@ public class WebsterDelay {
             writer.write(header.toString() + "\n");
 
             // Write each link's flows as a row
-            for (Map.Entry<Id<Link>, List<Double>> entry : trafficLightDelays.entrySet()) {
+            for (Map.Entry<Id<Link>, double[]> entry : trafficLightDelays.entrySet()) {
                 Id<Link> linkId = entry.getKey();
-                List<Double> binFlows = entry.getValue();
+                double[] binFlows = entry.getValue();
 
                 StringBuilder row = new StringBuilder(linkId.toString());
                 for (int bin = 0; bin < numberOfBins; bin++) {
-                    row.append(String.format(";%.1f", binFlows.get(bin)));
+                    row.append(String.format(";%.1f", binFlows[bin]));
                 }
                 writer.write(row.toString() + "\n");
             }
         }
-
 //        // Export the debug list
 //        String debugFilename = filename.replace(".csv", "_debug.csv");
 //        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(debugFilename))) {

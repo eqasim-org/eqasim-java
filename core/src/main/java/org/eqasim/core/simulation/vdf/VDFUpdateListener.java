@@ -66,7 +66,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		// to obtain historical flows
 		boolean ignoreIteration = event.getIteration() == firstIteration && inputFile != null;
 
-		IdMap<Link, List<Double>> data = handler.aggregate(ignoreIteration);
+		IdMap<Link, double[]> data = handler.aggregate(ignoreIteration);
 		scope.verify(data, "Wrong flow format");
 		travelTime.update(data);
 
@@ -104,7 +104,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 
 			// ignore "current iteration" because it does not exist at startup, we just
 			// aggregate to have consistent travel times
-			IdMap<Link, List<Double>> data = handler.aggregate(true);
+			IdMap<Link, double[]> data = handler.aggregate(true);
 			scope.verify(data, "Wrong flow format");
 			travelTime.update(data);
 

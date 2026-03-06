@@ -5,15 +5,14 @@ import com.google.inject.Singleton;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.flow.FlowBinManager;
 import org.eqasim.core.components.network_calibration.capacities_calibration.CapacitiesAdapter;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltiesAdapter;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
-import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
-import org.eqasim.core.components.flow.FlowDataSet;
-import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -59,25 +58,10 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public LinkFlowCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
-                                                 OutputDirectoryHierarchy outputHierarchy) {
-        DelaysConfigGroup config = DelaysConfigGroup.getOrCreate(getConfig());
-        return new LinkFlowCounter(network, flowDataSet, timeBinManager, outputHierarchy, config);
-    }
-
-    @Provides
-    @Singleton
-    public TimeBinManager provideTimeBinManager() {
-        DelaysConfigGroup config = DelaysConfigGroup.getOrCreate(getConfig());
-        return new TimeBinManager(config);
-    }
-
-    @Provides
-    @Singleton
-    public FlowProcessor provideFlowByLinkCategory(Network network, LinkFlowCounter counter, TimeBinManager timeBinManager,
+    public FlowProcessor provideFlowByLinkCategory(Network network, LinkFlowCounter counter, FlowBinManager flowBinManager,
                                                    CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new FlowProcessor(network, counter, timeBinManager, countsProcessor, outputHierarchy, config);
+        return new FlowProcessor(network, counter, flowBinManager, countsProcessor, outputHierarchy, config);
     }
 
     @Provides

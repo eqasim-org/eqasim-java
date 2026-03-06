@@ -3,6 +3,8 @@ package org.eqasim.core.components.traffic_light;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.flow.FlowBinManager;
+import org.eqasim.core.components.flow.FlowConfigGroup;
 import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
@@ -11,7 +13,6 @@ import org.eqasim.core.components.traffic_light.delays.shahpar.ShahparDelay;
 import org.eqasim.core.components.traffic_light.delays.webster.WebsterDelay;
 import org.eqasim.core.components.traffic_light.delays.webster.WebsterFormula;
 import org.eqasim.core.components.flow.FlowDataSet;
-import org.eqasim.core.components.flow.TimeBinManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.matsim.api.core.v01.network.Network;
@@ -50,23 +51,9 @@ public class DelaysModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public TimeBinManager provideTimeBinManager(DelaysConfigGroup config) {
-        return new TimeBinManager(config);
+    public TimeBinManager provideTimeBinManager(DelaysConfigGroup config, FlowConfigGroup flowConfig) {
+        return new TimeBinManager(config, flowConfig);
     }
-
-    @Provides
-    @Singleton
-    public FlowDataSet provideFlowDataSet(Network network, TimeBinManager timeBinManager, DelaysConfigGroup config) {
-        return new FlowDataSet(network, timeBinManager, config.getBeta());
-    }
-
-    @Provides
-    @Singleton
-    public LinkFlowCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
-                                                 OutputDirectoryHierarchy outputHierarchy, DelaysConfigGroup delaysConfigGroup) {
-        return new LinkFlowCounter(network, flowDataSet, timeBinManager, outputHierarchy, delaysConfigGroup);
-    }
-
 
 
     @Provides
@@ -98,7 +85,8 @@ public class DelaysModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public ShahparDelay provideShahparDelay(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager, DelaysConfigGroup delaysConfigGroup,
+    public ShahparDelay provideShahparDelay(Network network, FlowDataSet flowDataSet, TimeBinManager timeBinManager,
+                                            DelaysConfigGroup delaysConfigGroup,
                                             EqasimConfigGroup eqasimConfigGroup) {
         return new ShahparDelay(network, flowDataSet, timeBinManager, delaysConfigGroup.getShahparConfigGroup(),
                                 eqasimConfigGroup.getSampleSize());

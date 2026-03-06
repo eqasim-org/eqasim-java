@@ -2,8 +2,9 @@ package org.eqasim.core.components.traffic_light.delays.shahpar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.flow.FlowBinManager;
 import org.eqasim.core.components.flow.FlowDataSet;
-import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -29,13 +30,12 @@ public class ShahparDelay {
     private final IdMap<Node, Double> ffMap = new IdMap<>(Node.class);
     private final IdMap<Link, Double> rowMap = new IdMap<>(Link.class);
     private final IdMap<Node, Double> nodesDegrees = new IdMap<>(Node.class);
-    private final IdMap<Link, List<Double>> delays = new IdMap<>(Link.class);;
+    private final IdMap<Link, double[]> delays = new IdMap<>(Link.class);;
     private boolean mapsAreInitialized;
 
     private final FlowDataSet flow;
     private final Network network;
     private final TimeBinManager timeBinManager;
-    private final double flowRatio; // Ratio to convert flow to hours, based on the time bin size
     private final double sampleSize;
 
     public ShahparDelay(Network network, FlowDataSet flow, TimeBinManager timeBinManager, ShahparConfigGroup config,
@@ -48,7 +48,6 @@ public class ShahparDelay {
         this.network = network;
         this.timeBinManager = timeBinManager;
         this.mapsAreInitialized = false;
-        this.flowRatio = 3600.0 / timeBinManager.getBinSize();
         this.sampleSize = sampleSize;
 
         logger.info("Shahpar delay initialized with {} intersection nodes.", ffMap.size());
@@ -71,7 +70,9 @@ public class ShahparDelay {
         // limit memory usage by removing the links with 0 delay from memory
         for (Link link : network.getLinks().values()) {
             if (considerLink(link)) {
-                    delays.put(link.getId(), new ArrayList<>(Collections.nCopies(timeBinManager.getNumberOfBins(), 0.0)));
+                    double[] delayArray = new double[timeBinManager.getNumberOfBins()];
+                    Arrays.fill(delayArray, 0.0);
+                    delays.put(link.getId(), delayArray);
                 }
             }
     }
@@ -89,36 +90,38 @@ public class ShahparDelay {
 
     public void clearDelays() {
         // Reset all delays to 0.0
-        delays.values().forEach(delayList -> Collections.fill(delayList, 0.0));
+        for (double[] delayList : delays.values()) {
+            Arrays.fill(delayList, 0.0);
+        }
     }
 
     public void buildDelays(){
         for (Link link : network.getLinks().values()) {
             if (considerLink(link)) {
-                List<Double> delayList = delays.get(link.getId());
+                double[] delayList = delays.get(link.getId());
                 if (delayList != null) {
                     double[] binCenters = timeBinManager.getBinsCenters();
                     for (int i = 0; i < timeBinManager.getNumberOfBins(); i++) {
                         double time = binCenters[i];
                         double delay = computeDelay(link, time);
-                        delayList.set(i, delay);
+                        delayList[i] = delay;
                     }
                 }
             }
         }
     }
 
-    public Double getDelay(Link link, double time){
-        return delays.get(link.getId()).get(timeBinManager.getBinIndex(time));
+    public double getDelay(Link link, double time){
+        return delays.get(link.getId())[timeBinManager.getBinIndex(time)];
     }
 
-    public Double getNodeDegree(Id<Node> nodeId) {
+    public double getNodeDegree(Id<Node> nodeId) {
         // Returns the degree of the node, or null if not assigned
         return nodesDegrees.get(nodeId);
     }
 
     public double getFlow(Link link, double time) {
-        return Math.min(flow.getFlow(link.getId(), time)*flowRatio/sampleSize,
+        return Math.min(flow.getFlow(link.getId(), time)/sampleSize,
                         link.getCapacity()); // Adjust flow based on the time bin size, rescale it to 100%, and cap it by the capacity of the link.
     }
 
@@ -274,13 +277,13 @@ public class ShahparDelay {
             writer.write(header.toString() + "\n");
 
             // Write each link's flows as a row
-            for (Map.Entry<Id<Link>, List<Double>> entry : delays.entrySet()) {
+            for (Map.Entry<Id<Link>, double[]> entry : delays.entrySet()) {
                 Id<Link> linkId = entry.getKey();
-                List<Double> delayValue = entry.getValue();
+                double[] delayValue = entry.getValue();
 
                 StringBuilder row = new StringBuilder(linkId.toString());
                 for (int bin = 0; bin < numberOfBins; bin++) {
-                    row.append(String.format(";%.1f", delayValue.get(bin)));
+                    row.append(String.format(";%.1f", delayValue[bin]));
                 }
                 writer.write(row.toString() + "\n");
             }

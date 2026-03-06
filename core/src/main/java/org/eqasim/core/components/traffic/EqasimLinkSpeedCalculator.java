@@ -20,6 +20,17 @@ public interface EqasimLinkSpeedCalculator extends LinkSpeedCalculator {
         return 0.0;
     }
 
+    default double getMaximumVelocity(QVehicle vehicle, Link link, double time) {
+        if (isBike(vehicle)) {
+            return getMaximumBikeVelocity(vehicle, link, time);
+        } else {
+            return getMaximumCarVelocity(vehicle, link, time);
+        }
+    }
+
+    double getMaximumCarVelocity(QVehicle vehicle, Link link, double time);
+    double getMaximumBikeVelocity(QVehicle vehicle, Link link, double time);
+
     default boolean isBike(QVehicle vehicle) {
         if (vehicle == null || vehicle.getVehicle() == null || vehicle.getVehicle().getType() == null) {
             return false; // treat as non-bike if any information is missing

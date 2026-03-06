@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 
+import ch.sbb.matsim.config.SBBTransitConfigGroup;
+import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.EqasimComponentsModule;
@@ -17,6 +19,8 @@ import org.eqasim.core.components.calibration.CalibrationModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.fast_calibration.FastCalibrationModule;
+import org.eqasim.core.components.flow.FlowConfigGroup;
+import org.eqasim.core.components.flow.FlowModule;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationModule;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
@@ -138,6 +142,12 @@ public abstract class EqasimConfigurator {
 		registerComponents(TransitWithAbstractAccessQSimModule::configure,
 				TransitWithAbstractAbstractAccessModuleConfigGroup.GROUP_NAME);
 
+//		registerConfigGroup(new SBBTransitConfigGroup(), true);
+//		registerComponents((components, config) -> {
+//			new SBBTransitEngineQSimModule().configure(components);
+//		}, SBBTransitEngineQSimModule.COMPONENT_NAME);
+//		registerQSimModule(new SBBTransitEngineQSimModule(), SBBTransitEngineQSimModule.COMPONENT_NAME);
+
 		// VDF functionality
 		registerConfigGroup(new VDFConfigGroup(), true);
 		registerModule(new VDFModule(), VDFConfigGroup.GROUP_NAME);
@@ -159,6 +169,10 @@ public abstract class EqasimConfigurator {
 		// Policies
 		registerConfigGroup(new PoliciesConfigGroup(), true);
 		registerModule(new PolicyModule());
+
+		// flow module
+		registerConfigGroup(new FlowConfigGroup(), true);
+		registerModule(new FlowModule(), FlowConfigGroup.GROUP_NAME);
 
 		// Delays functionality (traffic light and other delays)
 		registerConfigGroup(new DelaysConfigGroup(), true);

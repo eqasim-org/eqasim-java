@@ -62,7 +62,7 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 	}
 
 	@Override
-	public IdMap<Link, List<Double>> aggregate(boolean ignoreIteration) {
+	public IdMap<Link, double[]> aggregate(boolean ignoreIteration) {
 		while (state.size() > horizon) {
 			state.remove(0);
 		}
@@ -80,14 +80,14 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 			state.add(copy);
 		}
 
-		IdMap<Link, List<Double>> aggregated = new IdMap<>(Link.class);
+		IdMap<Link, double[]> aggregated = new IdMap<>(Link.class);
 
 		for (Id<Link> linkId : network.getLinks().keySet()) {
 			// Reset current counts
 			counts.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
 
 			// Initialize aggregated counts
-			aggregated.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
+			aggregated.put(linkId, new double[scope.getIntervals()]); // new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
 		}
 
 		// Aggregate
@@ -110,11 +110,11 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 				for (int k = 0; k < state.size(); k++) {
 					IdMap<Link, List<Double>> historyItem = state.get(k);
 					List<Double> linkValues = historyItem.get(currentLinkId);
-					List<Double> linkAggregator = aggregated.get(currentLinkId);
+					double[] linkAggregator = aggregated.get(currentLinkId);
 
 					for (int i = 0; i < linkValues.size(); i++) {
-						linkAggregator.set(i,
-								linkAggregator.get(i) + (double) linkValues.get(i) / (double) state.size());
+						linkAggregator[i] =
+								linkAggregator[i] + (double) linkValues.get(i) / (double) state.size();
 					}
 				}
 			}

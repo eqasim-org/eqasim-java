@@ -15,11 +15,11 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 
 public class FlowWriter {
-	private final IdMap<Link, List<Double>> flows;
+	private final IdMap<Link, double[]> flows;
 	private final Network network;
 	private final VDFScope scope;
 
-	public FlowWriter(IdMap<Link, List<Double>> flows, Network network, VDFScope scope) {
+	public FlowWriter(IdMap<Link, double[]> flows, Network network, VDFScope scope) {
 		this.flows = flows;
 		this.network = network;
 		this.scope = scope;
@@ -32,13 +32,13 @@ public class FlowWriter {
 			writer.write(String.join(";", new String[] { "link_id", "interval", "start_time", "flow", "lanes", "osm" })
 					+ "\n");
 
-			for (Map.Entry<Id<Link>, List<Double>> item : flows.entrySet()) {
+			for (Map.Entry<Id<Link>, double[]> item : flows.entrySet()) {
 				for (int interval = 0; interval < scope.getIntervals(); interval++) {
 					writer.write(String.join(";", new String[] { //
 							item.getKey().toString(), //
 							String.valueOf(interval), //
 							String.valueOf(scope.getStartTime() + interval * scope.getIntervalTime()), //
-							String.valueOf(item.getValue().get(interval)), //
+							String.valueOf(item.getValue()[interval]), //
 							String.valueOf(network.getLinks().get(item.getKey()).getNumberOfLanes()), //
 							String.valueOf(network.getLinks().get(item.getKey()).getAttributes()
 									.getAttribute("osm:way:highway")) //

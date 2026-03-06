@@ -66,7 +66,7 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 	}
 
 	@Override
-	public IdMap<Link, List<Double>> aggregate(boolean ignoreIteration) {
+	public IdMap<Link, double[]> aggregate(boolean ignoreIteration) {
 		while (state.size() > horizon) {
 			state.remove(0);
 		}
@@ -102,14 +102,14 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 			}
 		}
 
-		IdMap<Link, List<Double>> aggregated = new IdMap<>(Link.class);
+		IdMap<Link, double[]> aggregated = new IdMap<>(Link.class);
 
 		for (Id<Link> linkId : network.getLinks().keySet()) {
 			// Reset current counts
 			counts.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
 
 			// Initialize aggregated counts
-			aggregated.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
+			aggregated.put(linkId, new double[scope.getIntervals()]);
 		}
 
 		// Aggregate
@@ -131,13 +131,13 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 				// Go through history for this link and aggregate by time slot
 				for (int k = 0; k < state.size(); k++) {
 					LinkState historyItem = state.get(k).get(currentLinkId);
-					List<Double> linkAggregator = aggregated.get(currentLinkId);
+					double[] linkAggregator = aggregated.get(currentLinkId);
 
 					if (historyItem != null) {
 						for (int i = 0; i < historyItem.count.size(); i++) {
 							int timeIndex = historyItem.time.get(i);
-							linkAggregator.set(timeIndex,
-									linkAggregator.get(timeIndex) + historyItem.count.get(i) / (double) state.size());
+							linkAggregator[timeIndex] = (
+									linkAggregator[timeIndex]  + historyItem.count.get(i) / (double) state.size());
 						}
 					}
 				}

@@ -54,10 +54,10 @@ public class VDFConfigGroup extends ReflectiveConfigGroup {
 	private int writeTravelTimesInterval = 0;
 
 	public enum HandlerType {
-		Horizon, Interpolation, SparseHorizon
+		Horizon, Interpolation, LowMemory, SparseHorizon
 	}
 
-	private HandlerType handler = HandlerType.Horizon;
+	private HandlerType handler = HandlerType.LowMemory;
 
 	public VDFConfigGroup() {
 		super(GROUP_NAME);

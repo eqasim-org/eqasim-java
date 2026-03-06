@@ -7,6 +7,7 @@ import java.util.List;
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
+import org.eqasim.core.components.flow.FlowConfigGroup;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
@@ -210,7 +211,10 @@ public class GenerateConfig {
 		delaysConfig.setActivateTl(false);
 		delaysConfig.setActivateUnsignalized(false);
 
-		// calibration
+		// calibration & flow settings
+		FlowConfigGroup flowConfig = FlowConfigGroup.getOrCreate(config);
+		flowConfig.setActivate(true);
+
 		AlphaCalibratorConfig alphaCalibratorConfig = AlphaCalibratorConfig.getOrCreate(config);
 		alphaCalibratorConfig.setActivate(false);
 

@@ -8,14 +8,14 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.flow.FlowDataSet;
+import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.components.traffic.CrossingPenalty;
+import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
-import org.eqasim.core.simulation.vdf.handlers.VDFHorizonHandler;
-import org.eqasim.core.simulation.vdf.handlers.VDFInterpolationHandler;
-import org.eqasim.core.simulation.vdf.handlers.VDFSparseHorizonHandler;
-import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
+import org.eqasim.core.simulation.vdf.handlers.*;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
@@ -36,11 +36,12 @@ public class VDFModule extends AbstractEqasimExtension {
 	protected void installEqasimExtension() {
 		VDFConfigGroup vdfConfig = VDFConfigGroup.getOrCreate(getConfig());
 
-		for (String mode : vdfConfig.getModes()) {
-			addTravelTimeBinding(mode).to(VDFTravelTime.class);
-		}
+		// for (String mode : vdfConfig.getModes()) {
+		//	LOGGER.info("Adding VDF travel time for mode " + mode);
+		//	addTravelTimeBinding(mode).to(VDFTravelTime.class);
+		//}
 
-		addControlerListenerBinding().to(VDFUpdateListener.class);
+		addControllerListenerBinding().to(VDFUpdateListener.class);
 		bind(VolumeDelayFunction.class).to(BPRFunction.class);
 
 		switch (vdfConfig.getHandler()) {
@@ -55,6 +56,23 @@ public class VDFModule extends AbstractEqasimExtension {
 			case Interpolation:
 				bind(VDFTrafficHandler.class).to(VDFInterpolationHandler.class);
 				addEventHandlerBinding().to(VDFInterpolationHandler.class);
+				break;
+			case LowMemory:
+				DelaysConfigGroup delaysConfig = DelaysConfigGroup.getOrCreate(getConfig());
+				// impose consistency between the flow calculation and the VDF calculation, otherwise the flow data will not be compatible for the VDF handler
+				boolean isConsistent = (delaysConfig.getStartTime()==vdfConfig.getStartTime() &&
+										delaysConfig.getEndTime()==vdfConfig.getEndTime() &&
+										delaysConfig.getBinSize()==vdfConfig.getInterval());
+				if (!isConsistent) {
+					LOGGER.warn("The flow calculation and the VDF calculation are not consistent. This may lead to incompatible flow data for the VDF handler.");
+					vdfConfig.setStartTime(delaysConfig.getStartTime());
+					vdfConfig.setEndTime(delaysConfig.getEndTime());
+					vdfConfig.setInterval(delaysConfig.getBinSize());
+				}
+
+				addEventHandlerBinding().to(LinkFlowCounter.class).asEagerSingleton();
+				addControllerListenerBinding().to(LinkFlowCounter.class).asEagerSingleton();
+				bind(VDFTrafficHandler.class).to(LowMemoryHandler.class);
 				break;
 			default:
 				throw new IllegalStateException();
@@ -103,6 +121,13 @@ public class VDFModule extends AbstractEqasimExtension {
 	@Singleton
 	public VDFHorizonHandler provideVDFHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope) {
 		return new VDFHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads());
+	}
+
+	@Provides
+	@Singleton
+	public LowMemoryHandler provideLowMemoryHandler(Network network, VDFScope scope,
+													LinkFlowCounter linkFlowCounter, FlowDataSet flowDataSet) {
+		return new LowMemoryHandler(network, scope, linkFlowCounter, flowDataSet);
 	}
 
 	@Provides

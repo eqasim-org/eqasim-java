@@ -2,10 +2,10 @@ package org.eqasim.core.components.network_calibration.Processors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.flow.FlowBinManager;
 import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
-import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
-import org.eqasim.core.components.flow.TimeBinManager;
+import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
@@ -33,7 +33,7 @@ public class FlowProcessor {
     private final int indexOfEndingCounts;
     private final double totalNumberOfHours;
 
-    public FlowProcessor(Network network, LinkFlowCounter linkFlowCounter, TimeBinManager timeBinManager,
+    public FlowProcessor(Network network, LinkFlowCounter linkFlowCounter, FlowBinManager flowBinManager,
                          CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy,
                          NetworkCalibrationConfigGroup config) {
         this.network = network;
@@ -41,12 +41,11 @@ public class FlowProcessor {
         this.outputHierarchy = outputHierarchy;
         this.countsProcessor = countsProcessor;
 
-        this.indexOfStartingCounts = timeBinManager.getBinIndex(config.getHourStartCounts() * 3600);
-        this.indexOfEndingCounts = timeBinManager.getBinIndex(config.getHourEndCounts() * 3600);
+        this.indexOfStartingCounts = flowBinManager.getBinIndex(config.getHourStartCounts() * 3600);
+        this.indexOfEndingCounts = flowBinManager.getBinIndex(config.getHourEndCounts() * 3600);
 
-        this.totalNumberOfHours = (timeBinManager.getBinInterval(indexOfEndingCounts)[1] - timeBinManager.getBinInterval(indexOfStartingCounts)[0])/3600.0;
+        this.totalNumberOfHours = (flowBinManager.getBinInterval(indexOfEndingCounts)[1] - flowBinManager.getBinInterval(indexOfStartingCounts)[0])/3600.0;
     }
-
 
     public void updateAndSaveCounts(IterationEndsEvent iterationEndsEvent) {
         updateCounts();
@@ -55,7 +54,7 @@ public class FlowProcessor {
 
     private void updateCounts() {
         // get the counts from the traffic counter
-        IdMap<Link, List<Double>> countsMap = linkFlowCounter.getCounts();
+        IdMap<Link, double[]> countsMap = linkFlowCounter.getCountsArray();
         // aggregate the counts by link category
         for (Id<Link> linkId : countsMap.keySet()) {
             if (!countsProcessor.contains(linkId)) {
@@ -68,7 +67,7 @@ public class FlowProcessor {
             }
 
             // sum the flow of the day
-            double totalFlow = countsMap.get(linkId).subList(indexOfStartingCounts, indexOfEndingCounts+1).stream().mapToDouble(Double::doubleValue).sum();
+            double totalFlow = Arrays.stream(countsMap.get(linkId), indexOfStartingCounts, indexOfEndingCounts + 1).sum();
 
             // only consider links with positive flow
             if (totalFlow>1) {
