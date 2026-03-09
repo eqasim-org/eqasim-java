@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.flow.FlowBinManager;
+import org.eqasim.core.components.flow.FlowConfigGroup;
 import org.eqasim.core.components.network_calibration.capacities_calibration.CapacitiesAdapter;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
@@ -32,7 +33,12 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
         if (config.isActivated()) {
             logger.info("Network calibration is activated. Installing components.");
-            addEventHandlerBinding().to(LinkFlowCounter.class).asEagerSingleton();
+            FlowConfigGroup flowConfig = FlowConfigGroup.getOrCreate(getConfig());
+            if (!flowConfig.isActivated()) {
+                logger.info("Flow estimation is turned on as part of network calibration.");
+                addEventHandlerBinding().to(LinkFlowCounter.class).asEagerSingleton();
+                addControllerListenerBinding().to(LinkFlowCounter.class).asEagerSingleton();
+            }
 
             if (objective.equals("capacity")) {
                 logger.info("Network capacity calibration is activated");

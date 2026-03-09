@@ -2,6 +2,7 @@ package org.eqasim.core.components.flow;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.matsim.api.core.v01.Scenario;
@@ -44,8 +45,8 @@ public class FlowModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     public LinkFlowCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, FlowBinManager timeBinManager, Scenario scenario,
-                                                 OutputDirectoryHierarchy outputHierarchy, FlowConfigGroup flowConfig) {
-        return new LinkFlowCounter(network, flowDataSet, timeBinManager, outputHierarchy, flowConfig, scenario);
+                                                 OutputDirectoryHierarchy outputHierarchy, FlowConfigGroup flowConfig, EqasimConfigGroup eqasimConfig) {
+        return new LinkFlowCounter(network, flowDataSet, timeBinManager, outputHierarchy, flowConfig, scenario, eqasimConfig.getSampleSize());
     }
 
 

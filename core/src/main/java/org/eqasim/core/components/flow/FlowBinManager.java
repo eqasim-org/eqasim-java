@@ -12,6 +12,7 @@ public class FlowBinManager {
     private final double endTime;
     private final double binSize;
     private final int numberOfBins;
+    private final double totalTime_h;
 
     public FlowBinManager(FlowConfigGroup config) {
         // Validate inputs for predictable behaviour
@@ -31,6 +32,7 @@ public class FlowBinManager {
         if (this.numberOfBins <= 0) {
             throw new IllegalStateException("Computed numberOfBins <= 0. Check start/end times and bin size.");
         }
+        this.totalTime_h = (endTime - startTime) / 3600.0;
 
         logger.info("Traffic counting start time: {}", startTime);
         logger.info("Traffic counting end time: {}", endTime);
@@ -43,6 +45,10 @@ public class FlowBinManager {
     }
     public int getNumberOfBins(double startTimeL, double endTimeL, double binSizeL) {
         return (int) Math.ceil((endTimeL - startTimeL) / binSizeL);
+    }
+
+    public double getTotalTime_h() {
+        return totalTime_h;
     }
 
     public double[] getBinsCenters(int numberOfBinsL, double startTimeL, double binSizeL) {

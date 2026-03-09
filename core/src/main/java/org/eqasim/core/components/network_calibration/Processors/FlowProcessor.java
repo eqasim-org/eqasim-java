@@ -29,8 +29,6 @@ public class FlowProcessor {
 
     private final Map<Integer, Double> flowPerCategory = new HashMap<>();
     private final Map<Integer, Integer> linksPerCategory = new HashMap<>();
-    private final int indexOfStartingCounts;
-    private final int indexOfEndingCounts;
     private final double totalNumberOfHours;
 
     public FlowProcessor(Network network, LinkFlowCounter linkFlowCounter, FlowBinManager flowBinManager,
@@ -41,10 +39,7 @@ public class FlowProcessor {
         this.outputHierarchy = outputHierarchy;
         this.countsProcessor = countsProcessor;
 
-        this.indexOfStartingCounts = flowBinManager.getBinIndex(config.getHourStartCounts() * 3600);
-        this.indexOfEndingCounts = flowBinManager.getBinIndex(config.getHourEndCounts() * 3600);
-
-        this.totalNumberOfHours = (flowBinManager.getBinInterval(indexOfEndingCounts)[1] - flowBinManager.getBinInterval(indexOfStartingCounts)[0])/3600.0;
+        this.totalNumberOfHours = flowBinManager.getTotalTime_h();
     }
 
     public void updateAndSaveCounts(IterationEndsEvent iterationEndsEvent) {
@@ -53,10 +48,8 @@ public class FlowProcessor {
     }
 
     private void updateCounts() {
-        // get the counts from the traffic counter
-        IdMap<Link, double[]> countsMap = linkFlowCounter.getCountsArray();
         // aggregate the counts by link category
-        for (Id<Link> linkId : countsMap.keySet()) {
+        for (Id<Link> linkId : network.getLinks().keySet()) {
             if (!countsProcessor.contains(linkId)) {
                 continue; // skip links not in the counts processor (consider all when no counts file is provided)
             }
@@ -67,7 +60,7 @@ public class FlowProcessor {
             }
 
             // sum the flow of the day
-            double totalFlow = Arrays.stream(countsMap.get(linkId), indexOfStartingCounts, indexOfEndingCounts + 1).sum();
+            double totalFlow = linkFlowCounter.getDailyCounts(linkId);
 
             // only consider links with positive flow
             if (totalFlow>1) {
