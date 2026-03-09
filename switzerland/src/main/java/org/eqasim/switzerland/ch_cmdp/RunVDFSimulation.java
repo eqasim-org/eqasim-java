@@ -44,7 +44,7 @@ public class RunVDFSimulation {
         VDFEngineConfigGroup vdfEngineConfig = VDFEngineConfigGroup.getOrCreate(config);
 
         if (cmd.hasOption("preventwaitingtoentertraffic")) {
-            if (cmd.getOption("preventwaitingtoentertraffic").get().equals("y")) {
+            if (cmd.getOption("preventwaitingtoentertraffic").get().matches("(?i)(y|yes|true)")) {
                 ((QSimConfigGroup) config.getModules().get(QSimConfigGroup.GROUP_NAME))
                         .setPcuThresholdForFlowCapacityEasing(1.0);
             }
@@ -67,7 +67,7 @@ public class RunVDFSimulation {
         vdfConfig.setWriteInterval(10);
         vdfConfig.setWriteFlowInterval(10);
         vdfConfig.setModes(Set.of(TransportMode.car, "car_passenger", "truck", "bus"));
-        vdfEngineConfig.setModes( Set.of(TransportMode.car, "truck", "bus") );
+        vdfEngineConfig.setModes( Set.of(TransportMode.car, "truck") );
 
         // VDF Engine: Decide whether to genertae link events or not
         vdfEngineConfig.setGenerateNetworkEvents(false);
@@ -94,13 +94,6 @@ public class RunVDFSimulation {
         configurator.adjustScenario(scenario);
         configurator.adjustPTpcu(scenario);
         Controler controller = new Controler(scenario);
-        // To use the deterministic pt simulation (Part 1 of 2):
-        controller.addOverridingModule(new SBBTransitModule());
-//        // To use the deterministic pt simulation (Part 2 of 2):
-//        controller.configureQSimComponents(components -> {
-//            new SBBTransitEngineQSimModule().configure(components);
-//
-//        });
 
         configurator.configureController(controller);
         controller.addOverridingModule(new PTPassengerCountsModule());

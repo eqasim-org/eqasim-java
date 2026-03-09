@@ -142,11 +142,11 @@ public abstract class EqasimConfigurator {
 		registerComponents(TransitWithAbstractAccessQSimModule::configure,
 				TransitWithAbstractAbstractAccessModuleConfigGroup.GROUP_NAME);
 
-//		registerConfigGroup(new SBBTransitConfigGroup(), true);
-//		registerComponents((components, config) -> {
-//			new SBBTransitEngineQSimModule().configure(components);
-//		}, SBBTransitEngineQSimModule.COMPONENT_NAME);
-//		registerQSimModule(new SBBTransitEngineQSimModule(), SBBTransitEngineQSimModule.COMPONENT_NAME);
+		registerConfigGroup(new SBBTransitConfigGroup(), true);
+		registerComponents((components, config) -> {
+			new SBBTransitEngineQSimModule().configure(components);
+		}, SBBTransitEngineQSimModule.COMPONENT_NAME);
+		registerQSimModule(new SBBTransitEngineQSimModule(), SBBTransitEngineQSimModule.COMPONENT_NAME);
 
 		// VDF functionality
 		registerConfigGroup(new VDFConfigGroup(), true);

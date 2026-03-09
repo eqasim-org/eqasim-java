@@ -121,22 +121,23 @@ public class TimeBinManager {
         }
 
         private void checkCompatibility(DelaysConfigGroup config, FlowConfigGroup flowConfig) {
+            final double epsilon = 1e-3;
             // 1. They should have the same bin size, or the delay bin size should be a multiple of the flow bin size
-            if (config.getBinSize() != flowConfig.getBinSize()) {
-                if (config.getBinSize() > flowConfig.getBinSize() || config.getBinSize() % flowConfig.getBinSize() != 0) {
+            if (Math.abs(config.getBinSize() - flowConfig.getBinSize()) > epsilon) {
+                if (config.getBinSize() < flowConfig.getBinSize() + epsilon || Math.abs(config.getBinSize() % flowConfig.getBinSize()) > epsilon) {
                     throw new IllegalArgumentException(String.format("Incompatible bin sizes: DelaysConfigGroup bin size is %f, FlowConfigGroup bin size is %f. They should be the same or the delay bin size should be a multiple of the flow bin size.", config.getBinSize(), flowConfig.getBinSize()));
                 }
             }
             // 2. The delay time range should be within the flow time range
-            if (config.getStartTime() < flowConfig.getStartTime() || config.getEndTime() > flowConfig.getEndTime()) {
+            if (config.getStartTime() < flowConfig.getStartTime() - epsilon || config.getEndTime() > flowConfig.getEndTime() + epsilon) {
                 throw new IllegalArgumentException(String.format("Incompatible time ranges: DelaysConfigGroup time range is [%f, %f], FlowConfigGroup time range is [%f, %f]. The delay time range should be within the flow time range.", config.getStartTime(), config.getEndTime(), flowConfig.getStartTime(), flowConfig.getEndTime()));
             }
             // 3. The traffic light delay time range should be within the flow time range
-            if (config.getTlStartTime() < flowConfig.getStartTime() || config.getTlEndTime() > flowConfig.getEndTime()) {
+            if (config.getTlStartTime() < flowConfig.getStartTime() - epsilon || config.getTlEndTime() > flowConfig.getEndTime() + epsilon) {
                 throw new IllegalArgumentException(String.format("Incompatible time ranges: DelaysConfigGroup traffic light time range is [%f, %f], FlowConfigGroup time range is [%f, %f]. The traffic light delay time range should be within the flow time range.", config.getTlStartTime(), config.getTlEndTime(), flowConfig.getStartTime(), flowConfig.getEndTime()));
             }
             // 4. All start times and end times should be multiples of the flow bin size
-            if (config.getStartTime() % flowConfig.getBinSize() != 0 || config.getEndTime() % flowConfig.getBinSize() != 0 || config.getTlStartTime() % flowConfig.getBinSize() != 0 || config.getTlEndTime() % flowConfig.getBinSize() != 0) {
+            if (Math.abs(config.getStartTime() % flowConfig.getBinSize()) > epsilon || Math.abs(config.getEndTime() % flowConfig.getBinSize()) > epsilon || Math.abs(config.getTlStartTime() % flowConfig.getBinSize()) > epsilon || Math.abs(config.getTlEndTime() % flowConfig.getBinSize()) > epsilon) {
                 throw new IllegalArgumentException(String.format("Incompatible time settings: All start times and end times should be multiples of the flow bin size. DelaysConfigGroup start time is %f, end time is %f, traffic light start time is %f, traffic light end time is %f, FlowConfigGroup bin size is %f.", config.getStartTime(), config.getEndTime(), config.getTlStartTime(), config.getTlEndTime(), flowConfig.getBinSize()));
             }
         }

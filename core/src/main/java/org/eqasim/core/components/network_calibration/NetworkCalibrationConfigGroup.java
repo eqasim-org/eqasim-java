@@ -18,8 +18,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String MAX_CAPACITY = "maxCapacity";
     static private final String MIN_CAPACITY = "minCapacity";
     static private final String BETA = "beta";
-    static private final String HOUR_START_COUNTS = "hourStartCounts";
-    static private final String HOUR_END_COUNTS = "hourEndCounts";
     static private final String COUNTS_FILE = "countsFile";
     static private final String AVERAGE_COUNTS_PER_CATEGORY_FILE = "averageCountsPerCategoryFile";
     static private final String CATEGORIES_TO_CALIBRATE = "categoriesToCalibrate";
@@ -38,8 +36,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private String countsFile = "";
     private String averageCountsPerCategoryFile = "";
     private double beta = 0.5;
-    private int hourStartCounts = 0;
-    private int hourEndCounts = 24;
     private boolean correctCapacities = true;
     private double minSpeed = 2.0; // km/h
     private double maxCapacity = 1800.0; // veh/h/lane (for the highest category, used to scale all capacities)
@@ -71,9 +67,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(COUNTS_FILE, "Path to the csv counts file (default: empty), it should contain columns 'linkId' and 'count', the counts are in veh/h/lane");
         map.put(AVERAGE_COUNTS_PER_CATEGORY_FILE, "Path to the csv average counts per category file (default: empty), it should contain columns 'category' and 'averageCount'");
         map.put(BETA, "Beta of the exponential moving average used to update capacities (default: 0.5)");
-        map.put(HOUR_START_COUNTS, "Hour of the day to start considering counts (default: 0), 24-hour format. "
-                + "This class uses timeBin manager from intersection delay, thus the start and end hours should be within the time bin range.");
-        map.put(HOUR_END_COUNTS, "Hour of the day to end considering counts (default: 24), 24-hour format.");
         map.put(CATEGORIES_TO_CALIBRATE, "Comma-separated list of link categories to calibrate (default: '1,2,3,4,5')");
         map.put(RAMP_FACTOR, "Factor for ramp links (default: 1.0)");
         map.put(TRUNK_FACTOR, "Factor (compared to motorway) for trunk links (default: 1.0)");
@@ -182,23 +175,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
 
     public boolean hasAverageCountsPerCategoryFile() {
         return !averageCountsPerCategoryFile.isEmpty() && averageCountsPerCategoryFile.endsWith(".csv");
-    }
-
-    @StringGetter(HOUR_START_COUNTS)
-    public int getHourStartCounts() {
-        return hourStartCounts;
-    }
-    @StringSetter(HOUR_START_COUNTS)
-    public void setHourStartCounts(int inputHourStartCounts) {
-        hourStartCounts = inputHourStartCounts;
-    }
-    @StringGetter(HOUR_END_COUNTS)
-    public int getHourEndCounts() {
-        return hourEndCounts;
-    }
-    @StringSetter(HOUR_END_COUNTS)
-    public void setHourEndCounts(int inputHourEndCounts) {
-        hourEndCounts = inputHourEndCounts;
     }
 
     @StringGetter(CORRECT_CAPACITIES)

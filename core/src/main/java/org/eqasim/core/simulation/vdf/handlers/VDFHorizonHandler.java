@@ -14,11 +14,13 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.flow.FlowUtils;
 import org.eqasim.core.simulation.vdf.VDFScope;
 import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
 import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.network.Link;
@@ -26,6 +28,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.utils.io.IOUtils;
 
 import com.google.common.base.Verify;
+import org.matsim.vehicles.Vehicle;
 
 public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandler {
 	private final VDFScope scope;
@@ -33,17 +36,19 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 	private final Network network;
 	private final int horizon;
 	private final int numberOfThreads;
+	private final Scenario scenario;
 
 	private final IdMap<Link, List<Double>> counts = new IdMap<>(Link.class);
 	private final List<IdMap<Link, List<Double>>> state = new LinkedList<>();
 
 	private final static Logger logger = LogManager.getLogger(VDFHorizonHandler.class);
 
-	public VDFHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads) {
+	public VDFHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads, Scenario scenario) {
 		this.scope = scope;
 		this.network = network;
 		this.horizon = horizon;
 		this.numberOfThreads = numberOfThreads;
+		this.scenario = scenario;
 
 		for (Id<Link> linkId : network.getLinks().keySet()) {
 			counts.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
@@ -52,13 +57,16 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 
 	@Override
 	public synchronized void handleEvent(LinkEnterEvent event) {
-		processEnterLink(event.getTime(), event.getLinkId());
+		double pcu = FlowUtils.getVehiclePcu(scenario, event);
+		processEnterLink(event.getTime(), event.getLinkId(), pcu);
 	}
 
-	public void processEnterLink(double time, Id<Link> linkId) {
-		int i = scope.getIntervalIndex(time);
-		double currentValue = counts.get(linkId).get(i);
-		counts.get(linkId).set(i, currentValue + 1);
+	public void processEnterLink(double time, Id<Link> linkId, double pcu) {
+		if (pcu>1e-6) {
+			int i = scope.getIntervalIndex(time);
+			double currentValue = counts.get(linkId).get(i);
+			counts.get(linkId).set(i, currentValue + pcu);
+		}
 	}
 
 	@Override

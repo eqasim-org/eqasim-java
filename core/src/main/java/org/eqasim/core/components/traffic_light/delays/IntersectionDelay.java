@@ -40,11 +40,6 @@ public class IntersectionDelay implements CrossingPenalty {
     }
 
     public double calculateCrossingPenalty(Link link, double time, Id<Vehicle> vehicleId) {
-        // 1. Check if the input values are valid, if not, return 0.0
-        if (link == null || time < 0 || vehicleId == null) {
-            return 0.0;
-        }
-
         // 2. Check if the traffic light delays and unsignalized intersection delays are activated
         // and check if a delay should be added based on the previous crossing position
         boolean timeOutOfBounds = time < timeBinManager.getStartTime() || time > timeBinManager.getEndTime();
@@ -90,6 +85,10 @@ public class IntersectionDelay implements CrossingPenalty {
     }
 
     private boolean couldAddDelayBasedOnLastIntersection(Link link, Id<Vehicle> vehicleId) {
+        if (vehicleId == null) {
+            return true; // If we do not have a vehicle ID, we cannot check the last crossing position, so we allow adding the delay
+        }
+
         // In this function I check if the vehicle has crossed a traffic light recently
         // If it has, and the distance is lower than the threshold, we do not apply the delay again
         Coord lastDelayLocation = lastDelayCoordinates.get(vehicleId);

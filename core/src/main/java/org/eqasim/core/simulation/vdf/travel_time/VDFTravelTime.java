@@ -70,7 +70,9 @@ public class VDFTravelTime implements TravelTime {
 	@Override
 	public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
 		int i = scope.getIntervalIndex(time);
-		return travelTimes.get(link.getId())[i];
+		Id<Vehicle> vehicleId = vehicle==null? null:vehicle.getId();
+		double delay = crossingPenalty.calculateCrossingPenalty(link, time, vehicleId);
+		return travelTimes.get(link.getId())[i] + delay;
 	}
 
 	public void update(IdMap<Link, double[]> counts) {
@@ -97,7 +99,7 @@ public class VDFTravelTime implements TravelTime {
 			double[] linkTravelTimes = travelTimes.get(entry.getKey());
 
 			for (int i = 0; i < scope.getIntervals(); i++) {
-				double time = scope.getStartTime() + i * scope.getIntervalTime();
+				double time = scope.getStartTime() + (i + 0.5) * scope.getIntervalTime();
 
 				// Pass per interval
 				double flow = linkCounts[i] / samplingRate;
@@ -107,9 +109,7 @@ public class VDFTravelTime implements TravelTime {
 				// TODO: maybe we should remove this way of getting the travel times, because crossing penalties are not considered here
 				double travelTime = Math.max(1.0,
 						Math.min(link.getLength() / minimumSpeed, vdf.calculateTravelTime(time, flow, capacity, link))
-				);      // we should not add crossing penalty here, because it might be dynamic, and thus needs to be included in the travel time calculation of the router.
-						// +
-						// crossingPenalty.calculateCrossingPenalty(link);
+				);
 
 				linkTravelTimes[i] = travelTime;
 			}

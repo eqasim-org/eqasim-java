@@ -9,7 +9,7 @@ import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 
 public interface VDFTrafficHandler {
-	void processEnterLink(double time, Id<Link> linkId);
+	void processEnterLink(double time, Id<Link> linkId, double pcu);
 
 	IdMap<Link, double []> aggregate(boolean ignoreIteration);
 

@@ -25,8 +25,6 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
 
     // parameters for the flow updater
     static private final String BIN_SIZE = "binSize";
-    static private final String BETA = "beta";
-    static private final String WRITE_FLOW_INTERVAL = "writeFlowInterval";
 
     // parameters for the traffic light delays
     static private final String WRITE_DELAY_INTERVAL = "writeDelayInterval";
@@ -39,8 +37,6 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
     private double tlEndTime = 23.0 * 3600.0;
 
     private double binSize = 3600.0;
-    private double beta = 0.5;
-    private int writeFlowInterval = 1;
     private int writeDelayInterval = 1;
     private boolean activateTl = false;
     private boolean activate = false;
@@ -65,9 +61,6 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
         map.put(TL_END_TIME, "Ending time of traffic light crossing delays (default: 23.0 * 3600.0)");
 
         map.put(BIN_SIZE, "Size of the time bins in seconds (default: 3600.0, other values are not tested)");
-        map.put(BETA, "Beta parameter for the flow updater (default: 0.5)" +
-                " (1.0 means no flow update, 0.0 means full flow update)");
-        map.put(WRITE_FLOW_INTERVAL, "Write flow interval in iterations (default: 1)");
         map.put(WRITE_DELAY_INTERVAL, "Write traffic light delays interval in iterations (default: 1)");
         map.put(STARTING_ITERATION, "Iteration from which the module starts to apply crossing penalties (default: 3)");
         return map;
@@ -130,26 +123,6 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(BIN_SIZE)
     public void setBinSize(double inputBinSize) {
         binSize = inputBinSize;
-    }
-
-    @StringGetter(BETA)
-    public double getBeta() {
-        return beta;
-    }
-
-    @StringSetter(BETA)
-    public void setBeta(double inputBeta) {
-        beta = inputBeta;
-    }
-
-    @StringGetter(WRITE_FLOW_INTERVAL)
-    public int getWriteFlowInterval() {
-        return writeFlowInterval;
-    }
-
-    @StringSetter(WRITE_FLOW_INTERVAL)
-    public void setWriteFlowInterval(int inputWriteFlowInterval) {
-        writeFlowInterval = inputWriteFlowInterval;
     }
 
     @StringGetter(WRITE_DELAY_INTERVAL)
