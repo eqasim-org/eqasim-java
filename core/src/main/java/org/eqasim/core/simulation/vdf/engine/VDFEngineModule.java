@@ -1,8 +1,10 @@
 package org.eqasim.core.simulation.vdf.engine;
 
+import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.vdf.handlers.VDFTrafficHandler;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.components.QSimComponentsConfig;
@@ -10,6 +12,7 @@ import org.matsim.core.mobsim.qsim.components.QSimComponentsConfig;
 import com.google.common.base.Verify;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import org.matsim.core.mobsim.qsim.qnetsimengine.QNetsimEngineI;
 
 public class VDFEngineModule extends AbstractEqasimExtension {
 	public static final String COMPONENT_NAME = "VDFEngine";
@@ -31,9 +34,10 @@ public class VDFEngineModule extends AbstractEqasimExtension {
 
 			@Provides
 			@Singleton
-			public VDFEngine provideVDFEngine(VDFTravelTime travelTime, Network network, VDFTrafficHandler handler) {
+			public VDFEngine provideVDFEngine(VDFTravelTime travelTime, Network network, VDFTrafficHandler handler,
+											  QNetsimEngineI qNetsimEngine, Scenario scenario, LinkFlowCounter linkFlowCounter) {
 				return new VDFEngine(engineConfig.getModes(), travelTime, network, handler,
-						engineConfig.getGenerateNetworkEvents());
+						engineConfig.getGenerateNetworkEvents(), qNetsimEngine, scenario, linkFlowCounter);
 			}
 		});
 	}

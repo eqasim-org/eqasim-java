@@ -31,6 +31,7 @@ public class WebsterDelay {
     private final WebsterFormula webster;
     private final FlowDataSet flow;
     private final double sampleSize;
+    private final double timeBinSize;
 
 //    private final IdMap<Link, String> debuggingMap = new IdMap<>(Link.class);;
 
@@ -41,6 +42,7 @@ public class WebsterDelay {
         this.webster = webster;
         this.flow = flow;
         this.sampleSize = sampleSize;
+        this.timeBinSize = timeBinManager.getBinSize();
     }
 
     public void initDelays() {
@@ -90,7 +92,7 @@ public class WebsterDelay {
      * We do not adjust the capacity, as the capacity here is not scaled by the sample size.
      */
     public double getFlow(Link link, double time) {
-        return Math.min(flow.getFlow(link.getId(), time)/sampleSize,
+        return Math.min(flow.getFlow_v_h(link.getId(), time, timeBinSize)/sampleSize,
                         link.getCapacity()); // Adjust flow based on the time bin size, rescale it to 100%, and cap it by the capacity of the link.
     }
 

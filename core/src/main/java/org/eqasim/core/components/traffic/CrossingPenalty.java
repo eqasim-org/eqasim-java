@@ -11,4 +11,9 @@ public interface CrossingPenalty {
         // Default implementation assumes no time dependency
         return calculateCrossingPenalty(link, 0.0, null);
     }
+
+    default double calculateCrossingPenalty(Link link, double time) {
+        // Default implementation assumes no time dependency
+        return calculateCrossingPenalty(link, time, null);
+    }
 }

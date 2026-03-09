@@ -27,7 +27,7 @@ public class FlowBinManager {
                     + startTime + ", endTime=" + endTime);
         }
 
-        this.numberOfBins = (int) Math.ceil((endTime - startTime) / binSize);
+        this.numberOfBins = getNumberOfBins(startTime, endTime, binSize);
         if (this.numberOfBins <= 0) {
             throw new IllegalStateException("Computed numberOfBins <= 0. Check start/end times and bin size.");
         }
@@ -41,15 +41,21 @@ public class FlowBinManager {
     public int getNumberOfBins() {
         return numberOfBins;
     }
+    public int getNumberOfBins(double startTimeL, double endTimeL, double binSizeL) {
+        return (int) Math.ceil((endTimeL - startTimeL) / binSizeL);
+    }
 
-
-    public double[] getBinsCenters() {
-        double[] centers = new double[numberOfBins];
-        for (int i = 0; i < numberOfBins; i++) {
-            centers[i] = startTime + (i + 0.5) * binSize;
+    public double[] getBinsCenters(int numberOfBinsL, double startTimeL, double binSizeL) {
+        double[] centers = new double[numberOfBinsL];
+        for (int i = 0; i < numberOfBinsL; i++) {
+            centers[i] = startTimeL + (i + 0.5) * binSizeL;
         }
         return centers;
     }
+    public double[] getBinsCenters() {
+        return getBinsCenters(numberOfBins, startTime, binSize);
+    }
+
 
     public int getBinIndex(double time) {
         return Math.min(Math.max(0, (int) Math.floor((time - startTime) / binSize)), numberOfBins - 1);

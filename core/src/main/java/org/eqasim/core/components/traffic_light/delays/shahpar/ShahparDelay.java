@@ -30,13 +30,14 @@ public class ShahparDelay {
     private final IdMap<Node, Double> ffMap = new IdMap<>(Node.class);
     private final IdMap<Link, Double> rowMap = new IdMap<>(Link.class);
     private final IdMap<Node, Double> nodesDegrees = new IdMap<>(Node.class);
-    private final IdMap<Link, double[]> delays = new IdMap<>(Link.class);;
+    private final IdMap<Link, double[]> delays = new IdMap<>(Link.class);
     private boolean mapsAreInitialized;
 
     private final FlowDataSet flow;
     private final Network network;
     private final TimeBinManager timeBinManager;
     private final double sampleSize;
+    private final double timeBinSize;
 
     public ShahparDelay(Network network, FlowDataSet flow, TimeBinManager timeBinManager, ShahparConfigGroup config,
                         double sampleSize) {
@@ -49,6 +50,7 @@ public class ShahparDelay {
         this.timeBinManager = timeBinManager;
         this.mapsAreInitialized = false;
         this.sampleSize = sampleSize;
+        this.timeBinSize = timeBinManager.getBinSize();
 
         logger.info("Shahpar delay initialized with {} intersection nodes.", ffMap.size());
     }
@@ -121,7 +123,7 @@ public class ShahparDelay {
     }
 
     public double getFlow(Link link, double time) {
-        return Math.min(flow.getFlow(link.getId(), time)/sampleSize,
+        return Math.min(flow.getFlow_v_h(link.getId(), time, timeBinSize)/sampleSize,
                         link.getCapacity()); // Adjust flow based on the time bin size, rescale it to 100%, and cap it by the capacity of the link.
     }
 

@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.eqasim.core.components.flow.FlowUtils;
 import org.eqasim.core.simulation.vdf.VDFScope;
 import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
 import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.network.Link;
@@ -27,13 +29,15 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 
 	private final double updateFactor;
 	private final int numIntervals;
+	private final Scenario scenario;
 	private final IdMap<Link, double[]> interpolatedCounts = new IdMap<>(Link.class);
 	private final IdMap<Link, List<Double>> currentCounts = new IdMap<>(Link.class);
 
-	public VDFInterpolationHandler(Network network, VDFScope scope, double updateFactor) {
+	public VDFInterpolationHandler(Network network, VDFScope scope, double updateFactor, Scenario scenario) {
 		this.scope = scope;
 		this.updateFactor = updateFactor;
 		this.numIntervals = scope.getIntervals();
+		this.scenario = scenario;
 
 		for (Id<Link> linkId : network.getLinks().keySet()) {
 			interpolatedCounts.put(linkId, new double[numIntervals]);
@@ -43,13 +47,16 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 
 	@Override
 	public synchronized void handleEvent(LinkEnterEvent event) {
-		processEnterLink(event.getTime(), event.getLinkId());
+		double pcu = FlowUtils.getVehiclePcu(scenario, event);
+		processEnterLink(event.getTime(), event.getLinkId(), pcu);
 	}
 
-	public void processEnterLink(double time, Id<Link> linkId) {
-		int i = scope.getIntervalIndex(time);
-		double currentValue = currentCounts.get(linkId).get(i);
-		currentCounts.get(linkId).set(i, currentValue + 1);
+	public void processEnterLink(double time, Id<Link> linkId, double pcu) {
+		if (pcu>1e-6) {
+			int i = scope.getIntervalIndex(time);
+			double currentValue = currentCounts.get(linkId).get(i);
+			currentCounts.get(linkId).set(i, currentValue + 1);
+		}
 	}
 
 	@Override
