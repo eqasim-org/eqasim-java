@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.PtStageCostCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
@@ -277,6 +278,9 @@ public class RunComputeTransitPrices {
             Facility fromFacility = FacilitiesUtils.wrapLinkAndCoord(fromLink, fromCoord);
             Facility toFacility   = FacilitiesUtils.wrapLinkAndCoord(toLink, toCoord);
 
+            int age = request.age;
+            PersonVariables personVariables = new PersonVariables(age);
+
             List<? extends PlanElement> route = router.calcRoute(
                 DefaultRoutingRequest.withoutAttributes(fromFacility, toFacility, request.departureTime_s, null));
 
@@ -381,7 +385,7 @@ public class RunComputeTransitPrices {
                     swissPtStageCostCalculator.priceCalculators.getOrDefault(authority,
                         swissPtStageCostCalculator.priceCalculators.get("None"));
 
-                price += calc.calculatePrice(legs, halfFare, authority);
+                price += calc.calculatePrice(authority, legs, halfFare, personVariables);
             }
 
             // Old model price
@@ -390,9 +394,6 @@ public class RunComputeTransitPrices {
             oldPrice = Math.round(oldPrice * 100.0) / 100.0;
             price    = Math.round(price * 100.0) / 100.0;
 
-            //if (id % 1000 == 0){
-            //    System.out.println("Computed price: " + price);
-            //}
             double maximumPrice = halfFare? 35.0 : 60.0;
             price = Math.min(price, maximumPrice);
             oldPrice = Math.min(oldPrice, maximumPrice);
@@ -414,6 +415,7 @@ public class RunComputeTransitPrices {
         return Math.max(originHomeDistance_km, destinationHomeDistance_km);
     }
 
+    @SuppressWarnings("null")
     static public void main(String[] args) throws ConfigurationException, IOException, CsvValidationException {
 
 		CommandLine cmd = new CommandLine.Builder(args) //

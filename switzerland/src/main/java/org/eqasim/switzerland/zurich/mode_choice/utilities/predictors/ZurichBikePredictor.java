@@ -22,6 +22,7 @@ public class ZurichBikePredictor extends CachedVariablePredictor<ZurichBikeVaria
 		this.delegate = delegate;
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	protected ZurichBikeVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {

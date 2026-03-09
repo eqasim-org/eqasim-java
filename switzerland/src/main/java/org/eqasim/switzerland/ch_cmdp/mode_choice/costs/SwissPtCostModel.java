@@ -54,18 +54,19 @@ public class SwissPtCostModel extends AbstractCostModel {
 										|| personVariables.age_a < 6
 										|| (personVariables.age_a < 16 && personVariables.hasJuniorSubscription)
 										|| hasGleis7FreeTravel;
+
 		if (hasFreePublicTransport) {
 			return 0.0;
 		}
 
 		// for testing purposes, we give ga to 70% of long distances trips
-//		double euclideanDistance_km = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(), trip.getDestinationActivity().getCoord()) * 1e-3;
-//		if (euclideanDistance_km>20.0) {
-//			double randomValue = Math.random();
-//			if (randomValue > 0.5) {
-//				return 0.0;
-//			}
-//		}
+		// double euclideanDistance_km = CoordUtils.calcEuclideanDistance(trip.getOriginActivity().getCoord(), trip.getDestinationActivity().getCoord()) * 1e-3;
+		// if (euclideanDistance_km>20.0) {
+		//	double randomValue = Math.random();
+		//	if (randomValue > 0.5) {
+		//		return 0.0;
+		//	}
+		//}
 
 		// TODO find a better way to identify which regional subscription the agent has access to
 		if (personVariables.hasRegionalSubscription) {
@@ -80,7 +81,7 @@ public class SwissPtCostModel extends AbstractCostModel {
 
 		boolean halfFareTariff = personVariables.hasHalbtaxSubscription || (personVariables.age_a <= 16);
 		double legPrice                      = 0;
-		double totalDistance                 = 0;
+
 		for (Map.Entry<String, List<SwissPtLegVariables>> entry : groupedByAuthority.entrySet()){
             String authority                        = entry.getKey();
             List<SwissPtLegVariables> authorityLegs = entry.getValue();
@@ -90,12 +91,10 @@ public class SwissPtCostModel extends AbstractCostModel {
 				calculator = this.calculators.priceCalculators.get(authority);				
 			}
 
-			legPrice = calculator.calculatePrice(authorityLegs, halfFareTariff, authority);
+			legPrice = calculator.calculatePrice(authority, authorityLegs, halfFareTariff, personVariables);
 			price += legPrice;
 
-			for (SwissPtLegVariables leg : authorityLegs){
-				totalDistance += leg.networkDistance / 1000.0;
-			}
+			//System.out.println("Computed price " + legPrice + " for authority " + authority + "\n");
         }
 
 		double maximumPrice = halfFareTariff? 35.0 : 60.0;

@@ -1,9 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp;
 
-import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
-import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
@@ -14,7 +12,6 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;

@@ -26,6 +26,7 @@ public class SwissPtVariables implements BaseVariables  {
     }
 
 
+    @SuppressWarnings("null")
     private Set<Authority> extractAuthorities(SwissPtLegVariables leg){
         if (leg.getZones().isEmpty()) {
             return Set.of(new Authority("None", 0, "Default"));
@@ -42,6 +43,7 @@ public class SwissPtVariables implements BaseVariables  {
     }
 
 
+    @SuppressWarnings("null")
     public Map<String, List<SwissPtLegVariables>> getPricingStrategy(){
         Map<String, List<SwissPtLegVariables>> groupedByAuthority = new HashMap<>();
 

@@ -31,7 +31,7 @@ public class Zone {
 	public boolean equals(Object other) {
 		if (other instanceof Zone) {
 			Zone otherZone = (Zone) other;
-			return otherZone.zoneId == zoneId && otherZone.authority.equals(authority);
+			return otherZone.zoneId.equals(zoneId) && otherZone.authority.equals(authority);
 		}
 
 		return false;

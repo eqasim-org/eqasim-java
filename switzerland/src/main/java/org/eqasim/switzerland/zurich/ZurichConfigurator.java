@@ -103,6 +103,7 @@ public class ZurichConfigurator extends EqasimConfigurator {
 		adjustBikeAvailability(scenario);
 	}
 
+	@SuppressWarnings("null")
 	static private void adjustBikeAvailability(Scenario scenario) {
 		Random random = new Random(scenario.getConfig().global().getRandomSeed());
 

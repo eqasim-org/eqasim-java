@@ -49,6 +49,7 @@ public class AlphaClusterCalibrator implements FastCalibration {
     private final Map<Integer, Map<String, Double>> targetModeSharesByCluster;
 
     // Utility and statistics
+    @SuppressWarnings("null")
     private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
     private int replannedTripsCount = 0;
     private int changedUtilityCount = 0;
@@ -130,6 +131,7 @@ public class AlphaClusterCalibrator implements FastCalibration {
         double epsilon = 0.001102; // some small random value to capture plans that were replanned, but sill same mode and same utility
 
         for (Person person : scenario.getPopulation().getPersons().values()) {
+            @SuppressWarnings("null")
             Plan plan = person.getSelectedPlan();
             plan.getAttributes().putAttribute("createdLastIteration", false);
 
@@ -158,6 +160,7 @@ public class AlphaClusterCalibrator implements FastCalibration {
                 continue; // Skip cross-border and freight persons
             }
 
+            @SuppressWarnings("null")
             Plan plan = person.getSelectedPlan();
             if ((Boolean) plan.getAttributes().getAttribute("createdLastIteration")) {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);

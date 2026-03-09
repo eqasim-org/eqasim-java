@@ -9,6 +9,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 public class SmoothingTravelTimeModule extends AbstractModule {
+	@SuppressWarnings("deprecation")
 	@Override
 	public void install() {
 		addEventHandlerBinding().to(SmoothingTravelTime.class);

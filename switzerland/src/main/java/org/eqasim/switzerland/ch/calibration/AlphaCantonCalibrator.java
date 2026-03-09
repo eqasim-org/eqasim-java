@@ -36,6 +36,7 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
     private final Map<String, Map<String, Double>> modeCountsByCanton = new HashMap<>();
     private final Map<String, Boolean> doUpdateThisIteration = new HashMap<>();
     private final Map<String, Integer> numberOfUpdates = new HashMap<>();
+    @SuppressWarnings("null")
     private final IdMap<Person, Double> utilities = new IdMap<>(Person.class);
     private int replannedTripsCount = 0;
     private int changedUtilityCount = 0;
@@ -158,6 +159,7 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
         double epsilon = 0.001102; // some small random value to capture plans that were replanned, but sill same mode and same utility
 
         for (Person person : scenario.getPopulation().getPersons().values()) {
+            @SuppressWarnings("null")
             Plan plan = person.getSelectedPlan();
             plan.getAttributes().putAttribute("createdLastIteration", false);
 
@@ -223,6 +225,7 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
                 continue; // Skip cross-border and freight agents
             }
 
+            @SuppressWarnings("null")
             Plan plan = person.getSelectedPlan();
             if ((Boolean) plan.getAttributes().getAttribute("createdLastIteration")) {
                 List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(plan);

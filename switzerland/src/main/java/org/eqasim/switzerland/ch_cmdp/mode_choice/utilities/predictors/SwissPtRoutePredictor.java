@@ -2,8 +2,10 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,41 +43,76 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 	}
 
     private Map<String, List<Zone>> cleanZoneInfo(Map<String, List<Zone>> zonesByStop) {
-        Map<String, List<Zone>> filtered = new HashMap<String, List<Zone>>();
+        List<String> stopIds = new ArrayList<>(zonesByStop.keySet());
 
-        for (List<Zone> zonesAtStop : zonesByStop.values()) {
+        if (stopIds.isEmpty()) return new HashMap<>();
 
-            int maxPriority = zonesAtStop.stream()
-                .mapToInt(z -> z.getAuthority().getPriority())
-                .max()
-                .orElse(Integer.MIN_VALUE);
+        // STEP 1: For each stop, deduplicate zones and group by authority
+        Map<String, Map<Authority, List<Zone>>> zonesByStopAndAuth = new HashMap<>();
 
-            List<Zone> highestPriorityZones = zonesAtStop.stream()
-                .filter(z -> z.getAuthority().getPriority() == maxPriority)
-                .collect(Collectors.toList());
+        for (String stopId : stopIds) {
+            List<Zone> zonesAtStop = zonesByStop.get(stopId);
 
-            // group zones by authority at this stop
-            Map<Authority, List<Zone>> byAuth = highestPriorityZones.stream()
-                    .collect(Collectors.groupingBy(Zone::getAuthority));
+            // Dedup zones
+            Map<String, Zone> uniqueZones = zonesAtStop.stream()
+            .collect(Collectors.toMap(
+                Zone::getZoneId,
+                z -> z,
+                (e1, e2) -> e1.getAuthority().getPriority() >= e2.getAuthority().getPriority() ? e1 : e2
+            ));
 
-            for (Map.Entry<Authority, List<Zone>> e : byAuth.entrySet()) {
+            // Group by authority
+            Map<Authority, List<Zone>> byAuth = uniqueZones.values().stream()
+                .collect(Collectors.groupingBy(Zone::getAuthority));
+            zonesByStopAndAuth.put(stopId, byAuth);
+        }
 
-                Authority auth = e.getKey();
-                List<Zone> zones = e.getValue();
+        // STEP 2: Find common authorities across ALL stops, then pick highest priority among them
+        Set<Authority> authoritiesAtEveryStop = zonesByStopAndAuth.values().stream()
+            .map(Map::keySet)
+            .reduce((a, b) -> {
+                Set<Authority> intersection = new HashSet<>(a);
+                intersection.retainAll(b);
+                return intersection;
+            })
+            .orElse(new HashSet<>());
 
-                // If exactly one zone covers this stop for this authority,
-                // this zone is definitely crossed
-                if (zones.size() == 1) {
-                    Zone z = zones.get(0);
-                    filtered
-                        .computeIfAbsent(auth.getId(), a -> new ArrayList<>())
-                        .add(z);
+        if (authoritiesAtEveryStop.isEmpty()) {
+            //System.out.println("WARNING: No common authority found across all stops!");
+            return new HashMap<>();
+        }
+
+        // Pick the highest priority among common authorities
+        int highestCommonPriority = authoritiesAtEveryStop.stream()
+            .mapToInt(Authority::getPriority)
+            .max()
+            .getAsInt();
+
+        Set<Authority> selectedAuthorities = authoritiesAtEveryStop.stream()
+            .filter(a -> a.getPriority() == highestCommonPriority)
+            .collect(Collectors.toSet());
+
+        // STEP 3: Collect zones for selected authorities (globally deduplicated)
+        Map<String, Set<String>> seenZonesByAuth = new HashMap<>();
+        Map<String, List<Zone>> filtered = new HashMap<>();
+
+        for (String stopId : stopIds) {
+            Map<Authority, List<Zone>> authsAtStop = zonesByStopAndAuth.get(stopId);
+
+            for (Authority auth : selectedAuthorities) {
+                List<Zone> zones = authsAtStop.getOrDefault(auth, List.of());
+
+                for (Zone zone : zones) {
+                    String authId = auth.getId();
+                    String zoneId = zone.getZoneId();
+                    if (seenZonesByAuth.computeIfAbsent(authId, k -> new HashSet<>()).add(zoneId)) {
+                        filtered.computeIfAbsent(authId, k -> new ArrayList<>()).add(zone);
+                    }
                 }
             }
         }
-        
+
         return filtered;
-        
     }
 
 
@@ -176,13 +213,12 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                         double sbbDistance = computeSBBDistance(zones, accessStopId, egressStopId);
                         double networkDistance = route.getDistance();
 
-                        //System.out.println("   We identified the following applicable authorities and zones: " + zones.toString());
+                        //System.out.println("We identified the following applicable authorities and zones: " + zones.toString());
 
                         SwissPtLegVariables legVariables = new SwissPtLegVariables(zones, departureTime, arrivalTime, networkDistance, sbbDistance, accessStopId, egressStopId, accessStop.getName(), egressStop.getName());
                         tripDescription.addStage(legVariables);
 
-					} 
-                    
+					}                     
                     else {
 						System.out.println("PT leg has no TransitPassengerRoute (route is " +
 							(route == null ? "null" : route.getClass().getSimpleName()) + ")");

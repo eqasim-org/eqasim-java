@@ -13,13 +13,13 @@ public class SwissPtStageCostCalculator {
     }
 
     public SwissPtStageCostCalculator(){
-        DefaultDistanceBasedCalculator calculator = new DefaultDistanceBasedCalculator(0.38, 4.08, -0.00022);
-        priceCalculators.put("None", calculator);
+        //DefaultDistanceBasedCalculator calculator = new DefaultDistanceBasedCalculator(0.38, 4.08, -0.00022);
+        //priceCalculators.put("None", calculator);
 
-        SBBPtStageCostCalculator sbbCalculator = new SBBPtStageCostCalculator();
-        priceCalculators.put("SBB", sbbCalculator);
+        //SBBPtStageCostCalculator sbbCalculator = new SBBPtStageCostCalculator();
+        //priceCalculators.put("SBB", sbbCalculator);
 
-        priceCalculators.put("Arcobaleno", SwissPTAuthorityPricing.ZonalAuthorityPricing.Arcobaleno);
+        /*priceCalculators.put("Arcobaleno", SwissPTAuthorityPricing.ZonalAuthorityPricing.Arcobaleno);
         priceCalculators.put("Awelle", SwissPTAuthorityPricing.ZonalAuthorityPricing.Awelle);
         priceCalculators.put("CTJU", new DefaultDistanceBasedCalculator(0.19, 2.04, -0.00011));
         priceCalculators.put("Davos", SwissPTAuthorityPricing.ZonalAuthorityPricing.Davos);
@@ -39,7 +39,7 @@ public class SwissPtStageCostCalculator {
         priceCalculators.put("ZPassOstwind", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZPassOstwind);
         priceCalculators.put("ZPassAwelle", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZPassAwelle);
         priceCalculators.put("ZPassSchwyzZug", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZPassSchwyzZug);
-        priceCalculators.put("ZVV", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZVV);
+        priceCalculators.put("ZVV", SwissPTAuthorityPricing.ZonalAuthorityPricing.ZVV);*/
     }
     
 }
