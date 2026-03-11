@@ -1,6 +1,8 @@
 package org.eqasim.ile_de_france;
 
 import org.eqasim.core.scenario.validation.VehiclesValidator;
+import org.eqasim.core.simulation.vdf.engine.VDFEngine;
+import org.eqasim.core.simulation.vdf.engine.VDFEngineModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -31,5 +33,9 @@ public class RunSimulation {
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
 		controller.run();
+
+		controller.configureQSimComponents(c -> {
+			c.addNamedComponent(VDFEngineModule.COMPONENT_NAME);
+		});
 	}
 }
