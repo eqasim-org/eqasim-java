@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
 
@@ -109,7 +110,7 @@ public class SwissPTAuthorityPricing {
         }
 
         @Override
-        public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authority) {
+        public double calculatePrice(String authority, List<SwissPtLegVariables> legs, boolean hasHalbtax, PersonVariables personVariables) {
             double[] prices = this.fullPrices;
             if (hasHalbtax){
                 prices = this.halbTaxPrices;
@@ -120,7 +121,7 @@ public class SwissPTAuthorityPricing {
                 .map(Zone::getZoneId)
                 .collect(Collectors.toSet());
 
-            //System.out.println("  Visited zones for authority " + authority + ": " + visitedZoneIds.toString());
+            System.out.println("  Visited zones for authority " + authority + ": " + visitedZoneIds.toString());
 
             if (visitedZoneIds == null || visitedZoneIds.isEmpty()) {
                 throw new IllegalArgumentException("At least one zone must be visited");
@@ -145,7 +146,7 @@ public class SwissPTAuthorityPricing {
 
             double price = Math.round(prices[effectiveZones - 1] * 100.0) / 100.0;
 
-//            System.out.println("Trip info: visited " + effectiveZones + "zones, price: " + price);
+            System.out.println("Trip info: visited " + effectiveZones + "zones, price: " + price);
 
             return price;
 

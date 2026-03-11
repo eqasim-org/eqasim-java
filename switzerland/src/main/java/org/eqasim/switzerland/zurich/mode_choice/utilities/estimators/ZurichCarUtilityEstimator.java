@@ -61,6 +61,7 @@ public class ZurichCarUtilityEstimator extends CarUtilityEstimator {
 		return variables.isCity ? parameters.ZurichCar.betaCity : 0.0;
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		CarVariables variables = predictor.predictVariables(person, trip, elements);

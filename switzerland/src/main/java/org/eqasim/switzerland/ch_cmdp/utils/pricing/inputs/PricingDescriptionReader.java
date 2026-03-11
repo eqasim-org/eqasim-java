@@ -160,12 +160,6 @@ public class PricingDescriptionReader {
                             break;
                         case "priceListByZone":
                             if (!inCentralZoneBasedAuthority){
-                                /*for (int i = 0; i < attributes.getLength(); i++) {
-                                    String name = attributes.getLocalName(i);
-                                    if (name.length() == 0) name = attributes.getQName(i); // fallback
-                                    String value = attributes.getValue(i);
-                                    System.out.println("  " + name + " = '" + value + "'");
-                                }*/
                                 boolean halbTaxOrNot = "true".equals(attributes.getValue("halbtax"));
                                 String pricesAttr    = attributes.getValue("prices");
                                 double[] prices      = Arrays.stream(pricesAttr.split(", ")).map(String::trim).mapToDouble(Double::parseDouble).toArray();
@@ -201,6 +195,21 @@ public class PricingDescriptionReader {
                                 double price = Double.parseDouble(attributes.getValue("price"));
                                 authorityPricing.setPriceInAdditionalZone(price);
                                 break;
+                            }
+                        case "targetedPricing":
+                            double discount  = Double.parseDouble(attributes.getValue("discount"));
+                            String age_range = attributes.getValue("age_range");
+                            if (age_range != null && age_range.contains("_")) {
+                                String[] parts = age_range.split("_");
+                                if (parts.length == 2) {
+                                    try {
+                                        int min_age = Integer.parseInt(parts[0].trim());
+                                        int max_age = Integer.parseInt(parts[1].trim());
+                                        authorityPricing.setAgeSpecificDiscount(min_age, max_age, discount);
+                                    } catch (NumberFormatException e) {
+                                        System.err.println("Invalid age range format: " + age_range);
+                                    }
+                                }
                             }
                     }
                 }

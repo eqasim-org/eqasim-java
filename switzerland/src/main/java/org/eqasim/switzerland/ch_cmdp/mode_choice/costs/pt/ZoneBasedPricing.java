@@ -1,9 +1,12 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
 
@@ -16,6 +19,7 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
     private String centerZoneID;
     private double priceInCenterZone;
     private double priceInAdditionalZone;
+    private Map<Integer, Double> ageDiscounts = new HashMap<>();
 
     public ZoneBasedPricing(){}
 
@@ -51,9 +55,32 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
         this.priceInAdditionalZone = price;
     }
 
+    public void setAgeSpecificDiscount(int min_age, int max_age, double discount){
+        for (int age = min_age; age <= max_age; age++){
+            ageDiscounts.put(age, discount);
+        }
+    }
+
+    private double getAgeDiscountFactor(PersonVariables personVariables) {
+        Integer age = personVariables.age_a;
+        
+        if (age == null || ageDiscounts.isEmpty()) {
+            return 1.0;  
+        }
+        
+        Double discount = ageDiscounts.get(age);
+        if (discount != null) {
+            double shareOfPriceBeingPaid = 1.0 - (discount / 100);
+            //System.out.println("  Age " + age + ": remaining share of price to be paid " + shareOfPriceBeingPaid);
+            return shareOfPriceBeingPaid; // if discount == 100.0, the value returned here should be 0 as the person doesn't pay anything
+        }
+        
+        return 1.0;
+    }
+
 
     @Override
-    public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authorityId) {
+    public double calculatePrice(String authorityId, List<SwissPtLegVariables> legs, boolean hasHalbtax, PersonVariables personVariables) {
 
         double price = 0;
 
@@ -92,8 +119,7 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
             }
 
             price = Math.round(prices[effectiveZones - 1] * 100.0) / 100.0;
-
-            //System.out.println("Trip info: visited " + effectiveZones + " zones, price: " + price);
+            //System.out.println("  Trip info: price: " + price + " for the " + effectiveZones + " visited zones ");
 
         }
         
@@ -105,15 +131,23 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
                 else{
                     // Apply default pricing
                     DefaultDistanceBasedCalculator ddbc = new DefaultDistanceBasedCalculator(0.38, 4.08, -0.00022);
-                    price = ddbc.calculatePrice(legs, hasHalbtax, authorityId);
+                    price = ddbc.calculatePrice(authorityId, legs, hasHalbtax, personVariables);
                 }
-                //System.out.println("Trip info: price: " + price + " for the visited zones " + visitedZoneIds.toString());
+                //System.out.println("  Trip info: price: " + price + " for the visited zones " + visitedZoneIds.toString());
             }
             else {
                 throw new IllegalArgumentException("Something is wrong");
             }
-        }   
-        return price;
+        } 
+        
+        // Age-based discounts and rounding the price
+        double discountFactor = getAgeDiscountFactor(personVariables);
+        double finalPrice     = price * discountFactor;
+        double returnPrice    = Math.round(finalPrice * 100.0) / 100.0;
+
+        //System.out.println("  Final price: " + returnPrice);
+
+        return returnPrice;
     }
     
 }

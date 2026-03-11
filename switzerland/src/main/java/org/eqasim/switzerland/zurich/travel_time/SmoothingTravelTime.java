@@ -43,6 +43,7 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 
 	// Setup part: Handling indices and making space
 
+	@SuppressWarnings("null")
 	public SmoothingTravelTime(double startTime, double endTime, double interval, double increasingAlpha,
 			double decreasingAlpha, boolean fixTravelTime, Network network) {
 		this.increasingAlpha = increasingAlpha;

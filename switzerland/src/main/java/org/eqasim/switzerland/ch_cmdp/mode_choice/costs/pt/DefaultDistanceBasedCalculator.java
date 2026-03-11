@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
 
 public class DefaultDistanceBasedCalculator implements PtStageCostCalculator {
@@ -38,7 +39,7 @@ public class DefaultDistanceBasedCalculator implements PtStageCostCalculator {
         this.priceDecreasePerKm2 = n;
     }
 
-    public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authority){
+    public double calculatePrice(String authority, List<SwissPtLegVariables> legs, boolean hasHalbtax, PersonVariables personVariables){
         double distance = 0;
 
         for (SwissPtLegVariables leg : legs){

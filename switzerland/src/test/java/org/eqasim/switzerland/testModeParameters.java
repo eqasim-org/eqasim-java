@@ -1,7 +1,6 @@
 package org.eqasim.switzerland;
 
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
-import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 
 import java.io.File;

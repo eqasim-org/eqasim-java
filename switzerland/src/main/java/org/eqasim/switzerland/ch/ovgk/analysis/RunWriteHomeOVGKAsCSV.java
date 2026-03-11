@@ -21,6 +21,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 
 public class RunWriteHomeOVGKAsCSV {
+	@SuppressWarnings("null")
 	static public void main(String[] args) throws ConfigurationException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("population-path", "schedule-path", "output-path") //

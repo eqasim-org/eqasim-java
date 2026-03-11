@@ -28,6 +28,7 @@ public class TransitTripInfo {
         this.routeMainDirection = routeMainDirection;
     }
 
+    @SuppressWarnings("null")
     public static List<String> findLineRouteInfo(TransitLine line, TransitRoute route ){
         // Identify direction (H vs R)
         String routeId      = route.getId().toString();

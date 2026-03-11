@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt;
 
 import java.util.List;
 
+import org.eqasim.core.simulation.mode_choice.utilities.variables.PersonVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
 
 public class SBBPtStageCostCalculator implements PtStageCostCalculator {
@@ -56,7 +57,7 @@ public class SBBPtStageCostCalculator implements PtStageCostCalculator {
         }
     }
 
-    public double calculatePrice(List<SwissPtLegVariables> legs, boolean hasHalbtax, String authority){
+    public double calculatePrice(String authority, List<SwissPtLegVariables> legs, boolean hasHalbtax, PersonVariables personVariables){
         double distance = 0;
         double price    = 0;
 
@@ -93,7 +94,11 @@ public class SBBPtStageCostCalculator implements PtStageCostCalculator {
             price = Math.max(price, this.mininumPrice);
         }
 
-        return Math.round(price * 100.0) / 100.0;
+        double finalPrice = Math.round(price * 100.0) / 100.0;
+
+        //System.out.println("  Final price for SBB leg: " + price);
+
+        return finalPrice;
 
     }
     
