@@ -142,7 +142,7 @@ public class RunAdaptConfig {
 		walkParams.setTeleportedModeSpeed(1.3);
 
 		TravelTimeCalculatorConfigGroup ttcConfig = config.travelTimeCalculator();
-		ttcConfig.setTravelTimeGetterType("linearinterpolation");
+		ttcConfig.setTravelTimeGetterType("average");
 		// if routing bike in the network, we include it in the routing module
 		if (SwissConfigAdapter.routeBikeInNetwork) {
 			List<String> networkModes = new ArrayList<>(routingConfig.getNetworkModes());
@@ -155,7 +155,7 @@ public class RunAdaptConfig {
 			qsimConfigGroup.setLinkDynamics(QSimConfigGroup.LinkDynamics.PassingQ);
 			qsimConfigGroup.setSeepModes(Collections.singletonList(TransportMode.bike));
 			qsimConfigGroup.setSeepModeStorageFree(true);
-			ttcConfig.getAnalyzedModes().add(TransportMode.bike);
+			// ttcConfig.getAnalyzedModes().add(TransportMode.bike);
 			qsimConfigGroup.setMainModes(Arrays.asList(TransportMode.car, TransportMode.bike, "truck"));
 		} else {
 			// if not routing bike in the network, we set the beeline factor and speed for bike mode

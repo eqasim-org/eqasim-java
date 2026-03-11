@@ -3,7 +3,6 @@ package org.eqasim.core.components.traffic_light;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.components.flow.FlowBinManager;
 import org.eqasim.core.components.flow.FlowConfigGroup;
 import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
