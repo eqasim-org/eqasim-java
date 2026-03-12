@@ -51,7 +51,7 @@ public class RunVDFSimulation {
         VDFConfigGroup.getOrCreate(config).setWriteFlowInterval(10);
 
         // VDF Engine: Decide whether to genertae link events or not
-        VDFEngineConfigGroup.getOrCreate(config).setGenerateNetworkEvents(false);
+        VDFEngineConfigGroup.getOrCreate(config).setGenerateNetworkEventsInterval(0);
 
         // VDF Engine: Remove car from main modes
         Set<String> mainModes = new HashSet<>(config.qsim().getMainModes());
