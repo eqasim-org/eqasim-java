@@ -39,10 +39,11 @@ public class PublicTransportLegWriter {
 				"egress_stop_id", //
 				"transit_line_id", //
 				"transit_route_id",
-				"departure_id",//
+				"departure_id", //
 				"access_area_id", //
 				"egress_area_id", //
-				"transit_mode" //
+				"transit_mode", //
+				"boarding_time", //
 		});
 	}
 
@@ -58,7 +59,8 @@ public class PublicTransportLegWriter {
 				trip.departureId == null ? "" : trip.departureId.toString(), //
 				trip.accessAreaId == null ? "" : trip.accessAreaId.toString(), //
 				trip.egressAreaId == null ? "" : trip.egressAreaId.toString(), //
-				trip.transitMode == null ? "" : trip.transitMode //
+				trip.transitMode == null ? "" : trip.transitMode, //
+				String.valueOf(trip.boardingTime)
 		});
 	}
 }
