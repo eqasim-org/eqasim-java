@@ -10,15 +10,18 @@ import org.eqasim.core.components.transit.events.PublicTransitEvent;
 import org.eqasim.core.components.transit.events.PublicTransitEventHandler;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.events.ActivityStartEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.TransitDriverStartsEvent;
+import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.TransitDriverStartsEventHandler;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.AgentWaitingForPtEvent;
 import org.matsim.core.api.experimental.events.handler.AgentWaitingForPtEventHandler;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopArea;
 import org.matsim.vehicles.Vehicle;
@@ -27,7 +30,7 @@ import com.google.common.base.Verify;
 
 public class PublicTransportLegListener implements PersonDepartureEventHandler,
 		PersonEntersVehicleEventHandler, PublicTransitEventHandler, AgentWaitingForPtEventHandler,
-		TransitDriverStartsEventHandler {
+		TransitDriverStartsEventHandler, ActivityStartEventHandler {
 	private final Collection<PublicTransportLegItem> trips = new LinkedList<>();
 
 	private final Map<Id<Person>, Integer> tripIndices = new HashMap<>();
@@ -78,6 +81,14 @@ public class PublicTransportLegListener implements PersonDepartureEventHandler,
 
 			Verify.verify(ongoing.put(event.getPersonId(), item) == null);
 			trips.add(item);
+		}
+	}
+
+	@Override
+	public void handleEvent(ActivityStartEvent event) {
+		if (TripStructureUtils.isStageActivityType(event.getActType())) {
+			// correct trip index based on interaction activities
+			tripIndices.computeIfPresent(event.getPersonId(), (k, v) -> v - 1);
 		}
 	}
 
