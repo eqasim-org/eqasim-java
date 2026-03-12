@@ -23,8 +23,9 @@ public class PublicTransitEventMapper implements CustomEventMapper {
 		Id<Departure> departureId = Id.create(event.getAttributes().get("departure"), Departure.class);
 		double vehicleDepartureTime = Double.parseDouble(event.getAttributes().get("vehicleDepartureTime"));
 		double travelDistance = Double.parseDouble(event.getAttributes().get("travelDistance"));
+		double boardingTime = Double.parseDouble(event.getAttributes().get("boardingTime"));
 
-		return new PublicTransitEvent(arrivalTime, personId, transitLineId, transitRouteId, accessStopId, egressStopId, departureId,
-				vehicleDepartureTime, travelDistance);
+		return new PublicTransitEvent(arrivalTime, personId, transitLineId, transitRouteId, accessStopId, egressStopId,
+				departureId, vehicleDepartureTime, travelDistance, boardingTime);
 	}
 }

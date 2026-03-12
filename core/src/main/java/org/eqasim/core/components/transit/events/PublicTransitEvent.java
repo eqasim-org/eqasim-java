@@ -22,10 +22,11 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 	final private Id<Departure> departureId;
 	final private double vehicleDepartureTime;
 	final private double travelDistance;
+	final private double boardingTime;
 
 	public PublicTransitEvent(double arrivalTime, Id<Person> personId, Id<TransitLine> transitLineId,
 			Id<TransitRoute> transitRouteId, Id<TransitStopFacility> accessStopId, Id<TransitStopFacility> egressStopId, Id<Departure> departureId,
-			double vehicleDepartureTime, double travelDistance) {
+			double vehicleDepartureTime, double travelDistance, double boardingTime) {
 		super(TYPE, arrivalTime);
 
 		this.personId = personId;
@@ -36,12 +37,13 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 		this.departureId = departureId;
 		this.vehicleDepartureTime = vehicleDepartureTime;
 		this.travelDistance = travelDistance;
+		this.boardingTime = boardingTime;
 	}
 
 	public PublicTransitEvent(double now, PublicTransitEvent delegate) {
 		this(now, delegate.getPersonId(), delegate.getTransitLineId(), delegate.getTransitRouteId(),
 				delegate.getAccessStopId(), delegate.getEgressStopId(), delegate.getDepartureId(), delegate.getVehicleDepartureTime(),
-				delegate.getTravelDistance());
+				delegate.getTravelDistance(), delegate.getBoardingTime());
 	}
 
 	public Id<TransitLine> getTransitLineId() {
@@ -72,6 +74,10 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 		return travelDistance;
 	}
 
+	public double getBoardingTime() {
+		return boardingTime;
+	}
+
 	@Override
 	public Id<Person> getPersonId() {
 		return personId;
@@ -93,6 +99,7 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 		attributes.put("departure", departureId.toString());
 		attributes.put("vehicleDepartureTime", String.valueOf(vehicleDepartureTime));
 		attributes.put("travelDistance", String.valueOf(travelDistance));
+		attributes.put("boardingTime", String.valueOf(boardingTime));
 		return attributes;
 	}
 
@@ -109,7 +116,8 @@ public class PublicTransitEvent extends GenericEvent implements HasPersonId {
 		Id<Departure> departureId = Id.create(attributes.get("departure"), Departure.class);
 		double vehicleDepartureTime = Double.parseDouble(attributes.get("vehicleDepartureTime"));
 		double travelDistance = Double.parseDouble(attributes.get("travelDistance"));
+		double boardingTime = Double.parseDouble(attributes.get("boardingTime"));
 
-		return new PublicTransitEvent(genericEvent.getTime(), personId, transitLineId, transitRouteId, accessStopId, egressStopId, departureId, vehicleDepartureTime, travelDistance);
+		return new PublicTransitEvent(genericEvent.getTime(), personId, transitLineId, transitRouteId, accessStopId, egressStopId, departureId, vehicleDepartureTime, travelDistance, boardingTime);
 	}
 }
