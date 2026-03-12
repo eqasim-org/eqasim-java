@@ -136,7 +136,7 @@ public class VDFDynamicEngine implements DepartureHandler, MobsimEngine {
 			handler.processEnterLink(record.triggerTime, nextLinkId,
 					flowEquivalentProvider.getFlowEquivalent(record.agent.getPlannedVehicleId()));
 
-			double qsimCorrection = record.agent.isWantingToArriveOnCurrentLink() ? 0.0 : simulationStep;
+			double qsimCorrection = record.agent.getDestinationLinkId().equals(nextLinkId) ? 0.0 : simulationStep;
 			record.triggerTime += traversalTime.getTraversalTime(now, nextLinkId, record.agent) + qsimCorrection;
 			record.distance += network.getLinks().get(nextLinkId).getLength();
 			queue.add(record);

@@ -807,26 +807,27 @@ public class TestVolumeDelayFunction {
 
 	@Test
 	public void testDrtFreeflowWithVdfEngine() {
-		Controller controller = prepareScenario();
-		enableFreeflow(controller);
-		enableVdf(controller, true);
-		enableDrt(controller, 3, true);
+		for (boolean generateEvents : new boolean[] { true, false }) {
+			Controller controller = prepareScenario();
+			enableFreeflow(controller);
+			enableVdf(controller, true);
+			enableDrt(controller, 3, true);
 
-		boolean generateEvents = true;
-		VDFEngineConfigGroup.getOrCreate(controller.getConfig())
-				.setGenerateNetworkEventsInterval(generateEvents ? 1 : 0);
+			VDFEngineConfigGroup.getOrCreate(controller.getConfig())
+					.setGenerateNetworkEventsInterval(generateEvents ? 1 : 0);
 
-		Analysis analysis = prepareAnalysis(controller);
+			Analysis analysis = prepareAnalysis(controller);
 
-		addTrip(controller, 3600.0, 2, 16, "drt");
-		addTrip(controller, 4200.0, 2, 16, "drt");
+			addTrip(controller, 3600.0, 2, 16, "drt");
+			addTrip(controller, 4200.0, 2, 16, "drt");
 
-		controller.run();
+			controller.run();
 
-		assertEquals(7029.0, analysis.arrivalTime(0), 1e-3);
-		assertEquals(7029.0, analysis.dropoffTime(0), 1e-3);
+			assertEquals(7029.0, analysis.arrivalTime(0), 1e-3);
+			assertEquals(7029.0, analysis.dropoffTime(0), 1e-3);
 
-		assertEquals(7029.0, analysis.arrivalTime(1), 1e-3);
-		assertEquals(7029.0, analysis.dropoffTime(1), 1e-3);
+			assertEquals(7029.0, analysis.arrivalTime(1), 1e-3);
+			assertEquals(7029.0, analysis.dropoffTime(1), 1e-3);
+		}
 	}
 }
