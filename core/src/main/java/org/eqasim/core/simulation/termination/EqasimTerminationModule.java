@@ -37,20 +37,16 @@ public class EqasimTerminationModule extends AbstractEqasimExtension {
 		int firstIteration = controllerConfig.getFirstIteration();
 		int lastIteration = controllerConfig.getLastIteration();
 
-		List<TerminationData> history = Collections.emptyList();
-
-		if (terminationConfig.getHistoryFile() != null) {
-			URL historyURL = ConfigGroup.getInputFileURL(getConfig().getContext(), terminationConfig.getHistoryFile());
-			history = new TerminationReader(indicators.keySet(), criteria.keySet()).read(historyURL);
-		}
-
 		int minimumIteration = firstIteration + terminationConfig.getMinimumIterations();
 
 		EqasimTerminationCriterion criterion = new EqasimTerminationCriterion(firstIteration, lastIteration,
 				minimumIteration, indicators, criteria,
 				writer);
 
-		criterion.replay(history);
+		if (terminationConfig.getHistoryFile() != null) {
+			URL historyURL = ConfigGroup.getInputFileURL(getConfig().getContext(), terminationConfig.getHistoryFile());
+			criterion.replay(new TerminationReader(indicators.keySet(), criteria.keySet()).read(historyURL));
+		}
 
 		return criterion;
 	}
