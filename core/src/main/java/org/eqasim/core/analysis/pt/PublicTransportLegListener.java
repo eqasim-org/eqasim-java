@@ -117,10 +117,10 @@ public class PublicTransportLegListener implements PersonDepartureEventHandler,
 
 	@Override
 	public void handleEvent(PersonEntersVehicleEvent event) {
-		PublicTransportLegItem item = ongoing.get(event.getPersonId());
+		PublicTransportLegItem item = ongoing.remove(event.getPersonId());
 
 		if (item != null) {
-			TransitDriverStartsEvent vehicle = Objects.requireNonNull(vehicles.remove(event.getVehicleId()));
+			TransitDriverStartsEvent vehicle = Objects.requireNonNull(vehicles.get(event.getVehicleId()));
 
 			String transitMode = schedule.getTransitLines().get(vehicle.getTransitLineId()) //
 					.getRoutes().get(vehicle.getTransitRouteId())//

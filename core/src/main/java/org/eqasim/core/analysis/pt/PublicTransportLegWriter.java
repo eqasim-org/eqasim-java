@@ -51,14 +51,14 @@ public class PublicTransportLegWriter {
 				trip.personId.toString(), //
 				String.valueOf(trip.personTripId), //
 				String.valueOf(trip.legIndex), //
-				trip.accessStopId.toString(), //
-				trip.egressStopId.toString(), //
-				trip.transitLineId.toString(), //
-				trip.transitRouteId.toString(),
+				trip.accessStopId == null ? "" : trip.accessStopId.toString(), //
+				trip.egressStopId == null ? "" : trip.egressStopId.toString(), //
+				trip.transitLineId == null ? "" : trip.transitLineId.toString(), //
+				trip.transitRouteId == null ? "" : trip.transitRouteId.toString(),
 				trip.departureId == null ? "" : trip.departureId.toString(), //
 				trip.accessAreaId == null ? "" : trip.accessAreaId.toString(), //
 				trip.egressAreaId == null ? "" : trip.egressAreaId.toString(), //
-				trip.transitMode //
+				trip.transitMode == null ? "" : trip.transitMode //
 		});
 	}
 }
