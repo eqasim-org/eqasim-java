@@ -19,8 +19,8 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.components.travel_time.TravelTimeRecorder;
 import org.matsim.core.config.groups.ControllerConfigGroup;
-import org.matsim.core.config.groups.GlobalConfigGroup;
 import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
+import org.matsim.core.config.groups.GlobalConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
@@ -63,8 +63,6 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 	private final DistanceUnit scenarioDistanceUnit;
 	private final DistanceUnit analysisDistanceUnit;
 
-	private final boolean enablePtLegsAnalysis;
-
 	@Inject
 	public AnalysisOutputListener(EqasimConfigGroup config, OutputDirectoryHierarchy outputDirectory,
 			TripListener tripListener, LegListener legListener, PublicTransportLegListener ptListener,
@@ -84,12 +82,6 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 		this.ptAnalysisListener = ptListener;
 		this.activityAnalysisListener = activityAnalysisListener;
 		this.travelTimeRecorder = travelTimeRecorder;
-
-		this.enablePtLegsAnalysis = config.getUseScheduleBasedTransport();
-
-		if(!enablePtLegsAnalysis) {
-			log.warn(String.format("PT analysis is disabled when eqasim.useScheduleBasedTransport is set to false. %s files will not be generated", PT_FILE_NAME));
-		}
 	}
 
 	@Override
@@ -102,9 +94,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				isAnalysisActive = true;
 				event.getServices().getEvents().addHandler(tripAnalysisListener);
 				event.getServices().getEvents().addHandler(legAnalysisListener);
-				if(enablePtLegsAnalysis) {
-					event.getServices().getEvents().addHandler(ptAnalysisListener);
-				}
+				event.getServices().getEvents().addHandler(ptAnalysisListener);
 				event.getServices().getEvents().addHandler(activityAnalysisListener);
 			}
 		}
@@ -124,6 +114,7 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				event.getServices().getEvents().removeHandler(tripAnalysisListener);
 				event.getServices().getEvents().removeHandler(legAnalysisListener);
 				event.getServices().getEvents().removeHandler(activityAnalysisListener);
+				event.getServices().getEvents().removeHandler(ptAnalysisListener);
 
 				new TripWriter(tripAnalysisListener.getTripItems(), scenarioDistanceUnit, analysisDistanceUnit, delimiter)
 						.write(outputDirectory.getIterationFilename(event.getIteration(), TRIPS_FILE_NAME, compressionType));
@@ -134,11 +125,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 				new ActivityWriter(activityAnalysisListener.getActivityItems(), delimiter)
 						.write(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME, compressionType));
 
-				if(enablePtLegsAnalysis) {
-					event.getServices().getEvents().removeHandler(ptAnalysisListener);
-					new PublicTransportLegWriter(ptAnalysisListener.getTripItems(), delimiter)
-							.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME, compressionType));
-				}
+				new PublicTransportLegWriter(ptAnalysisListener.getTripItems(), delimiter)
+						.write(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME, compressionType));
 			}
 
 			if (isTravelTimeActive) {
@@ -160,10 +148,8 @@ public class AnalysisOutputListener implements IterationStartsListener, Iteratio
 					new File(outputDirectory.getOutputFilename(TRIPS_FILE_NAME, compressionType)).toPath());
 			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), LEGS_FILE_NAME, compressionType)).toPath(),
 					new File(outputDirectory.getOutputFilename(LEGS_FILE_NAME, compressionType)).toPath());
-			if(enablePtLegsAnalysis) {
-				Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME, compressionType)).toPath(),
-						new File(outputDirectory.getOutputFilename(PT_FILE_NAME, compressionType)).toPath());
-			}
+			Files.copy(new File(outputDirectory.getIterationFilename(event.getIteration(), PT_FILE_NAME, compressionType)).toPath(),
+					new File(outputDirectory.getOutputFilename(PT_FILE_NAME, compressionType)).toPath());
 			Files.copy(
 					new File(outputDirectory.getIterationFilename(event.getIteration(), ACTIVITIES_FILE_NAME, compressionType)).toPath(),
 					new File(outputDirectory.getOutputFilename(ACTIVITIES_FILE_NAME, compressionType)).toPath());
