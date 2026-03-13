@@ -13,6 +13,7 @@ import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.ShutdownEvent;
@@ -26,9 +27,9 @@ import com.google.common.io.Files;
 public class VDFUpdateListener implements IterationEndsListener, StartupListener, ShutdownListener {
 	private final static Logger logger = LogManager.getLogger(VDFUpdateListener.class);
 
-	private final String VDF_FILE = "vdf.bin";
-	private final String FLOW_FILE = "vdf_flow.csv";
-	private final String TRAVEL_TIMES_FILE = "vdf_travel_times.bin";
+	static public final String VDF_FILE = "vdf.bin";
+	static public final String FLOW_FILE = "vdf_flow.csv";
+	static public final String TRAVEL_TIMES_FILE = "vdf_travel_times.bin";
 
 	private final VDFScope scope;
 	private final VDFTrafficHandler handler;
@@ -42,11 +43,13 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 	private final int firstIteration;
 
 	private final OutputDirectoryHierarchy outputHierarchy;
+	private final CompressionType compressionType;
+
 	private final Network network;
 
 	public VDFUpdateListener(Network network, VDFScope scope, VDFTrafficHandler handler, VDFTravelTime travelTime,
 							 OutputDirectoryHierarchy outputHierarchy, int writeInterval, int writeFlowInterval, int writeTravelTimesInterval, int firstIteration,
-							 URL inputFile) {
+							 URL inputFile, CompressionType compressionType) {
 		this.network = network;
 		this.scope = scope;
 		this.handler = handler;
@@ -57,6 +60,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		this.inputFile = inputFile;
 		this.firstIteration = firstIteration;
 		this.writeTravelTimesInterval = writeTravelTimesInterval;
+		this.compressionType = compressionType;
 	}
 
 	@Override
@@ -71,7 +75,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		travelTime.update(data);
 
 		if (writeInterval > 0 && (event.getIteration() % writeInterval == 0 || event.isLastIteration())) {
-			File outputFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), VDF_FILE));
+			File outputFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), VDF_FILE, compressionType));
 
 			logger.info("Writing VDF data to " + outputFile.toString() + "...");
 			handler.getWriter().writeFile(outputFile);
@@ -80,7 +84,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		}
 
 		if (writeFlowInterval > 0 && (event.getIteration() % writeFlowInterval == 0 || event.isLastIteration())) {
-			File flowFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), FLOW_FILE));
+			File flowFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), FLOW_FILE, compressionType));
 
 			logger.info("Writing flow information to " + flowFile.toString() + "...");
 			new FlowWriter(data, network, scope).write(flowFile);
@@ -88,7 +92,7 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 		}
 
 		if (writeTravelTimesInterval > 0 && (event.getIteration() % writeTravelTimesInterval == 0 || event.isLastIteration())) {
-			File travelTimesFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), TRAVEL_TIMES_FILE));
+			File travelTimesFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), TRAVEL_TIMES_FILE, compressionType));
 			logger.info("Writing travel time information to " + travelTimesFile + "...");
 			travelTime.write(travelTimesFile);
 			logger.info("  Done");
@@ -115,22 +119,22 @@ public class VDFUpdateListener implements IterationEndsListener, StartupListener
 	@Override
 	public void notifyShutdown(ShutdownEvent event) {
 		try {
-			File fromFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), VDF_FILE));
-			File toFile = new File(outputHierarchy.getOutputFilename(VDF_FILE));
+			File fromFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), VDF_FILE, compressionType));
+			File toFile = new File(outputHierarchy.getOutputFilename(VDF_FILE, compressionType));
 
 			if (fromFile.exists()) {
 				Files.copy(fromFile, toFile);
 			}
 
-			File fromFlowFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), FLOW_FILE));
-			File toFlowFile = new File(outputHierarchy.getOutputFilename(FLOW_FILE));
+			File fromFlowFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), FLOW_FILE, compressionType));
+			File toFlowFile = new File(outputHierarchy.getOutputFilename(FLOW_FILE, compressionType));
 
 			if (fromFlowFile.exists()) {
 				Files.copy(fromFlowFile, toFlowFile);
 			}
 
-			File fromTravelTimesFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), TRAVEL_TIMES_FILE));
-			File toTravelTimesFile = new File(outputHierarchy.getOutputFilename(TRAVEL_TIMES_FILE));
+			File fromTravelTimesFile = new File(outputHierarchy.getIterationFilename(event.getIteration(), TRAVEL_TIMES_FILE, compressionType));
+			File toTravelTimesFile = new File(outputHierarchy.getOutputFilename(TRAVEL_TIMES_FILE, compressionType));
 
 			if(fromTravelTimesFile.exists()) {
 				Files.copy(fromTravelTimesFile, toTravelTimesFile);

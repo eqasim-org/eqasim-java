@@ -29,10 +29,10 @@ public class GenerateConfig {
 	protected final List<String> ACTIVITY_TYPES = Arrays.asList("home", "work", "education", "shop", "leisure", "other",
 			"freight_loading", "freight_unloading", "outside");
 
-	protected final List<String> MODES = Arrays.asList("walk", "bike", "pt", "car", "car_passenger", "truck",
-			"outside");
+	protected final List<String> MODES = Arrays.asList("walk", "bike", "pt", "car", "car_passenger", "motorcycle",
+			"truck", "outside");
 
-	private final List<String> NETWORK_MODES = Arrays.asList("car", "car_passenger", "truck");
+	private final List<String> NETWORK_MODES = Arrays.asList("car", "car_passenger", "truck", "motorcycle");
 
 	private final CommandLine cmd;
 	private final String prefix;
@@ -155,19 +155,19 @@ public class GenerateConfig {
 
 		dmcConfig.setTripEstimator(EqasimModeChoiceModule.UTILITY_ESTIMATOR_NAME);
 		dmcConfig.setTourEstimator(EstimatorModule.CUMULATIVE);
-		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck"));
+		dmcConfig.setCachedModes(Arrays.asList("car", "bike", "pt", "walk", "car_passenger", "truck", "motorcycle"));
 
 		dmcConfig.setTourFinder(TourFinderModule.ACTIVITY_BASED);
 		dmcConfig.getActivityTourFinderConfigGroup().setActivityTypes(Arrays.asList("home", "outside"));
 		dmcConfig.setModeAvailability("unknown");
 
 		dmcConfig.setTourConstraints(
-				Arrays.asList(EqasimModeChoiceModule.VEHICLE_TOUR_CONSTRAINT, ConstraintModule.FROM_TRIP_BASED));
+				Arrays.asList(ConstraintModule.VEHICLE_CONTINUITY, ConstraintModule.FROM_TRIP_BASED));
 		dmcConfig.setTripConstraints(Arrays.asList(ConstraintModule.TRANSIT_WALK,
 				EqasimModeChoiceModule.PASSENGER_CONSTRAINT_NAME, EqasimModeChoiceModule.OUTSIDE_CONSTRAINT_NAME));
 
 		dmcConfig.setHomeFinder(EqasimModeChoiceModule.HOME_FINDER);
-		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike"));
+		dmcConfig.getVehicleTourConstraintConfig().setRestrictedModes(Arrays.asList("car", "bike", "motorcycle"));
 
 		dmcConfig.setTourFilters(Arrays.asList(EqasimModeChoiceModule.OUTSIDE_FILTER_NAME,
 				FilterModule.TOUR_LENGTH));
@@ -178,6 +178,7 @@ public class GenerateConfig {
 		// Set up modes
 
 		eqasimConfig.setEstimator(TransportMode.car, EqasimModeChoiceModule.CAR_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator(TransportMode.motorcycle, EqasimModeChoiceModule.MOTORCYCLE_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.pt, EqasimModeChoiceModule.PT_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.bike, EqasimModeChoiceModule.BIKE_ESTIMATOR_NAME);
 		eqasimConfig.setEstimator(TransportMode.walk, EqasimModeChoiceModule.WALK_ESTIMATOR_NAME);
@@ -187,6 +188,7 @@ public class GenerateConfig {
 		}
 
 		eqasimConfig.setCostModel(TransportMode.car, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+		eqasimConfig.setCostModel(TransportMode.motorcycle, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 		eqasimConfig.setCostModel(TransportMode.pt, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 
 		// To make sure trips arriving later than the next activity end time are taken into account when routing the next trip during mode choice

@@ -26,8 +26,9 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private final static String ANALYSIS_INTERVAL = "analysisInterval";
 	private final static String ANALYSIS_DISTANCE_UNIT = "analysisDistanceUnit";
-	
+
 	private final static String TRAVEL_TIME_RECORDING_INTERVAL = "travelTimeRecordingInterval";
+	private final static String TRAVEL_TIME_ANALYSIS_INTERVAL = "travelTimeAnalysisInterval";
 
 	private final static String USE_SCHEDULE_BASED_TRANSPORT = "useScheduleBasedTransport";
 
@@ -45,8 +46,9 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private int analysisInterval = 0;
 	private DistanceUnit analysisDistanceUnit = DistanceUnit.meter;
-	
+
 	private int travelTimeRecordingInterval = 0;
+	private int travelTimeAnalysisInterval = 10;
 
 	private boolean useScheduleBasedTransport = true;
 
@@ -57,13 +59,13 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	public EqasimConfigGroup() {
 		super(GROUP_NAME);
 	}
-	
+
 	@Override
 	public final Map<String, String> getComments() {
 		Map<String, String> map = super.getComments();
 		map.put(SAMPLE_SIZE,
 				"The sample size of the population you are simulating. This is normally set by the synthesis pipeline.");
-		
+
 		return map;
 	}
 
@@ -97,15 +99,25 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 		this.usePseudoRandomErrors = usePseudoRandomErrors;
 	}
 
+	@StringGetter(TRAVEL_TIME_ANALYSIS_INTERVAL)
+	public int getTravelTimeAnalysisInterval() {
+		return travelTimeAnalysisInterval;
+	}
+
+	@StringSetter(TRAVEL_TIME_ANALYSIS_INTERVAL)
+	public void setTravelTimeAnalysisInterval(int TravelTimeAnalysisInterval) {
+		this.travelTimeAnalysisInterval = TravelTimeAnalysisInterval;
+	}
+
 	@Override
 	public ConfigGroup createParameterSet(String type) {
 		switch (type) {
-		case EstimatorParameterSet.GROUP_NAME:
-			return new EstimatorParameterSet();
-		case CostModelParameterSet.GROUP_NAME:
-			return new CostModelParameterSet();
-		default:
-			throw new IllegalArgumentException("Unknown parameter set type: " + type);
+			case EstimatorParameterSet.GROUP_NAME:
+				return new EstimatorParameterSet();
+			case CostModelParameterSet.GROUP_NAME:
+				return new CostModelParameterSet();
+			default:
+				throw new IllegalArgumentException("Unknown parameter set type: " + type);
 		}
 	}
 

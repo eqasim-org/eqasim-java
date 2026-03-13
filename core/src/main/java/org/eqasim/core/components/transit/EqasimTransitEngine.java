@@ -110,8 +110,9 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 				Id<Link> arrivalLinkId = transitSchedule.getFacilities().get(route.getEgressStopId()).getLinkId();
 
 				PublicTransitEvent transitEvent = new PublicTransitEvent(arrivalTime, agent.getId(),
-						transitLine.getId(), transitRoute.getId(), route.getAccessStopId(), route.getEgressStopId(), stopDeparture.departure.getId(),
-						vehicleDepartureTime, route.getDistance());
+						transitLine.getId(), transitRoute.getId(), route.getAccessStopId(), route.getEgressStopId(),
+						stopDeparture.departure.getId(),
+						vehicleDepartureTime, route.getDistance(), route.getBoardingTime().seconds());
 
 				internalInterface.registerAdditionalAgentOnLink(agent);
 				departures.add(new AgentDeparture(agent, vehicleDepartureTime, departureLinkId));

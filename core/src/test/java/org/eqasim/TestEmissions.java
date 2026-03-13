@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.emissions.RunComputeEmissionsEvents;
 import org.eqasim.core.components.emissions.RunExportEmissionsNetwork;
 import org.eqasim.core.components.emissions.SafeOsmHbefaMapping;
@@ -58,8 +60,12 @@ import org.matsim.vehicles.Vehicles;
 
 public class TestEmissions {
 
+	private static final Logger log = LogManager.getLogger(TestEmissions.class);
+
 	@Before
 	public void setUp() throws IOException {
+		// Attempt to remove leftover directories from previous runs (Windows file locks eventually release)
+		FileUtils.deleteQuietly(new File("melun_test"));
 		URL fixtureUrl = getClass().getResource("/melun");
 		FileUtils.copyDirectory(new File(fixtureUrl.getPath()), new File("melun_test/input"));
 		var coldAverageFile = "sample_41_EFA_ColdStart_vehcat_2020average.csv";
@@ -73,8 +79,12 @@ public class TestEmissions {
 	}
 
 	@After
-	public void tearDown() throws IOException {
-		FileUtils.deleteDirectory(new File("melun_test"));
+	public void tearDown() {
+		try {
+			FileUtils.deleteDirectory(new File("melun_test"));
+		} catch (IOException e) {
+			log.warn("Could not fully delete melun_test directory : {}", e.getMessage());
+		}
 	}
 
 	private void runMelunSimulation() throws ConfigurationException {
@@ -140,13 +150,13 @@ public class TestEmissions {
 
 	private void runMelunEmissions() throws CommandLine.ConfigurationException, IOException {
 		Map<String, Long> counts = countLegs("melun_test/output/output_events.xml.gz");
-		Assert.assertEquals(3303, (long) counts.get("car"));
-		Assert.assertEquals(1560, (long) counts.get("car_passenger"));
-		Assert.assertEquals(9400, (long) counts.get("walk"));
-		Assert.assertEquals(3402, (long) counts.getOrDefault("bike", 0L));
-		Assert.assertEquals(2121, (long) counts.get("pt"));
+		Assert.assertEquals(4641, (long) counts.get("car"));
+		Assert.assertEquals(1554, (long) counts.get("car_passenger"));
+		Assert.assertEquals(11910, (long) counts.get("walk"));
+		Assert.assertEquals(638, (long) counts.getOrDefault("bike", 0L));
+		Assert.assertEquals(2251, (long) counts.get("pt"));
 
-		SafeOsmHbefaMapping.defaultType = "URB/Loca/50";
+		SafeOsmHbefaMapping.defaultType = "URB/Local/50";
 
 		RunComputeEmissionsEvents.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--hbefa-cold-avg", "sample_41_EFA_ColdStart_vehcat_2020average.csv", "--hbefa-hot-avg",
@@ -155,7 +165,7 @@ public class TestEmissions {
 				"sample_41_EFA_HOT_SubSegm_2020detailed.csv",
 				"--eqasim-configurator", TestConfigurator.class.getName() });
 
-		assertEquals(354139, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
+		assertEquals(634526, countLines(new File("melun_test/output/output_emissions_events.xml.gz")));
 
 		RunExportEmissionsNetwork.main(new String[] { "--config-path", "melun_test/input/config.xml",
 				"--pollutants", "PM,CO,NOx,Unknown", "--time-bin-size", "3600",
@@ -163,19 +173,19 @@ public class TestEmissions {
 
 		Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures("melun_test/output/emissions_network.shp");
 
-		// NOTE: Locally, I always get 32527 lines here. On Github CI, it is always
+		// NOTE: Locally, I always get 42235 (old : 32527) lines here. On Github CI, it is always
 		// 32528. No clue why this is, but all the previous tests on the events line
 		// length etc. pass without a problem ...
 
-		// assertEquals(features.size(), 32527);
+		assertEquals(42235, features.size());
 
 		SimpleFeature feature = features.stream().filter(f -> f.getAttribute("link").toString().equals("163994")
 				& f.getAttribute("time").toString().equals("43200")).findFirst().orElse(null);
 		assertNotNull(feature);
 
-		double expectedPm = 0.045174881256541;
-		double expectedCo = 0.627553969527029;
-		double expectedNox = 0.810111846744523;
+		double expectedPm = 0.059894542675388;
+		double expectedCo = 0.893473893036039;
+		double expectedNox = 1.080511804659364;
 		double expectedUnknown = Double.NaN;
 
 		assertEquals(expectedPm, feature.getAttribute("PM"));
@@ -214,12 +224,13 @@ public class TestEmissions {
 	}
 
 	static long countLines(File file) throws IOException {
+		String line;
 		int lines = 0;
 
 		BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new GZIPInputStream(new FileInputStream(file))));
 
-		while (reader.readLine() != null) {
+		while ((line = reader.readLine()) != null) {
 			lines++;
 		}
 

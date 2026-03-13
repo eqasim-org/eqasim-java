@@ -37,6 +37,7 @@ public class RunLegAnalysis {
 				.allowOptions("population-path", "events-path", "network-path", "facilities-path") //
 				.allowOptions("vehicle-modes") //
 				.allowOptions("input-distance-units", "output-distance-units") //
+				.allowOptions("delimiter") //
 				.build();
 
 		run(cmd, new DefaultPersonAnalysisFilter());
@@ -63,6 +64,7 @@ public class RunLegAnalysis {
 		}
 
 		String outputPath = cmd.getOptionStrict("output-path");
+		String delimiter = cmd.getOption("delimiter").orElse(";");
 
 		Collection<String> vehicleModes = Arrays.asList(cmd.getOption("vehicle-modes").orElse("car,pt").split(","))
 				.stream().map(s -> s.trim()).collect(Collectors.toSet());
@@ -105,6 +107,6 @@ public class RunLegAnalysis {
 		DistanceUnit inputUnit = DistanceUnit.valueOf(cmd.getOption("input-distance-unit").orElse("meter"));
 		DistanceUnit outputUnit = DistanceUnit.valueOf(cmd.getOption("output-distance-unit").orElse("meter"));
 
-		new LegWriter(legs, inputUnit, outputUnit).write(outputPath);
+		new LegWriter(legs, inputUnit, outputUnit, delimiter).write(outputPath);
 	}
 }

@@ -1,18 +1,14 @@
 package org.eqasim.core.analysis.pt;
 
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.Collection;
+
+import org.matsim.core.utils.io.IOUtils;
 
 public class PublicTransportLegWriter {
 	final private Collection<PublicTransportLegItem> trips;
 	final private String delimiter;
-
-	public PublicTransportLegWriter(Collection<PublicTransportLegItem> trips) {
-		this(trips, ";");
-	}
 
 	public PublicTransportLegWriter(Collection<PublicTransportLegItem> trips, String delimiter) {
 		this.trips = trips;
@@ -20,7 +16,7 @@ public class PublicTransportLegWriter {
 	}
 
 	public void write(String outputPath) throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputPath);
 
 		writer.write(formatHeader() + "\n");
 		writer.flush();
@@ -43,10 +39,11 @@ public class PublicTransportLegWriter {
 				"egress_stop_id", //
 				"transit_line_id", //
 				"transit_route_id",
-				"departure_id",//
+				"departure_id", //
 				"access_area_id", //
 				"egress_area_id", //
-				"transit_mode" //
+				"transit_mode", //
+				"boarding_time", //
 		});
 	}
 
@@ -55,14 +52,15 @@ public class PublicTransportLegWriter {
 				trip.personId.toString(), //
 				String.valueOf(trip.personTripId), //
 				String.valueOf(trip.legIndex), //
-				trip.accessStopId.toString(), //
-				trip.egressStopId.toString(), //
-				trip.transitLineId.toString(), //
-				trip.transitRouteId.toString(),
+				trip.accessStopId == null ? "" : trip.accessStopId.toString(), //
+				trip.egressStopId == null ? "" : trip.egressStopId.toString(), //
+				trip.transitLineId == null ? "" : trip.transitLineId.toString(), //
+				trip.transitRouteId == null ? "" : trip.transitRouteId.toString(),
 				trip.departureId == null ? "" : trip.departureId.toString(), //
 				trip.accessAreaId == null ? "" : trip.accessAreaId.toString(), //
 				trip.egressAreaId == null ? "" : trip.egressAreaId.toString(), //
-				trip.transitMode //
+				trip.transitMode == null ? "" : trip.transitMode, //
+				String.valueOf(trip.boardingTime)
 		});
 	}
 }
