@@ -1,5 +1,6 @@
 package org.eqasim.core.components.network_calibration.Processors;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -132,7 +133,12 @@ public class CountsProcessor {
             Id<Link> linkId = Id.create(point.linkId, Link.class);
             Integer category = getLinkCategory(linkId);
             if (category == null) {
-                throw new IOException("Link with ID " + point.linkId + " not found in the network.");
+                // check whether the link is missing in the network
+                if (!network.getLinks().containsKey(linkId)) {
+                    throw new IOException("Link with ID '" + point.linkId + "' not found in the network.");
+                } else {
+                    throw new IOException("Link with ID '" + point.linkId + "' is found in the network, but has somehow null category.");
+                }
             }
             if (category != LinkCategorizer.UNKNOWN_CATEGORY) {
                 AverageCountsPerCategory.put(category, AverageCountsPerCategory.getOrDefault(category, 0.0) + point.count);
@@ -200,9 +206,11 @@ public class CountsProcessor {
 
     static public class CountPoint {
         @JsonProperty("linkId")
+        @JsonAlias({"link", "link_id", "linkId"})
         public String linkId;
 
         @JsonProperty("count")
+        @JsonAlias({"count", "counts", "Count"})
         public double count;
 
     }

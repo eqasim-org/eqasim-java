@@ -38,6 +38,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     private final double rampCapacityFactor;
     private final double trunkCapacityFactor;
     private final LinkCategorizer categorizer;
+    private final boolean isActivated;
 
     public CapacitiesAdapter(Network network, FlowProcessor flowsEstimator, CountsProcessor countsProcessor,
                              NetworkCalibrationConfigGroup config,
@@ -59,11 +60,14 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.outputHierarchy = outputHierarchy;
         this.categorizer = categorizer;
+        this.isActivated = config.isOneOfObjectives("capacity") & config.isActivated();
 
-        // adjust initial capacities
-        NetworkCalibrationUtils.adjustNetworkCapacities(network, minCapacity, maxCapacity, sampleSize, correctCapacities, minSpeed, categorizer);
-        // initialize average capacities per category
-        initCapacityPerCategory();
+        if (isActivated) {
+            // adjust initial capacities
+            NetworkCalibrationUtils.adjustNetworkCapacities(network, minCapacity, maxCapacity, sampleSize, correctCapacities, minSpeed, categorizer);
+            // initialize average capacities per category
+            initCapacityPerCategory();
+        }
     }
 
     private void initCapacityPerCategory() {
@@ -112,21 +116,25 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent iterationEndsEvent) {
-        flowsEstimator.updateAndSaveCounts(iterationEndsEvent);
+        if (isActivated) {
+            flowsEstimator.updateAndSaveCounts(iterationEndsEvent);
 
-        int iteration = iterationEndsEvent.getIteration();
-        if (updateInterval>0 && iteration % updateInterval == 0 && iteration > 0) {
-            updateCapacities();
-            saveCapacities(iteration);
-        }
-        if (saveNetworkInterval>0 && iteration % saveNetworkInterval == 0 && iteration > 0) {
-            saveNetwork(iteration);
+            int iteration = iterationEndsEvent.getIteration();
+            if (updateInterval > 0 && iteration % updateInterval == 0 && iteration > 0) {
+                updateCapacities();
+                saveCapacities(iteration);
+            }
+            if (saveNetworkInterval > 0 && iteration % saveNetworkInterval == 0 && iteration > 0) {
+                saveNetwork(iteration);
+            }
         }
     }
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent iterationStartsEvent) {
-        flowsEstimator.resetCounts(iterationStartsEvent.getIteration());
+        if (isActivated) {
+            flowsEstimator.resetCounts(iterationStartsEvent.getIteration());
+        }
     }
 
     public boolean considersCategory(int category) {

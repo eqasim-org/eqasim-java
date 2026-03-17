@@ -28,11 +28,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String MIN_PENALTY = "minPenalty";
     static private final String PENALTIES_FILE = "penaltiesFile";
     static private final String SEPARATE_URBAN_ROADS = "separateUrbanRoads";
+    static private final String OBSERVED_SPEED_TRIPS_FILE = "observedSpeedTripsFile";
+    static private final String MIN_FREESPEED_FACTOR = "minFreespeedFactor";
+    static private final String MAX_FREESPEED_FACTOR = "maxFreespeedFactor";
+    static private final String MIN_TRIPS_PER_GROUP = "minTripsPerGroup";
 
     private boolean activate = false;
     private boolean calibrate = true;
     private int updateInterval = 5;
-    private int saveNetworkInterval = 5;
+    private int saveNetworkInterval = 0;
     private String countsFile = "";
     private String averageCountsPerCategoryFile = "";
     private double beta = 0.5;
@@ -43,11 +47,16 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private String categoriesToCalibrate = "1,2,3,4,5,11,12,13,14,15";
     private double rampFactor = 1.0;
     private double trunkFactor = 1.0;
-    private String objective = "capacity";
+    private String objective = "penalty";
     private double maxPenalty = 0.3;
     private double minPenalty = -0.1;
     private String penaltiesFile = "";
     private boolean separateUrbanRoads = false;
+
+    private String observedSpeedTripsFile = "";
+    private double minFreespeedFactor = 0.7;
+    private double maxFreespeedFactor = 1.3;
+    private int minTripsPerGroup = 50;
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -70,12 +79,16 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(CATEGORIES_TO_CALIBRATE, "Comma-separated list of link categories to calibrate (default: '1,2,3,4,5')");
         map.put(RAMP_FACTOR, "Factor for ramp links (default: 1.0)");
         map.put(TRUNK_FACTOR, "Factor (compared to motorway) for trunk links (default: 1.0)");
-        map.put(OBJECTIVE, "What should be calibrated (capacity, penalty)");
+        map.put(OBJECTIVE, "What should be calibrated (capacity, penalty, freespeed), or comma separated choice");
         map.put(MAX_PENALTY, "Maximum penalty to be applied to link categories when objective is penalty (default: 0.3)");
         map.put(MIN_PENALTY, "Minimum penalty to be applied to link categories when objective is penalty (default: -0.1)");
         map.put(PENALTIES_FILE, "Path to the csv penalties file (default: empty), used to initialize link category penalties"+
                 ", it should contain columns 'category' and 'penalty'. When it is provided, the penalties will not be updated during the simulation.");
         map.put(SEPARATE_URBAN_ROADS, "Whether to treat urban roads (links within urban areas) as a separate category for calibration (default: false)");
+        map.put(OBSERVED_SPEED_TRIPS_FILE, "Path to observed trips CSV used when objective is freespeed. Expected columns: departure_x,departure_y,arrival_x,arrival_y,departure_hour,travel_time,traveled_distance");
+        map.put(MIN_FREESPEED_FACTOR, "Lower bound applied to freespeed factors during freespeed calibration (default: 0.5)");
+        map.put(MAX_FREESPEED_FACTOR, "Upper bound applied to freespeed factors during freespeed calibration (default: 1.5)");
+        map.put(MIN_TRIPS_PER_GROUP, "Minimum number of routed observed trips required to update a freespeed group (default: 50)");
         return map;
     }
 
@@ -140,6 +153,14 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(OBJECTIVE)
     public void setObjective(String inputObjective) {
         this.objective = inputObjective;
+    }
+
+    public List<String> getAllObjectives() {
+        return Stream.of(objective.split(",")).map(String::trim).toList();
+    }
+
+    public boolean isOneOfObjectives(String obj){
+        return getAllObjectives().contains(obj);
     }
 
     @StringGetter(BETA)
@@ -263,6 +284,46 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(TRUNK_FACTOR)
     public void setTrunkFactor(double inputTrunkCapacityFactor) {
         trunkFactor = inputTrunkCapacityFactor;
+    }
+
+    @StringGetter(OBSERVED_SPEED_TRIPS_FILE)
+    public String getObservedSpeedTripsFile() {
+        return observedSpeedTripsFile;
+    }
+    @StringSetter(OBSERVED_SPEED_TRIPS_FILE)
+    public void setObservedSpeedTripsFile(String inputObservedSpeedTripsFile) {
+        observedSpeedTripsFile = inputObservedSpeedTripsFile;
+    }
+
+    public boolean hasObservedSpeedTripsFile() {
+        return !observedSpeedTripsFile.isEmpty() && observedSpeedTripsFile.endsWith(".csv");
+    }
+
+    @StringGetter(MIN_FREESPEED_FACTOR)
+    public double getMinFreespeedFactor() {
+        return minFreespeedFactor;
+    }
+    @StringSetter(MIN_FREESPEED_FACTOR)
+    public void setMinFreespeedFactor(double inputMinFreespeedFactor) {
+        minFreespeedFactor = inputMinFreespeedFactor;
+    }
+
+    @StringGetter(MAX_FREESPEED_FACTOR)
+    public double getMaxFreespeedFactor() {
+        return maxFreespeedFactor;
+    }
+    @StringSetter(MAX_FREESPEED_FACTOR)
+    public void setMaxFreespeedFactor(double inputMaxFreespeedFactor) {
+        maxFreespeedFactor = inputMaxFreespeedFactor;
+    }
+
+    @StringGetter(MIN_TRIPS_PER_GROUP)
+    public int getMinTripsPerGroup() {
+        return minTripsPerGroup;
+    }
+    @StringSetter(MIN_TRIPS_PER_GROUP)
+    public void setMinTripsPerGroup(int inputMinTripsPerGroup) {
+        minTripsPerGroup = inputMinTripsPerGroup;
     }
 
     public static NetworkCalibrationConfigGroup getOrCreate(Config config) {

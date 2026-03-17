@@ -100,7 +100,17 @@ public class LinkCategorizer {
         return UNKNOWN_CATEGORY;
     }
 
-    private int getCategoryFromOsmHighway(String osmHighway, Link link) {
+    public int getBaseCategory(Link link) {
+        if (link.getAllowedModes().contains("car")) {
+            Object osmHighway = link.getAttributes().getAttribute("osm:way:highway");
+            if (osmHighway != null) {
+                return getBaseCategoryFromOsmHighway(osmHighway.toString(), link);
+            }
+        }
+        return UNKNOWN_CATEGORY;
+    }
+
+    private int getBaseCategoryFromOsmHighway(String osmHighway, Link link) {
         int baseCategory;
         if (CATEGORY_1_HIGHWAY_TYPES.contains(osmHighway)) {
             baseCategory = 1;
@@ -119,10 +129,19 @@ public class LinkCategorizer {
         } else {
             return UNKNOWN_CATEGORY; // unknown category
         }
+        return baseCategory;
+    }
 
-        if (separateUrban && !combined.contains(baseCategory) && isUrbanLink(link)) {
+    private int getCategoryFromOsmHighway(String osmHighway, Link link) {
+        int baseCategory = getBaseCategoryFromOsmHighway(osmHighway, link);
+
+        if (separateUrban &
+            baseCategory!=UNKNOWN_CATEGORY &
+            !combined.contains(baseCategory) &
+            isUrbanLink(link)) {
             return baseCategory + 10; // Urban categories are 11-15
         }
+
         return baseCategory;
     }
 
@@ -137,18 +156,29 @@ public class LinkCategorizer {
         return false;
     }
 
+    public String getMunicipalityType(Link link) {
+        Object municipalityTypeObj = link.getAttributes().getAttribute("municipalityType");
+        if (municipalityTypeObj instanceof String municipalityType) {
+            String normalized = municipalityType.trim().toLowerCase();
+            if (!normalized.isEmpty()) {
+                return normalized;
+            }
+        }
+        return "unknown";
+    }
+
     /**
      * Checks if a link is outside the country.
      */
     public boolean isOutsideLink(Link link) {
-        Object municipalityTypeObj = link.getAttributes().getAttribute("municipalityType");
-        if (municipalityTypeObj instanceof String municipalityType) {
-            return municipalityType.equalsIgnoreCase("outside");
-        }
-        return false;
+        return getMunicipalityType(link).equals("outside");
     }
 
     public boolean isSeparateUrban() {
         return separateUrban;
+    }
+
+    public boolean isCarLink(Link link) {
+        return link.getAllowedModes().contains("car");
     }
 }

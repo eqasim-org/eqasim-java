@@ -46,7 +46,7 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
     // Configuration
     private final Set<String> cantons;
     private final double beta;
-    private final int batchSizeLimit = 400; // the minimum number of observations before updating the parameters
+    private final int batchSizeLimit = 600; // the minimum number of observations before updating the parameters
     private final boolean isActivated;
     private final String cantonsModeShareFile;
 
@@ -102,17 +102,17 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
 
     private boolean doUpdateGlobal(int iteration) {
         // first 6 iterations: update only global parameters
-        if (iteration <= 6) {
+        if (iteration <= 8) {
             numGlobalUpdates = 0; // keep it 0, these global updates are not counted
             return true;
         }
         // update only global parameters in the last iterations
-        int iterationLimit = Math.min(80, 3*lastIteration/4);
+        int iterationLimit = Math.min(100, 3*lastIteration/4);
 
-        if ((iteration%10 == 0) && (iteration<iterationLimit)) {
-            numGlobalUpdates = 0; // keep it 0, these global updates are not counted
-            return true;
-        }
+        // if ((iteration%10 == 0) && (iteration<iterationLimit)) {
+        //     numGlobalUpdates = 0; // keep it 0, these global updates are not counted
+        //     return true;
+        // }
         return iteration>=iterationLimit;
     }
 
@@ -342,7 +342,7 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
         // For global updates, use a staged beta based on the number of global updates
         if (doUpdateGlobal(matsimIteration)) {
             if (numGlobalUpdates < 3) {
-                return 0.2;
+                return 0.4;
             } else if (numGlobalUpdates < 8) {
                 return 0.5;
             } else if (numGlobalUpdates < 12) {
@@ -357,8 +357,8 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
             return 0.98;
         } else if (matsimIteration > 90) {
             return 0.95;
-        } else if (matsimIteration < 20 || iteration < 5) {
-            return 0.1;
+        } else if (matsimIteration < 20 || iteration < 3) {
+            return 0.3;
         } else {
             // Gradually increase beta as iterations progress
             return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.1 * iteration + 1.0)));

@@ -39,6 +39,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private final double rampFactor;
     private final double trunkFactor;
     private final LinkCategorizer categorizer;
+    private final boolean isActivated;
 
     /**
      * Constructs a PenaltiesAdapter with the given parameters.
@@ -60,13 +61,16 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         this.trunkFactor = config.getTrunkFactor();
         this.categorizer = categorizer;
         this.penaltyManager = penaltyManager;
+        this.isActivated = config.isOneOfObjectives("penalty") && config.isActivated();
 
-        // Load penalties from file if provided
-        penaltyManager.loadFromCsv(config.getPenaltiesFile());
+        if (isActivated) {
+            // Load penalties from file if provided
+            penaltyManager.loadFromCsv(config.getPenaltiesFile());
 
-        // Adjust network capacities initially
-        NetworkCalibrationUtils.adjustNetworkCapacities(network, config.getMinCapacity(), config.getMaxCapacity(), sampleSize,
-                config.getCorrectCapacities(), config.getMinSpeed(), categorizer);
+            // Adjust network capacities initially
+            NetworkCalibrationUtils.adjustNetworkCapacities(network, config.getMinCapacity(), config.getMaxCapacity(), sampleSize,
+                    config.getCorrectCapacities(), config.getMinSpeed(), categorizer);
+        }
     }
 
     /**
@@ -130,20 +134,24 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent iterationEndsEvent) {
-        flowProcessor.updateAndSaveCounts(iterationEndsEvent);
+        if (isActivated) {
+            flowProcessor.updateAndSaveCounts(iterationEndsEvent);
 
-        if (penaltyManager.isCalibrating()) {
-            int iteration = iterationEndsEvent.getIteration();
-            if (updateInterval > 0 && iteration % updateInterval == 0 && iteration > 0) {
-                updatePenalties(iteration);
-                savePenalties(iteration);
+            if (penaltyManager.isCalibrating()) {
+                int iteration = iterationEndsEvent.getIteration();
+                if (updateInterval > 0 && iteration % updateInterval == 0 && iteration > 0) {
+                    updatePenalties(iteration);
+                    savePenalties(iteration);
+                }
             }
         }
     }
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent iterationStartsEvent) {
-        flowProcessor.resetCounts(iterationStartsEvent.getIteration());
+        if (isActivated) {
+            flowProcessor.resetCounts(iterationStartsEvent.getIteration());
+        }
     }
 
     /**
