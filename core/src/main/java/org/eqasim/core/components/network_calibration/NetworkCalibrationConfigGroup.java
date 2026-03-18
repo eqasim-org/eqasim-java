@@ -29,6 +29,8 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String PENALTIES_FILE = "penaltiesFile";
     static private final String SEPARATE_URBAN_ROADS = "separateUrbanRoads";
     static private final String OBSERVED_SPEED_TRIPS_FILE = "observedSpeedTripsFile";
+    static private final String FREESPEED_FACTORS_FILE = "freespeedFactorsFile";
+    static private final String CAPACITIES_FILE = "capacitiesFile";
     static private final String MIN_FREESPEED_FACTOR = "minFreespeedFactor";
     static private final String MAX_FREESPEED_FACTOR = "maxFreespeedFactor";
     static private final String MIN_TRIPS_PER_GROUP = "minTripsPerGroup";
@@ -47,13 +49,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private String categoriesToCalibrate = "1,2,3,4,5,11,12,13,14,15";
     private double rampFactor = 1.0;
     private double trunkFactor = 1.0;
-    private String objective = "penalty";
+    private String objective = "";
     private double maxPenalty = 0.3;
     private double minPenalty = -0.1;
     private String penaltiesFile = "";
     private boolean separateUrbanRoads = false;
 
     private String observedSpeedTripsFile = "";
+    private String freespeedFactorsFile = "";
+    private String capacitiesFile = "";
     private double minFreespeedFactor = 0.7;
     private double maxFreespeedFactor = 1.3;
     private int minTripsPerGroup = 50;
@@ -66,9 +70,9 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     public final Map<String, String> getComments() {
         Map<String, String> map = super.getComments();
         map.put(ACTIVATE, "Whether to activate the module or not or not (default: false)");
-        map.put(CALIBRATE, "Whether to run calibration or not (default: true)");
+        map.put(CALIBRATE, "Whether to update parameters during the run (default: true). If false, parameters are loaded from input files and kept fixed.");
         map.put(UPDATE_INTERVAL, "Interval (in iterations) at which the capacities are updated (default: 5)");
-        map.put(SAVE_NETWORK_INTERVAL, "Interval (in iterations) at which the network is saved (default: 5)");
+        map.put(SAVE_NETWORK_INTERVAL, "Interval (in iterations) at which the network is saved (default: 0)");
         map.put(CORRECT_CAPACITIES, "Whether to correct capacities for short links (default: true)");
         map.put(MIN_SPEED, "Minimum speed (in km/h) used in capacity correction (default: 2.0 km/h)");
         map.put(MAX_CAPACITY, "Maximum capacity (in veh/h/lane) used to scale all capacities (default: 1800 veh/h/lane)");
@@ -84,10 +88,12 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(MIN_PENALTY, "Minimum penalty to be applied to link categories when objective is penalty (default: -0.1)");
         map.put(PENALTIES_FILE, "Path to the csv penalties file (default: empty), used to initialize link category penalties"+
                 ", it should contain columns 'category' and 'penalty'. When it is provided, the penalties will not be updated during the simulation.");
+        map.put(CAPACITIES_FILE, "Path to the csv capacities file (default: empty), used when objective is capacity and calibrate=false. Expected columns: Category;Capacity(veh/h/lane)");
         map.put(SEPARATE_URBAN_ROADS, "Whether to treat urban roads (links within urban areas) as a separate category for calibration (default: false)");
         map.put(OBSERVED_SPEED_TRIPS_FILE, "Path to observed trips CSV used when objective is freespeed. Expected columns: departure_x,departure_y,arrival_x,arrival_y,departure_hour,travel_time,traveled_distance");
-        map.put(MIN_FREESPEED_FACTOR, "Lower bound applied to freespeed factors during freespeed calibration (default: 0.5)");
-        map.put(MAX_FREESPEED_FACTOR, "Upper bound applied to freespeed factors during freespeed calibration (default: 1.5)");
+        map.put(FREESPEED_FACTORS_FILE, "Path to freespeed factors CSV (default: empty), used when objective is freespeed and calibrate=false. Expected columns: category;municipalityType;factor");
+        map.put(MIN_FREESPEED_FACTOR, "Lower bound applied to freespeed factors during freespeed calibration (default: 0.7)");
+        map.put(MAX_FREESPEED_FACTOR, "Upper bound applied to freespeed factors during freespeed calibration (default: 1.3)");
         map.put(MIN_TRIPS_PER_GROUP, "Minimum number of routed observed trips required to update a freespeed group (default: 50)");
         return map;
     }
@@ -128,6 +134,24 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         penaltiesFile = inputPenaltiesFile;
     }
 
+    public boolean hasPenaltiesFile() {
+        return !penaltiesFile.isEmpty() && penaltiesFile.endsWith(".csv");
+    }
+
+    @StringGetter(CAPACITIES_FILE)
+    public String getCapacitiesFile() {
+        return capacitiesFile;
+    }
+
+    public boolean hasCapacitiesFile(){
+        return !capacitiesFile.isEmpty() && capacitiesFile.endsWith(".csv");
+    }
+
+    @StringSetter(CAPACITIES_FILE)
+    public void setCapacitiesFile(String inputCapacitiesFile) {
+        capacitiesFile = inputCapacitiesFile;
+    }
+
     @StringGetter(ACTIVATE)
     public boolean isActivated() {
         return activate;
@@ -144,6 +168,10 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(CALIBRATE)
     public void setCalibrate(boolean inputCalibrate) {
         calibrate = inputCalibrate;
+    }
+
+    public boolean isCalibrationEnabled() {
+        return calibrate;
     }
 
     @StringGetter(OBJECTIVE)
@@ -297,6 +325,20 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
 
     public boolean hasObservedSpeedTripsFile() {
         return !observedSpeedTripsFile.isEmpty() && observedSpeedTripsFile.endsWith(".csv");
+    }
+
+    @StringGetter(FREESPEED_FACTORS_FILE)
+    public String getFreespeedFactorsFile() {
+        return freespeedFactorsFile;
+    }
+
+    @StringSetter(FREESPEED_FACTORS_FILE)
+    public void setFreespeedFactorsFile(String inputFreespeedFactorsFile) {
+        freespeedFactorsFile = inputFreespeedFactorsFile;
+    }
+
+    public boolean hasFreespeedFactorsFile() {
+        return !freespeedFactorsFile.isEmpty() && freespeedFactorsFile.endsWith(".csv");
     }
 
     @StringGetter(MIN_FREESPEED_FACTOR)

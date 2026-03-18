@@ -1,5 +1,6 @@
 package org.eqasim.core.components.network_calibration.cost_calibration;
 
+import com.google.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
@@ -9,7 +10,6 @@ import org.eqasim.core.components.network_calibration.NetworkCalibrationUtils;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
@@ -30,31 +30,26 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private final FlowProcessor flowProcessor;
     private final double sampleSize;
     private final List<Integer> categoriesToCalibrate;
-    private final Network network;
     private final PenaltyManager penaltyManager;
     private final double beta;
     private final int updateInterval;
-    private final int saveNetworkInterval;
     private final OutputDirectoryHierarchy outputHierarchy;
     private final double rampFactor;
     private final double trunkFactor;
     private final LinkCategorizer categorizer;
     private final boolean isActivated;
-
+    private final boolean isCalibrating;
+    private boolean disable = false;
     /**
      * Constructs a PenaltiesAdapter with the given parameters.
      * Initializes penalties from file if provided, or throws error if calibration is disabled without file.
      */
-    public PenaltiesAdapter(CountsProcessor countsProcessor, FlowProcessor flowProcessor, Network network,
+    public PenaltiesAdapter(Provider<CountsProcessor> countsProcessorProvider, Provider<FlowProcessor> flowProcessorProvider,
                             NetworkCalibrationConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
                             EqasimConfigGroup eqasimConfig, LinkCategorizer categorizer, PenaltyManager penaltyManager) {
-        this.countsProcessor = countsProcessor;
-        this.flowProcessor = flowProcessor;
-        this.network = network;
         this.sampleSize = eqasimConfig.getSampleSize();
         this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.updateInterval = config.getUpdateInterval();
-        this.saveNetworkInterval = config.getSaveNetworkInterval();
         this.beta = config.getBeta();
         this.outputHierarchy = outputHierarchy;
         this.rampFactor = config.getRampFactor();
@@ -62,14 +57,17 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         this.categorizer = categorizer;
         this.penaltyManager = penaltyManager;
         this.isActivated = config.isOneOfObjectives("penalty") && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
+
+        this.countsProcessor = isCalibrating ? countsProcessorProvider.get() : null;
+        this.flowProcessor = isCalibrating ? flowProcessorProvider.get() : null;
 
         if (isActivated) {
-            // Load penalties from file if provided
             penaltyManager.loadFromCsv(config.getPenaltiesFile());
 
-            // Adjust network capacities initially
-            NetworkCalibrationUtils.adjustNetworkCapacities(network, config.getMinCapacity(), config.getMaxCapacity(), sampleSize,
-                    config.getCorrectCapacities(), config.getMinSpeed(), categorizer);
+            if (!isCalibrating) {
+                logger.info("Penalty objective is active in fixed mode. Loaded penalties are kept constant during simulation.");
+            }
         }
     }
 
@@ -78,8 +76,12 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
      * Applies factors for ramps and trunks.
      */
     public double computePenalty(Link link) {
-        Integer category = countsProcessor.getLinkCategory(link.getId());
-        if (category == null || !categoriesToCalibrate.contains(category)) {
+        if (disable) {
+            return 0.0;
+        }
+
+        int category = categorizer.getCategory(link);
+        if (category == LinkCategorizer.UNKNOWN_CATEGORY || !categoriesToCalibrate.contains(category)) {
             return 0.0;
         }
         double penalty = penaltyManager.getPenalty(category);
@@ -98,7 +100,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     /**
      * Calculates the effective beta based on iteration for smoothing penalty updates.
      */
-    private double getEffectiveBeta(double percentageError, int iteration) {
+    private double getEffectiveBeta(int iteration) {
         double factor;
         if (iteration <= 20) {
             factor = 2.0;
@@ -123,7 +125,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
                     double flow = flowProcessor.getFlowByCategory(category, sampleSize);
                     if (flow >= 0.0 && Double.isFinite(flow)) {
                         double percentageDifference = (flow - count) / count;
-                        double effectiveBeta = getEffectiveBeta(percentageDifference, iteration);
+                        double effectiveBeta = getEffectiveBeta(iteration);
                         penaltyManager.updatePenalty(category, percentageDifference, effectiveBeta, iteration);
                     }
                 }
@@ -134,7 +136,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent iterationEndsEvent) {
-        if (isActivated) {
+        if (isActivated && isCalibrating) {
             flowProcessor.updateAndSaveCounts(iterationEndsEvent);
 
             if (penaltyManager.isCalibrating()) {
@@ -149,7 +151,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent iterationStartsEvent) {
-        if (isActivated) {
+        if (isActivated && isCalibrating) {
             flowProcessor.resetCounts(iterationStartsEvent.getIteration());
         }
     }
@@ -160,6 +162,15 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private void savePenalties(int iteration) {
         String filename = outputHierarchy.getIterationFilename(iteration, "link_category_penalties.csv");
         penaltyManager.saveToCsv(filename);
+    }
+
+
+    public void diable(){
+        this.disable = true;
+    }
+
+    public void enable(){
+        this.disable = false;
     }
 
 }

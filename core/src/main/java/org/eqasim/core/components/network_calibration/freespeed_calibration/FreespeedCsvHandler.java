@@ -3,16 +3,42 @@ package org.eqasim.core.components.network_calibration.freespeed_calibration;
 import org.apache.logging.log4j.Logger;
 import org.matsim.core.utils.io.IOUtils;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 public class FreespeedCsvHandler {
+    public static Map<LinkGroupKey, Double> readFactors(String filename) {
+        Map<LinkGroupKey, Double> factors = new HashMap<>();
+
+        try (BufferedReader reader = IOUtils.getBufferedReader(filename)) {
+            String line = reader.readLine(); // header
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length < 3) {
+                    continue;
+                }
+
+                int category = Integer.parseInt(parts[0].trim());
+                String municipalityType = parts[1].trim();
+                double factor = Double.parseDouble(parts[2].trim());
+                factors.put(new LinkGroupKey(category, municipalityType), factor);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error reading freespeed factors from file: " + filename, e);
+        }
+
+        return factors;
+    }
+
     public static void writeFactors(String filename, Map<LinkGroupKey, Double> factors) {
         try (BufferedWriter writer = IOUtils.getBufferedWriter(filename)) {
             writer.write("category;municipalityType;factor\n");
             for (Map.Entry<LinkGroupKey, Double> entry : factors.entrySet()) {
                 LinkGroupKey key = entry.getKey();
-                writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + entry.getValue() + "\n");
+                double val = round(entry.getValue());
+                writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + val + "\n");
             }
         } catch (Exception e) {
             throw new RuntimeException("Error writing freespeed factors to file: " + filename, e);
@@ -26,13 +52,18 @@ public class FreespeedCsvHandler {
                 LinkGroupKey key = entry.getKey();
                 FreespeedFactorManager.GroupStats stats = entry.getValue();
                 double ratio = stats.observedTime > 0.0 ? stats.simulatedTime / stats.observedTime : Double.NaN;
+
                 writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + stats.tripCount + ";"
-                        + stats.simulatedTime + ";" + stats.observedTime + ";" + stats.simulatedDistance + ";"
-                        + stats.observedDistance + ";" + ratio + "\n");
+                        + round(stats.simulatedTime) + ";" + round(stats.observedTime) + ";" + round(stats.simulatedDistance) + ";"
+                        + round(stats.observedDistance) + ";" + round(ratio) + "\n");
             }
         } catch (Exception e) {
             throw new RuntimeException("Error writing freespeed group stats to file: " + filename, e);
         }
+    }
+
+    public static double round(double x){
+        return (Double.isNaN(x) || Double.isInfinite(x)) ? x : Math.round(x*100.0)/100.0;
     }
 
     public static void logFactorsByMunicipalityType(Logger logger, Map<LinkGroupKey, Double> factors) {

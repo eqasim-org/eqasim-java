@@ -1,5 +1,6 @@
 package org.eqasim.core.components.network_calibration.capacities_calibration;
 
+import com.google.inject.Provider;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
@@ -39,14 +40,14 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
     private final double trunkCapacityFactor;
     private final LinkCategorizer categorizer;
     private final boolean isActivated;
+    private final boolean isCalibrating;
 
-    public CapacitiesAdapter(Network network, FlowProcessor flowsEstimator, CountsProcessor countsProcessor,
+    public CapacitiesAdapter(Network network, Provider<FlowProcessor> flowProcessorProvider,
+                             Provider<CountsProcessor> countsProcessorProvider,
                              NetworkCalibrationConfigGroup config,
                              EqasimConfigGroup eqasimConfig, OutputDirectoryHierarchy outputHierarchy,
                              LinkCategorizer categorizer) {
         this.network = network;
-        this.flowsEstimator = flowsEstimator;
-        this.countsProcessor = countsProcessor;
         this.updateInterval = config.getUpdateInterval();
         this.saveNetworkInterval = config.getSaveNetworkInterval();
         this.sampleSize = eqasimConfig.getSampleSize();
@@ -60,13 +61,21 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.outputHierarchy = outputHierarchy;
         this.categorizer = categorizer;
-        this.isActivated = config.isOneOfObjectives("capacity") & config.isActivated();
+        this.isActivated = config.isOneOfObjectives("capacity") && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
+        this.flowsEstimator = isCalibrating ? flowProcessorProvider.get() : null;
+        this.countsProcessor = isCalibrating ? countsProcessorProvider.get() : null;
 
         if (isActivated) {
             // adjust initial capacities
             NetworkCalibrationUtils.adjustNetworkCapacities(network, minCapacity, maxCapacity, sampleSize, correctCapacities, minSpeed, categorizer);
-            // initialize average capacities per category
-            initCapacityPerCategory();
+
+            if (isCalibrating) {
+                initCapacityPerCategory();
+            } else {
+                CapacityCsvHandler.readCapacitiesFromFile(config.getCapacitiesFile(), capacityPerCategory);
+                applyCapacity(capacityPerCategory);
+            }
         }
     }
 
@@ -75,9 +84,9 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         Map<Integer, Integer> categoryCounts = new HashMap<>();
 
         for (Link link : network.getLinks().values()) {
-            Integer category = countsProcessor.getLinkCategory(link.getId());
+            int category = categorizer.getCategory(link);
 
-            if ((category == null)||(category == LinkCategorizer.UNKNOWN_CATEGORY)) {
+            if (category == LinkCategorizer.UNKNOWN_CATEGORY) {
                 continue; // skip links with unknown category
             }
 
@@ -116,7 +125,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent iterationEndsEvent) {
-        if (isActivated) {
+        if (isActivated && isCalibrating) {
             flowsEstimator.updateAndSaveCounts(iterationEndsEvent);
 
             int iteration = iterationEndsEvent.getIteration();
@@ -132,7 +141,7 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent iterationStartsEvent) {
-        if (isActivated) {
+        if (isActivated && isCalibrating) {
             flowsEstimator.resetCounts(iterationStartsEvent.getIteration());
         }
     }
@@ -209,6 +218,10 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
             return maxCapacity/maxNewCapacity;
         }
 
+        if (maxNewCapacity <= 0.0) {
+            return 1.0;
+        }
+
         // second, compute ratio corresponding to ensuring that the highest capacity should be in (maxCapacity-100,maxCapacity)
         if (maxNewCapacity < (maxCapacity - 100.0)){
             return (maxCapacity - 100.0)/maxNewCapacity;
@@ -235,6 +248,9 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
         double targetFlow = countsProcessor.getAverageCountForCategory(category);
         double simulatedFlow = flowsEstimator.getFlowByCategory(category, sampleSize);
         double currentCapacity = capacityPerCategory.get(category);
+        if (targetFlow <= 0.0 || simulatedFlow <= 0.0 || !Double.isFinite(targetFlow) || !Double.isFinite(simulatedFlow)) {
+            return currentCapacity;
+        }
         // if the difference between target and simulated flow is within 3%, do not change the capacity
         if (Math.abs(targetFlow - simulatedFlow)/targetFlow <= 0.03) {
             return currentCapacity; // no change if within tolerance
@@ -249,9 +265,8 @@ public class CapacitiesAdapter implements IterationEndsListener, IterationStarts
 
     private void applyCapacity(Map<Integer, Double> capacities) {
         for (Link link : network.getLinks().values()) {
-            Integer linkCategory = countsProcessor.getLinkCategory(link.getId());
-            if ((linkCategory != null) &&
-                (linkCategory != LinkCategorizer.UNKNOWN_CATEGORY) &&
+            int linkCategory = categorizer.getCategory(link);
+            if ((linkCategory != LinkCategorizer.UNKNOWN_CATEGORY) &&
                 (capacities.containsKey(linkCategory))) {
                 double numberOfLanes = link.getNumberOfLanes();
                 double linkCapacity = capacities.get(linkCategory) * numberOfLanes;

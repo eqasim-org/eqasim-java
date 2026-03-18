@@ -1,9 +1,12 @@
 package org.eqasim.core.components.network_calibration.freespeed_calibration;
 
+import com.google.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
+import org.eqasim.core.components.network_calibration.cost_calibration.PenaltiesAdapter;
+import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
@@ -19,6 +22,7 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.DijkstraFactory;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
 import org.matsim.core.router.util.LeastCostPathCalculator;
+import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 
@@ -46,6 +50,9 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
     private final TravelTime carTravelTime;
     private final int threads;
     private final boolean isActivated;
+    private final boolean isCalibrating;
+    private final Provider<LeastCostPathCalculatorFactory> routerFactoryProvider;
+    private final PenaltiesAdapter penaltiesAdapter;
 
     public FreespeedAdapter(Network network,
                             NetworkCalibrationConfigGroup config,
@@ -53,8 +60,12 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
                             LinkCategorizer categorizer,
                             FreespeedFactorManager factorManager,
                             TravelTime carTravelTime,
+                            Provider<LeastCostPathCalculatorFactory> routerFactoryProvider,
+                            PenaltiesAdapter penaltiesAdapter,
                             int threads) {
         this.network = network;
+        this.routerFactoryProvider = routerFactoryProvider;
+        this.penaltiesAdapter = penaltiesAdapter;
         this.outputHierarchy = outputHierarchy;
         this.categorizer = categorizer;
         this.factorManager = factorManager;
@@ -63,42 +74,52 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
         this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.carTravelTime = carTravelTime;
         this.threads = threads;
-        this.isActivated = config.isOneOfObjectives("freespeed") & config.isActivated();
+        this.isActivated = config.isOneOfObjectives("freespeed") && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
 
         if (isActivated) {
-            if (carTravelTime == null) {
-                throw new IllegalStateException("car TravelTime is required for freespeed calibration and must include simulated conditions.");
-            }
-
-            if (carTravelTime instanceof FreeSpeedTravelTime) {
-                throw new IllegalStateException("Freespeed calibration requires congested simulated car TravelTime, but FreeSpeedTravelTime was provided.");
-            }
-
-            if (!config.hasObservedSpeedTripsFile()) {
-                throw new IllegalArgumentException("observedSpeedTripsFile must be provided for freespeed calibration objective.");
-            }
-
-            this.observedTrips = ObservedTripsTravelTimesCsvHandler.readTrips(config.getObservedSpeedTripsFile());
-
             for (Link link : network.getLinks().values()) {
                 if (categorizer.getCategory(link) != LinkCategorizer.UNKNOWN_CATEGORY) {
                     baseFreespeeds.put(link.getId(), link.getFreespeed());
                 }
             }
 
-            logger.info("Freespeed calibration initialized with {} observed trips", observedTrips.size());
+            if (isCalibrating) {
+                if (carTravelTime == null) {
+                    throw new IllegalStateException("car TravelTime is required for freespeed calibration and must include simulated conditions.");
+                }
+
+                if (carTravelTime instanceof FreeSpeedTravelTime) {
+                    throw new IllegalStateException("Freespeed calibration requires congested simulated car TravelTime, but FreeSpeedTravelTime was provided.");
+                }
+
+                if (!config.hasObservedSpeedTripsFile()) {
+                    throw new IllegalArgumentException("observedSpeedTripsFile must be provided for freespeed calibration objective.");
+                }
+
+                this.observedTrips = ObservedTripsTravelTimesCsvHandler.readTrips(config.getObservedSpeedTripsFile());
+                logger.info("Freespeed calibration initialized with {} observed trips", observedTrips.size());
+            } else {
+                this.observedTrips = List.of();
+                factorManager.loadFactors(FreespeedCsvHandler.readFactors(config.getFreespeedFactorsFile()));
+                applyFactors();
+                logger.info("Freespeed objective is active in fixed mode. Loaded factors are kept constant during simulation.");
+            }
         } else {
-            this.observedTrips = null;
+            this.observedTrips = List.of();
         }
     }
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
-        if (isActivated) {
+        if (isActivated && isCalibrating) {
             int iteration = event.getIteration();
 
             if (updateInterval > 0 && iteration > 0 && iteration % updateInterval == 0) {
+                penaltiesAdapter.diable(); // do not use penalties during this routing (freespeedDisutility is used, but keep this here in case we change it at some point, this is safer)
                 Map<LinkGroupKey, FreespeedFactorManager.GroupStats> groupStats = routeTripsAndCollectGroupStats();
+                penaltiesAdapter.enable(); // reset it
+
                 factorManager.updateFactors(groupStats);
                 applyFactors();
                 saveOutputs(iteration, groupStats);
@@ -118,7 +139,7 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
     private Map<LinkGroupKey, FreespeedFactorManager.GroupStats> routeTripsAndCollectGroupStats() {
         logger.info("Start routing trips and collecting group stats for freespeed calibration");
         logger.info("Using car TravelTime implementation for calibration routing: {}", carTravelTime.getClass().getName());
-        int workerCount = Math.max(1, Math.min(threads, observedTrips.size()));
+        int workerCount = Math.max(1, Math.min(threads*2, observedTrips.size()));
         ExecutorService executor = Executors.newFixedThreadPool(workerCount);
         List<Future<RoutingChunkResult>> futures = new ArrayList<>();
         int chunkSize = Math.max(1, (observedTrips.size() + workerCount - 1) / workerCount);
@@ -156,11 +177,11 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
     }
 
     private RoutingChunkResult routeTripsChunk(int startIndex, int endIndex) {
-        LeastCostPathCalculator router = new DijkstraFactory().createPathCalculator(
-                network,
+        LeastCostPathCalculatorFactory factory = routerFactoryProvider.get();
+        LeastCostPathCalculator router = factory.createPathCalculator(network,
                 new OnlyTimeDependentTravelDisutility(carTravelTime),
-                carTravelTime
-        );
+                carTravelTime);
+
 
         Map<LinkGroupKey, FreespeedFactorManager.GroupStats> localStats = new HashMap<>();
         int routedTrips = 0;
@@ -190,15 +211,13 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
             routedTrips++;
             double simulatedDistance = path.links.stream().mapToDouble(Link::getLength).sum();
             double observedDistance = Math.max(0.0, trip.traveledDistanceMeters);
-
-            if (!acceptRoutedTrip(observedDistance, simulatedDistance)) {
+            double simulatedTravelTime = path.travelTime;
+            double observedTravelTime = trip.travelTimeSeconds;
+            if (!acceptRoutedTrip(observedDistance, observedTravelTime, simulatedDistance, simulatedTravelTime)) {
                 continue;
             }
 
-            double simulatedTravelTime = path.travelTime;
-            double observedTravelTime = trip.travelTimeSeconds;
             double now = trip.departureTime;
-
             for (Link link : path.links) {
                 double linkTravelTime = computeLinkTravelTime(link, now);
                 now += linkTravelTime;
@@ -256,8 +275,15 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
         }
     }
 
-    private boolean acceptRoutedTrip(double observedDistance, double simulatedDistance){
-        return Math.abs((observedDistance-simulatedDistance)/observedDistance) < 0.1; // only accept less than 10% difference
+    private boolean acceptRoutedTrip(double observedDistance, double observedTravelTime, double simulatedDistance, double simulatedTravelTime){
+        if (observedDistance <= 1000.0 || observedTravelTime <= 300.0 || simulatedDistance <= 1000.0 || simulatedTravelTime <= 300.0) {
+            return false;
+        }
+        if  (Math.abs((simulatedDistance-observedDistance)/observedDistance) > 0.1) {
+            return false;
+        }
+        double diffTravelTime_pct = (simulatedTravelTime-observedTravelTime)/observedTravelTime;
+        return !(diffTravelTime_pct > 2) && !(diffTravelTime_pct < -0.3);
     }
 
     private double computeLinkTravelTime(Link link, double time) {
@@ -284,7 +310,7 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
 
         FreespeedCsvHandler.writeFactors(factorsFile, factorManager.getFactorsSnapshot());
         FreespeedCsvHandler.writeGroupStats(groupsFile, groupStats);
-        FreespeedCsvHandler.logFactorsByMunicipalityType(logger, factorManager.getFactorsSnapshot());;
+        FreespeedCsvHandler.logFactorsByMunicipalityType(logger, factorManager.getFactorsSnapshot());
     }
 
     private void saveNetwork(int iteration) {

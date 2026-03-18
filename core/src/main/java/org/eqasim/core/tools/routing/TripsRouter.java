@@ -16,18 +16,18 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutilityFactory;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
+import org.matsim.core.router.speedy.SpeedyALTFactory;
 
 import java.io.File;
 import java.io.IOException;
 
 import org.matsim.api.core.v01.*;
 import org.matsim.api.core.v01.network.*;
-import org.matsim.core.router.*;
 import org.matsim.core.router.util.*;
 import org.matsim.core.utils.geometry.CoordUtils;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TripsRouter {
@@ -35,7 +35,7 @@ public class TripsRouter {
 
     public static final Collection<String> REQUIRED_ARGS = Set.of("config-path", "events-path", "trips-path");
     public static final Collection<String> OPTIONAL_ARGS = Set.of("threads","start-time","end-time","interval","output-path",
-            "departure-time", "return-links");
+            "departure-time", "return-links", "batch-size");
 
     private static boolean returnLinks;
 
@@ -47,7 +47,10 @@ public class TripsRouter {
 
         int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
                 .orElse(Runtime.getRuntime().availableProcessors());
-        numberOfThreads = Math.min(Math.max(1, numberOfThreads),12);
+        numberOfThreads = Math.max(1, numberOfThreads);
+
+        int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(1000);
+        batchSize = Math.max(1, batchSize);
         // whether to return links in the output
         returnLinks = cmd.getOption("return-links").map(Boolean::parseBoolean).orElse(false);
         logger.info("Return links option set to: {}", returnLinks);
@@ -77,8 +80,8 @@ public class TripsRouter {
         RecordedTravelTime travelTime = loadTravelTime(cmd, roadNetwork);
 
         // ROUTING SECTION
-        logger.info("Routing {} trips using {} threads...", trips.size(), numberOfThreads);
-        List<RoutedTrip> routedTrips = routeTrips(trips, roadNetwork, travelTime, numberOfThreads);
+        logger.info("Routing {} trips using {} threads with batch size {}...", trips.size(), numberOfThreads, batchSize);
+        List<RoutedTrip> routedTrips = routeTrips(trips, roadNetwork, travelTime, numberOfThreads, batchSize);
 
         // Write results
         String outputPath = cmd.getOption("output-path").orElse("routed_trips.csv");
@@ -98,7 +101,7 @@ public class TripsRouter {
     }
 
     // === LOAD RECORDED TRAVEL TIME FROM EVENTS ===
-    public static RecordedTravelTime loadTravelTime(CommandLine cmd, RoadNetwork roadNetwork) throws IOException, CommandLine.ConfigurationException {
+    public static RecordedTravelTime loadTravelTime(CommandLine cmd, RoadNetwork roadNetwork) throws CommandLine.ConfigurationException {
         double startTime = Double.parseDouble(cmd.getOption("start-time").orElse("0.0"));
         double endTime = Double.parseDouble(cmd.getOption("end-time").orElse(String.valueOf(24 * 3600.0)));
         double interval = Double.parseDouble(cmd.getOption("interval").orElse("900.0"));
@@ -107,50 +110,76 @@ public class TripsRouter {
     }
 
     // === ROUTING TRIPS IN PARALLEL ===
-    private static List<RoutedTrip> routeTrips(List<Trip> trips, Network network, TravelTime travelTime, int threads)
-            throws InterruptedException, ExecutionException {
+    private static List<RoutedTrip> routeTrips(List<Trip> trips, Network network, TravelTime travelTime, int threads,
+            int batchSize) throws InterruptedException {
+        logger.info("Routing trips ...");
+        logger.info("\t Batch size: {}", batchSize);
+        logger.info("\t Threads: {}", threads);
 
         TravelDisutilityFactory disutilityFactory = new OnlyTimeDependentTravelDisutilityFactory();
-
-        ExecutorService executor = Executors.newFixedThreadPool(threads);
-        CompletionService<RoutedTrip> completion = new ExecutorCompletionService<>(executor);
-
+        SpeedyALTFactory routerFactory = new SpeedyALTFactory();
         AtomicInteger completed = new AtomicInteger(0);
+        AtomicInteger nextTripIndex = new AtomicInteger(0);
+        AtomicReference<Throwable> failure = new AtomicReference<>(null);
+
         int total = trips.size();
-        int progressInterval = Math.max(1, total / 40);
+        int progressInterval = batchSize *  threads;
 
-        // submit all tasks, but do NOT retain Futures (CompletionService holds minimal bookkeeping)
-        for (Trip trip : trips) {
-            completion.submit(() -> {
-                RoutedTrip routed = routeTrip(trip, network, travelTime, disutilityFactory);
-                int progress = completed.incrementAndGet();
-                if (progress % progressInterval == 0 || progress == total) {
-                    logger.info("Progress ({}%): {}/{} trips routed.", (progress * 100 / total), progress, total);
+        RoutedTrip[] results = new RoutedTrip[total];
+        List<Thread> workers = new ArrayList<>(threads);
+
+        for (int workerIndex = 0; workerIndex < threads; workerIndex++) {
+            Thread worker = new Thread(() -> {
+                try {
+                    TravelDisutility disutility = disutilityFactory.createTravelDisutility(travelTime);
+                    LeastCostPathCalculator router = routerFactory.createPathCalculator(network, disutility, travelTime);
+
+                    while (failure.get() == null) {
+                        int start = nextTripIndex.getAndAdd(batchSize);
+                        if (start >= total) {
+                            return;
+                        }
+
+                        int end = Math.min(total, start + batchSize);
+                        for (int index = start; index < end; index++) {
+                            Trip trip = trips.get(index);
+                            results[index] = routeTrip(trip, network, router);
+                        }
+
+                        int progress = completed.addAndGet(end - start);
+                        if (progress % progressInterval == 0 || progress == total) {
+                            logger.info("\t Progress ({}%): {}/{} trips routed.", (progress * 100 / total), progress, total);
+                        }
+                    }
+                } catch (Throwable e) {
+                    failure.compareAndSet(null, e);
                 }
-                return routed;
-            });
+            }, "trips-router-" + workerIndex);
+
+            workers.add(worker);
+            worker.start();
         }
 
-        List<RoutedTrip> results = new ArrayList<>(total);
-        for (int i = 0; i < total; i++) {
-            results.add(completion.take().get());
+        for (Thread worker : workers) {
+            worker.join();
         }
 
-        executor.shutdown();
-        return results;
+        if (failure.get() != null) {
+            throw new RuntimeException("Routing failed in worker thread", failure.get());
+        }
+
+        return Arrays.asList(results);
     }
 
     // === ROUTING FOR ONE TRIP ===
-    public static RoutedTrip routeTrip(Trip trip, Network network, TravelTime travelTime, TravelDisutilityFactory disutilityFactory) {
+    public static RoutedTrip routeTrip(Trip trip, Network network, LeastCostPathCalculator router) {
         Coord fromCoord = new Coord(trip.originX, trip.originY);
         Coord toCoord = new Coord(trip.destinationX, trip.destinationY);
 
         Node fromNode = NetworkUtils.getNearestNode(network, fromCoord);
         Node toNode = NetworkUtils.getNearestNode(network, toCoord);
 
-        TravelDisutility disutility = disutilityFactory.createTravelDisutility(travelTime);
-        LeastCostPathCalculator router = new DijkstraFactory().createPathCalculator(network, disutility, travelTime); //SpeedyALTFactory, DijkstraFactory
-        // it seems that using fromLink and toLink uses the nodes afterall, so we can directly use nodes here
+        // MATSim routes on nodes; nearest nodes represent access/egress connectors for the trip coordinates.
         LeastCostPathCalculator.Path path = router.calcLeastCostPath(fromNode, toNode, trip.departureTime, null, null);
 
         // Extract results

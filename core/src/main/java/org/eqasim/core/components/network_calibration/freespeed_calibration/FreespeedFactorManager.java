@@ -33,6 +33,17 @@ public class FreespeedFactorManager {
         return new HashMap<>(factors);
     }
 
+    public void loadFactors(Map<LinkGroupKey, Double> loadedFactors) {
+        factors.clear();
+        for (Map.Entry<LinkGroupKey, Double> entry : loadedFactors.entrySet()) {
+            factors.put(entry.getKey(), clip(entry.getValue()));
+        }
+    }
+
+    public boolean isCalibrating() {
+        return calibrate;
+    }
+
     public void updateFactors(Map<LinkGroupKey, GroupStats> groupStats) {
         if (!calibrate) {
             return;
