@@ -20,6 +20,8 @@ import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControllerConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup.PersonInitializedEventsSetting;
 import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -28,6 +30,7 @@ import org.matsim.core.router.RoutingModeMainModeIdentifier;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 
+import com.google.common.base.Preconditions;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
@@ -73,7 +76,10 @@ public class EqasimAnalysisModule extends AbstractModule {
 
 	@Provides
 	@Singleton
-	public ActivityListener provideActivityListener(PersonAnalysisFilter personFilter) {
+	public ActivityListener provideActivityListener(PersonAnalysisFilter personFilter, QSimConfigGroup qsimConfig) {
+		Preconditions.checkState(
+				qsimConfig.getPersonInitializedEventsSetting().equals(PersonInitializedEventsSetting.all),
+				"We now require to have qsim.personInitializedEvents to be set to 'all'.");
 		return new ActivityListener(personFilter);
 	}
 

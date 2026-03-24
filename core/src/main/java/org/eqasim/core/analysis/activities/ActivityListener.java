@@ -76,7 +76,8 @@ public class ActivityListener
 	public void handleEvent(ActivityEndEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
 			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
-				ActivityItem activity = Objects.requireNonNull(ongoing.remove(event.getPersonId()));
+				ActivityItem activity = Objects.requireNonNull(ongoing.remove(event.getPersonId()),
+						"Are you running activity analysis on an instance without qsim.personInitializedEvents = 'all'?");
 				activity.endTime = event.getTime();
 			}
 		}
