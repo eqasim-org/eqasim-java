@@ -15,6 +15,7 @@ import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonInitializedEventHandler;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.dvrp.vrpagent.VrpAgentLogic;
 import org.matsim.core.router.TripStructureUtils;
 
 import com.google.common.base.Verify;
@@ -74,6 +75,12 @@ public class ActivityListener
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
+		if (event.getActType().startsWith(VrpAgentLogic.BEFORE_SCHEDULE_ACTIVITY_TYPE)) {
+			// special case that can not be covered by the person filter (event comes too
+			// early)
+			return;
+		}
+
 		if (personFilter.analyzePerson(event.getPersonId())) {
 			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
 				ActivityItem activity = Objects.requireNonNull(ongoing.remove(event.getPersonId()),
