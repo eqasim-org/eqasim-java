@@ -18,6 +18,7 @@ import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPe
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedAdapter;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedFactorManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
+import org.eqasim.core.components.network_calibration.freespeed_calibration.TripsHandler;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
@@ -149,13 +150,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Singleton
     public FreespeedFactorManager provideFreespeedFactorManager() {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new FreespeedFactorManager(
-                config.getMinFreespeedFactor(),
-                config.getMaxFreespeedFactor(),
-                config.getBeta(),
-                config.isCalibrationEnabled(),
-                config.getMinTripsPerGroup()
-        );
+        return new FreespeedFactorManager(config);
     }
 
     @Provides
@@ -165,13 +160,24 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                                                     OutputDirectoryHierarchy outputHierarchy,
                                                     LinkCategorizer categorizer,
                                                     FreespeedFactorManager factorManager,
-                                                    @Named(TransportMode.car) TravelTime carTravelTime,
-                                                    Provider<LeastCostPathCalculatorFactory> routerFactoryProvider,
-                                                    PenaltiesAdapter penaltiesAdapter) {
+                                                    PenaltiesAdapter penaltiesAdapter,
+                                                    TripsHandler tripsHandler) {
+
+        return new FreespeedAdapter(network, config, outputHierarchy, categorizer, factorManager,
+                penaltiesAdapter, tripsHandler);
+    }
+
+    @Provides
+    @Singleton
+    public TripsHandler provideTripsHandler(Network network,
+                                            NetworkCalibrationConfigGroup config,
+                                            LinkCategorizer categorizer,
+                                            @Named(TransportMode.car) TravelTime carTravelTime,
+                                            Provider<LeastCostPathCalculatorFactory> routerFactoryProvider) {
         int threads = getConfig().global().getNumberOfThreads();
         RoadNetwork roadNetwork = new RoadNetwork(network);
-        return new FreespeedAdapter(roadNetwork, config, outputHierarchy, categorizer, factorManager, carTravelTime,
-                routerFactoryProvider, penaltiesAdapter, threads);
+        return new TripsHandler(roadNetwork, config, categorizer, carTravelTime,
+                routerFactoryProvider, threads);
     }
 
     static void validateConfiguration(NetworkCalibrationConfigGroup config) {
@@ -217,6 +223,18 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
         if (calibrate && hasFreespeedObjective && !config.hasObservedSpeedTripsFile()) {
             throw new IllegalArgumentException("Freespeed calibration requires observedSpeedTripsFile.");
+        }
+
+        if (hasFreespeedObjective) {
+            if (config.getMinFreespeedFactor() <= 0.0 || config.getMaxFreespeedFactor() <= 0.0
+                    || config.getMinFreespeedFactor() > config.getMaxFreespeedFactor()) {
+                throw new IllegalArgumentException("Invalid freespeed factor bounds: minFreespeedFactor must be > 0 and <= maxFreespeedFactor.");
+            }
+
+            if (config.getFreespeedWarmupIterations() < 0) {
+                throw new IllegalArgumentException("freespeedWarmupIterations must be >= 0.");
+            }
+
         }
 
         if (!calibrate && hasFreespeedObjective && !config.hasFreespeedFactorsFile()) {

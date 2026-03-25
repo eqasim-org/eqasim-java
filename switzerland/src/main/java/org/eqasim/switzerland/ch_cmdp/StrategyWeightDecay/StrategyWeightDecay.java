@@ -63,14 +63,16 @@ public class StrategyWeightDecay implements IterationStartsListener {
 
     private StWeights getStrategiesWeight(int iteration) {
         double factor = 1.0;
-        if (iteration >= 10 && iteration < 20) {
+        if (iteration >= 40 && iteration < 55) {
             factor = 4.0 / 5.0;
-        } else if (iteration >= 20 && iteration < 40) {
+        } else if (iteration >= 55 && iteration < 70) {
             factor = 3.0 / 5.0;
-        } else if (iteration >= 40 && iteration < 60) {
+        } else if (iteration >= 70 && iteration < 80) {
             factor = 2.5 / 5.0;
-        } else if (iteration >= 60) {
+        } else if (iteration >= 80 && iteration < 90) {
             factor = 1.5 / 5.0;
+        } else if (iteration >= 90) {
+            factor = 1.0 / 5.0;
         }
         return new StWeights(initialWeights.dmcWeight * factor,
                 initialWeights.reRouteWeight * factor); // KeepLastSelected unchanged or adjust as needed

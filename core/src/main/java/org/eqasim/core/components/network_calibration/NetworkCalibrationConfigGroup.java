@@ -34,6 +34,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String MIN_FREESPEED_FACTOR = "minFreespeedFactor";
     static private final String MAX_FREESPEED_FACTOR = "maxFreespeedFactor";
     static private final String MIN_TRIPS_PER_GROUP = "minTripsPerGroup";
+    static private final String FREESPEED_WARMUP_ITERATIONS = "freespeedWarmupIterations";
 
     private boolean activate = false;
     private boolean calibrate = true;
@@ -61,6 +62,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double minFreespeedFactor = 0.7;
     private double maxFreespeedFactor = 1.3;
     private int minTripsPerGroup = 50;
+    private int freespeedWarmupIterations = 20;
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -95,6 +97,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(MIN_FREESPEED_FACTOR, "Lower bound applied to freespeed factors during freespeed calibration (default: 0.7)");
         map.put(MAX_FREESPEED_FACTOR, "Upper bound applied to freespeed factors during freespeed calibration (default: 1.3)");
         map.put(MIN_TRIPS_PER_GROUP, "Minimum number of routed observed trips required to update a freespeed group (default: 50)");
+        map.put(FREESPEED_WARMUP_ITERATIONS, "Initial iterations where freespeed factors are not updated to let route assignment/network stabilize (default: 20)");
         return map;
     }
 
@@ -366,6 +369,17 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(MIN_TRIPS_PER_GROUP)
     public void setMinTripsPerGroup(int inputMinTripsPerGroup) {
         minTripsPerGroup = inputMinTripsPerGroup;
+    }
+
+
+    @StringGetter(FREESPEED_WARMUP_ITERATIONS)
+    public int getFreespeedWarmupIterations() {
+        return freespeedWarmupIterations;
+    }
+
+    @StringSetter(FREESPEED_WARMUP_ITERATIONS)
+    public void setFreespeedWarmupIterations(int inputFreespeedWarmupIterations) {
+        freespeedWarmupIterations = inputFreespeedWarmupIterations;
     }
 
     public static NetworkCalibrationConfigGroup getOrCreate(Config config) {
