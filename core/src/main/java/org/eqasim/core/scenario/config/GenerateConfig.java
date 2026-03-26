@@ -16,6 +16,7 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.ControllerConfigGroup.RoutingAlgorithmType;
+import org.matsim.core.config.groups.QSimConfigGroup.PersonInitializedEventsSetting;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.RoutingConfigGroup.AccessEgressType;
@@ -77,6 +78,7 @@ public class GenerateConfig {
 		config.qsim().setNumberOfThreads(Math.min(12, threads));
 		config.qsim().setFlowCapFactor(sampleSize);
 		config.qsim().setStorageCapFactor(sampleSize);
+		config.qsim().setPersonInitializedEventsSetting(PersonInitializedEventsSetting.all);
 
 		// Eqasim settings
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);

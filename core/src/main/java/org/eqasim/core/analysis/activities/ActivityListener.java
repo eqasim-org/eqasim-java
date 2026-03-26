@@ -10,14 +10,18 @@ import org.eqasim.core.analysis.PersonAnalysisFilter;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.ActivityStartEvent;
+import org.matsim.api.core.v01.events.PersonInitializedEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonInitializedEventHandler;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.dvrp.vrpagent.VrpAgentLogic;
 import org.matsim.core.router.TripStructureUtils;
 
 import com.google.common.base.Verify;
 
-public class ActivityListener implements ActivityStartEventHandler, ActivityEndEventHandler {
+public class ActivityListener
+		implements PersonInitializedEventHandler, ActivityStartEventHandler, ActivityEndEventHandler {
 	final private Collection<ActivityItem> activities = new LinkedList<>();
 	final private Map<Id<Person>, ActivityItem> ongoing = new HashMap<>();
 	final private Map<Id<Person>, Integer> activityIndex = new HashMap<>();
@@ -40,47 +44,48 @@ public class ActivityListener implements ActivityStartEventHandler, ActivityEndE
 	}
 
 	@Override
+	public void handleEvent(PersonInitializedEvent event) {
+		if (personFilter.analyzePerson(event.getPersonId())) {
+			ActivityItem activity = new ActivityItem(event.getPersonId(), 0, event.getActivityType(),
+					Double.NEGATIVE_INFINITY,
+					Double.POSITIVE_INFINITY, event.getCoord().getX(), event.getCoord().getY(), event.getFacilityId(),
+					event.getLinkId());
+
+			activities.add(activity);
+			ongoing.put(event.getPersonId(), activity);
+		}
+	}
+
+	@Override
 	public void handleEvent(ActivityStartEvent event) {
 		if (personFilter.analyzePerson(event.getPersonId())) {
 			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
-				int personActivityIndex = Objects.requireNonNull(activityIndex.get(event.getPersonId())) + 1;
-				activityIndex.put(event.getPersonId(), personActivityIndex);
+				int personActivityIndex = activityIndex.compute(event.getPersonId(),
+						(id, val) -> val == null ? 1 : val + 1);
 
-				// this is not the first one
 				ActivityItem activity = new ActivityItem(event.getPersonId(), personActivityIndex, event.getActType(),
 						event.getTime(), Double.POSITIVE_INFINITY, event.getCoord().getX(), event.getCoord().getY(),
 						event.getFacilityId(), event.getLinkId());
 
 				activities.add(activity);
-				ongoing.put(event.getPersonId(), activity);
+				Verify.verify(ongoing.put(event.getPersonId(), activity) == null);
 			}
 		}
 	}
 
 	@Override
 	public void handleEvent(ActivityEndEvent event) {
+		if (event.getActType().startsWith(VrpAgentLogic.BEFORE_SCHEDULE_ACTIVITY_TYPE)) {
+			// special case that can not be covered by the person filter (event comes too
+			// early)
+			return;
+		}
+
 		if (personFilter.analyzePerson(event.getPersonId())) {
 			if (!TripStructureUtils.isStageActivityType(event.getActType())) {
-				ActivityItem activity = ongoing.remove(event.getPersonId());
-
-				if (activity == null) {
-					if (event.getCoord() == null) {
-						// can happen for BeforeVrpSchedule activities of DRT vehicles
-						return;
-					}
-
-					// this is the first one
-					activity = new ActivityItem(event.getPersonId(), 0, event.getActType(), Double.NEGATIVE_INFINITY,
-							event.getTime(), event.getCoord().getX(), event.getCoord().getY(), event.getFacilityId(),
-							event.getLinkId());
-
-					Verify.verify(activityIndex.put(event.getPersonId(), 0) == null);
-
-					activities.add(activity);
-					ongoing.put(event.getPersonId(), activity);
-				} else {
-					activity.endTime = event.getTime();
-				}
+				ActivityItem activity = Objects.requireNonNull(ongoing.remove(event.getPersonId()),
+						"Are you running activity analysis on an instance without qsim.personInitializedEvents = 'all'?");
+				activity.endTime = event.getTime();
 			}
 		}
 	}
