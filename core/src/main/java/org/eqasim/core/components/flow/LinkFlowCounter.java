@@ -36,8 +36,8 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
     private final int writeFlowInterval;
     private final int numberOfBins;
     private final boolean isActivated;
-    private final IdMap<Link, double[]> counts = new IdMap<>(Link.class);
-    private final IdMap<Link, Double> dailyCounts = new IdMap<>(Link.class);
+    private final IdMap<Link, float[]> counts = new IdMap<>(Link.class);
+    private final IdMap<Link, Float> dailyCounts = new IdMap<>(Link.class);
     private final static Logger logger = LogManager.getLogger(LinkFlowCounter.class);
     private final String FLOW_FILE = "traffic_flow.csv";
 
@@ -61,8 +61,8 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
         dailyCounts.clear();
         // TODO: do not consider non car links
         for (Id<Link> linkId : network.getLinks().keySet()) {
-            counts.put(linkId, new double[numberOfBins]);
-            dailyCounts.put(linkId, 0.0);
+            counts.put(linkId, new float[numberOfBins]);
+            dailyCounts.put(linkId, 0.0F);
         }
     }
 
@@ -75,8 +75,8 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
     public void processEnterLink(double time, Id<Link> linkId, double pcu) {
         if (isActivated & pcu>1e-6 & flowBinManager.timeInBounds(time)) {
             int idx = flowBinManager.getBinIndex(time);
-            double[] linkCounts = counts.get(linkId);
-            linkCounts[idx] += pcu;
+            float[] linkCounts = counts.get(linkId);
+            linkCounts[idx] += (float) pcu;
             dailyCounts.put(linkId, dailyCounts.get(linkId) + FlowUtils.getCountValue(pcu, sampleSize)); // to consider trucks as 1 count, but consider sample size for buses
         }
     }
@@ -85,20 +85,20 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
         return counts.size();
     }
 
-    public IdMap<Link, double[]> getCountsArray() {
+    public IdMap<Link, float[]> getCountsArray() {
         return counts;
     }
 
-    public double[] getLinkCountsArray(Id<Link> linkId) {
+    public float[] getLinkCountsArray(Id<Link> linkId) {
         return counts.get(linkId);
     }
 
-    public double getDailyCounts(Id<Link> linkId) {
+    public float getDailyCounts(Id<Link> linkId) {
         return dailyCounts.get(linkId);
     }
 
-    public double getLinkCounts(Id<Link> linkId, double time) {
-        double[] linkCounts = counts.get(linkId);
+    public float getLinkCounts(Id<Link> linkId, double time) {
+        float[] linkCounts = getLinkCountsArray(linkId);
         int binIdx = flowBinManager.getBinIndex(time);
         return linkCounts[binIdx];
     }
@@ -106,8 +106,8 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
     @Override
     public void reset(int iteration) {
         logger.info("Resetting traffic counts for iteration {}", iteration);
-        counts.values().forEach(countsArray -> Arrays.fill(countsArray, 0.0));
-        dailyCounts.replaceAll((linkId, count) -> 0.0);
+        counts.values().forEach(countsArray -> Arrays.fill(countsArray, 0.0F));
+        dailyCounts.replaceAll((linkId, count) -> 0.0F);
     }
 
     @Override
@@ -146,11 +146,11 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
             writer.write("linkId;dailyCount\n");
 
             // Write each link's daily count as a row
-            for (Map.Entry<Id<Link>, Double> entry : dailyCounts.entrySet()) {
+            for (Map.Entry<Id<Link>, Float> entry : dailyCounts.entrySet()) {
                 Id<Link> linkId = entry.getKey();
-                int dailyCount = (int) Math.round(entry.getValue());
+                double dailyCount = Math.round(entry.getValue()*100.0)/100.0;
 
-                String row = String.format("%s;%d\n", linkId.toString(), dailyCount);
+                String row = String.format("%s;%f\n", linkId.toString(), dailyCount);
                 writer.write(row);
             }
         }

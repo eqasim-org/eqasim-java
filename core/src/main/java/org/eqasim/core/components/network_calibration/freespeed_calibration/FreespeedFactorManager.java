@@ -10,12 +10,13 @@ import java.util.*;
 public class FreespeedFactorManager {
     private static final Logger logger = LogManager.getLogger(FreespeedFactorManager.class);
     private static final int HISTORY_SIZE = 5;
-    private static final double MIN_EFFECTIVE_BETA = 0.2;
+    private static final double MIN_EFFECTIVE_BETA = 0.4;
     private static final double MAX_EFFECTIVE_BETA = 0.8;
     private static final double MAX_FACTOR_STEP = 0.08;
     private static final double MIN_IMPROVEMENT_RATIO = 0.015;
     private static final int NO_IMPROVEMENT_PATIENCE = 3;
-    private static final int NUM_FROZEN_ITERATIONS = 3;
+    private static final int NUM_FROZEN_ITERATIONS = 4;
+    private static final int KEEP_FROZEN_FROM_ITERATION = 90;
 
     private int NUM_UPDATES = 0;
 
@@ -53,101 +54,168 @@ public class FreespeedFactorManager {
         }
     }
     
+    /**
+     * Updates each group with the same decision order as before:
+     * <ol>
+     *     <li>skip if data is insufficient,</li>
+     *     <li>skip if the group is currently frozen,</li>
+     *     <li>skip if the fit is already good enough,</li>
+     *     <li>freeze and optionally roll back when the error stops improving,</li>
+     *     <li>otherwise apply the bounded factor update.</li>
+     * </ol>
+     */
     public void updateFactors(Map<LinkGroupKey, GroupStats> groupStats, int iteration) {
         if (!calibrate) {
             return;
         }
-        int changed = 0;
-        int updated = 0;
-        int skipped = 0;
-        int frozen = 0;
+
         NUM_UPDATES++;
+        UpdateSummary summary = new UpdateSummary(iteration);
 
         for (Map.Entry<LinkGroupKey, GroupStats> entry : groupStats.entrySet()) {
-            LinkGroupKey key = entry.getKey();
-            GroupStats stats = entry.getValue();
-            double currentFactor = factors.getOrDefault(key, 1.0);
-            GroupDiagnostics diag = diagnostics.computeIfAbsent(key, k -> new GroupDiagnostics(Decision.FIRST, currentFactor, Double.NaN));
-            double currentError = Math.abs(stats.getAverageErrors());
-
-            // If there isn't many trips, skip
-            if (stats.tripCount < minTripsPerGroup || stats.observedTime <= 0.0 || stats.simulatedTime <= 0.0 || !Double.isFinite(currentError)) {
-                diag.add(Decision.SKIPPED_INSUFFICIENT_TRIPS, currentFactor, Double.NaN);
-                skipped++;
-                continue;
-            }
-
-            // If it is frozen, do not update
-            if (diag.isFrozen()) {
-                diag.frozen++;
-                diag.noImprovementStreak = 0;
-                diag.lastlyFrozen = true;
-                diag.add(Decision.SKIPPED_FROZEN, currentFactor, currentError);
-                skipped++;
-                frozen++;
-                continue;
-            }
-
-            // If we have almost 50% overestimation and 50% underestimation, do not update.
-            if (!stats.shouldUpdate()) {
-                diag.noImprovementStreak = 0;
-                skipped++;
-                diag.add(Decision.SKIPPED_GOOD_FIT, currentFactor, currentError);
-                continue;
-            }
-
-            // If no improvement, skipp it, if more than NO_IMPROVEMENT_PATIENCE, roll back to the last factor with an improvement
-            // and keep it frozen for a few iterations, if lastly frozen, keep going (to try new values after some frozen iterations, might be interesting)
-            Double previousError = diag.lastErrors.getFromLast(diag.noImprovementStreak); // compare against the latest improving point
-            if (previousError == null) previousError = diag.lastErrors.getFromLast(0);
-
-            if (previousError != null && Double.isFinite(previousError) && !isImproved(previousError, currentError) && !diag.lastlyFrozen) {
-                diag.noImprovementStreak++;
-                if (diag.noImprovementStreak >= NO_IMPROVEMENT_PATIENCE) {
-                    diag.frozen++;
-                    frozen++;
-                    Double rollbackFactor = diag.lastFactors.getFromLast(diag.noImprovementStreak);
-                    if (rollbackFactor == null || !Double.isFinite(rollbackFactor)) {
-                        rollbackFactor = currentFactor;
-                    }
-
-                    double lastFactorWithImprovement = clipFactor(rollbackFactor);
-                    factors.put(key, lastFactorWithImprovement);
-                    diag.add(Decision.SKIPPED_NO_MORE_IMPROVEMENT, lastFactorWithImprovement, currentError);
-                } else{
-                    diag.add(Decision.SKIPPED_NO_MORE_IMPROVEMENT, currentFactor, currentError);
-                }
-
-                skipped++;
-                continue;
-            }
-
-            // This is the last case, in this case, we do update the factors and reset the no improvement streak
-            diag.noImprovementStreak = 0;
-            diag.lastlyFrozen = false;
-
-            double candidateFactor = clipFactor(stats.getAverageFactor() * currentFactor); // we multiply it here because the factor over the already existing one (multiplicative factor)
-            if (!Double.isFinite(candidateFactor)) {
-                skipped++;
-                diag.add(Decision.SKIPPED_INSUFFICIENT_TRIPS, currentFactor, currentError);
-                continue;
-            }
-
-            double effectiveBeta = clipValue(beta * 2.0 / NUM_UPDATES,  MIN_EFFECTIVE_BETA, MAX_EFFECTIVE_BETA);
-            double rawStep = (candidateFactor - currentFactor) * effectiveBeta;
-            double boundedStep = clipValue(rawStep, -MAX_FACTOR_STEP, MAX_FACTOR_STEP);
-            double newFactor = clipFactor(currentFactor + boundedStep);
-
-            factors.put(key, newFactor);
-            diag.add(Decision.UPDATED, newFactor, currentError);
-            updated++;
-            if (!almostEqual(newFactor, currentFactor)) {
-                changed++;
-            }
+            processGroupUpdate(entry.getKey(), entry.getValue(), summary);
         }
 
+        logUpdateSummary(groupStats.size(), summary);
+    }
+
+    private void processGroupUpdate(LinkGroupKey key, GroupStats stats, UpdateSummary summary) {
+        GroupUpdateContext context = createGroupUpdateContext(key, stats);
+
+        if (hasInsufficientData(context)) {
+            skipInsufficientData(context, summary);
+            return;
+        }
+
+        if (context.diagnostics.isFrozen(summary.iteration)) {
+            skipFrozenGroup(context, summary);
+            return;
+        }
+
+        if (!context.stats.shouldUpdate()) {
+            skipGoodFit(context, summary);
+            return;
+        }
+
+        if (shouldSkipForNoImprovement(context)) {
+            skipNoImprovement(context, summary);
+            return;
+        }
+
+        applyFactorUpdate(context, summary);
+    }
+
+    private GroupUpdateContext createGroupUpdateContext(LinkGroupKey key, GroupStats stats) {
+        double currentFactor = this.factors.getOrDefault(key, 1.0);
+        GroupDiagnostics diagnostics = this.diagnostics.computeIfAbsent(key,
+                ignored -> new GroupDiagnostics(Decision.FIRST, currentFactor, Double.NaN));
+        double currentError = Math.abs(stats.getAverageErrors());
+
+        return new GroupUpdateContext(key, stats, diagnostics, currentFactor, currentError);
+    }
+
+    private boolean hasInsufficientData(GroupUpdateContext context) {
+        return context.stats.tripCount < minTripsPerGroup
+                || context.stats.observedTime <= 0.0
+                || context.stats.simulatedTime <= 0.0
+                || !Double.isFinite(context.currentError);
+    }
+
+    private void skipInsufficientData(GroupUpdateContext context, UpdateSummary summary) {
+        context.diagnostics.add(Decision.SKIPPED_INSUFFICIENT_TRIPS, context.currentFactor, Double.NaN);
+        summary.skipped++;
+    }
+
+    private void skipFrozenGroup(GroupUpdateContext context, UpdateSummary summary) {
+        context.diagnostics.frozen++;
+        context.diagnostics.noImprovementStreak = 0;
+        context.diagnostics.lastlyFrozen = true;
+        context.diagnostics.add(Decision.SKIPPED_FROZEN, context.currentFactor, context.currentError);
+        summary.skipped++;
+        summary.frozen++;
+    }
+
+    private void skipGoodFit(GroupUpdateContext context, UpdateSummary summary) {
+        context.diagnostics.noImprovementStreak = 0;
+        context.diagnostics.add(Decision.SKIPPED_GOOD_FIT, context.currentFactor, context.currentError);
+        summary.skipped++;
+    }
+
+    private boolean shouldSkipForNoImprovement(GroupUpdateContext context) {
+        Double referenceError = getReferenceError(context.diagnostics);
+        return referenceError != null
+                && Double.isFinite(referenceError)
+                && !isImproved(referenceError, context.currentError)
+                && !context.diagnostics.lastlyFrozen;
+    }
+
+    private Double getReferenceError(GroupDiagnostics diagnostics) {
+        Double previousError = diagnostics.lastErrors.getFromLast(diagnostics.noImprovementStreak);
+        return previousError != null ? previousError : diagnostics.lastErrors.getFromLast(0);
+    }
+
+    private void skipNoImprovement(GroupUpdateContext context, UpdateSummary summary) {
+        context.diagnostics.noImprovementStreak++;
+
+        if (context.diagnostics.noImprovementStreak >= NO_IMPROVEMENT_PATIENCE) {
+            context.diagnostics.frozen++;
+            summary.frozen++;
+
+            double rollbackFactor = getRollbackFactor(context.diagnostics, context.currentFactor);
+            factors.put(context.key, rollbackFactor);
+            context.diagnostics.add(Decision.SKIPPED_NO_MORE_IMPROVEMENT, rollbackFactor, context.currentError);
+        } else {
+            context.diagnostics.add(Decision.SKIPPED_NO_MORE_IMPROVEMENT, context.currentFactor, context.currentError);
+        }
+
+        summary.skipped++;
+    }
+
+    private double getRollbackFactor(GroupDiagnostics diagnostics, double currentFactor) {
+        Double rollbackFactor = diagnostics.lastFactors.getFromLast(diagnostics.noImprovementStreak);
+        if (rollbackFactor == null || !Double.isFinite(rollbackFactor)) {
+            return currentFactor;
+        }
+
+        return clipFactor(rollbackFactor);
+    }
+
+    private void applyFactorUpdate(GroupUpdateContext context, UpdateSummary summary) {
+        context.diagnostics.noImprovementStreak = 0;
+        context.diagnostics.lastlyFrozen = false;
+
+        double candidateFactor = computeCandidateFactor(context);
+        if (!Double.isFinite(candidateFactor)) {
+            context.diagnostics.add(Decision.SKIPPED_INSUFFICIENT_TRIPS, context.currentFactor, context.currentError);
+            summary.skipped++;
+            return;
+        }
+
+        double newFactor = computeUpdatedFactor(context.currentFactor, candidateFactor);
+        factors.put(context.key, newFactor);
+        context.diagnostics.add(Decision.UPDATED, newFactor, context.currentError);
+        summary.updated++;
+
+        if (!almostEqual(newFactor, context.currentFactor)) {
+            summary.changed++;
+        }
+    }
+
+    private double computeCandidateFactor(GroupUpdateContext context) {
+        return clipFactor(context.stats.getAverageFactor() * context.currentFactor);
+    }
+
+    private double computeUpdatedFactor(double currentFactor, double candidateFactor) {
+        double effectiveBeta = NUM_UPDATES>2 ? clipValue(beta * 2.0 / (NUM_UPDATES-2.0), MIN_EFFECTIVE_BETA, MAX_EFFECTIVE_BETA):1.0;
+        double maximumStep = NUM_UPDATES>2 ? MAX_FACTOR_STEP: 1.0;
+        double rawStep = (candidateFactor - currentFactor) * effectiveBeta;
+        double boundedStep = clipValue(rawStep, -maximumStep, maximumStep);
+        return clipFactor(currentFactor + boundedStep);
+    }
+
+    private void logUpdateSummary(int groupsWithStats, UpdateSummary summary) {
         logger.info("Freespeed update: groupsWithStats={}, totalGroupsWithFactors={}, updated={}, skipped={}, changed={}, frozen={}, iteration={}",
-                groupStats.size(), factors.size(), updated, skipped, changed, frozen, iteration);
+                groupsWithStats, factors.size(), summary.updated, summary.skipped, summary.changed, summary.frozen, summary.iteration);
     }
 
     private static boolean isImproved(double previousError, double currentError) {
@@ -184,6 +252,32 @@ public class FreespeedFactorManager {
         UPDATED,
     }
 
+    private static final class GroupUpdateContext {
+        private final LinkGroupKey key;
+        private final GroupStats stats;
+        private final GroupDiagnostics diagnostics;
+        private final double currentFactor;
+        private final double currentError;
+
+        private GroupUpdateContext(LinkGroupKey key, GroupStats stats, GroupDiagnostics diagnostics,
+                                   double currentFactor, double currentError) {
+            this.key = key;
+            this.stats = stats;
+            this.diagnostics = diagnostics;
+            this.currentFactor = currentFactor;
+            this.currentError = currentError;
+        }
+    }
+
+    private static final class UpdateSummary {
+        private int changed;
+        private int updated;
+        private int skipped;
+        private int frozen;
+        private final int iteration;
+        public UpdateSummary(int iteration) {this.iteration = iteration;}
+    }
+
     public static class GroupDiagnostics {
         public final Q<Decision> decisions = new Q<>(HISTORY_SIZE);
         public final Q<Double> lastFactors = new Q<>(HISTORY_SIZE);
@@ -191,6 +285,7 @@ public class FreespeedFactorManager {
         public int noImprovementStreak;
         public int frozen;
         public boolean lastlyFrozen = false;
+        public boolean keepFrozen = false;
 
         public GroupDiagnostics(Decision decision, double factor, double error) {
             this.decisions.add(decision);
@@ -206,8 +301,13 @@ public class FreespeedFactorManager {
             this.lastErrors.add(error);
         }
 
-        public boolean isFrozen() {
-            return (frozen > 0) && (frozen%NUM_FROZEN_ITERATIONS)!=0;
+        public boolean isFrozen(int iteration) {
+            // after KEEP_FROZEN_FROM_ITERATION, if it is frozenonce, it will stay frozen up to the end of the simulation
+            boolean shouldBeFrozen = (frozen > 0) && (frozen%NUM_FROZEN_ITERATIONS)!=0;
+            if (iteration>=KEEP_FROZEN_FROM_ITERATION && shouldBeFrozen) {
+                keepFrozen = true;
+            }
+            return keepFrozen || shouldBeFrozen;
         }
 
     }

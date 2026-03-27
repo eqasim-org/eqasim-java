@@ -16,10 +16,10 @@ public class UnsignalizedIntersectionDelay {
         logger.info("Unsignalized intersection delay initialized with Shahpar formula.");
     }
 
-    public double getDelay(Link link, double time){
+    public float getDelay(Link link, double time){
         // 1. Check if the intersection node has a degree assigned, and this degree is higher then 2 (otherwise it is a simple connection)
         if (!intersectionDelayFormula.considerLink(link)) {
-            return 0.0;
+            return 0.0F;
         }
         // 3. return the delay using the formula
         return intersectionDelayFormula.getDelay(link, time);

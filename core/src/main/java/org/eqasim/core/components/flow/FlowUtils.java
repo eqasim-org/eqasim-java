@@ -53,14 +53,14 @@ public class FlowUtils {
         return vehicleId.toString().contains("bus");
     }
 
-    public static double getCountValue(double pcu, double sampleSize) {
-        double epsilon = 1e-6;
+    public static float getCountValue(double pcu, double sampleSize) {
+        double epsilon = 1e-3;
         if (pcu < epsilon) {
-            return 0.0; // do not count bikes
+            return 0.0F; // do not count bikes
         } else if (pcu < 1.0-epsilon) {
-            return sampleSize; // count buses as 1 count, but consider sample size for buses (e.g., if sample size is 0.1, then each bus counts as 10)
+            return (float) sampleSize; // count buses as 1 count, but consider sample size for buses (e.g., if sample size is 0.1, then each bus counts as 10)
         } else {
-            return 1.0; // count cars and trucks and LCV as 1 count
+            return 1.0F; // count cars and trucks and LCV as 1 count
 
         }
     }

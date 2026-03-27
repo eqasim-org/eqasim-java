@@ -25,7 +25,7 @@ public class WebsterDelay {
     private final Logger logger = LogManager.getLogger(WebsterDelay.class);
 
     static public String TL_ATTRIBUTE = TrafficLightDelay.TL_ATTRIBUTE;
-    private final IdMap<Link, double[]> trafficLightDelays = new IdMap<>(Link.class);
+    private final IdMap<Link, float[]> trafficLightDelays = new IdMap<>(Link.class);
     private final TimeBinManager timeBinManager;
     private final Network network;
     private final WebsterFormula webster;
@@ -51,23 +51,23 @@ public class WebsterDelay {
         for (Link link : network.getLinks().values()) {
             boolean hasTl = (boolean) link.getAttributes().getAttribute(TL_ATTRIBUTE);
             if (hasTl) {
-                trafficLightDelays.put(link.getId(), getZeros(timeBinManager.getNumberOfTlBins()));
+                trafficLightDelays.put(link.getId(), new float[timeBinManager.getNumberOfTlBins()]);
             }
         }
     }
 
-    public Double getDelay(Link link, double time) {
+    public float getDelay(Link link, double time) {
         int binIdx = timeBinManager.getTlBinIndex(time);
-        double[] linkDelay = trafficLightDelays.get(link.getId());
+        float[] linkDelay = trafficLightDelays.get(link.getId());
         if (linkDelay == null) {
-            return 0.0; // Default to 0 if no delay is set for this link (e.g., if it does not have a traffic light)
+            return TrafficLightDelay.INCORRECT_DELAY; // Default to 0 if no delay is set for this link (e.g., if it does not have a traffic light)
         }
         return linkDelay[binIdx];
     }
 
     public void clearDelays() {
         // Reset all trafficLightDelays to 0.0
-        trafficLightDelays.values().forEach(delayList -> Arrays.fill(delayList, 0.0));
+        trafficLightDelays.values().forEach(delayList -> Arrays.fill(delayList, 0.0F));
     }
 
     public void resetDelays() {
@@ -76,7 +76,8 @@ public class WebsterDelay {
         clearDelays();
         buildDelays();
         double averageDelay = trafficLightDelays.values().stream()
-                .flatMapToDouble(Arrays::stream)
+                .flatMapToDouble(arr -> java.util.stream.IntStream.range(0, arr.length)
+                        .mapToDouble(i -> arr[i]))
                 .average()
                 .orElse(0.0);
         logger.info("Average traffic light delay after reset: {}", averageDelay);
@@ -157,7 +158,7 @@ public class WebsterDelay {
         double correctedC = correctGreenTime(newC, node, numGroups);
 
         // Compute the delays for each link using Webster's formula
-        Map<Link, Double> delayMap = computeDelays(inLinks, flowMap, gMap, correctedC, intersectionCapacity);
+        Map<Link, Float> delayMap = computeDelays(inLinks, flowMap, gMap, correctedC, intersectionCapacity);
 
         // Apply the computed delays to the trafficLightDelays map
         applyDelays(delayMap, time);
@@ -264,9 +265,9 @@ public class WebsterDelay {
 
     }
 
-    private Map<Link, Double> computeDelays(List<Link> inLinks, Map<Link, Double> flowMap, Map<Link, Double> gMap, double cOpt,
+    private Map<Link, Float> computeDelays(List<Link> inLinks, Map<Link, Double> flowMap, Map<Link, Double> gMap, double cOpt,
                                             double intersectionCapacity) {
-        Map<Link, Double> delayMap = new HashMap<>();
+        Map<Link, Float> delayMap = new HashMap<>();
         double minFlow = webster.getMinimumFlowRate(); // Minimum flow to avoid division by zero (one vehicle per hour)
         double maxSat = webster.getMaximumSaturatedRatio(); // Maximum saturation to avoid division by zero in Webster's formula
 
@@ -276,7 +277,7 @@ public class WebsterDelay {
             double x = Math.min(flowMap.get(link) / cap, maxSat);
             double q = Math.max((flowMap.get(link) / 3600.0), minFlow); // in veh/s
             double delay = webster.delay(cOpt, g, x, q);
-            delayMap.put(link, delay);
+            delayMap.put(link, (float) delay);
             // just for debugging purposes
 //            if (timeBinManager.getTlBinIndex(time) == 3) {
 //                String row = link.getId().toString() + ";" + link.getToNode().getId().toString() +
@@ -298,20 +299,14 @@ public class WebsterDelay {
         return delayMap;
     }
 
-    private void applyDelays(Map<Link, Double> delayMap, double time) {
+    private void applyDelays(Map<Link, Float> delayMap, double time) {
         int index = timeBinManager.getTlBinIndex(time);
-        for (Map.Entry<Link, Double> entry : delayMap.entrySet()) {
+        for (Map.Entry<Link, Float> entry : delayMap.entrySet()) {
             Id<Link> linkId = entry.getKey().getId();
-            trafficLightDelays.computeIfAbsent(linkId, k -> getZeros(timeBinManager.getNumberOfTlBins()));
-            double[] delays = trafficLightDelays.get(linkId);
+            trafficLightDelays.computeIfAbsent(linkId, k -> new float[timeBinManager.getNumberOfTlBins()]);
+            float[] delays = trafficLightDelays.get(linkId);
             delays[index] = entry.getValue();
         }
-    }
-
-    private double[] getZeros(int size) {
-        double[] zeros = new double[size];
-        Arrays.fill(zeros, 0.0);
-        return zeros;
     }
 
     /**
@@ -334,9 +329,9 @@ public class WebsterDelay {
             writer.write(header.toString() + "\n");
 
             // Write each link's flows as a row
-            for (Map.Entry<Id<Link>, double[]> entry : trafficLightDelays.entrySet()) {
+            for (Map.Entry<Id<Link>, float[]> entry : trafficLightDelays.entrySet()) {
                 Id<Link> linkId = entry.getKey();
-                double[] binFlows = entry.getValue();
+                float[] binFlows = entry.getValue();
 
                 StringBuilder row = new StringBuilder(linkId.toString());
                 for (int bin = 0; bin < numberOfBins; bin++) {

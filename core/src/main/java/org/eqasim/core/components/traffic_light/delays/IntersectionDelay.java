@@ -62,7 +62,7 @@ public class IntersectionDelay implements CrossingPenalty {
         // and the unsignalized intersection delays if activated
 
         //---- 4.1 get first the traffic light delay
-        double tlValue = trafficLightDelays.getDelay(link, time);
+        float tlValue = trafficLightDelays.getDelay(link, time);
 
         //---- 4.2 In these cases, we return the crossing penalty of unsignalized intersections if activated or delegate
         if (returnUnsignalizedDelayInsteadOfTlDelay(tlValue)) {
@@ -79,9 +79,9 @@ public class IntersectionDelay implements CrossingPenalty {
 
     private boolean returnUnsignalizedDelayInsteadOfTlDelay(double tlValue) {
         // If the link has no traffic light, we return the unsignalized intersection delay
-        return (Math.abs(tlValue-TrafficLightDelay.NO_TL)<1e-6 ||
-                Math.abs(tlValue-TrafficLightDelay.OUT_OF_BOUNDS)<1e-6 ||
-                Math.abs(tlValue-TrafficLightDelay.INCORRECT_DELAY)<1e-6) ;
+        return (Math.abs(tlValue-TrafficLightDelay.NO_TL)<1e-3 ||
+                Math.abs(tlValue-TrafficLightDelay.OUT_OF_BOUNDS)<1e-3 ||
+                Math.abs(tlValue-TrafficLightDelay.INCORRECT_DELAY)<1e-3) ;
     }
 
     private boolean couldAddDelayBasedOnLastIntersection(Link link, Id<Vehicle> vehicleId) {

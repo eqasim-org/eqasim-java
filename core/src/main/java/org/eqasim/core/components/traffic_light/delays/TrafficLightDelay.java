@@ -20,9 +20,9 @@ public class TrafficLightDelay {
     private final WebsterDelay websterDelay;
 
     // flags
-    public static final double NO_TL = -1; // No traffic light
-    public static final double OUT_OF_BOUNDS = -2; // Time out of bounds
-    public static final double INCORRECT_DELAY = -3; // After the traffic light module ends
+    public static final float NO_TL = -1F; // No traffic light
+    public static final float OUT_OF_BOUNDS = -2F; // Time out of bounds
+    public static final float INCORRECT_DELAY = -3F; // After the traffic light module ends
 
     public TrafficLightDelay(Network network, TimeBinManager timeBinManager,
                              DelaysConfigGroup delaysConfigGroup,
@@ -33,15 +33,14 @@ public class TrafficLightDelay {
         logger.info("Traffic light delays initialized with Webster formula");
     }
 
-    public double getDelay(Link link, double time) {
+    public float getDelay(Link link, double time) {
         if (!hasTrafficLight(link)) {
             return NO_TL; // The link does not have a traffic light (or no trafficLightDelays set)
         }
         if (time < timeBinManager.getTlStartTime() || time > timeBinManager.getTlEndTime()){
             return OUT_OF_BOUNDS; // Time is out of bounds of the time bins (normal crossing penalty will be applied)
         }
-        Double delayValue = websterDelay.getDelay(link, time);
-        return delayValue != null ? delayValue : INCORRECT_DELAY; // Default to 0 if no delay is set
+        return websterDelay.getDelay(link, time);
     }
 
     public void setTlAttributeToAllLinks() {

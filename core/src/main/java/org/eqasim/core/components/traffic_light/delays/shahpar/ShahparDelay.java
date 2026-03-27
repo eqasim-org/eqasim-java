@@ -27,10 +27,10 @@ public class ShahparDelay {
     private double eta;  // exponent for the formula of the delay
     private final double maximumSaturation; // maximum saturation ratio for the intersection
 
-    private final IdMap<Node, Double> ffMap = new IdMap<>(Node.class);
-    private final IdMap<Link, Double> rowMap = new IdMap<>(Link.class);
-    private final IdMap<Node, Double> nodesDegrees = new IdMap<>(Node.class);
-    private final IdMap<Link, double[]> delays = new IdMap<>(Link.class);
+    private final IdMap<Node, Float> ffMap = new IdMap<>(Node.class);
+    private final IdMap<Link, Float> rowMap = new IdMap<>(Link.class);
+    private final IdMap<Node, Float> nodesDegrees = new IdMap<>(Node.class);
+    private final IdMap<Link, float[]> delays = new IdMap<>(Link.class);
     private boolean mapsAreInitialized;
 
     private final FlowDataSet flow;
@@ -72,9 +72,7 @@ public class ShahparDelay {
         // limit memory usage by removing the links with 0 delay from memory
         for (Link link : network.getLinks().values()) {
             if (considerLink(link)) {
-                    double[] delayArray = new double[timeBinManager.getNumberOfBins()];
-                    Arrays.fill(delayArray, 0.0);
-                    delays.put(link.getId(), delayArray);
+                    delays.put(link.getId(), new float[timeBinManager.getNumberOfBins()]);
                 }
             }
     }
@@ -92,32 +90,32 @@ public class ShahparDelay {
 
     public void clearDelays() {
         // Reset all delays to 0.0
-        for (double[] delayList : delays.values()) {
-            Arrays.fill(delayList, 0.0);
+        for (float[] delayList : delays.values()) {
+            Arrays.fill(delayList, 0.0F);
         }
     }
 
     public void buildDelays(){
         for (Link link : network.getLinks().values()) {
             if (considerLink(link)) {
-                double[] delayList = delays.get(link.getId());
+                float[] delayList = delays.get(link.getId());
                 if (delayList != null) {
                     double[] binCenters = timeBinManager.getBinsCenters();
                     for (int i = 0; i < timeBinManager.getNumberOfBins(); i++) {
                         double time = binCenters[i];
                         double delay = computeDelay(link, time);
-                        delayList[i] = delay;
+                        delayList[i] = (float) delay;
                     }
                 }
             }
         }
     }
 
-    public double getDelay(Link link, double time){
+    public float getDelay(Link link, double time){
         return delays.get(link.getId())[timeBinManager.getBinIndex(time)];
     }
 
-    public double getNodeDegree(Id<Node> nodeId) {
+    public float getNodeDegree(Id<Node> nodeId) {
         // Returns the degree of the node, or null if not assigned
         return nodesDegrees.get(nodeId);
     }
@@ -130,8 +128,8 @@ public class ShahparDelay {
     public double computeDelay(Link link, double time) {
         Node intersectionNode = link.getToNode();
         // 1. estimate the FF and ROW of the delay Shahpar formula
-        Double FF = ffMap.get(intersectionNode.getId());
-        Double ROW = rowMap.get(link.getId());
+        Float FF = ffMap.get(intersectionNode.getId());
+        Float ROW = rowMap.get(link.getId());
         if (FF == null || ROW == null || !Double.isFinite(FF) || !Double.isFinite(ROW) || FF <= 0.0 || ROW < 0.0) {
             logger.warn("FF or ROW not assigned for intersection node {} or link {}. Returning 0.0 delay.", intersectionNode.getId(), link.getId());
             return 0.0; // Return 0.0 if FF or ROW is not assigned
@@ -174,7 +172,7 @@ public class ShahparDelay {
         Set<Id<Node>> neighboringNodeIds = new HashSet<>();
         neighboringNodeIds.addAll(inLinksCar.values().stream().map(Link::getFromNode).map(Node::getId).collect(Collectors.toSet()));
         neighboringNodeIds.addAll(outLinksCar.values().stream().map(Link::getToNode).map(Node::getId).collect(Collectors.toSet()));
-        nodesDegrees.put(node.getId(), (double) neighboringNodeIds.size());
+        nodesDegrees.put(node.getId(), (float) neighboringNodeIds.size());
     }
 
     public void assignFfToNode(Node intersectionNode) {
@@ -188,12 +186,12 @@ public class ShahparDelay {
         // Step 2: Check consistencies
         // Check if there are enough car entries and exits to calculate FF
         if ((nEntries <= 1 && nExits <= 1) || nEntries == 0 || nExits == 0) {
-            ffMap.put(intersectionNode.getId(), 0.0);
+            ffMap.put(intersectionNode.getId(), 0.0F);
             return;
         }
         // Check if the intersection node has a degree assigned, and this degree is higher than 2 (otherwise it is a simple connection)
         if (nodesDegrees.get(intersectionNode.getId()) <= 2) {
-            ffMap.put(intersectionNode.getId(), 0.0);
+            ffMap.put(intersectionNode.getId(), 0.0F);
             return;
         }
 
@@ -237,7 +235,7 @@ public class ShahparDelay {
 
         // step 5: clip ffValue
         ffValue = Math.max(Math.min(ffValue, 10.0), 2.0);
-        ffMap.put(intersectionNode.getId(), ffValue);
+        ffMap.put(intersectionNode.getId(), (float) ffValue);
     }
 
     private String formatTurnPair(Id<Link> fromId, Id<Link> toId) {
@@ -254,7 +252,7 @@ public class ShahparDelay {
         double minCapacity = Collections.min(capacities);
         if (Math.abs(maxCapacity - minCapacity)<100) { // if all capacities are the same, assign 0.25 to all in-links
             for (Link link : inLinks) {
-                rowMap.put(link.getId(), 0.25);
+                rowMap.put(link.getId(), 0.25F);
             }
             return;
         }
@@ -262,7 +260,7 @@ public class ShahparDelay {
         for (Link link : inLinks) {
             double capacityRatio = (link.getCapacity() - minCapacity) / (maxCapacity - minCapacity);
             double linkRow = 0.5 * ( 1.0 - capacityRatio); // 0.0 on major street and 0.5 on minor street
-            rowMap.put(link.getId(), linkRow);
+            rowMap.put(link.getId(), (float) linkRow);
         }
     }
 
@@ -279,9 +277,9 @@ public class ShahparDelay {
             writer.write(header.toString() + "\n");
 
             // Write each link's flows as a row
-            for (Map.Entry<Id<Link>, double[]> entry : delays.entrySet()) {
+            for (Map.Entry<Id<Link>, float[]> entry : delays.entrySet()) {
                 Id<Link> linkId = entry.getKey();
-                double[] delayValue = entry.getValue();
+                float[] delayValue = entry.getValue();
 
                 StringBuilder row = new StringBuilder(linkId.toString());
                 for (int bin = 0; bin < numberOfBins; bin++) {
