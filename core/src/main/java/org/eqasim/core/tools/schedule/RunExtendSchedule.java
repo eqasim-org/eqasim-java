@@ -12,13 +12,36 @@ import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 public class RunExtendSchedule {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("schedule-path", "output-path", "period") //
+				.requireOptions("schedule-path", "output-path") //
+				.allowOptions("end-time", "hours", "days") //
 				.build();
+
+		boolean endTimeAvailable = cmd.hasOption("end-time");
+		boolean hoursAvailable = cmd.hasOption("hours");
+		boolean daysAvailable = cmd.hasOption("days");
+
+		if (!(endTimeAvailable ^ (hoursAvailable || daysAvailable))) {
+			throw new IllegalStateException(
+					"Either --end-time (in seconds), or --hours / --days (can be combined) need to be provided.");
+		}
+
+		double endTime = 0.0;
+		if (endTimeAvailable) {
+			endTime = Double.parseDouble(cmd.getOptionStrict("end-time"));
+		} else {
+			if (hoursAvailable) {
+				endTime += 3600.0 * Double.parseDouble(cmd.getOptionStrict("hours"));
+			}
+
+			if (daysAvailable) {
+				endTime += 24.0 * 3600.0 * Double.parseDouble(cmd.getOptionStrict("hours"));
+			}
+		}
 
 		Config config = ConfigUtils.createConfig();
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		new TransitScheduleReader(scenario).readFile(cmd.getOptionStrict("schedule-path"));
-		new ExtendSchedule(Double.parseDouble(cmd.getOptionStrict("period"))).process(scenario.getTransitSchedule());
+		new ExtendSchedule(endTime).process(scenario.getTransitSchedule());
 		new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(cmd.getOptionStrict("output-path"));
 	}
 }
