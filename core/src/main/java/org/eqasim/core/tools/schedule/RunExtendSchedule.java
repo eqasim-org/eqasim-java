@@ -8,11 +8,14 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.vehicles.MatsimVehicleReader;
+import org.matsim.vehicles.MatsimVehicleWriter;
 
 public class RunExtendSchedule {
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("schedule-path", "output-path") //
+				.requireOptions("input-schedule-path", "output-schedule-path", "input-vehicles-path",
+						"output-vehicles-path") //
 				.allowOptions("end-time", "hours", "days") //
 				.build();
 
@@ -40,8 +43,13 @@ public class RunExtendSchedule {
 
 		Config config = ConfigUtils.createConfig();
 		Scenario scenario = ScenarioUtils.createScenario(config);
-		new TransitScheduleReader(scenario).readFile(cmd.getOptionStrict("schedule-path"));
-		new ExtendSchedule(endTime).process(scenario.getTransitSchedule());
-		new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(cmd.getOptionStrict("output-path"));
+
+		new TransitScheduleReader(scenario).readFile(cmd.getOptionStrict("input-schedule-path"));
+		new MatsimVehicleReader(scenario.getTransitVehicles()).readFile(cmd.getOptionStrict("input-vehicles-path"));
+
+		new ExtendSchedule(endTime).process(scenario.getTransitSchedule(), scenario.getTransitVehicles());
+
+		new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(cmd.getOptionStrict("output-schedule-path"));
+		new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(cmd.getOptionStrict("output-vehicles-path"));
 	}
 }
