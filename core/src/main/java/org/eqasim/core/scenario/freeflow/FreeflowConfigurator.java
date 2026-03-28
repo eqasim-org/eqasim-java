@@ -120,8 +120,8 @@ public class FreeflowConfigurator {
             Id<Link> linkId = entry.getKey();
 
             double travelTime = entry.getValue().networkTravelTime;
-            travelTime *= container.factors.get(linkId);
-            travelTime += container.delays.get(linkId);
+            travelTime *= container.factors.getOrDefault(linkId, 1.0);
+            travelTime += container.delays.getOrDefault(linkId, 0.0);
 
             travelTimes.put(linkId, travelTime);
         }
