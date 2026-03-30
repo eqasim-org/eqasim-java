@@ -147,6 +147,8 @@ public class FreespeedFactorManager {
                 && Double.isFinite(referenceError)
                 && !isImproved(referenceError, context.currentError)
                 && !context.diagnostics.lastlyFrozen;
+        // if it was frozen in the last iteration and now unfrozen, there is no improvement in the error, but we must allow updates. Why ?
+        // because of the interaction of other calibrations (i.e. penalties calibration), the evolution of penalties can change travel times, thus we need a new factor's update
     }
 
     private Double getReferenceError(GroupDiagnostics diagnostics) {
@@ -223,8 +225,8 @@ public class FreespeedFactorManager {
             return true;
         }
 
-        double threshold = previousError * (1.0 - MIN_IMPROVEMENT_RATIO);
-        return currentError < threshold;
+        double threshold = Math.abs(previousError) * (1.0 - MIN_IMPROVEMENT_RATIO);
+        return Math.abs(currentError) < threshold;
     }
 
     public Map<LinkGroupKey, GroupDiagnostics> getDiagnosticsSnapshot() {
@@ -302,7 +304,7 @@ public class FreespeedFactorManager {
         }
 
         public boolean isFrozen(int iteration) {
-            // after KEEP_FROZEN_FROM_ITERATION, if it is frozenonce, it will stay frozen up to the end of the simulation
+            // after KEEP_FROZEN_FROM_ITERATION, if it is frozen once, it will stay frozen up to the end of the simulation
             boolean shouldBeFrozen = (frozen > 0) && (frozen%NUM_FROZEN_ITERATIONS)!=0;
             if (iteration>=KEEP_FROZEN_FROM_ITERATION && shouldBeFrozen) {
                 keepFrozen = true;
@@ -360,8 +362,8 @@ public class FreespeedFactorManager {
         private final FloatArrayList weights = new FloatArrayList(16_384);
         private final FloatArrayList errors = new FloatArrayList(16_384);
 
-        private static final double EPSILON = 0.03;
-        private static final double C = 0.05;
+        private static final double EPSILON = 0.02;
+        private static final double C = 0.07;
 
         public void addStat(double observedTravelTime, double simulatedTravelTime,
                             double weight, double length, double freespeed) {
