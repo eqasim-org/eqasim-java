@@ -6,6 +6,7 @@ import org.matsim.core.config.ReflectiveConfigGroup;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import java.io.File;
 
 public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static public final String GROUP_NAME = "eqasim:networkCalibration";
@@ -35,6 +36,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String MAX_FREESPEED_FACTOR = "maxFreespeedFactor";
     static private final String MIN_TRIPS_PER_GROUP = "minTripsPerGroup";
     static private final String FREESPEED_WARMUP_ITERATIONS = "freespeedWarmupIterations";
+    static private final String PENALTIES_SPECIAL_REGION_PATH = "penaltiesSpecialRegionPath";
 
     private boolean activate = false;
     private boolean calibrate = true;
@@ -47,14 +49,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double minSpeed = 2.0; // km/h
     private double maxCapacity = 1800.0; // veh/h/lane (for the highest category, used to scale all capacities)
     private double minCapacity = 700.0; // veh/h/lane (for the lowest category)
-    private String categoriesToCalibrate = "1,2,3,4,5,11,12,13,14,15";
+    private String categoriesToCalibrate = "1,2,3,4,5,11,12,13,14,15,21,22,23,24,25";
     private double rampFactor = 1.0;
     private double trunkFactor = 1.0;
     private String objective = "";
     private double maxPenalty = 0.3;
     private double minPenalty = -0.1;
     private String penaltiesFile = "";
-    private boolean separateUrbanRoads = false;
+    private String penaltiesSpecialRegionPath = "";
+    private boolean separateUrbanRoads = true;
 
     private String observedSpeedTripsFile = "";
     private String freespeedFactorsFile = "";
@@ -98,6 +101,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(MAX_FREESPEED_FACTOR, "Upper bound applied to freespeed factors during freespeed calibration (default: 1.3)");
         map.put(MIN_TRIPS_PER_GROUP, "Minimum number of routed observed trips required to update a freespeed group (default: 50)");
         map.put(FREESPEED_WARMUP_ITERATIONS, "Initial iterations where freespeed factors are not updated to let route assignment/network stabilize (default: 20)");
+        map.put(PENALTIES_SPECIAL_REGION_PATH, "This is the path to a geojson file that contains polygones of regions that would be treated differently");
         return map;
     }
 
@@ -380,6 +384,20 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(FREESPEED_WARMUP_ITERATIONS)
     public void setFreespeedWarmupIterations(int inputFreespeedWarmupIterations) {
         freespeedWarmupIterations = inputFreespeedWarmupIterations;
+    }
+
+    @StringGetter(PENALTIES_SPECIAL_REGION_PATH)
+    public String getPenaltiesSpecialRegionPath() {
+        return penaltiesSpecialRegionPath;
+    }
+    @StringSetter(PENALTIES_SPECIAL_REGION_PATH)
+    public void setPenaltiesSpecialRegionPath(String inputPenaltiesSpecialRegion) {
+        assert inputPenaltiesSpecialRegion.endsWith("json") : "The penaltiesSpecialRegion should be either empty or a path to an existing json file";
+        penaltiesSpecialRegionPath = inputPenaltiesSpecialRegion;
+    }
+
+    public boolean hasPenaltiesSpecialRegion() {
+        return !penaltiesSpecialRegionPath.isEmpty() && penaltiesSpecialRegionPath.endsWith("json") && (new File(penaltiesSpecialRegionPath)).exists();
     }
 
     public static NetworkCalibrationConfigGroup getOrCreate(Config config) {

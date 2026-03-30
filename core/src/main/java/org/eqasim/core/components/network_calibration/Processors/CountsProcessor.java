@@ -25,37 +25,33 @@ import java.util.*;
 public class CountsProcessor {
     private static final Logger logger = LogManager.getLogger(CountsProcessor.class);
 
+    private final int MIN_OBSERVATIONS_RURAL_VS_URBAN = 15;
+    private final int MIN_OBSERVATIONS_SPECIAL_REST = 7;
+    private final int MIN_OBSERVATION_TO_CONSIDER = 5;
+
     private final String countsFile;
     private final String averageCountsPerCategoryFile;
     private final Network network;
-    private final NetworkCalibrationConfigGroup config;
     private final Map<Integer, Double> AverageCountsPerCategory =  new HashMap<>();
     private final Set<Id<Link>> allLinks =  new java.util.HashSet<>();
     private final IdMap<Link, Integer> roadCategories = new IdMap<>(Link.class);
     private final boolean hasCountsFile;
-    private final boolean hasAverageCountsPerCategoryFile;
-    private final OutputDirectoryHierarchy outputHierarchy;
     private final LinkCategorizer categorizer;
     private final Map<Integer, Integer> numCountsByCategory = new HashMap<>();
 
     public CountsProcessor(Network network, NetworkCalibrationConfigGroup config,
                            OutputDirectoryHierarchy outputHierarchy, LinkCategorizer categorizer) {
         this.hasCountsFile = config.hasCountsFile();
-        this.hasAverageCountsPerCategoryFile = config.hasAverageCountsPerCategoryFile();
-        // check that at least one of the files is provided
-        if (!hasCountsFile && !hasAverageCountsPerCategoryFile) {
+        this.averageCountsPerCategoryFile = config.getAverageCountsPerCategoryFile();
+        this.countsFile = config.getCountsFile();
+        this.network = network;
+        this.categorizer = categorizer;
+
+        if (!hasCountsFile && !config.hasAverageCountsPerCategoryFile()) {
             throw new IllegalArgumentException("Either counts file or average counts per category file must be provided.");
         }
-        // csv files that contain counts and average counts per category
-        this.countsFile = config.getCountsFile();
-        this.averageCountsPerCategoryFile = config.getAverageCountsPerCategoryFile();
-        // network and output
-        this.network = network;
-        this.outputHierarchy = outputHierarchy;
-        this.config = config;
 
         // Initialize categorizer with separate urban flag
-        this.categorizer = categorizer;
         try {
             build();
             saveAverageCounts();
@@ -66,10 +62,7 @@ public class CountsProcessor {
 
     private void build() throws IOException {
         // init road categories
-        for (Link link : network.getLinks().values()) {
-            int category = categorizer.getCategory(link);
-            roadCategories.put(link.getId(), category);
-        }
+        initRoadCategories();
 
         // read counts file and process
         if (hasCountsFile) {
@@ -78,28 +71,34 @@ public class CountsProcessor {
             readAverageCountsPerCategory();
         }
 
-
         // when distinction is made between urban and rural, and counts are provided, categories with less than 20 counts are merged (merge urban into rural)
+        // special regions have different limits
         boolean merged = false;
-        if (hasCountsFile && categorizer.isSeparateUrban()) {
+        if (hasCountsFile && (categorizer.isSeparateUrban() || categorizer.itHasSpecialRegions())) {
             for (Map.Entry<Integer, Integer> entry : numCountsByCategory.entrySet()) {
                 int category = entry.getKey();
                 int count = entry.getValue();
-                if (count < 20) {
+                boolean isInSpecialRegion = categorizer.isInSpecialRegion(category);
+
+                if (count < MIN_OBSERVATIONS_RURAL_VS_URBAN && !isInSpecialRegion) {
+                    // This first conditions works also for rural, if there isn't enough in rural, they will be merged with urban anyway
                     logger.warn("Merging category {} into rural due to insufficient number of roads: {}", category, count);
-                    int category1 = category % 10;
-                    int category2 = category1 + 10;
-                    categorizer.mergeCategories(category1, category2);
-                    for (Id<Link> linkId:roadCategories.keySet()) {
-                        if (roadCategories.get(linkId).equals(category2)) {
-                            roadCategories.put(linkId, category1);
-                        }
-                    }
+                    int cat = category % 10 + 10;
+                    categorizer.drop("urban", cat);
+                    merged = true;
+                }
+
+                if (count < MIN_OBSERVATIONS_SPECIAL_REST && isInSpecialRegion) {
+                    logger.warn("Merging category {} into other non-special regions due to insufficient number of roads: {}", category, count);
+                    int cat = category % 10 + 20;
+                    categorizer.drop("special", cat);
                     merged = true;
                 }
             }
+
             // re-compute average counts per category after merging
             if (merged){
+                initRoadCategories();
                 AverageCountsPerCategory.clear();
                 numCountsByCategory.clear();
                 allLinks.clear();
@@ -177,10 +176,13 @@ public class CountsProcessor {
     }
 
     public boolean contains(Id<Link> linkId) {
-        return hasCountsFile ? allLinks.contains(linkId): true; // if counts file is not provided, assume all links are contained
+        return !hasCountsFile || allLinks.contains(linkId); // if counts file is not provided, assume all links are contained
     }
 
     public Double getAverageCountForCategory(int category) {
+        if (numCountsByCategory.containsKey(category) && numCountsByCategory.get(category) < MIN_OBSERVATION_TO_CONSIDER) {
+            return Double.NaN;
+        }
         return AverageCountsPerCategory.getOrDefault(category, 0.0);
     }
 
@@ -222,6 +224,14 @@ public class CountsProcessor {
         @JsonProperty("averageCount")
         public double averageCount;
 
+    }
+
+    private void initRoadCategories(){
+        // init road categories
+        for (Link link : network.getLinks().values()) {
+            int category = categorizer.getCategory(link);
+            roadCategories.put(link.getId(), category);
+        }
     }
 
 }

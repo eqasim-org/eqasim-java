@@ -2,7 +2,9 @@ package org.eqasim.core.components.network_calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -52,39 +54,57 @@ public class LinkCategorizer {
 
     public static final int UNKNOWN_CATEGORY = 0;
 
+    // other
     private final boolean separateUrban;
+    private final boolean hasSpecialRegion;
+    private final Set<Id<Link>> linksInSpecialRegions = new HashSet<>();
 
+    private final Set<Integer> allCategoriesSpecial =  new HashSet<>(Set.of(21, 22, 23, 24, 25));
+    private final Set<Integer> allCategoriesUrban =  new HashSet<>(Set.of(11, 12, 13, 14, 15));
+    private final Set<Integer> allCategories = Set.of(1, 2, 3, 4, 5);
+    private final Set<Integer> combined = new HashSet<>();
+    private final Set<Integer> specialRegionsToDrop = new HashSet<>();
+    private final Set<Integer> urbanCategoriesToDrop = new HashSet<>();
     /**
      * Constructs a LinkCategorizer with the option to separate urban roads.
-     * @param separateUrban Whether to treat urban roads as separate categories.
+     * @param config Network Calibration Config group.
      */
-    public LinkCategorizer(boolean separateUrban) {
-        this.separateUrban = separateUrban;
+    public LinkCategorizer(Network network, NetworkCalibrationConfigGroup config) {
+        this.separateUrban = config.getSeparateUrbanRoads();
         logger.info("LinkCategorizer initialized with separateUrban: {}", separateUrban);
+
+        this.hasSpecialRegion = config.hasPenaltiesSpecialRegion();
+        if (hasSpecialRegion) {
+            SpecialRegionsReader specialRegionsReader = new SpecialRegionsReader(config.getPenaltiesSpecialRegionPath());
+            logger.info("\t SpecialRegionsReader initialized with file: {}", config.getPenaltiesSpecialRegionPath());
+            logger.info("\t SpecialRegionsReader initialized with {} regions", specialRegionsReader.getNumberOfRegions());
+            linksInSpecialRegions.addAll(
+                    specialRegionsReader.getLinksInSpecialRegions(network)
+            );
+            logger.info("\t The network contains {} link sin special regions out of {} total links", linksInSpecialRegions.size(), network.getLinks().size());
+        }
+
     }
 
     /**
      * Returns all possible categories based on the separateUrban flag.
      */
-    private final Set<Integer> allCategoriesUrban =  new HashSet<>(Set.of(11, 12, 13, 14, 15));
-    private final Set<Integer> allCategories = Set.of(1, 2, 3, 4, 5);
-    private final Set<Integer> combined = new HashSet<>();
     public List<Integer> getAllCategories() {
-        if (separateUrban) {
-            List<Integer> combined = new ArrayList<>(allCategories);
-            combined.addAll(allCategoriesUrban);
-            return combined;
-        } else {
-            return new ArrayList<>(allCategories);
-        }
+        List<Integer> combinedList = new ArrayList<>(allCategories);
+        if (separateUrban) combinedList.addAll(allCategoriesUrban);
+        if (hasSpecialRegion) combinedList.addAll(allCategoriesSpecial);
+        return combinedList;
     }
 
-    public void mergeCategories(int cat1, int cat2) {
-        logger.info("Merging categories cat1={} cat2={}", cat1, cat2);
-        combined.add(cat1);
-        combined.add(cat2);
-        int catToRemove = Math.max(cat1, cat2);
-        allCategoriesUrban.remove(catToRemove);
+    public void drop(String which, int cat){
+        logger.info("Dropping category {} from {}", cat, which);
+        if (which.equals("urban")){
+            urbanCategoriesToDrop.add(cat);
+        } else if (which.equals("special")){
+            specialRegionsToDrop.add(cat);
+        } else {
+            throw new IllegalArgumentException("Unknown category type to drop: " + which);
+        }
     }
 
     /**
@@ -134,12 +154,16 @@ public class LinkCategorizer {
 
     private int getCategoryFromOsmHighway(String osmHighway, Link link) {
         int baseCategory = getBaseCategoryFromOsmHighway(osmHighway, link);
+        if (baseCategory ==UNKNOWN_CATEGORY ) return UNKNOWN_CATEGORY;
 
-        if (separateUrban &
-            baseCategory!=UNKNOWN_CATEGORY &
-            !combined.contains(baseCategory) &
-            isUrbanLink(link)) {
-            return baseCategory + 10; // Urban categories are 11-15
+        int catIfSpecialRegion = baseCategory + 20; // special regions categories are 21-25
+        if (hasSpecialRegion && !specialRegionsToDrop.contains(catIfSpecialRegion) && isInSpecialRegion(link)) {
+            return catIfSpecialRegion;
+        }
+
+        int catIfUrban = baseCategory + 10; // Urban categories are 11-15
+        if (separateUrban && !urbanCategoriesToDrop.contains(catIfUrban) && isUrbanLink(link)) {
+            return catIfUrban;
         }
 
         return baseCategory;
@@ -154,6 +178,14 @@ public class LinkCategorizer {
             return municipalityType.equalsIgnoreCase("urban") || municipalityType.equalsIgnoreCase("urbancore");
         }
         return false;
+    }
+
+    public boolean isInSpecialRegion(Link link) {
+        return hasSpecialRegion && linksInSpecialRegions.contains(link.getId());
+    }
+
+    public boolean isInSpecialRegion(int cat) {
+        return hasSpecialRegion && cat>=20 && cat<30;
     }
 
     public String getMunicipalityType(Link link) {
@@ -176,6 +208,10 @@ public class LinkCategorizer {
 
     public boolean isSeparateUrban() {
         return separateUrban;
+    }
+
+    public boolean itHasSpecialRegions(){
+        return hasSpecialRegion;
     }
 
     public boolean isCarLink(Link link) {

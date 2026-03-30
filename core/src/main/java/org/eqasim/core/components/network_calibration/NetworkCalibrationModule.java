@@ -134,9 +134,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public LinkCategorizer provideLinkCategorizer() {
-        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new LinkCategorizer(config.getSeparateUrbanRoads());
+    public LinkCategorizer provideLinkCategorizer(Network network, NetworkCalibrationConfigGroup config) {
+        return new LinkCategorizer(network, config);
     }
 
     @Provides

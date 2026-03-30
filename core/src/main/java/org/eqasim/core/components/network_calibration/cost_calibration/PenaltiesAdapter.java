@@ -120,7 +120,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     public void updatePenalties(int iteration) {
         for (Integer category : categoriesToCalibrate) {
             if (categorizer.getAllCategories().contains(category)) {
-                double count = countsProcessor.getAverageCountForCategory(category);
+                Double count = countsProcessor.getAverageCountForCategory(category);
                 if (count > 0.0 && Double.isFinite(count)) {
                     double flow = flowProcessor.getFlowByCategory(category, sampleSize);
                     if (flow >= 0.0 && Double.isFinite(flow)) {

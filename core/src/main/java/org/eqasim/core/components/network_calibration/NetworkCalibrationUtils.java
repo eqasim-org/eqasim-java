@@ -51,7 +51,6 @@ public class NetworkCalibrationUtils {
         logger.info("Adjusting network capacities with minCapacity={}, maxCapacity={}, sampleSize={}, correctForSampleSize={}, minSpeed={}",
                 minimumCapacity, maximumCapacity, sampleSize, correctForSampleSize, minSpeed);
 
-        List<Integer> linkCategories = categorizer.getAllCategories();
         for (Link link : network.getLinks().values()) {
             if (!categorizer.isOutsideLink(link)) {
                 if (categorizer.getCategory(link)!=LinkCategorizer.UNKNOWN_CATEGORY) {
