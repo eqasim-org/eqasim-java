@@ -67,8 +67,8 @@ public class PenaltyManager {
      * @param effectiveBeta The learning rate.
      * @param iteration Current iteration number.
      */
-    public void updatePenalty(int category, double percentageDifference, double effectiveBeta, int iteration) {
-        if (!calibrate) return;
+    public void updatePenalty(int category, double percentageDifference, double effectiveBeta, int iteration, double  unbiasedError, boolean doUpdate) {
+        if (!calibrate || !doUpdate) return;
 
         double currentPenalty = getPenalty(category);
         previousPenalties.put(category, currentPenalty);
@@ -80,10 +80,16 @@ public class PenaltyManager {
         }
 
         // Use exponential moving average for stability
-        double newPenalty = currentPenalty + adaptiveBeta * percentageDifference;
+        double newPenalty;
+        if (Double.isFinite(unbiasedError)) {
+            newPenalty = currentPenalty + adaptiveBeta * unbiasedError;
+        } else {
+            newPenalty = currentPenalty + adaptiveBeta * percentageDifference;
+        }
 
-        // Add small regularization to prevent exact zeros
-        if (Math.abs(newPenalty) < 1e-3) {
+
+        // Add small regularization
+        if (Math.abs(newPenalty) < 5e-3) {
             newPenalty = 0.0;
         }
 

@@ -37,6 +37,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String MIN_TRIPS_PER_GROUP = "minTripsPerGroup";
     static private final String FREESPEED_WARMUP_ITERATIONS = "freespeedWarmupIterations";
     static private final String PENALTIES_SPECIAL_REGION_PATH = "penaltiesSpecialRegionPath";
+    static private final String PENALTIES_WARMUP_ITERATIONS = "penaltiesWarmupIterations";
 
     private boolean activate = false;
     private boolean calibrate = true;
@@ -66,6 +67,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double maxFreespeedFactor = 1.3;
     private int minTripsPerGroup = 50;
     private int freespeedWarmupIterations = 20;
+    private int penaltiesWarmupIterations = 15;
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -101,6 +103,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(MAX_FREESPEED_FACTOR, "Upper bound applied to freespeed factors during freespeed calibration (default: 1.3)");
         map.put(MIN_TRIPS_PER_GROUP, "Minimum number of routed observed trips required to update a freespeed group (default: 50)");
         map.put(FREESPEED_WARMUP_ITERATIONS, "Initial iterations where freespeed factors are not updated to let route assignment/network stabilize (default: 20)");
+        map.put(PENALTIES_WARMUP_ITERATIONS, "Initial iterations where penalties are not updated to let route assignment/network stabilize (default: 15)");
         map.put(PENALTIES_SPECIAL_REGION_PATH, "This is the path to a geojson file that contains polygones of regions that would be treated differently");
         return map;
     }
@@ -398,6 +401,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
 
     public boolean hasPenaltiesSpecialRegion() {
         return !penaltiesSpecialRegionPath.isEmpty() && penaltiesSpecialRegionPath.endsWith("json") && (new File(penaltiesSpecialRegionPath)).exists();
+    }
+
+    @StringGetter(PENALTIES_WARMUP_ITERATIONS)
+    public int getPenaltiesWarmupIterations() {
+        return penaltiesWarmupIterations;
+    }
+    @StringSetter(PENALTIES_WARMUP_ITERATIONS)
+    public void setPenaltiesWarmupIterations(int inputPenaltiesWarmupIterations) {
+        penaltiesWarmupIterations = inputPenaltiesWarmupIterations;
     }
 
     public static NetworkCalibrationConfigGroup getOrCreate(Config config) {

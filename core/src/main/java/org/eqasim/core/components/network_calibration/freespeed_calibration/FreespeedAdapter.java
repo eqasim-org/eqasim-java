@@ -1,37 +1,21 @@
 package org.eqasim.core.components.network_calibration.freespeed_calibration;
 
-import com.google.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltiesAdapter;
-import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.network.NetworkWriter;
-import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.IterationStartsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.controler.listener.IterationStartsListener;
-import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.router.costcalculators.OnlyTimeDependentTravelDisutility;
-import org.matsim.core.router.util.LeastCostPathCalculator;
-import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
-import org.matsim.core.router.util.TravelTime;
-import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class FreespeedAdapter implements IterationEndsListener, IterationStartsListener {
     private static final Logger logger = LogManager.getLogger(FreespeedAdapter.class);
@@ -98,7 +82,7 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
             if (shouldUpdateAtIteration(iteration)) {
                 logger.info("Triggering freespeed calibration update at iteration {} (start={}, interval={})",
                         iteration, updateStartIteration, updateInterval);
-                penaltiesAdapter.diable(); // do not use penalties during this routing (freespeedDisutility is used, but keep this here in case we change it at some point, this is safer)
+                penaltiesAdapter.disable(); // do not use penalties during this routing (freespeedDisutility is used, but keep this here in case we change it at some point, this is safer)
                 Map<LinkGroupKey, FreespeedFactorManager.GroupStats> groupStats = tripsHandler.routeTrips();
                 penaltiesAdapter.enable(); // reset it
 

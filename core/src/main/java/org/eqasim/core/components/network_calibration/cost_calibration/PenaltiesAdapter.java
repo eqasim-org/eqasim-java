@@ -39,6 +39,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private final LinkCategorizer categorizer;
     private final boolean isActivated;
     private final boolean isCalibrating;
+    private final int warmupIterations;
     private boolean disable = false;
     /**
      * Constructs a PenaltiesAdapter with the given parameters.
@@ -58,6 +59,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         this.penaltyManager = penaltyManager;
         this.isActivated = config.isOneOfObjectives("penalty") && config.isActivated();
         this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
+        this.warmupIterations = config.getPenaltiesWarmupIterations();
 
         this.countsProcessor = isCalibrating ? countsProcessorProvider.get() : null;
         this.flowProcessor = isCalibrating ? flowProcessorProvider.get() : null;
@@ -126,7 +128,10 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
                     if (flow >= 0.0 && Double.isFinite(flow)) {
                         double percentageDifference = (flow - count) / count;
                         double effectiveBeta = getEffectiveBeta(iteration);
-                        penaltyManager.updatePenalty(category, percentageDifference, effectiveBeta, iteration);
+                        double unbiasedError = flowProcessor.getUnbiasedError(category);
+                        boolean doUpdate = flowProcessor.doUpdate(category);
+
+                        penaltyManager.updatePenalty(category, percentageDifference, effectiveBeta, iteration, unbiasedError, doUpdate);
                     }
                 }
             }
@@ -141,7 +146,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
             if (penaltyManager.isCalibrating()) {
                 int iteration = iterationEndsEvent.getIteration();
-                if (updateInterval > 0 && iteration % updateInterval == 0 && iteration > 0) {
+                if (updateInterval > 0 && iteration % updateInterval == 0 && iteration >=warmupIterations) {
                     updatePenalties(iteration);
                     savePenalties(iteration);
                 }
@@ -165,7 +170,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     }
 
 
-    public void diable(){
+    public void disable(){
         this.disable = true;
     }
 

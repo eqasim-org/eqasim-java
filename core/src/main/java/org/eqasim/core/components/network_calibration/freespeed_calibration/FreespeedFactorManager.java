@@ -362,8 +362,8 @@ public class FreespeedFactorManager {
         private final FloatArrayList weights = new FloatArrayList(16_384);
         private final FloatArrayList errors = new FloatArrayList(16_384);
 
-        private static final double EPSILON = 0.02;
-        private static final double C = 0.07;
+        private static final double EPSILON = 0.025;
+        private static final double C = 0.05;
 
         public void addStat(double observedTravelTime, double simulatedTravelTime,
                             double weight, double length, double freespeed) {

@@ -33,7 +33,7 @@ public class CountsProcessor {
     private final String averageCountsPerCategoryFile;
     private final Network network;
     private final Map<Integer, Double> AverageCountsPerCategory =  new HashMap<>();
-    private final Set<Id<Link>> allLinks =  new java.util.HashSet<>();
+    private final IdMap<Link, Float> allLinks =  new IdMap<>(Link.class);
     private final IdMap<Link, Integer> roadCategories = new IdMap<>(Link.class);
     private final boolean hasCountsFile;
     private final LinkCategorizer categorizer;
@@ -139,11 +139,11 @@ public class CountsProcessor {
                     throw new IOException("Link with ID '" + point.linkId + "' is found in the network, but has somehow null category.");
                 }
             }
-            if (category != LinkCategorizer.UNKNOWN_CATEGORY) {
+            if (category != LinkCategorizer.UNKNOWN_CATEGORY && point.count>0.0) {
                 AverageCountsPerCategory.put(category, AverageCountsPerCategory.getOrDefault(category, 0.0) + point.count);
                 numCountsByCategory.put(category, numCountsByCategory.getOrDefault(category, 0) + 1);
                 //  register the links
-                allLinks.add(linkId);
+                allLinks.put(linkId,(float) point.count);
             }
         }
 
@@ -176,7 +176,7 @@ public class CountsProcessor {
     }
 
     public boolean contains(Id<Link> linkId) {
-        return !hasCountsFile || allLinks.contains(linkId); // if counts file is not provided, assume all links are contained
+        return !hasCountsFile || allLinks.containsKey(linkId); // if counts file is not provided, assume all links are contained
     }
 
     public Double getAverageCountForCategory(int category) {
@@ -234,4 +234,11 @@ public class CountsProcessor {
         }
     }
 
+    public int size(){
+        return hasCountsFile ? allLinks.size():0 ;
+    }
+
+    public float getLinkCounts(Id<Link> linkId) {
+        return allLinks.getOrDefault(linkId,-1.0F);
+    }
 }

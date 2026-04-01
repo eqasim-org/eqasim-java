@@ -1,14 +1,13 @@
 package org.eqasim.core.components.network_calibration.Processors;
 
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.flow.FlowBinManager;
 import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
-import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
@@ -29,25 +28,27 @@ public class FlowProcessor {
 
     private final Map<Integer, Double> flowPerCategory = new HashMap<>();
     private final Map<Integer, Integer> linksPerCategory = new HashMap<>();
+    private final Map<Integer, FloatArrayList> errors = new HashMap<>();
     private final double totalNumberOfHours;
+    private final double sampleSize;
 
     public FlowProcessor(Network network, LinkFlowCounter linkFlowCounter, FlowBinManager flowBinManager,
                          CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy,
-                         NetworkCalibrationConfigGroup config) {
+                         double sampleSize) {
         this.network = network;
         this.linkFlowCounter = linkFlowCounter;
         this.outputHierarchy = outputHierarchy;
         this.countsProcessor = countsProcessor;
-
+        this.sampleSize = sampleSize;
         this.totalNumberOfHours = flowBinManager.getTotalTime_h();
     }
 
     public void updateAndSaveCounts(IterationEndsEvent iterationEndsEvent) {
-        updateCounts();
+        update();
         saveCounts(iterationEndsEvent.getIteration());
     }
 
-    private void updateCounts() {
+    private void update() {
         // aggregate the counts by link category
         for (Id<Link> linkId : network.getLinks().keySet()) {
             if (!countsProcessor.contains(linkId)) {
@@ -70,8 +71,15 @@ public class FlowProcessor {
                 // put the flow in the map
                 flowPerCategory.put(linkCategory, flowPerCategory.getOrDefault(linkCategory, 0.0) + totalFlow);
                 linksPerCategory.put(linkCategory, linksPerCategory.getOrDefault(linkCategory, 0) + 1);
+
+                double linkCounts = countsProcessor.getLinkCounts(linkId);
+                if (linkCounts>0.0) {
+                    float error = (float) ((totalFlow / sampleSize - linkCounts) / linkCounts);
+                    errors.computeIfAbsent(linkCategory, k -> new FloatArrayList(32)).add(error);
+                }
             }
         }
+
         // get average flow per link category
         for (int category : flowPerCategory.keySet()) {
             double totalFlow = flowPerCategory.get(category);
@@ -87,16 +95,18 @@ public class FlowProcessor {
     public void resetCounts(int iteration) {
         flowPerCategory.clear();
         linksPerCategory.clear();
-        linkFlowCounter.reset(iteration);
+        errors.clear();
+        // linkFlowCounter.reset(iteration); // no need to call reset, it will be called anyway before mobsim
+    }
+
+    public double getFlowByCategory(int category, double inputSampleSize) {
+        // this method scale back the flow to 100% sample size
+        return flowPerCategory.getOrDefault(category, 0.0) / inputSampleSize;
     }
 
     public double getFlowByCategory(int category) {
-        return flowPerCategory.getOrDefault(category, 0.0);
-    }
-
-    public double getFlowByCategory(int category, double sampleSize) {
         // this method scale back the flow to 100% sample size
-        return getFlowByCategory(category) / sampleSize;
+        return flowPerCategory.getOrDefault(category, 0.0) / sampleSize;
     }
 
     private void saveCounts(int iteration) {
@@ -111,6 +121,38 @@ public class FlowProcessor {
         } catch (Exception e) {
             throw new RuntimeException("Error writing flow by link category to file: " + outputFile);
         }
+    }
+
+
+    private final double C = 0.05;
+    private final double EPSILON = 0.03;
+    public double getUnbiasedError(int category){
+        if (countsProcessor.size()==0) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        FloatArrayList catErrors = errors.get(category);
+        int nMore = 0;
+        int nLess = 0;
+        int nTot  = 0;
+        for (float e:  catErrors) {
+            if (e > EPSILON) {
+                nMore ++;
+            } else if (e < EPSILON) {
+                nLess ++;
+            }
+            nTot++;
+        }
+
+        return nTot==0? 0.0:(nMore - nLess) / (double) nTot;
+    }
+
+    public boolean doUpdate(int category) {
+        if (countsProcessor.size()==0) {
+            return true;
+        }
+        double unbiasedError = getUnbiasedError(category);
+        return Math.abs(unbiasedError) > C;
     }
 
 }

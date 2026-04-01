@@ -90,9 +90,10 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     public FlowProcessor provideFlowByLinkCategory(Network network, LinkFlowCounter counter, FlowBinManager flowBinManager,
-                                                   CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy) {
-        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new FlowProcessor(network, counter, flowBinManager, countsProcessor, outputHierarchy, config);
+                                                   CountsProcessor countsProcessor, OutputDirectoryHierarchy outputHierarchy,
+                                                   EqasimConfigGroup config) {
+        double sampleSize = config.getSampleSize();
+        return new FlowProcessor(network, counter, flowBinManager, countsProcessor, outputHierarchy, sampleSize);
     }
 
     @Provides
