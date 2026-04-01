@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLeg
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtVariables;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.NetworkOfDistances;
+import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.PricingDescriptionReader;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.SBBDistanceReader;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalReader;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalRegistry;
@@ -35,6 +37,7 @@ import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordUtils;
@@ -416,7 +419,7 @@ public class RunComputeTransitPrices {
     }
 
     @SuppressWarnings("null")
-    static public void main(String[] args) throws ConfigurationException, IOException, CsvValidationException {
+    static public void main(String[] args) throws Exception {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "requests-path", "output-path") //
@@ -432,24 +435,29 @@ public class RunComputeTransitPrices {
         SwissPTZonesConfigGroup ptZonesConfig = ConfigUtils.addOrGetModule(config, SwissPTZonesConfigGroup.class);        
         String ptZonesFilePath = ptZonesConfig.getZonePath();
         String sbbDistances    = ptZonesConfig.getSBBDistancesPath();
+        String operators       = ptZonesConfig.getPricingDescriptionPath();
 
         ZonalReader zonalReader = new ZonalReader();
 
-        if (ptZonesFilePath == null | sbbDistances == null){
+        if (ptZonesFilePath == null | sbbDistances == null | operators == null){
             throw new ConfigurationException("ptZones configuration is incomplete: "
                 + "ptZonesFilePath=" + ptZonesFilePath
-                + ", sbbDistances=" + sbbDistances);
+                + ", sbbDistances=" + sbbDistances
+                + ", pricingDescription=" + operators);
         }
         
         File zonesPath = new File(ptZonesFilePath);
         Collection<Authority> authorities = zonalReader.readTarifNetworks(zonesPath);
-		Collection<Zone> zones = zonalReader.readZones(zonesPath, authorities);
-		ZonalRegistry zonalRegistry = new ZonalRegistry(authorities, zones);
+		Collection<Zone> zones            = zonalReader.readZones(zonesPath, authorities);
+		ZonalRegistry zonalRegistry       = new ZonalRegistry(authorities, zones);
 
         File sbbPath = new File(sbbDistances);
         Zone sbbZone = SBBDistanceReader.createZone(sbbPath);
         ZonalRegistry sbbZonalRegistry = SBBDistanceReader.createZonalRegistry(sbbZone);
         zonalRegistry.merge(sbbZonalRegistry);
+
+        File pricingPath = new File(operators);     
+        SwissPtStageCostCalculator swissPtStageCostCalculator = PricingDescriptionReader.readPriceDescription(pricingPath);
 
         NetworkOfDistances sbbNetwork = SBBDistanceReader.createNetworkOfDistances(sbbPath);
 
@@ -462,9 +470,9 @@ public class RunComputeTransitPrices {
         SwissRailRaptorData srrData = SwissRailRaptorData.create(transitSchedule,
 				scenario.getTransitVehicles(), srrStaticConfig, network, occupancyData);
 
-        ThreadLocal<SwissRailRaptor> threadLocalRouter = ThreadLocal.withInitial(() -> new SwissRailRaptor.Builder(srrData, config).build()); 
-        ThreadLocal<SwissPtRoutePredictor> threadLocalPtRoutePredictor = ThreadLocal.withInitial(() -> new SwissPtRoutePredictor(transitSchedule, zonalRegistry, sbbNetwork)); 
-        ThreadLocal<SwissPtStageCostCalculator> threadLocalPtStageCalculator = ThreadLocal.withInitial(() -> new SwissPtStageCostCalculator()); 
+        ThreadLocal<SwissRailRaptor> threadLocalRouter                       = ThreadLocal.withInitial(() -> new SwissRailRaptor.Builder(srrData, config).build()); 
+        ThreadLocal<SwissPtRoutePredictor> threadLocalPtRoutePredictor       = ThreadLocal.withInitial(() -> new SwissPtRoutePredictor(transitSchedule, zonalRegistry, sbbNetwork)); 
+        ThreadLocal<SwissPtStageCostCalculator> threadLocalPtStageCalculator = ThreadLocal.withInitial(() -> swissPtStageCostCalculator); 
 
         CSVRequestReader csvRequestReader = new RunComputeTransitPrices.CSVRequestReader(cmd.getOptionStrict("requests-path"));
         csvRequestReader.readCSV();
