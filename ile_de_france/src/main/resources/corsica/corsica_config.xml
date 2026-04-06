@@ -706,6 +706,7 @@
 		<param name="vehicleBehavior" value="teleport" />
 		<!-- If vehicles should all be the same default vehicle, or come from the vehicles file, or something else.  Possible values:  defaultVehicle modeVehicleTypesFromVehiclesData fromVehiclesData -->
 		<param name="vehiclesSource" value="defaultVehicle" />
+		<param name="personInitializedEvents" value="all" />
 	</module>
 	<module name="strategy" >
 		<!-- the external executable will be called with a config file as argument.  This is the pathname to a possible skeleton config, to which additional information will be added.  Can be null. -->
