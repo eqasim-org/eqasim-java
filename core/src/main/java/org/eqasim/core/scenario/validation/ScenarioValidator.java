@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
@@ -110,8 +111,12 @@ public class ScenarioValidator {
 							Link link = scenario.getNetwork().getLinks().get(activity.getLinkId());
 
 							if (link != null) {
-								if (!link.getAllowedModes().contains("car")) {
-									logger.error(String.format("Person %s has %s activity attached to non-car link %s",
+								if (!link.getAllowedModes().contains(TransportMode.car) &&
+									!link.getAllowedModes().contains(TransportMode.bike) &&
+									!link.getAllowedModes().contains(TransportMode.truck) &&
+									!link.getAllowedModes().contains("car_passenger")
+								) {
+									logger.error(String.format("Person %s has %s activity attached to a link (%s) without these modes : car, bike, truck, car_passenger",
 											person.getId().toString(), activity.getType(), link.getId().toString()));
 									errorsFound = true;
 								}

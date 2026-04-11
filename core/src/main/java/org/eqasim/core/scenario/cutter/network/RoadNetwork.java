@@ -3,6 +3,7 @@ package org.eqasim.core.scenario.cutter.network;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -24,6 +25,11 @@ public class RoadNetwork implements Network, SearchableNetwork {
 	public RoadNetwork(Network network) {
 		delegate = NetworkUtils.createNetwork();
 		new TransportModeNetworkFilter(network).filter(delegate, Collections.singleton(TransportMode.car));
+	}
+
+	public RoadNetwork(Network network, Set<String> modes) {
+		delegate = NetworkUtils.createNetwork();
+		new TransportModeNetworkFilter(network).filter(delegate, modes);
 	}
 
 	public Attributes getAttributes() {

@@ -30,6 +30,9 @@ public class OutsideFacilityAdapter {
 	}
 
 	public ActivityFacility getFacility(Link link) {
+		if (link == null) {
+			throw new NullPointerException("The link in null at this point. We ignore the reason why this is happening for now, but it should be investigated in the future.");
+		}
 		ActivityFacility facility = facilitiesByLink.get(link);
 
 		if (facility == null) {

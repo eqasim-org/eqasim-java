@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
@@ -17,6 +18,8 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Route;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.population.routes.NetworkRoute;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.pt.PtConstants;
@@ -38,6 +41,10 @@ public class NetworkCutter {
 	}
 
 	public void run(Network network) throws InterruptedException {
+		run(network, Set.of(TransportMode.car));
+	}
+
+	public void run(Network network, Set<String> modes) throws InterruptedException {
 		log.info("Cutting the network ...");
 
 		int originalNumberOfLinks = network.getLinks().size();
@@ -110,17 +117,21 @@ public class NetworkCutter {
 		// a route from all retained links to this point and that all retained links can
 		// be reached by this reference point.
 
-		Set<Id<Link>> retainedCarLinkIds = new HashSet<>();
-
-		for (Id<Link> linkId : retainedLinkIds) {
-			if (network.getLinks().get(linkId).getAllowedModes().contains("car")) {
-				retainedCarLinkIds.add(linkId);
-			}
-		}
-
 		Set<Id<Link>> allRetainedLinkIds = new HashSet<>();
 		allRetainedLinkIds.addAll(retainedLinkIds);
-		allRetainedLinkIds.addAll(minimumNetworkFinder.run(retainedCarLinkIds));
+
+		for (String mode : modes) {
+			log.info("\t Finding the minimum network for mode " + mode + " ...");
+			minimumNetworkFinder.referenceLinkShouldContainMode(mode);
+
+			Set<Id<Link>> retainedModeLinkIds = new HashSet<>();
+			for (Id<Link> linkId : retainedLinkIds) {
+				if (network.getLinks().get(linkId).getAllowedModes().contains(mode)) {
+					retainedModeLinkIds.add(linkId);
+				}
+			}
+			allRetainedLinkIds.addAll(minimumNetworkFinder.run(retainedModeLinkIds, mode));
+		}
 
 		// Note that this means, that public transit lines CANNOT change their routes in
 		// the simulation if this is desired (at least not outside of the scenario
@@ -151,4 +162,26 @@ public class NetworkCutter {
 		log.info("  Number of nodes now: " + finalNumberOfNodes);
 		log.info("  Number of links now: " + finalNumberOfLinks);
 	}
+
+	public void keepLargestConnectedPartPerMode(Network network, Set<String> modes) {
+		for (String mode : modes) {
+			Network subNetwork = NetworkUtils.createNetwork();
+			new TransportModeNetworkFilter(network).filter(subNetwork, Set.of(mode));
+
+			if (subNetwork.getLinks().isEmpty()) {
+				continue;
+			}
+
+			NetworkUtils.cleanNetwork(subNetwork, Set.of(mode));
+
+			for (Link link : network.getLinks().values()) {
+				if (link.getAllowedModes().contains(mode) && !subNetwork.getLinks().containsKey(link.getId())) {
+					Set<String> updated = new HashSet<>(link.getAllowedModes());
+					updated.remove(mode);
+					link.setAllowedModes(updated);
+				}
+			}
+		}
+	}
+
 }

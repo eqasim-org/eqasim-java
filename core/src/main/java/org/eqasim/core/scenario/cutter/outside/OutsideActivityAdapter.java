@@ -28,12 +28,20 @@ public class OutsideActivityAdapter {
 						Activity activity = (Activity) element;
 
 						if (activity.getType().equals("outside")) {
-							Link activityLink;
+							Link activityLink = null;
 
 							if (activity.getLinkId() != null) {
 								activityLink = roadNetwork.getLinks().get(activity.getLinkId());
-							} else {
+							}
+							// change this part because roadNetwork can in some cases not contain the activity link (a bike link for example)
+							if (activityLink == null) {
 								activityLink = NetworkUtils.getNearestLink(roadNetwork, activity.getCoord());
+							}
+
+							// check if activity link is still null, if so, we cannot do anything and just skip this activity
+							if (activityLink == null) {
+								throw new NullPointerException("The activity link is null for this activity. Here are the coordinates of the activity: "
+										+ activity.getCoord() + ". \nThis should not happen, but we ignore the reason why this is happening for now, but it should be investigated in the future.");
 							}
 
 							ActivityFacility facility = facilityAdapter.getFacility(activityLink);

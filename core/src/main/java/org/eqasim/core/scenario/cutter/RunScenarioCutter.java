@@ -3,6 +3,7 @@ package org.eqasim.core.scenario.cutter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -33,10 +34,14 @@ import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
 
@@ -98,7 +103,8 @@ public class RunScenarioCutter {
 		scenarioValidator.checkScenario(scenario);
 
 		// Prepare road network
-		RoadNetwork roadNetwork = new RoadNetwork(scenario.getNetwork());
+		Set<String> modes = new HashSet<>(config.routing().getNetworkModes());
+		RoadNetwork roadNetwork = new RoadNetwork(scenario.getNetwork(), modes);
 
 		// Optionally, load travel time
 		Optional<RecordedTravelTime> travelTime = Optional.empty();
@@ -112,7 +118,7 @@ public class RunScenarioCutter {
 		// TODO Check if we can remove stuff
 		Injector populationCutterInjector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(
-						new PopulationCutterModule(extent, numberOfThreads, 40, cmd.getOption("events-path"))) //
+						new PopulationCutterModule(extent, numberOfThreads, 64, cmd.getOption("events-path"))) //
 				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
 				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
@@ -154,9 +160,11 @@ public class RunScenarioCutter {
 		facilitiesCutter.run(scenario.getActivityFacilities(), true);
 
 		// Cut network
-		MinimumNetworkFinder minimumNetworkFinder = new MinimumNetworkFinder(extent, roadNetwork, numberOfThreads, 20);
+		MinimumNetworkFinder minimumNetworkFinder = new MinimumNetworkFinder(extent, roadNetwork, numberOfThreads, 32);
 		NetworkCutter networkCutter = new NetworkCutter(extent, scenario, minimumNetworkFinder);
-		networkCutter.run(scenario.getNetwork());
+		Network network = scenario.getNetwork();
+		networkCutter.run(network, modes);
+		networkCutter.keepLargestConnectedPartPerMode(network, modes);
 
 		// "Cut" config
 		// (we need to reload it, because it has become locked at this point)

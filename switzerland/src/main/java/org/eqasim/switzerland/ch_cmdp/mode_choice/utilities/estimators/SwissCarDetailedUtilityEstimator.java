@@ -215,7 +215,6 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         carAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
         carAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
         carAttributes.put("income", String.valueOf(personVariables.income));
-        carAttributes.put("carOwnershipRatio", String.valueOf(personVariables.carOwnershipRatio));
 
         // purposes used in utility
         carAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
