@@ -3,8 +3,8 @@ package org.eqasim.switzerland.ch_cmdp;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
-import org.eqasim.switzerland.ch.PTLinkVolumesModule;
-import org.eqasim.switzerland.ch.PTPassengerCountsModule;
+import org.eqasim.switzerland.ch_cmdp.PTLinkVolumesModule;
+import org.eqasim.switzerland.ch_cmdp.PTPassengerCountsModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
@@ -53,7 +53,7 @@ public class RunSimulation {
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
 		controller.addOverridingModule(new PTPassengerCountsModule());
-		controller.addOverridingModule(new PTLinkVolumesModule());
+        controller.addOverridingModule(new PTLinkVolumesModule());
 		controller.addOverridingModule(new StrategyWeightDecayModule());
 
 		// To use the deterministic pt simulation (Part 1 of 2):

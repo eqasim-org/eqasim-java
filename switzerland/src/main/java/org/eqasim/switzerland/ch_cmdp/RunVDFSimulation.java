@@ -1,7 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;

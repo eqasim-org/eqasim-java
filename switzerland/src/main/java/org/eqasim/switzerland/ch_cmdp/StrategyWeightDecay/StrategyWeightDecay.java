@@ -10,7 +10,6 @@ import org.matsim.api.core.v01.population.Plan;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
