@@ -19,15 +19,13 @@ import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
 import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.utils.io.IOUtils;
 
 import com.google.common.base.Verify;
 
-public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandler {
+public class VDFHorizonHandler implements VDFTrafficHandler {
 	private final VDFScope scope;
 
 	private final Network network;
@@ -50,15 +48,10 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 		}
 	}
 
-	@Override
-	public synchronized void handleEvent(LinkEnterEvent event) {
-		processEnterLink(event.getTime(), event.getLinkId());
-	}
-
-	public void processEnterLink(double time, Id<Link> linkId) {
+	public void processEnterLink(double time, Id<Link> linkId, double flow) {
 		int i = scope.getIntervalIndex(time);
 		double currentValue = counts.get(linkId).get(i);
-		counts.get(linkId).set(i, currentValue + 1);
+		counts.get(linkId).set(i, currentValue + flow);
 	}
 
 	@Override
@@ -219,7 +212,8 @@ public class VDFHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandl
 		@Override
 		public void writeFile(File outputFile) {
 			try {
-				DataOutputStream outputStream = new DataOutputStream(IOUtils.getOutputStream(outputFile.toURI().toURL(), false));
+				DataOutputStream outputStream = new DataOutputStream(
+						IOUtils.getOutputStream(outputFile.toURI().toURL(), false));
 
 				outputStream.writeDouble(scope.getStartTime());
 				outputStream.writeDouble(scope.getEndTime());

@@ -8,3 +8,4 @@ dependency-reduced-pom.xml
 *.idea
 simulation_output
 .vscode
+core/melun_test

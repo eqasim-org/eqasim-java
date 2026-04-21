@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.core.simulation.mode_choice.constraints.EqasimVehicleTourConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.OutsideConstraint;
 import org.eqasim.core.simulation.mode_choice.constraints.PassengerConstraint;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
@@ -14,17 +13,18 @@ import org.eqasim.core.simulation.mode_choice.cost.ZeroCostModel;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonModule;
 import org.eqasim.core.simulation.mode_choice.epsilon.EpsilonProvider;
 import org.eqasim.core.simulation.mode_choice.filters.OutsideFilter;
-import org.eqasim.core.simulation.mode_choice.filters.TourLengthFilter;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.core.simulation.mode_choice.utilities.EqasimUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.estimators.MotorcycleUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.ZeroUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.BikePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.MotorcyclePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PersonPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
@@ -35,9 +35,7 @@ import org.eqasim.core.simulation.modes.drt.mode_choice.predictors.DrtPredictor;
 import org.eqasim.core.simulation.modes.drt.mode_choice.utilities.estimators.DrtUtilityEstimator;
 import org.eqasim.core.simulation.policies.utility.UtilityPenalty;
 import org.matsim.contrib.drt.run.MultiModeDrtConfigGroup;
-import org.matsim.contribs.discrete_mode_choice.components.utils.home_finder.HomeFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
-import org.matsim.contribs.discrete_mode_choice.modules.config.VehicleTourConstraintConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.router.TripRouter;
 import org.matsim.core.utils.timing.TimeInterpretation;
@@ -45,7 +43,6 @@ import org.matsim.facilities.ActivityFacilities;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 public class EqasimModeChoiceModule extends AbstractEqasimExtension {
@@ -53,12 +50,12 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	public static final String OUTSIDE_CONSTRAINT_NAME = "OutsideConstraint";
 	public static final String DRT_WALK_CONSTRAINT = "DrtWalkConstraint";
 	public static final String DRT_SERVICE_AREA_CONSTRAINT = "DrtServiceAreaConstraint";
-	public static final String TOUR_LENGTH_FILTER_NAME = "TourLengthFilter";
 	public static final String OUTSIDE_FILTER_NAME = "OutsideFilter";
 
 	public static final String UTILITY_ESTIMATOR_NAME = "EqasimUtilityEstimator";
 
 	public static final String CAR_ESTIMATOR_NAME = "CarUtilityEstimator";
+	public static final String MOTORCYCLE_ESTIMATOR_NAME = "MotorcycleUtilityEstimator";
 	public static final String PT_ESTIMATOR_NAME = "PtUtilityEstimator";
 	public static final String BIKE_ESTIMATOR_NAME = "BikeUtilityEstimator";
 	public static final String WALK_ESTIMATOR_NAME = "WalkUtilityEstimator";
@@ -67,7 +64,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 	public static final String ZERO_COST_MODEL_NAME = "ZeroCostModel";
 
-	public static final String VEHICLE_TOUR_CONSTRAINT = "EqasimVehicleTourConstraint";
 	public static final String HOME_FINDER = "EqasimHomeFinder";
 
 	@Override
@@ -77,12 +73,12 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(DRT_WALK_CONSTRAINT).to(DrtWalkConstraint.Factory.class);
 		bindTripConstraintFactory(DRT_SERVICE_AREA_CONSTRAINT).to(DrtServiceAreaConstraint.Factory.class);
 
-		bindTourFilter(TOUR_LENGTH_FILTER_NAME).to(TourLengthFilter.class);
 		bindTourFilter(OUTSIDE_FILTER_NAME).to(OutsideFilter.class);
 
 		bindTripEstimator(UTILITY_ESTIMATOR_NAME).to(EqasimUtilityEstimator.class);
 
 		bind(CarPredictor.class);
+		bind(MotorcyclePredictor.class);
 		bind(PtPredictor.class);
 		bind(BikePredictor.class);
 		bind(WalkPredictor.class);
@@ -91,6 +87,7 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindUtilityEstimator(ZERO_ESTIMATOR_NAME).to(ZeroUtilityEstimator.class);
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(CarUtilityEstimator.class);
+		bindUtilityEstimator(MOTORCYCLE_ESTIMATOR_NAME).to(MotorcycleUtilityEstimator.class);
 		bindUtilityEstimator(PT_ESTIMATOR_NAME).to(PtUtilityEstimator.class);
 		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(BikeUtilityEstimator.class);
 		bindUtilityEstimator(WALK_ESTIMATOR_NAME).to(WalkUtilityEstimator.class);
@@ -98,7 +95,6 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 
 		bindCostModel(ZERO_COST_MODEL_NAME).to(ZeroCostModel.class);
 
-		bindTourConstraintFactory(VEHICLE_TOUR_CONSTRAINT).to(EqasimVehicleTourConstraint.Factory.class);
 		bindHomeFinder(HOME_FINDER).to(EqasimHomeFinder.class);
 
 		install(new EpsilonModule());
@@ -137,17 +133,15 @@ public class EqasimModeChoiceModule extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	@Named("pt")
-	public CostModel providePtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
-		return getCostModel(factory, config, "pt");
+	@Named("motorcycle")
+	public CostModel provideMotorcycleCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "motorcycle");
 	}
 
 	@Provides
-	@Singleton
-	public EqasimVehicleTourConstraint.Factory provideEqasimVehicleTourConstraintFactory(
-			DiscreteModeChoiceConfigGroup dmcConfig, HomeFinder homeFinder) {
-		VehicleTourConstraintConfigGroup config = dmcConfig.getVehicleTourConstraintConfig();
-		return new EqasimVehicleTourConstraint.Factory(config.getRestrictedModes(), homeFinder);
+	@Named("pt")
+	public CostModel providePtCostModel(Map<String, Provider<CostModel>> factory, EqasimConfigGroup config) {
+		return getCostModel(factory, config, "pt");
 	}
 
 	@Provides

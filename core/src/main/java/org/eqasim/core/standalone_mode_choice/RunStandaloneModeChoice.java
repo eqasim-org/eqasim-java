@@ -47,7 +47,9 @@ import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.ControllerConfigGroup.CompressionType;
 import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -148,7 +150,8 @@ public class RunStandaloneModeChoice {
     public static final String CMD_TRAVEL_TIMES_FACTORS_PATH = "travel-times-factors-path";
     public static final String CMD_RECORDED_TRAVEL_TIMES_PATH = "recorded-travel-times-path";
     public static final String CMD_SKIP_SCENARIO_CHECK = "skip-scenario-check";
-    
+    public static final String CMD_COMPRESSION = "compression";
+
     public static void main(String[] args) throws CommandLine.ConfigurationException, InterruptedException, IOException, ExecutionException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions(CMD_CONFIG_PATH)
@@ -156,6 +159,7 @@ public class RunStandaloneModeChoice {
                 .allowOptions(CMD_TRAVEL_TIMES_FACTORS_PATH, CMD_RECORDED_TRAVEL_TIMES_PATH)
                 .allowOptions(CMD_SIMULATE_AFTER)
                 .allowOptions(CMD_SKIP_SCENARIO_CHECK)
+                .allowOptions(CMD_COMPRESSION)
                 .allowOptions(EqasimConfigurator.CONFIGURATOR)
                 .allowAnyOption(true)
                 .build();
@@ -244,11 +248,14 @@ public class RunStandaloneModeChoice {
         LegReaderFromPopulation legReader = new LegReaderFromPopulation(Arrays.asList("car", "pt"), injector.getInstance(PersonAnalysisFilter.class), Optional.empty(), Optional.empty());
         OutputDirectoryHierarchy outputDirectoryHierarchy = injector.getInstance(OutputDirectoryHierarchy.class);
 
+        String delimiter = config.global().getDefaultDelimiter();
+        CompressionType compressionType = cmd.getOption(CMD_COMPRESSION).map(CompressionType::valueOf).orElse(config.controller().getCompressionType());
+
         cmd.getOption(CMD_WRITE_INPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
-                writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_trips.csv"), tripReader);
-                writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_pt_legs.csv"), ptLegReader);
-                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_legs.csv"), legReader);
+                writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_trips.csv", compressionType), tripReader, delimiter);
+                writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_pt_legs.csv", compressionType), ptLegReader, delimiter);
+                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("input_legs.csv", compressionType), legReader, delimiter);
             }
         });
 
@@ -263,9 +270,9 @@ public class RunStandaloneModeChoice {
 
         cmd.getOption(CMD_WRITE_OUTPUT_CSV).ifPresent(s -> {
             if(Boolean.parseBoolean(s)) {
-                writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv"), tripReader);
-                writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_pt_legs.csv"), ptLegReader);
-                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_legs.csv"), legReader);
+                writeTripsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_trips.csv", compressionType), tripReader, delimiter);
+                writePtLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_pt_legs.csv", compressionType), ptLegReader, delimiter);
+                writeLegsCsv(population, outputDirectoryHierarchy.getOutputFilename("output_legs.csv", compressionType), legReader, delimiter);
             }
         });
         if(cmd.hasOption(CMD_SIMULATE_AFTER)) {
@@ -297,31 +304,33 @@ public class RunStandaloneModeChoice {
                 throw new RuntimeException(e);
             }
         }
+
+        OutputDirectoryLogging.closeOutputDirLogging();
     }
 
-    private static void writeTripsCsv(Population population, String filePath, TripReaderFromPopulation tripReader) {
+    private static void writeTripsCsv(Population population, String filePath, TripReaderFromPopulation tripReader, String delimiter) {
         //We write the initial trip modes
         Collection<TripItem> trips = tripReader.readTrips(population);
         try {
-            new TripWriter(trips, DistanceUnit.meter, DistanceUnit.meter).write(filePath);
+            new TripWriter(trips, DistanceUnit.meter, DistanceUnit.meter, delimiter).write(filePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void writePtLegsCsv(Population population, String filePath, PublicTransportLegReaderFromPopulation legsReader) {
+    private static void writePtLegsCsv(Population population, String filePath, PublicTransportLegReaderFromPopulation legsReader, String delimiter) {
         Collection<PublicTransportLegItem> legs = legsReader.readPublicTransportLegs(population);
         try {
-            new PublicTransportLegWriter(legs).write(filePath);
+            new PublicTransportLegWriter(legs, delimiter).write(filePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static void writeLegsCsv(Population population, String filePath, LegReaderFromPopulation legsReader) {
+    private static void writeLegsCsv(Population population, String filePath, LegReaderFromPopulation legsReader, String delimiter) {
         Collection<LegItem> legs = legsReader.readLegs(population);
         try {
-            new LegWriter(legs, DistanceUnit.meter, DistanceUnit.meter).write(filePath);
+            new LegWriter(legs, DistanceUnit.meter, DistanceUnit.meter, delimiter).write(filePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

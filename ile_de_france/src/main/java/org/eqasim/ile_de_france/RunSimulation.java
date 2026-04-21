@@ -50,7 +50,7 @@ public class RunSimulation {
 			if (cmd.getOption("use-vdf-engine").map(Boolean::parseBoolean).orElse(false)) {
 				VDFEngineConfigGroup engineConfig = new VDFEngineConfigGroup();
 				engineConfig.setModes(Set.of("car", "car_passenger"));
-				engineConfig.setGenerateNetworkEvents(false);
+				engineConfig.setGenerateNetworkEventsInterval(0);
 				config.addModule(engineConfig);
 
 				config.qsim().setMainModes(Collections.emptySet());

@@ -35,6 +35,8 @@ public class IDFModeAvailability implements ModeAvailability {
 			}
 		}
 
+		// TODO phased out motorbike in scenario update, phase in again!
+
 		// Check bicycle availability
 		if (IDFPredictorUtils.hasBicycleAvailability(person)) {
 			modes.add(IDFModeChoiceModule.BICYCLE);

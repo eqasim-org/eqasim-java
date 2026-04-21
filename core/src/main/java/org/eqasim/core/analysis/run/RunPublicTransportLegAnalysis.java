@@ -19,11 +19,13 @@ public class RunPublicTransportLegAnalysis {
 	static public void main(String[] args) throws IOException, ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("events-path", "schedule-path", "output-path") //
+				.allowOptions("delimiter") //
 				.build();
 
 		String outputPath = cmd.getOptionStrict("output-path");
 		String eventsPath = cmd.getOptionStrict("events-path");
 		String schedulePath = cmd.getOptionStrict("schedule-path");
+		String delimiter = cmd.getOption("delimiter").orElse(";");
 
 		Config config = ConfigUtils.createConfig();
 		Scenario scenario = ScenarioUtils.createScenario(config);
@@ -33,6 +35,6 @@ public class RunPublicTransportLegAnalysis {
 		PublicTransportLegReader reader = new PublicTransportLegReader(tripListener);
 		Collection<PublicTransportLegItem> trips = reader.readTrips(eventsPath);
 
-		new PublicTransportLegWriter(trips).write(outputPath);
+		new PublicTransportLegWriter(trips, delimiter).write(outputPath);
 	}
 }

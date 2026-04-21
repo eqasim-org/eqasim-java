@@ -9,6 +9,14 @@ public class IDFModeParameters extends ModeParameters {
 
 	public final IDFCarParameters idfCar = new IDFCarParameters();
 
+	// not used right now
+	/*public class IDFMotorcycleParameters {
+		public double betaInsideUrbanArea;
+		public double betaCrossingUrbanArea;
+	}
+
+	public final IDFMotorcycleParameters idfMotorcycle = new IDFMotorcycleParameters();*/
+
 	public class IDFCarPassengerParameters {
 		public double alpha_u;
 		public double betaInVehicleTravelTime_u_min;
@@ -60,6 +68,16 @@ public class IDFModeParameters extends ModeParameters {
 
 		// Road
 		parameters.betaRoadInsideParis_u = -1.513682;
+
+		// Motorcycle ; copy of Car for now
+		parameters.motorcycle.alpha_u = 1.35;
+		parameters.motorcycle.betaTravelTime_u_min = -0.06;
+
+		parameters.motorcycle.additionalAccessEgressWalkTime_min = 4.0;
+		parameters.motorcycle.constantParkingSearchPenalty_min = 4.0;
+
+		// parameters.idfMotorcycle.betaInsideUrbanArea = -0.5;
+		// parameters.idfMotorcycle.betaCrossingUrbanArea = -1.0;
 
 		// PT
 		parameters.pt.alpha_u = 0.0;

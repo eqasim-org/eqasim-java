@@ -19,15 +19,13 @@ import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
 import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.utils.io.IOUtils;
 
 import com.google.common.base.Verify;
 
-public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEventHandler {
+public class VDFSparseHorizonHandler implements VDFTrafficHandler {
 	private final VDFScope scope;
 
 	private final Network network;
@@ -54,15 +52,10 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 		}
 	}
 
-	@Override
-	public synchronized void handleEvent(LinkEnterEvent event) {
-		processEnterLink(event.getTime(), event.getLinkId());
-	}
-
-	public void processEnterLink(double time, Id<Link> linkId) {
+	public void processEnterLink(double time, Id<Link> linkId, double flow) {
 		int i = scope.getIntervalIndex(time);
 		double currentValue = counts.get(linkId).get(i);
-		counts.get(linkId).set(i, currentValue + 1);
+		counts.get(linkId).set(i, currentValue + flow);
 	}
 
 	@Override
@@ -211,7 +204,8 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 
 					int sliceLinkCount = inputStream.readInt();
 
-					logger.info(String.format("Slice %d/%d, Reading %d link states", sliceIndex+1, slices, sliceLinkCount));
+					logger.info(String.format("Slice %d/%d, Reading %d link states", sliceIndex + 1, slices,
+							sliceLinkCount));
 
 					for (int sliceLinkIndex = 0; sliceLinkIndex < sliceLinkCount; sliceLinkIndex++) {
 						int linkIndex = inputStream.readInt();
@@ -243,7 +237,8 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 		@Override
 		public void writeFile(File outputFile) {
 			try {
-				DataOutputStream outputStream = new DataOutputStream(IOUtils.getOutputStream(outputFile.toURI().toURL(), false));
+				DataOutputStream outputStream = new DataOutputStream(
+						IOUtils.getOutputStream(outputFile.toURI().toURL(), false));
 
 				outputStream.writeDouble(scope.getStartTime());
 				outputStream.writeDouble(scope.getEndTime());
@@ -265,12 +260,13 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 					outputStream.writeInt(slice.size());
 
 					int sliceLinkIndex = 0;
-					for (Id<Link> linkId : linkIds) {
+					for (int linkIndex = 0; linkIndex < linkIds.size(); linkIndex++) {
+						Id<Link> linkId = linkIds.get(linkIndex);
 						LinkState linkState = slice.get(linkId);
-						if(linkState == null) {
+						if (linkState == null) {
 							continue;
 						}
-						outputStream.writeInt(linkIds.indexOf(linkId));
+						outputStream.writeInt(linkIndex);
 						outputStream.writeInt(linkState.count.size());
 
 						for (int i = 0; i < linkState.count.size(); i++) {

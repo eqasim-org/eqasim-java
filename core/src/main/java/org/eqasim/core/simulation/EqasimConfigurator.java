@@ -97,6 +97,17 @@ public abstract class EqasimConfigurator {
 		registerModule(new EqasimTerminationModule(), EqasimTerminationConfigGroup.GROUP_NAME);
 		registerModule(new TerminationModeShareModule(), EqasimTerminationConfigGroup.GROUP_NAME);
 
+		// VDF functionality (must come before DRT for 1:1 freeflow compatibility)
+		registerConfigGroup(new VDFConfigGroup(), true);
+		registerModule(new VDFModule(), VDFConfigGroup.GROUP_NAME);
+		registerQSimModule(new VDFQSimModule(), VDFConfigGroup.GROUP_NAME);
+
+		registerConfigGroup(new VDFEngineConfigGroup(), true);
+		registerModule(new VDFEngineModule(), VDFEngineConfigGroup.GROUP_NAME);
+		registerComponents((components, config) -> {
+			VDFEngineModule.configureQSim(components);
+		}, VDFEngineConfigGroup.GROUP_NAME);
+
 		// Analysis
 
 		// DRT functionality
@@ -130,17 +141,6 @@ public abstract class EqasimConfigurator {
 
 		registerComponents(TransitWithAbstractAccessQSimModule::configure,
 				TransitWithAbstractAbstractAccessModuleConfigGroup.GROUP_NAME);
-
-		// VDF functionality
-		registerConfigGroup(new VDFConfigGroup(), true);
-		registerModule(new VDFModule(), VDFConfigGroup.GROUP_NAME);
-		registerQSimModule(new VDFQSimModule(), VDFConfigGroup.GROUP_NAME);
-
-		registerConfigGroup(new VDFEngineConfigGroup(), true);
-		registerModule(new VDFEngineModule(), VDFEngineConfigGroup.GROUP_NAME);
-		registerComponents((components, config) -> {
-			VDFEngineModule.configureQSim(components);
-		}, VDFEngineConfigGroup.GROUP_NAME);
 
 		// Leg time constraint functionality
 		registerConfigGroup(new LegTimeConstraintConfigGroup(), true);

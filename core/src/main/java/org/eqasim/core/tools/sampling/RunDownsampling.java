@@ -24,7 +24,7 @@ public class RunDownsampling {
     static public void main(String[] args) throws ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("config-path", "sampling-rate", "suffix") //
-                .allowOptions("update", EqasimConfigurator.CONFIGURATOR) //
+                .allowOptions("seed", "update", EqasimConfigurator.CONFIGURATOR) //
                 .build();
 
         Preconditions.checkArgument(cmd.getOptionStrict("suffix").length() > 0, "Suffix must be given.");

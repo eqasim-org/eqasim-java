@@ -1,18 +1,14 @@
 package org.eqasim.core.analysis.activities;
 
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.Collection;
+
+import org.matsim.core.utils.io.IOUtils;
 
 public class ActivityWriter {
 	final private Collection<ActivityItem> activities;
 	final private String delimiter;
-
-	public ActivityWriter(Collection<ActivityItem> activities) {
-		this(activities, ";");
-	}
 
 	public ActivityWriter(Collection<ActivityItem> activities, String delimiter) {
 		this.activities = activities;
@@ -20,7 +16,7 @@ public class ActivityWriter {
 	}
 
 	public void write(String outputPath) throws IOException {
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputPath)));
+		BufferedWriter writer = IOUtils.getBufferedWriter(outputPath);
 
 		writer.write(formatHeader() + "\n");
 		writer.flush();

@@ -13,6 +13,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.core.utils.io.IOUtils;
 
 public class FlowWriter {
 	private final IdMap<Link, List<Double>> flows;
@@ -27,7 +28,7 @@ public class FlowWriter {
 
 	public void write(File path) {
 		try {
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path)));
+			BufferedWriter writer = IOUtils.getBufferedWriter(path.getPath());
 
 			writer.write(String.join(";", new String[] { "link_id", "interval", "start_time", "flow", "lanes", "osm" })
 					+ "\n");
