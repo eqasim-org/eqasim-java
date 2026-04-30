@@ -1,6 +1,7 @@
 package org.eqasim.ile_de_france.probing;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Set;
 
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
@@ -75,6 +76,13 @@ public class ProbeModule extends AbstractModule {
         if (config.useProbeAvailability) {
             bind(ModeAvailability.class).toInstance(new ProbeModeAvailability());
         }
+    }
+
+    @Provides
+    @Singleton
+    IDFModeAvailability provideIDFModeAvailability() {
+        // need to write this provide because of arguemt to IDFModeAvailability
+        return new IDFModeAvailability(Collections.emptySet());
     }
 
     @Provides
