@@ -70,7 +70,7 @@ public class ProbeModule extends AbstractModule {
             bind(WalkUtilityEstimator.class);
             bind(IDFCarCostModel.class);
             bind(IDFPtCostModel.class);
-            bind(IDFModeAvailability.class);
+            // bind(IDFModeAvailability.class);
         }
 
         if (config.useProbeAvailability) {
