@@ -3,16 +3,17 @@ package org.eqasim.core.simulation.mode_choice.utilities.estimators;
 import java.util.List;
 
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
+import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimatorWithPreviousTrips;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CarPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 
 import com.google.inject.Inject;
 
-public class CarUtilityEstimator implements UtilityEstimator {
+public class CarUtilityEstimator implements UtilityEstimatorWithPreviousTrips {
 	private final ModeParameters parameters;
 	private final CarPredictor predictor;
 
@@ -40,8 +41,9 @@ public class CarUtilityEstimator implements UtilityEstimator {
 	}
 
 	@Override
-	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		CarVariables variables = predictor.predictVariables(person, trip, elements);
+	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements,
+			List<TripCandidate> previousTrips) {
+		CarVariables variables = predictor.predictVariables(person, trip, elements, previousTrips);
 
 		double utility = 0.0;
 
@@ -51,5 +53,10 @@ public class CarUtilityEstimator implements UtilityEstimator {
 		utility += estimateMonetaryCostUtility(variables);
 
 		return utility;
+	}
+
+	@Override
+	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+		throw new IllegalStateException("Need to provide previous trips");
 	}
 }

@@ -8,16 +8,23 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
-import com.google.inject.Singleton;
-
-@Singleton
 public class IDFSpatialPredictor extends CachedVariablePredictor<IDFSpatialVariables> {
 	@Override
 	protected IDFSpatialVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
-		boolean hasUrbanOrigin = IDFPredictorUtils.isUrbanArea(trip.getOriginActivity());
-		boolean hasUrbanDestination = IDFPredictorUtils.isUrbanArea(trip.getDestinationActivity());
+		String originMunicipalityId = IDFPredictorUtils.getMunicipalityId(trip.getOriginActivity());
+		String destinationMunicipalityId = IDFPredictorUtils.getMunicipalityId(trip.getDestinationActivity());
 
-		return new IDFSpatialVariables(hasUrbanOrigin, hasUrbanDestination);
+		boolean isOriginInsideParis = isInsideParis(originMunicipalityId);
+		boolean isDestinationInsideParis = isInsideParis(destinationMunicipalityId);
+
+		return new IDFSpatialVariables( //
+				isOriginInsideParis && isDestinationInsideParis, //
+				isOriginInsideParis ^ isDestinationInsideParis, //
+				originMunicipalityId, destinationMunicipalityId);
+	}
+
+	static private boolean isInsideParis(String municipalityId) {
+		return municipalityId.startsWith("75");
 	}
 }

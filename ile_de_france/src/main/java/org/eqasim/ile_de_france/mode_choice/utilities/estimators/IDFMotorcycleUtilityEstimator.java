@@ -28,13 +28,13 @@ public class IDFMotorcycleUtilityEstimator extends MotorcycleUtilityEstimator {
 	protected double estimateUrbanUtility(IDFSpatialVariables variables) {
 		double utility = 0.0;
 
-		if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
+		/*if (variables.hasUrbanOrigin && variables.hasUrbanDestination) {
 			utility += parameters.idfMotorcycle.betaInsideUrbanArea;
 		}
 
 		if (variables.hasUrbanOrigin || variables.hasUrbanDestination) {
 			utility += parameters.idfMotorcycle.betaCrossingUrbanArea;
-		}
+		}*/
 
 		return utility;
 	}
