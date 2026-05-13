@@ -57,7 +57,7 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.cp.betaAge_u * Math.max(0.0, personVariables.age_a - 17);
+        return parameters.cp.betaAge_u * Math.max(0.0, personVariables.age_a - 17) / parameters.ageScale_year;
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
@@ -105,7 +105,11 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
     }
 
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
-        return Utils.isLowIncome(personVariables) ? parameters.cp.betaLowIncome_u : 0.0;
+        return Utils.isLowIncome(personVariables, parameters) ? parameters.cp.betaLowIncome_u : 0.0;
+    }
+
+    protected double estimateHighIncomeUtility(SwissPersonVariables personVariables) {
+        return Utils.isHighIncome(personVariables, parameters) ? parameters.cp.betaHighIncome_u : 0.0;
     }
 
     protected double estimateDrivingLicenseUtility(SwissPersonVariables personVariables) {
@@ -113,15 +117,15 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
     }
 
     protected double estimateShortDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isShortDistanceTrip(trip)? parameters.cp.betaShortDistance_u :0.0;
+        return Utils.isShortDistanceTrip(trip, parameters)? parameters.cp.betaShortDistance_u :0.0;
     }
 
     protected double estimateLongDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isLongDistanceTrip(trip)? parameters.cp.betaLongDistance_u :0.0;
+        return Utils.isLongDistanceTrip(trip, parameters)? parameters.cp.betaLongDistance_u :0.0;
     }
 
     protected double estimateVeryLongDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isVeryLongDistanceTrip(trip)? parameters.cp.betaVeryLongDistance_u :0.0;
+        return Utils.isVeryLongDistanceTrip(trip, parameters)? parameters.cp.betaVeryLongDistance_u :0.0;
     }
 
     protected double estimateDistanceUtility(DiscreteModeChoiceTrip trip) {
@@ -137,6 +141,10 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         return personVariables.hasCar? parameters.cp.betaHasCar_u:0.0;
     }
 
+    protected double estimateDensitiesUtility(DiscreteModeChoiceTrip trip) {
+        double aggregatedDensities = Utils.getDensitiesAtDestination(trip, parameters);
+        return parameters.cp.betaDensities_u * aggregatedDensities;
+    }
 
     protected double estimateCantonUtility(Person person) {
         Object cantonObj = person.getAttributes().getAttribute("cantonName");
@@ -160,6 +168,7 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         utility += estimateRetiredUtility(personVariables);
         utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
+        utility += estimateHighIncomeUtility(personVariables);
         utility += estimateDrivingLicenseUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);
@@ -170,6 +179,8 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         utility += estimateOtherDestinationUtility(trip);
         // origin
         utility += estimateHomeOriginUtility(trip);
+        // destination
+        utility += estimateDensitiesUtility(trip);
         // region
         utility += estimateRegionalUtility(personVariables);
         // distance
@@ -210,7 +221,7 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         cpAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         cpAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
         cpAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        cpAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
+        cpAttributes.put("lowIncome", Utils.isLowIncome(personVariables, parameters) ? "1" : "0");
         cpAttributes.put("income", String.valueOf(personVariables.income));
         cpAttributes.put("drivingLicense", String.valueOf(personVariables.drivingLicense));
 
@@ -226,9 +237,9 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         // location/distance used in utility
         cpAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
         cpAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        cpAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
-        cpAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
-        cpAttributes.put("veryLongDistance", Utils.isVeryLongDistanceTrip(trip) ? "1" : "0");
+        cpAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip, parameters) ? "1" : "0");
+        cpAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
+        cpAttributes.put("veryLongDistance", Utils.isVeryLongDistanceTrip(trip, parameters) ? "1" : "0");
 
         // canton
         Object cantonObj = person.getAttributes().getAttribute("cantonName");

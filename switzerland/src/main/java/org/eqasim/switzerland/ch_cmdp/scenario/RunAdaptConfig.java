@@ -5,7 +5,9 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contribs.discrete_mode_choice.model.utilities.MultinomialLogitSelector;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
+import org.matsim.contribs.discrete_mode_choice.modules.config.MultinomialLogitSelectorConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
@@ -131,7 +133,9 @@ public class RunAdaptConfig {
 			cachedModes.add(mode);
 		}
 		dmcConfig.setCachedModes(cachedModes);
-
+		// set fixed randoms
+		MultinomialLogitSelectorConfigGroup MNLConfig = dmcConfig.getMultinomialLogitSelectorConfig();
+		MNLConfig.setRandomNumbers(MultinomialLogitSelectorConfigGroup.RandomNumbers.fixed);
 		// adjust routing parameters
 		RoutingConfigGroup routingConfig  = config.routing();
 		routingConfig.setRoutingRandomness(1.0); // small randomness to avoid ties in route choice

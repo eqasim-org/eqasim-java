@@ -18,7 +18,7 @@ public class Utils {
     public static String LEISURE = "leisure";
     public static String OTHER = "other";
     // income groups
-    public static double LOW_INCOME_LIMIT_CHF = 3000.0;
+//    public static double LOW_INCOME_LIMIT_CHF = 3000.0;
     // municipality types
     public static String URBAN = "urban";
     public static String SUBURBAN = "suburban";
@@ -26,9 +26,9 @@ public class Utils {
     public static String URBAN_CORE = "urbancore";
     // other
     public static String NONE = "none";
-    public static double SHORT_DISTANCE_TRIP_KM = 1.0;
-    public static double LONG_DISTANCE_TRIP_KM = 13.0;
-    public static double VERY_LONG_DISTANCE_TRIP_KM = 25.0;
+//    public static double SHORT_DISTANCE_TRIP_KM = 1.0;
+//    public static double LONG_DISTANCE_TRIP_KM = 13.0;
+//    public static double VERY_LONG_DISTANCE_TRIP_KM = 25.0;
     public static double RETIRED_AGE_THRESHOLD = 65.0;
     public static double JUNIOR_AGE_THRESHOLD = 16.0;
 
@@ -86,35 +86,42 @@ public class Utils {
         return getDestinationMunicipalityType(trip).equals(NONE);
     }
 
-    public static boolean isShortDistanceTrip(double distance_km){
-        return (distance_km<SHORT_DISTANCE_TRIP_KM);
+    public static boolean isShortDistanceTrip(double distance_km, SwissCmdpModeParameters parameters){
+        return (distance_km<parameters.shortDistance_km);
     }
 
-    public static boolean isShortDistanceTrip(DiscreteModeChoiceTrip trip){
+    public static boolean isShortDistanceTrip(DiscreteModeChoiceTrip trip, SwissCmdpModeParameters parameters){
         double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return isShortDistanceTrip(distance_km);
+        return isShortDistanceTrip(distance_km, parameters);
     }
 
-    public static boolean isLongDistanceTrip(double distance_km){
-        return (distance_km>LONG_DISTANCE_TRIP_KM);
+    public static boolean isLongDistanceTrip(double distance_km, SwissCmdpModeParameters parameters){
+        return (distance_km>parameters.longDistance_km);
     }
 
-    public static boolean isLongDistanceTrip(DiscreteModeChoiceTrip trip){
+    public static boolean isLongDistanceTrip(DiscreteModeChoiceTrip trip, SwissCmdpModeParameters parameters){
         double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return isLongDistanceTrip(distance_km);
+        return isLongDistanceTrip(distance_km, parameters);
     }
 
-    public static boolean isVeryLongDistanceTrip(DiscreteModeChoiceTrip trip){
+    public static boolean isVeryLongDistanceTrip(DiscreteModeChoiceTrip trip, SwissCmdpModeParameters parameters){
         double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return (distance_km>VERY_LONG_DISTANCE_TRIP_KM);
+        return (distance_km>parameters.veryLongDistance_km);
     }
 
-    public static boolean isLowIncome(double income_CHF){
-        return (income_CHF<=LOW_INCOME_LIMIT_CHF);
+    public static boolean isLowIncome(double income_CHF, SwissCmdpModeParameters parameters){
+        return (income_CHF<=parameters.lowIncomeThreshold);
     }
 
-    public static boolean isLowIncome(SwissPersonVariables person){
-        return isLowIncome(person.income);
+    public static boolean isLowIncome(SwissPersonVariables person, SwissCmdpModeParameters parameters){
+        return isLowIncome(person.income, parameters);
+    }
+
+    public static boolean isHighIncome(double income_CHF, SwissCmdpModeParameters parameters){
+        return (income_CHF>=parameters.highIncomeThreshold);
+    }
+    public static boolean isHighIncome(SwissPersonVariables person, SwissCmdpModeParameters parameters){
+        return isHighIncome(person.income, parameters);
     }
 
     public static boolean isRetired(double age){
@@ -148,6 +155,91 @@ public class Utils {
                 parameters.referenceIncome, parameters.lambdaCostIncome);
 
         return interactionDistance * interactionIncome;
+    }
+
+    public static double getDensitiesAtDestination(DiscreteModeChoiceTrip trip, SwissCmdpModeParameters parameters) {
+        Object empDensity = trip.getDestinationActivity().getAttributes().getAttribute("employeeDensity");
+        Object compDensity = trip.getDestinationActivity().getAttributes().getAttribute("companiesDensity");
+        Object popDensity = trip.getDestinationActivity().getAttributes().getAttribute("populationDensity");
+
+        if (empDensity == null || compDensity == null || popDensity == null) {
+            return 0.0;
+        }
+
+        // Accept Integer, Double, Float, Long... and avoid ClassCastException
+        if (!(empDensity instanceof Number) || !(compDensity instanceof Number) || !(popDensity instanceof Number)) {
+            throw new IllegalArgumentException("Density attributes must be of type Number (Integer, Double, Float, Long, etc.)");
+        }
+
+        double densityValue = 0.0;
+
+        double empDensityValue = ((Number) empDensity).doubleValue();
+        densityValue += parameters.betaDestinationEmployeeDensity_u
+                * Math.pow(empDensityValue, parameters.employeesDensityExponent)
+                / parameters.employeesDensityScale;
+
+        double compDensityValue = ((Number) compDensity).doubleValue();
+        densityValue += parameters.betaDestinationCompaniesDensity_u
+                * Math.pow(compDensityValue, parameters.companiesDensityExponent)
+                / parameters.companiesDensityScale;
+
+        double popDensityValue = ((Number) popDensity).doubleValue();
+        densityValue += parameters.betaDestinationPopulationDensity_u
+                * Math.pow(popDensityValue, parameters.populationDensityExponent)
+                / parameters.populationDensityScale;
+
+        return densityValue;
+    }
+
+    public static boolean destinationIsGoodPtService(DiscreteModeChoiceTrip trip){
+        Object ovgk = trip.getDestinationActivity().getAttributes().getAttribute("ovgk");
+        if (!(ovgk instanceof String)) {
+            return false;
+        }
+        return isGoodPtService((String) ovgk);
+    }
+
+    public static boolean destinationIsMediumPtService(DiscreteModeChoiceTrip trip){
+        Object ovgk = trip.getDestinationActivity().getAttributes().getAttribute("ovgk");
+        if (!(ovgk instanceof String)) {
+            return false;
+        }
+        return isMediumPtService((String) ovgk);
+    }
+
+    public static String ZURICH = "zurich";
+    public static String GENEVA = "geneva";
+    public static String BASEL = "basel";
+    public static String LUZERN = "luzern";
+    public static String LAUSANNE = "lausanne";
+    public static String BERN = "BERN";
+
+    public static String getMainCity(DiscreteModeChoiceTrip trip){
+        Object objMunicipalityId = trip.getDestinationActivity().getAttributes().getAttribute("municipalityId");
+        if  (objMunicipalityId != null){
+            String municipalityId = objMunicipalityId.toString();
+            switch (municipalityId) {
+                case "261" -> {
+                    return ZURICH;
+                }
+                case "6621" -> {
+                    return GENEVA;
+                }
+                case "2701" -> {
+                    return BASEL;
+                }
+                case "1061" -> {
+                    return LUZERN;
+                }
+                case "5586" -> {
+                    return LAUSANNE;
+                }
+                case "351" -> {
+                    return BERN;
+                }
+            }
+        }
+        return NONE;
     }
 
 }

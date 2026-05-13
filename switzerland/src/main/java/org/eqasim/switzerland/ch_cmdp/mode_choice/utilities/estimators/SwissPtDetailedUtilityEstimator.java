@@ -128,7 +128,7 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.pt.betaAge_u * Math.max(0.0, personVariables.age_a - 17);
+        return parameters.pt.betaAge_u * Math.max(0.0, personVariables.age_a - 17) / parameters.ageScale_year;
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
@@ -180,15 +180,26 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     }
 
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
-        return Utils.isLowIncome(personVariables) ? parameters.pt.betaLowIncome_u : 0.0;
+        return Utils.isLowIncome(personVariables, parameters) ? parameters.pt.betaLowIncome_u : 0.0;
+    }
+
+    protected double estimateHighIncomeUtility(SwissPersonVariables personVariables) {
+        return Utils.isHighIncome(personVariables, parameters) ? parameters.pt.betaHighIncome_u : 0.0;
     }
 
     protected double estimateShortDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isShortDistanceTrip(trip)? parameters.pt.betaShortDistance_u :0.0;
+        return Utils.isShortDistanceTrip(trip, parameters)? parameters.pt.betaShortDistance_u :0.0;
+    }
+
+    protected double estimateServiceQualityUtility(SwissPersonVariables personVariables, DiscreteModeChoiceTrip trip) {
+        return (estimateGoodPtServiceUtility(personVariables) +
+                estimateMediumPtServiceUtility(personVariables) +
+                estimateDestinationMediumPtServiceUtility(trip) +
+                estimateDestinationGoodPtServiceUtility(trip));
     }
 
     protected double estimateLongDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isLongDistanceTrip(trip)? parameters.pt.betaLongDistance_u :0.0;
+        return Utils.isLongDistanceTrip(trip, parameters)? parameters.pt.betaLongDistance_u :0.0;
     }
 
     protected double estimateGoodPtServiceUtility(SwissPersonVariables personVariables) {
@@ -197,6 +208,19 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
 
     protected double estimateMediumPtServiceUtility(SwissPersonVariables personVariablesp) {
         return Utils.isMediumPtService(personVariablesp.ovgk)? parameters.pt.betaMediumService_u :0.0;
+    }
+
+    protected double estimateDestinationMediumPtServiceUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsMediumPtService(trip)? parameters.pt.betaDestinationMediumService_u :0.0;
+    }
+
+    protected double estimateDestinationGoodPtServiceUtility(DiscreteModeChoiceTrip trip) {
+        return Utils.destinationIsGoodPtService(trip)? parameters.pt.betaDestinationGoodService_u :0.0;
+    }
+
+    protected double estimateDensitiesUtility(DiscreteModeChoiceTrip trip) {
+        double aggregatedDensities = Utils.getDensitiesAtDestination(trip, parameters);
+        return parameters.pt.betaDensities_u * aggregatedDensities;
     }
 
     protected double estimateCantonUtility(Person person) {
@@ -225,6 +249,7 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         utility += estimateRetiredUtility(personVariables);
         utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
+        utility += estimateHighIncomeUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
@@ -234,6 +259,8 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         utility += estimateOtherDestinationUtility(trip);
         // origin
         utility += estimateHomeOriginUtility(trip);
+        // destination
+        utility += estimateDensitiesUtility(trip);
         // region
         utility += estimateRegionalUtility(personVariables);
         // distance
@@ -245,8 +272,7 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         // canton
         utility += estimateCantonUtility(person);
         // service quality
-        utility += estimateGoodPtServiceUtility(personVariables);
-        utility += estimateMediumPtServiceUtility(personVariables);
+        utility += estimateServiceQualityUtility(personVariables, trip);
 
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, variables, personVariables, utility);
@@ -272,7 +298,7 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         ptAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         ptAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
         ptAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        ptAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
+        ptAttributes.put("lowIncome", Utils.isLowIncome(personVariables, parameters) ? "1" : "0");
         ptAttributes.put("income", String.valueOf(personVariables.income));
 
         // canton attribute
@@ -291,8 +317,8 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         // location/distance used in utility
         ptAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
         ptAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        ptAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
-        ptAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+        ptAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip, parameters) ? "1" : "0");
+        ptAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
 
         // service quality used in utility
         ptAttributes.put("goodPtService", Utils.isGoodPtService(personVariables.ovgk) ? "1" : "0");

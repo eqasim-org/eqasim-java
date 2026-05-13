@@ -18,8 +18,23 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
     public double lambdaCostIncome = 0.0;
     public double referenceIncome = 0.0;
 
+    public double betaDestinationEmployeeDensity_u = 0.0;
+    public double betaDestinationPopulationDensity_u = 0.0;
+    public double betaDestinationCompaniesDensity_u = 0.0;
     public double timeScale_min = 1.0;
     public double distanceScale_km = 1.0;
+    public double ageScale_year = 1.0;
+    public double populationDensityScale = 2000.0;
+    public double populationDensityExponent = 0.7;
+    public double employeesDensityScale = 200.0;
+    public double employeesDensityExponent = 0.5;
+    public double companiesDensityScale = 200.0;
+    public double companiesDensityExponent = 0.7;
+    public double lowIncomeThreshold = 3000.0;
+    public double highIncomeThreshold = 8000.0;
+    public double shortDistance_km = 1.0;
+    public double longDistance_km = 13.0;
+    public double veryLongDistance_km = 30.0;
 
     public static class SwissBikeParameters {
         public double alpha_u = 0.0;
@@ -29,6 +44,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
         public double betaLowIncome_u = 0.0;
+        public double betaHighIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
@@ -44,6 +60,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaRetired_u = 0.0;
         public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
+        public double betaDensities_u = 0.0;
     }
 
     public static class SwissCarParameters {
@@ -54,6 +71,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
         public double betaLowIncome_u = 0.0;
+        public double betaHighIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
@@ -70,6 +88,15 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaCarOwnershipRatio_u = 0.0;
         public double betaShortDistance_u = 0.0;
         public double betaLongDistance_u = 0.0;
+        public double betaDensities_u = 0.0;
+        // cities
+        public double betaDestinationZurich_u = 0.0;
+        public double betaDestinationGeneva_u = 0.0;
+        public double betaDestinationBasel_u = 0.0;
+        public double betaDestinationLausanne_u = 0.0;
+        public double betaDestinationLuzern_u = 0.0;
+        public double betaDestinationBern_u = 0.0;
+
         // just because are used for calculating travel times in car predictor
         public double additionalAccessEgressWalkTime_min = 0.0;
         public double constantParkingSearchPenalty_min = 0.0;
@@ -100,6 +127,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
         public double betaLowIncome_u = 0.0;
+        public double betaHighIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
@@ -117,6 +145,9 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaLongDistance_u = 0.0;
         public double betaGoodService_u = 0.0;
         public double betaMediumService_u = 0.0;
+        public double betaDestinationGoodService_u = 0.0;
+        public double betaDestinationMediumService_u = 0.0;
+        public double betaDensities_u = 0.0;
     }
 
     public static class SwissWalkParameters {
@@ -127,6 +158,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
         public double betaLowIncome_u = 0.0;
+        public double betaHighIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
@@ -142,6 +174,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaRetired_u = 0.0;
         public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
+        public double betaDensities_u = 0.0;
     }
 
     public static class SwissCarPassengerParameters {
@@ -152,6 +185,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaAge_u = 0.0;
         public double betaSex_u = 0.0;
         public double betaLowIncome_u = 0.0;
+        public double betaHighIncome_u = 0.0;
         public double betaRegion1_u = 0.0;
         public double betaRegion2_u = 0.0;
         public double betaOriginHome_u = 0.0;
@@ -172,6 +206,7 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaHasCar_u = 0.0;
         public double betaVeryLongDistance_u = 0.0;
         public double betaDistance_u_km = 0.0;
+        public double betaDensities_u = 0.0;
     }
 
     public static SwissCmdpModeParameters buildDefault() {

@@ -154,9 +154,9 @@ public class SwissPredictorUtils {
 	}
 
 	static public String getOvgk(Person person) {
-		String ovgk = (String) person.getAttributes().getAttribute("ovgk");
-		if (ovgk != null) {
-			return ovgk;
+		Object ovgk = person.getAttributes().getAttribute("ovgk");
+		if (ovgk instanceof String) {
+			return (String) ovgk;
 		} else {
 			return "none";
 		}

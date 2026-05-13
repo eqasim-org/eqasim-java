@@ -124,8 +124,8 @@ public class FlowProcessor {
     }
 
 
-    private final double C = 0.05;
-    private final double EPSILON = 0.03;
+    private final double C = 0.02;
+    private final double EPSILON = 0.02;
     public double getUnbiasedError(int category){
         if (countsProcessor.size()==0) {
             return Double.POSITIVE_INFINITY;

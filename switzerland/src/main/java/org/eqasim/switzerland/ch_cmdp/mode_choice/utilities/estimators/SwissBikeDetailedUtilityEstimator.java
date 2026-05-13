@@ -45,7 +45,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.bike.betaAge_u * Math.max(0.0, personVariables.age_a - 17);
+        return parameters.bike.betaAge_u * Math.max(0.0, personVariables.age_a - 17) / parameters.ageScale_year;
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
@@ -67,11 +67,11 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     }
 
     protected double estimateShortDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isShortDistanceTrip(trip)? parameters.bike.betaShortDistance_u :0.0;
+        return Utils.isShortDistanceTrip(trip, parameters)? parameters.bike.betaShortDistance_u :0.0;
     }
 
     protected double estimatedLongDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isLongDistanceTrip(trip)? parameters.bike.betaLongDistance_u :0.0;
+        return Utils.isLongDistanceTrip(trip, parameters)? parameters.bike.betaLongDistance_u :0.0;
     }
 
     protected double estimateUrbanDestinationUtility(DiscreteModeChoiceTrip trip) {
@@ -115,7 +115,16 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
     }
 
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
-        return Utils.isLowIncome(personVariables) ? parameters.bike.betaLowIncome_u : 0.0;
+        return Utils.isLowIncome(personVariables, parameters) ? parameters.bike.betaLowIncome_u : 0.0;
+    }
+
+    protected double estimateHighIncomeUtility(SwissPersonVariables personVariables) {
+        return Utils.isHighIncome(personVariables, parameters) ? parameters.bike.betaHighIncome_u : 0.0;
+    }
+
+    protected double estimateDensitiesUtility(DiscreteModeChoiceTrip trip) {
+        double aggregatedDensities = Utils.getDensitiesAtDestination(trip, parameters);
+        return parameters.bike.betaDensities_u * aggregatedDensities;
     }
 
     protected double estimateCantonUtility(Person person) {
@@ -140,6 +149,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         utility += estimateRetiredUtility(personVariables);
         utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
+        utility += estimateHighIncomeUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
@@ -149,6 +159,8 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         utility += estimateOtherDestinationUtility(trip);
         // origin
         utility += estimateHomeOriginUtility(trip);
+        // destination
+        utility += estimateDensitiesUtility(trip);
         // region
         utility += estimateRegionalUtility(personVariables);
         // distance
@@ -184,7 +196,7 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         bikeAttributes.put("region", String.valueOf(personVariables.cantonCluster));
         bikeAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
         bikeAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        bikeAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
+        bikeAttributes.put("lowIncome", Utils.isLowIncome(personVariables, parameters) ? "1" : "0");
         bikeAttributes.put("income", String.valueOf(personVariables.income));
 
         // purposes used in utility
@@ -199,8 +211,8 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         // location/distance used in utility
         bikeAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
         bikeAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        bikeAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
-        bikeAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+        bikeAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip, parameters) ? "1" : "0");
+        bikeAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
 
         // canton
         Object cantonObj = person.getAttributes().getAttribute("cantonName");

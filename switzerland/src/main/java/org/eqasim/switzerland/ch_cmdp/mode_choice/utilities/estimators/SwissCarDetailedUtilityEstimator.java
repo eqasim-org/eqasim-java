@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.Utils.*;
+
 public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
     private final SwissPersonPredictor personPredictor;
@@ -48,13 +50,13 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
     }
 
     protected double getParkingSearchDuration(DiscreteModeChoiceTrip trip){
-        if (Utils.destinationIsHome(trip) || Utils.destinationIsWork(trip)){
+        if (destinationIsHome(trip) || destinationIsWork(trip)){
             return 0.0;
-        } else if (Utils.destinationIsUrban(trip)) {
+        } else if (destinationIsUrban(trip)) {
             return parameters.parking.urbanParkingSearchDuration_min;
-        } else if (Utils.destinationIsUrbanCore(trip)){
+        } else if (destinationIsUrbanCore(trip)){
             return parameters.parking.urbancoreParkingSearchDuration_min;
-        } else if (Utils.destinationIsSuburban(trip)){
+        } else if (destinationIsSuburban(trip)){
             return parameters.parking.suburbanParkingSearchDuration_min;
         }
         return 0.0;
@@ -71,17 +73,17 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
     }
 
     protected double estimateUrbanDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsUrban(trip) ? parameters.car.betaUrbanDestination_u : 0.0;
+        return destinationIsUrban(trip) ? parameters.car.betaUrbanDestination_u : 0.0;
     }
 
     protected double estimateMonetaryCostUtility(DiscreteModeChoiceTrip trip, CarVariables variables, SwissPersonVariables personVariables) {
         double totalCost = variables.cost_MU + parkingCostModel.getParkingPrice_CFH(trip, variables);
-        double interaction = Utils.interaction(variables.euclideanDistance_km, personVariables.income, parameters);
+        double interaction = interaction(variables.euclideanDistance_km, personVariables.income, parameters);
         return parameters.betaCost_u_MU * totalCost * interaction;
     }
 
     protected double estimateAgeUtility(SwissPersonVariables personVariables) {
-        return parameters.car.betaAge_u * Math.max(0.0, personVariables.age_a - 17);
+        return parameters.car.betaAge_u * Math.max(0.0, personVariables.age_a - 17) / parameters.ageScale_year;
     }
 
     protected double estimateSexUtility(SwissPersonVariables personVariables) {
@@ -89,59 +91,91 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
     }
 
     protected double estimateHomeOriginUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.originIsHome(trip) ? parameters.car.betaOriginHome_u : 0.0;
+        return originIsHome(trip) ? parameters.car.betaOriginHome_u : 0.0;
     }
 
     protected double estimateWorkDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsWork(trip) ? parameters.car.betaDestinationWork_u : 0.0;
+        return destinationIsWork(trip) ? parameters.car.betaDestinationWork_u : 0.0;
     }
 
     protected double estimateHomeDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsHome(trip) ? parameters.car.betaDestinationHome_u : 0.0;
+        return destinationIsHome(trip) ? parameters.car.betaDestinationHome_u : 0.0;
     }
 
     protected double estimateEducationDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsEducation(trip) ? parameters.car.betaDestinationEducation_u : 0.0;
+        return destinationIsEducation(trip) ? parameters.car.betaDestinationEducation_u : 0.0;
     }
 
     protected double estimateShoppingDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsShopping(trip) ? parameters.car.betaDestinationShopping_u : 0.0;
+        return destinationIsShopping(trip) ? parameters.car.betaDestinationShopping_u : 0.0;
     }
 
     protected double estimateLeisureDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsLeisure(trip) ? parameters.car.betaDestinationLeisure_u : 0.0;
+        return destinationIsLeisure(trip) ? parameters.car.betaDestinationLeisure_u : 0.0;
     }
 
     protected double estimateOtherDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsOther(trip) ? parameters.car.betaDestinationOther_u : 0.0;
+        return destinationIsOther(trip) ? parameters.car.betaDestinationOther_u : 0.0;
     }
 
     protected double estimateUrbancoreDestinationUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsUrbanCore(trip) ? parameters.car.betaUrbancoreDestination_u : 0.0;
+        return destinationIsUrbanCore(trip) ? parameters.car.betaUrbancoreDestination_u : 0.0;
     }
 
     protected double estimateRetiredUtility(SwissPersonVariables personVariables) {
-        return Utils.isRetired(personVariables) ? parameters.car.betaRetired_u : 0.0;
+        return isRetired(personVariables) ? parameters.car.betaRetired_u : 0.0;
     }
 
     protected double estimateJuniorUtility(SwissPersonVariables personVariables) {
-        return Utils.isJunior(personVariables) ? parameters.car.betaJunior_u : 0.0;
+        return isJunior(personVariables) ? parameters.car.betaJunior_u : 0.0;
     }
 
     protected double estimateLowIncomeUtility(SwissPersonVariables personVariables) {
-        return Utils.isLowIncome(personVariables) ? parameters.car.betaLowIncome_u : 0.0;
+        return isLowIncome(personVariables, parameters) ? parameters.car.betaLowIncome_u : 0.0;
+    }
+
+    protected double estimateHighIncomeUtility(SwissPersonVariables personVariables) {
+        return isHighIncome(personVariables, parameters) ? parameters.car.betaHighIncome_u : 0.0;
     }
 
     protected double estimateShortDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isShortDistanceTrip(trip)? parameters.car.betaShortDistance_u :0.0;
+        return isShortDistanceTrip(trip,parameters)? parameters.car.betaShortDistance_u :0.0;
     }
 
     protected double estimateLongDistanceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.isLongDistanceTrip(trip)? parameters.car.betaLongDistance_u :0.0;
+        return isLongDistanceTrip(trip, parameters)? parameters.car.betaLongDistance_u :0.0;
     }
 
     protected double estimateCarOwnershipUtility(SwissPersonVariables personVariables) {
         return personVariables.carOwnershipRatio * parameters.car.betaCarOwnershipRatio_u;
+    }
+
+    protected double estimateDensitiesUtility(DiscreteModeChoiceTrip trip) {
+        double aggregatedDensities = getDensitiesAtDestination(trip, parameters);
+        return parameters.car.betaDensities_u * aggregatedDensities;
+    }
+
+    protected double estimateBigCitiesUtility(DiscreteModeChoiceTrip trip) {
+        String city = getMainCity(trip);
+        if (city == null) {
+            return 0.0;
+        }
+
+        if (ZURICH.equals(city)) {
+            return parameters.car.betaDestinationZurich_u;
+        } else if (GENEVA.equals(city)) {
+            return parameters.car.betaDestinationGeneva_u;
+        } else if (BASEL.equals(city)) {
+            return parameters.car.betaDestinationBasel_u;
+        } else if (LUZERN.equals(city)) {
+            return parameters.car.betaDestinationLuzern_u;
+        } else if (LAUSANNE.equals(city)) {
+            return parameters.car.betaDestinationLausanne_u;
+        } else if (BERN.equals(city)) {
+            return parameters.car.betaDestinationBern_u;
+        }
+
+        return 0.0;
     }
 
     protected double estimateCantonUtility(Person person) {
@@ -167,6 +201,7 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         utility += estimateRetiredUtility(personVariables);
         utility += estimateJuniorUtility(personVariables);
         utility += estimateLowIncomeUtility(personVariables);
+        utility += estimateHighIncomeUtility(personVariables);
         // purposes
         utility += estimateHomeDestinationUtility(trip);
         utility += estimateWorkDestinationUtility(trip);
@@ -176,6 +211,8 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         utility += estimateOtherDestinationUtility(trip);
         // origin
         utility += estimateHomeOriginUtility(trip);
+        // destination
+        utility += estimateDensitiesUtility(trip);
         // region
         utility += estimateRegionalUtility(personVariables);
         // distance
@@ -188,7 +225,8 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         utility += estimateCarOwnershipUtility(personVariables);
         // canton
         utility += estimateCantonUtility(person);
-
+        // city specific
+        utility += estimateBigCitiesUtility(trip);
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, variables, personVariables, utility);
         }
@@ -211,26 +249,26 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         carAttributes.put("age", String.valueOf(personVariables.age_a));
         carAttributes.put("sex", String.valueOf(personVariables.sex));
         carAttributes.put("region", String.valueOf(personVariables.cantonCluster));
-        carAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
-        carAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        carAttributes.put("lowIncome", Utils.isLowIncome(personVariables) ? "1" : "0");
+        carAttributes.put("retired", isRetired(personVariables) ? "1" : "0");
+        carAttributes.put("junior", isJunior(personVariables) ? "1" : "0");
+        carAttributes.put("lowIncome", isLowIncome(personVariables, parameters) ? "1" : "0");
         carAttributes.put("income", String.valueOf(personVariables.income));
 
         // purposes used in utility
-        carAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
-        carAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
-        carAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
-        carAttributes.put("destinationEducation", Utils.destinationIsEducation(trip) ? "1" : "0");
-        carAttributes.put("destinationShopping", Utils.destinationIsShopping(trip) ? "1" : "0");
-        carAttributes.put("destinationLeisure", Utils.destinationIsLeisure(trip) ? "1" : "0");
-        carAttributes.put("destinationOther", Utils.destinationIsOther(trip) ? "1" : "0");
+        carAttributes.put("originHome", originIsHome(trip) ? "1" : "0");
+        carAttributes.put("destinationWork", destinationIsWork(trip) ? "1" : "0");
+        carAttributes.put("destinationHome", destinationIsHome(trip) ? "1" : "0");
+        carAttributes.put("destinationEducation", destinationIsEducation(trip) ? "1" : "0");
+        carAttributes.put("destinationShopping", destinationIsShopping(trip) ? "1" : "0");
+        carAttributes.put("destinationLeisure", destinationIsLeisure(trip) ? "1" : "0");
+        carAttributes.put("destinationOther", destinationIsOther(trip) ? "1" : "0");
 
         // location/distance used in utility
-        carAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
-        carAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        carAttributes.put("suburbanDestination", Utils.destinationIsSuburban(trip) ? "1" : "0");
-        carAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip) ? "1" : "0");
-        carAttributes.put("longDistance", Utils.isLongDistanceTrip(trip) ? "1" : "0");
+        carAttributes.put("urbanDestination", destinationIsUrban(trip) ? "1" : "0");
+        carAttributes.put("urbancoreDestination", destinationIsUrbanCore(trip) ? "1" : "0");
+        carAttributes.put("suburbanDestination", destinationIsSuburban(trip) ? "1" : "0");
+        carAttributes.put("shortDistance", isShortDistanceTrip(trip, parameters) ? "1" : "0");
+        carAttributes.put("longDistance", isLongDistanceTrip(trip, parameters) ? "1" : "0");
 
         // car ownership and canton used in utility
         carAttributes.put("carOwnershipRatio", String.valueOf(personVariables.carOwnershipRatio));
