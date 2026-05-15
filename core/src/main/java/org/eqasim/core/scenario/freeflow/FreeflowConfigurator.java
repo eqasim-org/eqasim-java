@@ -49,7 +49,7 @@ public class FreeflowConfigurator {
         this.network = network;
     }
 
-    private record AreaRecord(Geometry geometry, double factor) {
+    private record AreaRecord(Geometry geometry, double factor, double crossingPenalty_s) {
     }
 
     private record Container(IdMap<Link, Double> delays, IdMap<Link, Double> factors) {
@@ -63,7 +63,7 @@ public class FreeflowConfigurator {
         for (FreeflowConfiguration.Area area : configuration.areas) {
             try {
                 Geometry geometry = new WKTReader().read(area.wkt);
-                areas.add(new AreaRecord(geometry, area.factor));
+                areas.add(new AreaRecord(geometry, area.factor, area.crossingPenalty_s));
             } catch (ParseException e) {
                 throw new IllegalStateException(e);
             }
@@ -95,6 +95,7 @@ public class FreeflowConfigurator {
                 for (AreaRecord area : areas) {
                     if (area.geometry.covers(point)) {
                         roadFactor *= area.factor;
+                        delay += area.crossingPenalty_s;
                     }
                 }
             }
@@ -119,8 +120,8 @@ public class FreeflowConfigurator {
             Id<Link> linkId = entry.getKey();
 
             double travelTime = entry.getValue().networkTravelTime;
-            travelTime *= container.factors.get(linkId);
-            travelTime += container.delays.get(linkId);
+            travelTime *= container.factors.getOrDefault(linkId, 1.0);
+            travelTime += container.delays.getOrDefault(linkId, 0.0);
 
             travelTimes.put(linkId, travelTime);
         }

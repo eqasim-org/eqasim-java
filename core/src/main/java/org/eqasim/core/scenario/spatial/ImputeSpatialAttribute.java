@@ -13,6 +13,8 @@ import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.TripStructureUtils.StageActivityHandling;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 public class ImputeSpatialAttribute {
 	private final Geometry geometry;
@@ -30,12 +32,17 @@ public class ImputeSpatialAttribute {
 
 		for (Person person : population.getPersons().values()) {
 			for (Plan plan : person.getPlans()) {
-				for (Activity activity : TripStructureUtils.getActivities(plan, StageActivityHandling.ExcludeStageActivities)) {
+				for (Activity activity : TripStructureUtils.getActivities(plan,
+						StageActivityHandling.ExcludeStageActivities)) {
 					Point point = factory
 							.createPoint(new Coordinate(activity.getCoord().getX(), activity.getCoord().getY()));
 
 					if (geometry.contains(point)) {
 						activity.getAttributes().putAttribute(attribute, true);
+
+						if (activity.getType().equals("home")) {
+							person.getAttributes().putAttribute(attribute, true);
+						}
 					}
 				}
 			}
@@ -55,6 +62,23 @@ public class ImputeSpatialAttribute {
 
 			if (geometry.covers(point)) {
 				link.getAttributes().putAttribute(attribute, true);
+			}
+
+			progress.update();
+		}
+
+		progress.close();
+	}
+
+	public void run(TransitSchedule schedule) throws InterruptedException {
+		ParallelProgress progress = new ParallelProgress("Imputing spatial schedule attributes ...",
+				schedule.getFacilities().size());
+
+		for (TransitStopFacility facility : schedule.getFacilities().values()) {
+			Point point = factory.createPoint(new Coordinate(facility.getCoord().getX(), facility.getCoord().getY()));
+
+			if (geometry.covers(point)) {
+				facility.getAttributes().putAttribute(attribute, true);
 			}
 
 			progress.update();

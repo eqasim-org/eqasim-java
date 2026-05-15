@@ -187,6 +187,8 @@ public class TestEmissions {
 		double expectedCo = 0.893473893036039;
 		double expectedNox = 1.080511804659364;
 		double expectedUnknown = Double.NaN;
+		
+		
 
 		assertEquals(expectedPm, feature.getAttribute("PM"));
 		assertEquals(expectedCo, feature.getAttribute("CO"));

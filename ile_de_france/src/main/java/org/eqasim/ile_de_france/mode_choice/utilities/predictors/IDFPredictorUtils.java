@@ -2,6 +2,7 @@ package org.eqasim.ile_de_france.mode_choice.utilities.predictors;
 
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.population.PersonUtils;
 
 public class IDFPredictorUtils {
 	static public boolean hasSubscription(Person person) {
@@ -9,8 +10,48 @@ public class IDFPredictorUtils {
 		return hasSubscription != null && hasSubscription;
 	}
 
-	static public boolean isUrbanArea(Activity activity) {
-		Boolean isUrban = (Boolean) activity.getAttributes().getAttribute("isUrban");
-		return isUrban != null && isUrban;
+	static public boolean isOutside(Person person) {
+		Boolean isOutside = (Boolean) person.getAttributes().getAttribute("outside");
+		return isOutside != null && isOutside;
+	}
+
+	static public boolean hasDrivingLicense(Person person) {
+		return !"no".equals(PersonUtils.getLicense(person));
+	}
+
+	static public boolean hasCarAvailability(Person person) {
+		return !"none".equals((String) person.getAttributes().getAttribute("carAvailability"));
+	}
+
+	static public boolean hasBicycleAvailability(Person person) {
+		return !"none".equals((String) person.getAttributes().getAttribute("bicycleAvailability"));
+	}
+
+	static public double getHouseholdIncome(Person person) {
+		Double householdIncome = (Double) person.getAttributes().getAttribute("householdIncome");
+		return householdIncome;
+	}
+
+	static public double getConsumptionUnits(Person person) {
+		Double consumptionUnits = (Double) person.getAttributes().getAttribute("householdConsumptionUnits");
+		return consumptionUnits;
+	}
+
+	static public double getHouseholdIncomePerCU(Person person) {
+		return getHouseholdIncome(person) / getConsumptionUnits(person);
+	}
+
+	static public final String ACTIVITY_MUNICIPALITY_ID = "municipalityId";
+
+	static public String getMunicipalityId(Activity activity) {
+		String municipalityId = (String) activity.getAttributes().getAttribute(ACTIVITY_MUNICIPALITY_ID);
+		return municipalityId != null ? municipalityId : "";
+	}
+
+	static public final String RESIDENCE_MUNICIPALITY_ID = "residenceMunicipalityId";
+
+	static public String getMunicipalityId(Person person) {
+		String municipalityId = (String) person.getAttributes().getAttribute(RESIDENCE_MUNICIPALITY_ID);
+		return municipalityId != null ? municipalityId : "";
 	}
 }
