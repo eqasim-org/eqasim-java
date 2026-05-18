@@ -2,11 +2,11 @@ package org.eqasim.core.components.fast_calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -14,14 +14,13 @@ import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationStartsEvent;
 import org.matsim.core.controler.events.ShutdownEvent;
-import org.matsim.core.controler.listener.ShutdownListener;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
 
-public class AlphaCalibrator implements FastCalibration, ShutdownListener {
+public class AlphaCalibrator implements FastCalibration {
     // This class tracks the mode share at the beginning of each iteration and calibrates the alpha value
     // based on the mode share from the previous iteration and the target mode shares.
 
@@ -51,6 +50,7 @@ public class AlphaCalibrator implements FastCalibration, ShutdownListener {
     private final ModeParameters modeParameters;
     private final TripListConverter tripListConverter;
     private String lastParametersFile = "";
+    private final EqasimConfigGroup eqasimConfigGroup;
 
     public AlphaCalibrator(Scenario scenario,
                            OutputDirectoryHierarchy outputHierarchy,
@@ -59,7 +59,8 @@ public class AlphaCalibrator implements FastCalibration, ShutdownListener {
                            Map<String, Double> targetModeShares,
                            List<String> modesToCalibrate,
                            double beta,
-                           boolean isActivated) {
+                           boolean isActivated,
+                           EqasimConfigGroup eqasimConfigGroup) {
 
         this.targetModeShares = targetModeShares;
         this.scenario = scenario;
@@ -69,6 +70,7 @@ public class AlphaCalibrator implements FastCalibration, ShutdownListener {
         this.beta = beta;
         this.isActivated = isActivated;
         this.modesToCalibrate = modesToCalibrate;
+        this.eqasimConfigGroup = eqasimConfigGroup;
 
         if (isActivated) {
             // if the calibration is activated, check the target mode shares and reset the plans creation flag
@@ -302,9 +304,12 @@ public class AlphaCalibrator implements FastCalibration, ShutdownListener {
         // copy the last parameters file to the main output directory
         if (isActivated && !lastParametersFile.isEmpty()) {
             File sourceFile = new File(lastParametersFile);
+            eqasimConfigGroup.setModeParametersPath(sourceFile.getAbsolutePath());
+
             File destFile = new File(outputHierarchy.getOutputFilenameWithOutputPrefix("mode_parameters.yml"));
             try {
                 java.nio.file.Files.copy(sourceFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                eqasimConfigGroup.setModeParametersPath(sourceFile.getAbsolutePath());
             } catch (IOException e) {
                 throw new RuntimeException("Error copying mode parameters file to main output directory.", e);
             }

@@ -126,7 +126,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	public AlphaCantonCalibrator provideAlphaCantonCalibrator(Scenario scenario,
 															  OutputDirectoryHierarchy outputHierarchy,
 															  SwissCmdpModeParameters modeParameters,
-															  TripListConverter tripListConverter) {
+															  TripListConverter tripListConverter,
+															  EqasimConfigGroup eqasimConfigGroup) {
 		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
 
 		String filePath = calConfig.getFilePath();
@@ -142,7 +143,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		);
 
 		return new AlphaCantonCalibrator(scenario,outputHierarchy,targetModeShares,modeParameters,
-				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate());
+				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate(),
+				eqasimConfigGroup);
 	}
 
 	@Provides

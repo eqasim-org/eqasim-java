@@ -27,7 +27,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     static private final String PENALTIES_FILE = "penaltiesFile";
     static private final String OBSERVED_SPEED_TRIPS_FILE = "observedSpeedTripsFile";
     static private final String FREESPEED_FACTORS_FILE = "freespeedFactorsFile";
-    static private final String CAPACITIES_FILE = "capacitiesFile";
     static private final String MIN_FREESPEED_FACTOR = "minFreespeedFactor";
     static private final String MAX_FREESPEED_FACTOR = "maxFreespeedFactor";
     static private final String MIN_TRIPS_PER_GROUP = "minTripsPerGroup";
@@ -56,7 +55,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
 
     private String observedSpeedTripsFile = "";
     private String freespeedFactorsFile = "";
-    private String capacitiesFile = "";
     private double minFreespeedFactor = 0.5;
     private double maxFreespeedFactor = 1.3;
     private int minTripsPerGroup = 50;
@@ -85,7 +83,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(MAX_PENALTY, "Maximum penalty to be applied to link categories when objective is penalty (default: 0.3)");
         map.put(MIN_PENALTY, "Minimum penalty to be applied to link categories when objective is penalty (default: -0.1)");
         map.put(PENALTIES_FILE, "Path to the csv penalties file (default: empty). Expected columns: linkCategory;isUrban;specialRegion;penalty. CSV values override penalties from link attributes.");
-        map.put(CAPACITIES_FILE, "Deprecated and ignored. Capacity calibration objective is no longer supported.");
         map.put(OBSERVED_SPEED_TRIPS_FILE, "Path to observed trips CSV used when objective is freespeed. Expected columns: departure_x,departure_y,arrival_x,arrival_y,departure_hour,travel_time,traveled_distance");
         map.put(FREESPEED_FACTORS_FILE, "Path to freespeed factors CSV (default: empty). Expected columns: category;municipalityType;specialRegion;factor. CSV values override speedFactor link attributes.");
         map.put(FREESPEED_SPECIAL_REGION_PATH, "Semicolon-separated list of GeoJSON files defining freespeed special regions. Each file is assigned an index (1..N).");
@@ -127,20 +124,6 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
 
     public boolean hasPenaltiesFile() {
         return !penaltiesFile.isEmpty() && penaltiesFile.endsWith(".csv");
-    }
-
-    @StringGetter(CAPACITIES_FILE)
-    public String getCapacitiesFile() {
-        return capacitiesFile;
-    }
-
-    public boolean hasCapacitiesFile(){
-        return !capacitiesFile.isEmpty() && capacitiesFile.endsWith(".csv");
-    }
-
-    @StringSetter(CAPACITIES_FILE)
-    public void setCapacitiesFile(String inputCapacitiesFile) {
-        capacitiesFile = inputCapacitiesFile;
     }
 
     @StringGetter(ACTIVATE)

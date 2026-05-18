@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibrationUtils;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
@@ -14,6 +15,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationStartsEvent;
+import org.matsim.core.controler.events.ShutdownEvent;
 
 import java.io.*;
 import java.util.*;
@@ -54,6 +56,9 @@ public class AlphaClusterCalibrator implements FastCalibration {
     private int replannedTripsCount = 0;
     private int changedUtilityCount = 0;
     private int numGlobalUpdates = 0;
+    private String lastParametersFile = "";
+
+    protected final EqasimConfigGroup eqasimConfigGroup;
 
     // track changes of region 0
     private final Map<String, Double> alphasRegion0Changes = new HashMap<String, Double>();
@@ -66,7 +71,8 @@ public class AlphaClusterCalibrator implements FastCalibration {
                                   List<String> modesToCalibrate,
                                   double beta,
                                   String filePath,
-                                  boolean isActivated) {
+                                  boolean isActivated,
+                                  EqasimConfigGroup eqasimConfigGroup) {
 
         this.modesToCalibrate = modesToCalibrate;
         this.scenario = scenario;
@@ -78,6 +84,7 @@ public class AlphaClusterCalibrator implements FastCalibration {
         this.isActivated = isActivated;
         this.modeSharesFile = filePath;
         this.lastIteration = scenario.getConfig().controller().getLastIteration();
+        this.eqasimConfigGroup = eqasimConfigGroup;
 
         if (isActivated) {
             // assert if file exists
@@ -443,8 +450,8 @@ public class AlphaClusterCalibrator implements FastCalibration {
     }
 
     private void saveParametersToYaml(int iteration) throws IOException {
-        String outputFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
-        modeParameters.saveToYamlFile(outputFile);
+        lastParametersFile = outputHierarchy.getIterationFilename(iteration, "mode_parameters.yml");
+        modeParameters.saveToYamlFile(lastParametersFile);
     }
 
     @Override
@@ -479,6 +486,23 @@ public class AlphaClusterCalibrator implements FastCalibration {
                 saveParametersToYaml(iteration);
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @Override
+    public void notifyShutdown(ShutdownEvent shutdownEvent) {
+        // copy the last parameters file to the main output directory
+        if (isActivated && !lastParametersFile.isEmpty()) {
+            File sourceFile = new File(lastParametersFile);
+            eqasimConfigGroup.setModeParametersPath(sourceFile.getAbsolutePath());
+
+            File destFile = new File(outputHierarchy.getOutputFilenameWithOutputPrefix("mode_parameters.yml"));
+            try {
+                java.nio.file.Files.copy(sourceFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                eqasimConfigGroup.setModeParametersPath(sourceFile.getAbsolutePath());
+            } catch (IOException e) {
+                throw new RuntimeException("Error copying mode parameters file to main output directory.", e);
             }
         }
     }

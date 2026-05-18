@@ -2,6 +2,7 @@ package org.eqasim.core.components.fast_calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 
 import com.google.inject.Provides;
@@ -30,7 +31,8 @@ public class FastCalibrationModule extends AbstractEqasimExtension {
                                                   OutputDirectoryHierarchy outputHierarchy,
                                                   ModeParameters modeParameters,
                                                   TripListConverter tripListConverter,
-                                                  AlphaCalibratorConfig calConfig) {
+                                                  AlphaCalibratorConfig calConfig,
+                                                  EqasimConfigGroup eqasimConfigGroup) {
         double beta = calConfig.getBeta();
         Map<String, Double> targetModeShares = Map.of(
                 "car", calConfig.getCarModeShare(),
@@ -41,6 +43,6 @@ public class FastCalibrationModule extends AbstractEqasimExtension {
         );
         boolean isActivated = calConfig.isActivate();
         List<String> modesToCalibrate = calConfig.getCalibratedModes();
-        return new AlphaCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares, modesToCalibrate, beta, isActivated);
+        return new AlphaCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares, modesToCalibrate, beta, isActivated, eqasimConfigGroup);
     }
 }

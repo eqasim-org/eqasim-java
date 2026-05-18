@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch.calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.fast_calibration.AlphaCalibrationUtils;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
@@ -14,12 +15,11 @@ import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.events.IterationStartsEvent;
 import org.matsim.core.controler.events.ShutdownEvent;
-import org.matsim.core.controler.listener.ShutdownListener;
 
 import java.io.*;
 import java.util.*;
 
-public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener {
+public class AlphaCantonCalibrator implements FastCalibration {
     // Logging
     private static final Logger logger = LogManager.getLogger(AlphaCantonCalibrator.class);
 
@@ -56,6 +56,7 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
     private final SwissModeParameters modeParameters;
     private final TripListConverter tripListConverter;
     private String lastParametersFile = "";
+    private final EqasimConfigGroup eqasimConfigGroup;
 
     public AlphaCantonCalibrator(Scenario scenario,
                                  OutputDirectoryHierarchy outputHierarchy,
@@ -65,7 +66,8 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
                                  List<String> modesToCalibrate,
                                  double beta,
                                  String filePath,
-                                 boolean isActivated) {
+                                 boolean isActivated,
+                                 EqasimConfigGroup eqasimConfigGroup) {
 
         this.modesToCalibrate = modesToCalibrate;
         this.scenario = scenario;
@@ -77,6 +79,8 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
         this.isActivated = isActivated;
         this.cantonsModeShareFile = filePath;
         this.lastIteration = scenario.getConfig().controller().getLastIteration();
+        this.eqasimConfigGroup = eqasimConfigGroup;
+
         if (isActivated) {
             // assert if file exists
             assertIfFileExists();
@@ -482,9 +486,12 @@ public class AlphaCantonCalibrator implements FastCalibration, ShutdownListener 
         // copy the last parameters file to the main output directory
         if (isActivated && !lastParametersFile.isEmpty()) {
             File sourceFile = new File(lastParametersFile);
+            eqasimConfigGroup.setModeParametersPath(sourceFile.getAbsolutePath());
+
             File destFile = new File(outputHierarchy.getOutputFilenameWithOutputPrefix("mode_parameters.yml"));
             try {
                 java.nio.file.Files.copy(sourceFile.toPath(), destFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                eqasimConfigGroup.setModeParametersPath(sourceFile.getAbsolutePath());
             } catch (IOException e) {
                 throw new RuntimeException("Error copying mode parameters file to main output directory.", e);
             }
