@@ -2,6 +2,7 @@ package org.eqasim.core.components.network_calibration.cost_calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,22 +13,19 @@ import java.util.Map;
 public class PenaltyManager {
     private static final Logger logger = LogManager.getLogger(PenaltyManager.class);
 
-    private final Map<Integer, Double> penalties = new HashMap<>();
-    private final Map<Integer, Double> previousPenalties = new HashMap<>();
+    private final Map<PenaltyGroupKey, Double> penalties = new HashMap<>();
+    private final Map<PenaltyGroupKey, Double> previousPenalties = new HashMap<>();
     private final double minPenalty;
     private final double maxPenalty;
     private final boolean calibrate;
 
     /**
      * Constructs a PenaltyManager with bounds and calibration flag.
-     * @param minPenalty Minimum allowed penalty value.
-     * @param maxPenalty Maximum allowed penalty value.
-     * @param calibrate Whether to enable calibration updates.*
      */
-    public PenaltyManager(double minPenalty, double maxPenalty, boolean calibrate) {
-        this.minPenalty = minPenalty;
-        this.maxPenalty = maxPenalty;
-        this.calibrate = calibrate;
+    public PenaltyManager(NetworkCalibrationConfigGroup config) {
+        this.minPenalty = config.getMinPenalty();
+        this.maxPenalty = config.getMaxPenalty();
+        this.calibrate = config.isOneOfObjectives("penalty") && config.isActivated() && config.isCalibrationEnabled();
     }
 
     /**
@@ -37,41 +35,60 @@ public class PenaltyManager {
     public void loadFromCsv(String penaltiesFile) {
         if (penaltiesFile != null && !penaltiesFile.isEmpty() && !penaltiesFile.equals("none")) {
             PenaltyCsvHandler.readPenaltiesFromFile(penaltiesFile, penalties);
-            logger.info("Loaded {} penalty categories from file: {}", penalties.size(), penaltiesFile);
-        } else if (!calibrate) {
-            throw new IllegalArgumentException("Penalties file must be provided if calibration is disabled.");
+            logger.info("Loaded {} penalty groups from file: {}", penalties.size(), penaltiesFile);
         } else {
-            logger.info("No penalties file provided, starting with zero penalties for calibration.");
+            logger.info("No penalties file provided, keeping existing penalties (from defaults/network attributes).");
         }
+    }
+
+    public void loadInitialPenalties(Map<PenaltyGroupKey, Double> initialPenalties) {
+        penalties.clear();
+        previousPenalties.clear();
+
+        if (initialPenalties == null || initialPenalties.isEmpty()) {
+            logger.info("No initial penalties provided. Falling back to zero penalties by default.");
+            return;
+        }
+
+        for (Map.Entry<PenaltyGroupKey, Double> entry : initialPenalties.entrySet()) {
+            setPenalty(entry.getKey(), entry.getValue());
+        }
+        logger.info("Initialized {} penalty groups from input values.", penalties.size());
     }
 
     /**
      * Gets the penalty for a category, defaulting to 0.0 if not set.
      */
-    public double getPenalty(int category) {
-        return penalties.getOrDefault(category, 0.0);
+    public double getPenalty(PenaltyGroupKey key) {
+        return penalties.getOrDefault(key, 0.0);
     }
 
     /**
      * Sets the penalty for a category, clamping to bounds.
      */
-    public void setPenalty(int category, double penalty) {
-        double clampedPenalty = Math.min(Math.max(penalty, minPenalty), maxPenalty);
-        penalties.put(category, clampedPenalty);
+    public void setPenalty(PenaltyGroupKey key, double penalty) {
+        double clampedPenalty = clip(penalty, minPenalty, maxPenalty);
+        penalties.put(key, clampedPenalty);
+    }
+
+    private double clip(double value, double min, double max) {
+        return Math.min(Math.max(value, min), max);
     }
 
     /**
      * Updates the penalty for a category using adaptive learning rate.
-     * @param category The category to update.
+     * @param key The penalty group key.
      * @param percentageDifference The flow vs count difference ratio.
      * @param effectiveBeta The learning rate.
      * @param iteration Current iteration number.
+     * @param unbiasedError The unbiased error for this category (if available).
+     * @param doUpdate Whether to perform the update (can be false for logging only).
      */
-    public void updatePenalty(int category, double percentageDifference, double effectiveBeta, int iteration, double  unbiasedError, boolean doUpdate) {
+    public void updatePenalty(PenaltyGroupKey key, double percentageDifference, double effectiveBeta, int iteration, double  unbiasedError, boolean doUpdate) {
         if (!calibrate || !doUpdate) return;
 
-        double currentPenalty = getPenalty(category);
-        previousPenalties.put(category, currentPenalty);
+        double currentPenalty = getPenalty(key);
+        previousPenalties.put(key, currentPenalty);
 
         // Adaptive update: reduce learning rate for large changes to prevent oscillations
         double adaptiveBeta = effectiveBeta;
@@ -80,29 +97,35 @@ public class PenaltyManager {
         }
 
         // Use exponential moving average for stability
-        double newPenalty;
-        if (Double.isFinite(unbiasedError)) {
-            newPenalty = currentPenalty + adaptiveBeta * unbiasedError;
-        } else {
-            newPenalty = currentPenalty + adaptiveBeta * percentageDifference;
-        }
+        double consideredError = Double.isFinite(unbiasedError) ? unbiasedError: percentageDifference;
+        double deltaPenalty = adaptiveBeta * consideredError;
 
+        boolean clipProgression = iteration>=60;
+        if (clipProgression) {
+            if (deltaPenalty > 0.005) {
+                deltaPenalty = clip(deltaPenalty, 0.01, 0.1);
+            } else if (deltaPenalty < -0.005) {
+                deltaPenalty = clip(deltaPenalty, -0.1, -0.01);
+            } else {
+                deltaPenalty = 0.0;
+            }
+        }
+        double newPenalty = currentPenalty + deltaPenalty;
 
         // Add small regularization
         if (Math.abs(newPenalty) < 5e-3) {
             newPenalty = 0.0;
         }
 
-        setPenalty(category, newPenalty);
-
-        logger.debug("Updated penalty for category {}: {} -> {} (diff: {:.3f}, beta: {:.3f})",
-                category, currentPenalty, newPenalty, percentageDifference, adaptiveBeta);
+        setPenalty(key, newPenalty);
+        logger.debug("Updated penalty for group {}: {} -> {} (diff: {}, beta: {})",
+            key, currentPenalty, newPenalty, percentageDifference, adaptiveBeta);
     }
 
     /**
      * Returns a copy of the penalties map.
      */
-    public Map<Integer, Double> getAllPenalties() {
+    public Map<PenaltyGroupKey, Double> getAllPenalties() {
         return new HashMap<>(penalties);
     }
 
@@ -111,6 +134,18 @@ public class PenaltyManager {
      */
     public void saveToCsv(String filename) {
         PenaltyCsvHandler.writePenaltiesToFile(filename, penalties);
+    }
+
+    public void saveToCsvWithAllKeys(String filename, PenaltyKeyManager penaltyKeyManager) {
+        Map<PenaltyGroupKey, Double> pen = new HashMap<>();
+        Map<PenaltyGroupKey, PenaltyGroupKey> keyMapping = penaltyKeyManager.getKeyMapping();
+        for (Map.Entry<PenaltyGroupKey, PenaltyGroupKey> entry : keyMapping.entrySet()) {
+            PenaltyGroupKey realKey = entry.getKey();
+            PenaltyGroupKey mappedKey = entry.getValue();
+            double penalty = getPenalty(mappedKey);
+            pen.put(realKey, penalty);
+        }
+        PenaltyCsvHandler.writePenaltiesToFile(filename, pen);
     }
 
     /**
@@ -136,7 +171,7 @@ public class PenaltyManager {
         double avgPenalty = penalties.values().stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
         double maxAbsPenalty = penalties.values().stream().mapToDouble(Math::abs).max().orElse(0.0);
 
-        logger.info("Iteration {}: {} active penalty categories out of {}, avg: {:.4f}, max: {:.4f}",
+        logger.info("Iteration {}: {} active penalty categories out of {}, avg: {}, max: {}",
                 iteration, activeCategories, totalCategories, avgPenalty, maxAbsPenalty);
     }
 }

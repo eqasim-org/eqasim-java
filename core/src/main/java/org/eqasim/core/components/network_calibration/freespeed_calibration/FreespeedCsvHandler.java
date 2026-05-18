@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public class FreespeedCsvHandler {
-    public static Map<LinkGroupKey, Double> readFactors(String filename) {
-        Map<LinkGroupKey, Double> factors = new HashMap<>();
+    public static Map<FreespeedCalibrationKey, Double> readFactors(String filename) {
+        Map<FreespeedCalibrationKey, Double> factors = new HashMap<>();
 
         try (BufferedReader reader = IOUtils.getBufferedReader(filename)) {
             String line = reader.readLine(); // header
@@ -23,8 +23,9 @@ public class FreespeedCsvHandler {
 
                 int category = Integer.parseInt(parts[0].trim());
                 String municipalityType = parts[1].trim();
-                double factor = Double.parseDouble(parts[2].trim());
-                factors.put(new LinkGroupKey(category, municipalityType), factor);
+                int specialRegion = parts.length >= 4 ? Integer.parseInt(parts[2].trim()) : 0;
+                double factor = Double.parseDouble(parts.length >= 4 ? parts[3].trim() : parts[2].trim());
+                factors.put(new FreespeedCalibrationKey(category, municipalityType, specialRegion), factor);
             }
         } catch (Exception e) {
             throw new RuntimeException("Error reading freespeed factors from file: " + filename, e);
@@ -33,29 +34,29 @@ public class FreespeedCsvHandler {
         return factors;
     }
 
-    public static void writeFactors(String filename, Map<LinkGroupKey, Double> factors) {
+    public static void writeFactors(String filename, Map<FreespeedCalibrationKey, Double> factors) {
         try (BufferedWriter writer = IOUtils.getBufferedWriter(filename)) {
-            writer.write("category;municipalityType;factor\n");
-            for (Map.Entry<LinkGroupKey, Double> entry : factors.entrySet()) {
-                LinkGroupKey key = entry.getKey();
+            writer.write("category;municipalityType;specialRegion;factor\n");
+            for (Map.Entry<FreespeedCalibrationKey, Double> entry : factors.entrySet()) {
+                FreespeedCalibrationKey key = entry.getKey();
                 double val = round(entry.getValue());
-                writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + val + "\n");
+                writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + key.getSpecialRegion() + ";" + val + "\n");
             }
         } catch (Exception e) {
             throw new RuntimeException("Error writing freespeed factors to file: " + filename, e);
         }
     }
 
-    public static void writeGroupStats(String filename, Map<LinkGroupKey, FreespeedFactorManager.GroupStats> groupStats) {
+    public static void writeGroupStats(String filename, Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats) {
         try (BufferedWriter writer = IOUtils.getBufferedWriter(filename)) {
-            writer.write("category;municipalityType;tripCount;simulatedTime_s;observedTime_s;timeRatio;statsError;statsFactor\n");
-            for (Map.Entry<LinkGroupKey, FreespeedFactorManager.GroupStats> entry : groupStats.entrySet()) {
-                LinkGroupKey key = entry.getKey();
+            writer.write("category;municipalityType;specialRegion;tripCount;simulatedTime_s;observedTime_s;timeRatio;statsError;statsFactor\n");
+            for (Map.Entry<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> entry : groupStats.entrySet()) {
+                FreespeedCalibrationKey key = entry.getKey();
                 FreespeedFactorManager.GroupStats stats = entry.getValue();
                 double ratio = stats.observedTime > 0.0 ? stats.simulatedTime / stats.observedTime : Double.NaN;
                 double error = stats.getAverageErrors();
                 double proposedFactor = stats.getAverageFactor();
-                writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + stats.tripCount + ";"
+                writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + key.getSpecialRegion() + ";" + stats.tripCount + ";"
                         + round(stats.simulatedTime) + ";" + round(stats.observedTime) +";" + round(ratio) + ";"
                         + error + ";" + proposedFactor + "\n");
             }
@@ -64,15 +65,15 @@ public class FreespeedCsvHandler {
         }
     }
 
-    public static void writeDiagnostics(String filename, Map<LinkGroupKey, FreespeedFactorManager.GroupDiagnostics> diagnostics) {
+    public static void writeDiagnostics(String filename, Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupDiagnostics> diagnostics) {
         try (BufferedWriter writer = IOUtils.getBufferedWriter(filename)) {
-            writer.write("category;municipalityType;frozen;noImprovementStreak;decisions;factors;errors\n");
+            writer.write("category;municipalityType;specialRegion;frozen;noImprovementStreak;decisions;factors;errors\n");
 
-            for (Map.Entry<LinkGroupKey, FreespeedFactorManager.GroupDiagnostics> entry : diagnostics.entrySet()) {
-                LinkGroupKey key = entry.getKey();
+            for (Map.Entry<FreespeedCalibrationKey, FreespeedFactorManager.GroupDiagnostics> entry : diagnostics.entrySet()) {
+                FreespeedCalibrationKey key = entry.getKey();
                 FreespeedFactorManager.GroupDiagnostics d = entry.getValue();
 
-               writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";"
+               writer.write(key.getCategory() + ";" + key.getMunicipalityType() + ";" + key.getSpecialRegion() + ";"
                        + d.frozen + ";"
                        + d.noImprovementStreak + ";"
                        + joinStringList(d.decisions.toList().stream().map(String::valueOf).toList()) + ";"
@@ -110,7 +111,7 @@ public class FreespeedCsvHandler {
         return buffer.toString();
     }
 
-    public static void logFactorsByMunicipalityType(Logger logger, Map<LinkGroupKey, Double> factors) {
+    public static void logFactorsByMunicipalityType(Logger logger, Map<FreespeedCalibrationKey, Double> factors) {
         if (factors == null || factors.isEmpty()) {
             logger.info("No freespeed factors available.");
             return;
@@ -118,10 +119,10 @@ public class FreespeedCsvHandler {
 
         Map<String, Map<String, Double>> grouped = new java.util.TreeMap<>();
 
-        for (Map.Entry<LinkGroupKey, Double> entry : factors.entrySet()) {
-            LinkGroupKey key = entry.getKey();
+        for (Map.Entry<FreespeedCalibrationKey, Double> entry : factors.entrySet()) {
+            FreespeedCalibrationKey key = entry.getKey();
             String municipalityType = String.valueOf(key.getMunicipalityType());
-            String category = String.valueOf(key.getCategory());
+            String category = key.getCategory() + "#" + key.getSpecialRegion();
 
             grouped.computeIfAbsent(municipalityType, k -> new java.util.TreeMap<>())
                     .put(category, entry.getValue());

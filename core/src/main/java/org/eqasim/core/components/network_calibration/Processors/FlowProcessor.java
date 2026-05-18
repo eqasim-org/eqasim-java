@@ -4,9 +4,8 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.flow.FlowBinManager;
-import org.eqasim.core.components.network_calibration.LinkCategorizer;
-import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.flow.LinkFlowCounter;
+import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyGroupKey;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -26,9 +25,9 @@ public class FlowProcessor {
     private final OutputDirectoryHierarchy outputHierarchy;
     private final CountsProcessor countsProcessor;
 
-    private final Map<Integer, Double> flowPerCategory = new HashMap<>();
-    private final Map<Integer, Integer> linksPerCategory = new HashMap<>();
-    private final Map<Integer, FloatArrayList> errors = new HashMap<>();
+    private final Map<PenaltyGroupKey, Double> flowPerGroup = new HashMap<>();
+    private final Map<PenaltyGroupKey, Integer> linksPerGroup = new HashMap<>();
+    private final Map<PenaltyGroupKey, FloatArrayList> errors = new HashMap<>();
     private final double totalNumberOfHours;
     private final double sampleSize;
 
@@ -52,11 +51,11 @@ public class FlowProcessor {
         // aggregate the counts by link category
         for (Id<Link> linkId : network.getLinks().keySet()) {
             if (!countsProcessor.contains(linkId)) {
-                continue; // skip links not in the counts processor (consider all when no counts file is provided)
+                continue; // skip links not in the counts processor
             }
 
-            Integer linkCategory = countsProcessor.getLinkCategory(linkId);
-            if ((linkCategory==null) || (linkCategory == LinkCategorizer.UNKNOWN_CATEGORY)) {
+            PenaltyGroupKey groupKey = countsProcessor.getLinkGroup(linkId);
+            if (groupKey == null) {
                 continue; // skip links with unknown category
             }
 
@@ -69,53 +68,53 @@ public class FlowProcessor {
                 totalFlow = totalFlow / Math.max(1.0, totalNumberOfHours); // normalize by number of hours
                 totalFlow = totalFlow / Math.max(network.getLinks().get(linkId).getNumberOfLanes(),1.0); // normalize by number of lanes
                 // put the flow in the map
-                flowPerCategory.put(linkCategory, flowPerCategory.getOrDefault(linkCategory, 0.0) + totalFlow);
-                linksPerCategory.put(linkCategory, linksPerCategory.getOrDefault(linkCategory, 0) + 1);
+                flowPerGroup.put(groupKey, flowPerGroup.getOrDefault(groupKey, 0.0) + totalFlow);
+                linksPerGroup.put(groupKey, linksPerGroup.getOrDefault(groupKey, 0) + 1);
 
                 double linkCounts = countsProcessor.getLinkCounts(linkId);
                 if (linkCounts>0.0) {
                     float error = (float) ((totalFlow / sampleSize - linkCounts) / linkCounts);
-                    errors.computeIfAbsent(linkCategory, k -> new FloatArrayList(32)).add(error);
+                    errors.computeIfAbsent(groupKey, k -> new FloatArrayList(32)).add(error);
                 }
             }
         }
 
-        // get average flow per link category
-        for (int category : flowPerCategory.keySet()) {
-            double totalFlow = flowPerCategory.get(category);
-            int numLinks = linksPerCategory.get(category);
+        // get average flow per link group
+        for (PenaltyGroupKey key : flowPerGroup.keySet()) {
+            double totalFlow = flowPerGroup.get(key);
+            int numLinks = linksPerGroup.get(key);
             if (numLinks == 0) {
                 continue;
             }
             double avgFlow = (totalFlow / numLinks);
-            flowPerCategory.put(category, avgFlow);
+            flowPerGroup.put(key, avgFlow);
         }
     }
 
     public void resetCounts(int iteration) {
-        flowPerCategory.clear();
-        linksPerCategory.clear();
+        flowPerGroup.clear();
+        linksPerGroup.clear();
         errors.clear();
         // linkFlowCounter.reset(iteration); // no need to call reset, it will be called anyway before mobsim
     }
 
-    public double getFlowByCategory(int category, double inputSampleSize) {
+    public double getFlowByGroup(PenaltyGroupKey key, double inputSampleSize) {
         // this method scale back the flow to 100% sample size
-        return flowPerCategory.getOrDefault(category, 0.0) / inputSampleSize;
+        return flowPerGroup.getOrDefault(key, 0.0) / inputSampleSize;
     }
 
-    public double getFlowByCategory(int category) {
+    public double getFlowByGroup(PenaltyGroupKey key) {
         // this method scale back the flow to 100% sample size
-        return flowPerCategory.getOrDefault(category, 0.0) / sampleSize;
+        return flowPerGroup.getOrDefault(key, 0.0) / sampleSize;
     }
 
     private void saveCounts(int iteration) {
         String outputFile = outputHierarchy.getIterationFilename(iteration, "flow_by_link_category.csv");
 
         try (BufferedWriter writer = getBufferedWriter(outputFile)) {
-            writer.write("Category;averageFlow(veh/h/lane)\n");
-            for (int category : flowPerCategory.keySet()) {
-                writer.write(category + ";" + flowPerCategory.get(category) + "\n");
+            writer.write("linkCategory;isUrban;specialRegion;averageFlow(veh/h/lane)\n");
+            for (PenaltyGroupKey key : flowPerGroup.keySet()) {
+                writer.write(key.getLinkCategory() + ";" + key.isUrban() + ";" + key.getSpecialRegion() + ";" + flowPerGroup.get(key) + "\n");
             }
             logger.info("Saved flow by link category to {}", outputFile);
         } catch (Exception e) {
@@ -126,19 +125,22 @@ public class FlowProcessor {
 
     private final double C = 0.02;
     private final double EPSILON = 0.02;
-    public double getUnbiasedError(int category){
+    public double getUnbiasedError(PenaltyGroupKey key){
         if (countsProcessor.size()==0) {
             return Double.POSITIVE_INFINITY;
         }
 
-        FloatArrayList catErrors = errors.get(category);
+        FloatArrayList catErrors = errors.get(key);
+        if (catErrors == null || catErrors.isEmpty()) {
+            return 0.0;
+        }
         int nMore = 0;
         int nLess = 0;
         int nTot  = 0;
         for (float e:  catErrors) {
             if (e > EPSILON) {
                 nMore ++;
-            } else if (e < EPSILON) {
+            } else if (e < -EPSILON) {
                 nLess ++;
             }
             nTot++;
@@ -147,11 +149,11 @@ public class FlowProcessor {
         return nTot==0? 0.0:(nMore - nLess) / (double) nTot;
     }
 
-    public boolean doUpdate(int category) {
+    public boolean doUpdate(PenaltyGroupKey key) {
         if (countsProcessor.size()==0) {
             return true;
         }
-        double unbiasedError = getUnbiasedError(category);
+        double unbiasedError = getUnbiasedError(key);
         return Math.abs(unbiasedError) > C;
     }
 

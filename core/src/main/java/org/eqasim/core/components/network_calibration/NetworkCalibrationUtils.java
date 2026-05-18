@@ -3,15 +3,47 @@ package org.eqasim.core.components.network_calibration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.api.core.v01.network.Network;
 
-import java.util.List;
+import java.util.OptionalDouble;
 
 /**
  * Utility class for network calibration operations.
  */
 public class NetworkCalibrationUtils {
     private static final Logger logger = LogManager.getLogger(NetworkCalibrationUtils.class);
+    public static final String SPEED_FACTOR_ATTRIBUTE = "speedFactor";
+    public static final String PENALTY_ATTRIBUTE = "penalty";
+
+    public static OptionalDouble readDoubleAttribute(Link link, String attributeName) {
+        Object rawValue = link.getAttributes().getAttribute(attributeName);
+        if (rawValue == null) {
+            return OptionalDouble.empty();
+        }
+
+        if (rawValue instanceof Number number) {
+            double value = number.doubleValue();
+            return Double.isFinite(value) ? OptionalDouble.of(value) : OptionalDouble.empty();
+        }
+
+        if (rawValue instanceof String text) {
+            try {
+                double value = Double.parseDouble(text.trim());
+                return Double.isFinite(value) ? OptionalDouble.of(value) : OptionalDouble.empty();
+            } catch (NumberFormatException ignored) {
+                return OptionalDouble.empty();
+            }
+        }
+
+        return OptionalDouble.empty();
+    }
+
+    public static void writeDoubleAttribute(Link link, String attributeName, double value) {
+        if (!Double.isFinite(value)) {
+            logger.warn("Skipping non-finite value for attribute {} on link {}", attributeName, link.getId());
+            return;
+        }
+        link.getAttributes().putAttribute(attributeName, value);
+    }
 
     /**
      * Checks if a link is a ramp (contains "_link" in highway type).
@@ -33,43 +65,5 @@ public class NetworkCalibrationUtils {
             return osmHighway != null && osmHighway.toString().contains("trunk");
         }
         return false;
-    }
-
-    /**
-     * Calculates the minimum speed-based capacity for a link.
-     */
-    public static double getMinimumSpeedBasedCapacity(double length, double minSpeed, double sampleSize) {
-        return Math.min(3600.0 * (minSpeed / 3.6) / (length * sampleSize), 1800 * 3.0); // max 3 times the theoretical capacity
-    }
-
-    /**
-     * Adjusts network capacities to be within specified bounds.
-     */
-    public static void adjustNetworkCapacities(Network network, double minimumCapacity, double maximumCapacity,
-                                               double sampleSize, boolean correctForSampleSize, double minSpeed,
-                                               LinkCategorizer categorizer) {
-        logger.info("Adjusting network capacities with minCapacity={}, maxCapacity={}, sampleSize={}, correctForSampleSize={}, minSpeed={}",
-                minimumCapacity, maximumCapacity, sampleSize, correctForSampleSize, minSpeed);
-
-        for (Link link : network.getLinks().values()) {
-            if (!categorizer.isOutsideLink(link)) {
-                if (categorizer.getCategory(link)!=LinkCategorizer.UNKNOWN_CATEGORY) {
-                    double capacity = link.getCapacity();
-                    double numberOfLanes = link.getNumberOfLanes();
-                    double length = link.getLength();
-                    // get the min and max capacities for that link
-                    double minCapacity = correctForSampleSize ?
-                            getMinimumSpeedBasedCapacity(length, minSpeed, sampleSize) * numberOfLanes :
-                            minimumCapacity * numberOfLanes;
-                    double maxCapacity = maximumCapacity * numberOfLanes;
-                    // adjust the capacity if needed
-                    if (capacity < minCapacity) {
-                        link.setCapacity(minCapacity);
-                    } else if (capacity > maxCapacity) {
-                        link.setCapacity(maxCapacity);
-                    }
-                }
-            }
-        }
     }
 }

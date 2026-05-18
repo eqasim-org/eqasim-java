@@ -20,8 +20,8 @@ public class FreespeedFactorManager {
 
     private int NUM_UPDATES = 0;
 
-    private final Map<LinkGroupKey, Double> factors = new HashMap<>();
-    private final Map<LinkGroupKey, GroupDiagnostics> diagnostics = new HashMap<>();
+    private final Map<FreespeedCalibrationKey, Double> factors = new HashMap<>();
+    private final Map<FreespeedCalibrationKey, GroupDiagnostics> diagnostics = new HashMap<>();
     private final double minFactor;
     private final double maxFactor;
     private final double beta;
@@ -36,19 +36,19 @@ public class FreespeedFactorManager {
         this.minTripsPerGroup = config.getMinTripsPerGroup();
     }
 
-    public double getFactor(LinkGroupKey key) {
+    public double getFactor(FreespeedCalibrationKey key) {
         return factors.getOrDefault(key, 1.0);
     }
 
-    public Map<LinkGroupKey, Double> getFactorsSnapshot() {
+    public Map<FreespeedCalibrationKey, Double> getFactorsSnapshot() {
         return new HashMap<>(factors);
     }
 
-    public void loadFactors(Map<LinkGroupKey, Double> loadedFactors) {
+    public void loadFactors(Map<FreespeedCalibrationKey, Double> loadedFactors) {
         factors.clear();
         diagnostics.clear();
 
-        for (Map.Entry<LinkGroupKey, Double> entry : loadedFactors.entrySet()) {
+        for (Map.Entry<FreespeedCalibrationKey, Double> entry : loadedFactors.entrySet()) {
             double factor = clipFactor(entry.getValue());
             factors.put(entry.getKey(), factor);
         }
@@ -64,7 +64,7 @@ public class FreespeedFactorManager {
      *     <li>otherwise apply the bounded factor update.</li>
      * </ol>
      */
-    public void updateFactors(Map<LinkGroupKey, GroupStats> groupStats, int iteration) {
+    public void updateFactors(Map<FreespeedCalibrationKey, GroupStats> groupStats, int iteration) {
         if (!calibrate) {
             return;
         }
@@ -72,14 +72,14 @@ public class FreespeedFactorManager {
         NUM_UPDATES++;
         UpdateSummary summary = new UpdateSummary(iteration);
 
-        for (Map.Entry<LinkGroupKey, GroupStats> entry : groupStats.entrySet()) {
+        for (Map.Entry<FreespeedCalibrationKey, GroupStats> entry : groupStats.entrySet()) {
             processGroupUpdate(entry.getKey(), entry.getValue(), summary);
         }
 
         logUpdateSummary(groupStats.size(), summary);
     }
 
-    private void processGroupUpdate(LinkGroupKey key, GroupStats stats, UpdateSummary summary) {
+    private void processGroupUpdate(FreespeedCalibrationKey key, GroupStats stats, UpdateSummary summary) {
         GroupUpdateContext context = createGroupUpdateContext(key, stats);
 
         if (hasInsufficientData(context)) {
@@ -105,7 +105,7 @@ public class FreespeedFactorManager {
         applyFactorUpdate(context, summary);
     }
 
-    private GroupUpdateContext createGroupUpdateContext(LinkGroupKey key, GroupStats stats) {
+    private GroupUpdateContext createGroupUpdateContext(FreespeedCalibrationKey key, GroupStats stats) {
         double currentFactor = this.factors.getOrDefault(key, 1.0);
         GroupDiagnostics diagnostics = this.diagnostics.computeIfAbsent(key,
                 ignored -> new GroupDiagnostics(Decision.FIRST, currentFactor, Double.NaN));
@@ -229,7 +229,7 @@ public class FreespeedFactorManager {
         return Math.abs(currentError) < threshold;
     }
 
-    public Map<LinkGroupKey, GroupDiagnostics> getDiagnosticsSnapshot() {
+    public Map<FreespeedCalibrationKey, GroupDiagnostics> getDiagnosticsSnapshot() {
         return new HashMap<>(diagnostics);
     }
 
@@ -255,13 +255,13 @@ public class FreespeedFactorManager {
     }
 
     private static final class GroupUpdateContext {
-        private final LinkGroupKey key;
+        private final FreespeedCalibrationKey key;
         private final GroupStats stats;
         private final GroupDiagnostics diagnostics;
         private final double currentFactor;
         private final double currentError;
 
-        private GroupUpdateContext(LinkGroupKey key, GroupStats stats, GroupDiagnostics diagnostics,
+        private GroupUpdateContext(FreespeedCalibrationKey key, GroupStats stats, GroupDiagnostics diagnostics,
                                    double currentFactor, double currentError) {
             this.key = key;
             this.stats = stats;

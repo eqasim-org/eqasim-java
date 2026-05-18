@@ -1,0 +1,132 @@
+
+\section{Intersection Delays}
+\label{sec:intersection_delays}
+
+MATSim's traffic simulation operates at the link level and does not explicitly model intersections. In the default simulation, vehicles traverse links and experience congestion through a point-queue model, but no delay is incurred at the transition between links, regardless of the intersection's geometry, control type, or conflicting traffic streams. This simplification systematically underestimates travel times, particularly in urban areas where intersection delays constitute a significant fraction of total trip duration.
+
+To address this limitation, we introduce a dynamic intersection delay model that adds a time penalty to each vehicle as it reaches the downstream node of a link. The delay depends on the type of intersection control---signalized or unsignalized---and is recomputed at each MATSim iteration based on the current traffic flows, allowing the delays to co-evolve with the demand pattern.
+
+\subsection{Identification of signalized and unsignalized intersections}
+
+The presence of traffic signals is obtained from OpenStreetMap (OSM), where traffic light nodes are tagged with \texttt{highway=traffic\_signals}. During network preparation, these tags are matched to the downstream node of each link. A link~$\ell$ is flagged as signalized if its downstream node carries a traffic light tag and if the node has more than one incoming or outgoing link (i.e., it represents a genuine intersection rather than a simple road connection). All remaining intersections with a node degree strictly greater than two are treated as unsignalized.
+
+\subsection{Dynamic update within the iterative loop}
+
+In previous work~\cite{AuroreTlDelays}, intersection delays were computed once from a converged simulation and then injected as static penalties into a subsequent simulation run. While this approach captures the first-order effect of intersection delays on travel times, it does not account for the feedback loop between delays and traffic flows: altering travel times changes route choices, which in turn modifies the flow distribution, which affects the delays themselves. Since the delays are held fixed, this interdependence is neglected.
+
+In our approach, intersection delays are updated dynamically within the MATSim iterative loop. At the start of each iteration~$k$ (after an initial warm-up of $k_0$ iterations), the traffic flows from the previous iteration are used to recompute all intersection delays. These updated delays are then applied during the current iteration's traffic simulation, influencing route choice and departure time decisions. This closed-loop mechanism ensures that intersection delays and traffic flows reach a consistent equilibrium jointly, rather than being determined sequentially.
+
+The simulation day is divided into time bins of duration~$\Delta t$ (default: 1~hour). Traffic flows are aggregated per link and per time bin, and the delay formulas are evaluated at the center of each bin. This time-dependent formulation captures the variation of intersection performance across the day (e.g., higher delays during peak hours).
+
+\subsection{Signalized intersection delay: Webster's formula}
+
+For links terminating at a signalized intersection, the delay is estimated using Webster's formula~\cite{Webster1958}. The computation proceeds in three steps for each signalized node: determining the signal timing, allocating green time to phases, and computing the per-link delay.
+
+\subsubsection{Phase identification}
+
+At each signalized node, the incoming links are grouped into phases. Two incoming links are assigned to the same phase if they share the same street name (from the OSM \texttt{name} tag), indicating that they belong to the same road and are likely served by the same green phase, or if their geometric bearings differ by less than $10°$ (accounting for the fact that opposite directions on the same road have a $180°$ difference, which maps to a $0°$ angular difference in the grouping metric). Let $n$ denote the number of identified phases.
+
+\subsubsection{Optimal cycle length}
+
+The total lost time per cycle is:
+
+\begin{equation}
+    L = n \cdot l_{\text{phase}} + t_{\text{ar}}
+    \label{eq:lost_time}
+\end{equation}
+
+\noindent where $l_{\text{phase}}$ is the lost time per phase (default: 4~s) and $t_{\text{ar}}$ is the all-red time (default: 3~s). For each phase~$i$, the critical flow ratio is:
+
+\begin{equation}
+    y_i = \frac{\sum_{\ell \in \mathcal{G}_i} q_\ell(t)}{\sum_{\ell \in \mathcal{G}_i} s_\ell}
+    \label{eq:flow_ratio}
+\end{equation}
+
+\noindent where $\mathcal{G}_i$ is the set of links in phase~$i$, $q_\ell(t)$ is the flow on link~$\ell$ during time bin centered at~$t$ (scaled to 100\% sample size and capped by the link capacity), and $s_\ell = \min(C_\ell, \, s_{\max} \cdot n_\ell^{\text{lanes}})$ is the saturation flow, with $C_\ell$ the link capacity, $s_{\max} = 1800$~veh/h, and $n_\ell^{\text{lanes}}$ the number of lanes. A minimum ratio $y_i \geq 0.05$ ensures that every phase contributes to the cycle length. The total critical ratio is $Y = \sum_{i=1}^{n} y_i$.
+
+The optimal cycle length is then given by Webster's formula:
+
+\begin{equation}
+    C_{\text{opt}} = \frac{1.5 \, L + 5}{1 - \min(Y, \, Y_{\max})}
+    \label{eq:webster_copt}
+\end{equation}
+
+\noindent clamped to the range $[C_{\min}, \, C_{\max}]$, with $C_{\min} = n \cdot g_{\min} + L$ and $C_{\max} = 120$~s. The parameter $Y_{\max} = 0.95$ prevents unrealistically long cycles when the intersection approaches saturation.
+
+\subsubsection{Green time allocation}
+
+The total effective green time is $G = C_{\text{opt}} - L$. Each phase receives a minimum green time $g_{\min} = 5$~s. The remaining green time $G - n \cdot g_{\min}$ is distributed proportionally to the flow ratios of each phase, subject to a maximum green time $g_{\max} = 60$~s per phase. The cycle length is then corrected to account for potential turn conflicts within phases: if the number of outgoing links at the node exceeds the number of phases, additional green time is added (one or two times~$g_{\min}$ depending on the excess).
+
+\subsubsection{Per-link delay}
+
+Given the cycle length~$C$, the green time~$g_\ell$ assigned to the phase containing link~$\ell$, the degree of saturation $x_\ell = \min(q_\ell / s_\ell, \, 0.95)$, and the arrival rate $\hat{q}_\ell = \max(q_\ell / 3600, \, q_{\min})$ in veh/s, the average delay per vehicle on link~$\ell$ is:
+
+\begin{equation}
+    d_\ell^{\text{TL}}(t) = \underbrace{\frac{C \left(1 - g_\ell/C\right)^2}{2\left(1 - (g_\ell/C) \, x_\ell\right)}}_{\text{uniform delay}}
+    + \underbrace{\frac{x_\ell^2}{2 \, \hat{q}_\ell \left(1 - x_\ell\right)}}_{\text{overflow delay}}
+    - \underbrace{0.65 \left(\frac{C}{\hat{q}_\ell^2}\right)^{1/3} x_\ell^{\,2 + 5 g_\ell / C}}_{\text{correction term}}
+    \label{eq:webster_delay}
+\end{equation}
+
+The first term represents the uniform delay due to the red phase, the second captures the additional delay from random arrivals under near-saturated conditions, and the third is an empirical correction. The delay is capped at 40~s to prevent extreme values at over-saturated intersections.
+
+The traffic light delay is applied only during the active signalization period $[t_{\text{TL,start}}, \, t_{\text{TL,end}}]$ (default: 5:00--23:00). Outside this window, a default crossing penalty is applied instead.
+
+\subsection{Unsignalized intersection delay}
+\label{sec:unsignalized_delay}
+
+For intersections without traffic signals, we adopt the delay formulation proposed by~\cite{unsignalizedDelayFormula}. The delay for a vehicle arriving on link~$\ell$ at an unsignalized intersection is:
+
+\begin{equation}
+    d_\ell^{\text{US}}(t) = \text{FF}(v) \cdot \text{ROW}(\ell) \cdot \left(\alpha + \beta \cdot X(v,t)^{\eta}\right)
+    \label{eq:shahpar_delay}
+\end{equation}
+
+\noindent where $v$ denotes the intersection node at the downstream end of link~$\ell$, and the three components are defined as follows.
+
+\subsubsection{Friction factor $\text{FF}(v)$}
+
+The friction factor captures the geometric complexity of the intersection. Let $n_{\text{in}}$ and $n_{\text{out}}$ denote the number of car-accessible incoming and outgoing links at node~$v$, respectively. The number of possible turning movements is estimated as:
+
+\begin{equation}
+    N_{\text{turns}} = \max\!\left(n_{\text{in}} \cdot n_{\text{out}} - N_{\text{prohibited}}, \; \max(n_{\text{in}}, n_{\text{out}})\right)
+\end{equation}
+
+\noindent where $N_{\text{prohibited}}$ is the count of prohibited turns, including U-turns and explicit turn restrictions from OSM. The friction factor is then:
+
+\begin{equation}
+    \text{FF}(v) = \text{clip}\!\left(N_{\text{turns}} \cdot \min\!\left(1.2, \; \frac{n_{\text{in}} + 1}{n_{\text{out}} + 1}\right), \; 2, \; 10\right)
+    \label{eq:ff}
+\end{equation}
+
+Intersections with more turning movements and an asymmetric entry-to-exit ratio yield higher friction.
+
+\subsubsection{Right-of-way factor $\text{ROW}(\ell)$}
+
+The right-of-way factor differentiates between major and minor approaches based on link capacities at the intersection:
+
+\begin{equation}
+    \text{ROW}(\ell) = \begin{cases}
+    0.25 & \text{if all incoming links have similar capacities} \\[4pt]
+    \displaystyle 0.5 \cdot \left(1 - \frac{C_\ell - C_{\min}}{C_{\max} - C_{\min}}\right) & \text{otherwise}
+    \end{cases}
+    \label{eq:row}
+\end{equation}
+
+\noindent where $C_\ell$ is the capacity of link~$\ell$, and $C_{\min}$ and $C_{\max}$ are the minimum and maximum capacities among all incoming links at node~$v$. Links with higher capacity (major roads) receive a lower right-of-way factor (closer to 0), while minor roads receive a factor closer to~0.5, reflecting the higher expected delay for vehicles on lower-priority approaches. Capacities are considered ``similar'' when $C_{\max} - C_{\min} < 100$~veh/h.
+
+\subsubsection{Saturation-dependent delay}
+
+The saturation ratio of the intersection at time~$t$ is:
+
+\begin{equation}
+    X(v,t) = \min\!\left(\frac{\sum_{\ell' \in \mathcal{L}_{\text{in}}(v)} q_{\ell'}(t)}{\max\!\left(\max_{\ell' \in \mathcal{L}_{\text{in}}(v)} C_{\ell'}, \; 600\right)}, \; X_{\max}\right)
+    \label{eq:saturation}
+\end{equation}
+
+\noindent where $\mathcal{L}_{\text{in}}(v)$ is the set of car-accessible incoming links at node~$v$, and $X_{\max} = 0.95$. The delay function uses the default parameters $\alpha = 3.5$, $\beta = 4.85$, and $\eta = 1.48$. As with the signalized delay, the result is capped at 40~s.
+
+\subsection{Spatial filtering of consecutive delays}
+
+In a detailed network, consecutive links can be very short, particularly around complex intersections where OSM data may produce multiple closely spaced nodes. Applying an intersection delay at every node would lead to unrealistic cumulative penalties for vehicles traversing such segments. To prevent this, a minimum distance threshold $d_{\min}$ (default: 30~m) is enforced between successive delay applications. When a vehicle reaches a node, the delay is applied only if the Euclidean distance from the last node where a delay was applied exceeds~$d_{\min}$. This filtering is tracked per vehicle using the coordinates of the most recent delay location.
+

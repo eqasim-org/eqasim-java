@@ -9,11 +9,12 @@ import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.flow.FlowBinManager;
 import org.eqasim.core.components.flow.FlowConfigGroup;
-import org.eqasim.core.components.network_calibration.capacities_calibration.CapacitiesAdapter;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
+import org.eqasim.core.components.network_calibration.capacities.CapacityCorrector;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltiesAdapter;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyManager;
+import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyKeyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedAdapter;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedFactorManager;
@@ -46,8 +47,11 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
         if (config.isActivated()) {
             logger.info("Network calibration is activated. Installing components.");
 
-            // 1. Install flow module and activate it if it is not activated
-            if (config.isCalibrationEnabled() && (objectives.contains("capacity") || objectives.contains("penalty"))) {
+            // 1. Correcting capacities in the network
+            bind(CapacityCorrector.class).asEagerSingleton();
+
+            // 2. Install flow module and activate it if it is not activated
+            if (config.isCalibrationEnabled() && objectives.contains("penalty")) {
                 FlowConfigGroup flowConfig = FlowConfigGroup.getOrCreate(getConfig());
                 if (!flowConfig.isActivated()) {
                     logger.info("Flow estimation is turned on as part of network calibration.");
@@ -57,11 +61,6 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             }
 
             // 2. install each component of the calibration module
-            if (objectives.contains("capacity")) {
-                logger.info("Network capacity calibration is activated");
-                addControllerListenerBinding().to(CapacitiesAdapter.class).asEagerSingleton();
-            }
-
             if (objectives.contains("penalty")) {
                 logger.info("Network penalties calibration is activated");
                 addTravelDisutilityFactoryBinding(TransportMode.car).to(EqasimTravelDisutilityFactory.class);
@@ -98,32 +97,26 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public CapacitiesAdapter provideCapacitiesAdapter(Network network,
-                                                      Provider<FlowProcessor> flowProcessorProvider,
-                                                      Provider<CountsProcessor> countsProcessorProvider,
-                                                      NetworkCalibrationConfigGroup config,
-                                                      EqasimConfigGroup eqasimConfig,
-                                                      OutputDirectoryHierarchy outputHierarchy,
-                                                      LinkCategorizer categorizer) {
-        return new CapacitiesAdapter(network, flowProcessorProvider, countsProcessorProvider, config, eqasimConfig, outputHierarchy, categorizer);
-    }
-
-    @Provides
-    @Singleton
-    public CountsProcessor provideCountsProcessor(Network network, OutputDirectoryHierarchy outputHierarchy, LinkCategorizer categorizer) {
+    public CountsProcessor provideCountsProcessor(Network network,
+                                                  OutputDirectoryHierarchy outputHierarchy,
+                                                  LinkCategorizer categorizer,
+                                                  PenaltyKeyManager penaltyKeyManager) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new CountsProcessor(network, config, outputHierarchy, categorizer);
+        return new CountsProcessor(network, config, outputHierarchy, categorizer, penaltyKeyManager);
     }
 
     @Provides
     @Singleton
-    public PenaltiesAdapter providePenaltiesAdapter(Provider<CountsProcessor> countsProcessorProvider,
+    public PenaltiesAdapter providePenaltiesAdapter(Network network,
+                                                    Provider<CountsProcessor> countsProcessorProvider,
                                                     Provider<FlowProcessor> flowProcessorProvider,
                                                     NetworkCalibrationConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
                                                     EqasimConfigGroup eqasimConfig,
                                                     LinkCategorizer categorizer,
+                                                    PenaltyKeyManager penaltyKeyManager,
                                                     PenaltyManager penaltyManager) {
-        return new PenaltiesAdapter(countsProcessorProvider, flowProcessorProvider, config, outputHierarchy, eqasimConfig, categorizer, penaltyManager);
+        return new PenaltiesAdapter(network, countsProcessorProvider, flowProcessorProvider, config, outputHierarchy,
+                eqasimConfig, categorizer, penaltyKeyManager, penaltyManager);
     }
 
     @Provides
@@ -143,7 +136,15 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Singleton
     public PenaltyManager providePenaltyManager() {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new PenaltyManager(config.getMinPenalty(), config.getMaxPenalty(), config.isCalibrationEnabled());
+        return new PenaltyManager(config);
+    }
+
+    @Provides
+    @Singleton
+    public PenaltyKeyManager providePenaltyKeyManager(Network network,
+                                                      NetworkCalibrationConfigGroup config,
+                                                      LinkCategorizer categorizer) {
+        return new PenaltyKeyManager(config, network, categorizer);
     }
 
     @Provides
@@ -186,7 +187,11 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
         }
 
         List<String> objectives = config.getAllObjectives();
-        Set<String> supportedObjectives = Set.of("capacity", "penalty", "freespeed");
+        if (objectives.isEmpty()) {
+            throw new IllegalArgumentException("Network calibration is activated but objective is empty. Supported objectives are: penalty, freespeed.");
+        }
+
+        Set<String> supportedObjectives = Set.of("penalty", "freespeed");
         Set<String> invalidObjectives = new HashSet<>();
 
         for (String objective : objectives) {
@@ -200,25 +205,11 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
         }
 
         boolean calibrate = config.isCalibrationEnabled();
-        boolean hasCapacityObjective = objectives.contains("capacity");
         boolean hasPenaltyObjective = objectives.contains("penalty");
         boolean hasFreespeedObjective = objectives.contains("freespeed");
 
-        if (calibrate && hasCapacityObjective && hasPenaltyObjective) {
-            throw new IllegalArgumentException("Both capacity and penalty calibration are enabled. Please calibrate them sequentially.");
-        }
-
-        if (calibrate && (hasCapacityObjective || hasPenaltyObjective)
-                && !config.hasCountsFile() && !config.hasAverageCountsPerCategoryFile()) {
-            throw new IllegalArgumentException("Calibration of capacity/penalty requires countsFile or averageCountsPerCategoryFile.");
-        }
-
-        if (!calibrate && hasCapacityObjective && !config.hasCapacitiesFile()) {
-            throw new IllegalArgumentException("When objective includes capacity and calibrate=false, capacitiesFile must be provided.");
-        }
-
-        if (!calibrate && hasPenaltyObjective && !config.hasPenaltiesFile()) {
-            throw new IllegalArgumentException("When objective includes penalty and calibrate=false, penaltiesFile must be provided.");
+        if (calibrate && hasPenaltyObjective && !config.hasCountsFile()) {
+            throw new IllegalArgumentException("Penalty calibration requires countsFile.");
         }
 
         if (calibrate && hasFreespeedObjective && !config.hasObservedSpeedTripsFile()) {
@@ -235,10 +226,6 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                 throw new IllegalArgumentException("freespeedWarmupIterations must be >= 0.");
             }
 
-        }
-
-        if (!calibrate && hasFreespeedObjective && !config.hasFreespeedFactorsFile()) {
-            throw new IllegalArgumentException("When objective includes freespeed and calibrate=false, freespeedFactorsFile must be provided.");
         }
     }
 

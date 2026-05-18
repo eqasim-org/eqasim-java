@@ -23,6 +23,18 @@ Under `eqasim:networkCalibration`:
 - `objective=freespeed`
 - `observedSpeedTripsFile=path/to/observed_trips.csv`
 
+## Initialization precedence
+
+For freespeed groups, initial factors are resolved in this order:
+
+1. `speedFactor` link attribute (group-averaged by category + municipality type)
+2. `freespeedFactorsFile` CSV (overrides attribute values for matching groups)
+
+If `calibrate=false`, the loaded factors are applied and kept fixed.
+If `calibrate=true`, these values are used as initial factors before iterative updates.
+
+At shutdown, the module restores each link's original freespeed and writes back the final `speedFactor` attribute.
+
 Useful optional parameters:
 
 - `updateInterval` (default `5`)

@@ -1,0 +1,275 @@
+
+\section{Network Calibration}
+\label{sec:network_calibration}
+
+The road network used in the simulation is derived from OpenStreetMap (OSM), where link attributes such as free-flow speed and capacity are assigned based on default values associated with highway types. These default values often do not reflect local traffic conditions, leading to discrepancies between simulated and observed traffic patterns. To address this, we introduce a two-stage iterative calibration procedure that adjusts (i)~routing penalties to reproduce observed traffic flows on instrumented links, and (ii)~free-speed factors to match observed travel times obtained from TomTom data. Both calibration stages operate within the MATSim iterative loop and are applied at configurable intervals after an initial warm-up phase.
+
+\subsection{Link categorization}
+
+Each road link $\ell$ in the network is assigned a category $c(\ell) \in \mathcal{C}$ based on its OSM highway tag. Five base categories are defined, ordered by decreasing road hierarchy:
+
+\begin{itemize}
+    \item $c = 1$: Motorways and trunk roads (including ramps),
+    \item $c = 2$: Primary roads,
+    \item $c = 3$: Secondary roads,
+    \item $c = 4$: Tertiary roads,
+    \item $c = 5$: Residential and local roads.
+\end{itemize}
+
+When spatial heterogeneity is relevant, categories are further distinguished by location type. Urban links receive categories $c \in \{11,\ldots,15\}$ and links within designated special regions (e.g., city centers) receive categories $c \in \{21,\ldots,25\}$. If a sub-category contains fewer observations than a predefined threshold, it is merged back into its parent category.
+
+For free-speed calibration, the grouping is refined to a tuple $g = (c, m)$, where $c$ is the base road category and $m$ is the municipality type (e.g., urban, suburban, rural). This allows free-speed factors to vary both by road hierarchy and by the spatial context in which a link is located.
+
+%======================================================================
+\subsection{Penalty calibration}
+\label{sec:penalty_calibration}
+
+\subsubsection{Objective}
+The goal of the penalty calibration is to adjust routing costs so that the simulated traffic flow at category level matches observed average daily traffic counts. The reference counts are expressed as daily averages in vehicles per hour per lane (veh/h/lane), which prevents systematic bias toward high-capacity roads and avoids overfitting to individual link volumes.
+
+\subsubsection{Penalty formulation}
+For each link $\ell$ belonging to a calibrated category $c(\ell)$, an additional disutility term is added to the routing cost:
+
+\begin{equation}
+    \Delta U_\ell = p_{c(\ell)} \cdot t_\ell^{\text{ff}}
+    \label{eq:penalty}
+\end{equation}
+
+\noindent where $p_{c(\ell)}$ is the penalty coefficient for category $c(\ell)$ and $t_\ell^{\text{ff}} = L_\ell / v_\ell^{\text{ff}}$ is the free-flow travel time on link~$\ell$, with $L_\ell$ denoting the link length and $v_\ell^{\text{ff}}$ the free-flow speed. By scaling the penalty proportionally to the free-flow travel time, the additional cost grows with link length and penalizes longer links more, which is physically meaningful. A positive penalty $p_c > 0$ increases the disutility of traversing links of category~$c$, thereby diverting traffic away from those links. Conversely, a negative penalty attracts traffic.
+
+Optional multiplicative correction factors $\alpha_{\text{ramp}}$ and $\alpha_{\text{trunk}}$ are applied to ramp and trunk links, respectively, to account for their specific operational characteristics. The total routing disutility is:
+
+\begin{equation}
+    U_\ell^{\text{routing}} = U_\ell^{\text{base}} + \Delta U_\ell
+\end{equation}
+
+\noindent where $U_\ell^{\text{base}}$ is the standard MATSim travel disutility.
+
+\subsubsection{Flow and count metrics}
+
+At each calibration iteration, the simulated traffic flow is aggregated by category. For each link~$\ell$ that belongs to the set of monitored links $\mathcal{L}_{\text{obs}}$, the daily flow is normalized as:
+
+\begin{equation}
+    q_\ell = \frac{Q_\ell}{H \cdot n_\ell}
+    \label{eq:flow_normalization}
+\end{equation}
+
+\noindent where $Q_\ell$ is the total daily vehicle count on link~$\ell$, $H$ is the number of hours in the observation period, and $n_\ell$ is the number of lanes. The category-level average simulated flow is then:
+
+\begin{equation}
+    \bar{q}_c^{\text{sim}} = \frac{1}{|\mathcal{L}_c|} \sum_{\ell \in \mathcal{L}_c} q_\ell
+    \label{eq:avg_flow}
+\end{equation}
+
+\noindent where $\mathcal{L}_c = \{\ell \in \mathcal{L}_{\text{obs}} : c(\ell) = c\}$ is the set of observed links belonging to category~$c$. The observed reference flow $\bar{q}_c^{\text{obs}}$ for each category is computed analogously from the input count data.
+
+\subsubsection{Unbiased error signal}
+
+Rather than relying solely on the aggregate percentage difference between simulated and observed flows, we compute an unbiased error signal that accounts for the distribution of per-link deviations. For each monitored link $\ell \in \mathcal{L}_c$, the relative error is:
+
+\begin{equation}
+    e_\ell = \frac{q_\ell / s - \bar{q}_\ell^{\text{obs}}}{\bar{q}_\ell^{\text{obs}}}
+\end{equation}
+
+\noindent where $s$ is the simulation sample rate and $\bar{q}_\ell^{\text{obs}}$ is the observed count for link~$\ell$. We then classify each link as over-estimated ($e_\ell > \varepsilon_p$) or under-estimated ($e_\ell < -\varepsilon_p$), with $\varepsilon_p = 0.03$ a tolerance band. The unbiased error for category $c$ is:
+
+\begin{equation}
+    E_c^{\text{unbiased}} = \frac{N_c^{+} - N_c^{-}}{N_c}
+    \label{eq:unbiased_error}
+\end{equation}
+
+\noindent where $N_c^{+}$ and $N_c^{-}$ are the number of links with flow above and below the tolerance band respectively, and $N_c$ is the total number of monitored links in category~$c$. This sign-based error is robust to outliers and reflects whether the majority of links exhibit too much or too little flow.
+
+\subsubsection{Update rule and convergence}
+
+The penalty update is triggered every $\Delta k$ iterations, starting after a warm-up period of $k_0^p$ iterations to allow the simulation to reach a stable routing pattern. At iteration~$k$, the penalty for category~$c$ is updated as:
+
+\begin{equation}
+    p_c^{(k+1)} = p_c^{(k)} + \tilde{\beta}^{(k)} \cdot E_c^{\text{unbiased}}
+    \label{eq:penalty_update}
+\end{equation}
+
+\noindent where $\tilde{\beta}^{(k)}$ is an adaptive learning rate. The base learning rate $\beta$ is modulated by an iteration-dependent schedule:
+
+\begin{equation}
+    \tilde{\beta}^{(k)} = \beta \cdot \gamma(k) \cdot \mathbb{1}\left[|\delta_c| \leq 0.3\right] + \frac{\beta \cdot \gamma(k)}{2} \cdot \mathbb{1}\left[|\delta_c| > 0.3\right]
+    \label{eq:adaptive_beta}
+\end{equation}
+
+\noindent where $\delta_c = (\bar{q}_c^{\text{sim}} - \bar{q}_c^{\text{obs}}) / \bar{q}_c^{\text{obs}}$ is the percentage flow difference, and $\gamma(k)$ is a decay schedule:
+
+\begin{equation}
+    \gamma(k) = \begin{cases}
+        2.0    & \text{if } k \leq 20 \\
+        1.2    & \text{if } 20 < k \leq 40 \\
+        0.8    & \text{if } 40 < k \leq 60 \\
+        0.5    & \text{if } k > 60
+    \end{cases}
+    \label{eq:decay_schedule}
+\end{equation}
+
+This schedule applies a larger step size in early iterations for faster initial convergence, and progressively reduces it for fine-tuning. When the aggregate discrepancy $|\delta_c|$ exceeds 30\%, the learning rate is halved to prevent oscillation.
+
+The update is suppressed (i.e., the penalty is held constant) when the category is already well-calibrated. Specifically, no update is performed when:
+
+\begin{equation}
+    |E_c^{\text{unbiased}}| \leq C_p
+    \label{eq:penalty_convergence}
+\end{equation}
+
+\noindent with $C_p = 0.05$, meaning fewer than 5\% more links are over-estimated than under-estimated (or vice versa). After each update, penalties are clamped to the feasible range:
+
+\begin{equation}
+    p_c^{(k+1)} \leftarrow \text{clip}\!\left(p_c^{(k+1)},\; p_{\min},\; p_{\max}\right)
+    \label{eq:penalty_clamp}
+\end{equation}
+
+\noindent with default bounds $p_{\min} = -0.1$ and $p_{\max} = 0.3$. Additionally, a regularization step sets $p_c = 0$ whenever $|p_c| < 5 \times 10^{-3}$, eliminating negligible penalties.
+
+%======================================================================
+\subsection{Free-speed calibration}
+\label{sec:freespeed_calibration}
+
+\subsubsection{Objective}
+
+The free-speed calibration adjusts the free-flow speed of network links so that the resulting simulated travel times match those observed from a reference dataset (TomTom probe data). The adjustment is performed through multiplicative factors applied at the level of link groups defined by road category and municipality type.
+
+\subsubsection{Observed trip data and routing}
+
+The calibration uses a set of observed trips~$\mathcal{T}$, where each trip~$\tau \in \mathcal{T}$ is characterized by an origin coordinate, a destination coordinate, a departure time~$t_\tau^{\text{dep}}$, an observed travel time~$T_\tau^{\text{obs}}$, and an observed travel distance~$D_\tau^{\text{obs}}$. At each calibration iteration, each observed trip is routed on the current network using a shortest-path algorithm based on the simulated (congested) travel times, yielding a simulated path $\mathcal{P}_\tau$ with total travel time $T_\tau^{\text{sim}}$ and total distance $D_\tau^{\text{sim}}$.
+
+\subsubsection{Trip acceptance filter}
+
+To ensure robustness, a trip~$\tau$ is retained for calibration only if it passes the following acceptance criteria:
+
+\begin{equation}
+    D_\tau^{\text{obs}} > 1\,\text{km}, \quad
+    D_\tau^{\text{sim}} > 1\,\text{km}, \quad
+    T_\tau^{\text{obs}} > 180\,\text{s}, \quad
+    T_\tau^{\text{sim}} > 180\,\text{s}
+    \label{eq:trip_filter_1}
+\end{equation}
+
+\begin{equation}
+    \frac{|D_\tau^{\text{sim}} - D_\tau^{\text{obs}}|}{D_\tau^{\text{obs}}} \leq 0.1
+    \label{eq:trip_filter_distance}
+\end{equation}
+
+\begin{equation}
+    -0.3 \leq \frac{T_\tau^{\text{sim}} - T_\tau^{\text{obs}}}{T_\tau^{\text{obs}}} \leq 2.0
+    \label{eq:trip_filter_time}
+\end{equation}
+
+The distance filter (Eq.~\ref{eq:trip_filter_distance}) discards trips whose simulated route deviates significantly from the observed path, which would indicate incorrect route assignment. The travel time filter (Eq.~\ref{eq:trip_filter_time}) removes extreme outliers.
+
+\subsubsection{Per-link error decomposition}
+
+For each accepted trip $\tau$ and each link $\ell \in \mathcal{P}_\tau$ with known category, the travel time discrepancy is decomposed into a per-link contribution. Let $t_{\ell,\tau}$ denote the (congested) travel time on link~$\ell$ when trip~$\tau$ traverses it. The weight of link~$\ell$ within trip~$\tau$ is:
+
+\begin{equation}
+    w_{\ell,\tau} = \frac{t_{\ell,\tau}}{T_\tau^{\text{sim}}}
+    \label{eq:link_weight}
+\end{equation}
+
+\noindent which captures the relative importance of each link in determining the overall travel time. The per-link speed discrepancy is defined as:
+
+\begin{equation}
+    \Delta v_{\ell,\tau} = \frac{L_\ell}{w_{\ell,\tau} \, T_\tau^{\text{sim}}} - \frac{L_\ell}{w_{\ell,\tau} \, T_\tau^{\text{obs}}}
+    \label{eq:speed_diff}
+\end{equation}
+
+\noindent and the corresponding local factor correction is:
+
+\begin{equation}
+    \hat{f}_{\ell,\tau} = 1 - \frac{\Delta v_{\ell,\tau}}{v_\ell^{\text{ff}}}
+    \label{eq:local_factor}
+\end{equation}
+
+\noindent where $v_\ell^{\text{ff}}$ is the current free-flow speed on link~$\ell$. When the simulation is faster than observed ($\Delta v_{\ell,\tau} > 0$), the factor $\hat{f}_{\ell,\tau} < 1$, indicating that the free speed should be reduced.
+
+\subsubsection{Group-level aggregation}
+
+All per-link observations are aggregated by group $g = (c, m)$. For each group, the proposed factor correction $\bar{f}_g$ is computed as a 20--80\% trimmed weighted mean of the individual link factors:
+
+\begin{equation}
+    \bar{f}_g = \frac{\sum_{(\ell,\tau) \in \mathcal{S}_g^{\text{trim}}} w_{\ell,\tau} \, \hat{f}_{\ell,\tau}}{\sum_{(\ell,\tau) \in \mathcal{S}_g^{\text{trim}}} w_{\ell,\tau}}
+    \label{eq:trimmed_factor}
+\end{equation}
+
+\noindent where $\mathcal{S}_g^{\text{trim}}$ denotes the set of per-link observations for group~$g$ after removing the 20\% lowest and 20\% highest values. The trimmed mean provides robustness against outlier trips that may arise from navigation errors, unusual driving behavior or network imperfections.
+
+The group-level speed error $\bar{e}_g$ is computed analogously as the trimmed weighted mean of the per-link speed discrepancies $\Delta v_{\ell,\tau}$.
+
+\subsubsection{Update decision and convergence criteria}
+
+A group $g$ is updated at iteration~$k$ only if the following conditions are all satisfied:
+
+\begin{enumerate}
+    \item \textbf{Sufficient data}: the number of trips contributing to group~$g$ is at least $N_{\min}$ (default: 50), and the observed and simulated travel times are both strictly positive.
+
+    \item \textbf{Not frozen}: the group has not been temporarily frozen due to convergence (see below).
+
+    \item \textbf{Significant imbalance}: the group exhibits a significant directional bias in travel time errors. For each trip-link observation in the group, a trip is classified as ``fast'' if $T_\tau^{\text{sim}} < (1-\varepsilon_f) \, T_\tau^{\text{obs}}$ and ``slow'' if $T_\tau^{\text{sim}} > (1+\varepsilon_f) \, T_\tau^{\text{obs}}$, with $\varepsilon_f = 0.025$. The update is performed only if:
+    \begin{equation}
+        |N_g^{\text{fast}} - N_g^{\text{slow}}| > C_f \cdot N_g^{\text{total}}
+        \label{eq:should_update}
+    \end{equation}
+    with $C_f = 0.05$. This ensures that a minimum fraction of trips shows a consistent direction of bias before adjusting.
+
+    \item \textbf{Improving}: the current absolute error $|\bar{e}_g^{(k)}|$ must show improvement relative to a reference error $|\bar{e}_g^{\text{ref}}|$ from earlier iterations. Specifically, the error must satisfy:
+    \begin{equation}
+        |\bar{e}_g^{(k)}| < |\bar{e}_g^{\text{ref}}| \cdot (1 - \rho)
+        \label{eq:improvement}
+    \end{equation}
+    with $\rho = 0.015$ (1.5\% minimum improvement). The reference error is taken from a rolling history buffer of size $H = 5$. If no improvement is detected, the no-improvement counter is incremented. After $P = 3$ consecutive non-improving updates, the group is frozen and the factor is rolled back to the best historical value.
+\end{enumerate}
+
+\subsubsection{Factor update}
+
+When all conditions are met, the factor for group~$g$ is updated. Given the current factor $f_g^{(k)}$ and the proposed correction $\bar{f}_g$, the candidate factor is:
+
+\begin{equation}
+    f_g^* = \bar{f}_g \cdot f_g^{(k)}
+    \label{eq:candidate_factor}
+\end{equation}
+
+The step from the current factor to the candidate is damped and bounded:
+
+\begin{equation}
+    \beta_{\text{eff}}^{(k)} = \text{clip}\!\left(\frac{2\beta}{k_{\text{upd}} - 2},\; \beta_{\min},\; \beta_{\max}\right)
+    \label{eq:eff_beta_fs}
+\end{equation}
+
+\noindent where $k_{\text{upd}}$ is the cumulative number of update rounds performed so far, $\beta$ is the base learning rate, and $\beta_{\min} = 0.4$, $\beta_{\max} = 0.8$. The first two updates use $\beta_{\text{eff}} = 1$ to allow a full initial adjustment. The bounded update step is:
+
+\begin{equation}
+    \Delta f_g = \text{clip}\!\left((f_g^* - f_g^{(k)}) \cdot \beta_{\text{eff}}^{(k)},\; -\Delta f_{\max},\; \Delta f_{\max}\right)
+    \label{eq:step_bound}
+\end{equation}
+
+\noindent with $\Delta f_{\max} = 0.08$. The updated factor is then:
+
+\begin{equation}
+    f_g^{(k+1)} = \text{clip}\!\left(f_g^{(k)} + \Delta f_g,\; f_{\min},\; f_{\max}\right)
+    \label{eq:factor_update}
+\end{equation}
+
+\noindent with default bounds $f_{\min} = 0.7$ and $f_{\max} = 1.3$. The factor is applied multiplicatively to the original (uncalibrated) free-flow speed of each link:
+
+\begin{equation}
+    v_\ell^{\text{ff,new}} = \max\!\left(0.1,\; v_\ell^{\text{ff,base}} \cdot f_{g(\ell)}\right)
+    \label{eq:apply_factor}
+\end{equation}
+
+\subsubsection{Freezing mechanism}
+
+A group that has been frozen skips $N_{\text{freeze}} = 4$ consecutive update rounds before becoming eligible again. This avoids flip-flopping when the error has nearly converged. Furthermore, after a late-stage iteration threshold $k_{\text{late}} = 90$ iterations, any group that gets frozen remains permanently frozen, locking in its calibrated factor for the remainder of the simulation, unless it was recently unfrozen and needs a new update due to interactions with other calibration components (e.g., a change in penalties affecting travel times).
+
+\subsubsection{Interaction with penalty calibration}
+
+During the routing of observed trips for free-speed calibration, the penalty component (Section~\ref{sec:penalty_calibration}) is temporarily disabled. This ensures that the free-speed factors are calibrated against travel times that reflect the network's free-flow and congestion characteristics without interference from the routing penalties, which serve a different purpose (flow distribution calibration). Once the routing is completed and factors are updated, the penalties are re-enabled.
+
+\subsection{Summary}
+
+The two calibration components address complementary aspects of network quality. The penalty calibration steers the router toward a realistic distribution of traffic across road categories by adjusting the perceived cost of traversing links, using observed traffic counts as targets. The free-speed calibration adjusts the intrinsic speed characteristics of the network by matching simulated travel times to TomTom probe data. Both procedures use bounded, adaptive update rules with explicit convergence criteria to ensure stability and prevent overfitting.
+

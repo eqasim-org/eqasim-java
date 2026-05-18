@@ -5,10 +5,12 @@ import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
+import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyGroupKey;
+import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedCalibrationKey;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -17,111 +19,112 @@ import java.util.Set;
 public class LinkCategorizer {
     private static final Logger logger = LogManager.getLogger(LinkCategorizer.class);
 
-    // Category 1 – Motorways / Freeways / Trunk / Expressways (highest capacity)
-    public static final List<String> CATEGORY_1_HIGHWAY_TYPES = List.of(
-            "motorway",
-            "motorway_link",
-            "trunk",
-            "trunk_link"
-    );
-
-    // Category 2 – primary
-    public static final List<String> CATEGORY_2_HIGHWAY_TYPES = List.of(
-            "primary",
-            "primary_link"
-    );
-
-    // Category 3 – Secondary
-    public static final List<String> CATEGORY_3_HIGHWAY_TYPES = List.of(
-            "secondary",
-            "secondary_link"
-    );
-
-    // Category 4 – Tertiary
-    public static final List<String> CATEGORY_4_HIGHWAY_TYPES = List.of(
-            "tertiary",
-            "tertiary_link"
-    );
-
-    // Category 5 – Local / Access Roads (lowest capacity)
-    public static final List<String> CATEGORY_5_HIGHWAY_TYPES = List.of(
-            "residential",
-            "unclassified",
-            "living_street",
-            "service",
-            "track"
-    );
-
+    public static final Set<String> CATEGORY_1_HIGHWAY_TYPES = Set.of(
+                                    "motorway", "motorway_link", "trunk", "trunk_link");
+    public static final Set<String> CATEGORY_2_HIGHWAY_TYPES = Set.of(
+                                    "primary", "primary_link");
+    public static final Set<String> CATEGORY_3_HIGHWAY_TYPES = Set.of(
+                                    "secondary", "secondary_link");
+    public static final Set<String> CATEGORY_4_HIGHWAY_TYPES = Set.of(
+                                    "tertiary", "tertiary_link");
+    public static final Set<String> CATEGORY_5_HIGHWAY_TYPES = Set.of(
+                                    "residential", "unclassified", "living_street", "service", "track");
     public static final int UNKNOWN_CATEGORY = 0;
 
-    // other
-    private final boolean separateUrban;
-    private final boolean hasSpecialRegion;
-    private final Set<Id<Link>> linksInSpecialRegions = new HashSet<>();
+    private final Map<Id<Link>, Integer> penaltiesSpecialRegionByLinkId = new HashMap<>();
+    private final Map<Id<Link>, Integer> freespeedSpecialRegionByLinkId = new HashMap<>();
+    private final boolean hasPenaltySpecialRegions;
+    private final boolean hasFreespeedSpecialRegions;
 
-    private final Set<Integer> allCategoriesSpecial =  new HashSet<>(Set.of(21, 22, 23, 24, 25));
-    private final Set<Integer> allCategoriesUrban =  new HashSet<>(Set.of(11, 12, 13, 14, 15));
-    private final Set<Integer> allCategories = Set.of(1, 2, 3, 4, 5);
-    private final Set<Integer> combined = new HashSet<>();
-    private final Set<Integer> specialRegionsToDrop = new HashSet<>();
-    private final Set<Integer> urbanCategoriesToDrop = new HashSet<>();
     /**
-     * Constructs a LinkCategorizer with the option to separate urban roads.
+     * Constructs a LinkCategorizer. Urban/rural separation is always active.
      * @param config Network Calibration Config group.
      */
     public LinkCategorizer(Network network, NetworkCalibrationConfigGroup config) {
-        this.separateUrban = config.getSeparateUrbanRoads();
-        logger.info("LinkCategorizer initialized with separateUrban: {}", separateUrban);
+        List<String> penaltiesSpecialRegionFiles = config.getPenaltiesSpecialRegionFiles();
+        this.hasPenaltySpecialRegions = !penaltiesSpecialRegionFiles.isEmpty();
 
-        this.hasSpecialRegion = config.hasPenaltiesSpecialRegion();
-        if (hasSpecialRegion) {
-            SpecialRegionsReader specialRegionsReader = new SpecialRegionsReader(config.getPenaltiesSpecialRegionPath());
-            logger.info("\t SpecialRegionsReader initialized with file: {}", config.getPenaltiesSpecialRegionPath());
-            logger.info("\t SpecialRegionsReader initialized with {} regions", specialRegionsReader.getNumberOfRegions());
-            linksInSpecialRegions.addAll(
-                    specialRegionsReader.getLinksInSpecialRegions(network)
-            );
-            logger.info("\t The network contains {} link sin special regions out of {} total links", linksInSpecialRegions.size(), network.getLinks().size());
-        }
+        List<String> freespeedSpecialRegionFiles = config.getFreespeedSpecialRegionFiles();
+        this.hasFreespeedSpecialRegions = !freespeedSpecialRegionFiles.isEmpty();
 
+        initSpecialRegions(network, penaltiesSpecialRegionFiles, freespeedSpecialRegionFiles);
     }
 
     /**
-     * Returns all possible categories based on the separateUrban flag.
+     * Keys management
      */
-    public List<Integer> getAllCategories() {
-        List<Integer> combinedList = new ArrayList<>(allCategories);
-        if (separateUrban) combinedList.addAll(allCategoriesUrban);
-        if (hasSpecialRegion) combinedList.addAll(allCategoriesSpecial);
-        return combinedList;
+
+    public PenaltyGroupKey getPenaltyGroupKey(Link link) {
+        int linkCategory = getBaseCategory(link);
+        if (!isCarLink(link) || linkCategory == UNKNOWN_CATEGORY || isOutsideLink(link)) {
+            return null;
+        }
+
+        return new PenaltyGroupKey(linkCategory, isUrbanLink(link), getPenaltiesSpecialRegionId(link));
     }
 
-    public void drop(String which, int cat){
-        logger.info("Dropping category {} from {}", cat, which);
-        if (which.equals("urban")){
-            urbanCategoriesToDrop.add(cat);
-        } else if (which.equals("special")){
-            specialRegionsToDrop.add(cat);
-        } else {
-            throw new IllegalArgumentException("Unknown category type to drop: " + which);
+    public FreespeedCalibrationKey getFreespeedCalibrationKey(Link link) {
+        int category = getBaseCategory(link);
+        if (!isCarLink(link) || category == UNKNOWN_CATEGORY) {
+            return null;
         }
+
+        return new FreespeedCalibrationKey(category, getMunicipalityType(link), getFreespeedSpecialRegionId(link));
     }
 
     /**
-     * Determines the category of a link based on its OSM highway type and urban status.
+     * Special regions
      */
-    public int getCategory(Link link) {
-        if (link.getAllowedModes().contains("car")) {
-            Object osmHighway = link.getAttributes().getAttribute("osm:way:highway");
-            if (osmHighway != null) {
-                return getCategoryFromOsmHighway(osmHighway.toString(), link);
+
+    public int getPenaltiesSpecialRegionId(Link link) {
+        return penaltiesSpecialRegionByLinkId.getOrDefault(link.getId(), 0);
+    }
+
+    public int getFreespeedSpecialRegionId(Link link) {
+        return freespeedSpecialRegionByLinkId.getOrDefault(link.getId(), 0);
+    }
+
+    private void initSpecialRegions(Network network, List<String> penaltiesSpecialRegionFiles, List<String> freespeedSpecialRegionFiles) {
+        if (hasPenaltySpecialRegions) {
+            for (int index = 0; index < penaltiesSpecialRegionFiles.size(); index++) {
+                String file = penaltiesSpecialRegionFiles.get(index);
+                int specialRegionId = index + 1;
+                SpecialRegionsReader specialRegionsReader = new SpecialRegionsReader(file);
+                logger.info("Loaded special region file {} (id={}) with {} geometries.",
+                        file, specialRegionId, specialRegionsReader.getNumberOfRegions());
+
+                for (Id<Link> linkId : specialRegionsReader.getLinksInSpecialRegions(network)) {
+                    penaltiesSpecialRegionByLinkId.putIfAbsent(linkId, specialRegionId);
+                }
             }
+
+            logger.info("Network has {} links assigned to penalties special regions.", penaltiesSpecialRegionByLinkId.size());
         }
-        return UNKNOWN_CATEGORY;
+
+
+        if (hasFreespeedSpecialRegions) {
+            for (int index = 0; index < freespeedSpecialRegionFiles.size(); index++) {
+                String file = freespeedSpecialRegionFiles.get(index);
+                int specialRegionId = index + 1;
+                SpecialRegionsReader specialRegionsReader = new SpecialRegionsReader(file);
+                logger.info("Loaded freespeed special region file {} (id={}) with {} geometries.",
+                        file, specialRegionId, specialRegionsReader.getNumberOfRegions());
+
+                for (Id<Link> linkId : specialRegionsReader.getLinksInSpecialRegions(network)) {
+                    freespeedSpecialRegionByLinkId.putIfAbsent(linkId, specialRegionId);
+                }
+            }
+
+            logger.info("Network has {} links assigned to freespeed special regions.", freespeedSpecialRegionByLinkId.size());
+        }
     }
+
+    /**
+     * Osm Categories
+     */
 
     public int getBaseCategory(Link link) {
-        if (link.getAllowedModes().contains("car")) {
+        if (isCarLink(link)) {
             Object osmHighway = link.getAttributes().getAttribute("osm:way:highway");
             if (osmHighway != null) {
                 return getBaseCategoryFromOsmHighway(osmHighway.toString(), link);
@@ -152,41 +155,9 @@ public class LinkCategorizer {
         return baseCategory;
     }
 
-    private int getCategoryFromOsmHighway(String osmHighway, Link link) {
-        int baseCategory = getBaseCategoryFromOsmHighway(osmHighway, link);
-        if (baseCategory ==UNKNOWN_CATEGORY ) return UNKNOWN_CATEGORY;
-
-        int catIfSpecialRegion = baseCategory + 20; // special regions categories are 21-25
-        if (hasSpecialRegion && !specialRegionsToDrop.contains(catIfSpecialRegion) && isInSpecialRegion(link)) {
-            return catIfSpecialRegion;
-        }
-
-        int catIfUrban = baseCategory + 10; // Urban categories are 11-15
-        if (separateUrban && !urbanCategoriesToDrop.contains(catIfUrban) && isUrbanLink(link)) {
-            return catIfUrban;
-        }
-
-        return baseCategory;
-    }
-
     /**
-     * Checks if a link is in an urban area.
-     */
-    public boolean isUrbanLink(Link link) {
-        Object municipalityTypeObj = link.getAttributes().getAttribute("municipalityType");
-        if (municipalityTypeObj instanceof String municipalityType) {
-            return municipalityType.equalsIgnoreCase("urban") || municipalityType.equalsIgnoreCase("urbancore");
-        }
-        return false;
-    }
-
-    public boolean isInSpecialRegion(Link link) {
-        return hasSpecialRegion && linksInSpecialRegions.contains(link.getId());
-    }
-
-    public boolean isInSpecialRegion(int cat) {
-        return hasSpecialRegion && cat>=20 && cat<30;
-    }
+    * helper methods
+    */
 
     public String getMunicipalityType(Link link) {
         Object municipalityTypeObj = link.getAttributes().getAttribute("municipalityType");
@@ -199,22 +170,16 @@ public class LinkCategorizer {
         return "unknown";
     }
 
-    /**
-     * Checks if a link is outside the country.
-     */
     public boolean isOutsideLink(Link link) {
         return getMunicipalityType(link).equals("outside");
     }
 
-    public boolean isSeparateUrban() {
-        return separateUrban;
-    }
-
-    public boolean itHasSpecialRegions(){
-        return hasSpecialRegion;
-    }
-
     public boolean isCarLink(Link link) {
         return link.getAllowedModes().contains("car");
+    }
+
+    public boolean isUrbanLink(Link link) {
+        String municipalityType = getMunicipalityType(link);
+        return municipalityType.equalsIgnoreCase("urban") || municipalityType.equalsIgnoreCase("urbancore");
     }
 }

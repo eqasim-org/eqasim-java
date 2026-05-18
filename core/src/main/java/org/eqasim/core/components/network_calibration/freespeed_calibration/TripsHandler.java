@@ -31,7 +31,6 @@ public class TripsHandler {
     private final Network network;
     private final LinkCategorizer categorizer;
     private final List<ObservedTripsTravelTimesCsvHandler.ObservedSpeedTrip> observedTrips;
-    private final List<Integer> categoriesToCalibrate;
     private final TravelTime carTravelTime;
     private final int threads;
     private final boolean isActivated;
@@ -47,7 +46,6 @@ public class TripsHandler {
         this.network = network;
         this.routerFactoryProvider = routerFactoryProvider;
         this.categorizer = categorizer;
-        this.categoriesToCalibrate = config.getCategoriesToCalibrationAsList();
         this.carTravelTime = carTravelTime;
         this.threads = threads;
         this.isActivated = config.isOneOfObjectives("freespeed") && config.isActivated();
@@ -74,11 +72,11 @@ public class TripsHandler {
 
     }
 
-    public Map<LinkGroupKey, FreespeedFactorManager.GroupStats> routeTrips(){
+    public Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> routeTrips(){
         return routeTripsAndCollectGroupStats();
     }
 
-    private Map<LinkGroupKey, FreespeedFactorManager.GroupStats> routeTripsAndCollectGroupStats() {
+    private Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> routeTripsAndCollectGroupStats() {
         logger.info("Start routing trips and collecting group stats for freespeed calibration");
         logger.info("Using car TravelTime implementation for calibration routing: {}", carTravelTime.getClass().getName());
         int workerCount = Math.max(1, Math.min(threads*2, observedTrips.size()));
@@ -93,7 +91,7 @@ public class TripsHandler {
             futures.add(executor.submit(() -> routeTripsChunk(chunkStart, chunkEnd)));
         }
 
-        Map<LinkGroupKey, FreespeedFactorManager.GroupStats> groupStats = new HashMap<>();
+        Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats = new HashMap<>();
         int routedTrips = 0;
         int acceptedTrips = 0;
 
@@ -125,7 +123,7 @@ public class TripsHandler {
                 carTravelTime);
 
 
-        Map<LinkGroupKey, FreespeedFactorManager.GroupStats> localStats = new HashMap<>();
+        Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> localStats = new HashMap<>();
         int routedTrips = 0;
         int acceptedTrips = 0;
 
@@ -164,8 +162,8 @@ public class TripsHandler {
                 double linkTravelTime = computeLinkTravelTime(link, now);
                 now += linkTravelTime;
 
-                int category = categorizer.getBaseCategory(link);
-                if (category == LinkCategorizer.UNKNOWN_CATEGORY || !categoriesToCalibrate.contains(category)) {
+                FreespeedCalibrationKey key = categorizer.getFreespeedCalibrationKey(link);
+                if (key == null) {
                     continue;
                 }
 
@@ -174,7 +172,6 @@ public class TripsHandler {
                     weight = 1.0 / path.links.size();
                 }
 
-                LinkGroupKey key = new LinkGroupKey(category, categorizer.getMunicipalityType(link));
                 FreespeedFactorManager.GroupStats stats = localStats.computeIfAbsent(key,
                         ignored -> new FreespeedFactorManager.GroupStats());
 
@@ -187,9 +184,9 @@ public class TripsHandler {
         return new RoutingChunkResult(localStats, routedTrips, acceptedTrips);
     }
 
-    private void mergeGroupStats(Map<LinkGroupKey, FreespeedFactorManager.GroupStats> destination,
-                                 Map<LinkGroupKey, FreespeedFactorManager.GroupStats> source) {
-        for (Map.Entry<LinkGroupKey, FreespeedFactorManager.GroupStats> entry : source.entrySet()) {
+    private void mergeGroupStats(Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> destination,
+                                 Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> source) {
+        for (Map.Entry<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> entry : source.entrySet()) {
             FreespeedFactorManager.GroupStats destinationStats = destination.computeIfAbsent(entry.getKey(), ignored -> new FreespeedFactorManager.GroupStats());
             FreespeedFactorManager.GroupStats sourceStats = entry.getValue();
             destinationStats.merge(sourceStats);
@@ -212,5 +209,5 @@ public class TripsHandler {
         return carTravelTime.getLinkTravelTime(link, time, null, null);
     }
 
-    private record RoutingChunkResult(Map<LinkGroupKey, FreespeedFactorManager.GroupStats> groupStats, int routedTrips, int acceptedTrips) {}
+    private record RoutingChunkResult(Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats, int routedTrips, int acceptedTrips) {}
 }

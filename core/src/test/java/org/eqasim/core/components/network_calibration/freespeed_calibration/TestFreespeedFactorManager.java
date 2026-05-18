@@ -15,7 +15,7 @@ public class TestFreespeedFactorManager {
     @Test
     public void testSkipWhenTripsAreInsufficient() {
         FreespeedFactorManager manager = new FreespeedFactorManager(createConfig(2));
-        LinkGroupKey key = new LinkGroupKey(1, "urban");
+        FreespeedCalibrationKey key = new FreespeedCalibrationKey(1, "urban", 0);
         FreespeedFactorManager.GroupStats stats = createConsistentStats();
 
         manager.updateFactors(Map.of(key, stats), 1);
@@ -33,7 +33,7 @@ public class TestFreespeedFactorManager {
     @Test
     public void testFreezeRollbackAndResumeAfterNoImprovement() {
         FreespeedFactorManager manager = new FreespeedFactorManager(createConfig(1));
-        LinkGroupKey key = new LinkGroupKey(1, "urban");
+        FreespeedCalibrationKey key = new FreespeedCalibrationKey(1, "urban", 0);
         FreespeedFactorManager.GroupStats stats = createConsistentStats();
 
         manager.updateFactors(Map.of(key, stats), 1);
