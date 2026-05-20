@@ -1,11 +1,11 @@
-package org.eqasim.switzerland.ch.ovgk.analysis;
+package org.eqasim.switzerland.ch_cmdp.ovgk.analysis;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-import org.eqasim.switzerland.ch.ovgk.OVGKConstants;
+import org.eqasim.switzerland.ch_cmdp.ovgk.OVGKConstants;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;

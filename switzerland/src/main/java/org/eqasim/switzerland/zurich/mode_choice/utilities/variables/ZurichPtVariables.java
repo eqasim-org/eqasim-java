@@ -1,7 +1,7 @@
 package org.eqasim.switzerland.zurich.mode_choice.utilities.variables;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
-import org.eqasim.switzerland.ch.ovgk.OVGK;
+import org.eqasim.switzerland.ch_cmdp.ovgk.OVGK;
 
 public class ZurichPtVariables extends PtVariables {
 	public final double railTravelTime_min;

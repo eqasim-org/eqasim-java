@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.mode_choice.constraints;
+package org.eqasim.switzerland.ch_cmdp.mode_choice.constraints;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,19 +14,7 @@ public class LoopModesConstraint extends AbstractTripConstraint {
 
 	@Override
 	public boolean validateBeforeEstimation(DiscreteModeChoiceTrip trip, String mode, List<String> previousModes) {
-		if (trip.getInitialMode().contains(LOOP_MODE)) {
-			if (!mode.contains(LOOP_MODE)) {
-				return false;
-			}
-		}
-
-		if (mode.contains(LOOP_MODE)) {
-			if (!trip.getInitialMode().contains(LOOP_MODE)) {
-				return false;
-			}
-		}
-
-		return true;
+		return modeConstraint(trip, mode, LOOP_MODE);
 	}
 
 	static public class Factory implements TripConstraintFactory {
@@ -35,5 +23,21 @@ public class LoopModesConstraint extends AbstractTripConstraint {
 				Collection<String> availableModes) {
 			return new LoopModesConstraint();
 		}
+	}
+
+	static boolean modeConstraint(DiscreteModeChoiceTrip trip, String mode, String filteredMode) {
+		if (trip.getInitialMode().contains(filteredMode)) {
+			if (!mode.contains(filteredMode)) {
+				return false;
+			}
+		}
+
+		if (mode.contains(filteredMode)) {
+			if (!trip.getInitialMode().contains(filteredMode)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

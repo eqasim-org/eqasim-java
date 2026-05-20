@@ -4,6 +4,7 @@ import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.model.utilities.MultinomialLogitSelector;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -122,6 +123,9 @@ public class RunAdaptConfig {
 		for (String mode : LOOP_MODES) {
 			eqasimConfig.setCostModel(mode, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 		}
+		// remote walk
+		eqasimConfig.setEstimator(RemoteWalkConstraint.REMOTE_MODE, EqasimModeChoiceModule.ZERO_ESTIMATOR_NAME);
+		eqasimConfig.setCostModel(RemoteWalkConstraint.REMOTE_MODE, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
 				.get(DiscreteModeChoiceConfigGroup.GROUP_NAME);
@@ -132,10 +136,13 @@ public class RunAdaptConfig {
 		for (String mode : LOOP_MODES) {
 			cachedModes.add(mode);
 		}
+		cachedModes.add(RemoteWalkConstraint.REMOTE_MODE);
 		dmcConfig.setCachedModes(cachedModes);
+
 		// set fixed randoms
 		MultinomialLogitSelectorConfigGroup MNLConfig = dmcConfig.getMultinomialLogitSelectorConfig();
 		MNLConfig.setRandomNumbers(MultinomialLogitSelectorConfigGroup.RandomNumbers.fixed);
+
 		// adjust routing parameters
 		RoutingConfigGroup routingConfig  = config.routing();
 		routingConfig.setRoutingRandomness(1.0); // small randomness to avoid ties in route choice
@@ -169,9 +176,10 @@ public class RunAdaptConfig {
 
 		//loop modes
 		ScoringConfigGroup scoringConfig = config.scoring();
-		for (String mode : LOOP_MODES) {
+		List<String> allModes = new ArrayList<>(LOOP_MODES);
+		allModes.add(RemoteWalkConstraint.REMOTE_MODE);
+		for (String mode : allModes) {
 			ModeParams modeParams = scoringConfig.getOrCreateModeParams(mode);
-
 			modeParams.setConstant(0.0);
 			modeParams.setMarginalUtilityOfDistance(0.0);
 			modeParams.setMarginalUtilityOfTraveling(-1.0);
@@ -179,11 +187,10 @@ public class RunAdaptConfig {
 
 			TeleportedModeParams modeParams2 = routingConfig.getOrCreateModeRoutingParams(mode);
 			modeParams2.setBeelineDistanceFactor(1.0);
-
-			if (mode.equals("walk_loop")) {
-				modeParams2.setTeleportedModeSpeed(1.2);
+			if (mode.contains("walk")) {
+				modeParams2.setTeleportedModeSpeed(1.3);
 			} else if (mode.equals("bike_loop")){
-				modeParams2.setTeleportedModeSpeed(3.1);
+				modeParams2.setTeleportedModeSpeed(4.0);
 			} else if (mode.equals("car_loop")){
 				modeParams2.setTeleportedModeSpeed(1000.0);
 			} else {
@@ -192,7 +199,9 @@ public class RunAdaptConfig {
 		}
 
 		// set trip constraints (to remove car passenger constraint)
-		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk", "LoopModesConstraint"));
+		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk",
+									SwissModeChoiceModule.LOOP_CONSTRAINT_NAME,
+									SwissModeChoiceModule.REMOTE_WALK_CONSTRAINT_NAME));
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {

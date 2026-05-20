@@ -17,9 +17,10 @@ import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
+import org.eqasim.switzerland.ch_cmdp.calibration.AlphaCantonCalibrator;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
-import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.*;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
@@ -73,6 +74,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String CP_ESTIMATOR_NAME = "SwissDetailedCpEstimator";
 
 	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
+	static public final String REMOTE_WALK_CONSTRAINT_NAME = "RemoteWalkConstraint";
 
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -82,6 +84,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	protected void installEqasimExtension() {
 
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
+		bindTripConstraintFactory(REMOTE_WALK_CONSTRAINT_NAME).to(RemoteWalkConstraint.Factory.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindCostModel(CAR_WEISS_COST_MODEL_NAME).to(SwissWeissCarCostModel.class);

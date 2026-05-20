@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.ovgk;
+package org.eqasim.switzerland.ch_cmdp.ovgk;
 
 import java.util.LinkedList;
 import java.util.List;

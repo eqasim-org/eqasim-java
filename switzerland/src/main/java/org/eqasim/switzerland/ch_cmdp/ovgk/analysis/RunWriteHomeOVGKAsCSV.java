@@ -1,12 +1,12 @@
-package org.eqasim.switzerland.ch.ovgk.analysis;
+package org.eqasim.switzerland.ch_cmdp.ovgk.analysis;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
-import org.eqasim.switzerland.ch.ovgk.OVGK;
-import org.eqasim.switzerland.ch.ovgk.OVGKCalculator;
+import org.eqasim.switzerland.ch_cmdp.ovgk.OVGK;
+import org.eqasim.switzerland.ch_cmdp.ovgk.OVGKCalculator;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;

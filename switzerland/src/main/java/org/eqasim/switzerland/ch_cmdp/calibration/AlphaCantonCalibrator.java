@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch.calibration;
+package org.eqasim.switzerland.ch_cmdp.calibration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

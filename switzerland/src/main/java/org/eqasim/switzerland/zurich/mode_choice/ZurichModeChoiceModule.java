@@ -8,7 +8,7 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.switzerland.ch.mode_choice.SwissModeAvailability;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
-import org.eqasim.switzerland.ch.ovgk.OVGKCalculator;
+import org.eqasim.switzerland.ch_cmdp.ovgk.OVGKCalculator;
 import org.eqasim.switzerland.zurich.mode_choice.constraints.InfiniteHeadwayConstraint;
 import org.eqasim.switzerland.zurich.mode_choice.parameters.ZurichModeParameters;
 import org.eqasim.switzerland.zurich.mode_choice.utilities.estimators.ZurichBikeUtilityEstimator;

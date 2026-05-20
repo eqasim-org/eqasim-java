@@ -12,9 +12,9 @@ import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.switzerland.ch.calibration.AlphaCantonCalibrator;
+import org.eqasim.switzerland.ch_cmdp.calibration.AlphaCantonCalibrator;
 import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
-import org.eqasim.switzerland.ch.mode_choice.constraints.LoopModesConstraint;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissPtCostModel;
 import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
@@ -33,6 +33,7 @@ import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
@@ -59,6 +60,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String PT_COST_MODEL_NAME = "SwissPtCostModel";
 
 	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
+	static public final String REMOTE_WALK_CONSTRAINT_NAME = "RemoteWalkConstraint";
 
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -67,6 +69,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	@Override
 	protected void installEqasimExtension() {
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
+		bindTripConstraintFactory(REMOTE_WALK_CONSTRAINT_NAME).to(RemoteWalkConstraint.Factory.class);
 
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissModeAvailability.class);
 
