@@ -1,8 +1,10 @@
 package org.eqasim.core.components.network_calibration;
 
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -370,6 +372,31 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         penaltiesWarmupIterations = inputPenaltiesWarmupIterations;
     }
 
+
+    public void applyContext(Config config) {
+        List<String> ps = getPenaltiesSpecialRegionFiles();
+        if (!ps.isEmpty()) {
+            StringBuilder psNew = new StringBuilder();
+            for (String p : ps) {
+                URL url = ConfigGroup.getInputFileURL(config.getContext(), p);
+                if (!psNew.isEmpty()) psNew.append(";");
+                psNew.append(url.getPath());
+            }
+            penaltiesSpecialRegionPath = psNew.toString();
+        }
+
+        List<String> fs = getFreespeedSpecialRegionFiles();
+        if (!fs.isEmpty()) {
+            StringBuilder fsNew = new StringBuilder();
+            for (String f : fs) {
+                URL url = ConfigGroup.getInputFileURL(config.getContext(), f);
+                if (!fsNew.isEmpty()) fsNew.append(";");
+                fsNew.append(url.getPath());
+            }
+            freespeedSpecialRegionPath = fsNew.toString();
+        }
+    }
+
     public static NetworkCalibrationConfigGroup getOrCreate(Config config) {
         NetworkCalibrationConfigGroup group = (NetworkCalibrationConfigGroup) config.getModules().get(GROUP_NAME);
 
@@ -377,7 +404,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
             group = new NetworkCalibrationConfigGroup();
             config.addModule(group);
         }
-
+        group.applyContext(config);
         return group;
     }
 

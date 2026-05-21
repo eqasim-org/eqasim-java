@@ -110,11 +110,12 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     public PenaltiesAdapter providePenaltiesAdapter(Network network,
                                                     Provider<CountsProcessor> countsProcessorProvider,
                                                     Provider<FlowProcessor> flowProcessorProvider,
-                                                    NetworkCalibrationConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
+                                                    OutputDirectoryHierarchy outputHierarchy,
                                                     EqasimConfigGroup eqasimConfig,
                                                     LinkCategorizer categorizer,
                                                     PenaltyKeyManager penaltyKeyManager,
                                                     PenaltyManager penaltyManager) {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         return new PenaltiesAdapter(network, countsProcessorProvider, flowProcessorProvider, config, outputHierarchy,
                 eqasimConfig, categorizer, penaltyKeyManager, penaltyManager);
     }
@@ -128,7 +129,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public LinkCategorizer provideLinkCategorizer(Network network, NetworkCalibrationConfigGroup config) {
+    public LinkCategorizer provideLinkCategorizer(Network network) {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         return new LinkCategorizer(network, config);
     }
 
@@ -142,8 +144,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     public PenaltyKeyManager providePenaltyKeyManager(Network network,
-                                                      NetworkCalibrationConfigGroup config,
                                                       LinkCategorizer categorizer) {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         return new PenaltyKeyManager(config, network, categorizer);
     }
 
@@ -157,13 +159,12 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     public FreespeedAdapter provideFreespeedAdapter(Network network,
-                                                    NetworkCalibrationConfigGroup config,
                                                     OutputDirectoryHierarchy outputHierarchy,
                                                     LinkCategorizer categorizer,
                                                     FreespeedFactorManager factorManager,
                                                     PenaltiesAdapter penaltiesAdapter,
                                                     TripsHandler tripsHandler) {
-
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         return new FreespeedAdapter(network, config, outputHierarchy, categorizer, factorManager,
                 penaltiesAdapter, tripsHandler);
     }
@@ -171,12 +172,12 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     public TripsHandler provideTripsHandler(Network network,
-                                            NetworkCalibrationConfigGroup config,
                                             LinkCategorizer categorizer,
                                             @Named(TransportMode.car) TravelTime carTravelTime,
                                             Provider<LeastCostPathCalculatorFactory> routerFactoryProvider) {
         int threads = getConfig().global().getNumberOfThreads();
         RoadNetwork roadNetwork = new RoadNetwork(network);
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         return new TripsHandler(roadNetwork, config, categorizer, carTravelTime,
                 routerFactoryProvider, threads);
     }

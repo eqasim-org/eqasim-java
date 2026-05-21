@@ -34,7 +34,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
     private String momentum = "ema";
 
     private double betaMomentum = 0.8;
-    private String eqasimCachePath = "/home/dabdelkader/Euler/ch-zh-synpop/cache10p100";
+    private String eqasimCachePath = "cache";
     private String objectives = "global,distance,mode_distance";
     private String distanceBins = "";
 

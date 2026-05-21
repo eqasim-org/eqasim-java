@@ -1,5 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.mode_availability;
 
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -7,6 +8,8 @@ import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvai
 import org.matsim.core.population.PersonUtils;
 
 import java.util.*;
+
+import static org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.Utils.destinationIsWork;
 
 public class SwissDetailedModeAvailability implements ModeAvailability {
     @Override
@@ -79,6 +82,14 @@ public class SwissDetailedModeAvailability implements ModeAvailability {
             Boolean hasLoopTrip = (Boolean) person.getAttributes().getAttribute(attribute);
             if (hasLoopTrip != null && hasLoopTrip) {
                 modes.add(mode);
+            }
+        }
+
+        // Add remote walk
+        for (DiscreteModeChoiceTrip trip : trips) {
+            if (destinationIsWork(trip)){
+                modes.add(RemoteWalkConstraint.REMOTE_MODE);
+                break;
             }
         }
 
