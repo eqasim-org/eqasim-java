@@ -6,7 +6,6 @@ import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.contribs.discrete_mode_choice.model.utilities.MultinomialLogitSelector;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.contribs.discrete_mode_choice.modules.config.MultinomialLogitSelectorConfigGroup;
 import org.matsim.core.config.CommandLine;
@@ -16,6 +15,7 @@ import org.matsim.core.config.groups.*;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
 import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
+import org.matsim.core.config.groups.ScoringConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultSelector;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultStrategy;
@@ -94,6 +94,21 @@ public class RunAdaptConfig {
 			// VSP Working Paper (2012), pp. 12-29 TU Berlin, Transport Systems Planning
 			qsimConfigGroup.setFlowCapFactor(SwissConfigAdapter.downsamplingRate);
 			qsimConfigGroup.setStorageCapFactor(Math.pow(SwissConfigAdapter.downsamplingRate, RunAdaptConfig.storageCapExponent));
+		}
+
+		// Primary_secondary activities
+		List<String> NEW_ACTIVITY_TYPES  = Arrays.asList("home_secondary", "work_secondary", "education_secondary");
+		ScoringConfigGroup scoringConfig0 = config.scoring();
+
+		for (String activityType : NEW_ACTIVITY_TYPES) {
+			ActivityParams activityParams = scoringConfig0.getActivityParams(activityType);
+
+			if (activityParams == null) {
+				activityParams = new ActivityParams(activityType);
+				config.scoring().addActivityParams(activityParams);
+			}
+
+			activityParams.setScoringThisActivityAtAll(false);
 		}
 
 		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
