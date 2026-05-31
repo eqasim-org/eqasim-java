@@ -19,9 +19,9 @@ public class BikeDisutilities {
             case "motorway","motorway_link", "trunk","trunk_link":
                 return 0.6 * travelTime;
             case "primary", "primary_link":
-                return 0.2 * travelTime;
-            case "secondary", "secondary_link":
                 return 0.1 * travelTime;
+            case "secondary", "secondary_link":
+                return 0.05 * travelTime;
             default:
                 return 0.0;
         }
@@ -30,11 +30,11 @@ public class BikeDisutilities {
     public static double gradientDisutility(Link link, double travelTime) {
         double gradientPce = BikeGradientBasedLinkSpeedCalculator.percentageGradient(link);
         if (gradientPce > 10.0) {
-            return 0.4 * travelTime;
+            return 0.3 * travelTime;
         } else if (gradientPce > 5.0) {
-            return 0.2 * travelTime;
-        } else if (gradientPce > 2.0) {
             return 0.1 * travelTime;
+        } else if (gradientPce > 2.0) {
+            return 0.03 * travelTime;
         } else {
             return 0.0;
         }
