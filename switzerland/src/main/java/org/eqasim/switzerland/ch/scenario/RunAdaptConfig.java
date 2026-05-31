@@ -21,6 +21,7 @@ import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
 import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
 import org.matsim.core.config.groups.ScoringConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.config.groups.VehiclesConfigGroup;
 import org.matsim.core.replanning.strategies.DefaultPlanStrategiesModule.DefaultSelector;
@@ -94,6 +95,21 @@ public class RunAdaptConfig {
 		eqasimConfig.setCostModel(TransportMode.pt, SwissModeChoiceModule.PT_COST_MODEL_NAME);
 		for (String mode : LOOP_MODES) {
 			eqasimConfig.setCostModel(mode, EqasimModeChoiceModule.ZERO_COST_MODEL_NAME);
+		}
+
+		// Primary_secondary activities
+		List<String> NEW_ACTIVITY_TYPES  = Arrays.asList("home_secondary", "work_secondary", "education_secondary");
+		ScoringConfigGroup scoringConfig0 = config.scoring();
+
+		for (String activityType : NEW_ACTIVITY_TYPES) {
+			ActivityParams activityParams = scoringConfig0.getActivityParams(activityType);
+
+			if (activityParams == null) {
+				activityParams = new ActivityParams(activityType);
+				config.scoring().addActivityParams(activityParams);
+			}
+
+			activityParams.setScoringThisActivityAtAll(false);
 		}
 
 		DiscreteModeChoiceConfigGroup dmcConfig = (DiscreteModeChoiceConfigGroup) config.getModules()
