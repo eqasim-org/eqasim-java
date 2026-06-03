@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.2.0](https://github.com/eqasim-org/eqasim-java/compare/v2.1.0...v2.2.0) (2026-06-03)
+
+
+### Features
+
+* automating simulation restarts ([#516](https://github.com/eqasim-org/eqasim-java/issues/516)) ([b86422e](https://github.com/eqasim-org/eqasim-java/commit/b86422e151c66233cd59d7a07eb9994e412c2ec9))
+* compress eqasim outputs ([#536](https://github.com/eqasim-org/eqasim-java/issues/536)) ([7d1cd8f](https://github.com/eqasim-org/eqasim-java/commit/7d1cd8f0f570150321d4d06dc551b5c3f1661c19))
+* **core:** motorcycles ([#468](https://github.com/eqasim-org/eqasim-java/issues/468)) ([3d4f295](https://github.com/eqasim-org/eqasim-java/commit/3d4f295be36ffa3d6086050f577d5d9eb18ec8ca))
+* enable analysis for fully simulated transit ([#546](https://github.com/eqasim-org/eqasim-java/issues/546)) ([b4ff4c4](https://github.com/eqasim-org/eqasim-java/commit/b4ff4c43491f197a5a98e79beb87465550259df6))
+* extend schedule by hours and days ([#557](https://github.com/eqasim-org/eqasim-java/issues/557)) ([3fdd03b](https://github.com/eqasim-org/eqasim-java/commit/3fdd03b7418a5f17bf5ebfd170c4bfcd6778411d))
+* remove examples package (covered by core now) ([#556](https://github.com/eqasim-org/eqasim-java/issues/556)) ([b9437b2](https://github.com/eqasim-org/eqasim-java/commit/b9437b2a616c9916b681791896f63e8aeab8ebe8))
+* replace EqasimVehicleTourConstraint with VehicleTourConstraint ([#541](https://github.com/eqasim-org/eqasim-java/issues/541)) ([584cbc2](https://github.com/eqasim-org/eqasim-java/commit/584cbc25edcf3eabd53cc2a519a418b76c6e1dbf))
+* travel time comparison ([#312](https://github.com/eqasim-org/eqasim-java/issues/312)) ([3475b70](https://github.com/eqasim-org/eqasim-java/commit/3475b70c61c421f89800c3547c64d24843c848f3))
+* update vdf ([#544](https://github.com/eqasim-org/eqasim-java/issues/544)) ([7ab5b0e](https://github.com/eqasim-org/eqasim-java/commit/7ab5b0e400da8753db3b821f1a3e961dfa4b8053))
+* use PersonInitializedEvent in activity analysis ([#551](https://github.com/eqasim-org/eqasim-java/issues/551)) ([2f185ad](https://github.com/eqasim-org/eqasim-java/commit/2f185ad0fd83bdc2483b403f66b9efd65f3520a4))
+
+
+### Bug Fixes
+
+* **core:** default behaviour for termination replay ([#539](https://github.com/eqasim-org/eqasim-java/issues/539)) ([6bf0131](https://github.com/eqasim-org/eqasim-java/commit/6bf0131de195631b8b42ad53b9d5d34b1f5e48ca))
+* release-please on main ([#579](https://github.com/eqasim-org/eqasim-java/issues/579)) ([d44b558](https://github.com/eqasim-org/eqasim-java/commit/d44b55853f411d2316105252e8c9158697c580bb))
+* restarting the termination criterion ([#534](https://github.com/eqasim-org/eqasim-java/issues/534)) ([2c849f8](https://github.com/eqasim-org/eqasim-java/commit/2c849f824df969b7588046b5f8b7ef9b7452003d))
+
 ## [2.1.0](https://github.com/eqasim-org/eqasim-java/compare/v2.0.0...v2.1.0) (2026-02-10)
 
 
