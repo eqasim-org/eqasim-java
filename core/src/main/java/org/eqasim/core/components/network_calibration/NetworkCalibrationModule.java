@@ -82,8 +82,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    EqasimTravelDisutilityFactory providePolicyTravelDisutilityFactory(RoutingPenaltyByLinkCategory linkPenalty) {
-        return new EqasimTravelDisutilityFactory(linkPenalty);
+    EqasimTravelDisutilityFactory providePolicyTravelDisutilityFactory(RoutingPenaltyByLinkCategory linkPenalty, EqasimConfigGroup config) {
+        return new EqasimTravelDisutilityFactory(linkPenalty, config.getRoutingDistanceUtility());
     }
 
     @Provides

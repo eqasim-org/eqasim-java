@@ -16,6 +16,7 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private final static String DISTANCE_UNIT = "distanceUnit";
 
 	private final static String CROSSING_PENALTY = "crossingPenalty";
+	private final static String ROUTING_DISTANCE_UTILITY = "routingDistanceUtility";
 
 	private final static String MODE_PARAMETERS_PATH = "modeParametersPath";
 	private final static String COST_PARAMETERS_PATH = "costParametersPath";
@@ -33,6 +34,7 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	private DistanceUnit distanceUnit = DistanceUnit.meter;
 
 	private double crossingPenalty = 3.0;
+	private double routingDistanceUtility = 0.0;
 
 	private String modeParametersPath = null;
 	private String costParametersPath = null;
@@ -67,6 +69,15 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(CROSSING_PENALTY)
 	public void setCrossingPenalty(double crossingPenalty) {
 		this.crossingPenalty = crossingPenalty;
+	}
+
+	@StringGetter(ROUTING_DISTANCE_UTILITY)
+	public double getRoutingDistanceUtility() {
+		return routingDistanceUtility;
+	}
+	@StringSetter(ROUTING_DISTANCE_UTILITY)
+	public void setRoutingDistanceUtility(double routingDistanceUtility) {
+		this.routingDistanceUtility = routingDistanceUtility;
 	}
 
 	@StringGetter(SAMPLE_SIZE)

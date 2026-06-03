@@ -9,16 +9,19 @@ import org.matsim.vehicles.Vehicle;
 public class EqasimTravelDisutility implements TravelDisutility {
 	private final TravelDisutility delegate;
 	private final RoutingPenalty penalty;
+	private final double routingDistanceUtility;
 
-	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty) {
+	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility) {
 		this.delegate = delegate;
 		this.penalty = penalty;
+		this.routingDistanceUtility = routingDistanceUtility;
 	}
 
 	@Override
 	public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
 		double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle);
 		disutility += penalty.getLinkPenalty(link, person, time, disutility);
+		disutility += routingDistanceUtility * (link.getLength() / 10.0); // 10.0 is for the scale, to be in the same order as travel time
 		return disutility;
 	}
 

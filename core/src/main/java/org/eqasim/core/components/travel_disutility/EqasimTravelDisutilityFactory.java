@@ -9,13 +9,15 @@ import org.matsim.core.router.util.TravelTime;
 public class EqasimTravelDisutilityFactory implements TravelDisutilityFactory {
 	private final OnlyTimeDependentTravelDisutilityFactory delegate = new OnlyTimeDependentTravelDisutilityFactory();
 	private final RoutingPenalty linkPenalty;
+	private final double routingDistanceUtility;
 
-	public EqasimTravelDisutilityFactory(RoutingPenalty linkPenalty) {
+	public EqasimTravelDisutilityFactory(RoutingPenalty linkPenalty, double routingDistanceUtility) {
 		this.linkPenalty = linkPenalty;
+		this.routingDistanceUtility = routingDistanceUtility;
 	}
 
 	@Override
 	public TravelDisutility createTravelDisutility(TravelTime travelTime) {
-		return new EqasimTravelDisutility(delegate.createTravelDisutility(travelTime), linkPenalty);
+		return new EqasimTravelDisutility(delegate.createTravelDisutility(travelTime), linkPenalty, routingDistanceUtility);
 	}
 }
