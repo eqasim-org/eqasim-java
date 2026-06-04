@@ -59,14 +59,11 @@ public class FlowProcessor {
                 continue; // skip links with unknown category
             }
 
-            // sum the flow of the day
-            double totalFlow = linkFlowCounter.getDailyCounts(linkId);
+            // sum the flow of the day (normalized, by hour, by lane)
+            double totalFlow = getTotalLinkFlow(linkId);
 
             // only consider links with positive flow
-            if (totalFlow>1) {
-                // normalize the flow by number of hours and number of lanes to get (veh/h/lane)
-                totalFlow = totalFlow / Math.max(1.0, totalNumberOfHours); // normalize by number of hours
-                totalFlow = totalFlow / Math.max(network.getLinks().get(linkId).getNumberOfLanes(),1.0); // normalize by number of lanes
+            if (totalFlow>0.0) {
                 // put the flow in the map
                 flowPerGroup.put(groupKey, flowPerGroup.getOrDefault(groupKey, 0.0) + totalFlow);
                 linksPerGroup.put(groupKey, linksPerGroup.getOrDefault(groupKey, 0) + 1);
@@ -89,6 +86,16 @@ public class FlowProcessor {
             double avgFlow = (totalFlow / numLinks);
             flowPerGroup.put(key, avgFlow);
         }
+    }
+
+    public double getTotalLinkFlow(Id<Link> linkId) {
+        double totalFlow = linkFlowCounter.getDailyCounts(linkId);
+        if (totalFlow>1) {
+            totalFlow = totalFlow / Math.max(1.0, totalNumberOfHours); // normalize by number of hours
+            totalFlow = totalFlow / Math.max(network.getLinks().get(linkId).getNumberOfLanes(),1.0); // normalize by number of lanes
+            return totalFlow;
+        }
+        return 0.0;
     }
 
     public void resetCounts(int iteration) {

@@ -8,6 +8,7 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissCarPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -186,6 +187,10 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         return 0.0;
     }
 
+    protected double estimateAgentUtility(Person person) {
+        return SwissPredictorUtils.getCarASC(person);
+    }
+
     @Override
     public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         SwissPersonVariables personVariables = personPredictor.predictVariables(person, trip, elements);
@@ -227,6 +232,9 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         utility += estimateCantonUtility(person);
         // city specific
         utility += estimateBigCitiesUtility(trip);
+        // agent specific (this is 0 for no, it could be used for calibration at some point)
+        utility += estimateAgentUtility(person);
+
         if(variablesWriter.isInitiated()) {
             writeVariablesToCsv(person, trip, variables, personVariables, utility);
         }

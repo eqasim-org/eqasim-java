@@ -168,4 +168,15 @@ public class SwissPredictorUtils {
 		return numCars > 0;
 	}
 
+
+	static public double getCarASC(Person person) {
+		Object asc = person.getAttributes().getAttribute("carASC");
+		return asc instanceof Double ? (Double) asc : 0.0;
+	}
+
+	static public void incrementCarASC(Person person, double delta) {
+		double currentAsc = getCarASC(person);
+		person.getAttributes().putAttribute("carASC", currentAsc + delta);
+	}
+
 }
