@@ -17,6 +17,10 @@ public class EqasimTravelDisutility implements TravelDisutility {
 		this.routingDistanceUtility = routingDistanceUtility;
 	}
 
+	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty) {
+		this(delegate, penalty, 0.0);
+	}
+
 	@Override
 	public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
 		double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle);
