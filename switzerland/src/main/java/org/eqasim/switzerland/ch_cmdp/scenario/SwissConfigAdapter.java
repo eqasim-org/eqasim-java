@@ -14,7 +14,7 @@ public class SwissConfigAdapter {
     protected static Boolean hasFreight = false;
     protected static double downsamplingRate = 1.0;
     protected static double replanningRate = 0.05;
-
+    protected static double routingDistanceUtility = 0.0;
     protected static String prefix = "";
 
     protected static String carCostModel = "simple";
@@ -24,7 +24,7 @@ public class SwissConfigAdapter {
             throws CommandLine.ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("input-path", "output-path", "downsamplingRate", "replanningRate", "prefix") //
-                .allowOptions("activity-list", "hasFreight", "carCostModel", "routeBikeInNetwork") //
+                .allowOptions("activity-list", "hasFreight", "carCostModel", "routeBikeInNetwork","routingDistanceUtility") //
                 .build();
 
         if (cmd.hasOption("activity-list")) {
@@ -32,7 +32,11 @@ public class SwissConfigAdapter {
         }
 
         if (cmd.hasOption("hasFreight")) {
-            hasFreight = true;
+            hasFreight = cmd.getOption("hasFreight").get().equalsIgnoreCase("true");;
+        }
+
+        if (cmd.hasOption("routingDistanceUtility")) {
+            routingDistanceUtility = Double.parseDouble(cmd.getOption("routingDistanceUtility").get());
         }
 
         if (cmd.hasOption("carCostModel")) {

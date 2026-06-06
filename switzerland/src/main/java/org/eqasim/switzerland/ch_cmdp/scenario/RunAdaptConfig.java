@@ -159,6 +159,8 @@ public class RunAdaptConfig {
 		MNLConfig.setRandomNumbers(MultinomialLogitSelectorConfigGroup.RandomNumbers.fixed);
 
 		// adjust routing parameters
+		eqasimConfig.setRoutingDistanceUtility(SwissConfigAdapter.routingDistanceUtility);
+
 		RoutingConfigGroup routingConfig  = config.routing();
 		routingConfig.setRoutingRandomness(1.0); // small randomness to avoid ties in route choice
 
