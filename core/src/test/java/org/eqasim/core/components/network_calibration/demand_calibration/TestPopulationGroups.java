@@ -1,8 +1,11 @@
 package org.eqasim.core.components.network_calibration.demand_calibration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
 
 import org.junit.Test;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -21,6 +24,8 @@ public class TestPopulationGroups {
         PopulationGroups groups = PopulationGroups.build(scenario);
 
         assertNotEquals(groups.getGroup(first), groups.getGroup(second));
+        assertEquals(groups.getGroup(first), groups.getGroup(new Coord(1_000.0, 1_000.0)));
+        assertTrue(groups.size() >= 2);
     }
 
     @Test
@@ -38,6 +43,11 @@ public class TestPopulationGroups {
         PopulationGroups groups = PopulationGroups.build(scenario);
 
         assertNotEquals(groups.getGroup(clustered), groups.getGroup(nearby));
+
+        // Outside known cells should still map to a valid existing group.
+        int outsideGroup = groups.getGroup(new Coord(100_000.0, 100_000.0));
+        assertTrue(outsideGroup >= 0);
+        assertTrue(outsideGroup < groups.size());
     }
 
     private static Person addPerson(Scenario scenario, String id, double x, double y) {

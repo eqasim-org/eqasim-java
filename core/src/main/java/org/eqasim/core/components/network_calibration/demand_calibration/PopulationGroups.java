@@ -26,19 +26,38 @@ public class PopulationGroups {
     private static final int MAX_POPULATION_PER_CELL = 5_000;
 
     private final IdMap<Person, Integer> personToGroup;
+    private final Map<GridIndex, Cell> topLevelCells;
+    private final Map<GridIndex, Integer> outsideGridLookupCache = new HashMap<>();
     private final int size;
-    public PopulationGroups(IdMap<Person, Integer> personToGroup) {
+
+    private PopulationGroups(IdMap<Person, Integer> personToGroup, Map<GridIndex, Cell> topLevelCells, int size) {
         this.personToGroup = personToGroup;
-        this.size = 1; // TODO: implement this method, the is the total number of cells
+        this.topLevelCells = topLevelCells;
+        this.size = size;
     }
 
     public int getGroup(Person person) {
-        return personToGroup.get(person.getId());
+        Integer group = personToGroup.get(person.getId());
+        if (group != null) {
+            return group;
+        }
+
+        return getGroup(Tools.getHomeLocation(person));
     }
 
     public int getGroup(Coord coord) {
-        // TODO: implement this method
-        return 0;
+        if (topLevelCells.isEmpty()) {
+            return 0;
+        }
+
+        GridIndex index = gridIndexOf(coord);
+        Cell topCell = topLevelCells.get(index);
+        if (topCell != null) {
+            return findGroup(topCell, coord);
+        }
+
+        // Outside covered top-level cells: map to nearest populated top-level cell.
+        return outsideGridLookupCache.computeIfAbsent(index, this::findNearestGroup);
     }
 
     public int size(){
@@ -80,12 +99,12 @@ public class PopulationGroups {
     // Grid index for the top-level cells
     // -------------------------------------------------------------------------
 
-    private record GridIndex(long x, long y) {}
+    private record GridIndex(int x, int y) {}
 
     private static GridIndex gridIndexOf(Coord coord) {
         return new GridIndex(
-                (long) Math.floor(coord.getX() / INITIAL_CELL_SIZE),
-                (long) Math.floor(coord.getY() / INITIAL_CELL_SIZE)
+                (int) Math.floor(coord.getX() / INITIAL_CELL_SIZE),
+                (int) Math.floor(coord.getY() / INITIAL_CELL_SIZE)
         );
     }
 
@@ -178,14 +197,13 @@ public class PopulationGroups {
     public static PopulationGroups build(Scenario scenario) {
         Population population = scenario.getPopulation();
         IdMap<Person, Integer> personToGroup = new IdMap<>(Person.class);
+        Map<GridIndex, Cell> topLevelCells = new HashMap<>();
 
         if (population.getPersons().isEmpty()) {
-            return new PopulationGroups(personToGroup);
+            return new PopulationGroups(personToGroup, topLevelCells, 0);
         }
 
         // Pass 1 — build adaptive quadtrees, one per top-level grid cell.
-        Map<GridIndex, Cell> topLevelCells = new HashMap<>();
-
         for (Person person : population.getPersons().values()) {
             Coord coord = Tools.getHomeLocation(person);
             Cell cell = topLevelCells.computeIfAbsent(
@@ -214,6 +232,36 @@ public class PopulationGroups {
             personToGroup.put(person.getId(), findGroup(topCell, coord));
         }
 
-        return new PopulationGroups(personToGroup);
+        return new PopulationGroups(personToGroup, topLevelCells, nextId[0]);
+    }
+
+    private int findNearestGroup(GridIndex targetIndex) {
+        Cell nearest = null;
+        double nearestDistance = Double.POSITIVE_INFINITY;
+
+        double centerX = (targetIndex.x() + 0.5) * INITIAL_CELL_SIZE;
+        double centerY = (targetIndex.y() + 0.5) * INITIAL_CELL_SIZE;
+
+        for (Cell cell : topLevelCells.values()) {
+            double cellCenterX = (cell.minX + cell.maxX) * 0.5;
+            double cellCenterY = (cell.minY + cell.maxY) * 0.5;
+
+            double dx = centerX - cellCenterX;
+            double dy = centerY - cellCenterY;
+            double squaredDistance = dx * dx + dy * dy;
+
+            if (squaredDistance < nearestDistance) {
+                nearestDistance = squaredDistance;
+                nearest = cell;
+            }
+        }
+
+        if (nearest == null) {
+            return 0;
+        }
+
+        double nearestCenterX = (nearest.minX + nearest.maxX) * 0.5;
+        double nearestCenterY = (nearest.minY + nearest.maxY) * 0.5;
+        return findGroup(nearest, new Coord(nearestCenterX, nearestCenterY));
     }
 }

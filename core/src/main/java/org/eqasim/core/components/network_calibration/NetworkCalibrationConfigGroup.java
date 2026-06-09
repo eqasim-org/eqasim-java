@@ -81,7 +81,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         map.put(BETA, "Beta of the exponential moving average used to update calibration parameters (default: 0.5)");
         map.put(RAMP_FACTOR, "Factor for ramp links (default: 1.0)");
         map.put(TRUNK_FACTOR, "Factor (compared to motorway) for trunk links (default: 1.0)");
-        map.put(OBJECTIVE, "What should be calibrated (penalty, freespeed), or comma separated choice");
+        map.put(OBJECTIVE, "What should be calibrated (penalty, freespeed, agent), or comma separated choice");
         map.put(MAX_PENALTY, "Maximum penalty to be applied to link categories when objective is penalty (default: 0.3)");
         map.put(MIN_PENALTY, "Minimum penalty to be applied to link categories when objective is penalty (default: -0.1)");
         map.put(PENALTIES_FILE, "Path to the csv penalties file (default: empty). Expected columns: linkCategory;isUrban;specialRegion;penalty. CSV values override penalties from link attributes.");

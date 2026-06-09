@@ -1,6 +1,5 @@
 package org.eqasim.core.components.network_calibration.demand_calibration;
 
-import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
 import org.matsim.api.core.v01.Coord;
@@ -23,7 +22,11 @@ public class ODErrors {
     private final FlowProcessor flowProcessor;
     private final TripListConverter tripListConverter;
     private final double sampleSize;
-    private final double PERCENTAGE_DIFFERENCE_THRESHOLD = 0.05;
+
+    private static final double RELATIVE_DIFFERENCE_THRESHOLD = 0.05;
+    private static final double EPSILON = 1.0;
+    private static final double MAX_ABS_LOG_ERROR = 1.5;
+    private static final double OBSERVATION_SHRINKAGE = 15.0;
 
     public ODErrors(Scenario scenario, PopulationGroups populationGroups, CountsProcessor countsProcessor,
                     FlowProcessor flowProcessor, TripListConverter tripListConverter, double sampleSize) {
@@ -35,22 +38,38 @@ public class ODErrors {
         this.sampleSize = sampleSize;
     }
 
-    public int[][] getODErrors() {
-        return computeOdErrors();
+    public double[][] getODCorrections() {
+        return computeOdCorrections();
     }
 
-    private int[][] computeOdErrors(){
+    private double[][] computeOdCorrections(){
         int n = populationGroups.size();
-        int[][] odErrors = new int[n][n];
+        double[][] sumLogError = new double[n][n];
+        int[][] observations = new int[n][n];
 
         for (Person person : population.getPersons().values()) {
             Plan plan = person.getSelectedPlan();
-            insertError(odErrors, plan);
+            insertErrors(sumLogError, observations, plan);
         }
-        return odErrors;
+
+        double[][] corrections = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                int nObs = observations[i][j];
+                if (nObs == 0) {
+                    continue;
+                }
+
+                double meanLogError = sumLogError[i][j] / nObs;
+                double confidenceWeight = nObs / (nObs + OBSERVATION_SHRINKAGE);
+                corrections[i][j] = confidenceWeight * meanLogError;
+            }
+        }
+
+        return corrections;
     }
 
-    private void insertError(int[][] odErrors, Plan plan) {
+    private void insertErrors(double[][] sumLogError, int[][] observations, Plan plan) {
         for (DiscreteModeChoiceTrip trip : tripListConverter.convert(plan)) {
             String mode = trip.getInitialMode();
 
@@ -58,37 +77,52 @@ public class ODErrors {
                 List<? extends PlanElement> elements = trip.getInitialElements();
                 for (PlanElement element : elements) {
                     if (element instanceof Leg leg){
-                        insertError(odErrors, trip, leg);
+                        insertErrors(sumLogError, observations, trip, leg);
                     }
                 }
             }
         }
     }
 
-    private void insertError(int[][] odErrors, DiscreteModeChoiceTrip trip, Leg leg) {
+    private void insertErrors(double[][] sumLogError, int[][] observations, DiscreteModeChoiceTrip trip, Leg leg) {
+        if (!(leg.getRoute() instanceof NetworkRoute)) {
+            return;
+        }
+
         NetworkRoute route = (NetworkRoute) leg.getRoute();
         List<Id<Link>> linkIds = route.getLinkIds();
+        if (linkIds == null || linkIds.isEmpty()) {
+            return;
+        }
+
+        Coord origin = trip.getOriginActivity().getCoord();
+        Coord destination = trip.getDestinationActivity().getCoord();
+        int groupOrigin = populationGroups.getGroup(origin);
+        int groupDestination = populationGroups.getGroup(destination);
 
         for (Id<Link> linkId : linkIds) {
             float counts = countsProcessor.getLinkCounts(linkId); // if lower than 0, counts do not exist for this link
             if (counts > 0){
                 double totalFlow = flowProcessor.getTotalLinkFlow(linkId);
-                if (totalFlow > 1){
+                if (totalFlow > 0.0){
                     totalFlow = totalFlow/sampleSize;
-                    insertError(odErrors, trip, counts, totalFlow);
+                    insertError(sumLogError, observations, groupOrigin, groupDestination, counts, totalFlow);
                 }
             }
         }
     }
 
-    private void insertError(int[][] odErrors, DiscreteModeChoiceTrip trip, double counts, double totalFlow){
-        double pceDiff = (totalFlow - counts)/counts;
-        if (pceDiff>PERCENTAGE_DIFFERENCE_THRESHOLD){
-            Coord origin = trip.getOriginActivity().getCoord();
-            Coord destination = trip.getDestinationActivity().getCoord();
-            int groupOrigin = populationGroups.getGroup(origin);
-            int groupDestination = populationGroups.getGroup(destination);
-            odErrors[groupOrigin][groupDestination] += 1;
+    private void insertError(double[][] sumLogError, int[][] observations, int groupOrigin, int groupDestination,
+                             double counts, double totalFlow){
+        double pceDiff = (totalFlow - counts) / Math.max(counts, EPSILON);
+        if (Math.abs(pceDiff) <= RELATIVE_DIFFERENCE_THRESHOLD) {
+            return;
         }
+
+        double logError = Math.log((counts + EPSILON) / (totalFlow + EPSILON));
+        logError = Math.max(-MAX_ABS_LOG_ERROR, Math.min(MAX_ABS_LOG_ERROR, logError));
+
+        sumLogError[groupOrigin][groupDestination] += logError;
+        observations[groupOrigin][groupDestination] += 1;
     }
 }

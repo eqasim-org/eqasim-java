@@ -16,6 +16,10 @@ import org.eqasim.core.components.network_calibration.cost_calibration.Penalties
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyKeyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
+import org.eqasim.core.components.network_calibration.demand_calibration.ASCsAdapter;
+import org.eqasim.core.components.network_calibration.demand_calibration.ODErrors;
+import org.eqasim.core.components.network_calibration.demand_calibration.PopulationGroups;
+import org.eqasim.core.components.network_calibration.demand_calibration.SubPopulationReducer;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedAdapter;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedFactorManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
@@ -24,9 +28,12 @@ import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactor
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.replanning.StrategyManager;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelTime;
 
@@ -68,6 +75,14 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                 addTravelDisutilityFactoryBinding("truck").to(EqasimTravelDisutilityFactory.class);
 
                 addControllerListenerBinding().to(PenaltiesAdapter.class).asEagerSingleton();
+            }
+
+            if (objectives.contains("agent")){
+                addControllerListenerBinding().to(ASCsAdapter.class).asEagerSingleton();
+            }
+
+            if (objectives.contains("subpopulations")){
+                addControllerListenerBinding().to(SubPopulationReducer.class).asEagerSingleton();
             }
 
             if (objectives.contains("freespeed")) {
@@ -182,6 +197,43 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                 routerFactoryProvider, threads);
     }
 
+    @Provides
+    @Singleton
+    public ASCsAdapter provideASCsAdapter(Scenario scenario, PopulationGroups populationGroups, TripListConverter tripListConverter,
+                                          OutputDirectoryHierarchy outputHierarchy, ODErrors odErrors, StrategyManager strategyManager) {
+        NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
+        boolean activate  = config.getAllObjectives().contains("agent");
+        double dmcWeight  = 0.5;
+        return new ASCsAdapter(scenario, populationGroups, tripListConverter, outputHierarchy, odErrors, dmcWeight, activate);
+    }
+
+    @Provides
+    @Singleton
+    public ODErrors provideODErrors(Scenario scenario, PopulationGroups populationGroups, CountsProcessor countsProcessor,
+                                       FlowProcessor flowProcessor, TripListConverter tripListConverter, EqasimConfigGroup config) {
+        double sampleSize = config.getSampleSize();
+        return new ODErrors(scenario, populationGroups, countsProcessor, flowProcessor, tripListConverter, sampleSize);
+    }
+
+    @Provides
+    @Singleton
+    public PopulationGroups providePopulationGroups(Scenario scenario) {
+        return PopulationGroups.build(scenario);
+    }
+
+    @Provides
+    @Singleton
+    public SubPopulationReducer provideSubPopulationReducer(Scenario scenario, TripListConverter tripListConverter,
+                                                            CountsProcessor countsProcessor, FlowProcessor flowProcessor,
+                                                            EqasimConfigGroup config) {
+        NetworkCalibrationConfigGroup calConfig = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
+        boolean activate  = calConfig.getAllObjectives().contains("subpopulations");
+        return new SubPopulationReducer(scenario.getPopulation(), tripListConverter, countsProcessor,
+                flowProcessor, config.getSampleSize(), activate);
+    }
+
+
+
     static void validateConfiguration(NetworkCalibrationConfigGroup config) {
         if (!config.isActivated()) {
             return;
@@ -192,7 +244,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             throw new IllegalArgumentException("Network calibration is activated but objective is empty. Supported objectives are: penalty, freespeed.");
         }
 
-        Set<String> supportedObjectives = Set.of("penalty", "freespeed");
+        Set<String> supportedObjectives = Set.of("penalty", "freespeed", "agent", "subpopulations");
         Set<String> invalidObjectives = new HashSet<>();
 
         for (String objective : objectives) {

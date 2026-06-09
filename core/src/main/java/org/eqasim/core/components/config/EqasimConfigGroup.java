@@ -57,7 +57,9 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 		Map<String, String> map = super.getComments();
 		map.put(SAMPLE_SIZE,
 				"The sample size of the population you are simulating. This is normally set by the synthesis pipeline.");
-		
+		map.put(ROUTING_DISTANCE_UTILITY,
+				"distance weight in the route choice. This is divided by 10.0 and multiplied by the link length in the disutility.");
+
 		return map;
 	}
 

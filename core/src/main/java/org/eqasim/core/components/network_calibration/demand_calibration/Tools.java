@@ -4,6 +4,7 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.core.population.PersonUtils;
 
 public class Tools {
 
@@ -48,5 +49,19 @@ public class Tools {
         setCarASC(person, currentAsc + delta);
     }
 
+    static public void incrementCarASC(Person person, double delta, double maxAsc) {
+        double currentAsc = getCarASC(person);
+        double clippedAsc = Math.max(Math.min(maxAsc, currentAsc+delta),-maxAsc);
+        setCarASC(person, clippedAsc);
+    }
 
+    static public boolean isCarAvailable(Person person){
+        return !(PersonUtils.getLicense(person).equals("no") || PersonUtils.getCarAvail(person).equals("never"));
+    }
+
+    static public boolean isInSubPopulation(Person person){
+        Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
+        Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
+        return ((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
+    }
 }
