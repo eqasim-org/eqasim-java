@@ -13,8 +13,7 @@ public class BikeTravelDisutility implements TravelDisutility {
 
     private final TravelTime travelTimeCalculator;
     private final Random random;
-    private double sigmaTravelTime = 0.05;
-    private double sigmaDisutility = 0.1;
+    private double sigmaNoise = 0.03;
 
     public BikeTravelDisutility(TravelTime travelTimeCalculator) {
         this.travelTimeCalculator = travelTimeCalculator;
@@ -26,12 +25,12 @@ public class BikeTravelDisutility implements TravelDisutility {
         double travelTime = travelTimeCalculator.getLinkTravelTime(link, v, person, vehicle);
         double linkTypeDisutility = BikeDisutilities.linkTypeDisutility(link, travelTime);
         double gradientDisutility = BikeDisutilities.gradientDisutility(link, travelTime);
+        double distanceDisutility = BikeDisutilities.distanceDisutility(link, travelTime);
+        double disutility = travelTime +linkTypeDisutility + gradientDisutility + distanceDisutility;
+        // add randomness
+        double noise = sigmaNoise * random.nextGaussian();
 
-        // add randomness to the router
-        double random1 = 1.0 + sigmaTravelTime * random.nextGaussian();
-        double random2  = 1.0 + sigmaDisutility * random.nextGaussian();
-
-        return travelTime * random1 + (linkTypeDisutility + gradientDisutility) * random2;
+        return disutility * (1.0 + noise);
     }
 
     @Override

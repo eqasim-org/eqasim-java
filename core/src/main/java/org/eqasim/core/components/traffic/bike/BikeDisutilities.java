@@ -30,15 +30,19 @@ public class BikeDisutilities {
     public static double gradientDisutility(Link link, double travelTime) {
         double gradientPce = BikeGradientBasedLinkSpeedCalculator.percentageGradient(link);
         if (gradientPce > 10.0) {
-            return 0.3 * travelTime;
+            return 0.2 * travelTime;
         } else if (gradientPce > 5.0) {
             return 0.1 * travelTime;
         } else if (gradientPce > 2.0) {
-            return 0.03 * travelTime;
+            return 0.02 * travelTime;
         } else {
             return 0.0;
         }
 
+    }
+
+    public static double distanceDisutility(Link link, double travelTime) {
+        return link.getLength() * 0.2;
     }
 
 
