@@ -13,6 +13,11 @@ public class Tools {
         Double homeY = (Double) person.getAttributes().getAttribute("home_y");
 
         if (homeX == null || homeY == null) {
+            homeX = (Double) person.getAttributes().getAttribute("home_coordinate_x");
+            homeY = (Double) person.getAttributes().getAttribute("home_coordinate_y");
+        }
+
+        if (homeX == null || homeY == null) {
             homeX = 0.0;
             homeY = 0.0;
 
@@ -20,9 +25,10 @@ public class Tools {
                 if (element instanceof Activity) {
                     Activity activity = (Activity) element;
 
-                    if (activity.getType().equals("home")) {
+                    if (activity.getType().equalsIgnoreCase("home") || activity.getType().equalsIgnoreCase("h")) {
                         homeX = activity.getCoord().getX();
                         homeY = activity.getCoord().getY();
+                        break;
                     }
                 }
             }

@@ -217,8 +217,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public PopulationGroups providePopulationGroups(Scenario scenario) {
-        return PopulationGroups.build(scenario);
+    public PopulationGroups providePopulationGroups(Scenario scenario, EqasimConfigGroup config) {
+        return PopulationGroups.build(scenario, config.getSampleSize(), false);
     }
 
     @Provides

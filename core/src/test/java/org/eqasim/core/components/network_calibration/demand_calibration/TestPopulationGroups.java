@@ -21,7 +21,7 @@ public class TestPopulationGroups {
         Person first = addPerson(scenario, "first", 1_000.0, 1_000.0);
         Person second = addPerson(scenario, "second", 15_000.0, 1_000.0);
 
-        PopulationGroups groups = PopulationGroups.build(scenario);
+        PopulationGroups groups = PopulationGroups.build(scenario, 1.0, false);
 
         assertNotEquals(groups.getGroup(first), groups.getGroup(second));
         assertEquals(groups.getGroup(first), groups.getGroup(new Coord(1_000.0, 1_000.0)));
@@ -40,7 +40,7 @@ public class TestPopulationGroups {
 
         Person nearby = addPerson(scenario, "nearby", 2_400.0, 100.0);
 
-        PopulationGroups groups = PopulationGroups.build(scenario);
+        PopulationGroups groups = PopulationGroups.build(scenario, 1.0, false);
 
         assertNotEquals(groups.getGroup(clustered), groups.getGroup(nearby));
 

@@ -23,10 +23,11 @@ public class ODErrors {
     private final TripListConverter tripListConverter;
     private final double sampleSize;
 
-    private static final double RELATIVE_DIFFERENCE_THRESHOLD = 0.05;
-    private static final double EPSILON = 1.0;
-    private static final double MAX_ABS_LOG_ERROR = 1.5;
-    private static final double OBSERVATION_SHRINKAGE = 15.0;
+    private final double RELATIVE_DIFFERENCE_THRESHOLD;
+    private final double EPSILON;
+    private final double MAX_ABS_LOG_ERROR;
+    private final double OBSERVATION_SHRINKAGE; // To build confidence in one OD erro
+    private final double MIN_TRIP_WEIGHT;
 
     public ODErrors(Scenario scenario, PopulationGroups populationGroups, CountsProcessor countsProcessor,
                     FlowProcessor flowProcessor, TripListConverter tripListConverter, double sampleSize) {
@@ -36,22 +37,32 @@ public class ODErrors {
         this.flowProcessor = flowProcessor;
         this.tripListConverter = tripListConverter;
         this.sampleSize = sampleSize;
+
+        // Later I need to make these parameters configurable
+        this.RELATIVE_DIFFERENCE_THRESHOLD = 0.02; // threshold in relative flow error to start correcting
+        this.EPSILON = 1.0; // for log error (log(x)+epsilon)
+        this.MAX_ABS_LOG_ERROR = 1.5; //limit the log error with this range
+        this.OBSERVATION_SHRINKAGE = 100.0 * sampleSize; // used for confidence weight
+        this.MIN_TRIP_WEIGHT = 0.05; // weight of each trips (the higher it crosses counting stations, the lower is the weight)
     }
 
     public double[][] getODCorrections() {
         return computeOdCorrections();
     }
 
-    private double[][] computeOdCorrections(){
+    private double[][] computeOdCorrections() {
         int n = populationGroups.size();
         double[][] sumLogError = new double[n][n];
         int[][] observations = new int[n][n];
-
+        double[][] sumWeights = new double[n][n];
+        // We go through all the population, and we insert the errors into these matrices if that person passed through a counting station
         for (Person person : population.getPersons().values()) {
-            Plan plan = person.getSelectedPlan();
-            insertErrors(sumLogError, observations, plan);
+            if (!Tools.isInSubPopulation(person)) {
+                Plan plan = person.getSelectedPlan();
+                insertErrors(sumLogError, observations, sumWeights, plan);
+            }
         }
-
+        // We compute the average error for each OD pair, and we return the matrix of corrections
         double[][] corrections = new double[n][n];
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -60,7 +71,12 @@ public class ODErrors {
                     continue;
                 }
 
-                double meanLogError = sumLogError[i][j] / nObs;
+                double totalWeight = sumWeights[i][j];
+                if (totalWeight < 1.0e-9) {
+                    continue;
+                }
+
+                double meanLogError = sumLogError[i][j] / totalWeight;
                 double confidenceWeight = nObs / (nObs + OBSERVATION_SHRINKAGE);
                 corrections[i][j] = confidenceWeight * meanLogError;
             }
@@ -69,22 +85,23 @@ public class ODErrors {
         return corrections;
     }
 
-    private void insertErrors(double[][] sumLogError, int[][] observations, Plan plan) {
+    private void insertErrors(double[][] sumLogError, int[][] observations, double[][] sumWeights, Plan plan) {
         for (DiscreteModeChoiceTrip trip : tripListConverter.convert(plan)) {
             String mode = trip.getInitialMode();
 
             if (TransportMode.car.equals(mode)) {
                 List<? extends PlanElement> elements = trip.getInitialElements();
                 for (PlanElement element : elements) {
-                    if (element instanceof Leg leg){
-                        insertErrors(sumLogError, observations, trip, leg);
+                    if (element instanceof Leg leg) {
+                        insertErrors(sumLogError, observations, sumWeights, trip, leg);
                     }
                 }
             }
         }
     }
 
-    private void insertErrors(double[][] sumLogError, int[][] observations, DiscreteModeChoiceTrip trip, Leg leg) {
+    private void insertErrors(double[][] sumLogError, int[][] observations, double[][] sumWeights,
+                              DiscreteModeChoiceTrip trip, Leg leg) {
         if (!(leg.getRoute() instanceof NetworkRoute)) {
             return;
         }
@@ -95,25 +112,48 @@ public class ODErrors {
             return;
         }
 
+        // Count the number of counted links on this trip so we can weight the contribution.
+        int countedLinksOnTrip = 0;
+        for (Id<Link> linkId : linkIds) {
+            if (countsProcessor.getLinkCounts(linkId) > 0) {
+                countedLinksOnTrip++;
+            }
+        }
+
+        // If the trip doesn't cross any counted link, it carries no information for this OD cell.
+        if (countedLinksOnTrip == 0) {
+            return;
+        }
+
+        // Each counted link on this trip contributes 1 / countedLinksOnTrip to the OD cell.
+        // This way, a trip that crosses 3 counts adds +1/3 per link, for a total of +1.
+        // A trip that crosses 20 counts adds +1/20 per link, for a total of +1.
+        double linkWeight = 1.0 / countedLinksOnTrip;
+        // As an extra safeguard, if a single trip has a very large number of counts, each individual link contribution is capped to avoid noise.
+        linkWeight = Math.max(linkWeight, MIN_TRIP_WEIGHT);
+
+        // we get the origin and destination zones
         Coord origin = trip.getOriginActivity().getCoord();
         Coord destination = trip.getDestinationActivity().getCoord();
         int groupOrigin = populationGroups.getGroup(origin);
         int groupDestination = populationGroups.getGroup(destination);
 
         for (Id<Link> linkId : linkIds) {
-            float counts = countsProcessor.getLinkCounts(linkId); // if lower than 0, counts do not exist for this link
-            if (counts > 0){
+            float counts = countsProcessor.getLinkCounts(linkId);
+            if (counts > 0) {
                 double totalFlow = flowProcessor.getTotalLinkFlow(linkId);
-                if (totalFlow > 0.0){
-                    totalFlow = totalFlow/sampleSize;
-                    insertError(sumLogError, observations, groupOrigin, groupDestination, counts, totalFlow);
+                if (totalFlow > 0.0) {
+                    totalFlow = totalFlow / sampleSize;
+                    insertError(sumLogError, observations, sumWeights, groupOrigin, groupDestination,
+                            counts, totalFlow, linkWeight);
                 }
             }
         }
     }
 
-    private void insertError(double[][] sumLogError, int[][] observations, int groupOrigin, int groupDestination,
-                             double counts, double totalFlow){
+    private void insertError(double[][] sumLogError, int[][] observations, double[][] sumWeights,
+                             int groupOrigin, int groupDestination,
+                             double counts, double totalFlow, double weight) {
         double pceDiff = (totalFlow - counts) / Math.max(counts, EPSILON);
         if (Math.abs(pceDiff) <= RELATIVE_DIFFERENCE_THRESHOLD) {
             return;
@@ -122,7 +162,8 @@ public class ODErrors {
         double logError = Math.log((counts + EPSILON) / (totalFlow + EPSILON));
         logError = Math.max(-MAX_ABS_LOG_ERROR, Math.min(MAX_ABS_LOG_ERROR, logError));
 
-        sumLogError[groupOrigin][groupDestination] += logError;
+        sumLogError[groupOrigin][groupDestination] += logError * weight;
+        sumWeights[groupOrigin][groupDestination] += weight;
         observations[groupOrigin][groupDestination] += 1;
     }
 }

@@ -59,17 +59,20 @@ public class correctionHeatMap {
 			g2.fillRect(0, 0, canvasWidth, canvasHeight);
 
 			double maxAbs = stats.maxAbsoluteAverage();
+			int[][] groupsByPixel = new int[imageWidth][imageHeight];
 
 			for (int px = 0; px < imageWidth; px++) {
 				double x = stats.minX + (px + 0.5) * widthMeters / imageWidth;
 				for (int py = 0; py < imageHeight; py++) {
 					double y = stats.maxY - (py + 0.5) * heightMeters / imageHeight;
 					int group = populationGroups.getGroup(new Coord(x, y));
+					groupsByPixel[px][py] = group;
 					double value = stats.averageFor(group);
 					image.setRGB(PADDING + px, PADDING + py, divergingColor(value, maxAbs).getRGB());
 				}
 			}
 
+			drawGroupBoundaries(image, groupsByPixel, imageWidth, imageHeight);
 			drawLegend(g2, imageWidth, imageHeight, maxAbs);
 			ImageIO.write(image, "png", new File(getIterationOutputFile(outputHierarchy, iteration)));
 			saveAveragesCsv(stats, outputHierarchy, iteration);
@@ -182,6 +185,22 @@ public class correctionHeatMap {
 		return Math.max(min, Math.min(max, value));
 	}
 
+	private static void drawGroupBoundaries(BufferedImage image, int[][] groupsByPixel, int imageWidth, int imageHeight) {
+		int boundaryColor = new Color(220, 30, 30, 180).getRGB();
+
+		for (int px = 0; px < imageWidth; px++) {
+			for (int py = 0; py < imageHeight; py++) {
+				int group = groupsByPixel[px][py];
+				boolean isBoundary = (px + 1 < imageWidth && groupsByPixel[px + 1][py] != group)
+						|| (py + 1 < imageHeight && groupsByPixel[px][py + 1] != group);
+
+				if (isBoundary) {
+					image.setRGB(PADDING + px, PADDING + py, boundaryColor);
+				}
+			}
+		}
+	}
+
 	private static final class GroupStats {
 		private final double[] sums;
 		private final int[] counts;
@@ -239,3 +258,4 @@ public class correctionHeatMap {
 		}
 	}
 }
+

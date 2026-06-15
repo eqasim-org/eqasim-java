@@ -21,9 +21,9 @@ import org.matsim.api.core.v01.population.Population;
  */
 public class PopulationGroups {
 
-    private static final double INITIAL_CELL_SIZE = 10_000.0; // 10 km
-    private static final double MIN_CELL_SIZE = 1_000.0;      // 1 km
-    private static final int MAX_POPULATION_PER_CELL = 5_000;
+    private static final double INITIAL_CELL_SIZE = 10_000.0;  // 10 km
+    private static final double MIN_CELL_SIZE = 500.0;        // 500 m
+    private static int MAX_POPULATION_PER_CELL = 1_000;
 
     private final IdMap<Person, Integer> personToGroup;
     private final Map<GridIndex, Cell> topLevelCells;
@@ -56,13 +56,13 @@ public class PopulationGroups {
             return findGroup(topCell, coord);
         }
 
-        // Outside covered top-level cells: map to nearest populated top-level cell.
         return outsideGridLookupCache.computeIfAbsent(index, this::findNearestGroup);
     }
 
-    public int size(){
+    public int size() {
         return size;
     }
+
     // -------------------------------------------------------------------------
     // Quadtree cell
     // -------------------------------------------------------------------------
@@ -73,8 +73,8 @@ public class PopulationGroups {
         int population = 0;
         int groupId = -1;
 
-        Cell[] children = null;           // non-null when this cell has been split
-        List<Coord> members = new ArrayList<>(); // only used on leaf cells
+        Cell[] children = null;
+        List<Coord> members = new ArrayList<>();
 
         Cell(double minX, double minY, double maxX, double maxY) {
             this.minX = minX;
@@ -91,15 +91,21 @@ public class PopulationGroups {
             return Math.max(maxX - minX, maxY - minY);
         }
 
-        double midX() { return (minX + maxX) * 0.5; }
-        double midY() { return (minY + maxY) * 0.5; }
+        double midX() {
+            return (minX + maxX) * 0.5;
+        }
+
+        double midY() {
+            return (minY + maxY) * 0.5;
+        }
     }
 
     // -------------------------------------------------------------------------
     // Grid index for the top-level cells
     // -------------------------------------------------------------------------
 
-    private record GridIndex(int x, int y) {}
+    private record GridIndex(int x, int y) {
+    }
 
     private static GridIndex gridIndexOf(Coord coord) {
         return new GridIndex(
@@ -118,7 +124,6 @@ public class PopulationGroups {
     // Quadtree operations
     // -------------------------------------------------------------------------
 
-    /** Inserts a coordinate into the tree rooted at {@code cell}. */
     private static void insert(Cell cell, Coord coord) {
         cell.population++;
 
@@ -127,39 +132,35 @@ public class PopulationGroups {
             return;
         }
 
-        // Leaf node: record the member, then split if necessary.
         cell.members.add(coord);
 
         boolean tooPopulated = cell.population > MAX_POPULATION_PER_CELL;
-        boolean canSplit     = cell.size() * 0.5 >= MIN_CELL_SIZE;
+        boolean canSplit = cell.size() >= MIN_CELL_SIZE;
 
         if (tooPopulated && canSplit) {
             splitCell(cell);
         }
     }
 
-    /** Splits a leaf cell into 4 children and moves its members down. */
     private static void splitCell(Cell cell) {
         double midX = cell.midX();
         double midY = cell.midY();
 
         cell.children = new Cell[] {
-                new Cell(cell.minX, cell.minY, midX,      midY),      // SW
-                new Cell(midX,      cell.minY, cell.maxX, midY),      // SE
-                new Cell(cell.minX, midY,      midX,      cell.maxY), // NW
-                new Cell(midX,      midY,      cell.maxX, cell.maxY)  // NE
+                new Cell(cell.minX, cell.minY, midX, midY),
+                new Cell(midX, cell.minY, cell.maxX, midY),
+                new Cell(cell.minX, midY, midX, cell.maxY),
+                new Cell(midX, midY, cell.maxX, cell.maxY)
         };
 
-        // Redistribute existing members to the children.
         List<Coord> toRedistribute = cell.members;
-        cell.members = null; // free memory; this cell is no longer a leaf
+        cell.members = null;
 
         for (Coord member : toRedistribute) {
             insert(childFor(cell, member), member);
         }
     }
 
-    /** Returns the child cell that contains {@code coord}. */
     private static Cell childFor(Cell cell, Coord coord) {
         int index = 0;
         if (coord.getX() >= cell.midX()) index += 1;
@@ -171,7 +172,6 @@ public class PopulationGroups {
     // Group ID assignment and lookup
     // -------------------------------------------------------------------------
 
-    /** Assigns a unique group ID to every leaf cell (depth-first order). */
     private static void assignGroupIds(Cell cell, int[] nextId) {
         if (cell.isLeaf()) {
             cell.groupId = nextId[0]++;
@@ -182,7 +182,6 @@ public class PopulationGroups {
         }
     }
 
-    /** Traverses the tree to find the group ID for the given coordinate. */
     private static int findGroup(Cell cell, Coord coord) {
         while (!cell.isLeaf()) {
             cell = childFor(cell, coord);
@@ -194,7 +193,12 @@ public class PopulationGroups {
     // Public factory
     // -------------------------------------------------------------------------
 
-    public static PopulationGroups build(Scenario scenario) {
+    public static PopulationGroups build(Scenario scenario, double sampleSize, boolean considerSubpopulations) {
+        // consider sample size (we can consider it in different ways, I just reduce the MAX_POPULATION_PER_CELL, which is the easiest way)
+        assert sampleSize > 0 && sampleSize <= 1 : "Sample size must be in (0, 1]";
+        MAX_POPULATION_PER_CELL = (int) Math.ceil(MAX_POPULATION_PER_CELL * sampleSize);
+
+        // insert population into cells of different sizes (quadtree)
         Population population = scenario.getPopulation();
         IdMap<Person, Integer> personToGroup = new IdMap<>(Person.class);
         Map<GridIndex, Cell> topLevelCells = new HashMap<>();
@@ -203,17 +207,18 @@ public class PopulationGroups {
             return new PopulationGroups(personToGroup, topLevelCells, 0);
         }
 
-        // Pass 1 — build adaptive quadtrees, one per top-level grid cell.
         for (Person person : population.getPersons().values()) {
-            Coord coord = Tools.getHomeLocation(person);
-            Cell cell = topLevelCells.computeIfAbsent(
-                    gridIndexOf(coord),
-                    PopulationGroups::createTopLevelCell
-            );
-            insert(cell, coord);
+            boolean isSubpopulation = Tools.isInSubPopulation(person);
+            if (considerSubpopulations || !isSubpopulation) {
+                Coord coord = Tools.getHomeLocation(person);
+                Cell cell = topLevelCells.computeIfAbsent(
+                        gridIndexOf(coord),
+                        PopulationGroups::createTopLevelCell
+                );
+                insert(cell, coord);
+            }
         }
 
-        // Pass 2 — assign group IDs to leaf cells, sorted for determinism.
         List<Cell> sortedTopLevel = new ArrayList<>(topLevelCells.values());
         sortedTopLevel.sort(
                 Comparator.comparingDouble((Cell c) -> c.minX)
@@ -225,11 +230,15 @@ public class PopulationGroups {
             assignGroupIds(cell, nextId);
         }
 
-        // Pass 3 — map each person to their leaf cell's group ID.
         for (Person person : population.getPersons().values()) {
-            Coord coord = Tools.getHomeLocation(person);
-            Cell topCell = topLevelCells.get(gridIndexOf(coord));
-            personToGroup.put(person.getId(), findGroup(topCell, coord));
+            boolean isSubpopulation = Tools.isInSubPopulation(person);
+            if (considerSubpopulations || !isSubpopulation) {
+                Coord coord = Tools.getHomeLocation(person);
+                Cell topCell = topLevelCells.get(gridIndexOf(coord));
+                personToGroup.put(person.getId(), findGroup(topCell, coord));
+            } else {
+                personToGroup.put(person.getId(), -1);
+            }
         }
 
         return new PopulationGroups(personToGroup, topLevelCells, nextId[0]);

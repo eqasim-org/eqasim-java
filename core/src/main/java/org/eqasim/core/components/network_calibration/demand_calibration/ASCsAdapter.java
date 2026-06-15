@@ -14,9 +14,12 @@ import java.util.List;
 
 public class ASCsAdapter implements IterationEndsListener {
 
-    private static final double LEARNING_RATE = 0.8;
-    private static final double MAX_PERSON_ASC_STEP = 0.35;
+    // --- Softened hyperparameters ---
+    private static final double LEARNING_RATE = 0.5;
+    private static final double MAX_PERSON_ASC_STEP = 0.2;
     private static final double MAX_PERSON_ASC = 2.0;
+    private static final int WARMUP_ITERATIONS = 20;
+    private static final double LEARNING_RATE_DECAY = 0.95;
 
     private final OutputDirectoryHierarchy outputHierarchy;
     private final Population population;
@@ -25,9 +28,10 @@ public class ASCsAdapter implements IterationEndsListener {
     private final ODErrors odErrors;
     private final double dmcWeight;
     private final boolean activate;
+    private final double initialLearningRate;
 
     public ASCsAdapter(Scenario scenario, PopulationGroups populationGroups, TripListConverter tripListConverter,
-                       OutputDirectoryHierarchy outputHierarchy, ODErrors odErrors,  double dmcWeight, boolean activate) {
+                       OutputDirectoryHierarchy outputHierarchy, ODErrors odErrors, double dmcWeight, boolean activate) {
         this.population = scenario.getPopulation();
         this.populationGroups = populationGroups;
         this.tripListConverter = tripListConverter;
@@ -35,16 +39,21 @@ public class ASCsAdapter implements IterationEndsListener {
         this.dmcWeight = dmcWeight;
         this.activate = activate;
         this.outputHierarchy = outputHierarchy;
+        this.initialLearningRate = LEARNING_RATE;
 
-        for (Person person: scenario.getPopulation().getPersons().values()){
+        for (Person person : scenario.getPopulation().getPersons().values()) {
             Tools.setCarASC(person, 0.0);
         }
     }
 
-    public void updateASCs() {
+    public void updateASCs(int iteration) {
         double[][] odCorrections = odErrors.getODCorrections();
+        double currentLearningRate = currentLearningRate(iteration);
+
         for (Person person : population.getPersons().values()) {
-            if (Tools.isInSubPopulation(person) || !Tools.isCarAvailable(person)) {continue;}
+            if (Tools.isInSubPopulation(person) || !Tools.isCarAvailable(person)) {
+                continue;
+            }
 
             List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(person.getSelectedPlan());
 
@@ -63,7 +72,7 @@ public class ASCsAdapter implements IterationEndsListener {
                     continue;
                 }
 
-                personDeltaSum += getDeltaAsc(odCorrections[groupOrigin][groupDestination]);
+                personDeltaSum += getDeltaAsc(odCorrections[groupOrigin][groupDestination], currentLearningRate);
                 validTrips++;
             }
 
@@ -75,18 +84,29 @@ public class ASCsAdapter implements IterationEndsListener {
         }
     }
 
-    private double getDeltaAsc(double odCorrection){
-        return LEARNING_RATE * odCorrection;
+    private double getDeltaAsc(double odCorrection, double currentLearningRate) {
+        return currentLearningRate * odCorrection;
+    }
+
+    private double currentLearningRate(int iteration) {
+        int effectiveIteration = Math.max(0, iteration - WARMUP_ITERATIONS);
+        return initialLearningRate * Math.pow(LEARNING_RATE_DECAY, effectiveIteration);
     }
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        if (!activate) {return;}
-        // if this is activated, we do this each time all population did mode choice
+        if (!activate) {
+            return;
+        }
         int interval = (int) Math.floor(1.0 / dmcWeight);
         int iteration = event.getIteration();
-        if (iteration>0 && iteration%interval==0) {
-            updateASCs();
+        // in the first iteration, we plot the boxes
+        if (iteration==0) {
+            correctionHeatMap.plotAverageCarAsc(population, populationGroups, outputHierarchy, iteration);
+        }
+        // then, each interval iterations, we update the ASCs and plot the boxes again
+        if (iteration >= WARMUP_ITERATIONS && iteration % interval == 0) {
+            updateASCs(iteration);
             correctionHeatMap.plotAverageCarAsc(population, populationGroups, outputHierarchy, iteration);
         }
     }
