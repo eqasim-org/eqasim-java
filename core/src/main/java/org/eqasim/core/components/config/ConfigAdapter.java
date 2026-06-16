@@ -15,8 +15,8 @@ public class ConfigAdapter {
 				.build();
 
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"));
-		configurator.updateConfig(config);
 		adapter.accept(config, cmd.getOptionStrict("prefix"));
+		configurator.updateConfig(config);
 
 		new ConfigWriter(config).write(cmd.getOptionStrict("output-path"));
 	}
