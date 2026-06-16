@@ -16,7 +16,7 @@ import org.eqasim.core.components.network_calibration.cost_calibration.Penalties
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyKeyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
-import org.eqasim.core.components.network_calibration.demand_calibration.ASCsAdapter;
+import org.eqasim.core.components.network_calibration.demand_calibration.CarASCsAdapter;
 import org.eqasim.core.components.network_calibration.demand_calibration.ODErrors;
 import org.eqasim.core.components.network_calibration.demand_calibration.PopulationGroups;
 import org.eqasim.core.components.network_calibration.demand_calibration.SubPopulationReducer;
@@ -31,8 +31,11 @@ import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.replanning.GenericPlanStrategy;
 import org.matsim.core.replanning.StrategyManager;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelTime;
@@ -78,7 +81,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             }
 
             if (objectives.contains("agent")){
-                addControllerListenerBinding().to(ASCsAdapter.class).asEagerSingleton();
+                addControllerListenerBinding().to(CarASCsAdapter.class).asEagerSingleton();
             }
 
             if (objectives.contains("subpopulations")){
@@ -199,12 +202,12 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public ASCsAdapter provideASCsAdapter(Scenario scenario, PopulationGroups populationGroups, TripListConverter tripListConverter,
-                                          OutputDirectoryHierarchy outputHierarchy, ODErrors odErrors, StrategyManager strategyManager) {
+    public CarASCsAdapter provideASCsAdapter(Scenario scenario, PopulationGroups populationGroups, TripListConverter tripListConverter,
+                                             OutputDirectoryHierarchy outputHierarchy, ODErrors odErrors, StrategyManager strategyManager) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         boolean activate  = config.getAllObjectives().contains("agent");
-        double dmcWeight  = 0.5;
-        return new ASCsAdapter(scenario, populationGroups, tripListConverter, outputHierarchy, odErrors, dmcWeight, activate);
+        double dmcWeight  = getDmcWeight(strategyManager);
+        return new CarASCsAdapter(scenario, populationGroups, tripListConverter, outputHierarchy, odErrors, dmcWeight, activate);
     }
 
     @Provides
@@ -280,6 +283,17 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             }
 
         }
+    }
+
+    static double getDmcWeight(StrategyManager strategyManager) {
+        List<GenericPlanStrategy<Plan, Person>> strategies = strategyManager.getStrategies(null);
+        List<Double> weights = strategyManager.getWeights(null);
+        for (GenericPlanStrategy<Plan, Person> strategy : strategies) {
+            if (strategy.toString().contains("DiscreteModeChoice")) {
+                return weights.get(strategies.indexOf(strategy));
+            }
+        }
+        return 0.05; // default weight if DMCStrategy is not found
     }
 
 }

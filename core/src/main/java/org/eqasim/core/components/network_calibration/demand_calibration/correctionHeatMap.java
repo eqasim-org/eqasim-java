@@ -3,6 +3,7 @@ package org.eqasim.core.components.network_calibration.demand_calibration;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Population;
+import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import javax.imageio.ImageIO;
@@ -18,9 +19,9 @@ public class correctionHeatMap {
 
 	private static final String FILE_NAME = "CarAscsHeatMap.png";
 	private static final String CSV_FILE_NAME = "CarAscsAverage.csv";
-	private static final int DEFAULT_IMAGE_WIDTH = 1000;
-	private static final int MIN_IMAGE_HEIGHT = 300;
-	private static final int MAX_IMAGE_HEIGHT = 1400;
+	private static final int DEFAULT_IMAGE_WIDTH = 1800;
+	private static final int MIN_IMAGE_HEIGHT = 600;
+	private static final int MAX_IMAGE_HEIGHT = 1800;
 	private static final int PADDING = 40;
 	private static final int LEGEND_WIDTH = 34;
 
@@ -29,7 +30,7 @@ public class correctionHeatMap {
 	}
 
 	public static void plotAverageCarAsc(Population population, PopulationGroups populationGroups,
-										 OutputDirectoryHierarchy outputHierarchy, int iteration) {
+										 OutputDirectoryHierarchy outputHierarchy, TripListConverter tripListConverter, int iteration) {
 		if (population == null || populationGroups == null || outputHierarchy == null) {
 			return;
 		}
@@ -38,7 +39,7 @@ public class correctionHeatMap {
 			return;
 		}
 
-		GroupStats stats = buildGroupStats(population, populationGroups);
+		GroupStats stats = buildGroupStats(population, populationGroups, tripListConverter);
 		if (!stats.hasValues) {
 			return;
 		}
@@ -100,7 +101,7 @@ public class correctionHeatMap {
 		}
 	}
 
-	private static GroupStats buildGroupStats(Population population, PopulationGroups populationGroups) {
+	private static GroupStats buildGroupStats(Population population, PopulationGroups populationGroups, TripListConverter tripListConverter) {
 		int n = Math.max(1, populationGroups.size());
 		double[] sums = new double[n];
 		int[] counts = new int[n];
@@ -112,6 +113,9 @@ public class correctionHeatMap {
 		boolean hasValues = false;
 
 		for (Person person : population.getPersons().values()) {
+			if (Tools.isInSubPopulation(person) || !Tools.isCarAvailable(person) || Tools.hasOutsideActivity(person, tripListConverter)) {
+				continue;
+			}
 			Coord home = Tools.getHomeLocation(person);
 			minX = Math.min(minX, home.getX());
 			minY = Math.min(minY, home.getY());
@@ -185,14 +189,31 @@ public class correctionHeatMap {
 		return Math.max(min, Math.min(max, value));
 	}
 
+	// FIXED: Check all 4 neighbors (left, right, up, down) to detect all boundary edges
 	private static void drawGroupBoundaries(BufferedImage image, int[][] groupsByPixel, int imageWidth, int imageHeight) {
 		int boundaryColor = new Color(220, 30, 30, 180).getRGB();
 
 		for (int px = 0; px < imageWidth; px++) {
 			for (int py = 0; py < imageHeight; py++) {
 				int group = groupsByPixel[px][py];
-				boolean isBoundary = (px + 1 < imageWidth && groupsByPixel[px + 1][py] != group)
-						|| (py + 1 < imageHeight && groupsByPixel[px][py + 1] != group);
+				boolean isBoundary = false;
+
+				// Check left neighbor
+				if (px > 0 && groupsByPixel[px - 1][py] != group) {
+					isBoundary = true;
+				}
+				// Check right neighbor
+				else if (px + 1 < imageWidth && groupsByPixel[px + 1][py] != group) {
+					isBoundary = true;
+				}
+				// Check top neighbor
+				else if (py > 0 && groupsByPixel[px][py - 1] != group) {
+					isBoundary = true;
+				}
+				// Check bottom neighbor
+				else if (py + 1 < imageHeight && groupsByPixel[px][py + 1] != group) {
+					isBoundary = true;
+				}
 
 				if (isBoundary) {
 					image.setRGB(PADDING + px, PADDING + py, boundaryColor);
@@ -258,4 +279,3 @@ public class correctionHeatMap {
 		}
 	}
 }
-

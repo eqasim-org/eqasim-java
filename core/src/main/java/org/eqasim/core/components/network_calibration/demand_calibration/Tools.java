@@ -4,7 +4,11 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
 import org.matsim.core.population.PersonUtils;
+
+import java.util.List;
 
 public class Tools {
 
@@ -43,11 +47,18 @@ public class Tools {
     // ################## CAR ASCs ##################
     static public double getCarASC(Person person) {
         Object asc = person.getAttributes().getAttribute("carASC");
-        return asc instanceof Double ? (Double) asc : 0.0;
+        return asc instanceof Double ? (double) asc : 0.0;
     }
 
     static public void setCarASC(Person person, double value) {
         person.getAttributes().putAttribute("carASC", value);
+    }
+
+    static public void setCarASCIfDoesntExist(Person person, double value) {
+        double personAsc = getCarASC(person);
+        if (Math.abs(personAsc)<1e-3) {
+            setCarASC(person, value);
+        }
     }
 
     static public void incrementCarASC(Person person, double delta) {
@@ -62,12 +73,31 @@ public class Tools {
     }
 
     static public boolean isCarAvailable(Person person){
-        return !(PersonUtils.getLicense(person).equals("no") || PersonUtils.getCarAvail(person).equals("never"));
+        Object hasLicense = PersonUtils.getLicense(person);
+        Object hasCar = PersonUtils.getCarAvail(person);
+
+        if (hasLicense == null || hasCar == null){
+            return true; // cross-border or freight traffic
+        }
+
+        return !("no".equals(hasLicense) || "never".equals(hasCar));
     }
 
     static public boolean isInSubPopulation(Person person){
         Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
         Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
         return ((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
+    }
+
+    static public boolean hasOutsideActivity(Person person, TripListConverter tripListConverter) {
+        List<DiscreteModeChoiceTrip> trips = tripListConverter.convert(person.getSelectedPlan());
+        for (DiscreteModeChoiceTrip trip : trips) {
+            String originActivity = trip.getOriginActivity().getType();
+            String destinationActivity = trip.getDestinationActivity().getType();
+            if (originActivity.equals("outside") || destinationActivity.equals("outside")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

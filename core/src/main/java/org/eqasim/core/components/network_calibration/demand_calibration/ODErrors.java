@@ -43,7 +43,7 @@ public class ODErrors {
         this.EPSILON = 1.0; // for log error (log(x)+epsilon)
         this.MAX_ABS_LOG_ERROR = 1.5; //limit the log error with this range
         this.OBSERVATION_SHRINKAGE = 100.0 * sampleSize; // used for confidence weight
-        this.MIN_TRIP_WEIGHT = 0.05; // weight of each trips (the higher it crosses counting stations, the lower is the weight)
+        this.MIN_TRIP_WEIGHT = 0.05; // minimum weight of each trips (the higher it crosses counting stations, the lower is the weight)
     }
 
     public double[][] getODCorrections() {
@@ -57,7 +57,7 @@ public class ODErrors {
         double[][] sumWeights = new double[n][n];
         // We go through all the population, and we insert the errors into these matrices if that person passed through a counting station
         for (Person person : population.getPersons().values()) {
-            if (!Tools.isInSubPopulation(person)) {
+            if (!Tools.isInSubPopulation(person) && Tools.isCarAvailable(person)) {
                 Plan plan = person.getSelectedPlan();
                 insertErrors(sumLogError, observations, sumWeights, plan);
             }
