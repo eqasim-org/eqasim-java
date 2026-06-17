@@ -9,15 +9,20 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.scenario.RunInsertVehicles;
 import org.eqasim.core.scenario.cutter.RunScenarioCutter;
 import org.eqasim.core.standalone_mode_choice.RunStandaloneModeChoice;
+import org.eqasim.ile_de_france.mode_choice.IDFModeChoiceModule;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.PopulationWriter;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -25,6 +30,10 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.ConfigWriter;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
+import org.matsim.core.config.groups.RoutingConfigGroup;
+import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
+import org.matsim.core.config.groups.ScoringConfigGroup;
+import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.population.io.PopulationReader;
@@ -49,6 +58,25 @@ public class TestCorisica {
 		configurator.updateConfig(config);
 		config.vehicles().setVehiclesFile("corsica_vehicles.xml.gz");
 		config.qsim().setVehiclesSource(VehiclesSource.fromVehiclesData);
+
+		EqasimConfigGroup eqasimConfig = EqasimConfigGroup.get(config);
+		eqasimConfig.setEstimator("bike", IDFModeChoiceModule.BICYCLE_ESTIMATOR_NAME);
+		eqasimConfig.setEstimator("bicycle", IDFModeChoiceModule.BICYCLE_ESTIMATOR_NAME);
+
+		DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(config);
+		dmcConfig.setModeAvailability(IDFModeChoiceModule.MODE_AVAILABILITY_NAME);
+
+		RoutingConfigGroup routingConfig = config.routing();
+
+		TeleportedModeParams bicycleRoutingParams = new TeleportedModeParams("bicycle");
+		bicycleRoutingParams.setBeelineDistanceFactor(1.3);
+		bicycleRoutingParams.setTeleportedModeSpeed(9.3 / 3.6);
+		routingConfig.addTeleportedModeParams(bicycleRoutingParams);
+
+		ScoringConfigGroup scoringConfig = config.scoring();
+		ModeParams bicycleScoringParams = new ModeParams("bicycle");
+		scoringConfig.addModeParams(bicycleScoringParams);
+
 		new ConfigWriter(config).write("corsica_test/corsica_config.xml");
 	}
 
@@ -57,6 +85,8 @@ public class TestCorisica {
 			throws ConfigurationException, InterruptedException, MalformedURLException, IOException, ExecutionException {
 
 		Assert.assertEquals(389, countPersons("corsica_test/corsica_population.xml.gz"));
+
+		applyFixes("corsica_test/corsica_population.xml.gz");
 
 		// Run the simulation
 		{
@@ -79,10 +109,11 @@ public class TestCorisica {
 			Assert.assertEquals(389, countPersons("corsica_test/simulation_output/output_plans.xml.gz"));
 
 			Map<String, Long> counts = countLegs("corsica_test/simulation_output/output_events.xml.gz");
-			Assert.assertEquals(994, (long) counts.get("car"));
+			Assert.assertEquals(989, (long) counts.get("car"));
 			Assert.assertEquals(129, (long) counts.get("car_passenger"));
-			Assert.assertEquals(221, (long) counts.get("walk"));
+			Assert.assertEquals(222, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
+			Assert.assertEquals(5, (long) counts.getOrDefault("bicycle", 0L));
 			Assert.assertEquals(5, (long) counts.get("pt"));
 		}
 
@@ -123,10 +154,11 @@ public class TestCorisica {
 			});
 
 			Map<String, Long> counts = countLegs("corsica_test/cut_output/output_events.xml.gz");
-			Assert.assertEquals(424, (long) counts.get("car"));
+			Assert.assertEquals(422, (long) counts.get("car"));
 			Assert.assertEquals(53, (long) counts.get("car_passenger"));
-			Assert.assertEquals(101, (long) counts.get("walk"));
+			Assert.assertEquals(102, (long) counts.get("walk"));
 			Assert.assertEquals(0, (long) counts.getOrDefault("bike", 0L));
+			Assert.assertEquals(1, (long) counts.getOrDefault("bicycle", 0L));
 			Assert.assertEquals(0, (long) counts.getOrDefault("pt", 0L));
 			Assert.assertEquals(6, (long) counts.get("outside"));
 		}
@@ -168,5 +200,16 @@ public class TestCorisica {
 		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 		new PopulationReader(scenario).readFile(populationPath);
 		return scenario.getPopulation().getPersons().size();
+	}
+
+	static void applyFixes(String populationPath) {
+		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+		new PopulationReader(scenario).readFile(populationPath);
+
+		for (Person person : scenario.getPopulation().getPersons().values()) {
+			person.getAttributes().putAttribute("householdConsumptionUnits", 1.0);
+		}
+
+		new PopulationWriter(scenario.getPopulation()).write(populationPath);
 	}
 }

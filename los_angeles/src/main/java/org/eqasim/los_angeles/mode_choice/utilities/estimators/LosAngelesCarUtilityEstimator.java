@@ -13,6 +13,7 @@ import org.eqasim.los_angeles.mode_choice.utilities.variables.LosAngelesPersonVa
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
+import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 
 import com.google.inject.Inject;
 
@@ -41,9 +42,9 @@ public class LosAngelesCarUtilityEstimator extends CarUtilityEstimator {
 	}
 
 	@Override
-	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+	public double estimateUtility(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements, List<TripCandidate> previousTrips) {
 		LosAngelesPersonVariables variables = predictor.predictVariables(person, trip, elements);
-		CarVariables variables_car = carPredictor.predict(person, trip, elements);
+		CarVariables variables_car = carPredictor.predict(person, trip, elements, previousTrips);
 
 		double utility = 0.0;
 
