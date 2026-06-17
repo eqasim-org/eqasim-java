@@ -15,11 +15,11 @@ import java.util.List;
 public class CarASCsAdapter implements IterationEndsListener {
 
     // --- Softened hyperparameters ---
-    private static final double LEARNING_RATE = 0.9;
+    private static final double LEARNING_RATE = 1.0;
     private static final double MAX_PERSON_ASC_STEP = 0.3;
     private static final double MAX_PERSON_ASC = 2.0;
     private static final int WARMUP_ITERATIONS = 20;
-    private static final double LEARNING_RATE_DECAY = 0.9;
+    private static final double LEARNING_RATE_DECAY = 0.983;
 
     private final OutputDirectoryHierarchy outputHierarchy;
     private final Population population;
@@ -71,8 +71,8 @@ public class CarASCsAdapter implements IterationEndsListener {
                 int groupDestination = populationGroups.getGroup(destination);
 
                 if (groupOrigin < 0 || groupDestination < 0
-                        || groupOrigin >= odCorrections.length
-                        || groupDestination >= odCorrections[groupOrigin].length) {
+                    || groupOrigin >= odCorrections.length
+                    || groupDestination >= odCorrections[groupOrigin].length) {
                     continue;
                 }
 
