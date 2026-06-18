@@ -28,7 +28,7 @@ public class RunGenerateConfig {
 		int randomSeed = cmd.getOption("random-seed").map(Integer::parseInt).orElse(0);
 		int threads = Integer.parseInt(cmd.getOptionStrict("threads"));
 		Set<String> activityTypes = cmd.getOption("activity-types")
-				.map(actTypes -> new HashSet<>(Arrays.stream(actTypes.split(actTypes)).toList()))
+				.map(actTypes -> new HashSet<>(Arrays.stream(actTypes.split(",")).toList()))
 				.orElse(null);
 
 		new GenerateConfig(cmd, prefix, sampleSize, randomSeed, threads, activityTypes).run(config);
