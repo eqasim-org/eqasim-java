@@ -1,6 +1,7 @@
 package org.eqasim.core.scenario.config;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -27,8 +28,8 @@ import org.matsim.core.config.groups.ScoringConfigGroup.ModeParams;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
 
 public class GenerateConfig {
-	protected final List<String> ACTIVITY_TYPES = Arrays.asList("home", "work", "education", "shop", "leisure", "other",
-			"freight_loading", "freight_unloading", "outside");
+	protected static final List<String> DEFAULT_ACTIVITY_TYPES = Arrays.asList("home", "work", "education", "shop", "leisure", "other",
+            "freight_loading", "freight_unloading", "outside");
 
 	protected final List<String> MODES = Arrays.asList("walk", "bike", "pt", "car", "car_passenger", "motorcycle",
 			"truck", "outside");
@@ -40,13 +41,20 @@ public class GenerateConfig {
 	private final double sampleSize;
 	private final int randomSeed;
 	private final int threads;
+    private final Collection<String> activityTypes;
 
 	public GenerateConfig(CommandLine cmd, String prefix, double sampleSize, int randomSeed, int threads) {
+        this(cmd, prefix, sampleSize, randomSeed, threads, DEFAULT_ACTIVITY_TYPES);
+    }
+
+	public GenerateConfig(CommandLine cmd, String prefix, double sampleSize, int randomSeed, int threads,
+                          Collection<String> activityTypes) {
 		this.sampleSize = sampleSize;
 		this.prefix = prefix;
 		this.cmd = cmd;
 		this.randomSeed = randomSeed;
 		this.threads = threads;
+        this.activityTypes = activityTypes != null ? activityTypes : DEFAULT_ACTIVITY_TYPES;
 	}
 
 	/**
@@ -85,7 +93,7 @@ public class GenerateConfig {
 		eqasimConfig.setCrossingPenalty(3.0);
 		eqasimConfig.setSampleSize(sampleSize);
 		eqasimConfig.setAnalysisInterval(DEFAULT_ITERATIONS);
-		
+
 		// Termination settings
 		EqasimTerminationConfigGroup terminationConfig = EqasimTerminationConfigGroup.getOrCreate(config);
 		terminationConfig.setModes(MODES);
@@ -96,7 +104,7 @@ public class GenerateConfig {
 		scoringConfig.setMarginalUtilityOfMoney(0.0);
 		scoringConfig.setMarginalUtlOfWaitingPt_utils_hr(-1.0);
 
-		for (String activityType : ACTIVITY_TYPES) {
+		for (String activityType : this.activityTypes) {
 			ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
 
 			if (activityParams == null) {
@@ -118,7 +126,7 @@ public class GenerateConfig {
 			modeParams.setMarginalUtilityOfTraveling(-1.0);
 			modeParams.setMonetaryDistanceRate(0.0);
 		}
-		
+
 		// Routing configuration
 		RoutingConfigGroup routingConfig = config.routing();
 
