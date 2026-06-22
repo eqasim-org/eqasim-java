@@ -1,5 +1,7 @@
 package org.eqasim.core.components.network_calibration.demand_calibration;
 
+import com.google.inject.Provider;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -27,25 +29,28 @@ public class CarASCsAdapter implements IterationEndsListener {
     private final TripListConverter tripListConverter;
     private final ODErrors odErrors;
     private final double dmcWeight;
-    private final boolean activate;
+    private final boolean calibrationEnabled;
     private final double initialLearningRate;
     private int numUpdates;
 
-    public CarASCsAdapter(Scenario scenario, PopulationGroups populationGroups, TripListConverter tripListConverter,
-                          OutputDirectoryHierarchy outputHierarchy, ODErrors odErrors, double dmcWeight, boolean activate) {
+    public CarASCsAdapter(Scenario scenario, Provider<PopulationGroups> populationGroupsProvider, TripListConverter tripListConverter,
+                          OutputDirectoryHierarchy outputHierarchy, Provider<ODErrors> odErrorsProvider, double dmcWeight, NetworkCalibrationConfigGroup calConfig) {
         this.population = scenario.getPopulation();
-        this.populationGroups = populationGroups;
         this.tripListConverter = tripListConverter;
-        this.odErrors = odErrors;
         this.dmcWeight = dmcWeight;
-        this.activate = activate;
+        this.calibrationEnabled = calConfig.getAllObjectives().contains("agent") && calConfig.isCalibrationEnabled();
         this.outputHierarchy = outputHierarchy;
         this.initialLearningRate = LEARNING_RATE;
         this.numUpdates = 0;
 
-        for (Person person : scenario.getPopulation().getPersons().values()) {
-            if (!Tools.isInSubPopulation(person) && Tools.isCarAvailable(person)) {
-                Tools.setCarASC(person, 0.0);
+        this.odErrors = calibrationEnabled ? odErrorsProvider.get():null;;
+        this.populationGroups = calibrationEnabled ? populationGroupsProvider.get():null;
+
+        if (calibrationEnabled) {
+            for (Person person : scenario.getPopulation().getPersons().values()) {
+                if (!Tools.isInSubPopulation(person) && Tools.isCarAvailable(person)) {
+                    Tools.setCarASC(person, 0.0);
+                }
             }
         }
     }
@@ -94,7 +99,7 @@ public class CarASCsAdapter implements IterationEndsListener {
 
     private double currentLearningRate(int iteration) {
         int effectiveIteration = Math.max(0, iteration - WARMUP_ITERATIONS);
-        return initialLearningRate * Math.pow(LEARNING_RATE_DECAY, effectiveIteration);
+        return Math.min(1.0,Math.max(0.2, initialLearningRate * Math.pow(LEARNING_RATE_DECAY, effectiveIteration)));
     }
 
     private void rebuildPopulationGroupsIfRequired(){
@@ -109,7 +114,7 @@ public class CarASCsAdapter implements IterationEndsListener {
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        if (!activate) {
+        if (!calibrationEnabled) {
             return;
         }
         int interval = (int) Math.floor(1.0 / dmcWeight);

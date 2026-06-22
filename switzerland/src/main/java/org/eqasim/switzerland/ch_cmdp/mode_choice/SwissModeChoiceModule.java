@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.eqasim.core.components.calibration.CalibrationConfigGroup;
@@ -17,7 +18,7 @@ import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
-import org.eqasim.switzerland.ch_cmdp.calibration.AlphaCantonCalibrator;
+import org.eqasim.switzerland.ch_cmdp.calibration.*;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
@@ -30,10 +31,6 @@ import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalReader;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalRegistry;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.PricingDescriptionReader;
-import org.eqasim.switzerland.ch_cmdp.calibration.AlphaClusterCalibrator;
-import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizer;
-import org.eqasim.switzerland.ch_cmdp.calibration.CmdpOptimizerHandler;
-import org.eqasim.switzerland.ch_cmdp.calibration.CmdpVariablesWriter;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissPtCostModel;
@@ -115,7 +112,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 			String level = calConfig.getLevel().toLowerCase();
 			switch (level) {
 				case "global":
-					bind(FastCalibration.class).to(AlphaCalibrator.class).asEagerSingleton();
+					bind(FastCalibration.class).to(GlobalAlphaCalibrator.class).asEagerSingleton();
 					break;
 				case "canton":
 					bind(FastCalibration.class).to(AlphaCantonCalibrator.class).asEagerSingleton();
@@ -222,6 +219,27 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		return new AlphaClusterCalibrator(scenario,outputHierarchy, targetModeShares, modeParameters,
 				tripListConverter, calConfig.getCalibratedModes() ,calConfig.getBeta(), filePath, calConfig.isActivate(),
 				eqasimConfigGroup);
+	}
+
+	@Provides
+	@Singleton
+	public GlobalAlphaCalibrator provideGlobalAlphaCalibrator(Scenario scenario,
+												  OutputDirectoryHierarchy outputHierarchy,
+												  ModeParameters modeParameters,
+												  TripListConverter tripListConverter,
+												  AlphaCalibratorConfig calConfig,
+												  EqasimConfigGroup eqasimConfigGroup) {
+		double beta = calConfig.getBeta();
+		Map<String, Double> targetModeShares = Map.of(
+				"car", calConfig.getCarModeShare(),
+				"pt", calConfig.getPtModeShare(),
+				"walk", calConfig.getWalkModeShare(),
+				"bike", calConfig.getBikeModeShare(),
+				"car_passenger", calConfig.getCarPassengerModeShare()
+		);
+		boolean isActivated = calConfig.isActivate();
+		List<String> modesToCalibrate = calConfig.getCalibratedModes();
+		return new GlobalAlphaCalibrator(scenario,outputHierarchy,modeParameters,tripListConverter,targetModeShares, modesToCalibrate, beta, isActivated, eqasimConfigGroup);
 	}
 
 	@Provides

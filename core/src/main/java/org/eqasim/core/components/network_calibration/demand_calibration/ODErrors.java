@@ -1,5 +1,8 @@
 package org.eqasim.core.components.network_calibration.demand_calibration;
 
+import com.google.inject.Provider;
+import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
 import org.matsim.api.core.v01.Coord;
@@ -22,6 +25,7 @@ public class ODErrors {
     private final FlowProcessor flowProcessor;
     private final TripListConverter tripListConverter;
     private final double sampleSize;
+    private final boolean calibrationEnabled;
 
     private final double RELATIVE_DIFFERENCE_THRESHOLD;
     private final double EPSILON;
@@ -29,14 +33,17 @@ public class ODErrors {
     private final double OBSERVATION_SHRINKAGE; // To build confidence in one OD erro
     private final double MIN_TRIP_WEIGHT;
 
-    public ODErrors(Scenario scenario, PopulationGroups populationGroups, CountsProcessor countsProcessor,
-                    FlowProcessor flowProcessor, TripListConverter tripListConverter, double sampleSize) {
+    public ODErrors(Scenario scenario, Provider<PopulationGroups> populationGroupsProvider, Provider<CountsProcessor> countsProcessorProvider,
+                    Provider<FlowProcessor> flowProcessorProvider, TripListConverter tripListConverter, EqasimConfigGroup eqasimConfig,
+                    NetworkCalibrationConfigGroup calConfig) {
         this.population = scenario.getPopulation();
-        this.populationGroups = populationGroups;
-        this.countsProcessor = countsProcessor;
-        this.flowProcessor = flowProcessor;
         this.tripListConverter = tripListConverter;
-        this.sampleSize = sampleSize;
+        this.sampleSize = eqasimConfig.getSampleSize();
+        this.calibrationEnabled = calConfig.getAllObjectives().contains("subpopulations") && calConfig.isCalibrationEnabled();
+
+        this.countsProcessor = calibrationEnabled ? countsProcessorProvider.get():null;
+        this.flowProcessor = calibrationEnabled ? flowProcessorProvider.get():null;
+        this.populationGroups = calibrationEnabled ? populationGroupsProvider.get():null;
 
         // Later I need to make these parameters configurable
         this.RELATIVE_DIFFERENCE_THRESHOLD = 0.02; // threshold in relative flow error to start correcting

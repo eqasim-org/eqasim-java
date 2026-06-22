@@ -1,10 +1,14 @@
 package org.eqasim.core.components.network_calibration.demand_calibration;
 
+import com.google.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.*;
@@ -14,6 +18,9 @@ import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.population.routes.NetworkRoute;
+import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleUtils;
+import org.matsim.vehicles.Vehicles;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,12 +32,13 @@ public class SubPopulationReducer implements IterationEndsListener {
 	private static final Logger logger = LogManager.getLogger(SubPopulationReducer.class);
 
 	// Adjustable calibration knobs.
-	public static double FLOW_OVER_ESTIMATION_THRESHOLD = 0.20; // if we have an overestimation above this, I do correct
+	public static double FLOW_OVER_ESTIMATION_THRESHOLD = 0.15; // if we have an overestimation above this, I do correct
 	public static double SUBPOPULATION_SHARE_THRESHOLD = 0.20; // if the share of subpopulation is above this, I correct
-	public static double FLOW_UNDER_ESTIMATION_THRESHOLD = 0.20; // if we have an underestimation of that percentage, and we can bring back people, we bring them back
+	public static double FLOW_UNDER_ESTIMATION_THRESHOLD = 0.12; // if we have an underestimation of that percentage, and we can bring back people, we bring them back
 	public static int MIN_TRAVERSALS_PER_LINK = 20; //minimum number of traversals to consider that link
 	public static double MAX_LINK_REMOVAL_PROBABILITY = 0.8; // cap the probability to remove people from that link
 	public static double MAX_UNDER_PENALTY_PER_LINK = 0.8; // to bring back people
+	public static double INITIAL_REMOVAL_DAMPING_FACTOR = 0.8; // remove only 90% of what's needed each step
 	public static double UNDER_PENALTY_WEIGHT = 0.9;
 	public static double MIN_PERSON_REMOVAL_PROBABILITY = 1.0e-3;
 	public static double MAX_PERSON_REMOVAL_PROBABILITY = 0.90;
@@ -41,6 +49,7 @@ public class SubPopulationReducer implements IterationEndsListener {
 
 	public static int WARM_UP_ITERATIONS = 30;
 	public static int ITERATION_INTERVAL = 5;
+	public static String REMOVED_ATTRIBUTE = "removed";
 
 
 	private final Population population;
@@ -49,30 +58,41 @@ public class SubPopulationReducer implements IterationEndsListener {
 	private final FlowProcessor flowProcessor;
 	private final double sampleSize;
 	private final boolean activate;
+	private final boolean calibrate;
+	private final Vehicles vehicles;
 	private final Random random;
 	private final Map<Id<Person>, StoredPersonPlan> removedPersonPlans = new HashMap<>();
+	private int numReductions;
 
-	public SubPopulationReducer(Population population, TripListConverter tripListConverter,
-								CountsProcessor countsProcessor, FlowProcessor flowProcessor,
-								double sampleSize, boolean activate) {
-		this.population = population;
+	public SubPopulationReducer(Scenario scenario, TripListConverter tripListConverter,
+								Provider<CountsProcessor> countsProcessorProvider,
+								Provider<FlowProcessor> flowProcessorProvider,
+								EqasimConfigGroup eqasimConfig, NetworkCalibrationConfigGroup calConfig) {
+		this.population = scenario.getPopulation();
 		this.tripListConverter = tripListConverter;
-		this.countsProcessor = countsProcessor;
-		this.flowProcessor = flowProcessor;
-		this.sampleSize = sampleSize;
-		this.activate = activate;
+		this.vehicles = scenario.getVehicles();
+		this.sampleSize = eqasimConfig.getSampleSize();
+		this.activate = calConfig.getAllObjectives().contains("subpopulations");
+		this.calibrate = this.activate && calConfig.isCalibrationEnabled();
 		this.random = MatsimRandom.getLocalInstance();
+		this.numReductions = 0;
+
+		this.countsProcessor = calibrate ? countsProcessorProvider.get():null;
+		this.flowProcessor = calibrate ? flowProcessorProvider.get():null;
 	}
 
 	@Override
 	public void notifyIterationEnds(IterationEndsEvent event) {
 		int iteration = event.getIteration();
-		if (activate && iteration >= WARM_UP_ITERATIONS && iteration%ITERATION_INTERVAL == 0) {
+		if (calibrate && iteration >= WARM_UP_ITERATIONS && iteration%ITERATION_INTERVAL == 0) {
 			reduceTrips();
 		}
 	}
 
 	public void reduceTrips() {
+		// This will be incremented anyway, just to keep track of how many times this method is called
+		numReductions++;
+		// Population reduction
 		LinkTripStats stats = collectLinkTripStats();
 		LinkDiagnostics diagnostics = buildLinkDiagnostics(stats);
 		int restoredPersons = restorePersons(diagnostics);
@@ -130,8 +150,9 @@ public class SubPopulationReducer implements IterationEndsListener {
 	}
 
 	private Map<Id<Person>, Double> identifyPersonRemovalProbabilities(LinkTripStats stats, LinkDiagnostics diagnostics) {
-
 		Map<Id<Person>, Double> result = new HashMap<>();
+		double dampingFactor = getDampingFactor();
+
 		for (Map.Entry<Id<Person>, Map<Id<Link>, Integer>> personEntry : stats.subpopulationPersonTraversals.entrySet()) {
 			Id<Person> personId = personEntry.getKey();
 			if (removedPersonPlans.containsKey(personId)) {
@@ -164,7 +185,8 @@ public class SubPopulationReducer implements IterationEndsListener {
 			}
 
 			double penaltyFactor = Math.exp(-UNDER_PENALTY_WEIGHT * underScore);
-			double finalProbability = clamp(overProbability * penaltyFactor,
+			double dampedProbability = overProbability * penaltyFactor * dampingFactor;
+			double finalProbability = clip(dampedProbability,
 					MIN_PERSON_REMOVAL_PROBABILITY, MAX_PERSON_REMOVAL_PROBABILITY);
 
 			if (finalProbability > MIN_PERSON_REMOVAL_PROBABILITY) {
@@ -176,6 +198,15 @@ public class SubPopulationReducer implements IterationEndsListener {
 				diagnostics.overSignals.size(), diagnostics.underSignals.size());
 
 		return result;
+	}
+
+	private double getDampingFactor(){
+		if (numReductions ==0) {
+			return 1.0;
+		} else {
+			double progress = clip(1.0-numReductions / 50.0, 0.1, 1.0);
+			return Math.max(INITIAL_REMOVAL_DAMPING_FACTOR * progress,0.3);
+		}
 	}
 
 	private LinkDiagnostics buildLinkDiagnostics(LinkTripStats stats) {
@@ -202,7 +233,7 @@ public class SubPopulationReducer implements IterationEndsListener {
 
 			if (relativeError > FLOW_OVER_ESTIMATION_THRESHOLD && subShare > SUBPOPULATION_SHARE_THRESHOLD) {
 				double removalShareNeeded = (relativeError - FLOW_OVER_ESTIMATION_THRESHOLD) / (1.0 + relativeError);
-				double pLink = clamp(removalShareNeeded / Math.max(subShare, 1.0e-9), 0.0, MAX_LINK_REMOVAL_PROBABILITY);
+				double pLink = clip(removalShareNeeded / Math.max(subShare, 1.0e-9), 0.0, MAX_LINK_REMOVAL_PROBABILITY);
 				if (pLink > 0.0) {
 					overSignals.put(linkId, new LinkSignal(pLink, relativeError, subShare));
 				}
@@ -211,7 +242,7 @@ public class SubPopulationReducer implements IterationEndsListener {
 			if (relativeError < -FLOW_UNDER_ESTIMATION_THRESHOLD) {
 				double underMagnitude = -relativeError;
 				double underPenalty = (underMagnitude - FLOW_UNDER_ESTIMATION_THRESHOLD) / (1.0 + underMagnitude);
-				underPenalty = clamp(underPenalty, 0.0, MAX_UNDER_PENALTY_PER_LINK);
+				underPenalty = clip(underPenalty, 0.0, MAX_UNDER_PENALTY_PER_LINK);
 				if (underPenalty > 0.0) {
 					underSignals.put(linkId, underPenalty);
 				}
@@ -281,11 +312,14 @@ public class SubPopulationReducer implements IterationEndsListener {
 		}
 
 		double scaled = (score - PLAN_RESTORE_SCORE_THRESHOLD) / (1.0 + Math.abs(score));
-		return clamp(scaled, MIN_PERSON_RESTORE_PROBABILITY, MAX_PERSON_RESTORE_PROBABILITY);
+		return clip(scaled, MIN_PERSON_RESTORE_PROBABILITY, MAX_PERSON_RESTORE_PROBABILITY);
 	}
 
 	private int applyReduction(Map<Id<Person>, Double> personRemovalProbabilities) {
 		int modifiedPersons = 0;
+
+		List<Person> clonedCandidates = new java.util.ArrayList<>();
+		List<Person> regularCandidates = new java.util.ArrayList<>();
 
 		for (Person person : population.getPersons().values()) {
 			if (!Tools.isInSubPopulation(person)) {
@@ -296,16 +330,53 @@ public class SubPopulationReducer implements IterationEndsListener {
 			}
 
 			double probability = personRemovalProbabilities.getOrDefault(person.getId(), 0.0);
+			if (probability <= MIN_PERSON_REMOVAL_PROBABILITY) {
+				continue;
+			}
+
+			if (isClonedPerson(person)) {
+				clonedCandidates.add(person);
+			} else {
+				regularCandidates.add(person);
+			}
+		}
+
+		modifiedPersons += applyReductionPass(clonedCandidates, personRemovalProbabilities);
+		modifiedPersons += applyReductionPass(regularCandidates, personRemovalProbabilities);
+
+		return modifiedPersons;
+	}
+
+	private int applyReductionPass(List<Person> candidates, Map<Id<Person>, Double> personRemovalProbabilities) {
+		int modifiedPersons = 0;
+		for (Person person : candidates) {
+			double probability = personRemovalProbabilities.getOrDefault(person.getId(), 0.0);
 			if (probability <= MIN_PERSON_REMOVAL_PROBABILITY || random.nextDouble() >= probability) {
 				continue;
 			}
 
-			if (removeThatPersonActivityChain(person)) {
+			boolean removed = isClonedPerson(person)
+					? removeClonedPersonCompletely(person)
+					: removeThatPersonActivityChain(person);
+
+			if (removed) {
 				modifiedPersons++;
 			}
 		}
 
 		return modifiedPersons;
+	}
+
+	private boolean removeClonedPersonCompletely(Person person) {
+		Id<Person> personId = person.getId();
+		for (Id<Vehicle> vehicleId : VehicleUtils.getVehicleIds(person).values()) {
+			if (vehicles.getVehicles().containsKey(vehicleId)) {
+				vehicles.removeVehicle(vehicleId);
+			}
+		}
+		removedPersonPlans.remove(personId);
+		population.removePerson(personId);
+		return !population.getPersons().containsKey(personId);
 	}
 
 	private boolean removeThatPersonActivityChain(Person person) {
@@ -333,6 +404,7 @@ public class SubPopulationReducer implements IterationEndsListener {
 		person.removePlan(oldPlan);
 		person.addPlan(newPlan);
 		person.setSelectedPlan(newPlan);
+		person.getAttributes().putAttribute(REMOVED_ATTRIBUTE, true);
 		removedPersonPlans.put(person.getId(), new StoredPersonPlan(oldPlan));
 		return true;
 	}
@@ -345,10 +417,96 @@ public class SubPopulationReducer implements IterationEndsListener {
 
 		person.addPlan(originalPlan);
 		person.setSelectedPlan(originalPlan);
+		person.getAttributes().putAttribute(REMOVED_ATTRIBUTE, false);
 		return true;
 	}
 
-	private double clamp(double value, double min, double max) {
+	public synchronized boolean isRemoved(Id<Person> personId) {
+		return removedPersonPlans.containsKey(personId);
+	}
+
+	public synchronized java.util.Set<Id<Person>> getRemovedPersonIds() {
+		return java.util.Set.copyOf(removedPersonPlans.keySet());
+	}
+
+	public synchronized boolean restoreRemovedPerson(Id<Person> personId) {
+		StoredPersonPlan stored = removedPersonPlans.get(personId);
+		if (stored == null) {
+			return false;
+		}
+
+		Person person = population.getPersons().get(personId);
+		if (person == null) {
+			removedPersonPlans.remove(personId);
+			return false;
+		}
+
+		if (restorePersonPlan(person, stored.originalPlan)) {
+			removedPersonPlans.remove(personId);
+			return true;
+		}
+
+		return false;
+	}
+
+	public synchronized int restoreCrossBorderPersonsForExpansion(Map<Id<Link>, Double> linkWeights, int maxPersons) {
+		if (maxPersons <= 0 || linkWeights.isEmpty() || removedPersonPlans.isEmpty()) {
+			return 0;
+		}
+
+		List<Map.Entry<Id<Person>, Double>> candidates = new java.util.ArrayList<>();
+		for (Map.Entry<Id<Person>, StoredPersonPlan> entry : removedPersonPlans.entrySet()) {
+			Person person = population.getPersons().get(entry.getKey());
+			if (person == null || !isCrossBorderPerson(person)) {
+				continue;
+			}
+
+			double score = estimateExpansionSupportScore(entry.getValue().originalPlan, linkWeights);
+			if (score > 0.0) {
+				candidates.add(Map.entry(entry.getKey(), score));
+			}
+		}
+
+		candidates.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+
+		int restored = 0;
+		for (Map.Entry<Id<Person>, Double> candidate : candidates) {
+			if (restored >= maxPersons) {
+				break;
+			}
+			if (restoreRemovedPerson(candidate.getKey())) {
+				restored++;
+			}
+		}
+
+		return restored;
+	}
+
+	private double estimateExpansionSupportScore(Plan plan, Map<Id<Link>, Double> linkWeights) {
+		Map<Id<Link>, Integer> traversals = collectPlanTraversals(plan);
+		double score = 0.0;
+
+		for (Map.Entry<Id<Link>, Integer> traversal : traversals.entrySet()) {
+			double weight = linkWeights.getOrDefault(traversal.getKey(), 0.0);
+			if (weight > 0.0) {
+				score += weight * Math.sqrt(Math.max(1, traversal.getValue()));
+			}
+		}
+
+		return score;
+	}
+
+	private boolean isCrossBorderPerson(Person person) {
+		Boolean isCB = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
+		return isCB != null && isCB;
+	}
+
+	private boolean isClonedPerson(Person person) {
+		Object cloned = person.getAttributes().getAttribute(CrossBorderPopulationExpander.CLONED_ATTRIBUTE);
+		return Boolean.TRUE.equals(cloned);
+	}
+
+	private double clip(double value, double min, double max) {
 		return Math.max(min, Math.min(max, value));
 	}
 
