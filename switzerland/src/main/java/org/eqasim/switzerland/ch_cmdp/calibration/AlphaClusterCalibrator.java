@@ -178,7 +178,10 @@ public class AlphaClusterCalibrator implements FastCalibration {
                     boolean consideredTrip = AlphaCalibrationUtils.isConsideredTrip(trip);
 
                     if (consideredTrip && consideredModes.contains(mode) && !sameLocation) {
-                        modeCounts.put(mode, modeCounts.getOrDefault(mode, 0.0) + 1.0);
+                        // for the global mode shares, we should not consider the external population.
+                        if (AlphaCalibrationUtils.isConsideredPerson(person, "isExternalFR")) {
+                            modeCounts.put(mode, modeCounts.getOrDefault(mode, 0.0) + 1.0);
+                        }
 
                         int cluster = SwissPredictorUtils.getCluster(person);
                         Map<String, Double> clusterModeCounts = modeCountsByCluster.computeIfAbsent(cluster, k -> new HashMap<>());

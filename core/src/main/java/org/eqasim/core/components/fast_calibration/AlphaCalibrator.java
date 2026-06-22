@@ -158,11 +158,15 @@ public class AlphaCalibrator implements FastCalibration {
         }
     }
 
+    protected boolean NotConsideredPerson(Person person){
+        return !AlphaCalibrationUtils.isConsideredPerson(person);
+    }
+
     private Map<String, Double> computeModeSharesFromPlans(){
         Map<String, Double> estimatedShares = new HashMap<>();
         replannedTripsCount = 0; // Reset the count of replanned plans
         for (Person person : scenario.getPopulation().getPersons().values()) {
-            if (!AlphaCalibrationUtils.isConsideredPerson(person)) {
+            if (NotConsideredPerson(person)) {
                 continue; // Skip cross-border and freight agents
             }
 

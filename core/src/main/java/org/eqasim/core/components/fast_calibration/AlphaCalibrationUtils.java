@@ -13,9 +13,11 @@ public class AlphaCalibrationUtils {
     public static Boolean isConsideredTrip(DiscreteModeChoiceTrip trip) {
         String originActivity = trip.getOriginActivity().getType();
         String destinationActivity = trip.getDestinationActivity().getType();
-        if (originActivity.equals("outside") || destinationActivity.equals("outside")) {
-            return false;
-        }
-        return true;
+        return !originActivity.equals("outside") && !destinationActivity.equals("outside");
+    }
+
+    public static Boolean isConsideredPerson(Person person, String additionalSubPopulation) {
+        Boolean isInThisSubPopulation = (Boolean) person.getAttributes().getAttribute(additionalSubPopulation);
+        return !(isInThisSubPopulation != null && isInThisSubPopulation);
     }
 }
