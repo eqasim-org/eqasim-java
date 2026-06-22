@@ -9,6 +9,7 @@ import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactor
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
+import org.eqasim.core.simulation.policies.routing.ZeroRoutingPenalty;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;

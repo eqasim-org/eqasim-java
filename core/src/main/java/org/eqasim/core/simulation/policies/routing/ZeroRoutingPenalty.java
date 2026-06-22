@@ -1,6 +1,5 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.core.simulation.policies.routing;
 
-import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 

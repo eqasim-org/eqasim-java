@@ -6,8 +6,11 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
+import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
+import org.eqasim.core.simulation.policies.routing.ZeroRoutingPenalty;
 import org.matsim.core.config.CommandLine;
 import java.net.URL;
 
@@ -35,9 +38,10 @@ public class TripsRouter {
 
     public static final Collection<String> REQUIRED_ARGS = Set.of("config-path", "events-path", "trips-path");
     public static final Collection<String> OPTIONAL_ARGS = Set.of("threads","start-time","end-time","interval","output-path",
-            "departure-time", "return-links", "batch-size");
+            "departure-time", "return-links", "batch-size","routingDistanceUtility");
 
     private static boolean returnLinks;
+    private static double routingDistanceUtility;
 
     public static void main(String[] args) throws Exception {
         CommandLine cmd = new CommandLine.Builder(args)
@@ -53,6 +57,7 @@ public class TripsRouter {
         batchSize = Math.max(1, batchSize);
         // whether to return links in the output
         returnLinks = cmd.getOption("return-links").map(Boolean::parseBoolean).orElse(false);
+        routingDistanceUtility = cmd.getOption("routingDistanceUtility").map(Double::parseDouble).orElse(0.0);
         logger.info("Return links option set to: {}", returnLinks);
 
         // Read trips
@@ -116,7 +121,8 @@ public class TripsRouter {
         logger.info("\t Batch size: {}", batchSize);
         logger.info("\t Threads: {}", threads);
 
-        TravelDisutilityFactory disutilityFactory = new OnlyTimeDependentTravelDisutilityFactory();
+        RoutingPenalty zeroPenalty = new ZeroRoutingPenalty();
+        EqasimTravelDisutilityFactory disutilityFactory = new EqasimTravelDisutilityFactory(zeroPenalty, routingDistanceUtility);
         SpeedyALTFactory routerFactory = new SpeedyALTFactory();
         AtomicInteger completed = new AtomicInteger(0);
         AtomicInteger nextTripIndex = new AtomicInteger(0);
