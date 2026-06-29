@@ -20,7 +20,7 @@ jobs:
         id: release
         with:
           token: ${{ secrets.RELEASE }}
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: ${{ steps.release.outputs.release_created }}
       - uses: actions/setup-java@v5
         if: ${{ steps.release.outputs.release_created }}
