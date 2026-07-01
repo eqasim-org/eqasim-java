@@ -97,7 +97,7 @@ public class RunAdaptConfig {
 		}
 
 		// Primary_secondary activities
-		List<String> NEW_ACTIVITY_TYPES  = Arrays.asList("home_secondary", "work_secondary", "education_secondary");
+		List<String> NEW_ACTIVITY_TYPES  = Arrays.asList("home_secondary", "work_secondary", "education_secondary", "border");
 		ScoringConfigGroup scoringConfig0 = config.scoring();
 
 		for (String activityType : NEW_ACTIVITY_TYPES) {
