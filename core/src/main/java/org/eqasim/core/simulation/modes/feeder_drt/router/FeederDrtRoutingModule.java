@@ -89,6 +89,7 @@ public class FeederDrtRoutingModule implements RoutingModule {
                 }
             }
             Activity accessInteractionActivity = populationFactory.createActivityFromLinkId(this.mode + " interaction", accessFacility.getLinkId());
+            accessInteractionActivity.setCoord(accessFacility.getCoord());
             accessInteractionActivity.setMaximumDuration(0);
             intermodalRoute.add(accessInteractionActivity);
         }
@@ -124,9 +125,10 @@ public class FeederDrtRoutingModule implements RoutingModule {
             }
             intermodalRoute.addAll(ptRoute);
         } else {
-            // Here we have a pt route and an egress drt route, we need to propriately concatenate them in the overall route
+            // Here we have a pt route and an egress drt route, we need to appropriately concatenate them in the overall route
             intermodalRoute.addAll(ptRoute);
             Activity egressInteractionActivity = populationFactory.createActivityFromLinkId(this.mode + " interaction", egressFacility.getLinkId());
+            egressInteractionActivity.setCoord(egressFacility.getCoord());
             egressInteractionActivity.setMaximumDuration(0);
             egressDrtRoute.stream().filter(planElement -> planElement instanceof Leg).map(planElement -> (Leg) planElement).forEach(leg -> leg.getAttributes().putAttribute(CURRENT_SEGMENT_TYPE_ATTR, FeederDrtTripSegmentType.DRT));
             intermodalRoute.add(egressInteractionActivity);
