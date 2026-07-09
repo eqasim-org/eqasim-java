@@ -320,7 +320,7 @@ public class TestSimulationPipeline {
     }
 
     @Test
-    public void testDrt() throws IOException, CommandLine.ConfigurationException {
+    public void testDrt() throws IOException, CommandLine.ConfigurationException, ExecutionException, InterruptedException {
         CreateDrtVehicles.main(new String[] {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--output-vehicles-path", "melun_test/input/drt_vehicles_a.xml.gz",
@@ -349,6 +349,16 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/input/config_drt.xml", "melun_test/output_drt");
+
+        RunStandaloneModeChoice.main(new String[] {
+                "--config-path", "melun_test/input/config_drt.xml",
+                "--recorded-travel-times-path", "melun_test/output_drt/eqasim_travel_times.bin.gz",
+                "--write-input-csv-trips", "true",
+                "--write-output-csv-trips", "true",
+                "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_drt",
+                "--eqasim-configurator", TestConfigurator.class.getName(),
+                "--simulate-after", TestRunSimulation.class.getName()
+        });
 
         RunDrtPassengerAnalysis.main(new String[] {
                 "--events-path", "melun_test/output_drt/output_events.xml.gz",
@@ -435,7 +445,7 @@ public class TestSimulationPipeline {
     }
 
     @Test
-    public void testFeeder() throws IOException, CommandLine.ConfigurationException {
+    public void testFeeder() throws IOException, CommandLine.ConfigurationException, ExecutionException, InterruptedException {
         CreateDrtVehicles.main(new String[] {
                 "--network-path", "melun_test/input/network.xml.gz",
                 "--output-vehicles-path", "melun_test/input/feeder_drt_vehicles_a.xml.gz",
@@ -474,6 +484,16 @@ public class TestSimulationPipeline {
         });
 
         runMelunSimulation("melun_test/input/config_feeder.xml", "melun_test/output_feeder");
+
+        RunStandaloneModeChoice.main(new String[] {
+                "--config-path", "melun_test/input/config_feeder.xml",
+                "--recorded-travel-times-path", "melun_test/output_feeder/eqasim_travel_times.bin.gz",
+                "--write-input-csv-trips", "true",
+                "--write-output-csv-trips", "true",
+                "--config:standaloneModeChoice.outputDirectory", "melun_test/output_mode_choice_feeder",
+                "--eqasim-configurator", TestConfigurator.class.getName(),
+                "--simulate-after", TestRunSimulation.class.getName()
+        });
 
         RunFeederDrtPassengerAnalysis.main(new String[] {
                 "--config-path", "melun_test/input/config_feeder.xml",
