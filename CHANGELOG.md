@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.0](https://github.com/eqasim-org/eqasim-java/compare/v2.2.0...v2.3.0) (2026-07-13)
+
+
+### Features
+
+* ability to override default params in ConfigAdapter ([#584](https://github.com/eqasim-org/eqasim-java/issues/584)) ([fc85693](https://github.com/eqasim-org/eqasim-java/commit/fc8569353b4aa5124e3254ed97aec2a853fed026))
+* **core:** configurable activity types in RunGenerateConfig ([#581](https://github.com/eqasim-org/eqasim-java/issues/581)) ([0a6884b](https://github.com/eqasim-org/eqasim-java/commit/0a6884b6553034048d76466d060bfe94e3e29c37))
+
 ## [2.2.0](https://github.com/eqasim-org/eqasim-java/compare/v2.1.0...v2.2.0) (2026-06-03)
 
 
