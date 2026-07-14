@@ -128,6 +128,13 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
+	public SwissDetailedModeAvailability provideModeAvailability(Config config){
+		boolean useBikesharing = this.commandLine.getOption("useBikesharing").isPresent() && Boolean.parseBoolean( this.commandLine.getOption("useBikesharing").get());
+		return new SwissDetailedModeAvailability(useBikesharing, config);
+	}
+
+	@Provides
+	@Singleton
 	public CmdpVariablesWriter provideCmdpVariablesWriter(){
 		return new CmdpVariablesWriter();
 	}

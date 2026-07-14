@@ -3,8 +3,13 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.mode_availability;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.shared_mobility.run.SharingConfigGroup;
+import org.matsim.contrib.shared_mobility.run.SharingServiceConfigGroup;
+import org.matsim.contrib.shared_mobility.service.SharingService;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.population.PersonUtils;
 
 import java.util.*;
@@ -12,6 +17,14 @@ import java.util.*;
 import static org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.Utils.destinationIsWork;
 
 public class SwissDetailedModeAvailability implements ModeAvailability {
+
+    private boolean useBikesharing = false;
+    private Config config;
+    public SwissDetailedModeAvailability(boolean useBikesharing, Config config) {
+        this.useBikesharing = useBikesharing;
+        this.config = config;
+    }
+
     @Override
     public Collection<String> getAvailableModes(Person person, List<DiscreteModeChoiceTrip> trips) {
         Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
@@ -90,6 +103,12 @@ public class SwissDetailedModeAvailability implements ModeAvailability {
             if (destinationIsWork(trip)){
                 modes.add(RemoteWalkConstraint.REMOTE_MODE);
                 break;
+            }
+        }
+        if (this.useBikesharing) {
+            Collection<? extends ConfigGroup> bikesharingServices = ((SharingConfigGroup)config.getModules().get(SharingConfigGroup.GROUP_NAME)).getParameterSets().get("mode");
+            for (ConfigGroup sscg : bikesharingServices) {
+                modes.add("sharing_" + ((SharingServiceConfigGroup) sscg).getId());
             }
         }
 
