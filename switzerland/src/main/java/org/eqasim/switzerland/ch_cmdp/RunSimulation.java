@@ -3,6 +3,7 @@ package org.eqasim.switzerland.ch_cmdp;
 import java.io.IOException;
 
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
+import org.eqasim.switzerland.ch_cmdp.config.SwissBikesharingConfigGroup;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.shared_mobility.run.SharingConfigGroup;
 import org.matsim.contrib.shared_mobility.run.SharingModule;
@@ -62,9 +63,10 @@ public class RunSimulation {
 		controller.addOverridingModule(new PTPassengerCountsModule());
 		controller.addOverridingModule(new PTLinkVolumesModule());
 		controller.addOverridingModule(new StrategyWeightDecayModule());
+		SwissBikesharingConfigGroup bikesharingConfig = SwissBikesharingConfigGroup.getOrCreate(config);
 		boolean useBikesharing = cmd.getOption("useBikesharing")
-		.map(Boolean::parseBoolean)
-		.orElse(false);
+				.map(Boolean::parseBoolean)
+				.orElse(bikesharingConfig.isUseBikesharing());
 		if (config.getModules().containsKey(SharingConfigGroup.GROUP_NAME) && useBikesharing) 
 			controller.addOverridingModule(new SharingModule());
 
