@@ -23,6 +23,7 @@ public class SwissModeParameters extends ModeParameters {
 		public Map<String, Double> bike = getCantonDummies();
 		public Map<String, Double> walk = getCantonDummies();
 		public Map<String, Double> cp = getCantonDummies();
+		public Map<String, Double> bikesharing = getCantonDummies();
 	}
 
 	public static Map<String, Double> getCantonDummies() {
