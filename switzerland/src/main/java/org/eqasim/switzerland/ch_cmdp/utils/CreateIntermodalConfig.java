@@ -4,6 +4,8 @@ import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -71,8 +73,9 @@ public class CreateIntermodalConfig {
         if (!cmd.hasOption("access-egress-mode") && !cmd.hasOption("access-egress-modes")) {
             throw new CommandLine.ConfigurationException("Missing access/egress modes.\n\n" + USAGE);
         }
-
-        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"), new SwissRailRaptorConfigGroup());
+        SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
+        Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("input-path"));
+        configurator.updateConfig(config);
         SwissRailRaptorConfigGroup raptorConfig = (SwissRailRaptorConfigGroup) config.getModules()
                 .get(SwissRailRaptorConfigGroup.GROUP);
         raptorConfig.setUseIntermodalAccessEgress(true);
