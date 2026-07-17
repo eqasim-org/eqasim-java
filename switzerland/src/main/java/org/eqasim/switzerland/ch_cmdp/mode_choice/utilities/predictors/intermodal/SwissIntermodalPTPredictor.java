@@ -5,6 +5,7 @@ import java.util.List;
 import org.eqasim.core.simulation.mode_choice.cost.CostModel;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
+import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
@@ -16,16 +17,17 @@ import org.matsim.pt.routes.TransitPassengerRoute;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
-public class SwissIntermodalPTPredictor extends CachedVariablePredictor<PtVariables> {
+public class SwissIntermodalPTPredictor extends PtPredictor{
     private final CostModel costModel;
 
     @Inject
     public SwissIntermodalPTPredictor(@Named("pt") CostModel costModel) {
+        super(costModel);
         this.costModel = costModel;
     }
 
     @Override
-    protected PtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
+    public PtVariables predict(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
         int numberOfVehicularTrips = 0;
         boolean isFirstWaitingTime = true;
 

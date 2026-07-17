@@ -26,6 +26,7 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstrai
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.ValidBikesharingTripConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.*;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.intermodal.SwissIntermodalPTPredictor;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.NetworkOfDistances;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.SBBDistanceReader;
@@ -103,6 +104,9 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bind(CarPassengerPredictor.class);
 		bind(SwissCarPredictor.class);
 		bind(SwissBikePredictor.class);
+		bind(SwissIntermodalPTPredictor.class);
+		
+		// this is used in cost calculation
 		bind(SwissPtRoutePredictor.class);
 		bind(SwissBikesharingPredictor.class);
 
