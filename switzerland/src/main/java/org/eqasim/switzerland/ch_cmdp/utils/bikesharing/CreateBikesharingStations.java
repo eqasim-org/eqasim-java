@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.contrib.shared_mobility.io.DefaultSharingServiceSpecification;
@@ -41,7 +42,6 @@ public class CreateBikesharingStations {
                         "parking-spaces-per-station")
                 .allowOptions("random-seed")
                 .build();
-
         int numberOfStations = getPositiveInt(cmd, "number-of-stations");
         int bikesPerStation = getPositiveInt(cmd, "bikes-per-station");
         int parkingSpacesPerStation = getPositiveInt(cmd, "parking-spaces-per-station");
@@ -54,9 +54,14 @@ public class CreateBikesharingStations {
         long randomSeed = cmd.hasOption("random-seed") ? Long.parseLong(cmd.getOptionStrict("random-seed")) : 0L;
 
         Network network = NetworkUtils.readNetwork(cmd.getOptionStrict("network-path"));
-        List<Id<Link>> linkIds = new ArrayList<>(network.getLinks().keySet());
+        List<Id<Link>> linkIds = new ArrayList<>();
+        for (Link link : network.getLinks().values()) {
+            if (link.getAllowedModes().contains(TransportMode.bike)) {
+                linkIds.add(link.getId());
+            }
+        }
         if (linkIds.isEmpty()) {
-            throw new CommandLine.ConfigurationException("Network contains no links");
+            throw new CommandLine.ConfigurationException("Network contains no links accessible by bike");
         }
 
         SharingServiceSpecification specification = createSpecification(linkIds, numberOfStations, bikesPerStation,
@@ -88,6 +93,7 @@ public class CreateBikesharingStations {
                 specification.addVehicle(ImmutableSharingVehicleSpecification.newBuilder()
                         .id(Id.create("bike_" + stationIndex + "_" + bikeIndex, SharingVehicle.class))
                         .startStationId(stationId)
+                        .startLinkId(linkId)
                         .build());
             }
         }
