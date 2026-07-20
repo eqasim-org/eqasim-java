@@ -31,7 +31,7 @@ public class CreateIntermodalConfig {
                   Adds one or more fully configured modes. Separate modes with commas.
 
             Global defaults, used unless a mode overrides them:
-              --initial-search-radius 1000
+              --initial-search-radius 4000
               --max-radius 5000
               --search-extension-radius 500
               --share-trip-search-radius 0.5
@@ -44,6 +44,10 @@ public class CreateIntermodalConfig {
             SwissRailRaptor options:
               --intermodal-leg-only-handling allow|avoid|forbid
               --intermodal-access-egress-mode-selection CalcLeastCostModePerStop|RandomSelectOneModePerRoutingRequestAndDirection
+
+            Input files:
+              --population-path population_intermodal.xml.gz
+              --transit-schedule-path transit_schedule_intermodal.xml.gz
             """;
 
     public static void main(String[] args) throws CommandLine.ConfigurationException {
@@ -67,7 +71,9 @@ public class CreateIntermodalConfig {
                         "stop-filter-attribute",
                         "stop-filter-value",
                         "intermodal-leg-only-handling",
-                        "intermodal-access-egress-mode-selection")
+                        "intermodal-access-egress-mode-selection",
+                        "population-path",
+                        "transit-schedule-path")
                 .build();
 
         if (!cmd.hasOption("access-egress-mode") && !cmd.hasOption("access-egress-modes")) {
@@ -87,6 +93,13 @@ public class CreateIntermodalConfig {
             raptorConfig.setIntermodalAccessEgressModeSelection(
                     SwissRailRaptorConfigGroup.IntermodalAccessEgressModeSelection.valueOf(
                             cmd.getOptionStrict("intermodal-access-egress-mode-selection")));
+        }
+
+        if (cmd.hasOption("population-path")) {
+            config.plans().setInputFile(cmd.getOptionStrict("population-path"));
+        }
+        if (cmd.hasOption("transit-schedule-path")) {
+            config.transit().setTransitScheduleFile(cmd.getOptionStrict("transit-schedule-path"));
         }
 
         addAccessEgressOptions(cmd, raptorConfig);
@@ -165,7 +178,7 @@ public class CreateIntermodalConfig {
 
         IntermodalAccessEgressParameterSet parameterSet = new IntermodalAccessEgressParameterSet()
                 .setMode(mode)
-                .setInitialSearchRadius(getDouble(attributes, cmd, "initialSearchRadius", "initial-search-radius", 1000.0))
+                .setInitialSearchRadius(getDouble(attributes, cmd, "initialSearchRadius", "initial-search-radius", 4000.0))
                 .setMaxRadius(getDouble(attributes, cmd, "maxRadius", "max-radius", 5000.0))
                 .setSearchExtensionRadius(getDouble(attributes, cmd, "searchExtensionRadius",
                         "search-extension-radius", 500.0))
