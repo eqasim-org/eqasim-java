@@ -27,6 +27,7 @@ import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissWalkUtili
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissZeroUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.IntermodalVehicleTourConstraint;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
 import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
@@ -61,6 +62,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
 	static public final String REMOTE_WALK_CONSTRAINT_NAME = "RemoteWalkConstraint";
+	static public final String INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME = IntermodalVehicleTourConstraint.NAME;
 
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -70,6 +72,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	protected void installEqasimExtension() {
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
 		bindTripConstraintFactory(REMOTE_WALK_CONSTRAINT_NAME).to(RemoteWalkConstraint.Factory.class);
+		bindTourConstraintFactory(INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME)
+				.to(IntermodalVehicleTourConstraint.Factory.class);
 
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(SwissModeAvailability.class);
 
