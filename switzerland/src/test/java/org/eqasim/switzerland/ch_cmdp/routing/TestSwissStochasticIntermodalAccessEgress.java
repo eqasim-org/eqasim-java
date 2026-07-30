@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
 import org.junit.Test;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -52,6 +53,7 @@ import ch.sbb.matsim.routing.pt.raptor.DefaultRaptorStopFinder;
 import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
+import ch.sbb.matsim.routing.pt.raptor.SwissHomeActivityRaptorStopFinder;
 
 public class TestSwissStochasticIntermodalAccessEgress {
 	@Test
@@ -136,8 +138,8 @@ public class TestSwissStochasticIntermodalAccessEgress {
 		Facility work = FacilitiesUtils.wrapLinkAndCoord(scenario.getNetwork().getLinks().get(Id.createLinkId("work_home")),
 				new Coord(10000.0, 0.0));
 
-		SwissRailRaptor deterministicRouter = createRouter(scenario, 0.0);
-		SwissRailRaptor stochasticRouter = createRouter(scenario, 1.0);
+		SwissRailRaptor deterministicRouter = createRouter(scenario, 0.0, false);
+		SwissRailRaptor stochasticRouter = createRouter(scenario, 1.0, false);
 		Map<String, Integer> deterministicChoices = new LinkedHashMap<>();
 		Map<String, Integer> stochasticChoices = new LinkedHashMap<>();
 
@@ -154,6 +156,26 @@ public class TestSwissStochasticIntermodalAccessEgress {
 		assertEquals(Map.of("bike->bike", 200), deterministicChoices);
 		assertEquals(200, stochasticChoices.values().stream().mapToInt(Integer::intValue).sum());
 		assertTrue(stochasticChoices.size() > 1);
+	}
+
+	@Test
+	public void testBikeAccessAndEgressCanBeRestrictedToHomeActivity() {
+		Scenario scenario = createIntermodalTransitScenario();
+		Facility home = FacilitiesUtils.wrapLinkAndCoord(scenario.getNetwork().getLinks().get(Id.createLinkId("home_work")),
+				new Coord(0.0, 0.0));
+		Facility work = FacilitiesUtils.wrapLinkAndCoord(scenario.getNetwork().getLinks().get(Id.createLinkId("work_home")),
+				new Coord(10000.0, 0.0));
+		SwissRailRaptor router = createRouter(scenario, 0.0, true);
+		Map<String, Integer> outboundChoices = new LinkedHashMap<>();
+		Map<String, Integer> inboundChoices = new LinkedHashMap<>();
+
+		for (Person person : scenario.getPopulation().getPersons().values()) {
+			addChoice(outboundChoices, router, home, work, 8.0 * 3600.0, person);
+			addChoice(inboundChoices, router, work, home, 17.0 * 3600.0, person);
+		}
+
+		assertEquals(Map.of("bike->walk", 100), outboundChoices);
+		assertEquals(Map.of("walk->bike", 100), inboundChoices);
 	}
 
 	static private Scenario createIntermodalTransitScenario() {
@@ -244,11 +266,13 @@ public class TestSwissStochasticIntermodalAccessEgress {
 		}
 	}
 
-	static private SwissRailRaptor createRouter(Scenario scenario, double utilityErrorScale) {
+	static private SwissRailRaptor createRouter(Scenario scenario, double utilityErrorScale, boolean restrictBikeToHome) {
 		SwissRailRaptorConfigGroup raptorConfig = new SwissRailRaptorConfigGroup();
 		raptorConfig.setUseIntermodalAccessEgress(true);
 		raptorConfig.addIntermodalAccessEgress(createIntermodalMode(TransportMode.walk));
 		raptorConfig.addIntermodalAccessEgress(createIntermodalMode(TransportMode.bike));
+		SwissIntermodalAccessEgressConfigGroup accessEgressConfig = new SwissIntermodalAccessEgressConfigGroup();
+		accessEgressConfig.setRestrictBikeToHomeActivity(restrictBikeToHome);
 
 		RaptorParameters parameters = new RaptorParameters(raptorConfig);
 		parameters.setBeelineWalkSpeed(1.0);
@@ -267,11 +291,12 @@ public class TestSwissStochasticIntermodalAccessEgress {
 				scenario.getNetwork(), null);
 		RoutingModule walk = new BeelineRoutingModule(TransportMode.walk, 1.0);
 		RoutingModule bike = new BeelineRoutingModule(TransportMode.bike, 3.0);
+		DefaultRaptorStopFinder delegate = new DefaultRaptorStopFinder(new SwissStochasticIntermodalAccessEgress(0L,
+				utilityErrorScale, Set.of(TransportMode.walk, TransportMode.bike)),
+				Map.of(TransportMode.walk, walk, TransportMode.bike, bike));
 
 		return new SwissRailRaptor.Builder(data, ConfigUtils.createConfig()).with(person -> parameters)
-				.with(new DefaultRaptorStopFinder(new SwissStochasticIntermodalAccessEgress(0L, utilityErrorScale,
-						Set.of(TransportMode.walk, TransportMode.bike)), Map.of(TransportMode.walk, walk,
-								TransportMode.bike, bike)))
+				.with(new SwissHomeActivityRaptorStopFinder(delegate, accessEgressConfig))
 				.build();
 	}
 

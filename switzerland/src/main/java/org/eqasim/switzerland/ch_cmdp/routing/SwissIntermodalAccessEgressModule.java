@@ -6,6 +6,8 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.intermoda
 import org.matsim.core.controler.AbstractModule;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
+import ch.sbb.matsim.routing.pt.raptor.RaptorStopFinder;
+import ch.sbb.matsim.routing.pt.raptor.SwissHomeActivityRaptorStopFinder;
 
 public class SwissIntermodalAccessEgressModule extends AbstractModule {
 	@Override
@@ -14,6 +16,7 @@ public class SwissIntermodalAccessEgressModule extends AbstractModule {
 		// chain. Rebinding it here lets ch_cmdp add stochastic access-mode tastes
 		// without changing the upstream router implementation.
 		bind(RaptorIntermodalAccessEgress.class).to(SwissStochasticIntermodalAccessEgress.class);
+		bind(RaptorStopFinder.class).to(SwissHomeActivityRaptorStopFinder.class);
 
 		if (SwissIntermodalAccessEgressConfigGroup.getOrCreate(getConfig()).useIntermodalPtPredictor()) {
 			bind(PtPredictor.class).to(SwissIntermodalPTPredictor.class);
