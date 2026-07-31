@@ -162,7 +162,7 @@ public class RunAdaptConfig {
 		eqasimConfig.setRoutingDistanceUtility(SwissConfigAdapter.routingDistanceUtility);
 
 		RoutingConfigGroup routingConfig  = config.routing();
-		routingConfig.setRoutingRandomness(1.0); // small randomness to avoid ties in route choice
+		routingConfig.setRoutingRandomness(3.0);
 
 		RoutingConfigGroup.TeleportedModeParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
 		walkParams.setBeelineDistanceFactor(1.3);
@@ -179,7 +179,7 @@ public class RunAdaptConfig {
 	    	}
 			routingConfig.removeTeleportedModeParams(TransportMode.bike);
 			// If routing bike in the network, we need to change qsim link dynamics to seepageQ
-			qsimConfigGroup.setLinkDynamics(QSimConfigGroup.LinkDynamics.PassingQ);
+			qsimConfigGroup.setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
 			qsimConfigGroup.setSeepModes(Collections.singletonList(TransportMode.bike));
 			qsimConfigGroup.setSeepModeStorageFree(true);
 			// ttcConfig.getAnalyzedModes().add(TransportMode.bike);
