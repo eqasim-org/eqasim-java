@@ -14,7 +14,6 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 
 	static private final String UTILITY_ERROR_SCALE = "utilityErrorScale";
 	static private final String UTILITY_ERROR_MODES = "utilityErrorModes";
-	static private final String USE_INTERMODAL_PT_PREDICTOR = "useIntermodalPtPredictor";
 	static private final String RESTRICT_BIKE_TO_HOME_ACTIVITY = "restrictBikeToHomeActivity";
 	static private final String BIKE_RESTRICTED_ACTIVITY_TYPE = "bikeRestrictedActivityType";
 	static private final String BIKE_RESTRICTED_MODE = "bikeRestrictedMode";
@@ -23,7 +22,6 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 
 	private double utilityErrorScale = 0.0;
 	private String utilityErrorModes = "";
-	private boolean useIntermodalPtPredictor = false;
 	private boolean restrictBikeToHomeActivity = true;
 	private String bikeRestrictedActivityType = "home";
 	private String bikeRestrictedMode = "bike";
@@ -67,16 +65,6 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 				.map(String::trim) //
 				.filter(mode -> !mode.isEmpty()) //
 				.collect(Collectors.toSet());
-	}
-
-	@StringGetter(USE_INTERMODAL_PT_PREDICTOR)
-	public boolean useIntermodalPtPredictor() {
-		return useIntermodalPtPredictor;
-	}
-
-	@StringSetter(USE_INTERMODAL_PT_PREDICTOR)
-	public void setUseIntermodalPtPredictor(boolean useIntermodalPtPredictor) {
-		this.useIntermodalPtPredictor = useIntermodalPtPredictor;
 	}
 
 	@StringGetter(RESTRICT_BIKE_TO_HOME_ACTIVITY)
@@ -150,8 +138,6 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 				"Scale parameter of the person-specific Gumbel utility error added to intermodal access/egress modes. Zero disables the error.");
 		comments.put(UTILITY_ERROR_MODES,
 				"Comma-separated access/egress modes that receive a utility error. Leave empty to apply it to all access/egress leg modes.");
-		comments.put(USE_INTERMODAL_PT_PREDICTOR,
-				"Whether to use the ch_cmdp intermodal PT predictor. Set to false to keep Eqasim's original PT predictor.");
 		comments.put(RESTRICT_BIKE_TO_HOME_ACTIVITY,
 				"If true, bike intermodal access is only allowed for trips starting at the configured activity type, and bike egress only for trips ending at that activity type.");
 		comments.put(BIKE_RESTRICTED_ACTIVITY_TYPE,

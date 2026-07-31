@@ -1,7 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp.routing;
 
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
-import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.intermodal.SwissIntermodalPTPredictor;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
@@ -23,9 +22,6 @@ public class SwissIntermodalAccessEgressModule extends AbstractModule {
 				SwissRailRaptorConfigGroup.class);
 		if (raptorConfig.isUseIntermodalAccessEgress()) {
 			bind(RaptorStopFinder.class).to(SwissHomeActivityRaptorStopFinder.class);
-		}
-
-		if (SwissIntermodalAccessEgressConfigGroup.getOrCreate(getConfig()).useIntermodalPtPredictor()) {
 			bind(PtPredictor.class).to(SwissIntermodalPTPredictor.class);
 		}
 	}
