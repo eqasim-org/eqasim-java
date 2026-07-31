@@ -24,6 +24,33 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 public class TestIntermodalVehicleTourConstraint {
 	@Test
+	public void testPreCheckRejectsDirectVehicleThatDoesNotReturnHome() {
+		IntermodalVehicleTourConstraint constraint = createConstraint();
+		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
+
+		assertFalse(constraint.validateBeforeEstimation(tour, List.of(TransportMode.bike, TransportMode.walk),
+				List.of()));
+	}
+
+	@Test
+	public void testPreCheckRejectsDirectVehicleAtWrongOrigin() {
+		IntermodalVehicleTourConstraint constraint = createConstraint();
+		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
+
+		assertFalse(constraint.validateBeforeEstimation(tour, List.of(TransportMode.walk, TransportMode.bike),
+				List.of()));
+	}
+
+	@Test
+	public void testPreCheckKeepsPtChainsBecauseIntermodalStopsAreUnknown() {
+		IntermodalVehicleTourConstraint constraint = createConstraint();
+		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
+
+		assertTrue(constraint.validateBeforeEstimation(tour, List.of(TransportMode.pt, TransportMode.walk),
+				List.of()));
+	}
+
+	@Test
 	public void testAllowsReturningIntermodalVehicleAtSameStop() {
 		IntermodalVehicleTourConstraint constraint = createConstraint();
 		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
@@ -52,6 +79,28 @@ public class TestIntermodalVehicleTourConstraint {
 		DefaultTourCandidate candidate = new DefaultTourCandidate(0.0,
 				List.of(createCandidate(createPtTrip(null, "stop_home", null, true)),
 						createCandidate(createPtTrip(null, "stop_home", TransportMode.bike, false))));
+
+		assertFalse(constraint.validateAfterEstimation(tour, candidate, List.of()));
+	}
+
+	@Test
+	public void testRejectsDirectWalkReturnAfterIntermodalVehicleWasLeftAtStop() {
+		IntermodalVehicleTourConstraint constraint = createConstraint();
+		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
+		DefaultTourCandidate candidate = new DefaultTourCandidate(0.0,
+				List.of(createCandidate(createPtTrip(TransportMode.bike, "stop_home", null, true)),
+						createCandidate(TransportMode.pt, List.of(createLeg(TransportMode.walk)))));
+
+		assertFalse(constraint.validateAfterEstimation(tour, candidate, List.of()));
+	}
+
+	@Test
+	public void testRejectsWalkReturnAfterIntermodalVehicleWasLeftAtStop() {
+		IntermodalVehicleTourConstraint constraint = createConstraint();
+		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
+		DefaultTourCandidate candidate = new DefaultTourCandidate(0.0,
+				List.of(createCandidate(createPtTrip(TransportMode.bike, "stop_home", null, true)),
+						createCandidate(TransportMode.walk, List.of(createLeg(TransportMode.walk)))));
 
 		assertFalse(constraint.validateAfterEstimation(tour, candidate, List.of()));
 	}

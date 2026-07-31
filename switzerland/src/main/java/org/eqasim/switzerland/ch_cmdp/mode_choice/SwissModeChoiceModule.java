@@ -3,6 +3,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -16,15 +17,21 @@ import org.eqasim.core.components.fast_calibration.AlphaCalibrator;
 import org.eqasim.core.components.fast_calibration.AlphaCalibratorConfig;
 import org.eqasim.core.components.fast_calibration.FastCalibration;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
+import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch_cmdp.calibration.*;
+import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.IntermodalVehicleTourConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.IntermodalVehicleContinuityTripEstimator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.IntermodalVehicleContinuityTourEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.*;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.NetworkOfDistances;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.SBBDistanceReader;
@@ -50,6 +57,7 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
@@ -74,6 +82,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
 	static public final String REMOTE_WALK_CONSTRAINT_NAME = "RemoteWalkConstraint";
 	static public final String INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME = IntermodalVehicleTourConstraint.NAME;
+	static public final String INTERMODAL_VEHICLE_CONTINUITY_TRIP_ESTIMATOR_NAME = "IntermodalVehicleContinuityTripEstimator";
+	static public final String INTERMODAL_VEHICLE_CONTINUITY_TOUR_ESTIMATOR_NAME = "IntermodalVehicleContinuityTourEstimator";
 
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -86,6 +96,25 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bindTripConstraintFactory(REMOTE_WALK_CONSTRAINT_NAME).to(RemoteWalkConstraint.Factory.class);
 		bindTourConstraintFactory(INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME)
 				.to(IntermodalVehicleTourConstraint.Factory.class);
+		bindTripEstimator(INTERMODAL_VEHICLE_CONTINUITY_TRIP_ESTIMATOR_NAME)
+				.to(IntermodalVehicleContinuityTripEstimator.class);
+		bindTourEstimator(INTERMODAL_VEHICLE_CONTINUITY_TOUR_ESTIMATOR_NAME)
+				.to(IntermodalVehicleContinuityTourEstimator.class);
+
+		SwissIntermodalAccessEgressConfigGroup intermodalConfig = ConfigUtils.addOrGetModule(getConfig(),
+				SwissIntermodalAccessEgressConfigGroup.class);
+		if (intermodalConfig.enforceIntermodalVehicleContinuityDuringRouting()) {
+			// This estimator needs previous routed PT candidates to know whether a
+			// vehicle is parked at a stop. Therefore PT must not be served from the
+			// standard mode/trip cache when the option is enabled.
+			DiscreteModeChoiceConfigGroup dmcConfig = DiscreteModeChoiceConfigGroup.getOrCreate(getConfig());
+			dmcConfig.setTripEstimator(INTERMODAL_VEHICLE_CONTINUITY_TRIP_ESTIMATOR_NAME);
+			dmcConfig.setTourEstimator(INTERMODAL_VEHICLE_CONTINUITY_TOUR_ESTIMATOR_NAME);
+			dmcConfig.setTourConstraints(getIntermodalVehicleTourConstraints(dmcConfig));
+			Collection<String> cachedModes = new ArrayList<>(dmcConfig.getCachedModes());
+			cachedModes.remove(TransportMode.pt);
+			dmcConfig.setCachedModes(cachedModes);
+		}
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindCostModel(CAR_WEISS_COST_MODEL_NAME).to(SwissWeissCarCostModel.class);
@@ -330,4 +359,31 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		return swissPtStageCostCalculator;
 	}
 
+	static private List<String> getIntermodalVehicleTourConstraints(DiscreteModeChoiceConfigGroup dmcConfig) {
+		List<String> constraints = new ArrayList<>();
+		boolean hasIntermodalConstraint = false;
+
+		for (String constraint : dmcConfig.getTourConstraints()) {
+			if (EqasimModeChoiceModule.VEHICLE_TOUR_CONSTRAINT.equals(constraint)
+					|| INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME.equals(constraint)) {
+				if (!hasIntermodalConstraint) {
+					// Replace the standard vehicle tour constraint in-place so the
+					// configured constraint order is preserved as much as possible.
+					constraints.add(INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME);
+					hasIntermodalConstraint = true;
+				}
+			} else {
+				constraints.add(constraint);
+			}
+		}
+
+		if (!hasIntermodalConstraint) {
+			// If the base vehicle constraint was not configured, still install the
+			// intermodal version because it is required by the routing-time continuity
+			// enforcement switch.
+			constraints.add(INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME);
+		}
+
+		return constraints;
+	}
 }

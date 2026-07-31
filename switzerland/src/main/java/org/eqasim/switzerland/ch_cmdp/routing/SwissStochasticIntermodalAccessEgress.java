@@ -1,10 +1,5 @@
 package org.eqasim.switzerland.ch_cmdp.routing;
 
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -87,36 +82,22 @@ public class SwissStochasticIntermodalAccessEgress implements RaptorIntermodalAc
 	}
 
 	private double getUniform(Person person, String mode) {
-		MessageDigest digest;
-		double maximumValue;
+		// Derive a stable person/mode-specific draw without a shared RNG. This keeps
+		// stochastic intermodal access costs independent of routing order and thread
+		// scheduling while staying much cheaper than constructing a cryptographic hash.
+		long value = randomSeed;
+		value ^= Integer.toUnsignedLong(person.getId().toString().hashCode()) * 0x9E3779B97F4A7C15L;
+		value ^= Long.rotateLeft(Integer.toUnsignedLong(mode.hashCode()) * 0xBF58476D1CE4E5B9L, 32);
 
-		try {
-			digest = MessageDigest.getInstance("SHA-512");
-			maximumValue = BigInteger.valueOf(2).pow(digest.getDigestLength() * 8).doubleValue();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(
-					"Cannot find SHA-512 algorithm. Providing intermodal utility errors is not possible.");
-		}
+		return ((splitMix64(value) >>> 11) + 0.5) * 0x1.0p-53;
+	}
 
-		// Hashing instead of drawing from a shared RNG keeps results independent of
-		// routing order and thread scheduling.
-		digest.update(ByteBuffer.allocate(Long.BYTES).putLong(randomSeed).array());
-		digest.update((byte) 0);
-		digest.update(person.getId().toString().getBytes(StandardCharsets.UTF_8));
-		digest.update((byte) 0);
-		digest.update(mode.getBytes(StandardCharsets.UTF_8));
-
-		double value = new BigInteger(1, digest.digest()).doubleValue();
-		double uniform = value / maximumValue;
-
-		if (uniform <= 0.0) {
-			return Double.MIN_VALUE;
-		}
-
-		if (uniform >= 1.0) {
-			return Math.nextDown(1.0);
-		}
-
-		return uniform;
+	static private long splitMix64(long value) {
+		// SplitMix64 finalization scrambles nearby inputs into well-distributed bits;
+		// the top 53 bits are then mapped to the open interval (0, 1).
+		value += 0x9E3779B97F4A7C15L;
+		value = (value ^ (value >>> 30)) * 0xBF58476D1CE4E5B9L;
+		value = (value ^ (value >>> 27)) * 0x94D049BB133111EBL;
+		return value ^ (value >>> 31);
 	}
 }

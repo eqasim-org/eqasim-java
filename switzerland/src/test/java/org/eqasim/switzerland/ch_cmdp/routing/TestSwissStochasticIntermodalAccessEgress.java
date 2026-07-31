@@ -43,6 +43,8 @@ import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.utils.objectattributes.attributable.Attributes;
+import org.matsim.utils.objectattributes.attributable.AttributesImpl;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet;
@@ -178,11 +180,44 @@ public class TestSwissStochasticIntermodalAccessEgress {
 		assertEquals(Map.of("walk->bike", 100), inboundChoices);
 	}
 
+	@Test
+	public void testRequiredVehicleEgressPreventsBikePtThenPtWalkTours() {
+		Scenario scenario = createIntermodalTransitScenario(true);
+		Facility home = FacilitiesUtils.wrapLinkAndCoord(scenario.getNetwork().getLinks().get(Id.createLinkId("home_work")),
+				new Coord(0.0, 0.0));
+		Facility work = FacilitiesUtils.wrapLinkAndCoord(scenario.getNetwork().getLinks().get(Id.createLinkId("work_home")),
+				new Coord(10000.0, 0.0));
+		SwissRailRaptor outboundRouter = createRouter(scenario, 0.0, true);
+		SwissRailRaptor returnRouter = createRouter(scenario, 0.0, false);
+
+		for (Person person : scenario.getPopulation().getPersons().values()) {
+			List<? extends PlanElement> outboundRoute = outboundRouter
+					.calcRoute(DefaultRoutingRequest.withoutAttributes(home, work, 8.0 * 3600.0, person));
+			assertEquals("bike->walk", getAccessMode(outboundRoute) + "->" + getEgressMode(outboundRoute));
+
+			Id<TransitStopFacility> parkedStopId = getFirstTransitRoute(outboundRoute).getAccessStopId();
+			Attributes attributes = new AttributesImpl();
+			attributes.putAttribute(IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE, TransportMode.bike);
+			attributes.putAttribute(IntermodalVehicleRoutingAttributes.REQUIRED_EGRESS_MODE, TransportMode.bike);
+			attributes.putAttribute(IntermodalVehicleRoutingAttributes.REQUIRED_EGRESS_STOP_ID, parkedStopId.toString());
+
+			List<? extends PlanElement> returnRoute = returnRouter
+					.calcRoute(DefaultRoutingRequest.of(work, home, 17.0 * 3600.0, person, attributes));
+
+			assertEquals("walk->bike", getAccessMode(returnRoute) + "->" + getEgressMode(returnRoute));
+			assertEquals(parkedStopId, getLastTransitRoute(returnRoute).getEgressStopId());
+		}
+	}
+
 	static private Scenario createIntermodalTransitScenario() {
+		return createIntermodalTransitScenario(false);
+	}
+
+	static private Scenario createIntermodalTransitScenario(boolean shareHomeStopByDirection) {
 		Config config = ConfigUtils.createConfig();
 		Scenario scenario = ScenarioUtils.createScenario(config);
 		createNetwork(scenario.getNetwork());
-		createSchedule(scenario);
+		createSchedule(scenario, shareHomeStopByDirection);
 		createPopulation(scenario);
 		return scenario;
 	}
@@ -199,7 +234,7 @@ public class TestSwissStochasticIntermodalAccessEgress {
 		link.setAllowedModes(Set.of(TransportMode.car, TransportMode.pt, TransportMode.bike));
 	}
 
-	static private void createSchedule(Scenario scenario) {
+	static private void createSchedule(Scenario scenario, boolean shareHomeStopByDirection) {
 		TransitScheduleFactory factory = scenario.getTransitSchedule().getFactory();
 		TransitStopFacility homeOutbound = createStop(factory, "home_outbound", new Coord(1000.0, 0.0),
 				Id.createLinkId("home_work"));
@@ -209,15 +244,18 @@ public class TestSwissStochasticIntermodalAccessEgress {
 				Id.createLinkId("work_home"));
 		TransitStopFacility homeInbound = createStop(factory, "home_inbound", new Coord(1000.0, 0.0),
 				Id.createLinkId("work_home"));
+		TransitStopFacility returnHomeStop = shareHomeStopByDirection ? homeOutbound : homeInbound;
 
 		scenario.getTransitSchedule().addStopFacility(homeOutbound);
 		scenario.getTransitSchedule().addStopFacility(workOutbound);
 		scenario.getTransitSchedule().addStopFacility(workInbound);
-		scenario.getTransitSchedule().addStopFacility(homeInbound);
+		if (!shareHomeStopByDirection) {
+			scenario.getTransitSchedule().addStopFacility(homeInbound);
+		}
 
 		TransitLine line = factory.createTransitLine(Id.create("bus", TransitLine.class));
 		line.addRoute(createTransitRoute(factory, "outbound", Id.createLinkId("home_work"), homeOutbound, workOutbound));
-		line.addRoute(createTransitRoute(factory, "inbound", Id.createLinkId("work_home"), workInbound, homeInbound));
+		line.addRoute(createTransitRoute(factory, "inbound", Id.createLinkId("work_home"), workInbound, returnHomeStop));
 		scenario.getTransitSchedule().addTransitLine(line);
 	}
 
@@ -343,6 +381,31 @@ public class TestSwissStochasticIntermodalAccessEgress {
 			throw new IllegalStateException("Route does not contain an egress leg after the pt leg.");
 		}
 		return legsAfterPt.get(legsAfterPt.size() - 1).getMode();
+	}
+
+	static private TransitPassengerRoute getFirstTransitRoute(List<? extends PlanElement> route) {
+		for (PlanElement element : route) {
+			if (element instanceof Leg leg && leg.getRoute() instanceof TransitPassengerRoute transitRoute) {
+				return transitRoute;
+			}
+		}
+
+		throw new IllegalStateException("Route does not contain a pt leg.");
+	}
+
+	static private TransitPassengerRoute getLastTransitRoute(List<? extends PlanElement> route) {
+		TransitPassengerRoute lastTransitRoute = null;
+		for (PlanElement element : route) {
+			if (element instanceof Leg leg && leg.getRoute() instanceof TransitPassengerRoute transitRoute) {
+				lastTransitRoute = transitRoute;
+			}
+		}
+
+		if (lastTransitRoute == null) {
+			throw new IllegalStateException("Route does not contain a pt leg.");
+		}
+
+		return lastTransitRoute;
 	}
 
 	static private class BeelineRoutingModule implements RoutingModule {

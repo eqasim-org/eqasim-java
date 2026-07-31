@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.routing.IntermodalVehicleRoutingAttributes;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
@@ -24,7 +25,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
-	private final DefaultRaptorStopFinder delegate;
+	private final RaptorStopFinder delegate;
 	private final SwissIntermodalAccessEgressConfigGroup config;
 
 	@Inject
@@ -40,11 +41,20 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		this.config = config;
 	}
 
+	SwissHomeActivityRaptorStopFinder(RaptorStopFinder delegate, SwissIntermodalAccessEgressConfigGroup config) {
+		this.delegate = delegate;
+		this.config = config;
+	}
+
 	@Override
 	public List<InitialStop> findStops(Facility fromFacility, Facility toFacility, Person person, double departureTime,
 			Attributes routingAttributes, RaptorParameters parameters, SwissRailRaptorData data, Direction type) {
 		List<InitialStop> stops = delegate.findStops(fromFacility, toFacility, person, departureTime, routingAttributes,
 				parameters, data, type);
+		// First apply hard requirements coming from DMC vehicle continuity. If a
+		// bike/car is parked at a specific PT stop, only that mode and stop remain
+		// feasible for the matching access or egress side.
+		stops = filterIntermodalVehicleRequirements(stops, routingAttributes, type);
 
 		if (!config.restrictBikeToHomeActivity()) {
 			return stops;
@@ -59,6 +69,89 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		}
 
 		return stops.stream().filter(Predicate.not(this::usesRestrictedMode)).collect(Collectors.toList());
+	}
+
+	private List<InitialStop> filterIntermodalVehicleRequirements(List<InitialStop> stops, Attributes routingAttributes,
+			Direction type) {
+		// The estimator writes these attributes only on candidate branches where a
+		// private vehicle must be retrieved or placed at a particular PT stop.
+		String requiredMode = getRequiredMode(routingAttributes, type);
+		String requiredStopId = getRequiredStopId(routingAttributes, type);
+		String forbiddenMode = getForbiddenMode(routingAttributes, type);
+
+		if (requiredMode == null && requiredStopId == null && forbiddenMode == null) {
+			return stops;
+		}
+
+		return stops.stream().filter(stop -> matchesRequiredStop(stop, requiredStopId))
+				.filter(stop -> matchesRequiredMode(stop, requiredMode))
+				.filter(stop -> !usesMode(stop, forbiddenMode)).collect(Collectors.toList());
+	}
+
+	private String getRequiredMode(Attributes routingAttributes, Direction type) {
+		if (routingAttributes == null) {
+			return null;
+		}
+
+		String attribute = type == Direction.ACCESS ? IntermodalVehicleRoutingAttributes.REQUIRED_ACCESS_MODE
+				: IntermodalVehicleRoutingAttributes.REQUIRED_EGRESS_MODE;
+		Object value = routingAttributes.getAttribute(attribute);
+		return value == null ? null : value.toString();
+	}
+
+	private String getRequiredStopId(Attributes routingAttributes, Direction type) {
+		if (routingAttributes == null) {
+			return null;
+		}
+
+		String attribute = type == Direction.ACCESS ? IntermodalVehicleRoutingAttributes.REQUIRED_ACCESS_STOP_ID
+				: IntermodalVehicleRoutingAttributes.REQUIRED_EGRESS_STOP_ID;
+		Object value = routingAttributes.getAttribute(attribute);
+		return value == null ? null : value.toString();
+	}
+
+	private String getForbiddenMode(Attributes routingAttributes, Direction type) {
+		if (routingAttributes == null) {
+			return null;
+		}
+
+		String attribute = type == Direction.ACCESS ? IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE
+				: IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE;
+		Object value = routingAttributes.getAttribute(attribute);
+		return value == null ? null : value.toString();
+	}
+
+	private boolean matchesRequiredStop(InitialStop stop, String requiredStopId) {
+		return requiredStopId == null || stop.stop.getId().toString().equals(requiredStopId);
+	}
+
+	private boolean matchesRequiredMode(InitialStop stop, String requiredMode) {
+		return requiredMode == null || usesMode(stop, requiredMode);
+	}
+
+	private boolean usesMode(InitialStop stop, String mode) {
+		if (mode == null) {
+			return false;
+		}
+
+		// Pure walk access/egress candidates have stop.mode set; intermodal
+		// candidates created from routed access/egress legs keep their mode in the
+		// leg list instead.
+		if (mode.equals(stop.mode)) {
+			return true;
+		}
+
+		if (stop.planElements == null) {
+			return false;
+		}
+
+		for (PlanElement element : stop.planElements) {
+			if (element instanceof Leg leg && mode.equals(leg.getMode())) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private boolean isRestrictedActivity(Optional<Activity> activity) {

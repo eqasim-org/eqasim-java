@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import org.matsim.api.core.v01.BasicLocation;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -40,14 +41,38 @@ public class IntermodalVehicleTourConstraint implements TourConstraint {
 	public IntermodalVehicleTourConstraint(Collection<String> vehicleModes,
 			Id<? extends BasicLocation> homeLocationId) {
 		this.vehicleModes = vehicleModes;
-		this.homeLocation = LocationKey.activity(homeLocationId);
+		this.homeLocation = homeLocationId == null ? null : LocationKey.activity(homeLocationId);
 	}
 
 	@Override
 	public boolean validateBeforeEstimation(List<DiscreteModeChoiceTrip> tour, List<String> modes,
 			List<List<String>> previousModes) {
-		// Access and egress stops are only known after routing, so this constraint
-		// can only reject candidates after estimation.
+		for (String vehicleMode : vehicleModes) {
+			boolean locationKnown = true;
+			LocationKey vehicleLocation = homeLocation;
+
+			for (int i = 0; i < modes.size(); i++) {
+				String mode = modes.get(i);
+
+				if (vehicleMode.equals(mode)) {
+					LocationKey origin = getOriginLocation(tour.get(i));
+					if (locationKnown && !origin.equals(vehicleLocation)) {
+						return false;
+					}
+					vehicleLocation = getDestinationLocation(tour.get(i));
+					locationKnown = true;
+				} else if (TransportMode.pt.equals(mode)) {
+					// PT routes may contain intermodal access/egress vehicle legs, but
+					// their stops are only known after routing.
+					locationKnown = false;
+				}
+			}
+
+			if (locationKnown && !Objects.equals(homeLocation, vehicleLocation)) {
+				return false;
+			}
+		}
+
 		return true;
 	}
 
@@ -118,7 +143,7 @@ public class IntermodalVehicleTourConstraint implements TourConstraint {
 		// The tour is only feasible if all tracked vehicles have returned home by
 		// the end of the tour.
 		for (LocationKey vehicleLocation : vehicleLocations.values()) {
-			if (!homeLocation.equals(vehicleLocation)) {
+			if (!Objects.equals(homeLocation, vehicleLocation)) {
 				return false;
 			}
 		}

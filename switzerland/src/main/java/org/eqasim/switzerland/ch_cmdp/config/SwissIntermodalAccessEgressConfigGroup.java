@@ -18,6 +18,8 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 	static private final String RESTRICT_BIKE_TO_HOME_ACTIVITY = "restrictBikeToHomeActivity";
 	static private final String BIKE_RESTRICTED_ACTIVITY_TYPE = "bikeRestrictedActivityType";
 	static private final String BIKE_RESTRICTED_MODE = "bikeRestrictedMode";
+	static private final String ENFORCE_INTERMODAL_VEHICLE_CONTINUITY_DURING_ROUTING = "enforceIntermodalVehicleContinuityDuringRouting";
+	static private final String INTERMODAL_VEHICLE_CONTINUITY_HOME_ACTIVITY_TYPE = "intermodalVehicleContinuityHomeActivityType";
 
 	private double utilityErrorScale = 0.0;
 	private String utilityErrorModes = "";
@@ -25,6 +27,8 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 	private boolean restrictBikeToHomeActivity = true;
 	private String bikeRestrictedActivityType = "home";
 	private String bikeRestrictedMode = "bike";
+	private boolean enforceIntermodalVehicleContinuityDuringRouting = false;
+	private String intermodalVehicleContinuityHomeActivityType = "home";
 
 	public SwissIntermodalAccessEgressConfigGroup() {
 		super(GROUP_NAME);
@@ -113,6 +117,32 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 		this.bikeRestrictedMode = bikeRestrictedMode.trim();
 	}
 
+	@StringGetter(ENFORCE_INTERMODAL_VEHICLE_CONTINUITY_DURING_ROUTING)
+	public boolean enforceIntermodalVehicleContinuityDuringRouting() {
+		return enforceIntermodalVehicleContinuityDuringRouting;
+	}
+
+	@StringSetter(ENFORCE_INTERMODAL_VEHICLE_CONTINUITY_DURING_ROUTING)
+	public void setEnforceIntermodalVehicleContinuityDuringRouting(
+			boolean enforceIntermodalVehicleContinuityDuringRouting) {
+		this.enforceIntermodalVehicleContinuityDuringRouting = enforceIntermodalVehicleContinuityDuringRouting;
+	}
+
+	@StringGetter(INTERMODAL_VEHICLE_CONTINUITY_HOME_ACTIVITY_TYPE)
+	public String getIntermodalVehicleContinuityHomeActivityType() {
+		return intermodalVehicleContinuityHomeActivityType;
+	}
+
+	@StringSetter(INTERMODAL_VEHICLE_CONTINUITY_HOME_ACTIVITY_TYPE)
+	public void setIntermodalVehicleContinuityHomeActivityType(String intermodalVehicleContinuityHomeActivityType) {
+		if (intermodalVehicleContinuityHomeActivityType == null
+				|| intermodalVehicleContinuityHomeActivityType.isBlank()) {
+			throw new IllegalArgumentException("Intermodal vehicle continuity home activity type must not be empty.");
+		}
+
+		this.intermodalVehicleContinuityHomeActivityType = intermodalVehicleContinuityHomeActivityType.trim();
+	}
+
 	@Override
 	public Map<String, String> getComments() {
 		Map<String, String> comments = super.getComments();
@@ -127,6 +157,10 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 		comments.put(BIKE_RESTRICTED_ACTIVITY_TYPE,
 				"Activity type that allows bike access from trip origin and bike egress to trip destination.");
 		comments.put(BIKE_RESTRICTED_MODE, "Intermodal access/egress mode to restrict to the configured activity type.");
+		comments.put(ENFORCE_INTERMODAL_VEHICLE_CONTINUITY_DURING_ROUTING,
+				"If true, routed PT candidates are constrained to retrieve an intermodal private vehicle at the same stop where it was left before returning home.");
+		comments.put(INTERMODAL_VEHICLE_CONTINUITY_HOME_ACTIVITY_TYPE,
+				"Destination activity type where an intermodal private vehicle must be retrieved if it was left at a PT stop earlier in the tour.");
 		return comments;
 	}
 
