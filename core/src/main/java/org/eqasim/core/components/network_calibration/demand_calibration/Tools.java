@@ -1,6 +1,7 @@
 package org.eqasim.core.components.network_calibration.demand_calibration;
 
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -87,6 +88,15 @@ public class Tools {
         Boolean isCrossBorder = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
         Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
         return ((isCrossBorder != null && isCrossBorder) || (isFreight != null && isFreight));
+    }
+
+    static public boolean isCrossBorderPerson(Person person) {
+        Boolean isCB = (Boolean) person.getAttributes().getAttribute("isCrossBorder");
+        return isCB != null && isCB;
+    }
+
+    static public boolean isCarOrTruck(DiscreteModeChoiceTrip trip) {
+        return TransportMode.car.equals(trip.getInitialMode()) || TransportMode.truck.equals(trip.getInitialMode());
     }
 
     static public boolean hasOutsideActivity(Person person, TripListConverter tripListConverter) {

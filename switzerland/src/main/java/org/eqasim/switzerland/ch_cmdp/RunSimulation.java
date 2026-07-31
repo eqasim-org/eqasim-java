@@ -6,6 +6,7 @@ import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.PTLinkVolumesModule;
 import org.eqasim.switzerland.ch_cmdp.PTPassengerCountsModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
+import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -55,6 +56,7 @@ public class RunSimulation {
 		controller.addOverridingModule(new PTPassengerCountsModule());
         controller.addOverridingModule(new PTLinkVolumesModule());
 		controller.addOverridingModule(new StrategyWeightDecayModule());
+		controller.addOverridingModule(new TollsModule());
 
 		// To use the deterministic pt simulation (Part 1 of 2):
 		controller.addOverridingModule(new SBBTransitModule());

@@ -7,6 +7,7 @@ import org.eqasim.core.simulation.vdf.engine.VDFEngineConfigGroup;
 import org.eqasim.switzerland.ch.PTLinkVolumesModule;
 import org.eqasim.switzerland.ch.PTPassengerCountsModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
+import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.CommandLine;
@@ -99,6 +100,7 @@ public class RunVDFSimulation {
         controller.addOverridingModule(new PTPassengerCountsModule());
         controller.addOverridingModule(new PTLinkVolumesModule());
         controller.addOverridingModule(new StrategyWeightDecayModule());
+        controller.addOverridingModule(new TollsModule());
 
         // save config
         ConfigUtils.writeConfig(config, "adapted_config.xml");
