@@ -16,7 +16,10 @@ import org.eqasim.core.components.network_calibration.cost_calibration.Penalties
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyKeyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
-import org.eqasim.core.components.network_calibration.demand_calibration.*;
+import org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs.CarASCsAdapter;
+import org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs.ODErrors;
+import org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs.PopulationGroups;
+import org.eqasim.core.components.network_calibration.demand_calibration.subpopulations.Calibrator;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedAdapter;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedFactorManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
@@ -83,8 +86,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             }
 
             if (objectives.contains("subpopulations")){
-                addControllerListenerBinding().to(SubPopulationReducer.class).asEagerSingleton();
-                addControllerListenerBinding().to(CrossBorderPopulationExpander.class).asEagerSingleton();
+                addControllerListenerBinding().to(Calibrator.class).asEagerSingleton();
             }
 
             if (objectives.contains("freespeed")) {
@@ -100,7 +102,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Provides
     @Singleton
     EqasimTravelDisutilityFactory providePolicyTravelDisutilityFactory(RoutingPenaltyByLinkCategory linkPenalty, EqasimConfigGroup config) {
-        return new EqasimTravelDisutilityFactory(linkPenalty, config.getRoutingDistanceUtility());
+        return new EqasimTravelDisutilityFactory(linkPenalty, config.getRoutingDistanceUtility(), config.getSigmaRoutingRandomness());
     }
 
     @Provides
@@ -224,26 +226,22 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public SubPopulationReducer provideSubPopulationReducer(Scenario scenario, TripListConverter tripListConverter,
-                                                            Provider<CountsProcessor> countsProcessorProvider,
-                                                            Provider<FlowProcessor> flowProcessorProvider,
-                                                            EqasimConfigGroup eqasimConfig) {
+    public Calibrator provideSubpopulationCalibrationOrchestrator(Scenario scenario,
+                                                                  TripListConverter tripListConverter,
+                                                                  Provider<CountsProcessor> countsProcessorProvider,
+                                                                  Provider<FlowProcessor> flowProcessorProvider,
+                                                                  EqasimConfigGroup eqasimConfig,
+                                                                  Provider<TripRouter> tripRouterProvider) {
         NetworkCalibrationConfigGroup calConfig = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new SubPopulationReducer(scenario, tripListConverter, countsProcessorProvider,
-                                        flowProcessorProvider, eqasimConfig, calConfig);
-    }
-
-    @Provides
-    @Singleton
-    public CrossBorderPopulationExpander provideCrossBorderPopulationExpander(Scenario scenario, TripListConverter tripListConverter,
-                                                                              Provider<CountsProcessor> countsProcessorProvider,
-                                                                              Provider<FlowProcessor> flowProcessorProvider,
-                                                                              EqasimConfigGroup eqasimConfig, Provider<TripRouter> tripRouterProvider,
-                                                                              Provider<SubPopulationReducer> subPopulationReducerProvider) {
-        NetworkCalibrationConfigGroup calConfig = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new CrossBorderPopulationExpander(scenario, tripListConverter, countsProcessorProvider,
-                                                flowProcessorProvider, tripRouterProvider, subPopulationReducerProvider,
-                                                 eqasimConfig, calConfig);
+        return new Calibrator(
+                scenario,
+                tripListConverter,
+                countsProcessorProvider,
+                flowProcessorProvider,
+                eqasimConfig,
+                calConfig,
+                tripRouterProvider
+        );
     }
 
 

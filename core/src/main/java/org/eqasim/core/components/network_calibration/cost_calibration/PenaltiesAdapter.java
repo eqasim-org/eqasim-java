@@ -174,11 +174,11 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
      */
     private double getEffectiveBeta(int iteration) {
         double factor;
-        if (iteration <= 30) {
+        if (iteration <= 50) {
             factor = 2.0;
-        } else if (iteration <= 40) {
+        } else if (iteration <= 65) {
             factor = 1.2;
-        } else if (iteration <= 60) {
+        } else if (iteration <= 80) {
             factor = 0.8;
         } else {
             factor = 0.5;

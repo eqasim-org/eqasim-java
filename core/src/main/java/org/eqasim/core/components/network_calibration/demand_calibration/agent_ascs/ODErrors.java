@@ -1,10 +1,11 @@
-package org.eqasim.core.components.network_calibration.demand_calibration;
+package org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs;
 
 import com.google.inject.Provider;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.eqasim.core.components.network_calibration.Processors.FlowProcessor;
+import org.eqasim.core.components.network_calibration.demand_calibration.Tools;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -39,7 +40,7 @@ public class ODErrors {
         this.population = scenario.getPopulation();
         this.tripListConverter = tripListConverter;
         this.sampleSize = eqasimConfig.getSampleSize();
-        this.calibrationEnabled = calConfig.getAllObjectives().contains("subpopulations") && calConfig.isCalibrationEnabled();
+        this.calibrationEnabled = calConfig.getAllObjectives().contains("agent") && calConfig.isCalibrationEnabled();
 
         this.countsProcessor = calibrationEnabled ? countsProcessorProvider.get():null;
         this.flowProcessor = calibrationEnabled ? flowProcessorProvider.get():null;
@@ -168,9 +169,24 @@ public class ODErrors {
 
         double logError = Math.log((counts + EPSILON) / (totalFlow + EPSILON));
         logError = Math.max(-MAX_ABS_LOG_ERROR, Math.min(MAX_ABS_LOG_ERROR, logError));
+        // At this point, one should only use the weight, however, I think that we must respect more the flow in the highways
+        // thus, I think that we need to include an additional weight that is based on the counts, it is higher as the counts go up
+        double w = weight * getCountsWeight(counts);
 
-        sumLogError[groupOrigin][groupDestination] += logError * weight;
-        sumWeights[groupOrigin][groupDestination] += weight;
+        sumLogError[groupOrigin][groupDestination] += logError * w;
+        sumWeights[groupOrigin][groupDestination] += w;
         observations[groupOrigin][groupDestination] += 1;
+    }
+
+    private double getCountsWeight(double count){
+        if (count<20_000){
+            return 0.5;
+        } else if(count<40_000){
+            return 0.8;
+        } else if(count<60_000){
+            return 1.1;
+        } else {
+            return 1.5;
+        }
     }
 }

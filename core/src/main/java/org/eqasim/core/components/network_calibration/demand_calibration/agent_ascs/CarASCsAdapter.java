@@ -1,7 +1,8 @@
-package org.eqasim.core.components.network_calibration.demand_calibration;
+package org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs;
 
 import com.google.inject.Provider;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
+import org.eqasim.core.components.network_calibration.demand_calibration.Tools;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Person;
@@ -17,9 +18,10 @@ import java.util.List;
 public class CarASCsAdapter implements IterationEndsListener {
 
     // --- Softened hyperparameters ---
-    private static final double LEARNING_RATE = 1.0;
-    private static final double MAX_PERSON_ASC_STEP = 0.3;
-    private static final double MAX_PERSON_ASC = 2.0;
+    private static final double LEARNING_RATE = 2.5;
+    private static final double MAX_PERSON_ASC_STEP = 0.5;
+    private static final double MIN_PERSON_ASC_STEP = 0.05;
+    private static final double MAX_PERSON_ASC = 3.0;
     private static final int WARMUP_ITERATIONS = 20;
     private static final double LEARNING_RATE_DECAY = 0.983;
 
@@ -87,7 +89,14 @@ public class CarASCsAdapter implements IterationEndsListener {
 
             if (validTrips > 0) {
                 double avgDelta = personDeltaSum / validTrips;
-                avgDelta = Math.max(-MAX_PERSON_ASC_STEP, Math.min(MAX_PERSON_ASC_STEP, avgDelta));
+                if (Math.abs(avgDelta)<5e-3){
+                    avgDelta = 0.0;
+                } else {
+                    double magnitude = Math.min(MAX_PERSON_ASC_STEP,
+                            Math.max(MIN_PERSON_ASC_STEP, Math.abs(avgDelta)));
+                    avgDelta = Math.copySign(magnitude, avgDelta);
+                }
+
                 Tools.incrementCarASC(person, avgDelta, MAX_PERSON_ASC);
             }
         }
@@ -99,7 +108,7 @@ public class CarASCsAdapter implements IterationEndsListener {
 
     private double currentLearningRate(int iteration) {
         int effectiveIteration = Math.max(0, iteration - WARMUP_ITERATIONS);
-        return Math.min(1.0,Math.max(0.2, initialLearningRate * Math.pow(LEARNING_RATE_DECAY, effectiveIteration)));
+        return Math.max(0.5, initialLearningRate * Math.pow(LEARNING_RATE_DECAY, effectiveIteration));
     }
 
     private void rebuildPopulationGroupsIfRequired(){
