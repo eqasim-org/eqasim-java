@@ -111,7 +111,13 @@ public class TourBasedModel implements DiscreteModeChoiceModel {
 					case INITIAL_CHOICE:
 						logger.warn(
 								buildFallbackMessage(tripIndex, person, "Setting tour modes back to initial choice."));
-						selectedCandidate = Optional.of(createFallbackCandidate(person, tourTrips, tourCandidates));
+						TourCandidate fallbackCandidate = createFallbackCandidate(person, tourTrips, tourCandidates);
+						if (!Double.isFinite(fallbackCandidate.getUtility())
+								|| !constraint.validateAfterEstimation(tourTrips, fallbackCandidate, tourCandidates)) {
+							throw new NoFeasibleChoiceException(buildFallbackMessage(tripIndex, person,
+									"Initial choice fallback is infeasible."));
+						}
+						selectedCandidate = Optional.of(fallbackCandidate);
 						break;
 					case IGNORE_AGENT:
 						return handleIgnoreAgent(tripIndex, person, tourTrips);
@@ -174,10 +180,11 @@ public class TourBasedModel implements DiscreteModeChoiceModel {
 	}
 
 	private String buildIllegalUtilityMessage(int tripIndex, Person person, TourCandidate candidate) {
-		TripCandidate trip = candidate.getTripCandidates().get(tripIndex);
+		String modes = candidate.getTripCandidates().stream().map(TripCandidate::getMode)
+				.collect(Collectors.joining(","));
 
 		return String.format(
 				"Received illegal utility for for tour starting at trip %d (%s) of agent %s. Continuing with next candidate.",
-				tripIndex, trip.getMode(), person.getId().toString());
+				tripIndex, modes, person.getId().toString());
 	}
 }
