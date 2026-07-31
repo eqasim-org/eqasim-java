@@ -17,6 +17,7 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private final static String CROSSING_PENALTY = "crossingPenalty";
 	private final static String ROUTING_DISTANCE_UTILITY = "routingDistanceUtility";
+	private final static String SIGMA_ROUTING_RANDOMNESS = "sigmaRoutingRandomness";
 
 	private final static String MODE_PARAMETERS_PATH = "modeParametersPath";
 	private final static String COST_PARAMETERS_PATH = "costParametersPath";
@@ -35,6 +36,7 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 
 	private double crossingPenalty = 3.0;
 	private double routingDistanceUtility = 0.0;
+	private double sigmaRoutingRandomness = 0.0;
 
 	private String modeParametersPath = null;
 	private String costParametersPath = null;
@@ -58,8 +60,9 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 		map.put(SAMPLE_SIZE,
 				"The sample size of the population you are simulating. This is normally set by the synthesis pipeline.");
 		map.put(ROUTING_DISTANCE_UTILITY,
-				"distance weight in the route choice. This is divided by 10.0 and multiplied by the link length in the disutility.");
-
+				"Distance weight in the route choice. This is divided by 10.0 and multiplied by the link length in the disutility.");
+		map.put(SIGMA_ROUTING_RANDOMNESS, "This is the standard deviation of a centered normal distribution from which we sample noise," +
+				" we then multiply this noise by the link disutility during the routing");
 		return map;
 	}
 
@@ -80,6 +83,15 @@ public class EqasimConfigGroup extends ReflectiveConfigGroup {
 	@StringSetter(ROUTING_DISTANCE_UTILITY)
 	public void setRoutingDistanceUtility(double routingDistanceUtility) {
 		this.routingDistanceUtility = routingDistanceUtility;
+	}
+
+	@StringGetter(SIGMA_ROUTING_RANDOMNESS)
+	public double getSigmaRoutingRandomness() {
+		return sigmaRoutingRandomness;
+	}
+	@StringSetter(SIGMA_ROUTING_RANDOMNESS)
+	public void setSigmaRoutingRandomness(double sigmaRoutingRandomness) {
+		this.sigmaRoutingRandomness = sigmaRoutingRandomness;
 	}
 
 	@StringGetter(SAMPLE_SIZE)
