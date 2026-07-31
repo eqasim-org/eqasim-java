@@ -1,5 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay;
 
+import org.matsim.core.config.groups.ControllerConfigGroup;
 import org.matsim.core.config.groups.ReplanningConfigGroup;
 import org.matsim.core.controler.events.IterationStartsEvent;
 import org.matsim.core.controler.listener.IterationStartsListener;
@@ -16,6 +17,7 @@ import java.util.Set;
 
 @Singleton
 public class StrategyWeightDecay implements IterationStartsListener {
+    private final int REMAINING_ITERATIONS_TO_START_DECAY = 30;
 
     private final StrategyManager strategyManager;
     private GenericPlanStrategy<Plan, Person> dmcStrategy;
@@ -23,21 +25,23 @@ public class StrategyWeightDecay implements IterationStartsListener {
     private GenericPlanStrategy<Plan, Person> keepLastSelectedStrategy;
     private final StWeights initialWeights;
     private final Set<String> subpopulations;
+    private final int lastIteration;
 
     @Inject
-    public StrategyWeightDecay(ReplanningConfigGroup replanningConfigGroup, StrategyManager strategyManager) {
+    public StrategyWeightDecay(ReplanningConfigGroup replanningConfigGroup, StrategyManager strategyManager, ControllerConfigGroup controllerConfigGroup) {
         this.strategyManager = strategyManager;
         this.subpopulations = getSubPopulations(replanningConfigGroup);
         // get strategies
         initStrategies();
         // get initial weights
         this.initialWeights = initWeights();
+        this.lastIteration = controllerConfigGroup.getLastIteration();
     }
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
         int iteration = event.getIteration();
-        if (iteration>0) {
+        if (startDecay(iteration)) {
             StWeights weights = getStrategiesWeight(iteration);
             strategyManager.changeWeightOfStrategy(dmcStrategy, null, weights.dmcWeight);
             strategyManager.changeWeightOfStrategy(reRouteStrategy, null, weights.reRouteWeight);
@@ -61,20 +65,28 @@ public class StrategyWeightDecay implements IterationStartsListener {
     }
 
     private StWeights getStrategiesWeight(int iteration) {
+        int remainingIterations = lastIteration - iteration;
         double factor = 1.0;
-        if (iteration >= 40 && iteration < 55) {
-            factor = 4.0 / 5.0;
-        } else if (iteration >= 55 && iteration < 70) {
-            factor = 3.0 / 5.0;
-        } else if (iteration >= 70 && iteration < 80) {
-            factor = 2.5 / 5.0;
-        } else if (iteration >= 80 && iteration < 90) {
-            factor = 1.5 / 5.0;
-        } else if (iteration >= 90) {
-            factor = 1.0 / 5.0;
+        boolean startDecay = startDecay(iteration);
+
+        if (startDecay) {
+            double step = (double) REMAINING_ITERATIONS_TO_START_DECAY /4;
+            if (remainingIterations > 3*step) {
+                factor = 3.5 / 5.0;
+            } else if (remainingIterations > 2*step) {
+                factor = 2.5 / 5.0;
+            } else if (remainingIterations > step) {
+                factor = 1.8 / 5.0;
+            } else if (iteration >= 90) {
+                factor = 1.2 / 5.0;
+            }
         }
         return new StWeights(initialWeights.dmcWeight * factor,
                 initialWeights.reRouteWeight * factor); // KeepLastSelected unchanged or adjust as needed
+    }
+
+    private boolean startDecay(int iteration){
+        return iteration > 45 && REMAINING_ITERATIONS_TO_START_DECAY > lastIteration - iteration;
     }
 
     private void initStrategies() {
