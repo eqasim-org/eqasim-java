@@ -304,13 +304,14 @@ public class TestSwissStochasticIntermodalAccessEgress {
 		}
 	}
 
-	static private SwissRailRaptor createRouter(Scenario scenario, double utilityErrorScale, boolean restrictBikeToHome) {
+	static private SwissRailRaptor createRouter(Scenario scenario, double utilityErrorScale,
+			boolean restrictVehicleToHome) {
 		SwissRailRaptorConfigGroup raptorConfig = new SwissRailRaptorConfigGroup();
 		raptorConfig.setUseIntermodalAccessEgress(true);
 		raptorConfig.addIntermodalAccessEgress(createIntermodalMode(TransportMode.walk));
 		raptorConfig.addIntermodalAccessEgress(createIntermodalMode(TransportMode.bike));
 		SwissIntermodalAccessEgressConfigGroup accessEgressConfig = new SwissIntermodalAccessEgressConfigGroup();
-		accessEgressConfig.setRestrictBikeToHomeActivity(restrictBikeToHome);
+		accessEgressConfig.setRestrictVehicleToHomeActivity(restrictVehicleToHome);
 
 		RaptorParameters parameters = new RaptorParameters(raptorConfig);
 		parameters.setBeelineWalkSpeed(1.0);

@@ -1,6 +1,8 @@
 package ch.sbb.matsim.routing.pt.raptor;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ public class TestSwissHomeActivityRaptorStopFinder {
 	@Test
 	public void testFiltersRequiredEgressModeAndStop() {
 		SwissIntermodalAccessEgressConfigGroup config = new SwissIntermodalAccessEgressConfigGroup();
-		config.setRestrictBikeToHomeActivity(false);
+		config.setRestrictVehicleToHomeActivity(false);
 		SwissHomeActivityRaptorStopFinder finder = new SwissHomeActivityRaptorStopFinder(new FakeStopFinder(), config);
 
 		Attributes attributes = new AttributesImpl();
@@ -42,13 +44,45 @@ public class TestSwissHomeActivityRaptorStopFinder {
 	@Test
 	public void testFiltersForbiddenAccessMode() {
 		SwissIntermodalAccessEgressConfigGroup config = new SwissIntermodalAccessEgressConfigGroup();
-		config.setRestrictBikeToHomeActivity(false);
+		config.setRestrictVehicleToHomeActivity(false);
 		SwissHomeActivityRaptorStopFinder finder = new SwissHomeActivityRaptorStopFinder(new FakeStopFinder(), config);
 
 		Attributes attributes = new AttributesImpl();
 		attributes.putAttribute(IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE, TransportMode.bike);
 
 		List<InitialStop> stops = finder.findStops(null, null, null, 0.0, attributes, null, null,
+				RaptorStopFinder.Direction.ACCESS);
+
+		assertEquals(2, stops.size());
+		assertFalse(containsMode(stops, TransportMode.bike));
+		assertTrue(containsMode(stops, TransportMode.walk));
+		assertTrue(containsMode(stops, TransportMode.car));
+	}
+
+	@Test
+	public void testFiltersMultipleForbiddenAccessModes() {
+		SwissIntermodalAccessEgressConfigGroup config = new SwissIntermodalAccessEgressConfigGroup();
+		config.setRestrictVehicleToHomeActivity(false);
+		SwissHomeActivityRaptorStopFinder finder = new SwissHomeActivityRaptorStopFinder(new FakeStopFinder(), config);
+
+		Attributes attributes = new AttributesImpl();
+		attributes.putAttribute(IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE,
+				TransportMode.bike + "," + TransportMode.car);
+
+		List<InitialStop> stops = finder.findStops(null, null, null, 0.0, attributes, null, null,
+				RaptorStopFinder.Direction.ACCESS);
+
+		assertEquals(1, stops.size());
+		assertEquals(TransportMode.walk, ((Leg) stops.get(0).planElements.get(0)).getMode());
+	}
+
+	@Test
+	public void testRestrictsConfiguredIntermodalVehicleModesAwayFromHome() {
+		SwissIntermodalAccessEgressConfigGroup config = new SwissIntermodalAccessEgressConfigGroup();
+		config.setRestrictedIntermodalAccessEgressModes(TransportMode.bike + "," + TransportMode.car);
+		SwissHomeActivityRaptorStopFinder finder = new SwissHomeActivityRaptorStopFinder(new FakeStopFinder(), config);
+
+		List<InitialStop> stops = finder.findStops(null, null, null, 0.0, null, null, null,
 				RaptorStopFinder.Direction.ACCESS);
 
 		assertEquals(1, stops.size());
@@ -62,7 +96,8 @@ public class TestSwissHomeActivityRaptorStopFinder {
 				Direction type) {
 			return List.of(new InitialStop(createStop("required_stop"), 0.0, 0.0, List.of(createLeg(TransportMode.bike))),
 					new InitialStop(createStop("required_stop"), 0.0, 0.0, List.of(createLeg(TransportMode.walk))),
-					new InitialStop(createStop("other_stop"), 0.0, 0.0, List.of(createLeg(TransportMode.bike))));
+					new InitialStop(createStop("other_stop"), 0.0, 0.0, List.of(createLeg(TransportMode.bike))),
+					new InitialStop(createStop("other_stop"), 0.0, 0.0, List.of(createLeg(TransportMode.car))));
 		}
 	}
 
@@ -75,5 +110,15 @@ public class TestSwissHomeActivityRaptorStopFinder {
 		Leg leg = PopulationUtils.createLeg(mode);
 		leg.setTravelTime(0.0);
 		return leg;
+	}
+
+	static private boolean containsMode(List<InitialStop> stops, String mode) {
+		for (InitialStop stop : stops) {
+			if (mode.equals(((Leg) stop.planElements.get(0)).getMode())) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

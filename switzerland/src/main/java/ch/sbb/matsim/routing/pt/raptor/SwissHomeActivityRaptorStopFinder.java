@@ -1,8 +1,12 @@
 package ch.sbb.matsim.routing.pt.raptor;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -56,7 +60,7 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		// feasible for the matching access or egress side.
 		stops = filterIntermodalVehicleRequirements(stops, routingAttributes, type);
 
-		if (!config.restrictBikeToHomeActivity()) {
+		if (!config.restrictVehicleToHomeActivity()) {
 			return stops;
 		}
 
@@ -77,15 +81,15 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		// private vehicle must be retrieved or placed at a particular PT stop.
 		String requiredMode = getRequiredMode(routingAttributes, type);
 		String requiredStopId = getRequiredStopId(routingAttributes, type);
-		String forbiddenMode = getForbiddenMode(routingAttributes, type);
+		Set<String> forbiddenModes = getForbiddenModes(routingAttributes, type);
 
-		if (requiredMode == null && requiredStopId == null && forbiddenMode == null) {
+		if (requiredMode == null && requiredStopId == null && forbiddenModes.isEmpty()) {
 			return stops;
 		}
 
 		return stops.stream().filter(stop -> matchesRequiredStop(stop, requiredStopId))
 				.filter(stop -> matchesRequiredMode(stop, requiredMode))
-				.filter(stop -> !usesMode(stop, forbiddenMode)).collect(Collectors.toList());
+				.filter(stop -> !usesAnyMode(stop, forbiddenModes)).collect(Collectors.toList());
 	}
 
 	private String getRequiredMode(Attributes routingAttributes, Direction type) {
@@ -110,15 +114,15 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		return value == null ? null : value.toString();
 	}
 
-	private String getForbiddenMode(Attributes routingAttributes, Direction type) {
+	private Set<String> getForbiddenModes(Attributes routingAttributes, Direction type) {
 		if (routingAttributes == null) {
-			return null;
+			return Collections.emptySet();
 		}
 
 		String attribute = type == Direction.ACCESS ? IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE
 				: IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE;
 		Object value = routingAttributes.getAttribute(attribute);
-		return value == null ? null : value.toString();
+		return parseModes(value);
 	}
 
 	private boolean matchesRequiredStop(InitialStop stop, String requiredStopId) {
@@ -127,6 +131,16 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 
 	private boolean matchesRequiredMode(InitialStop stop, String requiredMode) {
 		return requiredMode == null || usesMode(stop, requiredMode);
+	}
+
+	private boolean usesAnyMode(InitialStop stop, Set<String> modes) {
+		for (String mode : modes) {
+			if (usesMode(stop, mode)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private boolean usesMode(InitialStop stop, String mode) {
@@ -155,7 +169,7 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 	}
 
 	private boolean isRestrictedActivity(Optional<Activity> activity) {
-		return activity.map(Activity::getType).filter(config.getBikeRestrictedActivityType()::equals).isPresent();
+		return activity.map(Activity::getType).filter(config.getVehicleRestrictedActivityType()::equals).isPresent();
 	}
 
 	private Optional<Activity> findOriginActivity(Person person, Facility fromFacility, double departureTime) {
@@ -207,7 +221,8 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 	}
 
 	private boolean usesRestrictedMode(InitialStop stop) {
-		if (config.getBikeRestrictedMode().equals(stop.mode)) {
+		Set<String> restrictedModes = config.getRestrictedIntermodalAccessEgressModes();
+		if (restrictedModes.contains(stop.mode)) {
 			return true;
 		}
 
@@ -216,11 +231,22 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		}
 
 		for (PlanElement element : stop.planElements) {
-			if (element instanceof Leg leg && config.getBikeRestrictedMode().equals(leg.getMode())) {
+			if (element instanceof Leg leg && restrictedModes.contains(leg.getMode())) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	static private Set<String> parseModes(Object value) {
+		if (value == null || value.toString().isBlank()) {
+			return Collections.emptySet();
+		}
+
+		return Arrays.stream(value.toString().split(",")) //
+				.map(String::trim) //
+				.filter(mode -> !mode.isEmpty()) //
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 }

@@ -100,6 +100,22 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 	}
 
 	@Test
+	public void testRequiresCarEgressAtParkedVehicleStopWhenReturningHome() {
+		SwissIntermodalAccessEgressConfigGroup config = createConfig();
+		CapturingEstimator delegate = new CapturingEstimator();
+		IntermodalVehicleContinuityTripEstimator estimator = new IntermodalVehicleContinuityTripEstimator(delegate,
+				List.of(TransportMode.car), config);
+
+		DiscreteModeChoiceTrip returnTrip = createTrip(createActivity("work", "work"), createActivity("home", "home"));
+		estimator.estimateTrip(null, TransportMode.pt, returnTrip,
+				List.of(createCandidate(createPtTrip(TransportMode.car, "stop_home", null))));
+
+		assertEquals(TransportMode.car, delegate.requiredEgressMode);
+		assertEquals("stop_home", delegate.requiredEgressStopId);
+		assertEquals(TransportMode.car, delegate.forbiddenAccessMode);
+	}
+
+	@Test
 	public void testDoesNotRequireEgressBeforeReturningHome() {
 		SwissIntermodalAccessEgressConfigGroup config = createConfig();
 		CapturingEstimator delegate = new CapturingEstimator();
@@ -178,6 +194,20 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 	}
 
 	@Test
+	public void testTourEstimatorForbidsConfiguredVehicleAccessModesWhenRemainingChainCannotReturnThemHome() {
+		SwissIntermodalAccessEgressConfigGroup config = createConfig();
+		config.setRestrictedIntermodalAccessEgressModes(TransportMode.bike + "," + TransportMode.car);
+		CapturingEstimator delegate = new CapturingEstimator();
+		IntermodalVehicleContinuityTourEstimator estimator = new IntermodalVehicleContinuityTourEstimator(delegate,
+				TimeInterpretation.create(ConfigUtils.createConfig()), config);
+		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
+
+		estimator.estimateTour(null, List.of(TransportMode.pt, TransportMode.walk), tour, List.of());
+
+		assertEquals(TransportMode.bike + "," + TransportMode.car, delegate.forbiddenAccessModes.get(0));
+	}
+
+	@Test
 	public void testTourEstimatorAllowsBikeAccessWhenRemainingChainCanReturnBikeHome() {
 		SwissIntermodalAccessEgressConfigGroup config = createConfig();
 		CapturingEstimator delegate = new CapturingEstimator();
@@ -196,7 +226,7 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 		Person person = createHomeWorkHomePerson(scenario);
 		RoutingFixture routing = createRouter(scenario);
 		SwissIntermodalAccessEgressConfigGroup config = createConfig();
-		config.setRestrictBikeToHomeActivity(true);
+		config.setRestrictVehicleToHomeActivity(true);
 
 		TripEstimator routingEstimator = new RoutingTripEstimator(scenario, routing.router);
 		IntermodalVehicleContinuityTripEstimator continuityEstimator = new IntermodalVehicleContinuityTripEstimator(
@@ -408,7 +438,7 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 		DefaultRaptorStopFinder delegate = new DefaultRaptorStopFinder(new DeterministicIntermodalAccessEgress(),
 				Map.of(TransportMode.walk, walk, TransportMode.bike, bike));
 		SwissIntermodalAccessEgressConfigGroup accessEgressConfig = new SwissIntermodalAccessEgressConfigGroup();
-		accessEgressConfig.setRestrictBikeToHomeActivity(true);
+		accessEgressConfig.setRestrictVehicleToHomeActivity(true);
 		CapturingSwissHomeActivityRaptorStopFinder stopFinder = new CapturingSwissHomeActivityRaptorStopFinder(delegate,
 				accessEgressConfig);
 		SwissRailRaptor router = new SwissRailRaptor.Builder(data, ConfigUtils.createConfig()).with(person -> parameters)

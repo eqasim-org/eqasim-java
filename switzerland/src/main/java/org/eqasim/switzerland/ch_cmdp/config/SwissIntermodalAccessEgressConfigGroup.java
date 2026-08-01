@@ -2,10 +2,12 @@ package org.eqasim.switzerland.ch_cmdp.config;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
@@ -14,17 +16,17 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 
 	static private final String UTILITY_ERROR_SCALE = "utilityErrorScale";
 	static private final String UTILITY_ERROR_MODES = "utilityErrorModes";
-	static private final String RESTRICT_BIKE_TO_HOME_ACTIVITY = "restrictBikeToHomeActivity";
-	static private final String BIKE_RESTRICTED_ACTIVITY_TYPE = "bikeRestrictedActivityType";
-	static private final String BIKE_RESTRICTED_MODE = "bikeRestrictedMode";
+	static private final String RESTRICT_VEHICLE_TO_HOME_ACTIVITY = "restrictVehicleToHomeActivity";
+	static private final String VEHICLE_RESTRICTED_ACTIVITY_TYPE = "vehicleRestrictedActivityType";
+	static private final String RESTRICTED_INTERMODAL_ACCESS_EGRESS_MODES = "restrictedIntermodalAccessEgressModes";
 	static private final String ENFORCE_INTERMODAL_VEHICLE_CONTINUITY_DURING_ROUTING = "enforceIntermodalVehicleContinuityDuringRouting";
 	static private final String INTERMODAL_VEHICLE_CONTINUITY_HOME_ACTIVITY_TYPE = "intermodalVehicleContinuityHomeActivityType";
 
 	private double utilityErrorScale = 0.0;
 	private String utilityErrorModes = "";
-	private boolean restrictBikeToHomeActivity = true;
-	private String bikeRestrictedActivityType = "home";
-	private String bikeRestrictedMode = "bike";
+	private boolean restrictVehicleToHomeActivity = true;
+	private String vehicleRestrictedActivityType = "home";
+	private String restrictedIntermodalAccessEgressModes = TransportMode.bike;
 	private boolean enforceIntermodalVehicleContinuityDuringRouting = false;
 	private String intermodalVehicleContinuityHomeActivityType = "home";
 
@@ -67,42 +69,43 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 				.collect(Collectors.toSet());
 	}
 
-	@StringGetter(RESTRICT_BIKE_TO_HOME_ACTIVITY)
-	public boolean restrictBikeToHomeActivity() {
-		return restrictBikeToHomeActivity;
+	@StringGetter(RESTRICT_VEHICLE_TO_HOME_ACTIVITY)
+	public boolean restrictVehicleToHomeActivity() {
+		return restrictVehicleToHomeActivity;
 	}
 
-	@StringSetter(RESTRICT_BIKE_TO_HOME_ACTIVITY)
-	public void setRestrictBikeToHomeActivity(boolean restrictBikeToHomeActivity) {
-		this.restrictBikeToHomeActivity = restrictBikeToHomeActivity;
+	@StringSetter(RESTRICT_VEHICLE_TO_HOME_ACTIVITY)
+	public void setRestrictVehicleToHomeActivity(boolean restrictVehicleToHomeActivity) {
+		this.restrictVehicleToHomeActivity = restrictVehicleToHomeActivity;
 	}
 
-	@StringGetter(BIKE_RESTRICTED_ACTIVITY_TYPE)
-	public String getBikeRestrictedActivityType() {
-		return bikeRestrictedActivityType;
+	@StringGetter(VEHICLE_RESTRICTED_ACTIVITY_TYPE)
+	public String getVehicleRestrictedActivityType() {
+		return vehicleRestrictedActivityType;
 	}
 
-	@StringSetter(BIKE_RESTRICTED_ACTIVITY_TYPE)
-	public void setBikeRestrictedActivityType(String bikeRestrictedActivityType) {
-		if (bikeRestrictedActivityType == null || bikeRestrictedActivityType.isBlank()) {
-			throw new IllegalArgumentException("Bike restricted activity type must not be empty.");
+	@StringSetter(VEHICLE_RESTRICTED_ACTIVITY_TYPE)
+	public void setVehicleRestrictedActivityType(String vehicleRestrictedActivityType) {
+		if (vehicleRestrictedActivityType == null || vehicleRestrictedActivityType.isBlank()) {
+			throw new IllegalArgumentException("Vehicle restricted activity type must not be empty.");
 		}
 
-		this.bikeRestrictedActivityType = bikeRestrictedActivityType.trim();
+		this.vehicleRestrictedActivityType = vehicleRestrictedActivityType.trim();
 	}
 
-	@StringGetter(BIKE_RESTRICTED_MODE)
-	public String getBikeRestrictedMode() {
-		return bikeRestrictedMode;
+	@StringGetter(RESTRICTED_INTERMODAL_ACCESS_EGRESS_MODES)
+	public String getRestrictedIntermodalAccessEgressModesAsString() {
+		return restrictedIntermodalAccessEgressModes;
 	}
 
-	@StringSetter(BIKE_RESTRICTED_MODE)
-	public void setBikeRestrictedMode(String bikeRestrictedMode) {
-		if (bikeRestrictedMode == null || bikeRestrictedMode.isBlank()) {
-			throw new IllegalArgumentException("Bike restricted mode must not be empty.");
-		}
+	@StringSetter(RESTRICTED_INTERMODAL_ACCESS_EGRESS_MODES)
+	public void setRestrictedIntermodalAccessEgressModes(String restrictedIntermodalAccessEgressModes) {
+		this.restrictedIntermodalAccessEgressModes = normalizeModeList(restrictedIntermodalAccessEgressModes,
+				"Restricted intermodal access/egress modes must not be empty.");
+	}
 
-		this.bikeRestrictedMode = bikeRestrictedMode.trim();
+	public Set<String> getRestrictedIntermodalAccessEgressModes() {
+		return parseModeList(restrictedIntermodalAccessEgressModes);
 	}
 
 	@StringGetter(ENFORCE_INTERMODAL_VEHICLE_CONTINUITY_DURING_ROUTING)
@@ -138,16 +141,36 @@ public class SwissIntermodalAccessEgressConfigGroup extends ReflectiveConfigGrou
 				"Scale parameter of the person-specific Gumbel utility error added to intermodal access/egress modes. Zero disables the error.");
 		comments.put(UTILITY_ERROR_MODES,
 				"Comma-separated access/egress modes that receive a utility error. Leave empty to apply it to all access/egress leg modes.");
-		comments.put(RESTRICT_BIKE_TO_HOME_ACTIVITY,
-				"If true, bike intermodal access is only allowed for trips starting at the configured activity type, and bike egress only for trips ending at that activity type.");
-		comments.put(BIKE_RESTRICTED_ACTIVITY_TYPE,
-				"Activity type that allows bike access from trip origin and bike egress to trip destination.");
-		comments.put(BIKE_RESTRICTED_MODE, "Intermodal access/egress mode to restrict to the configured activity type.");
+		comments.put(RESTRICT_VEHICLE_TO_HOME_ACTIVITY,
+				"If true, restricted intermodal vehicle access is only allowed for trips starting at the configured activity type, and restricted vehicle egress only for trips ending at that activity type.");
+		comments.put(VEHICLE_RESTRICTED_ACTIVITY_TYPE,
+				"Activity type that allows restricted intermodal access from trip origin and restricted intermodal egress to trip destination.");
+		comments.put(RESTRICTED_INTERMODAL_ACCESS_EGRESS_MODES,
+				"Comma-separated intermodal access/egress modes to restrict to the configured activity type and track for routing-time vehicle continuity.");
 		comments.put(ENFORCE_INTERMODAL_VEHICLE_CONTINUITY_DURING_ROUTING,
 				"If true, routed PT candidates are constrained to retrieve an intermodal private vehicle at the same stop where it was left before returning home.");
 		comments.put(INTERMODAL_VEHICLE_CONTINUITY_HOME_ACTIVITY_TYPE,
 				"Destination activity type where an intermodal private vehicle must be retrieved if it was left at a PT stop earlier in the tour.");
 		return comments;
+	}
+
+	static private String normalizeModeList(String value, String errorMessage) {
+		Set<String> modes = parseModeList(value);
+		if (modes.isEmpty()) {
+			throw new IllegalArgumentException(errorMessage);
+		}
+		return String.join(",", modes);
+	}
+
+	static private Set<String> parseModeList(String value) {
+		if (value == null || value.isBlank()) {
+			return Collections.emptySet();
+		}
+
+		return Arrays.stream(value.split(",")) //
+				.map(String::trim) //
+				.filter(mode -> !mode.isEmpty()) //
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	static public SwissIntermodalAccessEgressConfigGroup getOrCreate(Config config) {

@@ -1,5 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,8 +29,9 @@ import org.matsim.utils.objectattributes.attributable.Attributes;
 import com.google.inject.Inject;
 
 /**
- * Estimates tours sequentially and prevents PT access by bike when the remaining
- * mode chain cannot bring that bike back home later in the tour.
+ * Estimates tours sequentially and prevents PT access by restricted private
+ * vehicles when the remaining mode chain cannot bring them back home later in
+ * the tour.
  */
 public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 	private final TripEstimator delegate;
@@ -73,17 +76,18 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 
 	private TripCandidate estimateTrip(Person person, String mode, DiscreteModeChoiceTrip trip,
 			List<TripCandidate> previousTrips, List<String> modes, List<DiscreteModeChoiceTrip> trips, int tripIndex) {
-		if (!shouldForbidBikeAccess(mode, previousTrips, modes, trips, tripIndex)) {
+		Collection<String> forbiddenAccessModes = getForbiddenAccessModes(mode, previousTrips, modes, trips, tripIndex);
+		if (forbiddenAccessModes.isEmpty()) {
 			return delegate.estimateTrip(person, mode, trip, previousTrips);
 		}
 
 		// This branch is only for PT candidates where taking the restricted vehicle
 		// to access transit would strand it at a stop with no later PT-home leg to
 		// retrieve it. The stop finder sees this temporary attribute and removes
-		// those bike-access stop options, leaving regular walk access available.
+		// those access stop options, leaving regular walk access available.
 		Attributes attributes = trip.getTripAttributes();
 		Object previousForbiddenAccess = attributes.putAttribute(
-				IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE, config.getBikeRestrictedMode());
+				IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE, String.join(",", forbiddenAccessModes));
 
 		try {
 			return delegate.estimateTrip(person, mode, trip, previousTrips);
@@ -93,22 +97,31 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 		}
 	}
 
-	private boolean shouldForbidBikeAccess(String mode, List<TripCandidate> previousTrips, List<String> modes,
+	private Collection<String> getForbiddenAccessModes(String mode, List<TripCandidate> previousTrips, List<String> modes,
 			List<DiscreteModeChoiceTrip> trips, int tripIndex) {
 		if (!config.enforceIntermodalVehicleContinuityDuringRouting() || !TransportMode.pt.equals(mode)) {
-			return false;
+			return List.of();
 		}
 
-		String bikeMode = config.getBikeRestrictedMode();
-		if (isParkedAtPtStop(previousTrips, bikeMode)) {
-			// Once the vehicle is already parked at a PT stop, another bike access
-			// before retrieving it would imply using a vehicle that is not at origin.
-			return true;
+		boolean hasLaterPtTripReturningHome = hasLaterPtTripReturningHome(modes, trips, tripIndex + 1);
+		List<String> forbiddenModes = new ArrayList<>();
+		for (String vehicleMode : config.getRestrictedIntermodalAccessEgressModes()) {
+			if (isParkedAtPtStop(previousTrips, vehicleMode)) {
+				// Once the vehicle is already parked at a PT stop, another access
+				// before retrieving it would imply using a vehicle that is not at origin.
+				forbiddenModes.add(vehicleMode);
+				continue;
+			}
+
+			// If no later PT trip returns home, this PT leg cannot safely park the
+			// vehicle at an access stop because the tour has no opportunity to pick it
+			// up again.
+			if (!hasLaterPtTripReturningHome) {
+				forbiddenModes.add(vehicleMode);
+			}
 		}
 
-		// If no later PT trip returns home, this PT leg cannot safely park the bike
-		// at an access stop because the tour has no opportunity to pick it up again.
-		return !hasLaterPtTripReturningHome(modes, trips, tripIndex + 1);
+		return forbiddenModes;
 	}
 
 	private boolean hasLaterPtTripReturningHome(List<String> modes, List<DiscreteModeChoiceTrip> trips, int startIndex) {
@@ -121,11 +134,11 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 		return false;
 	}
 
-	private boolean isParkedAtPtStop(List<TripCandidate> previousTrips, String bikeMode) {
+	private boolean isParkedAtPtStop(List<TripCandidate> previousTrips, String vehicleMode) {
 		Id<TransitStopFacility> parkedStopId = null;
 
 		for (TripCandidate previousTrip : previousTrips) {
-			if (bikeMode.equals(previousTrip.getMode())) {
+			if (vehicleMode.equals(previousTrip.getMode())) {
 				parkedStopId = null;
 				continue;
 			}
@@ -135,7 +148,7 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 			}
 
 			IntermodalVehicleUse use = IntermodalVehicleUse.from(routedTripCandidate.getRoutedPlanElements(),
-					bikeMode);
+					vehicleMode);
 			if (use.usesAccess) {
 				parkedStopId = use.accessStopId;
 			}
