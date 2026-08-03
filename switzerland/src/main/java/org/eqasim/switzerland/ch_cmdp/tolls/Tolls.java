@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.google.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -18,10 +17,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -34,6 +30,7 @@ public class Tolls {
     // filenames tried, in order, when no explicit filename is given to the constructor
     private static final List<String> DEFAULT_TOLLS_FILENAMES =
             List.of("tolls.csv", "road_tolls.csv", "roadTolls.csv","link_prices.csv");
+    private static final String NETWORK_TOLL_ATTRIBUTE = "toll";
     private static final Logger logger = LogManager.getLogger(Tolls.class);
 
     public final boolean hasTolls;
@@ -58,15 +55,28 @@ public class Tolls {
     }
 
     public Tolls(Network network, String filename) {
+        boolean tollsExist;
+        TollInfo tollInfoFromFile;
         try {
-            TollInfo tollInfo = readTolls(resolveTollsFile(filename));
-            this.hasTolls = tollInfo.tollsExist();
-            processTolls(tollInfo, network);
+            tollInfoFromFile = readTolls(resolveTollsFile(filename));
+            tollsExist = tollInfoFromFile.tollsExist();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
+        // We also check the network for tolls
+        TollInfo tollInfoNetwork = readTollsFromNetwork(network);
+        tollsExist = tollsExist || tollInfoNetwork.tollsExist();
+
+        // if tolls exist, we process them (save them into dictionary of open and closed systems
+        if (tollsExist){
+            // merge the two tollInfo
+            TollInfo tollInfo = mergeTollInfo(tollInfoFromFile, tollInfoNetwork);
+            processTolls(tollInfo, network);
+        }
+
         // log whether this is activated or not
+        this.hasTolls = tollsExist;
         if (hasTolls) {
             logger.info("Tolls are found in the scenario, open tolls: {}, closed tolls: {}", openTolls.size(), closedTolls.size());
         } else {
@@ -176,7 +186,7 @@ public class Tolls {
                 return candidate;
             }
         }
-        return DEFAULT_TOLLS_FILENAMES.get(0);
+        return DEFAULT_TOLLS_FILENAMES.getFirst();
     }
 
     public static TollInfo readTolls(String file) throws IOException {
@@ -206,6 +216,31 @@ public class Tolls {
         return new TollInfo(true, tollsList);
     }
 
+    private TollInfo readTollsFromNetwork(Network network){
+        List<Toll> tollsList = new ArrayList<>();
+        for (Link link: network.getLinks().values()) {
+            Object passagePrice = link.getAttributes().getAttribute(NETWORK_TOLL_ATTRIBUTE);
+            if (passagePrice instanceof Double price) {
+                tollsList.add(new Toll(link.getId().toString(), null, price.floatValue()));
+            }
+        }
+        if (tollsList.isEmpty()) {
+            return new TollInfo(false, null);
+        }
+        return new TollInfo(true, tollsList);
+    }
+
+    private TollInfo mergeTollInfo(TollInfo tollInfo1, TollInfo tollInfo2) {
+        List<Toll> mergedTollsList = new ArrayList<>();
+        if (tollInfo1.tollsList() != null) {
+            mergedTollsList.addAll(tollInfo1.tollsList());
+        }
+        if (tollInfo2.tollsList() != null) {
+            mergedTollsList.addAll(tollInfo2.tollsList());
+        }
+        boolean tollsExist = !mergedTollsList.isEmpty();
+        return new TollInfo(tollsExist, mergedTollsList);
+    }
     /**
      * Picks ',' or ';' by checking which one appears in the header line. Defaults to ','
      * if neither is found (e.g. a single-column file) or the file can't be peeked at.
@@ -237,5 +272,11 @@ public class Tolls {
         @JsonProperty("price")
         @JsonAlias({"value", "toll", "cost"})
         public float price;
+
+        public Toll(String linkId, String entryLInk, float price) {
+            this.linkId = linkId;
+            this.entryLink = entryLInk;
+            this.price = price;
+        }
     }
 }
