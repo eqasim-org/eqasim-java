@@ -158,6 +158,9 @@ public class RunAdaptConfig {
 		MultinomialLogitSelectorConfigGroup MNLConfig = dmcConfig.getMultinomialLogitSelectorConfig();
 		MNLConfig.setRandomNumbers(MultinomialLogitSelectorConfigGroup.RandomNumbers.fixed);
 
+		// tourFilter:TourLength: set maximumLength to 8 instead of default 10
+		dmcConfig.getTourLengthFilterConfigGroup().setMaximumLength(8);
+
 		// adjust routing parameters
 		eqasimConfig.setRoutingDistanceUtility(SwissConfigAdapter.routingDistanceUtility);
 
