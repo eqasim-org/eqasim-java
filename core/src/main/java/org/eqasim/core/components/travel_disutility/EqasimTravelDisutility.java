@@ -4,11 +4,8 @@ import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.eqasim.core.tools.random.Normal;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
-import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.vehicles.Vehicle;
-
-import java.util.Random;
 
 public class EqasimTravelDisutility implements TravelDisutility {
 	private final TravelDisutility delegate;
@@ -41,7 +38,7 @@ public class EqasimTravelDisutility implements TravelDisutility {
 		disutility += penalty.getLinkPenalty(link, person, time, disutility);
 		disutility += routingDistanceUtility * (link.getLength() / 10.0); // 10.0 is for the scale, to be in the same order as travel time
 		if (useRandomness){
-			double normalNoise = Normal.get(link.getId().toString(), person.getId().toString(), 0);
+			double normalNoise = Normal.get(link.getId().toString(), person.getId().toString(), baseSeed);
 			disutility *=   (1.0 + normalNoise * sigma);
 		}
 		return disutility;
