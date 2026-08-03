@@ -11,19 +11,21 @@ public class EqasimTravelDisutilityFactory implements TravelDisutilityFactory {
 	private final RoutingPenalty linkPenalty;
 	private final double routingDistanceUtility;
 	private final double sigma;
+	private final long baseSeed;
 
 	public EqasimTravelDisutilityFactory(RoutingPenalty linkPenalty, double routingDistanceUtility) {
-		this(linkPenalty, routingDistanceUtility, 0.0);
+		this(linkPenalty, routingDistanceUtility, 0.0, 1997);
 	}
 
-	public EqasimTravelDisutilityFactory(RoutingPenalty linkPenalty, double routingDistanceUtility, double sigma) {
+	public EqasimTravelDisutilityFactory(RoutingPenalty linkPenalty, double routingDistanceUtility, double sigma, long baseSeed) {
 		this.linkPenalty = linkPenalty;
 		this.routingDistanceUtility = routingDistanceUtility;
 		this.sigma = sigma;
+		this.baseSeed = baseSeed;
 	}
 
 	@Override
 	public TravelDisutility createTravelDisutility(TravelTime travelTime) {
-		return new EqasimTravelDisutility(delegate.createTravelDisutility(travelTime), linkPenalty, routingDistanceUtility, sigma);
+		return new EqasimTravelDisutility(delegate.createTravelDisutility(travelTime), linkPenalty, routingDistanceUtility, sigma, baseSeed);
 	}
 }

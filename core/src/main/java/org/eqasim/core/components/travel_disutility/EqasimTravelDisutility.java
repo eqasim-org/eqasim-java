@@ -1,6 +1,7 @@
 package org.eqasim.core.components.travel_disutility;
 
 import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
+import org.eqasim.core.tools.random.Normal;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.gbl.MatsimRandom;
@@ -13,25 +14,25 @@ public class EqasimTravelDisutility implements TravelDisutility {
 	private final TravelDisutility delegate;
 	private final RoutingPenalty penalty;
 	private final double routingDistanceUtility;
-	private final Random random;
 	private final double sigma;
 	private final boolean useRandomness;
+	private final long baseSeed;
 
-	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility, double sigma) {
+	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility, double sigma, long baseSeed) {
 		this.delegate = delegate;
 		this.penalty = penalty;
 		this.routingDistanceUtility = routingDistanceUtility;
 		this.sigma = sigma;
 		this.useRandomness = sigma>1e-6;
-		this.random = useRandomness? MatsimRandom.getLocalInstance() : null;
+		this.baseSeed = baseSeed;
 	}
 
 	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility) {
-		this(delegate, penalty, routingDistanceUtility, 0.0);
+		this(delegate, penalty, routingDistanceUtility, 0.0, 1997);
 	}
 
 	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty) {
-		this(delegate, penalty, 0.0, 0.0);
+		this(delegate, penalty, 0.0, 0.0, 1997);
 	}
 
 	@Override
@@ -40,7 +41,8 @@ public class EqasimTravelDisutility implements TravelDisutility {
 		disutility += penalty.getLinkPenalty(link, person, time, disutility);
 		disutility += routingDistanceUtility * (link.getLength() / 10.0); // 10.0 is for the scale, to be in the same order as travel time
 		if (useRandomness){
-			disutility *=   (1.0 + random.nextGaussian() * sigma);
+			double normalNoise = Normal.get(link.getId().toString(), person.getId().toString(), 0);
+			disutility *=   (1.0 + normalNoise * sigma);
 		}
 		return disutility;
 	}

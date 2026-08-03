@@ -34,6 +34,7 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.contribs.discrete_mode_choice.replanning.TripListConverter;
+import org.matsim.core.config.Config;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.replanning.GenericPlanStrategy;
 import org.matsim.core.replanning.StrategyManager;
@@ -101,8 +102,12 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    EqasimTravelDisutilityFactory providePolicyTravelDisutilityFactory(RoutingPenaltyByLinkCategory linkPenalty, EqasimConfigGroup config) {
-        return new EqasimTravelDisutilityFactory(linkPenalty, config.getRoutingDistanceUtility(), config.getSigmaRoutingRandomness());
+    EqasimTravelDisutilityFactory providePolicyTravelDisutilityFactory(RoutingPenaltyByLinkCategory linkPenalty, EqasimConfigGroup eqConfig) {
+        Config config = getConfig();
+        return new EqasimTravelDisutilityFactory(linkPenalty,
+                                                 eqConfig.getRoutingDistanceUtility(),
+                                                 eqConfig.getSigmaRoutingRandomness(),
+                                                 config.global().getRandomSeed());
     }
 
     @Provides

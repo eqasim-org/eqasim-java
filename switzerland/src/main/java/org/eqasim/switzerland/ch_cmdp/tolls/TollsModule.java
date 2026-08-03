@@ -33,8 +33,8 @@ public class TollsModule extends AbstractModule {
     MarginalCostOfTolls provideMarginalCostOfTolls() {
         Config config = getConfig();
         double sigma = config.routing().getRoutingRandomness();
-        double valueOfTime = 20;
-        long baseSeed = 11021997;
+        double valueOfTime = 12.0;
+        long baseSeed = config.global().getRandomSeed();
         return new MarginalCostOfTolls(sigma, valueOfTime, baseSeed);
     }
 
