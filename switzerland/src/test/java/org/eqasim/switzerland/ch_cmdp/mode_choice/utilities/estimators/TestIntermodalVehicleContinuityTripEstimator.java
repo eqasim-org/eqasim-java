@@ -35,6 +35,7 @@ import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceModel.No
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 import org.matsim.contribs.discrete_mode_choice.model.mode_availability.ModeAvailability;
 import org.matsim.contribs.discrete_mode_choice.model.mode_chain.DefaultModeChainGenerator;
+import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourCandidate;
 import org.matsim.contribs.discrete_mode_choice.model.tour_based.TourBasedModel;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripEstimator;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.DefaultRoutedTripCandidate;
@@ -218,6 +219,28 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 		estimator.estimateTour(null, List.of(TransportMode.pt, TransportMode.pt), tour, List.of());
 
 		assertNull(delegate.forbiddenAccessModes.get(0));
+	}
+
+	@Test
+	public void testTourEstimatorReroutesEarlierPtAccessWhenVehicleReturnIsInfeasible() {
+		SwissIntermodalAccessEgressConfigGroup config = createConfig();
+		List<DiscreteModeChoiceTrip> tour = createHomeWorkHomeTour();
+		RetryingEstimator delegate = new RetryingEstimator(tour.get(0), tour.get(1));
+		IntermodalVehicleContinuityTripEstimator tripEstimator = new IntermodalVehicleContinuityTripEstimator(delegate,
+				List.of(TransportMode.bike), config);
+		IntermodalVehicleContinuityTourEstimator tourEstimator = new IntermodalVehicleContinuityTourEstimator(
+				tripEstimator, TimeInterpretation.create(ConfigUtils.createConfig()), config);
+
+		TourCandidate candidate = tourEstimator.estimateTour(null, List.of(TransportMode.pt, TransportMode.pt), tour,
+				List.of());
+
+		assertEquals(2, delegate.outboundCalls);
+		assertEquals(2, delegate.returnCalls);
+		assertEquals(TransportMode.bike, delegate.outboundForbiddenAccessModes.get(1));
+		assertEquals("walk->walk", getAccessMode(getRoute(candidate.getTripCandidates().get(0))) + "->"
+				+ getEgressMode(getRoute(candidate.getTripCandidates().get(0))));
+		assertEquals("walk->walk", getAccessMode(getRoute(candidate.getTripCandidates().get(1))) + "->"
+				+ getEgressMode(getRoute(candidate.getTripCandidates().get(1))));
 	}
 
 	@Test
@@ -589,6 +612,60 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 			forbiddenAccessModes.add(forbiddenAccessMode);
 			return new DefaultRoutedTripCandidate(0.0, mode, trip.getInitialElements(), 0.0);
 		}
+	}
+
+	static private class RetryingEstimator implements TripEstimator {
+		private final DiscreteModeChoiceTrip outboundTrip;
+		private final DiscreteModeChoiceTrip returnTrip;
+		private int outboundCalls;
+		private int returnCalls;
+		private final List<Object> outboundForbiddenAccessModes = new ArrayList<>();
+
+		private RetryingEstimator(DiscreteModeChoiceTrip outboundTrip, DiscreteModeChoiceTrip returnTrip) {
+			this.outboundTrip = outboundTrip;
+			this.returnTrip = returnTrip;
+		}
+
+		@Override
+		public TripCandidate estimateTrip(Person person, String mode, DiscreteModeChoiceTrip trip,
+				List<TripCandidate> previousTrips) {
+			if (trip == outboundTrip) {
+				outboundCalls++;
+				Object forbiddenAccessMode = trip.getTripAttributes()
+						.getAttribute(IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE);
+				outboundForbiddenAccessModes.add(forbiddenAccessMode);
+				if (containsMode(forbiddenAccessMode, TransportMode.bike)) {
+					return createCandidate(createPtTrip(null, "stop_home", null));
+				}
+				return createCandidate(createPtTrip(TransportMode.bike, "stop_home", null));
+			}
+
+			if (trip == returnTrip) {
+				returnCalls++;
+				Object requiredEgressMode = trip.getTripAttributes()
+						.getAttribute(IntermodalVehicleRoutingAttributes.REQUIRED_EGRESS_MODE);
+				if (TransportMode.bike.equals(requiredEgressMode)) {
+					throw new RuntimeException("Bike egress is infeasible in this test fixture.");
+				}
+				return createCandidate(createPtTrip(null, "stop_home", null));
+			}
+
+			throw new IllegalArgumentException("Unexpected trip.");
+		}
+	}
+
+	static private boolean containsMode(Object value, String mode) {
+		if (value == null) {
+			return false;
+		}
+
+		for (String token : value.toString().split(",")) {
+			if (mode.equals(token.trim())) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	static private class RoutingTripEstimator implements TripEstimator {

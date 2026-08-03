@@ -2,8 +2,12 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.routing.IntermodalVehicleRoutingAttributes;
@@ -49,6 +53,31 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 	@Override
 	public TourCandidate estimateTour(Person person, List<String> modes, List<DiscreteModeChoiceTrip> trips,
 			List<TourCandidate> preceedingTours) {
+		List<Set<String>> forcedForbiddenAccessModes = createForcedForbiddenAccessModes(trips.size());
+		int maximumAttempts = Math.max(1, config.getRestrictedIntermodalAccessEgressModes().size()) + 1;
+		RuntimeException lastFailure = null;
+
+		// Routing is sequential: an early PT trip may park a vehicle that a later
+		// return-home PT trip cannot retrieve. In that case, retry the whole tour
+		// with that earlier access mode forbidden so Raptor can fall back to walk
+		// access. The bound is one retry per restricted vehicle mode.
+		for (int attempt = 0; attempt < maximumAttempts; attempt++) {
+			try {
+				return estimateTourAttempt(person, modes, trips, forcedForbiddenAccessModes);
+			} catch (RetryTourEstimationException e) {
+				lastFailure = e.failure;
+				if (!forcedForbiddenAccessModes.get(e.sourceTripIndex).add(e.vehicleMode)) {
+					throw e.failure;
+				}
+			}
+		}
+
+		throw lastFailure == null ? new IllegalStateException("Unable to estimate intermodal vehicle tour.")
+				: lastFailure;
+	}
+
+	private TourCandidate estimateTourAttempt(Person person, List<String> modes, List<DiscreteModeChoiceTrip> trips,
+			List<Set<String>> forcedForbiddenAccessModes) {
 		List<TripCandidate> tripCandidates = new LinkedList<>();
 		double utility = 0.0;
 
@@ -64,7 +93,18 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 				trip.setDepartureTime(timeTracker.getTime().seconds());
 			}
 
-			TripCandidate tripCandidate = estimateTrip(person, mode, trip, tripCandidates, modes, trips, i);
+			TripCandidate tripCandidate;
+			try {
+				tripCandidate = estimateTrip(person, mode, trip, tripCandidates, modes, trips, i,
+						forcedForbiddenAccessModes.get(i));
+			} catch (RuntimeException e) {
+				RetryInstruction retry = getRetryInstruction(mode, trip, tripCandidates);
+				if (retry == null) {
+					throw e;
+				}
+				throw new RetryTourEstimationException(retry.sourceTripIndex, retry.vehicleMode, e);
+			}
+
 			utility += tripCandidate.getUtility();
 			timeTracker.addDuration(tripCandidate.getDuration());
 
@@ -75,16 +115,20 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 	}
 
 	private TripCandidate estimateTrip(Person person, String mode, DiscreteModeChoiceTrip trip,
-			List<TripCandidate> previousTrips, List<String> modes, List<DiscreteModeChoiceTrip> trips, int tripIndex) {
-		Collection<String> forbiddenAccessModes = getForbiddenAccessModes(mode, previousTrips, modes, trips, tripIndex);
+			List<TripCandidate> previousTrips, List<String> modes, List<DiscreteModeChoiceTrip> trips, int tripIndex,
+			Collection<String> forcedForbiddenAccessModes) {
+		Set<String> forbiddenAccessModes = new LinkedHashSet<>(forcedForbiddenAccessModes);
+		forbiddenAccessModes.addAll(getForbiddenAccessModes(mode, previousTrips, modes, trips, tripIndex));
 		if (forbiddenAccessModes.isEmpty()) {
 			return delegate.estimateTrip(person, mode, trip, previousTrips);
 		}
 
 		// This branch is only for PT candidates where taking the restricted vehicle
 		// to access transit would strand it at a stop with no later PT-home leg to
-		// retrieve it. The stop finder sees this temporary attribute and removes
-		// those access stop options, leaving regular walk access available.
+		// retrieve it, or where a retry forbids an earlier access mode that led to
+		// an infeasible return egress. The stop finder sees this temporary
+		// attribute and removes those access stop options, leaving regular walk
+		// access available.
 		Attributes attributes = trip.getTripAttributes();
 		Object previousForbiddenAccess = attributes.putAttribute(
 				IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE, String.join(",", forbiddenAccessModes));
@@ -124,6 +168,21 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 		return forbiddenModes;
 	}
 
+	private RetryInstruction getRetryInstruction(String mode, DiscreteModeChoiceTrip trip,
+			List<TripCandidate> previousTrips) {
+		if (!config.enforceIntermodalVehicleContinuityDuringRouting() || !TransportMode.pt.equals(mode)
+				|| !isHomeActivity(trip.getDestinationActivity())) {
+			return null;
+		}
+
+		ParkedVehicle parkedVehicle = findParkedVehicleWithSource(previousTrips);
+		if (parkedVehicle == null) {
+			return null;
+		}
+
+		return new RetryInstruction(parkedVehicle.sourceTripIndex, parkedVehicle.mode);
+	}
+
 	private boolean hasLaterPtTripReturningHome(List<String> modes, List<DiscreteModeChoiceTrip> trips, int startIndex) {
 		for (int i = startIndex; i < modes.size(); i++) {
 			if (TransportMode.pt.equals(modes.get(i)) && isHomeActivity(trips.get(i).getDestinationActivity())) {
@@ -160,6 +219,44 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 		return parkedStopId != null;
 	}
 
+	private ParkedVehicle findParkedVehicleWithSource(List<TripCandidate> previousTrips) {
+		Map<String, ParkedVehicle> parkedVehicles = new LinkedHashMap<>();
+		for (String vehicleMode : config.getRestrictedIntermodalAccessEgressModes()) {
+			parkedVehicles.put(vehicleMode, null);
+		}
+
+		for (int i = 0; i < previousTrips.size(); i++) {
+			TripCandidate previousTrip = previousTrips.get(i);
+			for (String vehicleMode : config.getRestrictedIntermodalAccessEgressModes()) {
+				if (vehicleMode.equals(previousTrip.getMode())) {
+					parkedVehicles.put(vehicleMode, null);
+					continue;
+				}
+
+				if (!(previousTrip instanceof RoutedTripCandidate routedTripCandidate)) {
+					continue;
+				}
+
+				IntermodalVehicleUse use = IntermodalVehicleUse.from(routedTripCandidate.getRoutedPlanElements(),
+						vehicleMode);
+				if (use.usesAccess) {
+					parkedVehicles.put(vehicleMode, new ParkedVehicle(vehicleMode, i));
+				}
+				if (use.usesEgress) {
+					parkedVehicles.put(vehicleMode, null);
+				}
+			}
+		}
+
+		for (ParkedVehicle parkedVehicle : parkedVehicles.values()) {
+			if (parkedVehicle != null) {
+				return parkedVehicle;
+			}
+		}
+
+		return null;
+	}
+
 	private boolean isHomeActivity(Activity activity) {
 		return config.getIntermodalVehicleContinuityHomeActivityType().equals(activity.getType());
 	}
@@ -170,6 +267,14 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 		} else {
 			attributes.putAttribute(name, previousValue);
 		}
+	}
+
+	static private List<Set<String>> createForcedForbiddenAccessModes(int size) {
+		List<Set<String>> forbiddenAccessModes = new ArrayList<>(size);
+		for (int i = 0; i < size; i++) {
+			forbiddenAccessModes.add(new LinkedHashSet<>());
+		}
+		return forbiddenAccessModes;
 	}
 
 	static private class IntermodalVehicleUse {
@@ -221,6 +326,39 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 			}
 
 			return new IntermodalVehicleUse(usesAccess, usesEgress, accessStopId);
+		}
+	}
+
+	static private class ParkedVehicle {
+		private final String mode;
+		private final int sourceTripIndex;
+
+		private ParkedVehicle(String mode, int sourceTripIndex) {
+			this.mode = mode;
+			this.sourceTripIndex = sourceTripIndex;
+		}
+	}
+
+	static private class RetryInstruction {
+		private final int sourceTripIndex;
+		private final String vehicleMode;
+
+		private RetryInstruction(int sourceTripIndex, String vehicleMode) {
+			this.sourceTripIndex = sourceTripIndex;
+			this.vehicleMode = vehicleMode;
+		}
+	}
+
+	static private class RetryTourEstimationException extends RuntimeException {
+		private final int sourceTripIndex;
+		private final String vehicleMode;
+		private final RuntimeException failure;
+
+		private RetryTourEstimationException(int sourceTripIndex, String vehicleMode, RuntimeException failure) {
+			super(failure);
+			this.sourceTripIndex = sourceTripIndex;
+			this.vehicleMode = vehicleMode;
+			this.failure = failure;
 		}
 	}
 }
