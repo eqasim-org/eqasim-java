@@ -40,7 +40,7 @@ public class EqasimTravelDisutility implements TravelDisutility {
 		disutility += penalty.getLinkPenalty(link, person, time, disutility);
 		disutility += routingDistanceUtility * (link.getLength() / 10.0); // 10.0 is for the scale, to be in the same order as travel time
 		if (useRandomness){
-			disutility *=   random.nextGaussian() * sigma;
+			disutility *=   (1.0 + random.nextGaussian() * sigma);
 		}
 		return disutility;
 	}
