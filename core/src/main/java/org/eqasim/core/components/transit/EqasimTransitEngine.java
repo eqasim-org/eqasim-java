@@ -146,13 +146,13 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 	}
 
 	@Override
-	public void onPrepareSim() {
+	public void beforeMobsim() {
 		departures.clear();
 		arrivals.clear();
 	}
 
 	@Override
-	public void afterSim() {
+	public void afterMobsim() {
 		double time = internalInterface.getMobsim().getSimTimer().getTimeOfDay();
 		Set<MobsimAgent> processedAgents = new HashSet<>();
 

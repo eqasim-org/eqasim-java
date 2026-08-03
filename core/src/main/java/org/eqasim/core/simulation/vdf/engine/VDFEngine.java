@@ -182,12 +182,12 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 	}
 
 	@Override
-	public void onPrepareSim() {
+	public void beforeMobsim() {
 		// Nothing to do
 	}
 
 	@Override
-	public void afterSim() {
+	public void afterMobsim() {
 		EventsManager eventsManager = internalInterface.getMobsim().getEventsManager();
 		double now = internalInterface.getMobsim().getSimTimer().getTimeOfDay();
 

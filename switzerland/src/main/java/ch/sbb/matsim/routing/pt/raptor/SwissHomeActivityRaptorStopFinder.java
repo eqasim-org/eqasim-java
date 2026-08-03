@@ -25,8 +25,8 @@ import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.Facility;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 	private final RaptorStopFinder delegate;
