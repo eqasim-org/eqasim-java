@@ -37,6 +37,7 @@ public class SwissIntermodalPTPredictor extends PtPredictor {
 				case TransportMode.walk:
 				case TransportMode.non_network_walk:
 				case TransportMode.bike:
+				case TransportMode.car:
 					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
 					break;
 				case TransportMode.transit_walk:
