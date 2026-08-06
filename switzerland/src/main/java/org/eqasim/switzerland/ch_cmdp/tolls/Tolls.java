@@ -273,6 +273,8 @@ public class Tolls {
         @JsonAlias({"value", "toll", "cost"})
         public float price;
 
+        public Toll() {}
+
         public Toll(String linkId, String entryLInk, float price) {
             this.linkId = linkId;
             this.entryLink = entryLInk;
