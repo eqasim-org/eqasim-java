@@ -51,7 +51,8 @@ public class RunSimulation {
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
 		controller.addOverridingModule(new PTPassengerCountsModule());
-        controller.addOverridingModule(new PTLinkVolumesModule());
+		controller.addOverridingModule(new PTIntermodalTripsModule());
+		controller.addOverridingModule(new PTLinkVolumesModule());
 		controller.addOverridingModule(new StrategyWeightDecayModule());
 
 		// To use the deterministic pt simulation (Part 1 of 2):
