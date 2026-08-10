@@ -62,14 +62,33 @@ public class IntermodalVehicleContinuityTripEstimator implements TripEstimator {
 		// The regular estimator is used unless the opt-in switch is enabled, the
 		// current trip returns to the configured home activity type, and a previous
 		// trip left a restricted vehicle at a PT stop.
-		if (!config.enforceIntermodalVehicleContinuityDuringRouting()
-				|| !isHomeActivity(trip.getDestinationActivity())) {
+		if (!config.enforceIntermodalVehicleContinuityDuringRouting()) {
 			return estimateDelegate(person, mode, trip, previousTrips);
+		}
+
+		if (!isHomeActivity(trip.getDestinationActivity())) {
+			return estimateWithManagedAccess(person, mode, trip, previousTrips);
 		}
 
 		ParkedVehicle parkedVehicle = findParkedVehicle(previousTrips);
 		if (parkedVehicle == null) {
-			return estimateDelegate(person, mode, trip, previousTrips);
+			if (!TransportMode.pt.equals(mode)) {
+				return estimateDelegate(person, mode, trip, previousTrips);
+			}
+
+			Attributes attributes = trip.getTripAttributes();
+			Object previousForbiddenEgress = attributes.putAttribute(
+					IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE, String.join(",", vehicleModes));
+
+			try {
+				// A home-bound PT route may not invent a private vehicle at the alighting
+				// stop. Restricted egress modes become feasible again only after an earlier
+				// PT access leg has parked that vehicle at a stop.
+				return estimateDelegate(person, mode, trip, previousTrips);
+			} finally {
+				restoreAttribute(attributes, IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE,
+						previousForbiddenEgress);
+			}
 		}
 
 		if (!TransportMode.pt.equals(mode)) {
@@ -115,6 +134,23 @@ public class IntermodalVehicleContinuityTripEstimator implements TripEstimator {
 			ptCache.put(key, candidate);
 		}
 		return candidate;
+	}
+
+	private TripCandidate estimateWithManagedAccess(Person person, String mode, DiscreteModeChoiceTrip trip,
+			List<TripCandidate> previousTrips) {
+		if (!TransportMode.pt.equals(mode) || vehicleModes.isEmpty()) {
+			return estimateDelegate(person, mode, trip, previousTrips);
+		}
+
+		Attributes attributes = trip.getTripAttributes();
+		Object previousAllowedAccess = attributes.putAttribute(IntermodalVehicleRoutingAttributes.ALLOWED_ACCESS_MODE,
+				String.join(",", vehicleModes));
+
+		try {
+			return estimateDelegate(person, mode, trip, previousTrips);
+		} finally {
+			restoreAttribute(attributes, IntermodalVehicleRoutingAttributes.ALLOWED_ACCESS_MODE, previousAllowedAccess);
+		}
 	}
 
 	private ParkedVehicle findParkedVehicle(List<TripCandidate> previousTrips) {
@@ -238,15 +274,16 @@ public class IntermodalVehicleContinuityTripEstimator implements TripEstimator {
 		}
 	}
 
-	static private record PtCacheKey(DiscreteModeChoiceTrip trip, double departureTime, String forbiddenAccessMode,
-			String forbiddenEgressMode, String requiredAccessMode, String requiredAccessStopId, String requiredEgressMode,
-			String requiredEgressStopId) {
+	static private record PtCacheKey(DiscreteModeChoiceTrip trip, double departureTime, String allowedAccessMode,
+			String forbiddenAccessMode, String forbiddenEgressMode, String requiredAccessMode, String requiredAccessStopId,
+			String requiredEgressMode, String requiredEgressStopId) {
 		static private PtCacheKey from(DiscreteModeChoiceTrip trip) {
 			// Routing attributes are temporary branch state, but they determine which
 			// access/egress stops SwissRailRaptor may use, so they must be part of
 			// the cache key to avoid reusing the wrong PT route.
 			Attributes attributes = trip.getTripAttributes();
 			return new PtCacheKey(trip, getDepartureTime(trip),
+					getAttribute(attributes, IntermodalVehicleRoutingAttributes.ALLOWED_ACCESS_MODE),
 					getAttribute(attributes, IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE),
 					getAttribute(attributes, IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE),
 					getAttribute(attributes, IntermodalVehicleRoutingAttributes.REQUIRED_ACCESS_MODE),

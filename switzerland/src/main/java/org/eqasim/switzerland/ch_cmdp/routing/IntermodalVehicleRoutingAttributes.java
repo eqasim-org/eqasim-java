@@ -11,6 +11,7 @@ public final class IntermodalVehicleRoutingAttributes {
 	// forbidden value may contain a comma-separated list of vehicle modes.
 	static public final String REQUIRED_ACCESS_MODE = "iv:reqAccessMode";
 	static public final String REQUIRED_ACCESS_STOP_ID = "iv:reqAccessStop";
+	static public final String ALLOWED_ACCESS_MODE = "iv:allowAccessMode";
 	static public final String FORBIDDEN_ACCESS_MODE = "iv:forbidAccessMode";
 
 	// When present, the stop finder keeps only egress candidates with this

@@ -116,29 +116,40 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 
 	private TripCandidate estimateTrip(Person person, String mode, DiscreteModeChoiceTrip trip,
 			List<TripCandidate> previousTrips, List<String> modes, List<DiscreteModeChoiceTrip> trips, int tripIndex,
-			Collection<String> forcedForbiddenAccessModes) {
+		Collection<String> forcedForbiddenAccessModes) {
 		Set<String> forbiddenAccessModes = new LinkedHashSet<>(forcedForbiddenAccessModes);
 		forbiddenAccessModes.addAll(getForbiddenAccessModes(mode, previousTrips, modes, trips, tripIndex));
-		if (forbiddenAccessModes.isEmpty()) {
+		Set<String> allowedAccessModes = getAllowedAccessModes(mode, forbiddenAccessModes);
+		if (forbiddenAccessModes.isEmpty() && allowedAccessModes.isEmpty()) {
 			return delegate.estimateTrip(person, mode, trip, previousTrips);
 		}
 
-		// This branch is only for PT candidates where taking the restricted vehicle
-		// to access transit would strand it at a stop with no later PT-home leg to
-		// retrieve it, or where a retry forbids an earlier access mode that led to
-		// an infeasible return egress. The stop finder sees this temporary
-		// attribute and removes those access stop options, leaving regular walk
-		// access available.
+		// These attributes mark the candidate as DMC-managed. Plain PrepareForSim or
+		// ReRoute calls do not carry them, so the stop finder filters restricted
+		// vehicle access there instead of risking a stranded vehicle.
 		Attributes attributes = trip.getTripAttributes();
-		Object previousForbiddenAccess = attributes.putAttribute(
-				IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE, String.join(",", forbiddenAccessModes));
+		Object previousAllowedAccess = putAttribute(attributes, IntermodalVehicleRoutingAttributes.ALLOWED_ACCESS_MODE,
+				allowedAccessModes);
+		Object previousForbiddenAccess = putAttribute(attributes, IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE,
+				forbiddenAccessModes);
 
 		try {
 			return delegate.estimateTrip(person, mode, trip, previousTrips);
 		} finally {
+			restoreAttribute(attributes, IntermodalVehicleRoutingAttributes.ALLOWED_ACCESS_MODE, previousAllowedAccess);
 			restoreAttribute(attributes, IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE,
 					previousForbiddenAccess);
 		}
+	}
+
+	private Set<String> getAllowedAccessModes(String mode, Set<String> forbiddenAccessModes) {
+		if (!config.enforceIntermodalVehicleContinuityDuringRouting() || !TransportMode.pt.equals(mode)) {
+			return Set.of();
+		}
+
+		Set<String> allowedAccessModes = new LinkedHashSet<>(config.getRestrictedIntermodalAccessEgressModes());
+		allowedAccessModes.removeAll(forbiddenAccessModes);
+		return allowedAccessModes;
 	}
 
 	private Collection<String> getForbiddenAccessModes(String mode, List<TripCandidate> previousTrips, List<String> modes,
@@ -259,6 +270,13 @@ public class IntermodalVehicleContinuityTourEstimator implements TourEstimator {
 
 	private boolean isHomeActivity(Activity activity) {
 		return config.getIntermodalVehicleContinuityHomeActivityType().equals(activity.getType());
+	}
+
+	private Object putAttribute(Attributes attributes, String name, Collection<String> values) {
+		if (values.isEmpty()) {
+			return attributes.getAttribute(name);
+		}
+		return attributes.putAttribute(name, String.join(",", values));
 	}
 
 	private void restoreAttribute(Attributes attributes, String name, Object previousValue) {

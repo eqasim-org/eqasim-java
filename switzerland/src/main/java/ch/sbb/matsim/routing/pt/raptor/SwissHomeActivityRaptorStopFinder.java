@@ -65,10 +65,21 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		}
 
 		if (type == Direction.ACCESS && isRestrictedActivity(findOriginActivity(person, fromFacility, departureTime))) {
-			return stops;
+			Set<String> allowedAccessModes = getAllowedAccessModes(routingAttributes);
+			if (!allowedAccessModes.isEmpty()) {
+				// Access by restricted private vehicle is allowed only for DMC-managed
+				// PT candidates, where the tour estimator can also enforce/retry the
+				// later return. Plain PrepareForSim/ReRoute calls have no such state.
+				return stops.stream().filter(stop -> !usesRestrictedMode(stop) || usesAnyMode(stop, allowedAccessModes))
+						.collect(Collectors.toList());
+			}
 		}
 
-		if (type == Direction.EGRESS && isRestrictedActivity(findDestinationActivity(person, toFacility, departureTime))) {
+		if (type == Direction.EGRESS && getRequiredMode(routingAttributes, type) != null) {
+			// Egress by a restricted private vehicle is only physically consistent
+			// when DMC continuity explicitly tells Raptor which parked vehicle must
+			// be retrieved. This also protects PrepareForSim/ReRoute, which call
+			// Raptor without tour-continuity state.
 			return stops;
 		}
 
@@ -122,6 +133,15 @@ public class SwissHomeActivityRaptorStopFinder implements RaptorStopFinder {
 		String attribute = type == Direction.ACCESS ? IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE
 				: IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE;
 		Object value = routingAttributes.getAttribute(attribute);
+		return parseModes(value);
+	}
+
+	private Set<String> getAllowedAccessModes(Attributes routingAttributes) {
+		if (routingAttributes == null) {
+			return Collections.emptySet();
+		}
+
+		Object value = routingAttributes.getAttribute(IntermodalVehicleRoutingAttributes.ALLOWED_ACCESS_MODE);
 		return parseModes(value);
 	}
 

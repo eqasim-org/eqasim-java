@@ -134,11 +134,11 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 	}
 
 	@Test
-	public void testDoesNotRequireEgressWhenNoVehicleWasParkedAtPtStop() {
+	public void testForbidsRestrictedEgressWhenNoVehicleWasParkedAtPtStop() {
 		SwissIntermodalAccessEgressConfigGroup config = createConfig();
 		CapturingEstimator delegate = new CapturingEstimator();
 		IntermodalVehicleContinuityTripEstimator estimator = new IntermodalVehicleContinuityTripEstimator(delegate,
-				List.of(TransportMode.bike), config);
+				List.of(TransportMode.bike, TransportMode.car), config);
 
 		DiscreteModeChoiceTrip returnTrip = createTrip(createActivity("work", "work"), createActivity("home", "home"));
 		estimator.estimateTrip(null, TransportMode.pt, returnTrip,
@@ -147,6 +147,10 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 		assertNull(delegate.requiredEgressMode);
 		assertNull(delegate.requiredEgressStopId);
 		assertNull(delegate.forbiddenAccessMode);
+		assertTrue(containsMode(delegate.forbiddenEgressMode, TransportMode.bike));
+		assertTrue(containsMode(delegate.forbiddenEgressMode, TransportMode.car));
+		assertNull(returnTrip.getTripAttributes()
+				.getAttribute(IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE));
 	}
 
 	@Test
@@ -595,6 +599,7 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 	static private class CapturingEstimator implements TripEstimator {
 		private int callCount;
 		private Object forbiddenAccessMode;
+		private Object forbiddenEgressMode;
 		private Object requiredEgressMode;
 		private Object requiredEgressStopId;
 		private final List<Object> forbiddenAccessModes = new ArrayList<>();
@@ -605,6 +610,8 @@ public class TestIntermodalVehicleContinuityTripEstimator {
 			callCount++;
 			forbiddenAccessMode = trip.getTripAttributes()
 					.getAttribute(IntermodalVehicleRoutingAttributes.FORBIDDEN_ACCESS_MODE);
+			forbiddenEgressMode = trip.getTripAttributes()
+					.getAttribute(IntermodalVehicleRoutingAttributes.FORBIDDEN_EGRESS_MODE);
 			requiredEgressMode = trip.getTripAttributes()
 					.getAttribute(IntermodalVehicleRoutingAttributes.REQUIRED_EGRESS_MODE);
 			requiredEgressStopId = trip.getTripAttributes()
