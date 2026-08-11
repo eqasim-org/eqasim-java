@@ -65,6 +65,8 @@ public class RunSimulation {
 			new SBBTransitEngineQSimModule().configure(components);
 
 		});
+		// save updated config before running the simulation
+		ConfigUtils.writeConfig(config, "run_config.xml");
 		controller.run();
 	}
 }

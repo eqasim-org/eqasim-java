@@ -20,6 +20,7 @@ import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch_cmdp.calibration.*;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.BorderConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
@@ -72,6 +73,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
 	static public final String REMOTE_WALK_CONSTRAINT_NAME = "RemoteWalkConstraint";
+	static public final String BORDER_CONSTRAINT_NAME = "BorderConstraint";
 
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -82,6 +84,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
 		bindTripConstraintFactory(REMOTE_WALK_CONSTRAINT_NAME).to(RemoteWalkConstraint.Factory.class);
+		bindTripConstraintFactory(BORDER_CONSTRAINT_NAME).to(BorderConstraint.Factory.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(SwissCarCostModel.class);
 		bindCostModel(CAR_WEISS_COST_MODEL_NAME).to(SwissWeissCarCostModel.class);
