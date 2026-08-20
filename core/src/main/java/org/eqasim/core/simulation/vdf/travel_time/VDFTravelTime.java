@@ -58,9 +58,7 @@ public class VDFTravelTime implements TravelTime {
 		this.crossingPenalty = crossingPenalty;
 
 		for (Link link : network.getLinks().values()) {
-			double travelTime = Math.max(1.0,
-					Math.min(link.getLength() / minimumSpeed, link.getLength() / link.getFreespeed())) +
-					crossingPenalty.calculateCrossingPenalty(link);
+			double travelTime = Math.clamp(link.getLength() / link.getFreespeed(), 1.0, link.getLength() / minimumSpeed);
 			double[] initialTimes = new double[scope.getIntervals()];
 			Arrays.fill(initialTimes, travelTime);
 			travelTimes.put(link.getId(), initialTimes);
