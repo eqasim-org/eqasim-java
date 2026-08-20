@@ -1,6 +1,5 @@
 package org.eqasim.core.components.flow;
 
-import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
@@ -35,7 +34,7 @@ public class FlowConfigGroup extends ReflectiveConfigGroup {
         map.put(ACTIVATE, "Whether to activate the module or not (default: true)");
         map.put(START_TIME, "Starting time of counting the traffic, therefore of computing the flow (default: 0.0 * 3600.0). ");
         map.put(END_TIME, "Ending time of counting traffic (default: 24.0 * 3600.0)");
-        map.put(BIN_SIZE, "Size of the time bins in seconds (default: 1800.0, other values are not tested)");
+        map.put(BIN_SIZE, "Size of the time bins in seconds (default: 3600.0, other values are not tested)");
         map.put(BETA, "Beta parameter for the flow updater (default: 0.5)" +
                 " (1.0 means no flow update, 0.0 means full flow update)");
         map.put(WRITE_FLOW_INTERVAL, "Write flow interval in iterations (default: 1)");

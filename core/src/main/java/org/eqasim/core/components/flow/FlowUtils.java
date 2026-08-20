@@ -13,40 +13,42 @@ public class FlowUtils {
             return 0.0; // bikes are not counted in the flow
         }
         Vehicle veh = scenario.getVehicles().getVehicles().get(vehicleId);
-        return scenario.getVehicles().getVehicleTypes().get(veh.getType().getId()).getPcuEquivalents();
+        return veh == null ? 0.0 : veh.getType().getPcuEquivalents();
     }
 
     public static double getBusPcu(Scenario scenario, Id<Vehicle> vehicleId){
         Vehicle veh = scenario.getTransitVehicles().getVehicles().get(vehicleId);
-        return scenario.getTransitVehicles().getVehicleTypes().get(veh.getType().getId()).getPcuEquivalents();
+        return veh == null ? 0.0 : veh.getType().getPcuEquivalents();
     }
 
     public static double getVehiclePcu(Scenario scenario, LinkEnterEvent event){
-        // this can be a transit vehicle or a normal vehicle
-        double pcu = 0.0;
-        if (isBus(event.getVehicleId())) {
-            pcu = getBusPcu(scenario, event.getVehicleId());
-        } else if (event.getVehicleId().toString().contains(":")) {
-            pcu = getCarPcu(scenario, Id.createVehicleId(event.getVehicleId().toString()));
-        }
-
-        return pcu;
+        return getVehiclePcu(scenario, event.getVehicleId());
     }
 
     public static double getVehiclePcu(Scenario scenario, LinkLeaveEvent event){
-        // this can be a transit vehicle or a normal vehicle
-        double pcu = 0.0;
-        if (isBus(event.getVehicleId())) {
-            pcu = getBusPcu(scenario, event.getVehicleId());
-        } else if (event.getVehicleId().toString().contains(":")) {
-            pcu = getCarPcu(scenario, Id.createVehicleId(event.getVehicleId().toString()));
+        return getVehiclePcu(scenario, event.getVehicleId());
+    }
+
+    private static double getVehiclePcu(Scenario scenario, Id<Vehicle> vehicleId) {
+        Vehicle vehicle = scenario.getVehicles().getVehicles().get(vehicleId);
+        if (vehicle != null) {
+            return isBike(vehicleId) ? 0.0 : vehicle.getType().getPcuEquivalents();
         }
 
-        return pcu;
+        if (isBus(vehicleId)) {
+            Vehicle transitVehicle = scenario.getTransitVehicles().getVehicles().get(vehicleId);
+            return transitVehicle == null ? 0.0 : transitVehicle.getType().getPcuEquivalents();
+        }
+
+        return 0.0;
     }
 
     public static boolean isBike(Id<Vehicle> vehicleId){
         return vehicleId.toString().contains("bike");
+    }
+
+    public static boolean isCarPassenger(Id<Vehicle> vehicleId){
+        return vehicleId.toString().contains("car_passenger");
     }
 
     public static boolean isBus(Id<Vehicle> vehicleId){
