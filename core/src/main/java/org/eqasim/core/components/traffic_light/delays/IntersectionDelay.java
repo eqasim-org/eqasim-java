@@ -5,14 +5,15 @@ import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.IdMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.vehicles.Vehicle;
 
 public class IntersectionDelay implements CrossingPenalty {
 
-    private final IdMap<Vehicle, Coord> lastDelayCoordinates = new IdMap<Vehicle, Coord>(Vehicle.class);
+    private final ConcurrentHashMap<Id<Vehicle>, Coord> lastDelayCoordinates = new ConcurrentHashMap<>();
     private final double minimumDistanceBetweenDelays; // meters
+    private final double minimumDistanceBetweenDelaysSquared; // meters
     private final TrafficLightDelay trafficLightDelays;
     private final UnsignalizedIntersectionDelay unsignalizedIntersectionDelay;
 
@@ -29,6 +30,7 @@ public class IntersectionDelay implements CrossingPenalty {
                              TimeBinManager timeBinManager,
                              CrossingPenalty delegate) {
         this.minimumDistanceBetweenDelays = delayConfigGroup.getMinimumDistanceBetweenDelays();
+        this.minimumDistanceBetweenDelaysSquared = minimumDistanceBetweenDelays * minimumDistanceBetweenDelays;
         this.applyUnsignalizedDelays = delayConfigGroup.isUnsignalizedActivated();
         this.applyTrafficLightDelays = delayConfigGroup.isTlActivated();
         this.startingIteration = delayConfigGroup.getStartingIteration();
@@ -100,17 +102,15 @@ public class IntersectionDelay implements CrossingPenalty {
             return true;
         }
 
-        // Calculate distance from last intersection where a delay was applied
+        // Calculate squared distance to avoid the expensive sqrt call
         double xDiff = lastDelayLocation.getX() - nextIntersectionLocation.getX();
         double yDiff = lastDelayLocation.getY() - nextIntersectionLocation.getY();
-        double distanceSinceLastDelay = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-
-        // if distance higher than the threshold, we should apply the traffic light delay, and update the last known traffic light position
-        if (distanceSinceLastDelay > minimumDistanceBetweenDelays){
-            // Update the last delay coordinates
+        double distance2 = xDiff * xDiff + yDiff * yDiff;
+        // if squared distance higher than squared threshold, apply the traffic light delay and update last known position
+        if (distance2 > minimumDistanceBetweenDelaysSquared) {
             updateLastDelayCoordinates(vehicleId, nextIntersectionLocation);
             return true;
-        }else {
+        } else {
             return false;
         }
     }
