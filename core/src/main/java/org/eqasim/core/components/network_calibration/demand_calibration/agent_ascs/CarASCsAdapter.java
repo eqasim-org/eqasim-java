@@ -56,17 +56,11 @@ public class CarASCsAdapter implements IterationEndsListener {
                 ? config.getUpdateInterval()
                 : Math.max(1, (int) Math.floor(1.0 / dmcWeight));
         this.numUpdates = 0;
-
+        // reset agents ASCS to 0 or to their initial values
+        resetAscs();
+        // get the errors and the population groups
         this.odErrors = calibrationEnabled ? odErrorsProvider.get():null;;
         this.populationGroups = calibrationEnabled ? populationGroupsProvider.get():null;
-
-        if (calibrationEnabled) {
-            for (Person person : scenario.getPopulation().getPersons().values()) {
-                if (!Tools.isInSubPopulation(person) && Tools.isCarAvailable(person)) {
-                    Tools.setCarASCIfDoesntExist(person, 0.0);
-                }
-            }
-        }
     }
 
     public void updateASCs(int iteration) {
@@ -150,6 +144,22 @@ public class CarASCsAdapter implements IterationEndsListener {
             updateASCs(iteration);
             correctionHeatMap.plotAverageCarAsc(population, populationGroups, outputHierarchy, tripListConverter, iteration);
             numUpdates++;
+        }
+    }
+
+    private void resetAscs(){
+        if (config.getResetAgentAscsToZero()){
+            for (Person person : population.getPersons().values()) {
+                if (Tools.isCarAvailable(person)) {
+                    Tools.setCarASC(person, 0.0);
+                }
+            }
+        } else if (calibrationEnabled) {
+            for (Person person : population.getPersons().values()) {
+                if (!Tools.isInSubPopulation(person) && Tools.isCarAvailable(person)) {
+                    Tools.setCarASCIfDoesntExist(person, 0.0);
+                }
+            }
         }
     }
 }

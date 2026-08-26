@@ -35,6 +35,7 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String GRID_REBUILD_INITIAL_CELL_SIZES = "gridRebuildInitialCellSizes";
     private static final String GRID_REBUILD_MIN_CELL_SIZES = "gridRebuildMinCellSizes";
     private static final String GRID_REBUILD_MAX_POPULATIONS = "gridRebuildMaxPopulations";
+    private static final String RESET_AGENT_ASCS_TO_ZERO = "resetAgentAscsToZero";
 
     private boolean activate;
     private int updateInterval = 0;
@@ -62,6 +63,7 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     private String gridRebuildInitialCellSizes = "10000,8000,8000";
     private String gridRebuildMinCellSizes = "800,500,200";
     private String gridRebuildMaxPopulations = "1000,800,500";
+    private boolean resetAgentAscsToZero = false;
 
     public AgentAscsCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -96,6 +98,7 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
         comments.put(GRID_REBUILD_INITIAL_CELL_SIZES, "Comma-separated initial cell sizes for scheduled grid rebuilds");
         comments.put(GRID_REBUILD_MIN_CELL_SIZES, "Comma-separated minimum cell sizes for scheduled grid rebuilds");
         comments.put(GRID_REBUILD_MAX_POPULATIONS, "Comma-separated population thresholds for scheduled grid rebuilds");
+        comments.put(RESET_AGENT_ASCS_TO_ZERO, "Whether to reset agent ASCs to zero (default: false)");
         return comments;
     }
 
@@ -143,6 +146,8 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(MIN_CELL_SIZE) public void setMinCellSize(double value) { minCellSize = value; }
     @StringGetter(MAX_POPULATION_PER_CELL) public int getMaxPopulationPerCell() { return maxPopulationPerCell; }
     @StringSetter(MAX_POPULATION_PER_CELL) public void setMaxPopulationPerCell(int value) { maxPopulationPerCell = value; }
+    @StringGetter(RESET_AGENT_ASCS_TO_ZERO) public boolean getResetAgentAscsToZero() { return resetAgentAscsToZero; }
+    @StringSetter(RESET_AGENT_ASCS_TO_ZERO) public void setResetAgentAscsToZero(boolean value) { resetAgentAscsToZero = value; }
     @StringGetter(GRID_REBUILD_UPDATES) public String getGridRebuildUpdatesAsString() { return gridRebuildUpdates; }
     @StringSetter(GRID_REBUILD_UPDATES) public void setGridRebuildUpdates(String value) { gridRebuildUpdates = value; }
     public List<Integer> getGridRebuildUpdates() { return parseIntegers(gridRebuildUpdates); }
