@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,9 +14,10 @@ import java.util.Map;
  */
 public class PenaltyManager {
     private static final Logger logger = LogManager.getLogger(PenaltyManager.class);
+    private static final int LAST_PENALTY_WINDOW = 4;
 
     private final Map<PenaltyGroupKey, Double> penalties = new HashMap<>();
-    private final Map<PenaltyGroupKey, Double> previousPenalties = new HashMap<>();
+    private final Map<PenaltyGroupKey, Deque<Double>> lastFourPenalties = new HashMap<>();
     private final double minPenalty;
     private final double maxPenalty;
     private final boolean calibrate;
@@ -22,10 +25,10 @@ public class PenaltyManager {
     /**
      * Constructs a PenaltyManager with bounds and calibration flag.
      */
-    public PenaltyManager(NetworkCalibrationConfigGroup config) {
-        this.minPenalty = config.getMinPenalty();
-        this.maxPenalty = config.getMaxPenalty();
-        this.calibrate = config.isOneOfObjectives("penalty") && config.isActivated() && config.isCalibrationEnabled();
+    public PenaltyManager(NetworkCalibrationConfigGroup config, CostCalibrationConfigGroup costConfig) {
+        this.minPenalty = costConfig.getMinPenalty();
+        this.maxPenalty = costConfig.getMaxPenalty();
+        this.calibrate = config.isCostCalibrationActivated() && config.isActivated() && config.isCalibrationEnabled();
     }
 
     /**
@@ -43,7 +46,7 @@ public class PenaltyManager {
 
     public void loadInitialPenalties(Map<PenaltyGroupKey, Double> initialPenalties) {
         penalties.clear();
-        previousPenalties.clear();
+        lastFourPenalties.clear();
 
         if (initialPenalties == null || initialPenalties.isEmpty()) {
             logger.info("No initial penalties provided. Falling back to zero penalties by default.");
@@ -63,6 +66,27 @@ public class PenaltyManager {
         return penalties.getOrDefault(key, 0.0);
     }
 
+    public double getAverageOfLastFourPenalties(PenaltyGroupKey key) {
+        Deque<Double> history = lastFourPenalties.get(key);
+        if (history == null || history.isEmpty()) {
+            return getPenalty(key);
+        }
+
+        double sum = 0.0;
+        for (double value : history) {
+            sum += value;
+        }
+        return sum / history.size();
+    }
+
+    private void recordPenaltyHistory(PenaltyGroupKey key, double penalty) {
+        Deque<Double> history = lastFourPenalties.computeIfAbsent(key, ignored -> new ArrayDeque<>());
+        history.addLast(penalty);
+        while (history.size() > LAST_PENALTY_WINDOW) {
+            history.removeFirst();
+        }
+    }
+
     /**
      * Sets the penalty for a category, clamping to bounds.
      */
@@ -76,50 +100,30 @@ public class PenaltyManager {
     }
 
     /**
-     * Updates the penalty for a category using adaptive learning rate.
-     * @param key The penalty group key.
-     * @param percentageDifference The flow vs count difference ratio.
-     * @param effectiveBeta The learning rate.
-     * @param iteration Current iteration number.
-     * @param unbiasedError The unbiased error for this category (if available).
-     * @param doUpdate Whether to perform the update (can be false for logging only).
+     * Applies a bounded robust-error update. There is deliberately no minimum
+     * non-zero step: updates can become arbitrarily small near equilibrium.
+     *
+     * @return the actual change after both step clipping and penalty bounds
      */
-    public void updatePenalty(PenaltyGroupKey key, double percentageDifference, double effectiveBeta, int iteration, double  unbiasedError, boolean doUpdate) {
-        if (!calibrate || !doUpdate) return;
+    public double updatePenalty(PenaltyGroupKey key, double robustError, double learningRate,
+                                double maximumUpdate) {
+        if (!calibrate || !Double.isFinite(robustError)) {
+            return 0.0;
+        }
+        if (!Double.isFinite(learningRate) || learningRate < 0.0
+                || !Double.isFinite(maximumUpdate) || maximumUpdate <= 0.0) {
+            throw new IllegalArgumentException("Learning rate must be finite and non-negative, and maximum update must be positive.");
+        }
 
         double currentPenalty = getPenalty(key);
-        previousPenalties.put(key, currentPenalty);
+        double requestedChange = clip(learningRate * robustError, -maximumUpdate, maximumUpdate);
+        setPenalty(key, currentPenalty + requestedChange);
+        double actualChange = getPenalty(key) - currentPenalty;
+        recordPenaltyHistory(key, getPenalty(key));
 
-        // Adaptive update: reduce learning rate for large changes to prevent oscillations
-        double adaptiveBeta = effectiveBeta;
-        if (Math.abs(percentageDifference) > 0.3) {
-            adaptiveBeta *= 0.5; // Reduce learning rate for large discrepancies
-        }
-
-        // Use exponential moving average for stability
-        double consideredError = Double.isFinite(unbiasedError) ? unbiasedError: percentageDifference;
-        double deltaPenalty = adaptiveBeta * consideredError;
-
-        boolean clipProgression = iteration>=60;
-        if (clipProgression) {
-            if (deltaPenalty > 0.005) {
-                deltaPenalty = clip(deltaPenalty, 0.01, 0.1);
-            } else if (deltaPenalty < -0.005) {
-                deltaPenalty = clip(deltaPenalty, -0.1, -0.01);
-            } else {
-                deltaPenalty = 0.0;
-            }
-        }
-        double newPenalty = currentPenalty + deltaPenalty;
-
-        // Add small regularization
-        if (Math.abs(newPenalty) < 5e-3) {
-            newPenalty = 0.0;
-        }
-
-        setPenalty(key, newPenalty);
-        logger.debug("Updated penalty for group {}: {} -> {} (diff: {}, beta: {})",
-            key, currentPenalty, newPenalty, percentageDifference, adaptiveBeta);
+        logger.debug("Updated penalty for group {}: {} -> {} (robust error: {}, learning rate: {}, actual change: {})",
+                key, currentPenalty, getPenalty(key), robustError, learningRate, actualChange);
+        return actualChange;
     }
 
     /**
@@ -142,7 +146,7 @@ public class PenaltyManager {
         for (Map.Entry<PenaltyGroupKey, PenaltyGroupKey> entry : keyMapping.entrySet()) {
             PenaltyGroupKey realKey = entry.getKey();
             PenaltyGroupKey mappedKey = entry.getValue();
-            double penalty = getPenalty(mappedKey);
+            double penalty = getAverageOfLastFourPenalties(mappedKey);
             pen.put(realKey, penalty);
         }
         PenaltyCsvHandler.writePenaltiesToFile(filename, pen);

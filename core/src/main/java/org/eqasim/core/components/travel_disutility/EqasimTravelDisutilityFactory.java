@@ -10,7 +10,7 @@ public class EqasimTravelDisutilityFactory implements TravelDisutilityFactory {
 	private final OnlyTimeDependentTravelDisutilityFactory delegate = new OnlyTimeDependentTravelDisutilityFactory();
 	private final RoutingPenalty linkPenalty;
 	private final double routingDistanceUtility;
-	private final double sigma;
+	private double sigma;
 	private final long baseSeed;
 
 	public EqasimTravelDisutilityFactory(RoutingPenalty linkPenalty, double routingDistanceUtility) {
@@ -22,6 +22,14 @@ public class EqasimTravelDisutilityFactory implements TravelDisutilityFactory {
 		this.routingDistanceUtility = routingDistanceUtility;
 		this.sigma = sigma;
 		this.baseSeed = baseSeed;
+	}
+
+	public void setSigmaNoise(double value) {
+		this.sigma = value;
+	}
+
+	public double getSigmaNoise() {
+		return sigma;
 	}
 
 	@Override

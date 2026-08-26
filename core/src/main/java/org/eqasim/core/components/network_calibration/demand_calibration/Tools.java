@@ -95,6 +95,11 @@ public class Tools {
         return isCB != null && isCB;
     }
 
+    static public boolean isFreightPerson(Person person) {
+        Boolean isFreight = (Boolean) person.getAttributes().getAttribute("isFreight");
+        return isFreight != null && isFreight;
+    }
+
     static public boolean isCarOrTruck(DiscreteModeChoiceTrip trip) {
         return TransportMode.car.equals(trip.getInitialMode()) || TransportMode.truck.equals(trip.getInitialMode());
     }

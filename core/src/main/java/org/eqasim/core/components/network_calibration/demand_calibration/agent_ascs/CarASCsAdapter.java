@@ -17,32 +17,44 @@ import java.util.List;
 
 public class CarASCsAdapter implements IterationEndsListener {
 
-    // --- Softened hyperparameters ---
-    private static final double LEARNING_RATE = 2.5;
-    private static final double MAX_PERSON_ASC_STEP = 0.5;
-    private static final double MIN_PERSON_ASC_STEP = 0.05;
-    private static final double MAX_PERSON_ASC = 3.0;
-    private static final int WARMUP_ITERATIONS = 20;
-    private static final double LEARNING_RATE_DECAY = 0.983;
-
     private final OutputDirectoryHierarchy outputHierarchy;
     private final Population population;
     private final PopulationGroups populationGroups;
     private final TripListConverter tripListConverter;
     private final ODErrors odErrors;
-    private final double dmcWeight;
     private final boolean calibrationEnabled;
     private final double initialLearningRate;
+    private final double minimumLearningRate;
+    private final double learningRateDecay;
+    private final double minAscStep;
+    private final double maxAscStep;
+    private final double ascDeadband;
+    private final double maxAbsoluteAsc;
+    private final int warmupIterations;
+    private final int updateInterval;
+    private final AgentAscsCalibrationConfigGroup config;
     private int numUpdates;
 
     public CarASCsAdapter(Scenario scenario, Provider<PopulationGroups> populationGroupsProvider, TripListConverter tripListConverter,
-                          OutputDirectoryHierarchy outputHierarchy, Provider<ODErrors> odErrorsProvider, double dmcWeight, NetworkCalibrationConfigGroup calConfig) {
+                          OutputDirectoryHierarchy outputHierarchy, Provider<ODErrors> odErrorsProvider, double dmcWeight,
+                          NetworkCalibrationConfigGroup calConfig, AgentAscsCalibrationConfigGroup config) {
         this.population = scenario.getPopulation();
         this.tripListConverter = tripListConverter;
-        this.dmcWeight = dmcWeight;
-        this.calibrationEnabled = calConfig.getAllObjectives().contains("agent") && calConfig.isCalibrationEnabled();
+        this.calibrationEnabled = calConfig.isActivated() && calConfig.isCalibrationEnabled()
+                && calConfig.isAgentAscsCalibrationActivated();
         this.outputHierarchy = outputHierarchy;
-        this.initialLearningRate = LEARNING_RATE;
+        this.config = config;
+        this.initialLearningRate = config.getLearningRate();
+        this.minimumLearningRate = config.getMinimumLearningRate();
+        this.learningRateDecay = config.getLearningRateDecay();
+        this.minAscStep = config.getMinAscStep();
+        this.maxAscStep = config.getMaxAscStep();
+        this.ascDeadband = config.getAscDeadband();
+        this.maxAbsoluteAsc = config.getMaxAbsoluteAsc();
+        this.warmupIterations = config.getWarmupIterations();
+        this.updateInterval = config.getUpdateInterval() > 0
+                ? config.getUpdateInterval()
+                : Math.max(1, (int) Math.floor(1.0 / dmcWeight));
         this.numUpdates = 0;
 
         this.odErrors = calibrationEnabled ? odErrorsProvider.get():null;;
@@ -51,7 +63,7 @@ public class CarASCsAdapter implements IterationEndsListener {
         if (calibrationEnabled) {
             for (Person person : scenario.getPopulation().getPersons().values()) {
                 if (!Tools.isInSubPopulation(person) && Tools.isCarAvailable(person)) {
-                    Tools.setCarASC(person, 0.0);
+                    Tools.setCarASCIfDoesntExist(person, 0.0);
                 }
             }
         }
@@ -89,15 +101,14 @@ public class CarASCsAdapter implements IterationEndsListener {
 
             if (validTrips > 0) {
                 double avgDelta = personDeltaSum / validTrips;
-                if (Math.abs(avgDelta)<5e-3){
+                if (Math.abs(avgDelta) < ascDeadband) {
                     avgDelta = 0.0;
                 } else {
-                    double magnitude = Math.min(MAX_PERSON_ASC_STEP,
-                            Math.max(MIN_PERSON_ASC_STEP, Math.abs(avgDelta)));
+                    double magnitude = Math.min(maxAscStep, Math.max(minAscStep, Math.abs(avgDelta)));
                     avgDelta = Math.copySign(magnitude, avgDelta);
                 }
 
-                Tools.incrementCarASC(person, avgDelta, MAX_PERSON_ASC);
+                Tools.incrementCarASC(person, avgDelta, maxAbsoluteAsc);
             }
         }
     }
@@ -107,17 +118,18 @@ public class CarASCsAdapter implements IterationEndsListener {
     }
 
     private double currentLearningRate(int iteration) {
-        int effectiveIteration = Math.max(0, iteration - WARMUP_ITERATIONS);
-        return Math.max(0.5, initialLearningRate * Math.pow(LEARNING_RATE_DECAY, effectiveIteration));
+        int effectiveIteration = Math.max(0, iteration - warmupIterations);
+        return Math.max(minimumLearningRate, initialLearningRate * Math.pow(learningRateDecay, effectiveIteration));
     }
 
     private void rebuildPopulationGroupsIfRequired(){
-        if (numUpdates==2) {
-            populationGroups.reBuild(10_000, 1250, 1000);
-        }
-
-        if (numUpdates==4) {
-            populationGroups.reBuild(8_000, 500, 1000);
+        List<Integer> updates = config.getGridRebuildUpdates();
+        int index = updates.indexOf(numUpdates);
+        if (index >= 0) {
+            populationGroups.reBuild(
+                    config.getGridRebuildInitialCellSizes().get(index),
+                    config.getGridRebuildMinCellSizes().get(index),
+                    config.getGridRebuildMaxPopulations().get(index));
         }
     }
 
@@ -126,7 +138,6 @@ public class CarASCsAdapter implements IterationEndsListener {
         if (!calibrationEnabled) {
             return;
         }
-        int interval = (int) Math.floor(1.0 / dmcWeight);
         int iteration = event.getIteration();
         // in the first iteration, we plot the boxes
         if (iteration==0) {
@@ -134,7 +145,7 @@ public class CarASCsAdapter implements IterationEndsListener {
         }
 
         // then, each interval iterations, we update the ASCs and plot the boxes again
-        if (iteration >= WARMUP_ITERATIONS && iteration % interval == 0) {
+        if (iteration >= warmupIterations && iteration % updateInterval == 0) {
             rebuildPopulationGroupsIfRequired();
             updateASCs(iteration);
             correctionHeatMap.plotAverageCarAsc(population, populationGroups, outputHierarchy, tripListConverter, iteration);

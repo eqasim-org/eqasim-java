@@ -38,14 +38,15 @@ public class EqasimTravelDisutility implements TravelDisutility {
 		disutility += penalty.getLinkPenalty(link, person, time, disutility);
 		disutility += routingDistanceUtility * (link.getLength() / 10.0); // 10.0 is for the scale, to be in the same order as travel time
 		if (useRandomness){
-			double normalNoise = Normal.get(link.getId().toString(), person.getId().toString(), baseSeed);
-			disutility *=   (1.0 + normalNoise * sigma);
+			double normalNoise = sigma * Normal.get(link.getId().toString(), person.getId().toString(), baseSeed);
+			disutility *= Math.max(1.0 + normalNoise, 1e-3); // we need to keep it positive, otherwise it doesn't make sense
 		}
 		return disutility;
 	}
 
 	@Override
 	public double getLinkMinimumTravelDisutility(Link link) {
-		return delegate.getLinkMinimumTravelDisutility(link);
+		return delegate.getLinkMinimumTravelDisutility(link)
+				+ routingDistanceUtility * (link.getLength() / 10.0);
 	}
 }

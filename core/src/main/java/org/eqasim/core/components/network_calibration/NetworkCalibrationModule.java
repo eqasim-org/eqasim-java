@@ -16,10 +16,14 @@ import org.eqasim.core.components.network_calibration.cost_calibration.Penalties
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyKeyManager;
 import org.eqasim.core.components.network_calibration.cost_calibration.RoutingPenaltyByLinkCategory;
+import org.eqasim.core.components.network_calibration.cost_calibration.CostCalibrationConfigGroup;
+import org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs.AgentAscsCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs.CarASCsAdapter;
 import org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs.ODErrors;
 import org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs.PopulationGroups;
 import org.eqasim.core.components.network_calibration.demand_calibration.subpopulations.Calibrator;
+import org.eqasim.core.components.network_calibration.demand_calibration.subpopulations.config.SubpopulationsCalibrationConfigGroup;
+import org.eqasim.core.components.network_calibration.freespeed_calibration.FreeSpeedCalibrationConfigGroup;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedAdapter;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.FreespeedFactorManager;
 import org.eqasim.core.components.flow.LinkFlowCounter;
@@ -53,8 +57,11 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Override
     protected void installEqasimExtension() {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        List<String> objectives = config.getAllObjectives();
         validateConfiguration(config);
+        boolean costCalibration = config.isCostCalibrationActivated();
+        boolean freespeedCalibration = config.isFreeSpeedCalibrationActivated();
+        boolean agentCalibration = config.isAgentAscsCalibrationActivated();
+        boolean subpopulationsCalibration = config.isSubpopulationsCalibrationActivated();
 
         if (config.isActivated()) {
             logger.info("Network calibration is activated. Installing components.");
@@ -63,7 +70,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             bind(CapacityCorrector.class).asEagerSingleton();
 
             // 2. Install flow module and activate it if it is not activated
-            if (config.isCalibrationEnabled() && objectives.contains("penalty")) {
+            if (config.isCalibrationEnabled() && (costCalibration || agentCalibration || subpopulationsCalibration)) {
                 FlowConfigGroup flowConfig = FlowConfigGroup.getOrCreate(getConfig());
                 if (!flowConfig.isActivated()) {
                     logger.info("Flow estimation is turned on as part of network calibration.");
@@ -73,7 +80,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             }
 
             // 2. install each component of the calibration module
-            if (objectives.contains("penalty")) {
+            if (costCalibration) {
                 logger.info("Network penalties calibration is activated");
                 addTravelDisutilityFactoryBinding(TransportMode.car).to(EqasimTravelDisutilityFactory.class);
                 addTravelDisutilityFactoryBinding("car_passenger").to(EqasimTravelDisutilityFactory.class);
@@ -82,15 +89,15 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                 addControllerListenerBinding().to(PenaltiesAdapter.class).asEagerSingleton();
             }
 
-            if (objectives.contains("agent")){
+            if (agentCalibration) {
                 addControllerListenerBinding().to(CarASCsAdapter.class).asEagerSingleton();
             }
 
-            if (objectives.contains("subpopulations")){
+            if (subpopulationsCalibration) {
                 addControllerListenerBinding().to(Calibrator.class).asEagerSingleton();
             }
 
-            if (objectives.contains("freespeed")) {
+            if (freespeedCalibration) {
                 logger.info("Network freespeed calibration is activated");
                 addControllerListenerBinding().to(FreespeedAdapter.class).asEagerSingleton();
             }
@@ -126,7 +133,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                                                   LinkCategorizer categorizer,
                                                   PenaltyKeyManager penaltyKeyManager) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new CountsProcessor(network, config, outputHierarchy, categorizer, penaltyKeyManager);
+        int minObservations = config.getCostCalibrationConfigGroup().getMinObservationsSpecialRegion();
+        return new CountsProcessor(network, config, outputHierarchy, categorizer, penaltyKeyManager, minObservations);
     }
 
     @Provides
@@ -140,7 +148,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                                                     PenaltyKeyManager penaltyKeyManager,
                                                     PenaltyManager penaltyManager) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new PenaltiesAdapter(network, countsProcessorProvider, flowProcessorProvider, config, outputHierarchy,
+        CostCalibrationConfigGroup costConfig = config.getCostCalibrationConfigGroup();
+        return new PenaltiesAdapter(network, countsProcessorProvider, flowProcessorProvider, config, costConfig, outputHierarchy,
                 eqasimConfig, categorizer, penaltyKeyManager, penaltyManager);
     }
 
@@ -162,7 +171,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     @Singleton
     public PenaltyManager providePenaltyManager() {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new PenaltyManager(config);
+        return new PenaltyManager(config, config.getCostCalibrationConfigGroup());
     }
 
     @Provides
@@ -170,14 +179,14 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     public PenaltyKeyManager providePenaltyKeyManager(Network network,
                                                       LinkCategorizer categorizer) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new PenaltyKeyManager(config, network, categorizer);
+        return new PenaltyKeyManager(config, config.getCostCalibrationConfigGroup(), network, categorizer);
     }
 
     @Provides
     @Singleton
     public FreespeedFactorManager provideFreespeedFactorManager() {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new FreespeedFactorManager(config);
+        return new FreespeedFactorManager(config, config.getFreeSpeedCalibrationConfigGroup());
     }
 
     @Provides
@@ -189,7 +198,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                                                     PenaltiesAdapter penaltiesAdapter,
                                                     TripsHandler tripsHandler) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new FreespeedAdapter(network, config, outputHierarchy, categorizer, factorManager,
+        return new FreespeedAdapter(network, config, config.getFreeSpeedCalibrationConfigGroup(), outputHierarchy, categorizer, factorManager,
                 penaltiesAdapter, tripsHandler);
     }
 
@@ -202,7 +211,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
         int threads = getConfig().global().getNumberOfThreads();
         RoadNetwork roadNetwork = new RoadNetwork(network);
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new TripsHandler(roadNetwork, config, categorizer, carTravelTime,
+        return new TripsHandler(roadNetwork, config, config.getFreeSpeedCalibrationConfigGroup(), categorizer, carTravelTime,
                 routerFactoryProvider, threads);
     }
 
@@ -212,7 +221,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                                              OutputDirectoryHierarchy outputHierarchy, Provider<ODErrors> odErrorsProvider, StrategyManager strategyManager) {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         double dmcWeight  = getDmcWeight(strategyManager);
-        return new CarASCsAdapter(scenario, populationGroupsProvider, tripListConverter, outputHierarchy, odErrorsProvider, dmcWeight, config);
+        return new CarASCsAdapter(scenario, populationGroupsProvider, tripListConverter, outputHierarchy,
+                odErrorsProvider, dmcWeight, config, config.getAgentAscsCalibrationConfigGroup());
     }
 
     @Provides
@@ -220,13 +230,17 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     public ODErrors provideODErrors(Scenario scenario, Provider<PopulationGroups> populationGroupsProvider, Provider<CountsProcessor> countsProcessorProvider,
                                     Provider<FlowProcessor> flowProcessorProvider, TripListConverter tripListConverter, EqasimConfigGroup eqasimConfig) {
         NetworkCalibrationConfigGroup calConfig = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new ODErrors(scenario, populationGroupsProvider, countsProcessorProvider, flowProcessorProvider, tripListConverter, eqasimConfig, calConfig);
+        return new ODErrors(scenario, populationGroupsProvider, countsProcessorProvider, flowProcessorProvider,
+                tripListConverter, eqasimConfig, calConfig, calConfig.getAgentAscsCalibrationConfigGroup());
     }
 
     @Provides
     @Singleton
     public PopulationGroups providePopulationGroups(Scenario scenario, EqasimConfigGroup config) {
-        return PopulationGroups.build(scenario, config.getSampleSize(), false);
+        AgentAscsCalibrationConfigGroup agentConfig = NetworkCalibrationConfigGroup.getOrCreate(getConfig())
+                .getAgentAscsCalibrationConfigGroup();
+        return PopulationGroups.build(scenario, config.getSampleSize(), false, agentConfig.getInitialCellSize(),
+                agentConfig.getMinCellSize(), agentConfig.getMaxPopulationPerCell());
     }
 
     @Provides
@@ -245,6 +259,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                 flowProcessorProvider,
                 eqasimConfig,
                 calConfig,
+                calConfig.getSubpopulationsCalibrationConfigGroup(),
                 tripRouterProvider
         );
     }
@@ -257,10 +272,6 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
         }
 
         List<String> objectives = config.getAllObjectives();
-        if (objectives.isEmpty()) {
-            throw new IllegalArgumentException("Network calibration is activated but objective is empty. Supported objectives are: penalty, freespeed.");
-        }
-
         Set<String> supportedObjectives = Set.of("penalty", "freespeed", "agent", "subpopulations");
         Set<String> invalidObjectives = new HashSet<>();
 
@@ -274,28 +285,117 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             throw new IllegalArgumentException("Unsupported network calibration objective(s): " + invalidObjectives);
         }
 
-        boolean calibrate = config.isCalibrationEnabled();
-        boolean hasPenaltyObjective = objectives.contains("penalty");
-        boolean hasFreespeedObjective = objectives.contains("freespeed");
-
-        if (calibrate && hasPenaltyObjective && !config.hasCountsFile()) {
-            throw new IllegalArgumentException("Penalty calibration requires countsFile.");
+        boolean costActive = config.isCostCalibrationActivated();
+        boolean freespeedActive = config.isFreeSpeedCalibrationActivated();
+        boolean agentActive = config.isAgentAscsCalibrationActivated();
+        boolean subpopulationsActive = config.isSubpopulationsCalibrationActivated();
+        if (!costActive && !freespeedActive && !agentActive && !subpopulationsActive) {
+            throw new IllegalArgumentException("Network calibration is active, but no child calibration group is active.");
         }
 
-        if (calibrate && hasFreespeedObjective && !config.hasObservedSpeedTripsFile()) {
-            throw new IllegalArgumentException("Freespeed calibration requires observedSpeedTripsFile.");
+        if (config.isCalibrationEnabled() && (costActive || agentActive || subpopulationsActive) && !config.hasCountsFile()) {
+            throw new IllegalArgumentException("Cost, agent-ASC, and subpopulation calibration require countsFile.");
         }
 
-        if (hasFreespeedObjective) {
-            if (config.getMinFreespeedFactor() <= 0.0 || config.getMaxFreespeedFactor() <= 0.0
-                    || config.getMinFreespeedFactor() > config.getMaxFreespeedFactor()) {
-                throw new IllegalArgumentException("Invalid freespeed factor bounds: minFreespeedFactor must be > 0 and <= maxFreespeedFactor.");
+        CostCalibrationConfigGroup costConfig = config.getCostCalibrationConfigGroup();
+        if (costActive) {
+            requirePositive("costCalibration.updateInterval", costConfig.getUpdateInterval());
+            requireNonNegative("costCalibration.warmupIterations", costConfig.getWarmupIterations());
+            if (costConfig.getMinPenalty() > costConfig.getMaxPenalty()) {
+                throw new IllegalArgumentException("costCalibration.minPenalty must be <= maxPenalty.");
             }
+            requirePositive("costCalibration.learningRateDecayScale", costConfig.getLearningRateDecayScale());
+            requireFraction("costCalibration.signReversalFactor", costConfig.getSignReversalFactor());
+            requireFraction("costCalibration.minimumGainMultiplier", costConfig.getMinimumGainMultiplier());
+            requireFraction("costCalibration.gainRecoveryRate", costConfig.getGainRecoveryRate());
+            requirePositive("costCalibration.minObservationsUrbanRural", costConfig.getMinObservationsUrbanRural());
+            requirePositive("costCalibration.minObservationsSpecialRegion", costConfig.getMinObservationsSpecialRegion());
+        }
 
-            if (config.getFreespeedWarmupIterations() < 0) {
-                throw new IllegalArgumentException("freespeedWarmupIterations must be >= 0.");
+        FreeSpeedCalibrationConfigGroup freespeedConfig = config.getFreeSpeedCalibrationConfigGroup();
+        if (freespeedActive) {
+            if (config.isCalibrationEnabled() && !freespeedConfig.hasObservedTripsFile()) {
+                throw new IllegalArgumentException("Freespeed calibration requires freespeedCalibration.observedTripsFile.");
             }
+            requirePositive("freespeedCalibration.updateInterval", freespeedConfig.getUpdateInterval());
+            requireNonNegative("freespeedCalibration.warmupIterations", freespeedConfig.getWarmupIterations());
+            if (freespeedConfig.getMinFactor() <= 0.0 || freespeedConfig.getMinFactor() > freespeedConfig.getMaxFactor()) {
+                throw new IllegalArgumentException("freespeedCalibration.minFactor must be > 0 and <= maxFactor.");
+            }
+            if (freespeedConfig.getTrimFraction() < 0.0 || freespeedConfig.getTrimFraction() >= 0.5) {
+                throw new IllegalArgumentException("freespeedCalibration.trimFraction must be in [0, 0.5).");
+            }
+            requirePositive("freespeedCalibration.frozenIterations", freespeedConfig.getFrozenIterations());
+            requirePositive("freespeedCalibration.historySize", freespeedConfig.getHistorySize());
+            requireNonNegative("freespeedCalibration.unboundedInitialUpdates", freespeedConfig.getUnboundedInitialUpdates());
+            requirePositive("freespeedCalibration.noImprovementPatience", freespeedConfig.getNoImprovementPatience());
+            if (freespeedConfig.getMinEffectiveLearningRate() > freespeedConfig.getMaxEffectiveLearningRate()) {
+                throw new IllegalArgumentException("freespeedCalibration.minEffectiveLearningRate must be <= maxEffectiveLearningRate.");
+            }
+        }
 
+        AgentAscsCalibrationConfigGroup agentConfig = config.getAgentAscsCalibrationConfigGroup();
+        if (agentActive) {
+            requireNonNegative("agentAscsCalibration.warmupIterations", agentConfig.getWarmupIterations());
+            int rebuildCount = agentConfig.getGridRebuildUpdates().size();
+            if (agentConfig.getGridRebuildInitialCellSizes().size() != rebuildCount
+                    || agentConfig.getGridRebuildMinCellSizes().size() != rebuildCount
+                    || agentConfig.getGridRebuildMaxPopulations().size() != rebuildCount) {
+                throw new IllegalArgumentException("All agentAscsCalibration grid-rebuild lists must have equal length.");
+            }
+            requirePositive("agentAscsCalibration.initialCellSize", agentConfig.getInitialCellSize());
+            requirePositive("agentAscsCalibration.minCellSize", agentConfig.getMinCellSize());
+            requirePositive("agentAscsCalibration.maxPopulationPerCell", agentConfig.getMaxPopulationPerCell());
+        }
+
+        SubpopulationsCalibrationConfigGroup subpopulationsConfig = config.getSubpopulationsCalibrationConfigGroup();
+        if (subpopulationsActive) {
+            requirePositive("subpopulationsCalibration.updateInterval", subpopulationsConfig.getUpdateInterval());
+            requirePositive("subpopulationsCalibration.earlyUpdateInterval", subpopulationsConfig.getEarlyUpdateInterval());
+            requireNonNegative("subpopulationsCalibration.warmupIterations", subpopulationsConfig.getWarmupIterations());
+            requirePositive("subpopulationsCalibration.freightRelocationRadiusFactor", subpopulationsConfig.getBackgroundRelocationRadiusFactor());
+            requirePositive("subpopulationsCalibration.freightMinimumRadius", subpopulationsConfig.getBackgroundMinimumRadius());
+            requirePositive("subpopulationsCalibration.freightMaximumRadius", subpopulationsConfig.getBackgroundMaximumRadius());
+            requireFraction("subpopulationsCalibration.freightRelocationTryFraction",
+                    subpopulationsConfig.getBackgroundRelocationTryFraction());
+            requireFraction("subpopulationsCalibration.destinationSelectionProbability",
+                    subpopulationsConfig.getDestinationSelectionProbability());
+            if (subpopulationsConfig.isCrossBorderCalibrationEnabled()) {
+                requirePositive("subpopulationsCalibration.relocationRadius", subpopulationsConfig.getRelocationRadius());
+                requirePositive("subpopulationsCalibration.homeRelocationRadius", subpopulationsConfig.getHomeRelocationRadius());
+                requireNonNegative("subpopulationsCalibration.maximumTimeShift", subpopulationsConfig.getMaximumTimeShift());
+                requirePositiveFraction("subpopulationsCalibration.crossBorderShareThreshold",
+                        subpopulationsConfig.getCrossBorderShareThreshold());
+                requirePositiveFraction("subpopulationsCalibration.crossBorderUpdateFraction",
+                        subpopulationsConfig.getCrossBorderUpdateFraction());
+            }
+            if (subpopulationsConfig.getBackgroundMinimumRadius() > subpopulationsConfig.getBackgroundMaximumRadius()) {
+                throw new IllegalArgumentException("subpopulationsCalibration.freightMinimumRadius must be <= freightMaximumRadius.");
+            }
+        }
+    }
+
+    private static void requirePositive(String name, int value) {
+        if (value <= 0) throw new IllegalArgumentException(name + " must be > 0.");
+    }
+
+    private static void requireNonNegative(String name, int value) {
+        if (value < 0) throw new IllegalArgumentException(name + " must be >= 0.");
+    }
+
+    private static void requirePositive(String name, double value) {
+        if (!Double.isFinite(value) || value <= 0.0) throw new IllegalArgumentException(name + " must be finite and > 0.");
+    }
+
+    private static void requireFraction(String name, double value) {
+        if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+            throw new IllegalArgumentException(name + " must be in [0, 1].");
+        }
+    }
+
+    private static void requirePositiveFraction(String name, double value) {
+        if (!Double.isFinite(value) || value <= 0.0 || value > 1.0) {
+            throw new IllegalArgumentException(name + " must be in (0, 1].");
         }
     }
 

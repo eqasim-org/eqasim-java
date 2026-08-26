@@ -2,6 +2,7 @@ package org.eqasim.core.scenario.routing;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
@@ -30,9 +31,22 @@ public class PlanRouter {
 	}
 
 	public void run(Plan plan, boolean replaceExistingRoutes, Set<String> modes) {
+		run(plan, replaceExistingRoutes, modes, trip -> true);
+	}
+
+	/**
+	 * Routes only trips accepted by {@code tripFilter}. The trip snapshot is
+	 * created before routes are replaced, so adjacent trips can safely be
+	 * selected by their shared activity instances.
+	 */
+	public void run(Plan plan, boolean replaceExistingRoutes, Set<String> modes,
+			Predicate<Trip> tripFilter) {
 		List<Trip> trips = TripStructureUtils.getTrips(plan);
 
 		for (Trip trip : trips) {
+			if (!tripFilter.test(trip)) {
+				continue;
+			}
 			boolean legsExist = true;
 
 			for (Leg leg : trip.getLegsOnly()) {

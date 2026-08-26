@@ -27,11 +27,12 @@ import java.util.*;
 public class CountsProcessor {
     private static final Logger logger = LogManager.getLogger(CountsProcessor.class);
 
-    private final int MIN_OBSERVATION_TO_CONSIDER = PenaltyKeyManager.MIN_OBSERVATIONS_SPECIAL;
+    private final int minObservationsToConsider;
 
     private final String countsFile;
     private final Map<PenaltyGroupKey, Double> averageCountsPerGroup =  new HashMap<>();
     private final IdMap<Link, Float> allLinks =  new IdMap<>(Link.class);
+    private final IdMap<Link, Float> weights =  new IdMap<>(Link.class);
     private final IdMap<Link, PenaltyGroupKey> roadGroups = new IdMap<>(Link.class);
     private final LinkCategorizer categorizer;
     private final PenaltyKeyManager penaltyKeyManager;
@@ -39,10 +40,11 @@ public class CountsProcessor {
 
     public CountsProcessor(Network network, NetworkCalibrationConfigGroup config,
                            OutputDirectoryHierarchy outputHierarchy, LinkCategorizer categorizer,
-                           PenaltyKeyManager penaltyKeyManager) {
+                           PenaltyKeyManager penaltyKeyManager, int minObservationsToConsider) {
         this.countsFile = config.getCountsFile();
         this.categorizer = categorizer;
         this.penaltyKeyManager = penaltyKeyManager;
+        this.minObservationsToConsider = minObservationsToConsider;
 
         if (!config.hasCountsFile()) {
             throw new IllegalArgumentException("countsFile must be provided for penalty calibration.");
@@ -71,23 +73,12 @@ public class CountsProcessor {
 
     private void readCounts(Network network) throws IOException {
         // Read counts file
-        File inputFile = new File(countsFile);
-        if (!inputFile.exists()) {
-            throw new IOException("Counts file " + countsFile + " does not exist.");
-        }
+        List<CountPoint> counts = readCounts(countsFile);
 
         averageCountsPerGroup.clear();
         numCountsByGroup.clear();
         allLinks.clear();
-
-        CsvMapper mapper = new CsvMapper();
-        CsvSchema taskSchema = mapper.typedSchemaFor(CountPoint.class).withHeader().withColumnSeparator(',').withComments()
-                .withColumnReordering(true);
-
-        MappingIterator<CountPoint> taskIterator = mapper.readerWithTypedSchemaFor(CountPoint.class).with(taskSchema)
-                .readValues(inputFile);
-
-        List<CountPoint> counts = taskIterator.readAll();
+        weights.clear();
 
         // Assign counts directly to mapped calibration groups.
         for (CountPoint point : counts) {
@@ -113,6 +104,7 @@ public class CountsProcessor {
                 numCountsByGroup.put(groupKey, numCountsByGroup.getOrDefault(groupKey, 0) + 1);
                 //  register the links
                 allLinks.put(linkId,(float) point.count);
+                weights.put(linkId, (float) point.weight);
             }
         }
 
@@ -128,8 +120,13 @@ public class CountsProcessor {
         return allLinks.containsKey(linkId);
     }
 
+    /** All links with a valid positive count, exposed as a read-only view. */
+    public Set<Id<Link>> linkIds() {
+        return Collections.unmodifiableSet(allLinks.keySet());
+    }
+
     public Double getAverageCountForGroup(PenaltyGroupKey key) {
-        if (numCountsByGroup.containsKey(key) && numCountsByGroup.get(key) < MIN_OBSERVATION_TO_CONSIDER) {
+        if (numCountsByGroup.containsKey(key) && numCountsByGroup.get(key) < minObservationsToConsider) {
             return Double.NaN;
         }
         return averageCountsPerGroup.getOrDefault(key, 0.0);
@@ -167,7 +164,33 @@ public class CountsProcessor {
         logger.info("Average counts per penalty group saved to {}", outputFile.getAbsolutePath());
     }
 
-    static public class CountPoint {
+    public static List<CountPoint> readCounts(String filename) throws IOException {
+        // Read counts file
+        File inputFile = new File(filename);
+        if (!inputFile.exists()) {
+            throw new IOException("Counts file " + filename + " does not exist.");
+        }
+
+        CsvMapper mapper = new CsvMapper();
+        CsvSchema bootstrapSchema = CsvSchema.emptySchema()
+                .withHeader()
+                .withColumnSeparator(',')
+                .withComments();
+
+        MappingIterator<CountPoint> taskIterator = mapper.readerFor(CountPoint.class)
+                .with(bootstrapSchema)
+                .readValues(inputFile);
+
+        List<CountPoint> counts = taskIterator.readAll();
+        for (CountPoint point : counts) {
+            if (point.weight < 1e-3) {
+                point.weight = 1.0;
+            }
+        }
+        return counts;
+    }
+
+    public static class CountPoint {
         @JsonProperty("linkId")
         @JsonAlias({"link", "link_id", "linkId"})
         public String linkId;
@@ -175,6 +198,10 @@ public class CountsProcessor {
         @JsonProperty("count")
         @JsonAlias({"count", "counts", "Count"})
         public double count;
+
+        @JsonProperty("weight")
+        @JsonAlias({"weight", "weights", "Weight"})
+        public double weight;
 
     }
 
@@ -206,5 +233,41 @@ public class CountsProcessor {
 
     public float getLinkCounts(Id<Link> linkId) {
         return allLinks.getOrDefault(linkId,-1.0F);
+    }
+
+    public float getWeight(Id<Link> linkId) {
+        return weights.getOrDefault(linkId, 1.0F);
+    }
+
+    public float getPercentile(double percentile) {
+        if (percentile < 0 || percentile > 100) {
+            throw new IllegalArgumentException("Percentile must be between 0 and 100.");
+        }
+        if (allLinks.isEmpty()) {
+            return 0.0F;
+        }
+
+        List<Float> values = new ArrayList<>(allLinks.values());
+        Collections.sort(values);
+
+        int n = values.size();
+        if (n == 1) {
+            return values.getFirst();
+        }
+
+        // Rank position (0-based) corresponding to the requested percentile
+        double rank = (percentile / 100.0) * (n - 1);
+        int lowIndex = (int) Math.floor(rank);
+        int highIndex = (int) Math.ceil(rank);
+
+        if (lowIndex == highIndex) {
+            return values.get(lowIndex);
+        }
+
+        // Linear interpolation between the two surrounding values
+        double fraction = rank - lowIndex;
+        float low = values.get(lowIndex);
+        float high = values.get(highIndex);
+        return (float) (low + fraction * (high - low));
     }
 }

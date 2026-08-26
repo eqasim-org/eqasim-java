@@ -9,16 +9,7 @@ import java.util.*;
 
 public class FreespeedFactorManager {
     private static final Logger logger = LogManager.getLogger(FreespeedFactorManager.class);
-    private static final int HISTORY_SIZE = 5;
-    private static final double MIN_EFFECTIVE_BETA = 0.4;
-    private static final double MAX_EFFECTIVE_BETA = 0.8;
-    private static final double MAX_FACTOR_STEP = 0.08;
-    private static final double MIN_IMPROVEMENT_RATIO = 0.015;
-    private static final int NO_IMPROVEMENT_PATIENCE = 3;
-    private static final int NUM_FROZEN_ITERATIONS = 4;
-    private static final int KEEP_FROZEN_FROM_ITERATION = 90;
-
-    private int NUM_UPDATES = 0;
+    private int numUpdates;
 
     private final Map<FreespeedCalibrationKey, Double> factors = new HashMap<>();
     private final Map<FreespeedCalibrationKey, GroupDiagnostics> diagnostics = new HashMap<>();
@@ -27,13 +18,31 @@ public class FreespeedFactorManager {
     private final double beta;
     private final boolean calibrate;
     private final int minTripsPerGroup;
+    private final int historySize;
+    private final double minEffectiveLearningRate;
+    private final double maxEffectiveLearningRate;
+    private final double maxFactorStep;
+    private final int unboundedInitialUpdates;
+    private final double minImprovementRatio;
+    private final int noImprovementPatience;
+    private final int frozenIterations;
+    private final int keepFrozenFromIteration;
 
-    public FreespeedFactorManager(NetworkCalibrationConfigGroup config) {
-        this.minFactor = config.getMinFreespeedFactor();
-        this.maxFactor = config.getMaxFreespeedFactor();
-        this.beta = config.getBeta();
-        this.calibrate = config.isOneOfObjectives("freespeed") && config.isActivated() && config.isCalibrationEnabled();
-        this.minTripsPerGroup = config.getMinTripsPerGroup();
+    public FreespeedFactorManager(NetworkCalibrationConfigGroup config, FreeSpeedCalibrationConfigGroup freespeedConfig) {
+        this.minFactor = freespeedConfig.getMinFactor();
+        this.maxFactor = freespeedConfig.getMaxFactor();
+        this.beta = freespeedConfig.getLearningRate();
+        this.calibrate = config.isFreeSpeedCalibrationActivated() && config.isActivated() && config.isCalibrationEnabled();
+        this.minTripsPerGroup = freespeedConfig.getMinTripsPerGroup();
+        this.historySize = freespeedConfig.getHistorySize();
+        this.minEffectiveLearningRate = freespeedConfig.getMinEffectiveLearningRate();
+        this.maxEffectiveLearningRate = freespeedConfig.getMaxEffectiveLearningRate();
+        this.maxFactorStep = freespeedConfig.getMaxFactorStep();
+        this.unboundedInitialUpdates = freespeedConfig.getUnboundedInitialUpdates();
+        this.minImprovementRatio = freespeedConfig.getMinImprovementRatio();
+        this.noImprovementPatience = freespeedConfig.getNoImprovementPatience();
+        this.frozenIterations = freespeedConfig.getFrozenIterations();
+        this.keepFrozenFromIteration = freespeedConfig.getKeepFrozenFromIteration();
     }
 
     public double getFactor(FreespeedCalibrationKey key) {
@@ -69,7 +78,7 @@ public class FreespeedFactorManager {
             return;
         }
 
-        NUM_UPDATES++;
+        numUpdates++;
         UpdateSummary summary = new UpdateSummary(iteration);
 
         for (Map.Entry<FreespeedCalibrationKey, GroupStats> entry : groupStats.entrySet()) {
@@ -108,7 +117,8 @@ public class FreespeedFactorManager {
     private GroupUpdateContext createGroupUpdateContext(FreespeedCalibrationKey key, GroupStats stats) {
         double currentFactor = this.factors.getOrDefault(key, 1.0);
         GroupDiagnostics diagnostics = this.diagnostics.computeIfAbsent(key,
-                ignored -> new GroupDiagnostics(Decision.FIRST, currentFactor, Double.NaN));
+                ignored -> new GroupDiagnostics(Decision.FIRST, currentFactor, Double.NaN,
+                        historySize, frozenIterations, keepFrozenFromIteration));
         double currentError = Math.abs(stats.getAverageErrors());
 
         return new GroupUpdateContext(key, stats, diagnostics, currentFactor, currentError);
@@ -159,7 +169,7 @@ public class FreespeedFactorManager {
     private void skipNoImprovement(GroupUpdateContext context, UpdateSummary summary) {
         context.diagnostics.noImprovementStreak++;
 
-        if (context.diagnostics.noImprovementStreak >= NO_IMPROVEMENT_PATIENCE) {
+        if (context.diagnostics.noImprovementStreak >= noImprovementPatience) {
             context.diagnostics.frozen++;
             summary.frozen++;
 
@@ -208,8 +218,11 @@ public class FreespeedFactorManager {
     }
 
     private double computeUpdatedFactor(double currentFactor, double candidateFactor) {
-        double effectiveBeta = NUM_UPDATES>2 ? clipValue(beta * 2.0 / (NUM_UPDATES-2.0), MIN_EFFECTIVE_BETA, MAX_EFFECTIVE_BETA):1.0;
-        double maximumStep = NUM_UPDATES>2 ? MAX_FACTOR_STEP: 1.0;
+        double effectiveBeta = numUpdates > unboundedInitialUpdates
+                ? clipValue(beta * 2.0 / Math.max(1.0, numUpdates - unboundedInitialUpdates),
+                        minEffectiveLearningRate, maxEffectiveLearningRate)
+                : 1.0;
+        double maximumStep = numUpdates > unboundedInitialUpdates ? maxFactorStep : 1.0;
         double rawStep = (candidateFactor - currentFactor) * effectiveBeta;
         double boundedStep = clipValue(rawStep, -maximumStep, maximumStep);
         return clipFactor(currentFactor + boundedStep);
@@ -220,12 +233,12 @@ public class FreespeedFactorManager {
                 groupsWithStats, factors.size(), summary.updated, summary.skipped, summary.changed, summary.frozen, summary.iteration);
     }
 
-    private static boolean isImproved(double previousError, double currentError) {
+    private boolean isImproved(double previousError, double currentError) {
         if (!Double.isFinite(previousError)) {
             return true;
         }
 
-        double threshold = Math.abs(previousError) * (1.0 - MIN_IMPROVEMENT_RATIO);
+        double threshold = Math.abs(previousError) * (1.0 - minImprovementRatio);
         return Math.abs(currentError) < threshold;
     }
 
@@ -281,15 +294,23 @@ public class FreespeedFactorManager {
     }
 
     public static class GroupDiagnostics {
-        public final Q<Decision> decisions = new Q<>(HISTORY_SIZE);
-        public final Q<Double> lastFactors = new Q<>(HISTORY_SIZE);
-        public final Q<Double> lastErrors = new Q<>(HISTORY_SIZE);
+        public final Q<Decision> decisions;
+        public final Q<Double> lastFactors;
+        public final Q<Double> lastErrors;
+        private final int frozenIterations;
+        private final int keepFrozenFromIteration;
         public int noImprovementStreak;
         public int frozen;
         public boolean lastlyFrozen = false;
         public boolean keepFrozen = false;
 
-        public GroupDiagnostics(Decision decision, double factor, double error) {
+        public GroupDiagnostics(Decision decision, double factor, double error, int historySize,
+                                int frozenIterations, int keepFrozenFromIteration) {
+            this.decisions = new Q<>(historySize);
+            this.lastFactors = new Q<>(historySize);
+            this.lastErrors = new Q<>(historySize);
+            this.frozenIterations = frozenIterations;
+            this.keepFrozenFromIteration = keepFrozenFromIteration;
             this.decisions.add(decision);
             this.lastFactors.add(factor);
             this.lastErrors.add(error);
@@ -305,8 +326,8 @@ public class FreespeedFactorManager {
 
         public boolean isFrozen(int iteration) {
             // after KEEP_FROZEN_FROM_ITERATION, if it is frozen once, it will stay frozen up to the end of the simulation
-            boolean shouldBeFrozen = (frozen > 0) && (frozen%NUM_FROZEN_ITERATIONS)!=0;
-            if (iteration>=KEEP_FROZEN_FROM_ITERATION && shouldBeFrozen) {
+            boolean shouldBeFrozen = frozen > 0 && frozen % frozenIterations != 0;
+            if (iteration >= keepFrozenFromIteration && shouldBeFrozen) {
                 keepFrozen = true;
             }
             return keepFrozen || shouldBeFrozen;
@@ -362,8 +383,19 @@ public class FreespeedFactorManager {
         private final FloatArrayList weights = new FloatArrayList(16_384);
         private final FloatArrayList errors = new FloatArrayList(16_384);
 
-        private static final double EPSILON = 0.02;
-        private static final double C = 0.02;
+        private final double travelTimeTolerance;
+        private final double imbalanceThreshold;
+        private final double trimFraction;
+
+        public GroupStats() {
+            this(new FreeSpeedCalibrationConfigGroup());
+        }
+
+        public GroupStats(FreeSpeedCalibrationConfigGroup config) {
+            this.travelTimeTolerance = config.getTravelTimeTolerance();
+            this.imbalanceThreshold = config.getImbalanceThreshold();
+            this.trimFraction = config.getTrimFraction();
+        }
 
         public void addStat(double observedTravelTime, double simulatedTravelTime,
                             double weight, double length, double freespeed) {
@@ -390,9 +422,9 @@ public class FreespeedFactorManager {
         private void adaptCounts(double realTt, double simTt, double weight) {
             this.nTot += weight;
 
-            if (simTt < (1 - EPSILON) * realTt) {
+            if (simTt < (1 - travelTimeTolerance) * realTt) {
                 nFast += weight;
-            } else if (simTt > (1 + EPSILON) * realTt) {
+            } else if (simTt > (1 + travelTimeTolerance) * realTt) {
                 nSlow += weight;
             }
         }
@@ -411,7 +443,7 @@ public class FreespeedFactorManager {
         }
 
         public boolean shouldUpdate() {
-            return Math.abs(nFast - nSlow) > C * nTot;
+            return Math.abs(nFast - nSlow) > imbalanceThreshold * nTot;
         }
 
         public double getAverageFactor() {
@@ -437,8 +469,9 @@ public class FreespeedFactorManager {
             // Sort indices based on x values
             IntArrays.quickSort(order, (i, j) -> Float.compare(x.getFloat(i), x.getFloat(j)));
 
-            int lowerBound = (int) (size * 0.2);
-            int upperBound = (int) (size * 0.8);
+            int lowerBound = (int) (size * trimFraction);
+            int upperBound = (int) Math.ceil(size * (1.0 - trimFraction));
+            upperBound = Math.max(lowerBound + 1, Math.min(size, upperBound));
 
             double weightedSum = 0.0;
             double totalWeight = 0.0;

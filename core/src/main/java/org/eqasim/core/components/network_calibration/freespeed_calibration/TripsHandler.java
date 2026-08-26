@@ -36,19 +36,22 @@ public class TripsHandler {
     private final boolean isActivated;
     private final boolean isCalibrating;
     private final Provider<LeastCostPathCalculatorFactory> routerFactoryProvider;
+    private final FreeSpeedCalibrationConfigGroup freespeedConfig;
 
     public TripsHandler(Network network,
                         NetworkCalibrationConfigGroup config,
+                        FreeSpeedCalibrationConfigGroup freespeedConfig,
                         LinkCategorizer categorizer,
                         TravelTime carTravelTime,
                         Provider<LeastCostPathCalculatorFactory> routerFactoryProvider,
                         int threads) {
         this.network = network;
+        this.freespeedConfig = freespeedConfig;
         this.routerFactoryProvider = routerFactoryProvider;
         this.categorizer = categorizer;
         this.carTravelTime = carTravelTime;
         this.threads = threads;
-        this.isActivated = config.isOneOfObjectives("freespeed") && config.isActivated();
+        this.isActivated = config.isFreeSpeedCalibrationActivated() && config.isActivated();
         this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
 
         if (isActivated && isCalibrating) {
@@ -60,11 +63,11 @@ public class TripsHandler {
                     throw new IllegalStateException("Freespeed calibration requires congested simulated car TravelTime, but FreeSpeedTravelTime was provided.");
                 }
 
-                if (!config.hasObservedSpeedTripsFile()) {
-                    throw new IllegalArgumentException("observedSpeedTripsFile must be provided for freespeed calibration objective.");
+                if (!freespeedConfig.hasObservedTripsFile()) {
+                    throw new IllegalArgumentException("observedTripsFile must be provided for freespeed calibration.");
                 }
 
-                this.observedTrips = ObservedTripsTravelTimesCsvHandler.readTrips(config.getObservedSpeedTripsFile());
+                this.observedTrips = ObservedTripsTravelTimesCsvHandler.readTrips(freespeedConfig.getObservedTripsFile());
                 logger.info("Freespeed calibration initialized with {} observed trips", observedTrips.size());
         } else {
                 this.observedTrips = List.of();
@@ -173,7 +176,7 @@ public class TripsHandler {
                 }
 
                 FreespeedFactorManager.GroupStats stats = localStats.computeIfAbsent(key,
-                        ignored -> new FreespeedFactorManager.GroupStats());
+                        ignored -> new FreespeedFactorManager.GroupStats(freespeedConfig));
 
                 stats.addStat(observedTravelTime, simulatedTravelTime, weight, link.getLength(), link.getFreespeed());
             }
@@ -187,7 +190,8 @@ public class TripsHandler {
     private void mergeGroupStats(Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> destination,
                                  Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> source) {
         for (Map.Entry<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> entry : source.entrySet()) {
-            FreespeedFactorManager.GroupStats destinationStats = destination.computeIfAbsent(entry.getKey(), ignored -> new FreespeedFactorManager.GroupStats());
+            FreespeedFactorManager.GroupStats destinationStats = destination.computeIfAbsent(entry.getKey(),
+                    ignored -> new FreespeedFactorManager.GroupStats(freespeedConfig));
             FreespeedFactorManager.GroupStats sourceStats = entry.getValue();
             destinationStats.merge(sourceStats);
         }
@@ -195,14 +199,18 @@ public class TripsHandler {
 
 
     private boolean acceptRoutedTrip(double observedDistance, double observedTravelTime, double simulatedDistance, double simulatedTravelTime){
-        if (observedDistance <= 1000.0 || observedTravelTime <= 180.0 || simulatedDistance <= 1000.0 || simulatedTravelTime <= 180.0) {
+        if (observedDistance <= freespeedConfig.getMinTripDistance()
+                || observedTravelTime <= freespeedConfig.getMinTripTravelTime()
+                || simulatedDistance <= freespeedConfig.getMinTripDistance()
+                || simulatedTravelTime <= freespeedConfig.getMinTripTravelTime()) {
             return false;
         }
-        if  (Math.abs((simulatedDistance-observedDistance)/observedDistance) > 0.1) {
+        if (Math.abs((simulatedDistance - observedDistance) / observedDistance) > freespeedConfig.getMaxDistanceError()) {
             return false;
         }
-        double diffTravelTime_pct = (simulatedTravelTime-observedTravelTime)/observedTravelTime;
-        return !(diffTravelTime_pct > 2) && !(diffTravelTime_pct < -0.3);
+        double relativeTravelTimeError = (simulatedTravelTime - observedTravelTime) / observedTravelTime;
+        return relativeTravelTimeError >= freespeedConfig.getMinTravelTimeError()
+                && relativeTravelTimeError <= freespeedConfig.getMaxTravelTimeError();
     }
 
     private double computeLinkTravelTime(Link link, double time) {

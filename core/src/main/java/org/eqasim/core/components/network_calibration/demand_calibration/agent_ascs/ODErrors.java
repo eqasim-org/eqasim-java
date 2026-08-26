@@ -28,30 +28,46 @@ public class ODErrors {
     private final double sampleSize;
     private final boolean calibrationEnabled;
 
-    private final double RELATIVE_DIFFERENCE_THRESHOLD;
-    private final double EPSILON;
-    private final double MAX_ABS_LOG_ERROR;
-    private final double OBSERVATION_SHRINKAGE; // To build confidence in one OD erro
-    private final double MIN_TRIP_WEIGHT;
+    private final double relativeDifferenceThreshold;
+    private final double epsilon;
+    private final double maxAbsoluteLogError;
+    private final double observationShrinkage;
+    private final double minTripWeight;
+    private final double lowCountWeight;
+    private final double mediumCountWeight;
+    private final double highCountWeight;
+    private final double veryHighCountWeight;
+
+    private final double counts25Percentile;
+    private final double counts50Percentile;
+    private final double counts75Percentile;
 
     public ODErrors(Scenario scenario, Provider<PopulationGroups> populationGroupsProvider, Provider<CountsProcessor> countsProcessorProvider,
                     Provider<FlowProcessor> flowProcessorProvider, TripListConverter tripListConverter, EqasimConfigGroup eqasimConfig,
-                    NetworkCalibrationConfigGroup calConfig) {
+                    NetworkCalibrationConfigGroup calConfig, AgentAscsCalibrationConfigGroup agentConfig) {
         this.population = scenario.getPopulation();
         this.tripListConverter = tripListConverter;
         this.sampleSize = eqasimConfig.getSampleSize();
-        this.calibrationEnabled = calConfig.getAllObjectives().contains("agent") && calConfig.isCalibrationEnabled();
+        this.calibrationEnabled = calConfig.isActivated() && calConfig.isCalibrationEnabled()
+                && calConfig.isAgentAscsCalibrationActivated();
 
         this.countsProcessor = calibrationEnabled ? countsProcessorProvider.get():null;
         this.flowProcessor = calibrationEnabled ? flowProcessorProvider.get():null;
         this.populationGroups = calibrationEnabled ? populationGroupsProvider.get():null;
 
-        // Later I need to make these parameters configurable
-        this.RELATIVE_DIFFERENCE_THRESHOLD = 0.02; // threshold in relative flow error to start correcting
-        this.EPSILON = 1.0; // for log error (log(x)+epsilon)
-        this.MAX_ABS_LOG_ERROR = 1.5; //limit the log error with this range
-        this.OBSERVATION_SHRINKAGE = 100.0 * sampleSize; // used for confidence weight
-        this.MIN_TRIP_WEIGHT = 0.05; // minimum weight of each trips (the higher it crosses counting stations, the lower is the weight)
+        this.counts25Percentile = countsProcessor==null? 0.0:countsProcessor.getPercentile(25);
+        this.counts50Percentile = countsProcessor==null? 0.0:countsProcessor.getPercentile(50);
+        this.counts75Percentile = countsProcessor==null? 0.0:countsProcessor.getPercentile(75);
+
+        this.relativeDifferenceThreshold = agentConfig.getRelativeFlowErrorThreshold();
+        this.epsilon = agentConfig.getLogErrorEpsilon();
+        this.maxAbsoluteLogError = agentConfig.getMaxAbsoluteLogError();
+        this.observationShrinkage = agentConfig.getObservationShrinkage() * sampleSize;
+        this.minTripWeight = agentConfig.getMinTripWeight();
+        this.lowCountWeight = agentConfig.getLowCountWeight();
+        this.mediumCountWeight = agentConfig.getMediumCountWeight();
+        this.highCountWeight = agentConfig.getHighCountWeight();
+        this.veryHighCountWeight = agentConfig.getVeryHighCountWeight();
     }
 
     public double[][] getODCorrections() {
@@ -85,7 +101,7 @@ public class ODErrors {
                 }
 
                 double meanLogError = sumLogError[i][j] / totalWeight;
-                double confidenceWeight = nObs / (nObs + OBSERVATION_SHRINKAGE);
+                double confidenceWeight = nObs / (nObs + observationShrinkage);
                 corrections[i][j] = confidenceWeight * meanLogError;
             }
         }
@@ -123,7 +139,7 @@ public class ODErrors {
         // Count the number of counted links on this trip so we can weight the contribution.
         int countedLinksOnTrip = 0;
         for (Id<Link> linkId : linkIds) {
-            if (countsProcessor.getLinkCounts(linkId) > 0) {
+            if (countsProcessor.contains(linkId)) {
                 countedLinksOnTrip++;
             }
         }
@@ -138,7 +154,7 @@ public class ODErrors {
         // A trip that crosses 20 counts adds +1/20 per link, for a total of +1.
         double linkWeight = 1.0 / countedLinksOnTrip;
         // As an extra safeguard, if a single trip has a very large number of counts, each individual link contribution is capped to avoid noise.
-        linkWeight = Math.max(linkWeight, MIN_TRIP_WEIGHT);
+        linkWeight = Math.max(linkWeight, minTripWeight);
 
         // we get the origin and destination zones
         Coord origin = trip.getOriginActivity().getCoord();
@@ -148,12 +164,14 @@ public class ODErrors {
 
         for (Id<Link> linkId : linkIds) {
             float counts = countsProcessor.getLinkCounts(linkId);
+            float countWeight = countsProcessor.getWeight(linkId);
+
             if (counts > 0) {
                 double totalFlow = flowProcessor.getTotalLinkFlow(linkId);
                 if (totalFlow > 0.0) {
                     totalFlow = totalFlow / sampleSize;
                     insertError(sumLogError, observations, sumWeights, groupOrigin, groupDestination,
-                            counts, totalFlow, linkWeight);
+                            counts, totalFlow, linkWeight, countWeight);
                 }
             }
         }
@@ -161,17 +179,17 @@ public class ODErrors {
 
     private void insertError(double[][] sumLogError, int[][] observations, double[][] sumWeights,
                              int groupOrigin, int groupDestination,
-                             double counts, double totalFlow, double weight) {
-        double pceDiff = (totalFlow - counts) / Math.max(counts, EPSILON);
-        if (Math.abs(pceDiff) <= RELATIVE_DIFFERENCE_THRESHOLD) {
+                             double counts, double totalFlow, double linkWeight, double countWeight) {
+        double pceDiff = (totalFlow - counts) / Math.max(counts, epsilon);
+        if (Math.abs(pceDiff) <= relativeDifferenceThreshold) {
             return;
         }
 
-        double logError = Math.log((counts + EPSILON) / (totalFlow + EPSILON));
-        logError = Math.max(-MAX_ABS_LOG_ERROR, Math.min(MAX_ABS_LOG_ERROR, logError));
+        double logError = Math.log((counts + epsilon) / (totalFlow + epsilon));
+        logError = Math.max(-maxAbsoluteLogError, Math.min(maxAbsoluteLogError, logError));
         // At this point, one should only use the weight, however, I think that we must respect more the flow in the highways
         // thus, I think that we need to include an additional weight that is based on the counts, it is higher as the counts go up
-        double w = weight * getCountsWeight(counts);
+        double w = linkWeight * getCountsWeight(counts) * countWeight;
 
         sumLogError[groupOrigin][groupDestination] += logError * w;
         sumWeights[groupOrigin][groupDestination] += w;
@@ -179,14 +197,14 @@ public class ODErrors {
     }
 
     private double getCountsWeight(double count){
-        if (count<20_000){
-            return 0.5;
-        } else if(count<40_000){
-            return 0.8;
-        } else if(count<60_000){
-            return 1.1;
+        if(count <= counts25Percentile){
+            return lowCountWeight;
+        } else if(count <= counts50Percentile){
+            return mediumCountWeight;
+        } else if(count <= counts75Percentile){
+            return highCountWeight;
         } else {
-            return 1.5;
+            return veryHighCountWeight;
         }
     }
 }

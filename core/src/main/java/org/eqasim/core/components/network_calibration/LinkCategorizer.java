@@ -35,16 +35,20 @@ public class LinkCategorizer {
     private final Map<Id<Link>, Integer> freespeedSpecialRegionByLinkId = new HashMap<>();
     private final boolean hasPenaltySpecialRegions;
     private final boolean hasFreespeedSpecialRegions;
+    private final double categoryFivePromotionLaneThreshold;
+    private final double categoryFivePromotionSpeedThreshold;
 
     /**
      * Constructs a LinkCategorizer. Urban/rural separation is always active.
      * @param config Network Calibration Config group.
      */
     public LinkCategorizer(Network network, NetworkCalibrationConfigGroup config) {
-        List<String> penaltiesSpecialRegionFiles = config.getPenaltiesSpecialRegionFiles();
+        this.categoryFivePromotionLaneThreshold = config.getCategoryFivePromotionLaneThreshold();
+        this.categoryFivePromotionSpeedThreshold = config.getCategoryFivePromotionSpeedThreshold() / 3.6;
+        List<String> penaltiesSpecialRegionFiles = config.getCostCalibrationConfigGroup().getSpecialRegionFiles();
         this.hasPenaltySpecialRegions = !penaltiesSpecialRegionFiles.isEmpty();
 
-        List<String> freespeedSpecialRegionFiles = config.getFreespeedSpecialRegionFiles();
+        List<String> freespeedSpecialRegionFiles = config.getFreeSpeedCalibrationConfigGroup().getSpecialRegionFiles();
         this.hasFreespeedSpecialRegions = !freespeedSpecialRegionFiles.isEmpty();
 
         initSpecialRegions(network, penaltiesSpecialRegionFiles, freespeedSpecialRegionFiles);
@@ -144,7 +148,8 @@ public class LinkCategorizer {
         } else if (CATEGORY_4_HIGHWAY_TYPES.contains(osmHighway)) {
             baseCategory = 4;
         } else if (CATEGORY_5_HIGHWAY_TYPES.contains(osmHighway)) {
-            if (link.getNumberOfLanes() > 1 || link.getFreespeed() > 45 / 3.6) {
+            if (link.getNumberOfLanes() > categoryFivePromotionLaneThreshold
+                    || link.getFreespeed() > categoryFivePromotionSpeedThreshold) {
                 baseCategory = 4; // treat as tertiary if more than 1 lane or freespeed > 45 km/h
             } else {
                 baseCategory = 5;

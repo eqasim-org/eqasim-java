@@ -27,7 +27,9 @@ public class FlowProcessor {
 
     private final Map<PenaltyGroupKey, Double> flowPerGroup = new HashMap<>();
     private final Map<PenaltyGroupKey, Integer> linksPerGroup = new HashMap<>();
-    private final Map<PenaltyGroupKey, FloatArrayList> errors = new HashMap<>();
+    private final Map<PenaltyGroupKey, FloatArrayList> simulatedFlows = new HashMap<>();
+    private final Map<PenaltyGroupKey, FloatArrayList> observedCounts = new HashMap<>();
+    private final Map<PenaltyGroupKey, FloatArrayList> observationWeights = new HashMap<>();
     private final double totalNumberOfHours;
     private final double sampleSize;
 
@@ -62,17 +64,23 @@ public class FlowProcessor {
             // sum the flow of the day (normalized, by hour, by lane)
             double totalFlow = getTotalLinkFlow(linkId);
 
-            // only consider links with positive flow
-            if (totalFlow>0.0) {
-                // put the flow in the map
-                flowPerGroup.put(groupKey, flowPerGroup.getOrDefault(groupKey, 0.0) + totalFlow);
-                linksPerGroup.put(groupKey, linksPerGroup.getOrDefault(groupKey, 0) + 1);
+            // Every observed link must contribute to the group average, including
+            // links with zero simulated flow. Otherwise simulated and observed
+            // group averages would use different denominators.
+            flowPerGroup.put(groupKey, flowPerGroup.getOrDefault(groupKey, 0.0) + totalFlow);
+            linksPerGroup.put(groupKey, linksPerGroup.getOrDefault(groupKey, 0) + 1);
 
-                double linkCounts = countsProcessor.getLinkCounts(linkId);
-                if (linkCounts>0.0) {
-                    float error = (float) ((totalFlow / sampleSize - linkCounts) / linkCounts);
-                    errors.computeIfAbsent(groupKey, k -> new FloatArrayList(32)).add(error);
+            double linkCounts = countsProcessor.getLinkCounts(linkId);
+            if (linkCounts > 0.0) {
+                double fullSampleFlow = totalFlow / sampleSize;
+                double weight = countsProcessor.getWeight(linkId);
+                if (!Double.isFinite(weight) || weight <= 0.0) {
+                    weight = 1.0;
                 }
+
+                simulatedFlows.computeIfAbsent(groupKey, k -> new FloatArrayList(32)).add((float) fullSampleFlow);
+                observedCounts.computeIfAbsent(groupKey, k -> new FloatArrayList(32)).add((float) linkCounts);
+                observationWeights.computeIfAbsent(groupKey, k -> new FloatArrayList(32)).add((float) weight);
             }
         }
 
@@ -98,10 +106,32 @@ public class FlowProcessor {
         return 0.0;
     }
 
+    /**
+     * Returns the change in the reported link flow caused by one additional
+     * vehicle passage in the simulated sample.
+     *
+     * <p>{@link #getTotalLinkFlow(Id)} reports average hourly, per-lane flow,
+     * while the demand calibrator manipulates whole daily passages. Keeping this
+     * conversion here ensures that incremental calibration updates use exactly
+     * the same units as the measured simulation flow.</p>
+     */
+    public double getFlowContributionPerPassage(Id<Link> linkId) {
+        Link link = network.getLinks().get(linkId);
+        if (link == null) {
+            return 0.0;
+        }
+
+        double hours = Math.max(1.0, totalNumberOfHours);
+        double lanes = Math.max(1.0, link.getNumberOfLanes());
+        return 1.0 / (hours * lanes);
+    }
+
     public void resetCounts(int iteration) {
         flowPerGroup.clear();
         linksPerGroup.clear();
-        errors.clear();
+        simulatedFlows.clear();
+        observedCounts.clear();
+        observationWeights.clear();
         // linkFlowCounter.reset(iteration); // no need to call reset, it will be called anyway before mobsim
     }
 
@@ -129,39 +159,60 @@ public class FlowProcessor {
         }
     }
 
+    /**
+     * Computes a robust median-oriented group error.
+     *
+     * <p>Each link contributes {@code tanh(log((flow + epsilon) / (count + epsilon)) / h)}.
+     * Large count outliers therefore have bounded influence, while small errors vary
+     * continuously instead of producing the quantized sign imbalance used previously.
+     * The score is shrunk towards zero according to the effective sample size so that
+     * sparse groups update more cautiously.</p>
+     */
+    public RobustGroupError getRobustGroupError(PenaltyGroupKey key, double h, double epsilon,
+                                                 double sampleSizeShrinkage) {
+        FloatArrayList flows = simulatedFlows.get(key);
+        FloatArrayList counts = observedCounts.get(key);
+        FloatArrayList weights = observationWeights.get(key);
 
-    private final double C = 0.02;
-    private final double EPSILON = 0.02;
-    public double getUnbiasedError(PenaltyGroupKey key){
-        if (countsProcessor.size()==0) {
-            return Double.POSITIVE_INFINITY;
+        if (flows == null || counts == null || weights == null || flows.isEmpty()) {
+            return new RobustGroupError(0.0, 0.0, 0.0, 0);
         }
-
-        FloatArrayList catErrors = errors.get(key);
-        if (catErrors == null || catErrors.isEmpty()) {
-            return 0.0;
-        }
-        int nMore = 0;
-        int nLess = 0;
-        int nTot  = 0;
-        for (float e:  catErrors) {
-            if (e > EPSILON) {
-                nMore ++;
-            } else if (e < -EPSILON) {
-                nLess ++;
-            }
-            nTot++;
-        }
-
-        return nTot==0? 0.0:(nMore - nLess) / (double) nTot;
+        return computeRobustGroupError(flows, counts, weights, h, epsilon, sampleSizeShrinkage);
     }
 
-    public boolean doUpdate(PenaltyGroupKey key) {
-        if (countsProcessor.size()==0) {
-            return true;
+    static RobustGroupError computeRobustGroupError(FloatArrayList flows, FloatArrayList counts,
+                                                     FloatArrayList weights, double h, double epsilon,
+                                                     double sampleSizeShrinkage) {
+        if (h <= 0.0 || epsilon <= 0.0 || sampleSizeShrinkage < 0.0) {
+            throw new IllegalArgumentException("Robust error parameters must satisfy h > 0, epsilon > 0 and shrinkage >= 0.");
         }
-        double unbiasedError = getUnbiasedError(key);
-        return Math.abs(unbiasedError) > C;
+        if (flows.size() != counts.size() || flows.size() != weights.size()) {
+            throw new IllegalArgumentException("Flow, count and weight arrays must have the same size.");
+        }
+
+        double weightedScore = 0.0;
+        double sumWeights = 0.0;
+        double sumSquaredWeights = 0.0;
+
+        for (int i = 0; i < flows.size(); i++) {
+            double weight = weights.getFloat(i);
+            double logRatio = Math.log((flows.getFloat(i) + epsilon) / (counts.getFloat(i) + epsilon));
+            weightedScore += weight * Math.tanh(logRatio / h);
+            sumWeights += weight;
+            sumSquaredWeights += weight * weight;
+        }
+
+        if (sumWeights <= 0.0 || sumSquaredWeights <= 0.0) {
+            return new RobustGroupError(0.0, 0.0, 0.0, flows.size());
+        }
+
+        double rawScore = weightedScore / sumWeights;
+        double effectiveSampleSize = sumWeights * sumWeights / sumSquaredWeights;
+        double reliability = effectiveSampleSize / (effectiveSampleSize + sampleSizeShrinkage);
+        return new RobustGroupError(rawScore * reliability, rawScore, effectiveSampleSize, flows.size());
     }
+
+    public record RobustGroupError(double score, double rawScore, double effectiveSampleSize,
+                                   int observations) { }
 
 }
