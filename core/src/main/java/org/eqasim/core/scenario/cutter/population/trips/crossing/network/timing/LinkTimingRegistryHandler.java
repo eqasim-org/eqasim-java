@@ -1,6 +1,6 @@
 package org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing;
 
-import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.LinkRegionClassifier;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
@@ -20,7 +20,6 @@ import org.matsim.vehicles.Vehicle;
 
 public class LinkTimingRegistryHandler implements PersonDepartureEventHandler, VehicleEntersTrafficEventHandler,
 		VehicleLeavesTrafficEventHandler, LinkEnterEventHandler, LinkLeaveEventHandler {
-	private final ScenarioExtent extent;
 	private final Network network;
 
 	private final LinkTimingRegistry timingRegistry;
@@ -30,8 +29,7 @@ public class LinkTimingRegistryHandler implements PersonDepartureEventHandler, V
 	private final IdMap<Person, LinkEnterEvent> enterEvents = new IdMap<>(Person.class);
 	private final IdMap<Vehicle, Id<Person>> driverRegistry = new IdMap<>(Vehicle.class);
 
-	public LinkTimingRegistryHandler(ScenarioExtent extent, Network network, LinkTimingRegistry timingRegistry) {
-		this.extent = extent;
+	public LinkTimingRegistryHandler(Network network, LinkTimingRegistry timingRegistry) {
 		this.network = network;
 		this.timingRegistry = timingRegistry;
 	}
@@ -55,7 +53,7 @@ public class LinkTimingRegistryHandler implements PersonDepartureEventHandler, V
 	public void handleEvent(LinkEnterEvent event) {
 		Link link = network.getLinks().get(event.getLinkId());
 
-		if (extent.isInside(link.getFromNode().getCoord()) ^ extent.isInside(link.getToNode().getCoord())) {
+		if (LinkRegionClassifier.isCrossing(link)) {
 			enterEvents.put(driverRegistry.get(event.getVehicleId()), event);
 		}
 	}

@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
+import org.eqasim.core.scenario.cutter.extent.LinkRegionClassifier;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.simulation.EqasimConfigurator;
@@ -105,11 +106,12 @@ public class RunScenarioCutterV2 {
         Optional<String> extentAttribute = cmd.getOption("extent-attribute");
         Optional<String> extentValue = cmd.getOption("extent-value");
         ScenarioExtent extent = new ShapeScenarioExtent.Builder(extentPath, extentAttribute, extentValue).build();
+        LinkRegionClassifier.classify(scenario.getNetwork(), extent);
 
         Set<String> insideModes = new HashSet<>();
         if(Boolean.parseBoolean(cmd.getOption("flag-area-link-modes").orElse("false"))) {
             scenario.getNetwork().getLinks().values()
-                    .stream().filter(link -> extent.isInside(link.getFromNode().getCoord()) && extent.isInside(link.getToNode().getCoord()))
+                    .stream().filter(LinkRegionClassifier::isInside)
                     .forEach(link -> {
                         Set<String> linkModes = new HashSet<>(link.getAllowedModes());
                         for(String mode: link.getAllowedModes()) {
@@ -143,6 +145,7 @@ public class RunScenarioCutterV2 {
         // We also set the VDF config to use the vdf.bin file for initial travel times
         vdfConfigGroup.setInputTravelTimesFile("vdf_travel_times.bin");
 
+        LinkRegionClassifier.clear(scenario.getNetwork());
         new ScenarioWriter(config, scenario, prefix).run(new File(outputPath).getAbsoluteFile());
 
         FileUtils.copyFile(new File(cmd.getOptionStrict("vdf-travel-times-path")), new File(outputPath, "vdf_travel_times.bin"));

@@ -5,7 +5,7 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.LinkRegionClassifier;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -30,12 +30,10 @@ import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 public class NetworkCutter {
 	private final static Logger log = LogManager.getLogger(NetworkCutter.class);
 
-	private final ScenarioExtent extent;
 	private final MinimumNetworkFinder minimumNetworkFinder;
 	private final Scenario scenario;
 
-	public NetworkCutter(ScenarioExtent extent, Scenario scenario, MinimumNetworkFinder minimumNetworkFinder) {
-		this.extent = extent;
+	public NetworkCutter(Scenario scenario, MinimumNetworkFinder minimumNetworkFinder) {
 		this.minimumNetworkFinder = minimumNetworkFinder;
 		this.scenario = scenario;
 	}
@@ -54,7 +52,7 @@ public class NetworkCutter {
 		Set<Id<Link>> retainedLinkIds = new HashSet<>();
 
 		for (Link link : network.getLinks().values()) {
-			if (extent.isInside(link.getToNode().getCoord()) && extent.isInside(link.getFromNode().getCoord())) {
+			if (LinkRegionClassifier.isInside(link)) {
 				retainedLinkIds.add(link.getId());
 			}
 

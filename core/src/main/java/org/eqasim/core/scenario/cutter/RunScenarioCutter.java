@@ -8,8 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.misc.InjectorBuilder;
+import org.eqasim.core.scenario.cutter.extent.LinkRegionClassifier;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.eqasim.core.scenario.cutter.facilities.CleanHomeFacilities;
@@ -34,14 +34,11 @@ import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.network.algorithms.TransportModeNetworkFilter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
 
@@ -101,25 +98,22 @@ public class RunScenarioCutter {
 		// Check validity before cutting
 		ScenarioValidator scenarioValidator = new ScenarioValidator();
 		scenarioValidator.checkScenario(scenario);
+		LinkRegionClassifier.classify(scenario.getNetwork(), extent);
 
 		// Prepare road network
 		Set<String> modes = new HashSet<>(config.routing().getNetworkModes());
 		RoadNetwork roadNetwork = new RoadNetwork(scenario.getNetwork(), modes);
 
-		// Optionally, load travel time
-		Optional<RecordedTravelTime> travelTime = Optional.empty();
-
-		if (cmd.hasOption("events-path")) {
-			travelTime = Optional.of(RecordedTravelTime.readFromEvents( //
-					new File(cmd.getOptionStrict("events-path")), roadNetwork, config));
-		}
+		// Optionally, load travel times and experienced boundary-crossing times in one event-file pass.
+		CutterEventData eventData = CutterEventData.read(cmd.getOption("events-path"), roadNetwork,
+				scenario.getNetwork(), config);
 
 		// Cut population
 		// TODO Check if we can remove stuff
 		Injector populationCutterInjector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(
-						new PopulationCutterModule(extent, numberOfThreads, 64, cmd.getOption("events-path"))) //
-				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
+						new PopulationCutterModule(extent, numberOfThreads, 64, eventData.getLinkTimingRegistry())) //
+				.addOverridingModule(new CutterTravelTimeModule(eventData.getTravelTime())) //
 				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
 
@@ -161,7 +155,7 @@ public class RunScenarioCutter {
 
 		// Cut network
 		MinimumNetworkFinder minimumNetworkFinder = new MinimumNetworkFinder(extent, roadNetwork, numberOfThreads, 32);
-		NetworkCutter networkCutter = new NetworkCutter(extent, scenario, minimumNetworkFinder);
+		NetworkCutter networkCutter = new NetworkCutter(scenario, minimumNetworkFinder);
 		Network network = scenario.getNetwork();
 		networkCutter.run(network, modes);
 		networkCutter.keepLargestConnectedPartPerMode(network, modes);
@@ -178,7 +172,7 @@ public class RunScenarioCutter {
 		// TODO: Check if we can remove stuff
 		Injector routingInjector = new InjectorBuilder(scenario, configurator) //
 				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
-				.addOverridingModule(new CutterTravelTimeModule(travelTime)) //
+				.addOverridingModule(new CutterTravelTimeModule(eventData.getTravelTime())) //
 				.addOverridingModule(new TimeInterpretationModule()) //
 				.build();
 
@@ -192,6 +186,7 @@ public class RunScenarioCutter {
 		}
 
 		// Write scenario
+		LinkRegionClassifier.clear(scenario.getNetwork());
 		ScenarioWriter scenarioWriter = new ScenarioWriter(config, scenario, prefix);
 		scenarioWriter.run(outputDirectory);
 	}
