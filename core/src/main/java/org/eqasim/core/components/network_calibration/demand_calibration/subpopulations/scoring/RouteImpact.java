@@ -101,8 +101,14 @@ public final class RouteImpact {
         }
 
         private void merge(Map<Id<Link>, Integer> passages, DiscreteModeChoiceTrip trip) {
+            // if not a car or truck trip, ignore it
             if (trip == null || !Tools.isCarOrTruck(trip)) return;
 
+            // if departure time is after midnight, ignore it
+            var departureTime = trip.getOriginActivity().getEndTime();
+            if (departureTime.isDefined() && departureTime.seconds() >= 24.0 * 3600.0) return;
+
+            // process it
             for (PlanElement element : trip.getInitialElements()) {
                 if (!(element instanceof Leg leg) || !(leg.getRoute() instanceof NetworkRoute route)) {
                     continue;
