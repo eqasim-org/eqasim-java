@@ -1,6 +1,5 @@
 package org.eqasim.switzerland.ch_cmdp.tolls;
 
-import org.eqasim.core.components.travel_disutility.EqasimTravelDisutility;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;

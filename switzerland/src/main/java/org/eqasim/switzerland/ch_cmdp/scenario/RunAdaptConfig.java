@@ -1,6 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.scenario;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
@@ -221,7 +222,8 @@ public class RunAdaptConfig {
 		// set trip constraints (to remove car passenger constraint)
 		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk",
 									SwissModeChoiceModule.LOOP_CONSTRAINT_NAME,
-									SwissModeChoiceModule.REMOTE_WALK_CONSTRAINT_NAME));
+									SwissModeChoiceModule.REMOTE_WALK_CONSTRAINT_NAME,
+									SwissModeChoiceModule.BORDER_CONSTRAINT_NAME));
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {
@@ -249,6 +251,13 @@ public class RunAdaptConfig {
 		transitRouterParams.setDirectWalkFactor(3.0);
 		transitRouterParams.setMaxBeelineWalkConnectionDistance(300.0);
 		transitRouterParams.setSearchRadius(1200.0);
+
+		// Network calibration
+		NetworkCalibrationConfigGroup netCalibConfig = NetworkCalibrationConfigGroup.getOrCreate(config);
+		if (!SwissConfigAdapter.countsFile.isEmpty()){ netCalibConfig.setCountsFile(SwissConfigAdapter.countsFile);}
+		if (!SwissConfigAdapter.countSpecialRegionPath.isEmpty()){ netCalibConfig.getCostCalibrationConfigGroup().setSpecialRegionPath(SwissConfigAdapter.countSpecialRegionPath);}
+		if (!SwissConfigAdapter.speedsFile.isEmpty()){ netCalibConfig.getFreeSpeedCalibrationConfigGroup().setObservedTripsFile(SwissConfigAdapter.speedsFile);}
+		if (!SwissConfigAdapter.speedsSpecialRegionPath.isEmpty()){ netCalibConfig.getFreeSpeedCalibrationConfigGroup().setSpecialRegionPath(SwissConfigAdapter.speedsSpecialRegionPath);}
 
 	}
 

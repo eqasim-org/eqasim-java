@@ -22,7 +22,7 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
     static private final String CALIBRATED_MODES = "calibratedModes";
 
     private boolean activate = false;
-    private double beta = 0.5;
+    private double beta = 0.3;
     private double carModeShare = 0.423;
     private double ptModeShare = 0.146;
     private double walkModeShare = 0.256;
