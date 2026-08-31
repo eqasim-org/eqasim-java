@@ -38,12 +38,12 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String MIN_OBSERVATIONS_URBAN_RURAL = "minObservationsUrbanRural";
     private static final String MIN_OBSERVATIONS_SPECIAL_REGION = "minObservationsSpecialRegion";
 
-    private boolean activate;
-    private int updateInterval = 5;
+    private boolean activate = false;
+    private int updateInterval = 3;
     private int warmupIterations = 10;
     private int endIteration = 100;
-    private double minPenalty = -0.1;
-    private double maxPenalty = 0.3;
+    private double minPenalty = 0.0;
+    private double maxPenalty = 0.25;
     private String penaltiesFile = "";
     private String specialRegionPath = "";
     private double rampFactor = 1.1;

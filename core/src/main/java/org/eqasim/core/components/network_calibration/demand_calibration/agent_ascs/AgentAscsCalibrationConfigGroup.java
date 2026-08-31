@@ -37,7 +37,7 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String GRID_REBUILD_MAX_POPULATIONS = "gridRebuildMaxPopulations";
     private static final String RESET_AGENT_ASCS_TO_ZERO = "resetAgentAscsToZero";
 
-    private boolean activate;
+    private boolean activate = false;
     private int updateInterval = 0;
     private int warmupIterations = 20;
     private double learningRate = 2.0;
@@ -52,14 +52,14 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double maxAbsoluteLogError = 1.5;
     private double observationShrinkage = 100.0;
     private double minTripWeight = 0.05;
-    private double lowCountWeight = 0.5;
+    private double lowCountWeight = 0.8;
     private double mediumCountWeight = 1.0;
-    private double highCountWeight = 1.5;
-    private double veryHighCountWeight = 2.0;
+    private double highCountWeight = 1.2;
+    private double veryHighCountWeight = 1.4;
     private double initialCellSize = 16_000.0;
     private double minCellSize = 2_000.0;
     private int maxPopulationPerCell = 2_000;
-    private String gridRebuildUpdates = "2,4,6";
+    private String gridRebuildUpdates = "2,4,5";
     private String gridRebuildInitialCellSizes = "10000,8000,8000";
     private String gridRebuildMinCellSizes = "800,500,200";
     private String gridRebuildMaxPopulations = "1000,800,500";

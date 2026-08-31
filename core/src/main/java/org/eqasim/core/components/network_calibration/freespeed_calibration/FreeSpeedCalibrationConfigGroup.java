@@ -41,7 +41,7 @@ public class FreeSpeedCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String MIN_TRAVEL_TIME_ERROR = "minTravelTimeError";
     private static final String MAX_TRAVEL_TIME_ERROR = "maxTravelTimeError";
 
-    private boolean activate;
+    private boolean activate = false;
     private int updateInterval = 5;
     private int warmupIterations = 30;
     private String observedTripsFile = "";
