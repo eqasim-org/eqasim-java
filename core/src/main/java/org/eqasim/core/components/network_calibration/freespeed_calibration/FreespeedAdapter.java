@@ -54,8 +54,8 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
         this.factorManager = factorManager;
         this.updateInterval = freespeedConfig.getUpdateInterval();
         this.updateStartIteration = freespeedConfig.getWarmupIterations();
-        this.isActivated = config.isFreeSpeedCalibrationActivated() && config.isActivated();
-        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
+        this.isActivated = config.isFreeSpeedFactorActivated() && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isFreeSpeedFactorCalibrationActivated();
         this.hasFactorsFile = freespeedConfig.hasFactorsFile();
 
         if (isActivated) {

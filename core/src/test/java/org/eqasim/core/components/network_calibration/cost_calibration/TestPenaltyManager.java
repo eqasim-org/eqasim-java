@@ -4,6 +4,7 @@ import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGr
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class TestPenaltyManager {
     @Test
@@ -50,6 +51,19 @@ public class TestPenaltyManager {
         }
 
         assertEquals(0.7, manager.getAverageOfLastFourPenalties(key), 1.0e-12);
+    }
+
+    @Test
+    public void testActiveCostComponentKeepsInputWhenNotCalibrated() {
+        NetworkCalibrationConfigGroup config = createConfig();
+        config.setCalibrate("");
+        PenaltyManager manager = new PenaltyManager(config, config.getCostCalibrationConfigGroup());
+        PenaltyGroupKey key = new PenaltyGroupKey(1, true, 0);
+        manager.setPenalty(key, 0.2);
+
+        assertFalse(manager.isCalibrating());
+        assertEquals(0.0, manager.updatePenalty(key, 1.0, 0.1, 0.1), 1.0e-12);
+        assertEquals(0.2, manager.getPenalty(key), 1.0e-12);
     }
 
     private static NetworkCalibrationConfigGroup createConfig() {

@@ -44,8 +44,8 @@ public final class Calibrator implements IterationEndsListener {
                       Provider<TripRouter> tripRouterProvider) {
         this.config = config;
         this.active = calibrationConfig.isActivated()
-                && calibrationConfig.isCalibrationEnabled()
-                && calibrationConfig.isSubpopulationsCalibrationActivated();
+                && calibrationConfig.isSubpopulationsCalibrationActivated()
+                && calibrationConfig.isSubpopulationsActivated();
         if (!active) {
             tracker = null;
             backgroundTraffic = null;

@@ -28,7 +28,8 @@ public class PenaltyManager {
     public PenaltyManager(NetworkCalibrationConfigGroup config, CostCalibrationConfigGroup costConfig) {
         this.minPenalty = costConfig.getMinPenalty();
         this.maxPenalty = costConfig.getMaxPenalty();
-        this.calibrate = config.isCostCalibrationActivated() && config.isActivated() && config.isCalibrationEnabled();
+        this.calibrate = config.isLinkPenaltyActivated() && config.isActivated()
+                && config.isLinkPenaltyCalibrationActivated();
     }
 
     /**

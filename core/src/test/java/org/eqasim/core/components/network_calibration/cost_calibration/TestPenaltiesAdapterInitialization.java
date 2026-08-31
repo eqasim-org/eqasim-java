@@ -18,13 +18,14 @@ import static org.mockito.Mockito.when;
 
 public class TestPenaltiesAdapterInitialization {
     @Test
-    public void activeCalibrationIgnoresNetworkAndCsvInitialPenalties() {
+    public void explicitResetIgnoresNetworkAndCsvInitialPenalties() {
         NetworkCalibrationConfigGroup config = new NetworkCalibrationConfigGroup();
         config.setActivate(true);
         config.setCalibrate(true);
         CostCalibrationConfigGroup costConfig = config.getCostCalibrationConfigGroup();
         costConfig.setActivate(true);
         costConfig.setPenaltiesFile("missing-initial-penalties.csv");
+        costConfig.setResetPenaltiesToZeros(true);
 
         Network network = NetworkUtils.createNetwork();
         var factory = network.getFactory();

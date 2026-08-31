@@ -66,8 +66,60 @@ public class TestNetworkCalibrationConfigGroup {
         calibration.setObjective("");
         calibration.getCostCalibrationConfigGroup().setActivate(true);
 
-        assertTrue(calibration.isCostCalibrationActivated());
-        assertFalse(calibration.isFreeSpeedCalibrationActivated());
+        assertTrue(calibration.isLinkPenaltyActivated());
+        assertFalse(calibration.isFreeSpeedFactorActivated());
+    }
+
+    @Test
+    public void testActivationAndCalibrationAreIndependentPerComponent() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        calibration.getCostCalibrationConfigGroup().setActivate(true);
+        calibration.getFreeSpeedCalibrationConfigGroup().setActivate(true);
+        calibration.getAgentAscsCalibrationConfigGroup().setActivate(true);
+        calibration.getSubpopulationsCalibrationConfigGroup().setActivate(true);
+        calibration.setCalibrate("freespeed, agent");
+
+        assertTrue(calibration.isLinkPenaltyActivated());
+        assertFalse(calibration.isLinkPenaltyCalibrationActivated());
+        assertTrue(calibration.isFreeSpeedFactorActivated());
+        assertTrue(calibration.isFreeSpeedFactorCalibrationActivated());
+        assertTrue(calibration.isAgentAscsActivated());
+        assertTrue(calibration.isAgentAscsCalibrationActivated());
+        assertTrue(calibration.isSubpopulationsActivated());
+        assertFalse(calibration.isSubpopulationsCalibrationActivated());
+    }
+
+    @Test
+    public void testFixedComponentsDoNotRequireCalibrationInputs() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        calibration.setActivate(true);
+        calibration.getCostCalibrationConfigGroup().setActivate(true);
+        calibration.getFreeSpeedCalibrationConfigGroup().setActivate(true);
+        calibration.getAgentAscsCalibrationConfigGroup().setActivate(true);
+        calibration.getSubpopulationsCalibrationConfigGroup().setActivate(true);
+        calibration.setCalibrate("");
+
+        NetworkCalibrationModule.validateConfiguration(calibration);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCalibratedFlowComponentRequiresCounts() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        calibration.setActivate(true);
+        calibration.getCostCalibrationConfigGroup().setActivate(true);
+        calibration.setCalibrate("penalty");
+
+        NetworkCalibrationModule.validateConfiguration(calibration);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUnknownCalibrationComponentIsRejected() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        calibration.setActivate(true);
+        calibration.getCostCalibrationConfigGroup().setActivate(true);
+        calibration.setCalibrate("unknown");
+
+        NetworkCalibrationModule.validateConfiguration(calibration);
     }
 
     @Test
@@ -76,6 +128,7 @@ public class TestNetworkCalibrationConfigGroup {
         NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
         config.addModule(calibration);
         calibration.setActivate(true);
+        calibration.setCalibrate("penalty, agent");
         calibration.setCountsFile("counts.csv");
 
         CostCalibrationConfigGroup cost = calibration.getCostCalibrationConfigGroup();
@@ -111,6 +164,7 @@ public class TestNetworkCalibrationConfigGroup {
             NetworkCalibrationConfigGroup loaded = NetworkCalibrationConfigGroup.getOrCreate(loadedConfig);
 
             assertTrue(loaded.isActivated());
+            assertEquals(List.of("penalty", "agent"), loaded.getModulesToBeCalibratedAsList());
             assertEquals(3, loaded.getCostCalibrationConfigGroup().getUpdateInterval());
             assertEquals(0.04, loaded.getCostCalibrationConfigGroup().getMaximumPenaltyUpdate(), 1.0e-12);
             assertEquals(7, loaded.getFreeSpeedCalibrationConfigGroup().getUpdateInterval());

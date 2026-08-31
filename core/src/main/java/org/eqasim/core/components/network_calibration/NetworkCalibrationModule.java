@@ -58,10 +58,10 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
     protected void installEqasimExtension() {
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
         validateConfiguration(config);
-        boolean costCalibration = config.isCostCalibrationActivated();
-        boolean freespeedCalibration = config.isFreeSpeedCalibrationActivated();
-        boolean agentCalibration = config.isAgentAscsCalibrationActivated();
-        boolean subpopulationsCalibration = config.isSubpopulationsCalibrationActivated();
+        boolean costCalibration = config.isLinkPenaltyActivated();
+        boolean freespeedCalibration = config.isFreeSpeedFactorActivated();
+        boolean agentCalibration = config.isAgentAscsActivated();
+        boolean subpopulationsCalibration = config.isSubpopulationsActivated();
 
         if (config.isActivated()) {
             logger.info("Network calibration is activated. Installing components.");
@@ -70,7 +70,10 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             bind(CapacityCorrector.class).asEagerSingleton();
 
             // 2. Install flow module and activate it if it is not activated
-            if (config.isCalibrationEnabled() && (costCalibration || agentCalibration || subpopulationsCalibration)) {
+            boolean flowCalibration = (costCalibration && config.isLinkPenaltyCalibrationActivated())
+                    || (agentCalibration && config.isAgentAscsCalibrationActivated())
+                    || (subpopulationsCalibration && config.isSubpopulationsCalibrationActivated());
+            if (flowCalibration) {
                 FlowConfigGroup flowConfig = FlowConfigGroup.getOrCreate(getConfig());
                 if (!flowConfig.isActivated()) {
                     logger.info("Flow estimation is turned on as part of network calibration.");
@@ -272,7 +275,8 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
         }
 
         List<String> objectives = config.getAllObjectives();
-        Set<String> supportedObjectives = Set.of("penalty", "freespeed", "agent", "subpopulations");
+        Set<String> supportedObjectives = Set.of(NetworkCalibrationConfigGroup.PENALTY, NetworkCalibrationConfigGroup.FREESPEED,
+                                                 NetworkCalibrationConfigGroup.AGENT, NetworkCalibrationConfigGroup.SUBPOPULATIONS);
         Set<String> invalidObjectives = new HashSet<>();
 
         for (String objective : objectives) {
@@ -285,15 +289,23 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
             throw new IllegalArgumentException("Unsupported network calibration objective(s): " + invalidObjectives);
         }
 
-        boolean costActive = config.isCostCalibrationActivated();
-        boolean freespeedActive = config.isFreeSpeedCalibrationActivated();
-        boolean agentActive = config.isAgentAscsCalibrationActivated();
-        boolean subpopulationsActive = config.isSubpopulationsCalibrationActivated();
+        Set<String> invalidCalibrations = new HashSet<>(config.getModulesToBeCalibratedAsList());
+        invalidCalibrations.removeAll(supportedObjectives);
+        if (!invalidCalibrations.isEmpty()) {
+            throw new IllegalArgumentException("Unsupported network calibration component(s) in calibrate: " + invalidCalibrations);
+        }
+
+        boolean costActive = config.isLinkPenaltyActivated();
+        boolean freespeedActive = config.isFreeSpeedFactorActivated();
+        boolean agentActive = config.isAgentAscsActivated();
+        boolean subpopulationsActive = config.isSubpopulationsActivated();
         if (!costActive && !freespeedActive && !agentActive && !subpopulationsActive) {
             throw new IllegalArgumentException("Network calibration is active, but no child calibration group is active.");
         }
 
-        if (config.isCalibrationEnabled() && (costActive || agentActive || subpopulationsActive) && !config.hasCountsFile()) {
+        if (((costActive && config.isLinkPenaltyCalibrationActivated())
+                || (agentActive && config.isAgentAscsCalibrationActivated())
+                || (subpopulationsActive && config.isSubpopulationsCalibrationActivated())) && !config.hasCountsFile()) {
             throw new IllegalArgumentException("Cost, agent-ASC, and subpopulation calibration require countsFile.");
         }
 
@@ -314,7 +326,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
 
         FreeSpeedCalibrationConfigGroup freespeedConfig = config.getFreeSpeedCalibrationConfigGroup();
         if (freespeedActive) {
-            if (config.isCalibrationEnabled() && !freespeedConfig.hasObservedTripsFile()) {
+            if (config.isFreeSpeedFactorCalibrationActivated() && !freespeedConfig.hasObservedTripsFile()) {
                 throw new IllegalArgumentException("Freespeed calibration requires freespeedCalibration.observedTripsFile.");
             }
             requirePositive("freespeedCalibration.updateInterval", freespeedConfig.getUpdateInterval());

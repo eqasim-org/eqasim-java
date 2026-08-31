@@ -32,7 +32,8 @@ public class FreespeedFactorManager {
         this.minFactor = freespeedConfig.getMinFactor();
         this.maxFactor = freespeedConfig.getMaxFactor();
         this.beta = freespeedConfig.getLearningRate();
-        this.calibrate = config.isFreeSpeedCalibrationActivated() && config.isActivated() && config.isCalibrationEnabled();
+        this.calibrate = config.isFreeSpeedFactorActivated() && config.isActivated()
+                && config.isFreeSpeedFactorCalibrationActivated();
         this.minTripsPerGroup = freespeedConfig.getMinTripsPerGroup();
         this.historySize = freespeedConfig.getHistorySize();
         this.minEffectiveLearningRate = freespeedConfig.getMinEffectiveLearningRate();

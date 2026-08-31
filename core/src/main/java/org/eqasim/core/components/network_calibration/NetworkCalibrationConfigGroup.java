@@ -16,6 +16,11 @@ import java.util.stream.Stream;
 public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "eqasim:networkCalibration";
 
+    public static final String PENALTY = "penalty";
+    public static final String FREESPEED = "freespeed";
+    public static final String AGENT = "agent";
+    public static final String SUBPOPULATIONS = "subpopulations";
+
     private static final String ACTIVATE = "activate";
     private static final String CALIBRATE = "calibrate";
     private static final String OBJECTIVE = "objective";
@@ -28,7 +33,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String CATEGORY_FIVE_PROMOTION_SPEED_THRESHOLD = "categoryFivePromotionSpeedThreshold";
 
     private boolean activate;
-    private boolean calibrate = true;
+    private String calibrate = "";
     private String objective = "";
     private String countsFile = "";
     private boolean correctCapacities = true;
@@ -46,7 +51,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     public Map<String, String> getComments() {
         Map<String, String> comments = super.getComments();
         comments.put(ACTIVATE, "Whether the network-calibration module is active (default: false)");
-        comments.put(CALIBRATE, "Whether active components update parameters; when false, configured initial values remain fixed (default: true)");
+        comments.put(CALIBRATE, "Optional comma-separated selector of active components whose values are updated: penalty, freespeed, agent, or subpopulations. Active components not listed here use their configured input/default values.");
         comments.put(OBJECTIVE, "Optional comma-separated selector: penalty, freespeed, agent, or subpopulations. When non-empty, it overrides the activate parameter of every child calibration group.");
         comments.put(COUNTS_FILE, "Counts CSV shared by flow-based calibration components; expected columns include linkId and count");
         comments.put(CORRECT_CAPACITIES, "Whether short-link capacities are corrected when the module is active (default: true)");
@@ -60,9 +65,15 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
 
     @StringGetter(ACTIVATE) public boolean isActivated() { return activate; }
     @StringSetter(ACTIVATE) public void setActivate(boolean value) { activate = value; }
-    @StringGetter(CALIBRATE) public boolean getCalibrate() { return calibrate; }
-    @StringSetter(CALIBRATE) public void setCalibrate(boolean value) { calibrate = value; }
-    public boolean isCalibrationEnabled() { return calibrate; }
+
+    @StringGetter(CALIBRATE) public String getCalibrate() { return calibrate; }
+    @StringSetter(CALIBRATE) public void setCalibrate(String value) { calibrate = value == null ? "" : value; }
+    public List<String> getModulesToBeCalibratedAsList() { return Stream.of(calibrate.split(",")).map(String::trim).filter(value -> !value.isEmpty()).toList(); }
+    public boolean isToBeCalibrated(String value) { return getModulesToBeCalibratedAsList().contains(value); }
+    public void setCalibrate(boolean value) {
+        calibrate = value ? String.join(",", PENALTY, FREESPEED, AGENT, SUBPOPULATIONS) : "";
+    }
+
     @StringGetter(OBJECTIVE) public String getObjective() { return objective; }
     @StringSetter(OBJECTIVE)
     public void setObjective(String value) {
@@ -87,20 +98,37 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringGetter(CATEGORY_FIVE_PROMOTION_SPEED_THRESHOLD) public double getCategoryFivePromotionSpeedThreshold() { return categoryFivePromotionSpeedThreshold; }
     @StringSetter(CATEGORY_FIVE_PROMOTION_SPEED_THRESHOLD) public void setCategoryFivePromotionSpeedThreshold(double value) { categoryFivePromotionSpeedThreshold = value; }
 
-    public boolean isCostCalibrationActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives("penalty") : getCostCalibrationConfigGroup().isActivated();
+    public boolean isLinkPenaltyActivated() {
+        return hasObjectiveOverride() ? isOneOfObjectives(PENALTY) : getCostCalibrationConfigGroup().isActivated();
     }
 
-    public boolean isFreeSpeedCalibrationActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives("freespeed") : getFreeSpeedCalibrationConfigGroup().isActivated();
+    public boolean isFreeSpeedFactorActivated() {
+        return hasObjectiveOverride() ? isOneOfObjectives(FREESPEED) : getFreeSpeedCalibrationConfigGroup().isActivated();
+    }
+
+    public boolean isAgentAscsActivated() {
+        return hasObjectiveOverride() ? isOneOfObjectives(AGENT) : getAgentAscsCalibrationConfigGroup().isActivated();
+    }
+
+    public boolean isSubpopulationsActivated() {
+        return hasObjectiveOverride() ? isOneOfObjectives(SUBPOPULATIONS) : getSubpopulationsCalibrationConfigGroup().isActivated();
+    }
+
+
+    public boolean isLinkPenaltyCalibrationActivated() {
+        return isToBeCalibrated(PENALTY);
+    }
+
+    public boolean isFreeSpeedFactorCalibrationActivated() {
+        return isToBeCalibrated(FREESPEED);
     }
 
     public boolean isAgentAscsCalibrationActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives("agent") : getAgentAscsCalibrationConfigGroup().isActivated();
+        return isToBeCalibrated(AGENT);
     }
 
     public boolean isSubpopulationsCalibrationActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives("subpopulations") : getSubpopulationsCalibrationConfigGroup().isActivated();
+        return isToBeCalibrated(SUBPOPULATIONS);
     }
 
     @Override
@@ -160,13 +188,13 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
             return;
         }
         if (parameterSet instanceof CostCalibrationConfigGroup costConfig) {
-            costConfig.setActivate(isOneOfObjectives("penalty"));
+            costConfig.setActivate(isOneOfObjectives(PENALTY));
         } else if (parameterSet instanceof FreeSpeedCalibrationConfigGroup freespeedConfig) {
-            freespeedConfig.setActivate(isOneOfObjectives("freespeed"));
+            freespeedConfig.setActivate(isOneOfObjectives(FREESPEED));
         } else if (parameterSet instanceof AgentAscsCalibrationConfigGroup agentConfig) {
-            agentConfig.setActivate(isOneOfObjectives("agent"));
+            agentConfig.setActivate(isOneOfObjectives(AGENT));
         } else if (parameterSet instanceof SubpopulationsCalibrationConfigGroup subpopulationsConfig) {
-            subpopulationsConfig.setActivate(isOneOfObjectives("subpopulations"));
+            subpopulationsConfig.setActivate(isOneOfObjectives(SUBPOPULATIONS));
         }
     }
 

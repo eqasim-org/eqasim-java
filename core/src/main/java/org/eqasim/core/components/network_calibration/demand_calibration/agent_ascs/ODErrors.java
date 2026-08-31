@@ -48,8 +48,8 @@ public class ODErrors {
         this.population = scenario.getPopulation();
         this.tripListConverter = tripListConverter;
         this.sampleSize = eqasimConfig.getSampleSize();
-        this.calibrationEnabled = calConfig.isActivated() && calConfig.isCalibrationEnabled()
-                && calConfig.isAgentAscsCalibrationActivated();
+        this.calibrationEnabled = calConfig.isActivated() && calConfig.isAgentAscsCalibrationActivated()
+                && calConfig.isAgentAscsActivated();
 
         this.countsProcessor = calibrationEnabled ? countsProcessorProvider.get():null;
         this.flowProcessor = calibrationEnabled ? flowProcessorProvider.get():null;

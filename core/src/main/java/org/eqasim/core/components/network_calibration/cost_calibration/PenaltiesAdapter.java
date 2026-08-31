@@ -81,8 +81,8 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         this.categorizer = categorizer;
         this.penaltyKeyManager = penaltyKeyManager;
         this.penaltyManager = penaltyManager;
-        this.isActivated = config.isCostCalibrationActivated() && config.isActivated();
-        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
+        this.isActivated = config.isLinkPenaltyActivated() && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isLinkPenaltyCalibrationActivated();
         this.warmupIterations = costConfig.getWarmupIterations();
         this.endIteration = costConfig.getEndIteration();
         this.hasPenaltiesFile = costConfig.hasPenaltiesFile();
@@ -103,7 +103,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         this.flowProcessor = isCalibrating ? flowProcessorProvider.get() : null;
 
         if (isActivated) {
-            if (isCalibrating) {
+            if (costConfig.getResetPenaltiesToZeros()) {
                 penaltyManager.loadInitialPenalties(Map.of());
                 logger.info("Penalty calibration starts from zero; network attributes and penalties CSV are ignored.");
             } else {
@@ -111,7 +111,8 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
                 if (hasPenaltiesFile) {
                     penaltyManager.loadFromCsv(costConfig.getPenaltiesFile());
                 }
-                logger.info("Penalty objective is active in fixed mode. Penalties are loaded from CSV when provided, otherwise from link attributes.");
+                logger.info("Penalty objective is active in {} mode. Initial penalties are loaded from CSV when provided, otherwise from link attributes.",
+                        isCalibrating ? "calibration" : "fixed");
             }
         }
     }

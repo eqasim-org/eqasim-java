@@ -37,6 +37,7 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String GAIN_RECOVERY_RATE = "gainRecoveryRate";
     private static final String MIN_OBSERVATIONS_URBAN_RURAL = "minObservationsUrbanRural";
     private static final String MIN_OBSERVATIONS_SPECIAL_REGION = "minObservationsSpecialRegion";
+    private static final String RESET_PENALTIES_TO_ZEROS = "resetPenaltiesToZeros";
 
     private boolean activate = false;
     private int updateInterval = 3;
@@ -62,6 +63,7 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double gainRecoveryRate = 0.25;
     private int minObservationsUrbanRural = 7;
     private int minObservationsSpecialRegion = 4;
+    private boolean resetPenaltiesToZeros = false;
 
     public CostCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -94,6 +96,7 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
         comments.put(GAIN_RECOVERY_RATE, "Fraction of lost controller gain recovered per update (default: 0.10)");
         comments.put(MIN_OBSERVATIONS_URBAN_RURAL, "Minimum observations before keeping urban and rural groups separate (default: 10)");
         comments.put(MIN_OBSERVATIONS_SPECIAL_REGION, "Minimum observations before keeping a special-region group separate (default: 4)");
+        comments.put(RESET_PENALTIES_TO_ZEROS, "Whether to reset penalties to zeros when simulation starts (default: false)");
         return comments;
     }
 
@@ -148,6 +151,8 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(MIN_OBSERVATIONS_URBAN_RURAL) public void setMinObservationsUrbanRural(int value) { minObservationsUrbanRural = value; }
     @StringGetter(MIN_OBSERVATIONS_SPECIAL_REGION) public int getMinObservationsSpecialRegion() { return minObservationsSpecialRegion; }
     @StringSetter(MIN_OBSERVATIONS_SPECIAL_REGION) public void setMinObservationsSpecialRegion(int value) { minObservationsSpecialRegion = value; }
+    @StringGetter(RESET_PENALTIES_TO_ZEROS) public boolean getResetPenaltiesToZeros() { return resetPenaltiesToZeros; }
+    @StringSetter(RESET_PENALTIES_TO_ZEROS) public void setResetPenaltiesToZeros(boolean value) { resetPenaltiesToZeros = value; }
 
     public void applyContext(Config config) {
         penaltiesFile = resolvePath(config, penaltiesFile);

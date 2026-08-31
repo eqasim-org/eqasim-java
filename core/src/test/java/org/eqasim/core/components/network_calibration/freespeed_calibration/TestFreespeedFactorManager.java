@@ -71,6 +71,19 @@ public class TestFreespeedFactorManager {
         assertFalse(diagnosticsAfterResume.lastlyFrozen);
     }
 
+    @Test
+    public void testActiveFreespeedComponentKeepsInputWhenNotCalibrated() {
+        NetworkCalibrationConfigGroup config = createConfig(1);
+        config.setCalibrate("");
+        FreespeedFactorManager manager = new FreespeedFactorManager(config, config.getFreeSpeedCalibrationConfigGroup());
+        FreespeedCalibrationKey key = new FreespeedCalibrationKey(1, "urban", 0);
+        manager.loadFactors(Map.of(key, 1.2));
+
+        manager.updateFactors(Map.of(key, createConsistentStats()), 1);
+
+        assertEquals(1.2, manager.getFactor(key), 1.0e-9);
+    }
+
     private static NetworkCalibrationConfigGroup createConfig(int minTripsPerGroup) {
         NetworkCalibrationConfigGroup config = new NetworkCalibrationConfigGroup();
         config.setActivate(true);

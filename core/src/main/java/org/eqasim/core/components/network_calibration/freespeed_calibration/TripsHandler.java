@@ -51,8 +51,8 @@ public class TripsHandler {
         this.categorizer = categorizer;
         this.carTravelTime = carTravelTime;
         this.threads = threads;
-        this.isActivated = config.isFreeSpeedCalibrationActivated() && config.isActivated();
-        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
+        this.isActivated = config.isFreeSpeedFactorActivated() && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isFreeSpeedFactorCalibrationActivated();
 
         if (isActivated && isCalibrating) {
                 if (carTravelTime == null) {

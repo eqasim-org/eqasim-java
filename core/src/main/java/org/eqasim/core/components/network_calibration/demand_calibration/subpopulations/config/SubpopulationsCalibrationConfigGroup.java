@@ -34,7 +34,7 @@ public class SubpopulationsCalibrationConfigGroup extends ReflectiveConfigGroup 
     private int updateInterval = 5;
     private int earlyUpdateInterval = 8;
     private int earlyIterationLimit = 50;
-    private boolean calibrateCrossBorder = true;
+    private boolean calibrateCrossBorder = false;
     private String crossBorderCloningIterations = "2,15,32,56,79";
     private double flowOverEstimationThreshold = 0.05;
     private double flowUnderEstimationThreshold = 0.05;
@@ -61,7 +61,7 @@ public class SubpopulationsCalibrationConfigGroup extends ReflectiveConfigGroup 
         comments.put(UPDATE_INTERVAL, "Iterations between updates after the early phase (default: 5)");
         comments.put(EARLY_UPDATE_INTERVAL, "Iterations between updates during the early phase (default: 8)");
         comments.put(EARLY_ITERATION_LIMIT, "Exclusive end of the early-interval phase (default: 50)");
-        comments.put(CALIBRATE_CROSS_BORDER, "Whether cross-border location and volume are calibrated; when false, only freight is calibrated (default: true)");
+        comments.put(CALIBRATE_CROSS_BORDER, "Whether cross-border location and volume are calibrated; when false, only freight is calibrated (default: false)");
         comments.put(CROSS_BORDER_CLONING_ITERATIONS, "Comma-separated iterations at which cross-border agents are cloned");
         comments.put(FLOW_OVER_ESTIMATION_THRESHOLD, "Relative flow excess that marks a link as overestimated (default: 0.05)");
         comments.put(FLOW_UNDER_ESTIMATION_THRESHOLD, "Relative flow deficit that marks a link as underestimated (default: 0.05)");

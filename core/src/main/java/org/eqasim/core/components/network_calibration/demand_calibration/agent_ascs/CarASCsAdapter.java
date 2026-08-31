@@ -40,8 +40,8 @@ public class CarASCsAdapter implements IterationEndsListener {
                           NetworkCalibrationConfigGroup calConfig, AgentAscsCalibrationConfigGroup config) {
         this.population = scenario.getPopulation();
         this.tripListConverter = tripListConverter;
-        this.calibrationEnabled = calConfig.isActivated() && calConfig.isCalibrationEnabled()
-                && calConfig.isAgentAscsCalibrationActivated();
+        this.calibrationEnabled = calConfig.isActivated() && calConfig.isAgentAscsCalibrationActivated()
+                && calConfig.isAgentAscsActivated();
         this.outputHierarchy = outputHierarchy;
         this.config = config;
         this.initialLearningRate = config.getLearningRate();

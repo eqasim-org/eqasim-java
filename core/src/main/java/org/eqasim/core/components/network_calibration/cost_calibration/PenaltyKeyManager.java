@@ -32,8 +32,8 @@ public class PenaltyKeyManager {
         this.minObservationsSpecialRegion = costConfig.getMinObservationsSpecialRegion();
 
         boolean isPenaltyCalibrationEnabled = config.isActivated()
-                && config.isCalibrationEnabled()
-                && config.isCostCalibrationActivated();
+                && config.isLinkPenaltyCalibrationActivated()
+                && config.isLinkPenaltyActivated();
 
         if (!isPenaltyCalibrationEnabled || !config.hasCountsFile()) {
             logger.info("Penalty key mapping is disabled (calibration={}, hasCountsFile={}). Using identity mapping.",
