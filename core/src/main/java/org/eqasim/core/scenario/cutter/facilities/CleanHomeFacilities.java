@@ -15,7 +15,7 @@ import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.ActivityOption;
 
 public class CleanHomeFacilities {
-	private final Collection<Id<ActivityFacility>> retainedIds = new HashSet<>();
+	private final Collection<Id<ActivityFacility>> referencedIds = new HashSet<>();
 
 	public CleanHomeFacilities(Population population) {
 		for (Person person : population.getPersons().values()) {
@@ -24,8 +24,8 @@ public class CleanHomeFacilities {
 					if (element instanceof Activity) {
 						Activity activity = (Activity) element;
 
-						if (activity.getType().equals("home")) {
-							retainedIds.add(activity.getFacilityId());
+						if (activity.getFacilityId() != null) {
+							referencedIds.add(activity.getFacilityId());
 						}
 					}
 				}
@@ -52,7 +52,7 @@ public class CleanHomeFacilities {
 			
 			boolean isCandidateForRemoval = hasHome && !hasOthers;
 
-			if (isCandidateForRemoval && !retainedIds.contains(facility.getId())) {
+			if (isCandidateForRemoval && !referencedIds.contains(facility.getId())) {
 				iterator.remove();
 			}
 		}
