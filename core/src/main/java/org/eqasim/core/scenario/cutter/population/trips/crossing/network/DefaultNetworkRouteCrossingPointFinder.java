@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.LinkRegionClassifier;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingData;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingRegistry;
 import org.matsim.api.core.v01.Id;
@@ -18,16 +18,14 @@ import org.matsim.core.router.util.TravelTime;
 import com.google.inject.Inject;
 
 public class DefaultNetworkRouteCrossingPointFinder implements NetworkRouteCrossingPointFinder {
-	final private ScenarioExtent extent;
 	final private Network network;
 
 	final private Map<String, TravelTime> travelTimes;
 	final private LinkTimingRegistry timingRegistry;
 
 	@Inject
-	public DefaultNetworkRouteCrossingPointFinder(ScenarioExtent extent, Network network,
+	public DefaultNetworkRouteCrossingPointFinder(Network network,
 			Map<String, TravelTime> travelTimes, LinkTimingRegistry timingRegistry) {
-		this.extent = extent;
 		this.network = network;
 		this.travelTimes = travelTimes;
 		this.timingRegistry = timingRegistry;
@@ -56,10 +54,8 @@ public class DefaultNetworkRouteCrossingPointFinder implements NetworkRouteCross
 			enterTime = leaveTime;
 			leaveTime = enterTime + travelTime.getLinkTravelTime(link, enterTime, null, null);
 
-			boolean fromIsInside = extent.isInside(link.getFromNode().getCoord());
-			boolean toIsInside = extent.isInside(link.getToNode().getCoord());
-
-			if (fromIsInside != toIsInside) {
+			if (LinkRegionClassifier.isCrossing(link)) {
+				boolean fromIsInside = LinkRegionClassifier.isFromNodeInside(link);
 				Optional<LinkTimingData> timingData = timingRegistry.getTimingData(personId, legIndex, linkId);
 
 				if (timingData.isPresent()) {
@@ -87,11 +83,7 @@ public class DefaultNetworkRouteCrossingPointFinder implements NetworkRouteCross
 		for (Id<Link> linkId : fullRoute) {
 			Link link = network.getLinks().get(linkId);
 
-			if (!extent.isInside(link.getFromNode().getCoord())) {
-				return false;
-			}
-
-			if (!extent.isInside(link.getToNode().getCoord())) {
+			if (!LinkRegionClassifier.isInside(link)) {
 				return false;
 			}
 		}

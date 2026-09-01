@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eqasim.core.scenario.cutter.extent.LinkRegionClassifier;
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.extent.ShapeScenarioExtent;
 import org.matsim.api.core.v01.network.Network;
@@ -48,6 +49,7 @@ public class RunNetworkCutter {
 
 		Network filteredNetwork = NetworkUtils.createNetwork();
 		new TransportModeNetworkFilter(fullNetwork).filter(filteredNetwork, modes);
+		LinkRegionClassifier.classify(filteredNetwork, extent);
 
 		// Cut network
 		RoadNetwork roadNetwork = new RoadNetwork(filteredNetwork);
@@ -55,9 +57,10 @@ public class RunNetworkCutter {
 				.orElse(Runtime.getRuntime().availableProcessors());
 
 		MinimumNetworkFinder minimumNetworkFinder = new MinimumNetworkFinder(extent, roadNetwork, numberOfThreads, 100);
-		new NetworkCutter(extent, ScenarioUtils.createScenario(ConfigUtils.createConfig()), minimumNetworkFinder)
+		new NetworkCutter(ScenarioUtils.createScenario(ConfigUtils.createConfig()), minimumNetworkFinder)
 				.run(roadNetwork);
 
+		LinkRegionClassifier.clear(roadNetwork);
 		new NetworkWriter(roadNetwork).write(cmd.getOptionStrict("output-path"));
 	}
 }

@@ -1,6 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.scenario;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
@@ -158,11 +159,14 @@ public class RunAdaptConfig {
 		MultinomialLogitSelectorConfigGroup MNLConfig = dmcConfig.getMultinomialLogitSelectorConfig();
 		MNLConfig.setRandomNumbers(MultinomialLogitSelectorConfigGroup.RandomNumbers.fixed);
 
+		// tourFilter:TourLength: set maximumLength to 8 instead of default 10
+		dmcConfig.getTourLengthFilterConfigGroup().setMaximumLength(8);
+
 		// adjust routing parameters
 		eqasimConfig.setRoutingDistanceUtility(SwissConfigAdapter.routingDistanceUtility);
 
 		RoutingConfigGroup routingConfig  = config.routing();
-		routingConfig.setRoutingRandomness(1.0); // small randomness to avoid ties in route choice
+		routingConfig.setRoutingRandomness(3.0);
 
 		RoutingConfigGroup.TeleportedModeParams walkParams = routingConfig.getOrCreateModeRoutingParams(TransportMode.walk);
 		walkParams.setBeelineDistanceFactor(1.3);
@@ -179,7 +183,7 @@ public class RunAdaptConfig {
 	    	}
 			routingConfig.removeTeleportedModeParams(TransportMode.bike);
 			// If routing bike in the network, we need to change qsim link dynamics to seepageQ
-			qsimConfigGroup.setLinkDynamics(QSimConfigGroup.LinkDynamics.PassingQ);
+			qsimConfigGroup.setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
 			qsimConfigGroup.setSeepModes(Collections.singletonList(TransportMode.bike));
 			qsimConfigGroup.setSeepModeStorageFree(true);
 			// ttcConfig.getAnalyzedModes().add(TransportMode.bike);
@@ -218,7 +222,8 @@ public class RunAdaptConfig {
 		// set trip constraints (to remove car passenger constraint)
 		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk",
 									SwissModeChoiceModule.LOOP_CONSTRAINT_NAME,
-									SwissModeChoiceModule.REMOTE_WALK_CONSTRAINT_NAME));
+									SwissModeChoiceModule.REMOTE_WALK_CONSTRAINT_NAME,
+									SwissModeChoiceModule.BORDER_CONSTRAINT_NAME));
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {
@@ -242,9 +247,17 @@ public class RunAdaptConfig {
 
 		// transit router
 		TransitRouterConfigGroup transitRouterParams = config.transitRouter();
+		transitRouterParams.setAdditionalTransferTime(5.0);
 		transitRouterParams.setDirectWalkFactor(3.0);
 		transitRouterParams.setMaxBeelineWalkConnectionDistance(300.0);
 		transitRouterParams.setSearchRadius(1200.0);
+
+		// Network calibration
+		NetworkCalibrationConfigGroup netCalibConfig = NetworkCalibrationConfigGroup.getOrCreate(config);
+		if (!SwissConfigAdapter.countsFile.isEmpty()){ netCalibConfig.setCountsFile(SwissConfigAdapter.countsFile);}
+		if (!SwissConfigAdapter.countSpecialRegionPath.isEmpty()){ netCalibConfig.getCostCalibrationConfigGroup().setSpecialRegionPath(SwissConfigAdapter.countSpecialRegionPath);}
+		if (!SwissConfigAdapter.speedsFile.isEmpty()){ netCalibConfig.getFreeSpeedCalibrationConfigGroup().setObservedTripsFile(SwissConfigAdapter.speedsFile);}
+		if (!SwissConfigAdapter.speedsSpecialRegionPath.isEmpty()){ netCalibConfig.getFreeSpeedCalibrationConfigGroup().setSpecialRegionPath(SwissConfigAdapter.speedsSpecialRegionPath);}
 
 	}
 

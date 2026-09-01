@@ -3,7 +3,6 @@ package org.eqasim.core.scenario.cutter.population;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
 import org.eqasim.core.scenario.cutter.population.trips.ModeAwareTripProcessor;
@@ -16,7 +15,6 @@ import org.eqasim.core.scenario.cutter.population.trips.crossing.network.Default
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkRouteCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkTripCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingRegistry;
-import org.eqasim.core.scenario.cutter.population.trips.crossing.network.timing.LinkTimingRegistryHandler;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.teleportation.DefaultTeleportationCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.teleportation.TeleportationCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.DefaultTransitRouteCrossingPointFinder;
@@ -24,33 +22,28 @@ import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.Default
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.TransitRouteCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.TransitTripCrossingPointFinder;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Population;
-import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
 import org.matsim.core.controler.AbstractModule;
-import org.matsim.core.events.EventsUtils;
-import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.pt.config.TransitConfigGroup;
 import org.matsim.pt.config.TransitRouterConfigGroup;
 
 import com.google.inject.Provider;
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
 
 public class PopulationCutterModule extends AbstractModule {
 	private final int numberOfThreads;
 	private final int batchSize;
 	private final ScenarioExtent extent;
-	private final Optional<String> eventsPath;
+	private final LinkTimingRegistry linkTimingRegistry;
 
 	public PopulationCutterModule(ScenarioExtent extent, int numberOfThreads, int batchSize,
-			Optional<String> eventsPath) {
+			LinkTimingRegistry linkTimingRegistry) {
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
 		this.extent = extent;
-		this.eventsPath = eventsPath;
+		this.linkTimingRegistry = linkTimingRegistry;
 	}
 
 	@Override
@@ -70,6 +63,7 @@ public class PopulationCutterModule extends AbstractModule {
 		bind(PlanCutter.class);
 
 		bind(ScenarioExtent.class).toInstance(extent);
+		bind(LinkTimingRegistry.class).toInstance(linkTimingRegistry);
 	}
 
 	@Provides
@@ -154,20 +148,4 @@ public class PopulationCutterModule extends AbstractModule {
 		return new NetworkTripProcessor(networkPointFinder, extent);
 	}
 
-	@Provides
-	@Singleton
-	public LinkTimingRegistry provideLinkTimingRegistry(Network network) {
-		LinkTimingRegistry registry = new LinkTimingRegistry();
-
-		if (eventsPath.isPresent()) {
-			EventsManager eventsManager = EventsUtils.createEventsManager();
-			eventsManager.addHandler(new LinkTimingRegistryHandler(extent, network, registry));
-
-			eventsManager.initProcessing();
-			new MatsimEventsReader(eventsManager).readFile(eventsPath.get());
-			eventsManager.finishProcessing();
-		}
-
-		return registry;
-	}
 }

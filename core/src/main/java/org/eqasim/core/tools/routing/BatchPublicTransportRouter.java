@@ -2,14 +2,19 @@ package org.eqasim.core.tools.routing;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.eqasim.core.components.headway.HeadwayCalculator;
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -23,6 +28,7 @@ import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Provider;
@@ -36,10 +42,18 @@ public class BatchPublicTransportRouter {
 	private final int batchSize;
 	private final int numberOfThreads;
 	private final double interval;
+	private final boolean collectLegInformation;
+	private final Map<TransitRoute, DepartureIndex> departureIndices;
 
 	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider,
 			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
 			int batchSize, int numberOfThreads, double interval) {
+		this(routerProvider, headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval, true);
+	}
+
+	public BatchPublicTransportRouter(Provider<TransitRouter> routerProvider,
+			Provider<HeadwayCalculator> headwayCalculatorProvider, TransitSchedule schedule, Network network,
+			int batchSize, int numberOfThreads, double interval, boolean collectLegInformation) {
 		this.routerProvider = routerProvider;
 		this.headwayCalculatorProvider = headwayCalculatorProvider;
 		this.batchSize = batchSize;
@@ -47,6 +61,8 @@ public class BatchPublicTransportRouter {
 		this.schedule = schedule;
 		this.network = network;
 		this.interval = interval;
+		this.collectLegInformation = collectLegInformation;
+		this.departureIndices = collectLegInformation ? createDepartureIndices(schedule) : Collections.emptyMap();
 	}
 
 	public Pair<Collection<TripInformation>, Collection<LegInformation>> run(Collection<Task> tasks)
@@ -54,7 +70,7 @@ public class BatchPublicTransportRouter {
 		Iterator<Task> taskIterator = tasks.iterator();
 
 		List<TripInformation> tripResults = new ArrayList<>(tasks.size());
-		List<LegInformation> legResults = new ArrayList<>(tasks.size());
+		List<LegInformation> legResults = new ArrayList<>(collectLegInformation ? tasks.size() : 0);
 
 		ParallelProgress progress = new ParallelProgress("Routing trips ...", tasks.size());
 		progress.start();
@@ -92,7 +108,7 @@ public class BatchPublicTransportRouter {
 		@Override
 		public void run() {
 			TransitRouter router = routerProvider.get();
-			HeadwayCalculator headwayCalculator = headwayCalculatorProvider.get();
+			HeadwayCalculator headwayCalculator = interval > 0.0 ? headwayCalculatorProvider.get() : null;
 
 			while (true) {
 				List<Task> localTasks = new ArrayList<>(batchSize);
@@ -108,7 +124,9 @@ public class BatchPublicTransportRouter {
 				}
 
 				List<TripInformation> localTripResults = new ArrayList<>(localTasks.size());
-				List<LegInformation> localLegResults = new ArrayList<>(localTasks.size() * 3);
+				List<LegInformation> localLegResults = collectLegInformation
+						? new ArrayList<>(localTasks.size() * 3)
+						: Collections.emptyList();
 
 				for (Task task : localTasks) {
 					TripInformation tripInformation = new TripInformation(task);
@@ -195,8 +213,8 @@ public class BatchPublicTransportRouter {
 
 								tripInformation.isOnlyWalk = 0;
 
-								{ // Legs
-									Departure departure = findDeparture(route, transitRoute);
+								if (collectLegInformation) {
+									Departure departure = departureIndices.get(transitRoute).findDeparture(route);
 
 									LegInformation legInformation = new LegInformation();
 									legInformation.identifier = task.identifier;
@@ -232,8 +250,9 @@ public class BatchPublicTransportRouter {
 						localTripResults.add(tripInformation);
 					}
 
-					progress.update();
 				}
+
+				progress.update(localTasks.size());
 
 				synchronized (tripResults) {
 					tripResults.addAll(localTripResults);
@@ -243,24 +262,60 @@ public class BatchPublicTransportRouter {
 		}
 	}
 
-	private static Departure findDeparture(TransitPassengerRoute passengerRoute, TransitRoute route) {
-		double boardingTime = passengerRoute.getBoardingTime().seconds();
+	private static Map<TransitRoute, DepartureIndex> createDepartureIndices(TransitSchedule schedule) {
+		Map<TransitRoute, DepartureIndex> indices = new IdentityHashMap<>();
 
-		List<Double> accessOffsets = route.getStops().stream() //
-				.filter(stop -> stop.getStopFacility().getId().equals(passengerRoute.getAccessStopId())) //
-				.map(stop -> stop.getArrivalOffset().seconds()).collect(Collectors.toList());
-
-		for (Departure departure : route.getDepartures().values()) {
-			if (departure.getDepartureTime() <= boardingTime) {
-				for (double offset : accessOffsets) {
-					if (departure.getDepartureTime() + offset == boardingTime) {
-						return departure;
-					}
-				}
+		for (TransitLine line : schedule.getTransitLines().values()) {
+			for (TransitRoute route : line.getRoutes().values()) {
+				indices.put(route, new DepartureIndex(route));
 			}
 		}
 
-		throw new IllegalStateException("Departure not found");
+		return indices;
+	}
+
+	static class DepartureIndex {
+		private final List<Departure> departures;
+		private final Map<Id<TransitStopFacility>, List<Double>> accessOffsets = new HashMap<>();
+
+		DepartureIndex(TransitRoute route) {
+			departures = new ArrayList<>(route.getDepartures().values());
+			departures.sort(Comparator.comparingDouble(Departure::getDepartureTime));
+
+			route.getStops().forEach(stop -> accessOffsets
+					.computeIfAbsent(stop.getStopFacility().getId(), id -> new ArrayList<>())
+					.add(stop.getArrivalOffset().seconds()));
+		}
+
+		Departure findDeparture(TransitPassengerRoute passengerRoute) {
+			double boardingTime = passengerRoute.getBoardingTime().seconds();
+			List<Double> offsets = accessOffsets.get(passengerRoute.getAccessStopId());
+
+			if (offsets != null) {
+				for (double offset : offsets) {
+					int low = 0;
+					int high = departures.size();
+
+					while (low < high) {
+						int middle = (low + high) >>> 1;
+						double candidateBoardingTime = departures.get(middle).getDepartureTime() + offset;
+
+						if (candidateBoardingTime < boardingTime) {
+							low = middle + 1;
+						} else {
+							high = middle;
+						}
+					}
+
+					if (low < departures.size()
+							&& departures.get(low).getDepartureTime() + offset == boardingTime) {
+						return departures.get(low);
+					}
+				}
+			}
+
+			throw new IllegalStateException("Departure not found");
+		}
 	}
 
 	static public class Task {

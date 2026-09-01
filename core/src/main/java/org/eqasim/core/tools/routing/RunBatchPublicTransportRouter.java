@@ -2,6 +2,7 @@ package org.eqasim.core.tools.routing;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,7 +58,7 @@ public class RunBatchPublicTransportRouter {
 			IOException, InterruptedException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path", "input-path") //
-				.allowOptions("threads", "batch-size", "interval", //
+				.allowOptions("threads", "batch-size", "chunk-size", "interval", //
 						"transfer-utility", "waiting-utility", //
 						"direct-walk-factor", "maximum-transfer-distance", //
 						"walk-factor", "walk-speed", //
@@ -256,8 +257,13 @@ public class RunBatchPublicTransportRouter {
 
 		int numberOfThreads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
-		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(100);
+		int batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(128);
+		int chunkSize = cmd.getOption("chunk-size").map(Integer::parseInt).orElse((65_536));
 		double interval = (double) cmd.getOption("interval").map(Integer::parseInt).orElse(0);
+
+		if (chunkSize <= 0) {
+			throw new IllegalArgumentException("chunk-size must be greater than zero");
+		}
 
 		Optional<String> outputLegsPath = cmd.getOption("output-legs-path");
 		Optional<String> outputTripsPath = cmd.getOption("output-trips-path");
@@ -272,7 +278,8 @@ public class RunBatchPublicTransportRouter {
 		Network network = injector.getInstance(Network.class);
 
 		BatchPublicTransportRouter batchRouter = new BatchPublicTransportRouter(routerProvider,
-				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval);
+				headwayCalculatorProvider, schedule, network, batchSize, numberOfThreads, interval,
+				outputLegsPath.isPresent());
 
 		CsvMapper mapper = new CsvMapper();
 
@@ -280,30 +287,38 @@ public class RunBatchPublicTransportRouter {
 		CsvSchema taskSchema = mapper.typedSchemaFor(Task.class).withHeader().withColumnSeparator(',').withComments()
 				.withColumnReordering(true);
 
-		MappingIterator<Task> taskIterator = mapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
+		CsvSchema tripResultSchema = mapper.typedSchemaFor(TripInformation.class).withHeader()
+				.withColumnSeparator(',');
+		CsvSchema legResultSchema = mapper.typedSchemaFor(LegInformation.class).withHeader()
+				.withColumnSeparator(',');
+
+		try (MappingIterator<Task> taskIterator = mapper.readerWithTypedSchemaFor(Task.class).with(taskSchema)
 				.readValues(inputFile);
-		List<Task> tasks = taskIterator.readAll();
+				SequenceWriter tripWriter = outputTripsPath.isPresent()
+						? mapper.writerWithTypedSchemaFor(TripInformation.class).with(tripResultSchema)
+								.writeValues(new File(outputTripsPath.get()))
+						: null;
+				SequenceWriter legWriter = outputLegsPath.isPresent()
+						? mapper.writerWithTypedSchemaFor(LegInformation.class).with(legResultSchema)
+								.writeValues(new File(outputLegsPath.get()))
+						: null) {
+			while (taskIterator.hasNext()) {
+				List<Task> tasks = new ArrayList<>(Math.min(chunkSize, 100_000));
 
-		Pair<Collection<TripInformation>, Collection<LegInformation>> results = batchRouter.run(tasks);
-		Collection<TripInformation> tripResults = results.getLeft();
-		Collection<LegInformation> legResults = results.getRight();
+				while (taskIterator.hasNext() && tasks.size() < chunkSize) {
+					tasks.add(taskIterator.next());
+				}
 
-		if (outputTripsPath.isPresent()) {
-			File outputFile = new File(outputTripsPath.get());
-			CsvSchema resultSchema = mapper.typedSchemaFor(TripInformation.class).withHeader().withColumnSeparator(',');
+				Pair<Collection<TripInformation>, Collection<LegInformation>> results = batchRouter.run(tasks);
 
-			SequenceWriter writer = mapper.writerWithTypedSchemaFor(TripInformation.class).with(resultSchema)
-					.writeValues(outputFile);
-			writer.writeAll(tripResults);
-		}
+				if (tripWriter != null) {
+					tripWriter.writeAll(results.getLeft());
+				}
 
-		if (outputLegsPath.isPresent()) {
-			File outputFile = new File(outputLegsPath.get());
-			CsvSchema resultSchema = mapper.typedSchemaFor(LegInformation.class).withHeader().withColumnSeparator(',');
-
-			SequenceWriter writer = mapper.writerWithTypedSchemaFor(LegInformation.class).with(resultSchema)
-					.writeValues(outputFile);
-			writer.writeAll(legResults);
+				if (legWriter != null) {
+					legWriter.writeAll(results.getRight());
+				}
+			}
 		}
 
 		if (outputConfigPath.isPresent()) {

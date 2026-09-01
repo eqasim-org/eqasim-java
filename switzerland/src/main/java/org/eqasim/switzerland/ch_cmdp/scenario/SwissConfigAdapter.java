@@ -20,11 +20,17 @@ public class SwissConfigAdapter {
     protected static String carCostModel = "simple";
     protected static boolean routeBikeInNetwork = false;
 
+    protected static String countSpecialRegionPath = "";
+    protected static String speedsSpecialRegionPath = "";
+    protected static String speedsFile = "";
+    protected static String countsFile = "";
+
     public static void run(String[] args, SwitzerlandConfigurator configurator, Consumer<Config> adapter)
             throws CommandLine.ConfigurationException {
         CommandLine cmd = new CommandLine.Builder(args) //
                 .requireOptions("input-path", "output-path", "downsamplingRate", "replanningRate", "prefix") //
-                .allowOptions("activity-list", "hasFreight", "carCostModel", "routeBikeInNetwork","routingDistanceUtility") //
+                .allowOptions("activity-list", "hasFreight", "carCostModel", "routeBikeInNetwork","routingDistanceUtility",
+                              "countsFile", "countSpecialRegionPath", "speedsFile", "speedsSpecialRegionPath") //
                 .build();
 
         if (cmd.hasOption("activity-list")) {
@@ -45,6 +51,20 @@ public class SwissConfigAdapter {
 
         if (cmd.hasOption("routeBikeInNetwork")) {
             routeBikeInNetwork = cmd.getOption("routeBikeInNetwork").get().equalsIgnoreCase("true");
+        }
+
+        if (cmd.hasOption("countSpecialRegionPath")) {
+            countSpecialRegionPath = cmd.getOption("countSpecialRegionPath").get();
+        }
+        if (cmd.hasOption("speedsSpecialRegionPath")) {
+            speedsSpecialRegionPath = cmd.getOption("speedsSpecialRegionPath").get();
+        }
+
+        if (cmd.hasOption("speedsFile")) {
+            speedsFile = cmd.getOption("speedsFile").get();
+        }
+        if (cmd.hasOption("countsFile")) {
+            countsFile = cmd.getOption("countsFile").get();
         }
 
         replanningRate = Double.parseDouble(cmd.getOptionStrict("replanningRate"));

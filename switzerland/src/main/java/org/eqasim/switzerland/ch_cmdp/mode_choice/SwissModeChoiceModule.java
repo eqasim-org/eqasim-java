@@ -24,6 +24,7 @@ import org.eqasim.switzerland.ch_cmdp.calibration.*;
 import org.eqasim.switzerland.ch_cmdp.config.SwissBikesharingConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.BorderConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.IntermodalVehicleTourConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
@@ -91,6 +92,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String INTERMODAL_VEHICLE_CONTINUITY_TRIP_ESTIMATOR_NAME = "IntermodalVehicleContinuityTripEstimator";
 	static public final String INTERMODAL_VEHICLE_CONTINUITY_TOUR_ESTIMATOR_NAME = "IntermodalVehicleContinuityTourEstimator";
 	static public final String VALID_BIKESHARING_TRIP_CONSTRAINT_NAME = "ValidBikesharingTripConstraint";
+	static public final String BORDER_CONSTRAINT_NAME = "BorderConstraint";
 
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -101,6 +103,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
 		bindTripConstraintFactory(REMOTE_WALK_CONSTRAINT_NAME).to(RemoteWalkConstraint.Factory.class);
+		bindTripConstraintFactory(BORDER_CONSTRAINT_NAME).to(BorderConstraint.Factory.class);
 		bindTripConstraintFactory(VALID_BIKESHARING_TRIP_CONSTRAINT_NAME)
 				.to(ValidBikesharingTripConstraint.Factory.class);
 		bindTourConstraintFactory(INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME)

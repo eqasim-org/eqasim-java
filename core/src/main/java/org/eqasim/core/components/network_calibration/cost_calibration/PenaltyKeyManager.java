@@ -1,19 +1,14 @@
 package org.eqasim.core.components.network_calibration.cost_calibration;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
+import org.eqasim.core.components.network_calibration.Processors.CountsProcessor;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,18 +20,20 @@ import java.util.Set;
  */
 public class PenaltyKeyManager {
     private static final Logger logger = LogManager.getLogger(PenaltyKeyManager.class);
-    public static final int MIN_OBSERVATIONS_URBAN_RURAL = 10;
-    public static final int MIN_OBSERVATIONS_SPECIAL = 5;
-
     private final Map<PenaltyGroupKey, PenaltyGroupKey> keyMapping = new HashMap<>();
     private final LinkCategorizer categorizer;
+    private final int minObservationsUrbanRural;
+    private final int minObservationsSpecialRegion;
 
-    public PenaltyKeyManager(NetworkCalibrationConfigGroup config, Network network, LinkCategorizer categorizer) {
+    public PenaltyKeyManager(NetworkCalibrationConfigGroup config, CostCalibrationConfigGroup costConfig,
+                             Network network, LinkCategorizer categorizer) {
         this.categorizer = categorizer;
+        this.minObservationsUrbanRural = costConfig.getMinObservationsUrbanRural();
+        this.minObservationsSpecialRegion = costConfig.getMinObservationsSpecialRegion();
 
         boolean isPenaltyCalibrationEnabled = config.isActivated()
-                && config.isCalibrationEnabled()
-                && config.isOneOfObjectives("penalty");
+                && config.isLinkPenaltyCalibrationActivated()
+                && config.isLinkPenaltyActivated();
 
         if (!isPenaltyCalibrationEnabled || !config.hasCountsFile()) {
             logger.info("Penalty key mapping is disabled (calibration={}, hasCountsFile={}). Using identity mapping.",
@@ -110,7 +107,7 @@ public class PenaltyKeyManager {
             }
 
             int observations = observationsByKey.getOrDefault(key, 0);
-            if (observations >= MIN_OBSERVATIONS_SPECIAL) {
+            if (observations >= minObservationsSpecialRegion) {
                 continue;
             }
 
@@ -129,7 +126,7 @@ public class PenaltyKeyManager {
             int ruralCount = getMappedObservationCount(rural, observationsByKey);
             int urbanCount = getMappedObservationCount(urban, observationsByKey);
 
-            if (ruralCount < MIN_OBSERVATIONS_URBAN_RURAL || urbanCount < MIN_OBSERVATIONS_URBAN_RURAL) {
+            if (ruralCount < minObservationsUrbanRural || urbanCount < minObservationsUrbanRural) {
                 keyMapping.put(urban, rural);
                 logger.info("Merging sparse urban/rural groups for link category {}: urban ({} observations) merged into rural ({} observations).",
                         linkCategory, urbanCount, ruralCount);
@@ -170,27 +167,11 @@ public class PenaltyKeyManager {
     private Map<PenaltyGroupKey, Integer> readObservationsByRealKey(String countsFile,
                                                                      Network network,
                                                                      Map<Id<Link>, PenaltyGroupKey> realKeyByLinkId) {
-        File inputFile = new File(countsFile);
-        if (!inputFile.exists()) {
-            throw new IllegalArgumentException("Counts file " + countsFile + " does not exist.");
-        }
-
         try {
-            CsvMapper mapper = new CsvMapper();
-            CsvSchema schema = mapper.typedSchemaFor(CountPoint.class)
-                    .withHeader()
-                    .withColumnSeparator(',')
-                    .withComments()
-                    .withColumnReordering(true);
-
-            MappingIterator<CountPoint> iterator = mapper.readerWithTypedSchemaFor(CountPoint.class)
-                    .with(schema)
-                    .readValues(inputFile);
-
-            List<CountPoint> points = iterator.readAll();
+            List<CountsProcessor.CountPoint> points = CountsProcessor.readCounts(countsFile);
             Map<PenaltyGroupKey, Integer> observationsByKey = new HashMap<>();
 
-            for (CountPoint point : points) {
+            for (CountsProcessor.CountPoint point : points) {
                 if (point.count <= 0.0) {
                     continue;
                 }
@@ -215,13 +196,4 @@ public class PenaltyKeyManager {
         }
     }
 
-    private static class CountPoint {
-        @JsonProperty("linkId")
-        @JsonAlias({"link", "link_id", "linkId"})
-        public String linkId;
-
-        @JsonProperty("count")
-        @JsonAlias({"count", "counts", "Count"})
-        public double count;
-    }
 }

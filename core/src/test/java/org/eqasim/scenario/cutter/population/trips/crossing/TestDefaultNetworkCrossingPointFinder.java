@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eqasim.core.scenario.cutter.extent.ScenarioExtent;
+import org.eqasim.core.scenario.cutter.extent.LinkRegionClassifier;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkRouteCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkRouteCrossingPoint;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkRouteCrossingPointFinder;
@@ -94,7 +95,8 @@ public class TestDefaultNetworkCrossingPointFinder {
 
 	@Test
 	public void testFindCrossingPoints() {
-		NetworkRouteCrossingPointFinder finder = new DefaultNetworkRouteCrossingPointFinder(extentMock, networkMock,
+		LinkRegionClassifier.classify(networkMock, extentMock);
+		NetworkRouteCrossingPointFinder finder = new DefaultNetworkRouteCrossingPointFinder(networkMock,
 				Collections.singletonMap("car", travelTimeMock), new LinkTimingRegistry());
 
 		NetworkRoute route;
@@ -164,13 +166,14 @@ public class TestDefaultNetworkCrossingPointFinder {
 	
 	@Test
 	public void testFindCrossingPointsFromTiming() {
+		LinkRegionClassifier.classify(networkMock, extentMock);
 		Id<Person> personId = Id.createPersonId("personA");
 		
 		LinkTimingRegistry registry = new LinkTimingRegistry();
 		registry.register(personId, 23, Id.createLinkId("23"), 600.0, 700.0);
 		registry.register(personId, 53, Id.createLinkId("23"), 650.0, 750.0);
 		
-		NetworkRouteCrossingPointFinder finder = new DefaultNetworkRouteCrossingPointFinder(extentMock, networkMock,
+		NetworkRouteCrossingPointFinder finder = new DefaultNetworkRouteCrossingPointFinder(networkMock,
 				Collections.singletonMap("car", travelTimeMock), registry);
 
 		NetworkRoute route = createRouteMock(1, 3);

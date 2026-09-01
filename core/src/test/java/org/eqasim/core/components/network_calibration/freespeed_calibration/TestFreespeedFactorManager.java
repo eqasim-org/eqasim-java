@@ -14,7 +14,8 @@ import org.junit.Test;
 public class TestFreespeedFactorManager {
     @Test
     public void testSkipWhenTripsAreInsufficient() {
-        FreespeedFactorManager manager = new FreespeedFactorManager(createConfig(2));
+        NetworkCalibrationConfigGroup config = createConfig(2);
+        FreespeedFactorManager manager = new FreespeedFactorManager(config, config.getFreeSpeedCalibrationConfigGroup());
         FreespeedCalibrationKey key = new FreespeedCalibrationKey(1, "urban", 0);
         FreespeedFactorManager.GroupStats stats = createConsistentStats();
 
@@ -32,7 +33,8 @@ public class TestFreespeedFactorManager {
 
     @Test
     public void testFreezeRollbackAndResumeAfterNoImprovement() {
-        FreespeedFactorManager manager = new FreespeedFactorManager(createConfig(1));
+        NetworkCalibrationConfigGroup config = createConfig(1);
+        FreespeedFactorManager manager = new FreespeedFactorManager(config, config.getFreeSpeedCalibrationConfigGroup());
         FreespeedCalibrationKey key = new FreespeedCalibrationKey(1, "urban", 0);
         FreespeedFactorManager.GroupStats stats = createConsistentStats();
 
@@ -69,15 +71,31 @@ public class TestFreespeedFactorManager {
         assertFalse(diagnosticsAfterResume.lastlyFrozen);
     }
 
+    @Test
+    public void testActiveFreespeedComponentKeepsInputWhenNotCalibrated() {
+        NetworkCalibrationConfigGroup config = createConfig(1);
+        config.setCalibrate("");
+        FreespeedFactorManager manager = new FreespeedFactorManager(config, config.getFreeSpeedCalibrationConfigGroup());
+        FreespeedCalibrationKey key = new FreespeedCalibrationKey(1, "urban", 0);
+        manager.loadFactors(Map.of(key, 1.2));
+
+        manager.updateFactors(Map.of(key, createConsistentStats()), 1);
+
+        assertEquals(1.2, manager.getFactor(key), 1.0e-9);
+    }
+
     private static NetworkCalibrationConfigGroup createConfig(int minTripsPerGroup) {
         NetworkCalibrationConfigGroup config = new NetworkCalibrationConfigGroup();
-        config.setObjective("freespeed");
         config.setActivate(true);
         config.setCalibrate(true);
-        config.setMinTripsPerGroup(minTripsPerGroup);
-        config.setBeta(0.5);
-        config.setMinFreespeedFactor(0.7);
-        config.setMaxFreespeedFactor(1.3);
+        FreeSpeedCalibrationConfigGroup freespeedConfig = config.getFreeSpeedCalibrationConfigGroup();
+        freespeedConfig.setActivate(true);
+        freespeedConfig.setMinTripsPerGroup(minTripsPerGroup);
+        freespeedConfig.setLearningRate(0.5);
+        freespeedConfig.setMinFactor(0.7);
+        freespeedConfig.setMaxFactor(1.3);
+        freespeedConfig.setUnboundedInitialUpdates(0);
+        freespeedConfig.setFrozenIterations(3);
         return config;
     }
 

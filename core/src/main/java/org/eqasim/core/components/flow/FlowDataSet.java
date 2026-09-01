@@ -44,37 +44,66 @@ public class FlowDataSet {
     }
 
     public float getFlow_v_h(Id<Link> linkId, double time, double aggregationWindow) {
-        float flow = getFlowInWindow(linkId, time, aggregationWindow);
-        return flow * flowRatio; // Convert from veh/bin to veh/h
+        WindowFlow windowFlow = aggregateWindow(linkId, time, aggregationWindow);
+        return windowFlow.duration > 0.0
+                ? (float) (windowFlow.vehicleCount * 3600.0 / windowFlow.duration)
+                : 0.0F;
     }
 
     public float getFlow(Id<Link> linkId, double time) {
-        // this method should always return flow in veh/h, so we need to multiply the stored flow (which is in veh/bin) by the flowRatio (veh/h per veh/bin)
+        // Return the number of vehicles stored in the bin containing time.
         float[] flows = flowMap.get(linkId);
         int binIdx = flowBinManager.getBinIndex(time);
         return flows[binIdx];
     }
 
+    /**
+     * Returns the estimated number of vehicles inside a window centered on {@code time}.
+     * Partial bins are weighted by their overlap with the window.
+     */
     public float getFlowInWindow(Id<Link> linkId, double time, double aggregationWindow) {
-        // time is the center of the aggregation window, so we need to look at the bins that are within aggregationWindow/2 before and after the time
-        // if it is the same bin, just return the flow within that bin
-        if (Math.abs(aggregationWindow - binSize) < 1e-3){
-            return getFlow(linkId, time);
+        return (float) aggregateWindow(linkId, time, aggregationWindow).vehicleCount;
+    }
+
+    private WindowFlow aggregateWindow(Id<Link> linkId, double time, double aggregationWindow) {
+        if (!Double.isFinite(time)) {
+            throw new IllegalArgumentException("time must be finite. Provided: " + time);
         }
-        // This method should always return flow in veh/h, so we need to multiply the stored flow (which is in veh/bin) by the flowRatio (veh/h per veh/bin)
-        // the aggregationWindow is in seconds, and is bigger than the bin size, so we need to aggregate multiple bins together
+        if (!Double.isFinite(aggregationWindow) || aggregationWindow <= 0.0) {
+            throw new IllegalArgumentException("aggregationWindow must be finite and > 0. Provided: " + aggregationWindow);
+        }
+
+        double windowStart = time - aggregationWindow / 2.0;
+        double windowEnd = time + aggregationWindow / 2.0;
+        double coveredStart = Math.max(windowStart, flowBinManager.getStartTime());
+        double coveredEnd = Math.min(windowEnd, flowBinManager.getEndTime());
+
+        if (coveredEnd <= coveredStart) {
+            return new WindowFlow(0.0, 0.0);
+        }
+
         float[] flows = flowMap.get(linkId);
-        int startBinIdx = flowBinManager.getBinIndex(time - aggregationWindow / 2 + binSize / 2); // Start from the bin that is centered at time - aggregationWindow/2
-        int endBinIdx = flowBinManager.getBinIndex(time + aggregationWindow / 2 - binSize / 2); // End at the bin that is centered at time + aggregationWindow/2
-        float totalFlow = 0.0F;
-        int binsCounted = 0;
-        for (int i = startBinIdx; i <= endBinIdx; i++) {
-            totalFlow += flows[i];
-            binsCounted++;
+        double flowStart = flowBinManager.getStartTime();
+        int firstBin = Math.max(0, (int) Math.floor((coveredStart - flowStart) / binSize));
+        int lastBinExclusive = Math.min(numberOfBins,
+                (int) Math.ceil((coveredEnd - flowStart) / binSize));
+        double vehicleCount = 0.0;
+
+        for (int bin = firstBin; bin < lastBinExclusive; bin++) {
+            double binStart = flowStart + bin * binSize;
+            double binEnd = Math.min(binStart + binSize, flowBinManager.getEndTime());
+            double overlap = Math.min(coveredEnd, binEnd) - Math.max(coveredStart, binStart);
+
+            if (overlap > 0.0) {
+                // Counts are assumed to be uniformly distributed within a bin.
+                vehicleCount += flows[bin] * overlap / (binEnd - binStart);
+            }
         }
-        totalFlow = totalFlow / binsCounted; // Average flow across the bins
-        totalFlow = (float) (totalFlow * (aggregationWindow/binSize));
-        return totalFlow;
+
+        return new WindowFlow(vehicleCount, coveredEnd - coveredStart);
+    }
+
+    private record WindowFlow(double vehicleCount, double duration) {
     }
 
     public void initializeFlowMap() {

@@ -5,14 +5,15 @@ import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.IdMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.vehicles.Vehicle;
 
 public class IntersectionDelay implements CrossingPenalty {
 
-    private final IdMap<Vehicle, Coord> lastDelayCoordinates = new IdMap<Vehicle, Coord>(Vehicle.class);
+    private final ConcurrentHashMap<Id<Vehicle>, Coord> lastDelayCoordinates = new ConcurrentHashMap<>();
     private final double minimumDistanceBetweenDelays; // meters
+    private final double minimumDistanceBetweenDelaysSquared; // meters
     private final TrafficLightDelay trafficLightDelays;
     private final UnsignalizedIntersectionDelay unsignalizedIntersectionDelay;
 
@@ -29,6 +30,7 @@ public class IntersectionDelay implements CrossingPenalty {
                              TimeBinManager timeBinManager,
                              CrossingPenalty delegate) {
         this.minimumDistanceBetweenDelays = delayConfigGroup.getMinimumDistanceBetweenDelays();
+        this.minimumDistanceBetweenDelaysSquared = minimumDistanceBetweenDelays * minimumDistanceBetweenDelays;
         this.applyUnsignalizedDelays = delayConfigGroup.isUnsignalizedActivated();
         this.applyTrafficLightDelays = delayConfigGroup.isTlActivated();
         this.startingIteration = delayConfigGroup.getStartingIteration();
@@ -49,73 +51,70 @@ public class IntersectionDelay implements CrossingPenalty {
             return delegate.calculateCrossingPenalty(link, time, vehicleId);
         }
 
-        if (!couldAddDelayBasedOnLastIntersection(link, vehicleId)) {
+        if (!isFarEnoughFromLastDelayedIntersection(link, vehicleId)) {
             // only add a delay if the vehicle has not crossed an intersection recently
             return 0.0;
         }
         // At this point, we know that at least one of the delays is activated and that we can add a delay based on the last intersection, time, iteration
         // 3. If the traffic light delays are not activated, we return the unsignalized intersection delay
+        double delay;
         if (!applyTrafficLightDelays) {
-            return unsignalizedIntersectionDelay.getDelay(link, time);
-        }
-        // 4. If the traffic light delays are activated, we calculate the delay based on the traffic light delays
-        // and the unsignalized intersection delays if activated
+            delay = unsignalizedIntersectionDelay.getDelay(link, time);
+        } else {
+            // 4. If the traffic light delays are activated, we calculate the delay based on the traffic light delays
+            // and the unsignalized intersection delays if activated
 
-        //---- 4.1 get first the traffic light delay
-        float tlValue = trafficLightDelays.getDelay(link, time);
+            //---- 4.1 get first the traffic light delay
+            float tlValue = trafficLightDelays.getDelay(link, time);
 
-        //---- 4.2 In these cases, we return the crossing penalty of unsignalized intersections if activated or delegate
-        if (returnUnsignalizedDelayInsteadOfTlDelay(tlValue)) {
-            if (applyUnsignalizedDelays) {
-                return unsignalizedIntersectionDelay.getDelay(link, time);
+            //---- 4.2 In these cases, we return the crossing penalty of unsignalized intersections if activated or delegate
+            if (returnUnsignalizedDelayInsteadOfTlDelay(tlValue)) {
+                if (applyUnsignalizedDelays) {
+                    delay = unsignalizedIntersectionDelay.getDelay(link, time);
+                } else {
+                    delay = delegate.calculateCrossingPenalty(link, time, vehicleId);
+                }
             } else {
-                return delegate.calculateCrossingPenalty(link, time, vehicleId);
+                //---- 4.4 Otherwise, the returned value is the actual delay
+                delay = tlValue;
             }
         }
 
-        //---- 4.4 Otherwise, the returned value is the actual delay
-        return tlValue;
+        if (delay > 0.0 && vehicleId != null) {
+            recordLastDelayedIntersection(vehicleId, link.getToNode().getCoord());
+        }
+        return delay;
     }
 
-    private boolean returnUnsignalizedDelayInsteadOfTlDelay(double tlValue) {
+    private boolean returnUnsignalizedDelayInsteadOfTlDelay(float tlValue) {
         // If the link has no traffic light, we return the unsignalized intersection delay
-        return (Math.abs(tlValue-TrafficLightDelay.NO_TL)<1e-3 ||
-                Math.abs(tlValue-TrafficLightDelay.OUT_OF_BOUNDS)<1e-3 ||
-                Math.abs(tlValue-TrafficLightDelay.INCORRECT_DELAY)<1e-3) ;
+        return tlValue == TrafficLightDelay.NO_TL ||
+                tlValue == TrafficLightDelay.OUT_OF_BOUNDS ||
+                tlValue == TrafficLightDelay.INCORRECT_DELAY;
     }
 
-    private boolean couldAddDelayBasedOnLastIntersection(Link link, Id<Vehicle> vehicleId) {
+    private boolean isFarEnoughFromLastDelayedIntersection(Link link, Id<Vehicle> vehicleId) {
         if (vehicleId == null) {
             return true; // If we do not have a vehicle ID, we cannot check the last crossing position, so we allow adding the delay
         }
 
-        // In this function I check if the vehicle has crossed a traffic light recently
-        // If it has, and the distance is lower than the threshold, we do not apply the delay again
+        // Only positive, applied delays are recorded in this map.
         Coord lastDelayLocation = lastDelayCoordinates.get(vehicleId);
         Coord nextIntersectionLocation = link.getToNode().getCoord();
 
         // If the vehicle has not crossed an intersection before, we should apply the delay
         if (lastDelayLocation == null){
-            updateLastDelayCoordinates(vehicleId, nextIntersectionLocation);
             return true;
         }
 
-        // Calculate distance from last intersection where a delay was applied
+        // Calculate squared distance to avoid the expensive sqrt call
         double xDiff = lastDelayLocation.getX() - nextIntersectionLocation.getX();
         double yDiff = lastDelayLocation.getY() - nextIntersectionLocation.getY();
-        double distanceSinceLastDelay = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
-
-        // if distance higher than the threshold, we should apply the traffic light delay, and update the last known traffic light position
-        if (distanceSinceLastDelay > minimumDistanceBetweenDelays){
-            // Update the last delay coordinates
-            updateLastDelayCoordinates(vehicleId, nextIntersectionLocation);
-            return true;
-        }else {
-            return false;
-        }
+        double distance2 = xDiff * xDiff + yDiff * yDiff;
+        return distance2 > minimumDistanceBetweenDelaysSquared;
     }
 
-    private void updateLastDelayCoordinates(Id<Vehicle> vehicleId, Coord coord) {
+    private void recordLastDelayedIntersection(Id<Vehicle> vehicleId, Coord coord) {
         lastDelayCoordinates.put(vehicleId, coord);
     }
 

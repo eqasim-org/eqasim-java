@@ -39,6 +39,7 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
 
     public FreespeedAdapter(Network network,
                             NetworkCalibrationConfigGroup config,
+                            FreeSpeedCalibrationConfigGroup freespeedConfig,
                             OutputDirectoryHierarchy outputHierarchy,
                             LinkCategorizer categorizer,
                             FreespeedFactorManager factorManager,
@@ -51,11 +52,11 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
         this.categorizer = categorizer;
         this.tripsHandler = tripsHandler;
         this.factorManager = factorManager;
-        this.updateInterval = Math.max(5, config.getUpdateInterval());
-        this.updateStartIteration = Math.max(10, config.getFreespeedWarmupIterations());
-        this.isActivated = config.isOneOfObjectives("freespeed") && config.isActivated();
-        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
-        this.hasFactorsFile = config.hasFreespeedFactorsFile();
+        this.updateInterval = freespeedConfig.getUpdateInterval();
+        this.updateStartIteration = freespeedConfig.getWarmupIterations();
+        this.isActivated = config.isFreeSpeedFactorActivated() && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isFreeSpeedFactorCalibrationActivated();
+        this.hasFactorsFile = freespeedConfig.hasFactorsFile();
 
         if (isActivated) {
             for (Link link : network.getLinks().values()) {
@@ -66,14 +67,14 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
 
             Map<FreespeedCalibrationKey, Double> initialFactors = loadFactorsFromNetworkAttributes();
             if (hasFactorsFile) {
-                initialFactors.putAll(FreespeedCsvHandler.readFactors(config.getFreespeedFactorsFile()));
+                initialFactors.putAll(FreespeedCsvHandler.readFactors(freespeedConfig.getFactorsFile()));
             }
             factorManager.loadFactors(initialFactors);
             applyFactors();
 
             if (isCalibrating) {
-                if (!config.hasObservedSpeedTripsFile()) {
-                    throw new IllegalArgumentException("observedSpeedTripsFile must be provided for freespeed calibration objective.");
+                if (!freespeedConfig.hasObservedTripsFile()) {
+                    throw new IllegalArgumentException("observedTripsFile must be provided for freespeed calibration.");
                 }
 
                 logger.info("Freespeed updates will start at iteration {} and then repeat every {} iterations",
@@ -116,7 +117,7 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
 
     @Override
     public void notifyShutdown(ShutdownEvent event) {
-        if (!isActivated) {
+        if (!isCalibrating) {
             return;
         }
 

@@ -1,4 +1,4 @@
-package org.eqasim.core.components.network_calibration.demand_calibration;
+package org.eqasim.core.components.network_calibration.demand_calibration.agent_ascs;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eqasim.core.components.network_calibration.demand_calibration.Tools;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
@@ -24,10 +25,6 @@ public class PopulationGroups {
     // -------------------------------------------------------------------------
     // Default resolution constants
     // -------------------------------------------------------------------------
-
-    private static final double DEFAULT_INITIAL_CELL_SIZE   = 16_000.0; // 12 km
-    private static final double DEFAULT_MIN_CELL_SIZE       =    2000.0; // 1.5 km
-    private static final int    DEFAULT_MAX_POPULATION_PER_CELL = 2_000;
 
     // -------------------------------------------------------------------------
     // Immutable configuration (set once at build time, never change)
@@ -120,7 +117,7 @@ public class PopulationGroups {
      */
     public int getMaxPopulationPerCell() { return maxPopulationPerCell; }
 
-    /** Returns the sample size that was fixed at build time. */
+    /** Returns the sample size fixed at build time. */
     public double getSampleSize() { return sampleSize; }
 
     /** Returns whether subpopulation filtering was fixed at build time. */
@@ -134,10 +131,11 @@ public class PopulationGroups {
     public static PopulationGroups build(Scenario scenario,
                                          double sampleSize,
                                          boolean considerSubpopulations) {
+        AgentAscsCalibrationConfigGroup defaults = new AgentAscsCalibrationConfigGroup();
         return build(scenario, sampleSize, considerSubpopulations,
-                DEFAULT_INITIAL_CELL_SIZE,
-                DEFAULT_MIN_CELL_SIZE,
-                DEFAULT_MAX_POPULATION_PER_CELL);
+                defaults.getInitialCellSize(),
+                defaults.getMinCellSize(),
+                defaults.getMaxPopulationPerCell());
     }
 
     /** Build with explicit resolution parameters. */
@@ -169,7 +167,7 @@ public class PopulationGroups {
      * The immutable fields ({@code scenario}, {@code sampleSize},
      * {@code considerSubpopulations}) are preserved automatically.
      *
-     * @param newInitialCellSize      new top-level cell size (e.g. 6_000.0 for 6 km)
+     * @param newInitialCellSize      new top-level cell size (e.g., 6_000.0 for 6 km)
      * @param newMinCellSize          new minimum leaf cell size (e.g. 375.0)
      * @param newMaxPopulationPerCell new max agents per cell <em>before</em> sample scaling
      */

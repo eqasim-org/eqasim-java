@@ -2,8 +2,13 @@ package org.eqasim.switzerland.ch_cmdp;
 
 import java.io.IOException;
 
+import ch.sbb.matsim.config.SBBTransitConfigGroup;
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
+import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.eqasim.switzerland.ch_cmdp.config.SwissBikesharingConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.shared_mobility.run.SharingConfigGroup;
 import org.matsim.contrib.shared_mobility.run.SharingModule;
@@ -14,11 +19,6 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
-
-import ch.sbb.matsim.config.SBBTransitConfigGroup;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
-import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 
 public class RunSimulation {
 	@SuppressWarnings("deprecation")
@@ -72,6 +72,7 @@ public class RunSimulation {
 				.orElse(bikesharingConfig.isUseBikesharing());
 		if (config.getModules().containsKey(SharingConfigGroup.GROUP_NAME) && useBikesharing)
 			controller.addOverridingModule(new SharingModule());
+		controller.addOverridingModule(new TollsModule());
 
 		// To use the deterministic pt simulation (Part 1 of 2):
 		controller.addOverridingModule(new SBBTransitModule());
@@ -86,6 +87,8 @@ public class RunSimulation {
 				SharingUtils.configureQSim(scf).configure(components);
 			}
 		});
+		// save updated config before running the simulation
+		ConfigUtils.writeConfig(config, "run_config.xml");
 		controller.run();
 	}
 }

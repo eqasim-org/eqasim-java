@@ -36,7 +36,6 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private final Network network;
     private final double sampleSize;
     private final PenaltyManager penaltyManager;
-    private final double beta;
     private final int updateInterval;
     private final OutputDirectoryHierarchy outputHierarchy;
     private final double rampFactor;
@@ -46,43 +45,74 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private final boolean isActivated;
     private final boolean isCalibrating;
     private final int warmupIterations;
+    private final int endIteration;
     private final boolean hasPenaltiesFile;
+    private final double initialLearningRate;
+    private final double minimumLearningRate;
+    private final double learningRateDecayScale;
+    private final double learningRateDecayExponent;
+    private final double maximumPenaltyUpdate;
+    private final double robustErrorThreshold;
+    private final double robustErrorEpsilon;
+    private final double sampleSizeShrinkage;
+    private final double signReversalFactor;
+    private final double signReversalThreshold;
+    private final double minimumGainMultiplier;
+    private final double gainRecoveryRate;
+    private final Map<PenaltyGroupKey, Double> previousRobustErrors = new HashMap<>();
+    private final Map<PenaltyGroupKey, Double> gainMultipliers = new HashMap<>();
+    private int penaltyUpdateCount = 0;
     private boolean disable = false;
     /**
      * Constructs a penalties adapter and initializes penalties from network attributes and/or CSV.
      */
     public PenaltiesAdapter(Network network,
                             Provider<CountsProcessor> countsProcessorProvider, Provider<FlowProcessor> flowProcessorProvider,
-                            NetworkCalibrationConfigGroup config, OutputDirectoryHierarchy outputHierarchy,
+                            NetworkCalibrationConfigGroup config, CostCalibrationConfigGroup costConfig,
+                            OutputDirectoryHierarchy outputHierarchy,
                             EqasimConfigGroup eqasimConfig, LinkCategorizer categorizer,
                             PenaltyKeyManager penaltyKeyManager, PenaltyManager penaltyManager) {
         this.network = network;
         this.sampleSize = eqasimConfig.getSampleSize();
-        this.updateInterval = config.getUpdateInterval();
-        this.beta = config.getBeta();
+        this.updateInterval = costConfig.getUpdateInterval();
         this.outputHierarchy = outputHierarchy;
-        this.rampFactor = config.getRampFactor();
-        this.trunkFactor = config.getTrunkFactor();
+        this.rampFactor = costConfig.getRampFactor();
+        this.trunkFactor = costConfig.getTrunkFactor();
         this.categorizer = categorizer;
         this.penaltyKeyManager = penaltyKeyManager;
         this.penaltyManager = penaltyManager;
-        this.isActivated = config.isOneOfObjectives("penalty") && config.isActivated();
-        this.isCalibrating = this.isActivated && config.isCalibrationEnabled();
-        this.warmupIterations = config.getPenaltiesWarmupIterations();
-        this.hasPenaltiesFile = config.hasPenaltiesFile();
+        this.isActivated = config.isLinkPenaltyActivated() && config.isActivated();
+        this.isCalibrating = this.isActivated && config.isLinkPenaltyCalibrationActivated();
+        this.warmupIterations = costConfig.getWarmupIterations();
+        this.endIteration = costConfig.getEndIteration();
+        this.hasPenaltiesFile = costConfig.hasPenaltiesFile();
+        this.initialLearningRate = costConfig.getInitialLearningRate();
+        this.minimumLearningRate = costConfig.getMinimumLearningRate();
+        this.learningRateDecayScale = costConfig.getLearningRateDecayScale();
+        this.learningRateDecayExponent = costConfig.getLearningRateDecayExponent();
+        this.maximumPenaltyUpdate = costConfig.getMaximumPenaltyUpdate();
+        this.robustErrorThreshold = costConfig.getRobustErrorThreshold();
+        this.robustErrorEpsilon = costConfig.getRobustErrorEpsilon();
+        this.sampleSizeShrinkage = costConfig.getSampleSizeShrinkage();
+        this.signReversalFactor = costConfig.getSignReversalFactor();
+        this.signReversalThreshold = costConfig.getSignReversalThreshold();
+        this.minimumGainMultiplier = costConfig.getMinimumGainMultiplier();
+        this.gainRecoveryRate = costConfig.getGainRecoveryRate();
 
         this.countsProcessor = isCalibrating ? countsProcessorProvider.get() : null;
         this.flowProcessor = isCalibrating ? flowProcessorProvider.get() : null;
 
         if (isActivated) {
-            penaltyManager.loadInitialPenalties(loadInitialPenaltiesFromNetwork());
-
-            if (hasPenaltiesFile) {
-                penaltyManager.loadFromCsv(config.getPenaltiesFile());
-            }
-
-            if (!isCalibrating) {
-                logger.info("Penalty objective is active in fixed mode. Penalties are loaded from CSV when provided, otherwise from link attributes.");
+            if (costConfig.getResetPenaltiesToZeros()) {
+                penaltyManager.loadInitialPenalties(Map.of());
+                logger.info("Penalty calibration starts from zero; network attributes and penalties CSV are ignored.");
+            } else {
+                penaltyManager.loadInitialPenalties(loadInitialPenaltiesFromNetwork());
+                if (hasPenaltiesFile) {
+                    penaltyManager.loadFromCsv(costConfig.getPenaltiesFile());
+                }
+                logger.info("Penalty objective is active in {} mode. Initial penalties are loaded from CSV when provided, otherwise from link attributes.",
+                        isCalibrating ? "calibration" : "fixed");
             }
         }
     }
@@ -113,10 +143,10 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private double getGroupPenaltyForLink(Link link, PenaltyGroupKey key) {
         double penalty = penaltyManager.getPenalty(key);
         if (NetworkCalibrationUtils.isRamp(link)) {
-            penalty *= rampFactor;
+            return penalty * rampFactor;
         }
         if (NetworkCalibrationUtils.isTrunk(link)) {
-            penalty *= trunkFactor;
+            return penalty * trunkFactor;
         }
         return penalty;
     }
@@ -124,7 +154,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     /**
      * Loads initial penalties from network attributes by averaging values for each category.
      * We could, in this case, get the penalty from the link directly and use it, but this way would make it
-     * compatible with the calibration, as we are not calibrating the category for each link separately
+     * consistent with the calibration, as we are not calibrating the category for each link separately
      */
     private Map<PenaltyGroupKey, Double> loadInitialPenaltiesFromNetwork() {
         Map<PenaltyGroupKey, Double> sums = new HashMap<>();
@@ -170,42 +200,8 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     }
 
     /**
-     * Calculates the effective beta based on iteration for smoothing penalty updates.
+     * All listeners here
      */
-    private double getEffectiveBeta(int iteration) {
-        double factor;
-        if (iteration <= 30) {
-            factor = 2.0;
-        } else if (iteration <= 40) {
-            factor = 1.2;
-        } else if (iteration <= 60) {
-            factor = 0.8;
-        } else {
-            factor = 0.5;
-        }
-        return beta * factor;
-    }
-
-    /**
-     * Updates penalties for all categories to calibrate based on flow vs count discrepancies.
-     */
-    public void updatePenalties(int iteration) {
-        for (PenaltyGroupKey key : countsProcessor.getGroups()) {
-            Double count = countsProcessor.getAverageCountForGroup(key);
-            if (count > 0.0 && Double.isFinite(count)) {
-                double flow = flowProcessor.getFlowByGroup(key, sampleSize);
-                if (flow >= 0.0 && Double.isFinite(flow)) {
-                    double percentageDifference = (flow - count) / count;
-                    double effectiveBeta = getEffectiveBeta(iteration);
-                    double unbiasedError = flowProcessor.getUnbiasedError(key);
-                    boolean doUpdate = flowProcessor.doUpdate(key);
-
-                    penaltyManager.updatePenalty(key, percentageDifference, effectiveBeta, iteration, unbiasedError, doUpdate);
-                }
-            }
-        }
-        penaltyManager.logStatistics(iteration);
-    }
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent iterationEndsEvent) {
@@ -214,9 +210,11 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
             if (penaltyManager.isCalibrating()) {
                 int iteration = iterationEndsEvent.getIteration();
-                if (updateInterval > 0 && iteration % updateInterval == 0 && iteration >=warmupIterations) {
-                    updatePenalties(iteration);
-                    savePenalties(iteration);
+                if (updateInterval > 0 && iteration >=warmupIterations && iteration <= endIteration) {
+                    if ((iteration-warmupIterations) % updateInterval == 0 || iteration == endIteration) {
+                        updatePenalties(iteration);
+                        savePenalties(iteration);
+                    }
                 }
             }
         }
@@ -231,7 +229,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
     @Override
     public void notifyShutdown(ShutdownEvent event) {
-        if (!isActivated) {
+        if (!isCalibrating) {
             return;
         }
         // save penalties in the network
@@ -242,7 +240,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
                 continue;
             }
 
-            double penaltyFactor = Math.round(penaltyManager.getPenalty(calibrationKey) * 1000.0)/1000.0;
+            double penaltyFactor = Math.round(penaltyManager.getAverageOfLastFourPenalties(calibrationKey) * 1000.0)/1000.0;
             NetworkCalibrationUtils.writeDoubleAttribute(link, NetworkCalibrationUtils.PENALTY_ATTRIBUTE, penaltyFactor);
             persisted++;
         }
@@ -251,6 +249,67 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         // return the penalties too, in real keys format
         String filename = outputHierarchy.getOutputFilename("final_link_category_penalties.csv");
         penaltyManager.saveToCsvWithAllKeys(filename, penaltyKeyManager);
+    }
+
+
+    /**
+     * Updates penalties for all categories to calibrate based on flow vs count discrepancies.
+     */
+    public void updatePenalties(int iteration) {
+        double baseLearningRate = getBaseLearningRate();
+
+        for (PenaltyGroupKey key : countsProcessor.getGroups()) {
+            Double count = countsProcessor.getAverageCountForGroup(key);
+            if (count > 0.0 && Double.isFinite(count)) {
+                double flow = flowProcessor.getFlowByGroup(key, sampleSize);
+                if (flow >= 0.0 && Double.isFinite(flow)) {
+                    double percentageDifference = (flow - count) / count;
+                    FlowProcessor.RobustGroupError robustError = flowProcessor.getRobustGroupError(
+                            key, robustErrorThreshold, robustErrorEpsilon, sampleSizeShrinkage);
+                    double gainMultiplier = updateGainMultiplier(key, robustError.score());
+                    double effectiveLearningRate = baseLearningRate * gainMultiplier;
+                    double actualChange = penaltyManager.updatePenalty(
+                            key, robustError.score(), effectiveLearningRate, maximumPenaltyUpdate);
+
+                    logger.info("Penalty calibration group {}: observations={}, effective observations={}, "
+                                    + "raw robust error={}, shrunk error={}, mean difference={}, gain={}, change={}",
+                            key, robustError.observations(), robustError.effectiveSampleSize(), robustError.rawScore(),
+                            robustError.score(), percentageDifference, effectiveLearningRate, actualChange);
+                }
+            }
+        }
+
+        penaltyUpdateCount++;
+        logger.info("Penalty update {} at iteration {} used base learning rate {}.",
+                penaltyUpdateCount, iteration, baseLearningRate);
+        penaltyManager.logStatistics(iteration);
+    }
+
+    /**
+     * Learning rates and gains are adjusted based on the number of penalty updates and the observed errors.
+     */
+    private double getBaseLearningRate() {
+        double decay = Math.pow(1.0 + penaltyUpdateCount / learningRateDecayScale, learningRateDecayExponent);
+        return minimumLearningRate + (initialLearningRate - minimumLearningRate) / decay;
+    }
+
+    private double updateGainMultiplier(PenaltyGroupKey key, double robustError) {
+        double multiplier = gainMultipliers.getOrDefault(key, 1.0);
+        Double previousError = previousRobustErrors.put(key, robustError);
+
+        boolean meaningfulReversal = previousError != null
+                && previousError * robustError < 0.0
+                && Math.abs(previousError) >= signReversalThreshold
+                && Math.abs(robustError) >= signReversalThreshold;
+
+        if (meaningfulReversal) {
+            multiplier = Math.max(minimumGainMultiplier, multiplier * signReversalFactor);
+        } else {
+            multiplier += gainRecoveryRate * (1.0 - multiplier);
+        }
+
+        gainMultipliers.put(key, multiplier);
+        return multiplier;
     }
 
     /**

@@ -30,7 +30,7 @@ public class LowMemoryHandler implements VDFTrafficHandler, LinkEnterEventHandle
     }
 
     @Override
-    public synchronized void handleEvent(LinkEnterEvent event) {
+    public void handleEvent(LinkEnterEvent event) {
         // do nothing, this is done in the linkFlowCounter
     }
 

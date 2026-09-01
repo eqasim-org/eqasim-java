@@ -349,11 +349,11 @@ public class AlphaCantonCalibrator implements FastCalibration {
         // For global updates, use a staged beta based on the number of global updates
         if (doUpdateGlobal(matsimIteration)) {
             if (numGlobalUpdates < 3) {
-                return 0.4;
+                return 0.2;
             } else if (numGlobalUpdates < 8) {
-                return 0.5;
+                return 0.4;
             } else if (numGlobalUpdates < 12) {
-                return 0.8;
+                return 0.7;
             } else {
                 return 0.95;
             }
@@ -364,8 +364,8 @@ public class AlphaCantonCalibrator implements FastCalibration {
             return 0.98;
         } else if (matsimIteration > 90) {
             return 0.95;
-        } else if (matsimIteration < 20 || iteration < 3) {
-            return 0.3;
+        } else if (matsimIteration < 20 || iteration <= 3) {
+            return 0.25;
         } else {
             // Gradually increase beta as iterations progress
             return Math.min(0.99, beta + (0.99 - beta) * (1.0 - 1.0 / (0.1 * iteration + 1.0)));

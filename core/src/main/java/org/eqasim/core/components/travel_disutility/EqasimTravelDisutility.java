@@ -1,6 +1,7 @@
 package org.eqasim.core.components.travel_disutility;
 
 import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
+import org.eqasim.core.tools.random.Normal;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.router.util.TravelDisutility;
@@ -10,15 +11,25 @@ public class EqasimTravelDisutility implements TravelDisutility {
 	private final TravelDisutility delegate;
 	private final RoutingPenalty penalty;
 	private final double routingDistanceUtility;
+	private final double sigma;
+	private final boolean useRandomness;
+	private final long baseSeed;
 
-	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility) {
+	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility, double sigma, long baseSeed) {
 		this.delegate = delegate;
 		this.penalty = penalty;
 		this.routingDistanceUtility = routingDistanceUtility;
+		this.sigma = sigma;
+		this.useRandomness = sigma>1e-6;
+		this.baseSeed = baseSeed;
+	}
+
+	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility) {
+		this(delegate, penalty, routingDistanceUtility, 0.0, 1997);
 	}
 
 	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty) {
-		this(delegate, penalty, 0.0);
+		this(delegate, penalty, 0.0, 0.0, 1997);
 	}
 
 	@Override
@@ -26,11 +37,16 @@ public class EqasimTravelDisutility implements TravelDisutility {
 		double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle);
 		disutility += penalty.getLinkPenalty(link, person, time, disutility);
 		disutility += routingDistanceUtility * (link.getLength() / 10.0); // 10.0 is for the scale, to be in the same order as travel time
+		if (useRandomness){
+			double normalNoise = sigma * Normal.get(link.getId().toString(), person.getId().toString(), baseSeed);
+			disutility *= Math.max(1.0 + normalNoise, 1e-3); // we need to keep it positive, otherwise it doesn't make sense
+		}
 		return disutility;
 	}
 
 	@Override
 	public double getLinkMinimumTravelDisutility(Link link) {
-		return delegate.getLinkMinimumTravelDisutility(link);
+		return delegate.getLinkMinimumTravelDisutility(link)
+				+ routingDistanceUtility * (link.getLength() / 10.0);
 	}
 }
