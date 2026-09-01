@@ -15,6 +15,7 @@ import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
@@ -39,6 +40,7 @@ public class RunSimulation {
 		configurator.updateConfig(config);
 		configurator.configure(config);
 		cmd.applyConfiguration(config);
+		ConfigUtils.addOrGetModule(config, SBBTransitConfigGroup.class);
 
 		if (cmd.hasOption("preventwaitingtoentertraffic")) {
 			if (cmd.getOption("preventwaitingtoentertraffic").get().equals("y")) {

@@ -33,6 +33,11 @@ public class SwissIntermodalPTPredictor extends PtPredictor {
 
 		for (PlanElement element : elements) {
 			if (element instanceof Leg leg) {
+				if (isBikesharingAccessEgressMode(leg.getMode())) {
+					accessEgressTime_min += leg.getTravelTime().seconds() / 60.0;
+					continue;
+				}
+
 				switch (leg.getMode()) {
 				case TransportMode.walk:
 				case TransportMode.non_network_walk:
@@ -72,5 +77,9 @@ public class SwissIntermodalPTPredictor extends PtPredictor {
 
 		return new PtVariables(inVehicleTime_min, waitingTime_min, accessEgressTime_min, numberOfLineSwitches, cost_CHF,
 				euclideanDistance_km);
+	}
+
+	private boolean isBikesharingAccessEgressMode(String mode) {
+		return mode.startsWith("sharing_");
 	}
 }
