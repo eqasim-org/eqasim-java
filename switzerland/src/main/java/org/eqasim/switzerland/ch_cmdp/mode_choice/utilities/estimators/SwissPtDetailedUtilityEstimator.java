@@ -8,6 +8,7 @@ import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPersonPredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.intermodal.SwissIntermodalPTPredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
@@ -20,14 +21,14 @@ import java.util.Map;
 
 public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     private final SwissCmdpModeParameters parameters;
-    private final PtPredictor ptPredictor;
+    private final SwissIntermodalPTPredictor ptPredictor;
     private final SwissPersonPredictor personPredictor;
     private final VariablesWriter variablesWriter;
     private final boolean correctPtVariables = false;
     private final SwissCostParameters swissCostParameters;
 
     @Inject
-    public SwissPtDetailedUtilityEstimator(SwissCmdpModeParameters parameters, PtPredictor predictor,
+    public SwissPtDetailedUtilityEstimator(SwissCmdpModeParameters parameters, SwissIntermodalPTPredictor predictor,
                                            SwissPersonPredictor personPredictor,
                                            VariablesWriter variablesWriter,
                                            SwissCostParameters swissCostParameters) {

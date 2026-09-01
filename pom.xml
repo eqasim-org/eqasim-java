@@ -96,6 +96,12 @@
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
+			<artifactId>shared_mobility</artifactId>
+			<version>${matsim.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
 			<artifactId>discrete_mode_choice</artifactId>
 			<version>${matsim.version}</version>
 		</dependency>

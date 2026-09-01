@@ -21,15 +21,18 @@ import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch_cmdp.calibration.*;
+import org.eqasim.switzerland.ch_cmdp.config.SwissBikesharingConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.IntermodalVehicleTourConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.ValidBikesharingTripConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.IntermodalVehicleContinuityTripEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.IntermodalVehicleContinuityTourEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.*;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.intermodal.SwissIntermodalPTPredictor;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
@@ -43,9 +46,11 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissPtCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissWeissCarCostModel;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissBikesharingCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissBikeDetailedUtilityEstimator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissBikesharingDetailedUtilityEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissCarDetailedUtilityEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissCarPassengerDetailedUtilityEstimator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators.SwissPtDetailedUtilityEstimator;
@@ -78,12 +83,14 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	static public final String PT_ESTIMATOR_NAME   = "SwissDetailedPtEstimator";
 	static public final String WALK_ESTIMATOR_NAME = "SwissDetailedWalkEstimator";
 	static public final String CP_ESTIMATOR_NAME = "SwissDetailedCpEstimator";
+	static public final String BIKESHARING_ESTIMATOR_NAME = "SwissBikesharingEstimator";
 
 	static public final String LOOP_CONSTRAINT_NAME = "LoopModesConstraint";
 	static public final String REMOTE_WALK_CONSTRAINT_NAME = "RemoteWalkConstraint";
 	static public final String INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME = IntermodalVehicleTourConstraint.NAME;
 	static public final String INTERMODAL_VEHICLE_CONTINUITY_TRIP_ESTIMATOR_NAME = "IntermodalVehicleContinuityTripEstimator";
 	static public final String INTERMODAL_VEHICLE_CONTINUITY_TOUR_ESTIMATOR_NAME = "IntermodalVehicleContinuityTourEstimator";
+	static public final String VALID_BIKESHARING_TRIP_CONSTRAINT_NAME = "ValidBikesharingTripConstraint";
 
 	public SwissModeChoiceModule(CommandLine commandLine) {
 		this.commandLine = commandLine;
@@ -94,6 +101,8 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		bindTripConstraintFactory(LOOP_CONSTRAINT_NAME).to(LoopModesConstraint.Factory.class);
 		bindTripConstraintFactory(REMOTE_WALK_CONSTRAINT_NAME).to(RemoteWalkConstraint.Factory.class);
+		bindTripConstraintFactory(VALID_BIKESHARING_TRIP_CONSTRAINT_NAME)
+				.to(ValidBikesharingTripConstraint.Factory.class);
 		bindTourConstraintFactory(INTERMODAL_VEHICLE_TOUR_CONSTRAINT_NAME)
 				.to(IntermodalVehicleTourConstraint.Factory.class);
 		bindTripEstimator(INTERMODAL_VEHICLE_CONTINUITY_TRIP_ESTIMATOR_NAME)
@@ -124,14 +133,18 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		bindUtilityEstimator(PT_ESTIMATOR_NAME).to(SwissPtDetailedUtilityEstimator.class);
 		bindUtilityEstimator(WALK_ESTIMATOR_NAME).to(SwissWalkDetailedUtilityEstimator.class);
 		bindUtilityEstimator(CP_ESTIMATOR_NAME).to(SwissCarPassengerDetailedUtilityEstimator.class);
-
+		bindUtilityEstimator(BIKESHARING_ESTIMATOR_NAME).to(SwissBikesharingDetailedUtilityEstimator.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(SwissPtCostModel.class);
 
 		bind(SwissPersonPredictor.class);
 		bind(CarPassengerPredictor.class);
 		bind(SwissCarPredictor.class);
 		bind(SwissBikePredictor.class);
+		bind(SwissIntermodalPTPredictor.class);
+
+		// this is used in cost calculation
 		bind(SwissPtRoutePredictor.class);
+		bind(SwissBikesharingPredictor.class);
 
 		bind(ModeParameters.class).to(SwissCmdpModeParameters.class).asEagerSingleton();
 
@@ -157,6 +170,16 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 					throw new IllegalArgumentException("Unknown calibration level: " + level);
 			}
 		}
+	}
+
+	@Provides
+	@Singleton
+	public SwissDetailedModeAvailability provideModeAvailability(Config config){
+		SwissBikesharingConfigGroup bikesharingConfig = SwissBikesharingConfigGroup.getOrCreate(config);
+		boolean useBikesharing = this.commandLine.getOption("useBikesharing")
+				.map(Boolean::parseBoolean)
+				.orElse(bikesharingConfig.isUseBikesharing());
+		return new SwissDetailedModeAvailability(useBikesharing, config);
 	}
 
 	@Provides
@@ -191,6 +214,19 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 			ParameterDefinition.applyFile(new File(url.getPath()), parameters);
 		}
 
+		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
+		return parameters;
+	}
+
+	@Provides
+	@Singleton
+	public SwissBikesharingCostParameters providBikesharingCostParameters(SwissBikesharingConfigGroup config) {
+		SwissBikesharingCostParameters parameters = SwissBikesharingCostParameters.buildDefault();
+
+		parameters.CHF_km = config.getCHF_km();
+		parameters.CHF_min = config.getCHF_min();
+		parameters.CHF_base = config.getCHF_base();
+		parameters.CHF_minimum = config.getCHF_minimum();
 		ParameterDefinition.applyCommandLine("cost-parameter", commandLine, parameters);
 		return parameters;
 	}

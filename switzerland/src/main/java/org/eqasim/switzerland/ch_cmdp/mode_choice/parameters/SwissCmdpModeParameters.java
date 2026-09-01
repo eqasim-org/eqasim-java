@@ -13,6 +13,8 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
     public final SwissWalkParameters walk = new SwissWalkParameters();
     public final SwissCarPassengerParameters cp = new SwissCarPassengerParameters();
 
+    public final SwissBikesharingParameters bikesharing = new SwissBikesharingParameters();
+
     public final SwissParking parking = new SwissParking();
 
     public double lambdaCostIncome = 0.0;
@@ -209,6 +211,34 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaDensities_u = 0.0;
     }
 
+    public static class SwissBikesharingParameters {
+        public double alpha_u = 0.0;
+        public double betaTravelTime_u_min = 0.0;
+        public double betaAccessegressTime_u_min = 0.0;
+        public double travelTimeExponent = 1.0;
+
+        public double betaAge_u = 0.0;
+        public double betaSex_u = 0.0;
+        public double betaLowIncome_u = 0.0;
+        public double betaHighIncome_u = 0.0;
+        public double betaRegion1_u = 0.0;
+        public double betaRegion2_u = 0.0;
+        public double betaOriginHome_u = 0.0;
+        public double betaShortDistance_u = 0.0;
+        public double betaDestinationWork_u = 0.0;
+        public double betaUrbanDestination_u = 0.0;
+        public double betaUrbancoreDestination_u = 0.0;
+        public double betaDestinationHome_u = 0.0;
+        public double betaDestinationEducation_u = 0.0;
+        public double betaDestinationShopping_u = 0.0;
+        public double betaDestinationLeisure_u = 0.0;
+        public double betaDestinationOther_u = 0.0;
+        public double betaRetired_u = 0.0;
+        public double betaJunior_u = 0.0;
+        public double betaLongDistance_u = 0.0;
+        public double betaDensities_u = 0.0;
+    }
+
     public static SwissCmdpModeParameters buildDefault() {
         SwissCmdpModeParameters parameters = new SwissCmdpModeParameters();
         // bike
@@ -343,6 +373,31 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         parameters.parking.urbancoreParkingSearchDuration_min = 3.0;
         parameters.parking.urbanParkingSearchDuration_min = 2.5;
         parameters.parking.suburbanParkingSearchDuration_min = 1.5;
+
+        // bikesharing - only when it is activated
+        // bike
+        parameters.bikesharing.alpha_u = 3.5927177629996963;
+        parameters.bikesharing.betaTravelTime_u_min = -3.381763673284838;
+        parameters.bikesharing.betaAccessegressTime_u_min = -3.381763673284838;
+        parameters.bikesharing.travelTimeExponent = 0.49643060880160594;
+        parameters.bikesharing.betaAge_u = 0.012469595848858433;
+        parameters.bikesharing.betaSex_u = -0.4315799671086237;
+        parameters.bikesharing.betaLowIncome_u = -0.19060846355206248;
+        parameters.bikesharing.betaRegion1_u = -1.0545718528375023;
+        parameters.bikesharing.betaRegion2_u = -0.43888452837940123;
+        parameters.bikesharing.betaOriginHome_u = 0.3777423561968097;
+        parameters.bikesharing.betaShortDistance_u = 0.1277838223450565;
+        parameters.bikesharing.betaDestinationWork_u = 0.0;
+        parameters.bikesharing.betaUrbanDestination_u = -0.4172492637463995;
+        parameters.bikesharing.betaUrbancoreDestination_u = -0.6543202737365967;
+        parameters.bikesharing.betaDestinationHome_u = 0.0;
+        parameters.bikesharing.betaDestinationEducation_u = -0.20973405680476825;
+        parameters.bikesharing.betaDestinationShopping_u = -0.2415414806417895;
+        parameters.bikesharing.betaDestinationLeisure_u = 0.25649030457789007;
+        parameters.bikesharing.betaDestinationOther_u = -0.3629626898614691;
+        parameters.bikesharing.betaRetired_u = -1.2144188553681627;
+        parameters.bikesharing.betaJunior_u = 0.0;
+        parameters.bikesharing.betaLongDistance_u = -0.743;
         // swissCanton
         parameters.swissCanton.car = new HashMap<String, Double>() {{
             put("solothurn", -0.2951613221601043);

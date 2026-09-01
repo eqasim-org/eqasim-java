@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp;
 
 //import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
+import org.eqasim.switzerland.ch_cmdp.config.SwissBikesharingConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.config.SwissIntermodalAccessEgressConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
@@ -10,6 +11,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.shared_mobility.run.SharingConfigGroup;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.QSimConfigGroup;
@@ -28,8 +30,10 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 
 		registerConfigGroup(new SwissIntermodalAccessEgressConfigGroup(), false);
 		registerConfigGroup(new SwissPTZonesConfigGroup(), true);
+		registerConfigGroup(new SwissBikesharingConfigGroup(), true);
 		registerModule(new SwissModeChoiceModule(cmd));
 		registerModule(new SwissIntermodalAccessEgressModule());
+		registerConfigGroup(new SharingConfigGroup(), true);
 	}
 
 	@Override
