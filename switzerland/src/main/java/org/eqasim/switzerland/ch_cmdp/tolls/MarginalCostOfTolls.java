@@ -1,5 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.tolls;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eqasim.core.tools.random.Normal;
 import org.matsim.api.core.v01.Id;
 import org.matsim.vehicles.Vehicle;
@@ -23,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@code disutility += toll * marginalCostOfTolls.getMarginalCostOfTolls(vehicle)}.
  */
 public class MarginalCostOfTolls {
+    private final Logger logger = LogManager.getLogger(MarginalCostOfTolls.class);
 
     // standard deviation of the underlying normal distribution; controls the spread of heterogeneity
     private final double sigma;
@@ -51,6 +54,8 @@ public class MarginalCostOfTolls {
         this.mu = -0.5 * sigma * sigma;
         this.valueOfTime = valueOfTime;
         this.baseSeed = baseSeed;
+
+        logger.info("Initialized MarginalCostOfTolls with: \n\t - sigma={} \n\t - valueOfTime={} \n\t - baseSeed={}", sigma, valueOfTime, baseSeed);
     }
 
     /**

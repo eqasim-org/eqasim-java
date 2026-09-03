@@ -1,5 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp.tolls;
 
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
@@ -31,8 +32,10 @@ public class TollsModule extends AbstractModule {
     @Singleton
     MarginalCostOfTolls provideMarginalCostOfTolls() {
         Config config = getConfig();
+        NetworkCalibrationConfigGroup netConfig = NetworkCalibrationConfigGroup.getOrCreate(config);
+
         double sigma = config.routing().getRoutingRandomness();
-        double valueOfTime = 12.0;
+        double valueOfTime = netConfig.getTollsValueOfTime();
         long baseSeed = config.global().getRandomSeed();
         return new MarginalCostOfTolls(sigma, valueOfTime, baseSeed);
     }

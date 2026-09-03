@@ -122,7 +122,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
      * Applies factors for ramps and trunks.
      */
     public double computePenalty(Link link) {
-        if (disable) {
+        if (disable || !isActivated) {
             return 0.0;
         }
 
