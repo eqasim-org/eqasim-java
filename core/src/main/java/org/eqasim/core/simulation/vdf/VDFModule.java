@@ -123,6 +123,7 @@ public class VDFModule extends AbstractEqasimExtension {
 				: new ShapeScenarioExtent.Builder(new File(ConfigGroup
 						.getInputFileURL(getConfig().getContext(), config.getUpdateAreaShapefile()).getPath()),
 						Optional.empty(), Optional.empty()).build();
+
 		VDFTravelTime vdfTravelTime = new VDFTravelTime(scope, config.getMinimumSpeed(), config.getCapacityFactor(),
 				eqasimConfig.getSampleSize(), network, vdf, crossingPenalty, updateExtent);
 		if (config.getInputTravelTimesFile() != null) {

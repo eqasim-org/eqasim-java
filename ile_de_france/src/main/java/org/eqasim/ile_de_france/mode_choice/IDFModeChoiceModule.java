@@ -14,10 +14,15 @@ import org.eqasim.ile_de_france.mode_choice.costs.IDFMotorcycleCostModel;
 import org.eqasim.ile_de_france.mode_choice.costs.IDFPtCostModel;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFCostParameters;
 import org.eqasim.ile_de_france.mode_choice.parameters.IDFModeParameters;
-import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBikeUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFBicycleUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarPassengerUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFCarUtilityEstimator;
 import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFMotorcycleUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.estimators.IDFPtUtilityEstimator;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFCarPassengerPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFParkingPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPersonPredictor;
+import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFPtPredictor;
 import org.eqasim.ile_de_france.mode_choice.utilities.predictors.IDFSpatialPredictor;
 import org.matsim.contribs.discrete_mode_choice.components.tour_finder.ActivityTourFinder;
 import org.matsim.contribs.discrete_mode_choice.modules.config.ActivityTourFinderConfigGroup;
@@ -38,8 +43,13 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 	public static final String PT_COST_MODEL_NAME = "IDFPtCostModel";
 
 	public static final String CAR_ESTIMATOR_NAME = "IDFCarUtilityEstimator";
+	public static final String CAR_PASSENGER_ESTIMATOR_NAME = "IDFCarPassengerUtilityEstimator";
+	public static final String BICYCLE_ESTIMATOR_NAME = "IDFBicycleUtilityEstimator";
+	public static final String PT_ESTIMATOR_NAME = "IDFPtUtilityEstimator";
 	public static final String MOTORCYCLE_ESTIMATOR_NAME = "IDFMotorcycleUtilityEstimator";
-	public static final String BIKE_ESTIMATOR_NAME = "IDFBikeUtilityEstimator";
+
+	static public final String CAR_PASSENGER = "car_passenger";
+	static public final String BICYCLE = "bicycle";
 
 	public static final String ISOLATED_OUTSIDE_TOUR_FINDER_NAME = "IsolatedOutsideTrips";
 
@@ -52,15 +62,20 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 		bindModeAvailability(MODE_AVAILABILITY_NAME).to(IDFModeAvailability.class);
 
 		bind(IDFPersonPredictor.class);
+		bind(IDFCarPassengerPredictor.class);
+		bind(IDFPtPredictor.class);
+		bind(IDFSpatialPredictor.class);
+		bind(IDFParkingPredictor.class);
 
 		bindCostModel(CAR_COST_MODEL_NAME).to(IDFCarCostModel.class);
 		bindCostModel(MOTORCYCLE_COST_MODEL_NAME).to(IDFMotorcycleCostModel.class);
 		bindCostModel(PT_COST_MODEL_NAME).to(IDFPtCostModel.class);
 
 		bindUtilityEstimator(CAR_ESTIMATOR_NAME).to(IDFCarUtilityEstimator.class);
+		bindUtilityEstimator(BICYCLE_ESTIMATOR_NAME).to(IDFBicycleUtilityEstimator.class);
+		bindUtilityEstimator(CAR_PASSENGER_ESTIMATOR_NAME).to(IDFCarPassengerUtilityEstimator.class);
+		bindUtilityEstimator(PT_ESTIMATOR_NAME).to(IDFPtUtilityEstimator.class);
 		bindUtilityEstimator(MOTORCYCLE_ESTIMATOR_NAME).to(IDFMotorcycleUtilityEstimator.class);
-		bindUtilityEstimator(BIKE_ESTIMATOR_NAME).to(IDFBikeUtilityEstimator.class);
-		bind(IDFSpatialPredictor.class);
 
 		bind(ModeParameters.class).to(IDFModeParameters.class);
 
@@ -102,8 +117,10 @@ public class IDFModeChoiceModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public ActivityTourFinderWithExcludedActivities provideActivityTourFinderWithExcludedActivities(DiscreteModeChoiceConfigGroup dmcConfig) {
+	public ActivityTourFinderWithExcludedActivities provideActivityTourFinderWithExcludedActivities(
+			DiscreteModeChoiceConfigGroup dmcConfig) {
 		ActivityTourFinderConfigGroup config = dmcConfig.getActivityTourFinderConfigGroup();
-		return new ActivityTourFinderWithExcludedActivities(List.of("outside"), new ActivityTourFinder(config.getActivityTypes()));
+		return new ActivityTourFinderWithExcludedActivities(List.of("outside"),
+				new ActivityTourFinder(config.getActivityTypes()));
 	}
 }

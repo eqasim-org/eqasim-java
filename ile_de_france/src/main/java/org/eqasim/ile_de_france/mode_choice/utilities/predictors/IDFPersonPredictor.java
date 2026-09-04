@@ -13,6 +13,11 @@ public class IDFPersonPredictor extends CachedVariablePredictor<IDFPersonVariabl
 	protected IDFPersonVariables predict(Person person, DiscreteModeChoiceTrip trip,
 			List<? extends PlanElement> elements) {
 		boolean hasSubscription = IDFPredictorUtils.hasSubscription(person);
-		return new IDFPersonVariables(hasSubscription);
+		boolean hasDrivingPermit = IDFPredictorUtils.hasDrivingLicense(person);
+		double householdIncomePerCU_EUR = IDFPredictorUtils.getHouseholdIncomePerCU(person);
+		String residenceMunicipalityId = IDFPredictorUtils.getMunicipalityId(person);
+
+		return new IDFPersonVariables(hasSubscription, hasDrivingPermit, householdIncomePerCU_EUR,
+				residenceMunicipalityId);
 	}
 }
