@@ -21,7 +21,7 @@ import org.eqasim.core.simulation.vdf.handlers.*;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
 import org.eqasim.core.simulation.vdf.travel_time.function.BPRFunction;
 import org.eqasim.core.simulation.vdf.travel_time.function.VolumeDelayFunction;
-import org.matsim.api.core.v01.Scenario;
+import org.eqasim.core.components.flow.FlowUtils;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.groups.ControllerConfigGroup;
@@ -116,8 +116,8 @@ public class VDFModule extends AbstractEqasimExtension {
 
 	@Provides
 	@Singleton
-	public VDFHorizonHandler provideVDFHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope, Scenario scenario) {
-		return new VDFHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads(), scenario);
+	public VDFHorizonHandler provideVDFHorizonHandler(VDFConfigGroup config, Network network, VDFScope scope, FlowUtils flowUtils) {
+		return new VDFHorizonHandler(network, scope, config.getHorizon(), getConfig().global().getNumberOfThreads(), flowUtils);
 	}
 
 	@Provides
@@ -129,16 +129,16 @@ public class VDFModule extends AbstractEqasimExtension {
 	@Provides
 	@Singleton
 	public VDFSparseHorizonHandler provideVDFSparseHorizonHandler(VDFConfigGroup config, Network network,
-			VDFScope scope, Scenario scenario) {
+			VDFScope scope, FlowUtils flowUtils) {
 		return new VDFSparseHorizonHandler(network, scope, config.getHorizon(),
-				getConfig().global().getNumberOfThreads(), scenario);
+				getConfig().global().getNumberOfThreads(), flowUtils);
 	}
 
 	@Provides
 	@Singleton
 	public VDFInterpolationHandler provideVDFInterpolationHandler(VDFConfigGroup config, Network network,
-			VDFScope scope, Scenario scenario) {
-		return new VDFInterpolationHandler(network, scope, 1.0 / config.getHorizon(), scenario);
+			VDFScope scope, FlowUtils flowUtils) {
+		return new VDFInterpolationHandler(network, scope, 1.0 / config.getHorizon(), flowUtils);
 	}
 
 	@Provides

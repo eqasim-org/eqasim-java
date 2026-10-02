@@ -44,17 +44,23 @@ public class FlowModule extends AbstractEqasimExtension {
 
     @Provides
     @Singleton
-    public VehiclePcuLookup provideVehiclePcuLookup(Scenario scenario) {
-        return new VehiclePcuLookup(scenario);
+    public VehiclePcuLookup provideVehiclePcuLookup(Scenario scenario, FlowUtils flowUtils) {
+        return new VehiclePcuLookup(scenario, flowUtils);
     }
 
     @Provides
     @Singleton
     public LinkFlowCounter provideTrafficCounter(Network network, FlowDataSet flowDataSet, FlowBinManager timeBinManager,
                                                  OutputDirectoryHierarchy outputHierarchy, FlowConfigGroup flowConfig, EqasimConfigGroup eqasimConfig,
-                                                 VehiclePcuLookup vehiclePcuLookup) {
+                                                 VehiclePcuLookup vehiclePcuLookup, FlowUtils flowUtils) {
         return new LinkFlowCounter(network, flowDataSet, timeBinManager, outputHierarchy, flowConfig,
-                vehiclePcuLookup, eqasimConfig.getSampleSize());
+                vehiclePcuLookup, eqasimConfig.getSampleSize(), flowUtils);
+    }
+
+    @Provides
+    @Singleton
+    public FlowUtils provideFlowUtils(Scenario scenario) {
+        return new FlowUtils(scenario);
     }
 
 

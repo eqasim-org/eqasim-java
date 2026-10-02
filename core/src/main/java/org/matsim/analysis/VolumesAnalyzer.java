@@ -25,6 +25,8 @@ import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.flow.FlowUtils;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.api.core.v01.IdSet;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.api.core.v01.events.VehicleEntersTrafficEvent;
@@ -53,7 +55,8 @@ public class VolumesAnalyzer implements LinkLeaveEventHandler, VehicleEntersTraf
     private final int maxTime;
     private final int maxSlotIndex;
     private final IdMap<Link, int[]> links;
-    private final Scenario scenario;
+    private final FlowUtils flowUtils;
+    private final IdSet<Vehicle> eventBikeIds = new IdSet<>(Vehicle.class);
 
     // ignoring bikes
     private final boolean ignoreBikes = true;
@@ -64,8 +67,8 @@ public class VolumesAnalyzer implements LinkLeaveEventHandler, VehicleEntersTraf
     private final IdMap<Link, Map<String, int[]>> linksPerMode;
 
     @Inject
-    VolumesAnalyzer(Network network, EventsManager eventsManager, Scenario scenario) {
-        this(3600, 24 * 3600 - 1, network, scenario);
+    VolumesAnalyzer(Network network, EventsManager eventsManager, FlowUtils flowUtils) {
+        this(3600, 24 * 3600 - 1, network, false, flowUtils);
         eventsManager.addHandler(this);
     }
 
@@ -74,15 +77,19 @@ public class VolumesAnalyzer implements LinkLeaveEventHandler, VehicleEntersTraf
     }
 
     public VolumesAnalyzer(final int timeBinSize, final int maxTime, final Network network) {
-        this(timeBinSize, maxTime, network, false, null);
+        this(timeBinSize, maxTime, network, false, (FlowUtils) null);
     }
 
     public VolumesAnalyzer(final int timeBinSize, final int maxTime, final Network network, boolean observeModes, Scenario scenario) {
+        this(timeBinSize, maxTime, network, observeModes, scenario == null ? null : new FlowUtils(scenario));
+    }
+
+    private VolumesAnalyzer(final int timeBinSize, final int maxTime, final Network network, boolean observeModes, FlowUtils flowUtils) {
         this.timeBinSize = timeBinSize;
         this.maxTime = maxTime;
         this.maxSlotIndex = (this.maxTime / this.timeBinSize) + 1;
         this.links = new IdMap<>(Link.class);
-        this.scenario = scenario;
+        this.flowUtils = flowUtils;
 
         this.observeModes = observeModes;
         if (this.observeModes) {
@@ -96,6 +103,14 @@ public class VolumesAnalyzer implements LinkLeaveEventHandler, VehicleEntersTraf
 
     @Override
     public void handleEvent(VehicleEntersTrafficEvent event) {
+        // Standalone event analysis may have no scenario; use the event's explicit mode.
+        if (flowUtils == null) {
+            if (TransportMode.bike.equals(event.getNetworkMode())) {
+                eventBikeIds.add(event.getVehicleId());
+            } else {
+                eventBikeIds.remove(event.getVehicleId());
+            }
+        }
         if (this.observeModes) {
             this.enRouteModes.put(event.getVehicleId(), event.getNetworkMode());
         }
@@ -109,7 +124,7 @@ public class VolumesAnalyzer implements LinkLeaveEventHandler, VehicleEntersTraf
             this.links.put(event.getLinkId(), volumes);
         }
         int timeslot = getTimeSlotIndex(event.getTime());
-        boolean isBike = FlowUtils.isBike(event.getVehicleId());
+        boolean isBike = (flowUtils == null ? eventBikeIds.contains(event.getVehicleId()) : flowUtils.isBike(event.getVehicleId()));
         if (!ignoreBikes | !isBike) {
             volumes[timeslot]++;
         }
@@ -263,6 +278,7 @@ public class VolumesAnalyzer implements LinkLeaveEventHandler, VehicleEntersTraf
 
     @Override
     public void reset(final int iteration) {
+        eventBikeIds.clear();
         this.links.clear();
         if (observeModes) {
             this.linksPerMode.clear();

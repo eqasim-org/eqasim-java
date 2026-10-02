@@ -6,8 +6,7 @@ import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Collections;
-import java.util.Set;
+import org.eqasim.core.components.flow.FlowUtils;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.vehicles.Vehicle;
 
@@ -24,7 +23,7 @@ public class IntersectionDelay implements CrossingPenalty {
     private final int startingIteration;
     private int currentIteration = 0;
     private final CrossingPenalty delegate;
-    private final Set<Id<Vehicle>> busVehicleIds;
+    private final FlowUtils flowUtils;
     private final boolean applyTlToBuses;
     private final boolean applyUnsignalizedToBuses;
     private final double constantBusDelay;
@@ -35,15 +34,15 @@ public class IntersectionDelay implements CrossingPenalty {
                              TimeBinManager timeBinManager,
                              CrossingPenalty delegate) {
         this(delayConfigGroup, trafficLightDelays, unsignalizedIntersectionDelay,
-                timeBinManager, delegate, Collections.emptySet());
+                timeBinManager, delegate, null);
     }
 
     public IntersectionDelay(DelaysConfigGroup delayConfigGroup,
                              TrafficLightDelay trafficLightDelays,
                              UnsignalizedIntersectionDelay unsignalizedIntersectionDelay,
                              TimeBinManager timeBinManager,
-                             CrossingPenalty delegate, Set<Id<Vehicle>> busVehicleIds) {
-        this.busVehicleIds = Set.copyOf(busVehicleIds);
+                             CrossingPenalty delegate, FlowUtils flowUtils) {
+        this.flowUtils = flowUtils;
         this.applyTlToBuses = delayConfigGroup.isApplyTlToBuses();
         this.applyUnsignalizedToBuses = delayConfigGroup.isApplyUnsignalizedToBuses();
         this.constantBusDelay = delayConfigGroup.getConstantBusDelay();
@@ -69,7 +68,7 @@ public class IntersectionDelay implements CrossingPenalty {
             return delegate.calculateCrossingPenalty(link, time, vehicleId);
         }
 
-        boolean isBus = vehicleId != null && busVehicleIds.contains(vehicleId);
+        boolean isBus = flowUtils != null && flowUtils.isBus(vehicleId);
         boolean busHasTrafficLight = isBus && trafficLightDelays.hasTrafficLight(link);
         if (isBus && !(busHasTrafficLight ? applyTlToBuses : applyUnsignalizedToBuses)) {
             return 0.0;

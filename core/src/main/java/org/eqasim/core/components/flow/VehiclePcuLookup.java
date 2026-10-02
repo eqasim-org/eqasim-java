@@ -3,6 +3,7 @@ package org.eqasim.core.components.flow;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.vehicles.Vehicle;
+import java.util.List;
 
 /**
  * Immutable, allocation-free PCU lookup for the event-processing hot path.
@@ -11,7 +12,7 @@ import org.matsim.vehicles.Vehicle;
 public class VehiclePcuLookup {
     private final float[] pcuByVehicleIndex;
 
-    public VehiclePcuLookup(Scenario scenario) {
+    public VehiclePcuLookup(Scenario scenario, FlowUtils flowUtils) {
         int maximumVehicleIndex = -1;
 
         for (Id<Vehicle> vehicleId : scenario.getVehicles().getVehicles().keySet()) {
@@ -21,20 +22,32 @@ public class VehiclePcuLookup {
             maximumVehicleIndex = Math.max(maximumVehicleIndex, vehicleId.index());
         }
 
+        validateVehicleIndices(scenario, maximumVehicleIndex + 1);
         pcuByVehicleIndex = new float[maximumVehicleIndex + 1];
 
         for (Vehicle vehicle : scenario.getVehicles().getVehicles().values()) {
-            boolean tobeIgnored = FlowUtils.isBike(vehicle.getId()) || FlowUtils.isCarPassenger(vehicle.getId());
-            pcuByVehicleIndex[vehicle.getId().index()] = tobeIgnored
-                    ? 0.0F
-                    : (float) vehicle.getType().getPcuEquivalents();
+            pcuByVehicleIndex[vehicle.getId().index()] = (float) flowUtils.getVehiclePcu(vehicle.getId());
         }
-
-        // Classify once from the schedule, independent of vehicle ID naming.
-        var busVehicleIds = FlowUtils.getBusVehicleIds(scenario);
         for (Vehicle vehicle : scenario.getTransitVehicles().getVehicles().values()) {
-            if (busVehicleIds.contains(vehicle.getId())) {
-                pcuByVehicleIndex[vehicle.getId().index()] = (float) vehicle.getType().getPcuEquivalents();
+            pcuByVehicleIndex[vehicle.getId().index()] = (float) flowUtils.getVehiclePcu(vehicle.getId());
+        }
+    }
+
+    /** Check once that regular and transit vehicles share a collision-free index space. */
+    private static void validateVehicleIndices(Scenario scenario, int size) {
+        Id<?>[] idsByIndex = new Id<?>[size];
+        for (var vehicles : List.of(scenario.getVehicles(), scenario.getTransitVehicles())) {
+            for (Id<Vehicle> id : vehicles.getVehicles().keySet()) {
+                int index = id.index();
+                if (index < 0) {
+                    throw new IllegalStateException("Negative vehicle ID index for " + id + ": " + index);
+                }
+                Id<?> previous = idsByIndex[index];
+                if (previous != null && !previous.equals(id)) {
+                    throw new IllegalStateException("Vehicle IDs " + previous + " and " + id
+                            + " share index " + index + "; PCU lookup requires unique indices across regular and transit vehicles");
+                }
+                idsByIndex[index] = id;
             }
         }
     }

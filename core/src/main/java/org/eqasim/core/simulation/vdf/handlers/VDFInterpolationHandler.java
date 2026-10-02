@@ -15,7 +15,6 @@ import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
 import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.network.Link;
@@ -29,15 +28,15 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 
 	private final double updateFactor;
 	private final int numIntervals;
-	private final Scenario scenario;
+	private final FlowUtils flowUtils;
 	private final IdMap<Link, double[]> interpolatedCounts = new IdMap<>(Link.class);
 	private final IdMap<Link, List<Double>> currentCounts = new IdMap<>(Link.class);
 
-	public VDFInterpolationHandler(Network network, VDFScope scope, double updateFactor, Scenario scenario) {
+	public VDFInterpolationHandler(Network network, VDFScope scope, double updateFactor, FlowUtils flowUtils) {
 		this.scope = scope;
 		this.updateFactor = updateFactor;
 		this.numIntervals = scope.getIntervals();
-		this.scenario = scenario;
+		this.flowUtils = flowUtils;
 
 		for (Id<Link> linkId : network.getLinks().keySet()) {
 			interpolatedCounts.put(linkId, new double[numIntervals]);
@@ -47,7 +46,7 @@ public class VDFInterpolationHandler implements VDFTrafficHandler, LinkEnterEven
 
 	@Override
 	public synchronized void handleEvent(LinkEnterEvent event) {
-		double pcu = FlowUtils.getVehiclePcu(scenario, event);
+		double pcu = flowUtils.getVehiclePcu(event.getVehicleId());
 		processEnterLink(event.getTime(), event.getLinkId(), pcu);
 	}
 

@@ -20,7 +20,6 @@ import org.eqasim.core.simulation.vdf.io.VDFReaderInterface;
 import org.eqasim.core.simulation.vdf.io.VDFWriterInterface;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.network.Link;
@@ -35,7 +34,7 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 	private final Network network;
 	private final int horizon;
 	private final int numberOfThreads;
-	private final Scenario scenario;
+	private final FlowUtils flowUtils;
 
 	private final IdMap<Link, List<Double>> counts = new IdMap<>(Link.class);
 
@@ -46,12 +45,12 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 
 	private List<IdMap<Link, LinkState>> state = new LinkedList<>();
 
-	public VDFSparseHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads, Scenario scenario) {
+	public VDFSparseHorizonHandler(Network network, VDFScope scope, int horizon, int numberOfThreads, FlowUtils flowUtils) {
 		this.scope = scope;
 		this.network = network;
 		this.horizon = horizon;
 		this.numberOfThreads = numberOfThreads;
-		this.scenario = scenario;
+		this.flowUtils = flowUtils;
 
 		for (Id<Link> linkId : network.getLinks().keySet()) {
 			counts.put(linkId, new ArrayList<>(Collections.nCopies(scope.getIntervals(), 0.0)));
@@ -60,7 +59,7 @@ public class VDFSparseHorizonHandler implements VDFTrafficHandler, LinkEnterEven
 
 	@Override
 	public synchronized void handleEvent(LinkEnterEvent event) {
-		double pcu = FlowUtils.getVehiclePcu(scenario, event);
+		double pcu = flowUtils.getVehiclePcu(event.getVehicleId());
 		processEnterLink(event.getTime(), event.getLinkId(), pcu);
 	}
 

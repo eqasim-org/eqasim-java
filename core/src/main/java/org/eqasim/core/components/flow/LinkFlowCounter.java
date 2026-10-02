@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.vehicles.Vehicle;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
 import org.matsim.api.core.v01.network.Link;
@@ -28,6 +29,7 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
     private final Network network;
     private final VehiclePcuLookup vehiclePcuLookup;
     private final double sampleSize;
+    private final FlowUtils flowUtils;
     private final FlowDataSet flowDataSet;
     private final OutputDirectoryHierarchy outputHierarchy;
     private final int writeFlowInterval;
@@ -40,11 +42,12 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
 
     public LinkFlowCounter(Network network, FlowDataSet flowDataSet, FlowBinManager flowBinManager,
                            OutputDirectoryHierarchy outputHierarchy, FlowConfigGroup config,
-                           VehiclePcuLookup vehiclePcuLookup, double sampleSize) {
+                           VehiclePcuLookup vehiclePcuLookup, double sampleSize, FlowUtils flowUtils) {
         this.flowBinManager = flowBinManager;
         this.network = network;
         this.vehiclePcuLookup = vehiclePcuLookup;
         this.sampleSize = sampleSize;
+        this.flowUtils = flowUtils;
         this.flowDataSet = flowDataSet;
         this.outputHierarchy = outputHierarchy;
         this.writeFlowInterval = config.getWriteFlowInterval();
@@ -70,14 +73,14 @@ public class LinkFlowCounter implements LinkEnterEventHandler, IterationEndsList
     @Override
     public void handleEvent(LinkEnterEvent event) {
         double pcu = vehiclePcuLookup.getPcu(event.getVehicleId());
-        processEnterLink(event.getTime(), event.getLinkId(), pcu);
+        processEnterLink(event.getTime(), event.getLinkId(), pcu, event.getVehicleId());
     }
 
-    public void processEnterLink(double time, Id<Link> linkId, double pcu) {
+    public void processEnterLink(double time, Id<Link> linkId, double pcu, Id<Vehicle> vehicleId) {
         if (isActivated && pcu > 1e-6 && flowBinManager.timeInBounds(time)) {
             int idx = flowBinManager.getBinIndex(time);
             float[] linkCounts = counts.get(linkId);
-            float dailyCountIncrement = FlowUtils.getCountValue(pcu, sampleSize);
+            float dailyCountIncrement = flowUtils.getCountValue(vehicleId, sampleSize);
             synchronized (linkCounts) {
                 linkCounts[idx] += (float) pcu;
                 dailyCounts[linkId.index()] += dailyCountIncrement;

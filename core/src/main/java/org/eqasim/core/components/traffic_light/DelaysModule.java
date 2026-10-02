@@ -16,7 +16,6 @@ import org.eqasim.core.components.flow.FlowDataSet;
 import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
@@ -63,9 +62,9 @@ public class DelaysModule extends AbstractEqasimExtension {
                                                       TrafficLightDelay trafficLightDelays,
                                                       UnsignalizedIntersectionDelay unsignalizedIntersectionDelay,
                                                       TimeBinManager timeBinManager,
-                                                      DefaultCrossingPenalty delegate, Scenario scenario) {
+                                                      DefaultCrossingPenalty delegate, FlowUtils flowUtils) {
         return new IntersectionDelay(delaysConfigGroup, trafficLightDelays, unsignalizedIntersectionDelay,
-                                     timeBinManager, delegate, FlowUtils.getBusVehicleIds(scenario));
+                                     timeBinManager, delegate, flowUtils);
     }
 
     @Provides

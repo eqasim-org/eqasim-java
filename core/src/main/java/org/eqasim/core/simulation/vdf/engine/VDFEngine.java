@@ -55,8 +55,9 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 	private final boolean generateNetworkEvents;
 	private final QNetsimEngineI qNetsimEngine;
 	private final Scenario scenario;
+	private final FlowUtils flowUtils;
 	public VDFEngine(Collection<String> modes, VDFTravelTime travelTime, Network network, VDFTrafficHandler handler,
-					 boolean generateNetworkEvents, QNetsimEngineI qNetsimEngine, Scenario scenario, LinkFlowCounter linkFlowCounter) {
+					 boolean generateNetworkEvents, QNetsimEngineI qNetsimEngine, Scenario scenario, LinkFlowCounter linkFlowCounter, FlowUtils flowUtils) {
 		this.modes = new ArrayList<>(modes);
 		this.travelTime = travelTime;
 		this.network = network;
@@ -64,6 +65,7 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 		this.generateNetworkEvents = generateNetworkEvents;
 		this.qNetsimEngine = qNetsimEngine;
 		this.scenario = scenario;
+		this.flowUtils = flowUtils;
 		this.linkFlowCounter = linkFlowCounter;
 	}
 
@@ -111,12 +113,12 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 				throw new IllegalStateException("generateNetworkEvents is set to false while some agents to be processed by the VDF engine are not planAgent instances. Set generateNetworkEvents to false to fix this");
 			}
 
-			double pcu = FlowUtils.getCarPcu(scenario, route.getVehicleId());
+			double pcu = flowUtils.getVehiclePcu(route.getVehicleId());
 			now += getTraversalTime(now, route.getStartLinkId(), driverAgent);
 
 			for (Id<Link> nextLinkId : route.getLinkIds()) {
 				handler.processEnterLink(now, nextLinkId, pcu);
-				linkFlowCounter.processEnterLink(now, nextLinkId, pcu);
+				linkFlowCounter.processEnterLink(now, nextLinkId, pcu, route.getVehicleId());
 				now += getTraversalTime(now, nextLinkId, driverAgent);
 			}
 
