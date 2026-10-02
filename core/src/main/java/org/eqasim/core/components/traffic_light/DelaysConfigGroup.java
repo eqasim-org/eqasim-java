@@ -16,6 +16,9 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
     static private final String ACTIVATE = "activate";
     static private final String ACTIVATE_TL_DELAYS = "activateTl";
     static private final String ACTIVATE_UNSIGNALIZED_DELAYS = "activateUnsignalized";
+    static private final String APPLY_TL_TO_BUSES = "applyTlToBuses";
+    static private final String APPLY_UNSIGNALIZED_TO_BUSES = "applyUnsignalizedToBuses";
+    static private final String CONSTANT_BUS_DELAY = "constantBusDelay";
 
     // starting times of the crossing delays
     static private final String START_TIME = "startTime";
@@ -41,6 +44,9 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
     private boolean activateTl = false;
     private boolean activate = false;
     private boolean activateUnsignalized = false;
+    private boolean applyTlToBuses = true;
+    private boolean applyUnsignalizedToBuses = true;
+    private double constantBusDelay = -1.0;
     private int startingIteration = 3;
     private double minimumDistanceBetweenDelays = 30.0; // meters
 
@@ -54,6 +60,9 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
         map.put(ACTIVATE, "Whether to activate the module or not or not (default: false)");
         map.put(ACTIVATE_TL_DELAYS, "Whether to activate traffic light delays or not (default: false)");
         map.put(ACTIVATE_UNSIGNALIZED_DELAYS, "Whether to activate unsignalized intersection delays or not (default: false)");
+        map.put(APPLY_TL_TO_BUSES, "Apply delays to buses at signalized intersections (default: true). False gives buses zero delay, including fallback delays, while the module is active.");
+        map.put(APPLY_UNSIGNALIZED_TO_BUSES, "Apply delays to buses at unsignalized intersections (default: true). False gives buses zero delay while the module is active.");
+        map.put(CONSTANT_BUS_DELAY, "Bus intersection delay in seconds: -1 uses the normal model (default); >= 0 replaces it at eligible intersections. Bus switches take precedence. Existing time, iteration and distance limits still apply. Buses are identified by transit routes with mode bus.");
         map.put(START_TIME, "Starting time of applying crossing delays, therefore of computing the flow (default: 0.0 * 3600.0). " +
                             "Out of these bounds, the default crossing penalty is applied. It can be set to 0 if needed in eqasim:crossingPenalty");
         map.put(END_TIME, "Ending time of applying crossing delays (default: 24.0 * 3600.0)");
@@ -64,6 +73,39 @@ public class DelaysConfigGroup extends ReflectiveConfigGroup {
         map.put(WRITE_DELAY_INTERVAL, "Write traffic light delays interval in iterations (default: 1)");
         map.put(STARTING_ITERATION, "Iteration from which the module starts to apply crossing penalties (default: 3)");
         return map;
+    }
+
+    @StringGetter(APPLY_TL_TO_BUSES)
+    public boolean isApplyTlToBuses() {
+        return applyTlToBuses;
+    }
+
+    @StringSetter(APPLY_TL_TO_BUSES)
+    public void setApplyTlToBuses(boolean applyTlToBuses) {
+        this.applyTlToBuses = applyTlToBuses;
+    }
+
+    @StringGetter(APPLY_UNSIGNALIZED_TO_BUSES)
+    public boolean isApplyUnsignalizedToBuses() {
+        return applyUnsignalizedToBuses;
+    }
+
+    @StringSetter(APPLY_UNSIGNALIZED_TO_BUSES)
+    public void setApplyUnsignalizedToBuses(boolean applyUnsignalizedToBuses) {
+        this.applyUnsignalizedToBuses = applyUnsignalizedToBuses;
+    }
+
+    @StringGetter(CONSTANT_BUS_DELAY)
+    public double getConstantBusDelay() {
+        return constantBusDelay;
+    }
+
+    @StringSetter(CONSTANT_BUS_DELAY)
+    public void setConstantBusDelay(double constantBusDelay) {
+        if (!Double.isFinite(constantBusDelay) || (constantBusDelay < 0.0 && constantBusDelay != -1.0)) {
+            throw new IllegalArgumentException("constantBusDelay must be -1 or a finite, nonnegative number of seconds");
+        }
+        this.constantBusDelay = constantBusDelay;
     }
 
     @StringGetter(STARTING_ITERATION)

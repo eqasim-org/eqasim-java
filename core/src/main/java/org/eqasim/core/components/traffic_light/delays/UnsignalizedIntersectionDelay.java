@@ -25,6 +25,10 @@ public class UnsignalizedIntersectionDelay {
         return intersectionDelayFormula.getDelay(link, time);
     }
 
+    public boolean considerLink(Link link) {
+        return intersectionDelayFormula.considerLink(link);
+    }
+
     public void initDelays() {
         intersectionDelayFormula.initDelays();
     }

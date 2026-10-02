@@ -1,6 +1,6 @@
 package org.eqasim.core.components.traffic_light.delays.webster;
 
-import org.eqasim.core.components.flow.FlowBinManager;
+import org.eqasim.core.components.flow.FlowUtils;
 import org.eqasim.core.components.traffic_light.delays.IntersectionGroups;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
 import org.eqasim.core.components.flow.FlowDataSet;
@@ -50,7 +50,7 @@ public class WebsterDelay {
         logger.info("Initializing traffic light delays");
         for (Link link : network.getLinks().values()) {
             boolean hasTl = (boolean) link.getAttributes().getAttribute(TL_ATTRIBUTE);
-            if (hasTl) {
+            if (hasTl && FlowUtils.isCarOrBusLink(link)) {
                 trafficLightDelays.put(link.getId(), new float[timeBinManager.getNumberOfTlBins()]);
             }
         }
@@ -107,7 +107,7 @@ public class WebsterDelay {
         Set<Id<Node>> visitedNodes = new HashSet<>();
         for (Link link : network.getLinks().values()) {
             boolean hasTl = (boolean) link.getAttributes().getAttribute(TL_ATTRIBUTE);
-            if (hasTl) {
+            if (hasTl && FlowUtils.isCarOrBusLink(link)) {
                 Node node = link.getToNode();
                 if (!visitedNodes.contains(node.getId())) {
                     for (double time : timeBinManager.getTlBinsCenters()) {
@@ -125,6 +125,7 @@ public class WebsterDelay {
 
     private void computeNodeDelays(Node node, double time) {
         List<Link> inLinks = node.getInLinks().values().stream()
+                .filter(FlowUtils::isCarOrBusLink)
                 .filter(link -> link.getNumberOfLanes() > 0 && link.getCapacity() > 0)
                 .collect(Collectors.toList());
         if (inLinks.isEmpty()) return;  // Skip if no valid links
@@ -252,7 +253,7 @@ public class WebsterDelay {
         // here we correct the green times, this might come from the fact that within a group,
         // there are turn conflicts that are not considered when grouping the links.
         List<Link> outLinks = node.getOutLinks().values().stream()
-                .filter(l -> l.getAllowedModes().contains("car"))
+                .filter(FlowUtils::isCarOrBusLink)
                 .collect(Collectors.toList());
 
         if (outLinks.isEmpty() | outLinks.size()<=numGroups) {

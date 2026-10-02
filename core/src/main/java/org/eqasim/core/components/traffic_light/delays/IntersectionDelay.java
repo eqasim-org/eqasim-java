@@ -6,13 +6,14 @@ import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collections;
+import java.util.Set;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.vehicles.Vehicle;
 
 public class IntersectionDelay implements CrossingPenalty {
 
     private final ConcurrentHashMap<Id<Vehicle>, Coord> lastDelayCoordinates = new ConcurrentHashMap<>();
-    private final double minimumDistanceBetweenDelays; // meters
     private final double minimumDistanceBetweenDelaysSquared; // meters
     private final TrafficLightDelay trafficLightDelays;
     private final UnsignalizedIntersectionDelay unsignalizedIntersectionDelay;
@@ -23,13 +24,30 @@ public class IntersectionDelay implements CrossingPenalty {
     private final int startingIteration;
     private int currentIteration = 0;
     private final CrossingPenalty delegate;
+    private final Set<Id<Vehicle>> busVehicleIds;
+    private final boolean applyTlToBuses;
+    private final boolean applyUnsignalizedToBuses;
+    private final double constantBusDelay;
 
     public IntersectionDelay(DelaysConfigGroup delayConfigGroup,
                              TrafficLightDelay trafficLightDelays,
                              UnsignalizedIntersectionDelay unsignalizedIntersectionDelay,
                              TimeBinManager timeBinManager,
                              CrossingPenalty delegate) {
-        this.minimumDistanceBetweenDelays = delayConfigGroup.getMinimumDistanceBetweenDelays();
+        this(delayConfigGroup, trafficLightDelays, unsignalizedIntersectionDelay,
+                timeBinManager, delegate, Collections.emptySet());
+    }
+
+    public IntersectionDelay(DelaysConfigGroup delayConfigGroup,
+                             TrafficLightDelay trafficLightDelays,
+                             UnsignalizedIntersectionDelay unsignalizedIntersectionDelay,
+                             TimeBinManager timeBinManager,
+                             CrossingPenalty delegate, Set<Id<Vehicle>> busVehicleIds) {
+        this.busVehicleIds = Set.copyOf(busVehicleIds);
+        this.applyTlToBuses = delayConfigGroup.isApplyTlToBuses();
+        this.applyUnsignalizedToBuses = delayConfigGroup.isApplyUnsignalizedToBuses();
+        this.constantBusDelay = delayConfigGroup.getConstantBusDelay();
+        double minimumDistanceBetweenDelays = delayConfigGroup.getMinimumDistanceBetweenDelays(); // meters
         this.minimumDistanceBetweenDelaysSquared = minimumDistanceBetweenDelays * minimumDistanceBetweenDelays;
         this.applyUnsignalizedDelays = delayConfigGroup.isUnsignalizedActivated();
         this.applyTrafficLightDelays = delayConfigGroup.isTlActivated();
@@ -49,6 +67,12 @@ public class IntersectionDelay implements CrossingPenalty {
         boolean isBeforeStartingIteration = currentIteration < startingIteration;
         if (timeOutOfBounds || noneOfDelaysActivated|| isBeforeStartingIteration) {
             return delegate.calculateCrossingPenalty(link, time, vehicleId);
+        }
+
+        boolean isBus = vehicleId != null && busVehicleIds.contains(vehicleId);
+        boolean busHasTrafficLight = isBus && trafficLightDelays.hasTrafficLight(link);
+        if (isBus && !(busHasTrafficLight ? applyTlToBuses : applyUnsignalizedToBuses)) {
+            return 0.0;
         }
 
         if (!isFarEnoughFromLastDelayedIntersection(link, vehicleId)) {
@@ -78,6 +102,11 @@ public class IntersectionDelay implements CrossingPenalty {
                 //---- 4.4 Otherwise, the returned value is the actual delay
                 delay = tlValue;
             }
+        }
+
+        if (isBus && constantBusDelay >= 0.0 &&
+                (busHasTrafficLight || (applyUnsignalizedDelays && unsignalizedIntersectionDelay.considerLink(link)))) {
+            delay = constantBusDelay;
         }
 
         if (delay > 0.0 && vehicleId != null) {
@@ -120,6 +149,7 @@ public class IntersectionDelay implements CrossingPenalty {
 
     public void updateIteration(int iteration) {
         this.currentIteration = iteration;
+        lastDelayCoordinates.clear();
     }
 
 

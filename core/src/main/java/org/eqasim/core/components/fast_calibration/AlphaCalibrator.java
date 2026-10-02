@@ -7,6 +7,7 @@ import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
@@ -40,7 +41,7 @@ public class AlphaCalibrator implements FastCalibration {
 
     // Mode share tracking
     private final Map<String, Double> shares = new HashMap<>();
-    private final Set<String> consideredModes = Set.of("car", "pt", "walk", "bike", "car_passenger");
+    private final Set<String> consideredModes = Set.of(TransportMode.car, TransportMode.pt, TransportMode.walk, TransportMode.bike, "car_passenger");
     private int replannedTripsCount = 0;
     private int changedUtilityCount = 0;
 

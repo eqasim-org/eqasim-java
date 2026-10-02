@@ -30,10 +30,10 @@ public class VehiclePcuLookup {
                     : (float) vehicle.getType().getPcuEquivalents();
         }
 
-        // Preserve the existing behavior: only bus-named transit vehicles
-        // contribute to road flow. Transit IDs overwrite identical regular IDs.
+        // Classify once from the schedule, independent of vehicle ID naming.
+        var busVehicleIds = FlowUtils.getBusVehicleIds(scenario);
         for (Vehicle vehicle : scenario.getTransitVehicles().getVehicles().values()) {
-            if (FlowUtils.isBus(vehicle.getId())) {
+            if (busVehicleIds.contains(vehicle.getId())) {
                 pcuByVehicleIndex[vehicle.getId().index()] = (float) vehicle.getType().getPcuEquivalents();
             }
         }

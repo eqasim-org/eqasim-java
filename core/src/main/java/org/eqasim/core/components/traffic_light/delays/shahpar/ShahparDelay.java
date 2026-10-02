@@ -3,9 +3,11 @@ package org.eqasim.core.components.traffic_light.delays.shahpar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.flow.FlowDataSet;
+import org.eqasim.core.components.flow.FlowUtils;
 import org.eqasim.core.components.traffic_light.TimeBinManager;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.IdMap;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
@@ -77,7 +79,7 @@ public class ShahparDelay {
     }
 
     public boolean considerLink(Link link) {
-        return (link.getAllowedModes().contains("car") &&
+        return (FlowUtils.isCarOrBusLink(link) &&
                 getNodeDegree(link.getToNode().getId()) > 2);
     }
 
@@ -135,7 +137,7 @@ public class ShahparDelay {
         }
 
         // 2. Get the saturation ration of the intersection
-        Collection<Link> inLinks = getCarLinks(intersectionNode, "in").values();
+        Collection<Link> inLinks = getRoadLinks(intersectionNode, "in").values();
         double intersectionCapacity = Math.max(Collections.max(inLinks.stream().map(Link::getCapacity).toList()), 600.0); // Ensure a minimum capacity to avoid division by zero and unrealistic saturation
         double intersectionFlow = inLinks.stream().mapToDouble(l -> getFlow(l, time)).sum();
         double intersectionSaturation = Math.min(intersectionFlow / intersectionCapacity, maximumSaturation);
@@ -150,40 +152,40 @@ public class ShahparDelay {
     }
 
 
-    private Map<Id<Link>, Link> getCarLinks(Node node, String direction) {
-        // Returns a map of car-allowed in-links for the given node
+    private Map<Id<Link>, Link> getRoadLinks(Node node, String direction) {
+        // Returns a map of car/bus-allowed in-links for the given node
         if (direction.equalsIgnoreCase("out")) {
             return node.getOutLinks().values().stream()
-                    .filter(link -> link.getAllowedModes() != null && link.getAllowedModes().contains("car"))
+                    .filter(FlowUtils::isCarOrBusLink)
                     .collect(Collectors.toMap(Link::getId, Function.identity()));
         }
         return node.getInLinks().values().stream()
-                .filter(link -> link.getAllowedModes() != null && link.getAllowedModes().contains("car"))
+                .filter(FlowUtils::isCarOrBusLink)
                 .collect(Collectors.toMap(Link::getId, Function.identity()));
     }
 
     public void assignDegreeToNode(Node node) {
         // The degree here is the degree of undirected graph, i.e. the number of neighboring nodes.
-        // but this is only for car allowed links, so we need to filter them first
-        Map<Id<Link>, Link> inLinksCar = getCarLinks(node, "in");
-        Map<Id<Link>, Link> outLinksCar = getCarLinks(node, "out");
+        // but this is only for car/bus allowed links, so we need to filter them first
+        Map<Id<Link>, Link> inLinksRoad = getRoadLinks(node, "in");
+        Map<Id<Link>, Link> outLinksRoad = getRoadLinks(node, "out");
 
         Set<Id<Node>> neighboringNodeIds = new HashSet<>();
-        neighboringNodeIds.addAll(inLinksCar.values().stream().map(Link::getFromNode).map(Node::getId).collect(Collectors.toSet()));
-        neighboringNodeIds.addAll(outLinksCar.values().stream().map(Link::getToNode).map(Node::getId).collect(Collectors.toSet()));
+        neighboringNodeIds.addAll(inLinksRoad.values().stream().map(Link::getFromNode).map(Node::getId).collect(Collectors.toSet()));
+        neighboringNodeIds.addAll(outLinksRoad.values().stream().map(Link::getToNode).map(Node::getId).collect(Collectors.toSet()));
         nodesDegrees.put(node.getId(), (float) neighboringNodeIds.size());
     }
 
     public void assignFfToNode(Node intersectionNode) {
-        // Step 1: Filter car-allowed in-links and out-links
-        Map<Id<Link>, Link> inLinksCar = getCarLinks(intersectionNode, "in");
-        Map<Id<Link>, Link> outLinksCar = getCarLinks(intersectionNode, "out");
-        int nEntries = inLinksCar.size();
-        int nExits = outLinksCar.size();
+        // Step 1: Filter car/bus-allowed in-links and out-links
+        Map<Id<Link>, Link> inLinksRoad = getRoadLinks(intersectionNode, "in");
+        Map<Id<Link>, Link> outLinksRoad = getRoadLinks(intersectionNode, "out");
+        int nEntries = inLinksRoad.size();
+        int nExits = outLinksRoad.size();
         int minimumTurns = Math.max(nEntries, nExits); // this should be the minimum number of turns to consider at the intersection
 
         // Step 2: Check consistencies
-        // Check if there are enough car entries and exits to calculate FF
+        // Check if there are enough road entries and exits to calculate FF
         if ((nEntries <= 1 && nExits <= 1) || nEntries == 0 || nExits == 0) {
             ffMap.put(intersectionNode.getId(), 0.0F);
             return;
@@ -197,28 +199,37 @@ public class ShahparDelay {
 
         // Step 3: Track prohibited turns (U-turns and disallowed sequences)
         Set<String> prohibitedTurnPairs = new HashSet<>();
-        for (Link inLink : inLinksCar.values()) {
+        for (Link inLink : inLinksRoad.values()) {
             Id<Link> inId = inLink.getId();
             // Disallowed next link sequences (turn restrictions)
             DisallowedNextLinks disallowed = (DisallowedNextLinks) inLink.getAttributes().getAttribute("disallowedNextLinks");
-            if (disallowed!=null) {
-                List<List<Id<Link>>> sequences = disallowed.getDisallowedLinkSequences("car");
-                if (sequences != null) {
-                    sequences.stream()
-                            .flatMap(List::stream)
-                            .filter(outLinksCar::containsKey)
-                            .map(outId -> formatTurnPair(inId, outId))
-                            .forEach(prohibitedTurnPairs::add);
+            for (Link outLink : outLinksRoad.values()) {
+                // A turn contributes if at least one road mode can use both links
+                // and is not explicitly prohibited from taking this next link.
+                boolean allowed = false;
+                for (String mode : List.of(TransportMode.car, "bus")) {
+                    if (inLink.getAllowedModes().contains(mode) && outLink.getAllowedModes().contains(mode)) {
+                        List<List<Id<Link>>> sequences = disallowed == null ? null
+                                : disallowed.getDisallowedLinkSequences(mode);
+                        if (sequences == null || !sequences.contains(List.of(outLink.getId()))) {
+                            allowed = true;
+                            break;
+                        }
+                    }
+                }
+                if (!allowed) {
+                    prohibitedTurnPairs.add(formatTurnPair(inId, outLink.getId()));
                 }
             }
         }
+
         // now we make sure thet U turns are removed, but only if the number of turns is above the minimum threshold
         if ((nEntries * nExits - prohibitedTurnPairs.size()) > minimumTurns) {
-            for (Link inLink : inLinksCar.values()) {
+            for (Link inLink : inLinksRoad.values()) {
                 Id<Link> inId = inLink.getId();
                 Node fromNode = inLink.getFromNode();
                 // U-turns
-                for (Link outLink : outLinksCar.values()) {
+                for (Link outLink : outLinksRoad.values()) {
                     // U-turn check
                     if (fromNode.equals(outLink.getToNode())) {
                         prohibitedTurnPairs.add(formatTurnPair(inId, outLink.getId()));
@@ -242,7 +253,7 @@ public class ShahparDelay {
     }
 
     private void assignRowToInLinks(Node node) {
-        List<Link> inLinks = new ArrayList<>(getCarLinks(node, "in").values());
+        List<Link> inLinks = new ArrayList<>(getRoadLinks(node, "in").values());
         if (inLinks.isEmpty()) {
             return;
         }

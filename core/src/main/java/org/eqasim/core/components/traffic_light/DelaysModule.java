@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.components.flow.FlowConfigGroup;
+import org.eqasim.core.components.flow.FlowUtils;
 import org.eqasim.core.components.traffic.DefaultCrossingPenalty;
 import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
 import org.eqasim.core.components.traffic_light.delays.TrafficLightDelay;
@@ -15,6 +16,7 @@ import org.eqasim.core.components.flow.FlowDataSet;
 import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
@@ -61,9 +63,9 @@ public class DelaysModule extends AbstractEqasimExtension {
                                                       TrafficLightDelay trafficLightDelays,
                                                       UnsignalizedIntersectionDelay unsignalizedIntersectionDelay,
                                                       TimeBinManager timeBinManager,
-                                                      DefaultCrossingPenalty delegate) {
+                                                      DefaultCrossingPenalty delegate, Scenario scenario) {
         return new IntersectionDelay(delaysConfigGroup, trafficLightDelays, unsignalizedIntersectionDelay,
-                                     timeBinManager, delegate);
+                                     timeBinManager, delegate, FlowUtils.getBusVehicleIds(scenario));
     }
 
     @Provides

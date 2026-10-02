@@ -2,6 +2,9 @@ package org.eqasim.core.components.flow;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.IdSet;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
 import org.matsim.vehicles.Vehicle;
@@ -51,8 +54,31 @@ public class FlowUtils {
         return vehicleId.toString().contains("car_passenger");
     }
 
-    public static boolean isBus(Id<Vehicle> vehicleId){
+    /** Legacy ID convention for VDF handlers. New consumers should use getBusVehicleIds. */
+    @Deprecated
+    public static boolean isBus(Id<Vehicle> vehicleId) {
         return vehicleId.toString().contains("bus");
+    }
+
+    /** Bus identification shared by flow counting and intersection delay application. */
+    public static IdSet<Vehicle> getBusVehicleIds(Scenario scenario) {
+        IdSet<Vehicle> ids = new IdSet<>(Vehicle.class);
+        scenario.getTransitSchedule().getTransitLines().values().forEach(line -> line.getRoutes().values().forEach(route -> {
+            if ("bus".equals(route.getTransportMode())) {
+                route.getDepartures().values().forEach(departure -> {
+                    if (departure.getVehicleId() != null) {
+                        ids.add(departure.getVehicleId());
+                    }
+                });
+            }
+        }));
+        return ids;
+    }
+
+    /** Road approaches used by both intersection models; pt alone may also mean rail. */
+    public static boolean isCarOrBusLink(Link link) {
+        return link.getAllowedModes() != null &&
+                (link.getAllowedModes().contains(TransportMode.car) || link.getAllowedModes().contains("bus"));
     }
 
     public static float getCountValue(double pcu, double sampleSize) {

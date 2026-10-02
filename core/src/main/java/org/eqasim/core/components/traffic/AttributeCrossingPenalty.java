@@ -20,7 +20,7 @@ public class AttributeCrossingPenalty implements CrossingPenalty {
     @Override
     public double calculateCrossingPenalty(Link link, double time, Id<Vehicle> vehicleId) {
         Double value = delays.get(link.getId());
-        return value != null ? value : delegate.calculateCrossingPenalty(link);
+        return value != null ? value : delegate.calculateCrossingPenalty(link, time, vehicleId);
     }
 
     public static AttributeCrossingPenalty sbuild(Network network, CrossingPenalty delegate) {
