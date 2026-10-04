@@ -5,6 +5,8 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
+import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellQSimModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
@@ -28,7 +30,7 @@ public class RunSimulation {
 				.build();
 
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
-		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
+		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new SampledTransitDwellConfigGroup());
 		configurator.updateConfig(config);
 		configurator.configure(config);
 		cmd.applyConfiguration(config);
@@ -63,6 +65,7 @@ public class RunSimulation {
 			new SBBTransitEngineQSimModule().configure(components);
 
 		});
+		controller.addOverridingQSimModule(new SampledTransitDwellQSimModule());
 		// save updated config before running the simulation
 		ConfigUtils.writeConfig(config, "run_config.xml");
 		controller.run();
