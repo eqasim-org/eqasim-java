@@ -7,6 +7,7 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.vehicles.Vehicle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 public class TestLinkFlowCounterConcurrency {
     @Test
@@ -38,9 +39,12 @@ public class TestLinkFlowCounterConcurrency {
 
         FlowBinManager binManager = new FlowBinManager(config);
         FlowDataSet dataSet = new FlowDataSet(network, binManager, config.getBeta());
+        FlowUtils flowUtils = mock(FlowUtils.class);
+        Id<Vehicle> vehicleId = Id.createVehicleId("car");
+        when(flowUtils.getCountValue(vehicleId, 1.0)).thenReturn(1.0F);
         LinkFlowCounter counter = new LinkFlowCounter(
                 network, dataSet, binManager, mock(OutputDirectoryHierarchy.class), config,
-                mock(VehiclePcuLookup.class), 1.0);
+                mock(VehiclePcuLookup.class), 1.0, flowUtils);
 
         int threadCount = 4;
         int eventsPerThread = 25_000;
@@ -53,7 +57,7 @@ public class TestLinkFlowCounterConcurrency {
                 futures.add(executor.submit(() -> {
                     start.await();
                     for (int event = 0; event < eventsPerThread; event++) {
-                        counter.processEnterLink(1800.0, linkId, 1.0);
+                        counter.processEnterLink(1800.0, linkId, 1.0, vehicleId);
                     }
                     return null;
                 }));
