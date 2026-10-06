@@ -5,6 +5,7 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
+import org.eqasim.switzerland.ch_cmdp.utils.link_stats.DetailedLinkStatisticsModule;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellQSimModule;
 import org.matsim.api.core.v01.Scenario;
@@ -57,6 +58,7 @@ public class RunSimulation {
         controller.addOverridingModule(new PTLinkVolumesModule());
 		controller.addOverridingModule(new StrategyWeightDecayModule());
 		controller.addOverridingModule(new TollsModule());
+		controller.addOverridingModule(new DetailedLinkStatisticsModule());
 
 		// To use the deterministic pt simulation (Part 1 of 2):
 		controller.addOverridingModule(new SBBTransitModule());

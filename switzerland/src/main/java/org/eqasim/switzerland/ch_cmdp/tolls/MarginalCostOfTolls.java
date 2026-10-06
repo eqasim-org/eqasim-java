@@ -21,38 +21,40 @@ import java.util.concurrent.ConcurrentHashMap;
  * disutility by a per-person log-normal random draw with mean 1 so that individual route
  * choice varies while the population's average valuation of money stays unchanged.
  * <p>
- * The draw is then divided by the value of time, so the result can be used directly as:
+ * The draw is then converted using the value of time in currency/hour, so the
+ * result can be used directly as:
  * {@code disutility += toll * marginalCostOfTolls.getMarginalCostOfTolls(vehicle)}.
  */
 public class MarginalCostOfTolls {
+    private static final double SECONDS_PER_HOUR = 3600.0;
     private final Logger logger = LogManager.getLogger(MarginalCostOfTolls.class);
 
     // standard deviation of the underlying normal distribution; controls the spread of heterogeneity
     private final double sigma;
     // mu chosen so the log-normal distribution has mean 1: E[exp(N(mu, sigma^2))] = exp(mu + sigma^2/2) = 1
     private final double mu;
-    // value of time (currency per second of disutility), used to convert the toll into time-equivalent units
-    private final double valueOfTime;
+    // population-average conversion from one currency unit to seconds of disutility
+    private final double secondsPerCurrencyUnit;
     // base seed so the whole population's draws can be reproducibly shifted (e.g. across scenario variants)
     private final long baseSeed;
 
-    // each vehicle keeps the same draw for the whole run, computed once on first use
-    private final Map<Id<Vehicle>, Float> vehicleFactors = new ConcurrentHashMap<>();
+    // each vehicle keeps the same complete seconds-per-currency multiplier for the whole run
+    private final Map<Id<Vehicle>, Double> vehicleMultipliers = new ConcurrentHashMap<>();
 
     public MarginalCostOfTolls(double sigma, double valueOfTime) {
         this(sigma, valueOfTime, 4711L);
     }
 
     public MarginalCostOfTolls(double sigma, double valueOfTime, long baseSeed) {
-        if (valueOfTime < 0.0) {
-            throw new IllegalArgumentException("valueOfTime must be non-negative");
+        if (!Double.isFinite(valueOfTime) || valueOfTime <= 0.0) {
+            throw new IllegalArgumentException("valueOfTime must be positive and finite");
         }
-        if (sigma < 0.0) {
-            throw new IllegalArgumentException("sigma must be non-negative");
+        if (!Double.isFinite(sigma) || sigma < 0.0) {
+            throw new IllegalArgumentException("sigma must be non-negative and finite");
         }
         this.sigma = sigma;
         this.mu = -0.5 * sigma * sigma;
-        this.valueOfTime = valueOfTime;
+        this.secondsPerCurrencyUnit = SECONDS_PER_HOUR / valueOfTime;
         this.baseSeed = baseSeed;
 
         logger.info("Initialized MarginalCostOfTolls with: \n\t - sigma={} \n\t - valueOfTime={} \n\t - baseSeed={}", sigma, valueOfTime, baseSeed);
@@ -64,10 +66,10 @@ public class MarginalCostOfTolls {
      * the same factor, across calls and across runs.
      */
     public double getMarginalCostOfTolls(Vehicle vehicle) {
-        if (sigma<1e-6) {
-            return 1.0;
+        if (sigma < 1e-6) {
+            return secondsPerCurrencyUnit;
         }
-        return vehicleFactors.computeIfAbsent(vehicle.getId(), this::drawCostSensitivity) / valueOfTime;
+        return vehicleMultipliers.computeIfAbsent(vehicle.getId(), this::drawMultiplier);
     }
 
     // ------------------- HELPER METHODS -------------------
@@ -83,6 +85,10 @@ public class MarginalCostOfTolls {
             return 1.0f;
         }
         return (float) Math.max(Math.exp(mu + sigma * standardNormalFor(str)), 0.0);
+    }
+
+    private double drawMultiplier(Id<Vehicle> vehicleId) {
+        return drawCostSensitivity(vehicleId) * secondsPerCurrencyUnit;
     }
 
     /**

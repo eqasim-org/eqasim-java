@@ -32,6 +32,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String CATEGORY_FIVE_PROMOTION_LANE_THRESHOLD = "categoryFivePromotionLaneThreshold";
     private static final String CATEGORY_FIVE_PROMOTION_SPEED_THRESHOLD = "categoryFivePromotionSpeedThreshold";
     private static final String TOLLS_VALUE_OF_TIME = "tollsValueOfTime";
+    private static final String TOLLS_SIGMA = "tollsSigma";
 
 
     private boolean activate;
@@ -44,7 +45,8 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double maxCapacity = 2_000.0;
     private double categoryFivePromotionLaneThreshold = 1.0;
     private double categoryFivePromotionSpeedThreshold = 45.0;
-    private double tollsValueOfTime = 12.0;
+    private double tollsValueOfTime = 15.0;
+    private double tollsSigma = 0.5;
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
@@ -63,7 +65,8 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         comments.put(MAX_CAPACITY, "Maximum capacity in veh/h/lane used to scale road categories (default: 1900)");
         comments.put(CATEGORY_FIVE_PROMOTION_LANE_THRESHOLD, "Category-five links above this lane count are treated as category four (default: 1.0)");
         comments.put(CATEGORY_FIVE_PROMOTION_SPEED_THRESHOLD, "Category-five links above this freespeed in km/h are treated as category four (default: 45)");
-        comments.put(TOLLS_VALUE_OF_TIME, "Value of time used to convert road tolls into travel time  (default: 12.0)");
+        comments.put(TOLLS_VALUE_OF_TIME, "Value of time in currency per hour, used to convert road tolls into routing disutility in seconds; passenger-car starting value, using CHF tolls (default: 15.0)");
+        comments.put(TOLLS_SIGMA, "Standard deviation of the normal distribution underlying the normalized log-normal toll-sensitivity multiplier (default: 0.5)");
         return comments;
     }
 
@@ -102,7 +105,19 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringGetter(CATEGORY_FIVE_PROMOTION_SPEED_THRESHOLD) public double getCategoryFivePromotionSpeedThreshold() { return categoryFivePromotionSpeedThreshold; }
     @StringSetter(CATEGORY_FIVE_PROMOTION_SPEED_THRESHOLD) public void setCategoryFivePromotionSpeedThreshold(double value) { categoryFivePromotionSpeedThreshold = value; }
     @StringGetter(TOLLS_VALUE_OF_TIME) public double getTollsValueOfTime() { return tollsValueOfTime; }
-    @StringSetter(TOLLS_VALUE_OF_TIME) public void setTollsValueOfTime(double value) { tollsValueOfTime = value; }
+    @StringSetter(TOLLS_VALUE_OF_TIME) public void setTollsValueOfTime(double value) {
+        if (!Double.isFinite(value) || value <= 0.0) {
+            throw new IllegalArgumentException("tollsValueOfTime must be positive and finite");
+        }
+        tollsValueOfTime = value;
+    }
+    @StringGetter(TOLLS_SIGMA) public double getTollsSigma() { return tollsSigma; }
+    @StringSetter(TOLLS_SIGMA) public void setTollsSigma(double value) {
+        if (!Double.isFinite(value) || value < 0.0) {
+            throw new IllegalArgumentException("tollsSigma must be non-negative and finite");
+        }
+        tollsSigma = value;
+    }
 
     public boolean isLinkPenaltyActivated() {
         return hasObjectiveOverride() ? isOneOfObjectives(PENALTY) : getCostCalibrationConfigGroup().isActivated();

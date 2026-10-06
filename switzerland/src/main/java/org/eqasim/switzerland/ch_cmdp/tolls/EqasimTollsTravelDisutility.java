@@ -19,7 +19,7 @@ public class EqasimTollsTravelDisutility implements TravelDisutility {
     @Override
     public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
         double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle);
-        double linkCost = tolls.getToll(link, vehicle);
+        double linkCost = tolls.getToll(link);
         if (linkCost>0){
             return disutility+linkCost * marginalCostOfTolls.getMarginalCostOfTolls(vehicle);
         }

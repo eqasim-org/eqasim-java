@@ -250,7 +250,8 @@ public class RunAdaptConfig {
 		transitRouterParams.setAdditionalTransferTime(5.0);
 		transitRouterParams.setDirectWalkFactor(3.0);
 		transitRouterParams.setMaxBeelineWalkConnectionDistance(300.0);
-		transitRouterParams.setSearchRadius(1200.0);
+		transitRouterParams.setSearchRadius(400.0);
+		transitRouterParams.setExtensionRadius(400.0);
 
 		// Network calibration
 		NetworkCalibrationConfigGroup netCalibConfig = NetworkCalibrationConfigGroup.getOrCreate(config);
