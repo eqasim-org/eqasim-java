@@ -14,6 +14,9 @@ public class BPRFunction implements VolumeDelayFunction {
 	@Override
 	public double calculateTravelTime(double time, double flow, double capacity, Link link) {
 		double freeflowTravelTime = link.getLength() / link.getFreespeed(time);
+		if (capacity == 0) {
+			return Double.POSITIVE_INFINITY;
+		}
 		return freeflowTravelTime * (1.0 + factor * Math.pow(flow / capacity, exponent));
 	}
 }
