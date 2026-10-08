@@ -60,7 +60,15 @@ public class VDFTravelTime implements TravelTime {
 		this.samplingRate = samplingRate;
 		this.crossingPenalty = crossingPenalty;
 
+		boolean capacityWarningPrinted = false;
+
 		for (Link link : network.getLinks().values()) {
+			if(!capacityWarningPrinted && link.getCapacity() == 0.0) {
+				logger.warn("At least one link in your network has zero capacity. " +
+						"This can cause travel time on this link to be +infinity later on");
+				capacityWarningPrinted = true;
+			}
+
 			double travelTime = Math.max(1.0,
 					Math.min(link.getLength() / minimumSpeed, link.getLength() / link.getFreespeed())) +
 					crossingPenalty.calculateCrossingPenalty(link);
