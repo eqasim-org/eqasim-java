@@ -7,8 +7,10 @@ import java.util.concurrent.Executors;
 
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.server.ServiceBuilder.Services;
+import org.eqasim.server.api.InterfaceEndpoint;
 import org.eqasim.server.api.RoadIsochroneEndpoint;
 import org.eqasim.server.api.RoadRouterEndpoint;
+import org.eqasim.server.api.ServicesEndpoint;
 import org.eqasim.server.api.TransitIsochroneEndpoint;
 import org.eqasim.server.api.TransitRouterEndpoint;
 import org.matsim.core.config.CommandLine;
@@ -25,10 +27,12 @@ public class RunServer {
 			throws ConfigurationException, JsonParseException, JsonMappingException, IOException {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions("port", "threads", "configuration-path", "use-transit", "vdf-path", "port-path",
+				.allowOptions("port", "threads", "configuration-path", "use-transit", "provide-interface", "vdf-path",
+						"port-path",
 						EqasimConfigurator.CONFIGURATOR) //
 				.build();
 
+		boolean provideInterface = cmd.getOption("provide-interface").map(Boolean::parseBoolean).orElse(false);
 		Services services = new ServiceBuilder().build(cmd);
 
 		int threads = cmd.getOption("threads").map(Integer::parseInt)
@@ -59,6 +63,14 @@ public class RunServer {
 				TransitIsochroneEndpoint transitIsochroneEndpoint = new TransitIsochroneEndpoint(executor,
 						services.transitIsochroneService());
 				config.routes.post("/isochrone/transit", transitIsochroneEndpoint::post);
+			}
+
+			ServicesEndpoint servicesEndpoint = new ServicesEndpoint(services);
+			config.routes.get("/services", servicesEndpoint::get);
+
+			if (provideInterface) {
+				InterfaceEndpoint interfaceEndpoint = new InterfaceEndpoint();
+				config.routes.get("/interface", interfaceEndpoint::get);
 			}
 		});
 
