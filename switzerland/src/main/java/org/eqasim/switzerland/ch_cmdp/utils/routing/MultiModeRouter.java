@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.eqasim.core.components.raptor.EqasimRaptorConfigGroup;
+import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
 import org.eqasim.core.components.raptor.EqasimRaptorUtils;
 import org.eqasim.core.components.traffic.bike.BikeDisutilities;
 import org.eqasim.core.components.traffic.bike.BikeGradientBasedLinkSpeedCalculator;
@@ -32,6 +34,7 @@ import org.eqasim.switzerland.ch_cmdp.tolls.EqasimTollsTravelDisutility;
 import org.eqasim.switzerland.ch_cmdp.tolls.MarginalCostOfTolls;
 import org.eqasim.switzerland.ch_cmdp.tolls.Tolls;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -57,6 +60,8 @@ import org.matsim.pt.router.TransitRouterConfig;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.vehicles.MatsimVehicleReader;
 import org.matsim.vehicles.Vehicle;
+import org.matsim.vehicles.VehicleType;
+import org.matsim.vehicles.VehicleUtils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.MappingIterator;
@@ -104,8 +109,38 @@ public final class MultiModeRouter implements AutoCloseable {
         public double departureTime = -1;
         public double routingDistanceUtility = 0;
         /** Population-average monetary toll conversion, in currency/hour. */
-        public double valueOfTime = 15;
+        public double tollsValueOfTime = 15;
+        /** Zero keeps toll sensitivity at the population average. */
+        public double tollsSigma = 0;
         public boolean returnLinks = false;
+        // CLI options omitted by the caller may inherit values from the config.
+        Set<String> configFallbackOptions = Set.of();
+
+        void applyConfigDefaults(Config config) {
+            if (config == null) {
+                return;
+            }
+            if (configFallbackOptions.contains("threads")) {
+                threads = config.global().getNumberOfThreads();
+            }
+            if (configFallbackOptions.contains("routingDistanceUtility")) {
+                routingDistanceUtility = configValue(config, EqasimConfigGroup.GROUP_NAME,
+                        "routingDistanceUtility", routingDistanceUtility);
+            }
+            if (configFallbackOptions.contains("tolls-value-of-time")) {
+                tollsValueOfTime = configValue(config, NetworkCalibrationConfigGroup.GROUP_NAME,
+                        "tollsValueOfTime", tollsValueOfTime);
+            }
+            if (configFallbackOptions.contains("tolls-sigma")) {
+                tollsSigma = configValue(config, NetworkCalibrationConfigGroup.GROUP_NAME, "tollsSigma", tollsSigma);
+            }
+        }
+
+        private static double configValue(Config config, String moduleName, String parameter, double fallback) {
+            ConfigGroup module = config.getModules().get(moduleName);
+            String value = module == null ? null : module.getParams().get(parameter);
+            return value == null ? fallback : Double.parseDouble(value);
+        }
 
         private void validate() {
             if (networkPath == null || networkPath.isBlank()) {
@@ -119,21 +154,22 @@ public final class MultiModeRouter implements AutoCloseable {
                 throw new IllegalArgumentException("Events time range must contain at least one positive interval");
             }
             if (!Double.isFinite(departureTime) || !Double.isFinite(routingDistanceUtility)
-                    || routingDistanceUtility < 0 || !Double.isFinite(valueOfTime) || valueOfTime <= 0) {
-                throw new IllegalArgumentException("Invalid departureTime, routingDistanceUtility or valueOfTime");
+                    || routingDistanceUtility < 0 || !Double.isFinite(tollsValueOfTime) || tollsValueOfTime <= 0
+                    || !Double.isFinite(tollsSigma) || tollsSigma < 0) {
+                throw new IllegalArgumentException("Invalid departureTime, routingDistanceUtility, tollsValueOfTime or tollsSigma");
             }
         }
     }
 
     @SuppressWarnings("unchecked")
     public MultiModeRouter(Settings settings) {
+        Config config = loadConfig(settings);
+        settings.applyConfigDefaults(config);
         settings.validate();
         batchSize = settings.batchSize;
         chunkSize = settings.chunkSize;
         departureTime = settings.departureTime;
         Network network = TripsRouter.loadNetwork(settings.networkPath);
-        Config config = settings.configPath == null ? null
-                : ConfigUtils.loadConfig(settings.configPath, new SwissRailRaptorConfigGroup());
         Map<String, java.util.function.Supplier<ModeRouter>> factories = new LinkedHashMap<>();
 
         RoadNetwork carNetwork = modeNetwork(network, "car");
@@ -147,8 +183,8 @@ public final class MultiModeRouter implements AutoCloseable {
             carBaseCost = recordedCost(carNetwork, carTime, carBaseCost, settings);
         }
         TravelDisutility carCost = new EqasimTollsTravelDisutility(carBaseCost,
-                new Tolls(), new MarginalCostOfTolls(0, settings.valueOfTime));
-        factories.put("car", networkFactory(carNetwork, carTime, carCost, settings.returnLinks));
+                new Tolls(), new MarginalCostOfTolls(settings.tollsSigma, settings.tollsValueOfTime));
+        factories.put("car", networkFactory(carNetwork, carTime, carCost, settings.returnLinks, settings.tollsSigma > 0));
 
         if (config != null) {
             for (String mode : List.of("walk", "bike")) {
@@ -259,6 +295,18 @@ public final class MultiModeRouter implements AutoCloseable {
 
     public Set<String> getAvailableModes() {
         return availableModes;
+    }
+
+    static Config loadConfig(Settings settings) {
+        if (settings.configPath == null) {
+            return null;
+        }
+        Config config = ConfigUtils.createConfig(new SwissRailRaptorConfigGroup());
+        // Seed only the fallback: reading an explicit global.numberOfThreads replaces it.
+        config.global().setNumberOfThreads(settings.threads);
+        // Keep Eqasim modules generic here so absent XML parameters retain Settings defaults.
+        ConfigUtils.loadConfig(config, settings.configPath);
+        return config;
     }
 
     public long route(String inputCsv, String outputCsv, String mode) throws IOException, InterruptedException {
@@ -446,13 +494,28 @@ public final class MultiModeRouter implements AutoCloseable {
 
     private static java.util.function.Supplier<ModeRouter> networkFactory(Network network, TravelTime time,
             TravelDisutility cost, boolean returnLinks) {
+        return networkFactory(network, time, cost, returnLinks, false);
+    }
+
+    private static java.util.function.Supplier<ModeRouter> networkFactory(Network network, TravelTime time,
+            TravelDisutility cost, boolean returnLinks, boolean useTollSensitivity) {
         SpeedyALTFactory factory = new SpeedyALTFactory();
+        VehicleType vehicleType = useTollSensitivity
+                ? VehicleUtils.createVehicleType(Id.create("csv-car", VehicleType.class)) : null;
         return () -> {
             LeastCostPathCalculator calculator = factory.createPathCalculator(network, cost, time);
             return trip -> {
                 var from = NetworkUtils.getNearestNode(network, origin(trip));
                 var to = NetworkUtils.getNearestNode(network, destination(trip));
-                var path = calculator.calcLeastCostPath(from, to, trip.departureTime, null, null);
+                Vehicle vehicle = null;
+                if (useTollSensitivity) {
+                    String identifier = trip.identifier == null || trip.identifier.isBlank()
+                            ? "csv:" + trip.originX + ":" + trip.originY + ":" + trip.destinationX + ":"
+                                    + trip.destinationY + ":" + trip.departureTime
+                            : trip.identifier;
+                    vehicle = VehicleUtils.createVehicle(Id.createVehicleId(identifier), vehicleType);
+                }
+                var path = calculator.calcLeastCostPath(from, to, trip.departureTime, null, vehicle);
                 if (path == null) {
                     throw new IllegalArgumentException("No " + trip.mode + " path for trip " + trip.identifier);
                 }

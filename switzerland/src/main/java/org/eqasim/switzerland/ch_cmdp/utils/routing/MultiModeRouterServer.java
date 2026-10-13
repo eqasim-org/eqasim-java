@@ -42,6 +42,51 @@ public final class MultiModeRouterServer implements AutoCloseable {
 
     private record State(String status, MultiModeRouter router, String error) {}
 
+    public static void main(String[] args) throws Exception {
+        CommandLine cmd = commandLine(args);
+        MultiModeRouter.Settings settings = readSettings(cmd);
+        MultiModeRouterServer server = new MultiModeRouterServer(settings, cmd.getOption("host").orElse("127.0.0.1"),
+                Integer.parseInt(cmd.getOptionStrict("port")));
+        Runtime.getRuntime().addShutdownHook(new Thread(server::close, "multi-mode-router-shutdown"));
+        server.start();
+    }
+
+    static CommandLine commandLine(String[] args) throws CommandLine.ConfigurationException {
+        return new CommandLine.Builder(args)
+                .requireOptions("network-path", "port")
+                .allowOptions("config-path", "events-path", "host", "threads", "batch-size", "chunk-size",
+                        "start-time", "end-time", "interval", "departure-time", "routingDistanceUtility",
+                        "tolls-value-of-time", "tolls-sigma", "return-links")
+                .build();
+    }
+
+    static MultiModeRouter.Settings readSettings(CommandLine cmd) throws CommandLine.ConfigurationException {
+        MultiModeRouter.Settings settings = new MultiModeRouter.Settings();
+        settings.networkPath = cmd.getOptionStrict("network-path");
+        settings.configPath = cmd.getOption("config-path").orElse(null);
+        settings.eventsPath = cmd.getOption("events-path").orElse(null);
+        settings.threads = cmd.getOption("threads").map(Integer::parseInt).orElse(settings.threads);
+        settings.batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(settings.batchSize);
+        settings.chunkSize = cmd.getOption("chunk-size").map(Integer::parseInt).orElse(settings.chunkSize);
+        settings.startTime = cmd.getOption("start-time").map(Double::parseDouble).orElse(settings.startTime);
+        settings.endTime = cmd.getOption("end-time").map(Double::parseDouble).orElse(settings.endTime);
+        settings.interval = cmd.getOption("interval").map(Double::parseDouble).orElse(settings.interval);
+        settings.departureTime = cmd.getOption("departure-time").map(Double::parseDouble).orElse(settings.departureTime);
+        settings.routingDistanceUtility = cmd.getOption("routingDistanceUtility").map(Double::parseDouble)
+                .orElse(settings.routingDistanceUtility);
+        settings.tollsValueOfTime = cmd.getOption("tolls-value-of-time").map(Double::parseDouble)
+                .orElse(settings.tollsValueOfTime);
+        settings.tollsSigma = cmd.getOption("tolls-sigma").map(Double::parseDouble).orElse(settings.tollsSigma);
+        settings.configFallbackOptions = new java.util.HashSet<>();
+        for (String option : List.of("threads", "routingDistanceUtility", "tolls-value-of-time", "tolls-sigma")) {
+            if (!cmd.hasOption(option)) {
+                settings.configFallbackOptions.add(option);
+            }
+        }
+        settings.returnLinks = cmd.getOption("return-links").map(Boolean::parseBoolean).orElse(false);
+        return settings;
+    }
+
     /** Takes ownership of the router; closing the server closes the router too. */
     public MultiModeRouterServer(MultiModeRouter router, String host, int port) throws IOException {
         this(null, router.getAvailableModes(), new State("ready", router, null), host, port);
@@ -244,33 +289,5 @@ public final class MultiModeRouterServer implements AutoCloseable {
         if (loaded != null) {
             loaded.close();
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        CommandLine cmd = new CommandLine.Builder(args)
-                .requireOptions("network-path", "port")
-                .allowOptions("config-path", "events-path", "host", "threads", "batch-size", "chunk-size",
-                        "start-time", "end-time", "interval", "departure-time", "routingDistanceUtility",
-                        "value-of-time", "return-links")
-                .build();
-        MultiModeRouter.Settings settings = new MultiModeRouter.Settings();
-        settings.networkPath = cmd.getOptionStrict("network-path");
-        settings.configPath = cmd.getOption("config-path").orElse(null);
-        settings.eventsPath = cmd.getOption("events-path").orElse(null);
-        settings.threads = cmd.getOption("threads").map(Integer::parseInt).orElse(settings.threads);
-        settings.batchSize = cmd.getOption("batch-size").map(Integer::parseInt).orElse(settings.batchSize);
-        settings.chunkSize = cmd.getOption("chunk-size").map(Integer::parseInt).orElse(settings.chunkSize);
-        settings.startTime = cmd.getOption("start-time").map(Double::parseDouble).orElse(settings.startTime);
-        settings.endTime = cmd.getOption("end-time").map(Double::parseDouble).orElse(settings.endTime);
-        settings.interval = cmd.getOption("interval").map(Double::parseDouble).orElse(settings.interval);
-        settings.departureTime = cmd.getOption("departure-time").map(Double::parseDouble).orElse(settings.departureTime);
-        settings.routingDistanceUtility = cmd.getOption("routingDistanceUtility").map(Double::parseDouble)
-                .orElse(settings.routingDistanceUtility);
-        settings.valueOfTime = cmd.getOption("value-of-time").map(Double::parseDouble).orElse(settings.valueOfTime);
-        settings.returnLinks = cmd.getOption("return-links").map(Boolean::parseBoolean).orElse(false);
-        MultiModeRouterServer server = new MultiModeRouterServer(settings, cmd.getOption("host").orElse("127.0.0.1"),
-                Integer.parseInt(cmd.getOptionStrict("port")));
-        Runtime.getRuntime().addShutdownHook(new Thread(server::close, "multi-mode-router-shutdown"));
-        server.start();
     }
 }
