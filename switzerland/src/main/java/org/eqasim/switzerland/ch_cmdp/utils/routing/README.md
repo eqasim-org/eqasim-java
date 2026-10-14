@@ -149,11 +149,14 @@ coordinate columns are required and finite; `identifier` is optional.
 `departure_time` is seconds and defaults to zero if its column is absent.
 `--departure-time` overrides all rows. With an explicit request mode, the CSV
 `mode` column is optional and ignored. Otherwise it is required. Supported values
-are `car`, `pt`, `walk`, and `bike`. Extra columns are ignored.
+are `car`, `car_passenger`, `pt`, `walk`, and `bike`. Extra columns are ignored.
 
 Output contains the input identifier, coordinates and departure time, plus
 `mode`, `travel_time` (seconds), `travel_distance` (meters), `access_distance`,
-`egress_distance` (meters), `link_count`, and `links`.
+`egress_distance` (meters), `link_count`, `links`, `cost` (CHF), and `pt_cost_data`.
+The `cost` column is blank when cost computation is disabled.
+`pt_cost_data` is JSON containing a PT itinerary and its traveler profile, saved
+for later pricing. It is blank for other modes.
 For network modes, endpoints snap to the closest nodes in that mode's network,
 as in `TripsRouter`. Travel time/distance cover the network path; access/egress
 distances report the straight-line gaps to those nodes separately.
@@ -161,6 +164,119 @@ distances report the straight-line gaps to those nodes separately.
 PT trips leave network path metadata empty/zero. PT time includes walking,
 waiting and in-vehicle time, and PT distance includes walking and transit legs.
 PT endpoints use nearest-link facilities, matching `RunBatchPublicTransportRouter`.
+
+## Optional monetary cost estimation
+
+Enable it with `--compute-cost true --car-cost-model simple` (or `weiss`). The
+same options can be stored in the MATSim config:
+
+```xml
+<module name="multiModeRouter">
+  <param name="computeCost" value="true" />
+  <param name="carCostModel" value="weiss" />
+</module>
+```
+
+CLI values override the config. If `carCostModel` is absent from this module,
+the router uses the car cost-model selection in the `eqasim` module created by
+`RunAdaptConfig`; if that is absent too, the default is `simple`.
+`computeCost` defaults to false. In Java, use `settings.computeCost = true` and
+`settings.carCostModel = "weiss"`.
+
+Each routed row/alternative gets a cost for its selected mode:
+
+- **Car:** Reuses `SwissCarCostModel` or `SwissWeissCarCostModel` on the routed
+  network distance. Simple pricing uses `carCost_CHF_km` from the Swiss cost
+  parameters (default 0.26 CHF/km). The router loads the optional
+  `eqasim.costParametersPath` YAML relative to the config, as the simulation does.
+  These models return driving costs; parking and link toll amounts are not added
+  to this monetary output. Tolls still affect route choice through disutility.
+- **PT:** Uses the same fare calculation as `RunComputeTransitPrices`, including
+  authority grouping, half-fare and subscription rules, rounding and fare caps.
+  It prices the already calculated route. When PT is configured, cost estimation
+  requires all three `ptZones` paths: `ptZonesFilePath`, `sbbDistancesPath`, and
+  `pricingDescriptionPath`, resolved relative to the config. These inputs are
+  loaded once before the server reports readiness, and shared by its workers.
+  A PT alternative containing only walking has zero ticket cost.
+- **Walk, bike, car_passenger:** Zero. `car_passenger` shares the car network,
+  travel times and routing behavior and is available with a network-only server.
+
+PT rows may provide the same traveler fields as the pricing utility: `age`,
+`hasGA`, `hasHalbtaxSubscription`, `hasVerbundAbo`, `hasStreckenAbo`,
+`hasGleis7Abo`, and `hasJuniorAbo`. Missing or blank fields default to age 30 and
+no subscriptions. If a regional subscription is true, provide `homeX`/`homeY`
+(or `home_x`/`home_y`). Its coverage radius comes from the Swiss cost parameters
+(`ptRegionalRadius_km`, default 10 km). Boolean columns accept true/false.
+Pricing inputs and traveler fields are unused when cost estimation is disabled.
+
+## Separate cost requests
+
+Start with `--compute-cost true` to load the pricing inputs at startup. This
+enables both combined routing/pricing and separate cost requests; `/health`
+reports `costReady: true` when these inputs are ready.
+
+To route first and price later, override cost computation for the routing request:
+
+```json
+{"inputCsv":"trips.csv","outputCsv":"routes.csv","computeCost":false}
+```
+
+Send this body to `POST /route`. To price the saved alternatives separately,
+send this to **`POST /cost`**:
+
+```json
+{"inputCsv":"routes.csv","outputCsv":"costs.csv"}
+```
+
+The output contains only `identifier`, `mode`, and `cost` (CHF), retaining row
+order. Both APIs accept an optional `mode` override. A `/route` request can set
+`computeCost: true` to include costs, or omit it to use the startup default.
+Cost requests on a server started with cost computation disabled return HTTP 400
+with instructions to enable it.
+
+Cost-only input can be either raw trip requests or saved routing results:
+
+- A car row with `travel_distance` (meters) is priced directly; it does not need
+  coordinates. A car row with only OD coordinates is routed to obtain distance.
+- A PT row with `pt_cost_data` is priced directly using the saved itinerary and
+  traveler profile; it does not need coordinates or another routing search.
+  Keep this column intact when passing saved results back to `/cost`. The loaded
+  transit schedule must contain the saved lines, routes and stops.
+- A PT row without `pt_cost_data` is routed from its OD coordinates to obtain
+  the itinerary. Provide the original traveler columns for subscription pricing.
+- Walk, bike and car_passenger rows need only their identifier and mode; their
+  costs are zero and no routing search is performed.
+
+The saved traveler profile preserves discounts/subscriptions when `/route` uses
+`computeCost: false` on a cost-enabled server. On a server started with cost
+computation disabled, saved PT profiles use the default adult/no-subscription
+profile. Costs are recalculated from the loaded models; an input `cost` column is
+ignored. Cost jobs use the existing parallel workers, bounded chunks, request
+queue, and safe output replacement.
+
+Java methods:
+
+```java
+router.route("trips.csv", "routes.csv", null, false);
+router.cost("routes.csv", "costs.csv");
+router.cost("car-distances.csv", "car-costs.csv", "car");
+// MultiModeRouterServer also exposes both String-path cost(...) overloads.
+```
+
+From Python, the two requests can be made independently:
+
+```python
+import requests
+base = "http://127.0.0.1:8080"
+response = requests.post(base + "/route", json={
+    "inputCsv": "trips.csv", "outputCsv": "routes.csv", "computeCost": False,
+})
+response.raise_for_status()
+response = requests.post(base + "/cost", json={
+    "inputCsv": "routes.csv", "outputCsv": "costs.csv",
+})
+response.raise_for_status()
+```
 
 ## Routing parameters
 
@@ -199,6 +315,8 @@ Startup values follow **explicit CLI option → config parameter → Settings de
 | `--routingDistanceUtility` | `eqasim.routingDistanceUtility` | 0 |
 | `--tolls-value-of-time` | `eqasim:networkCalibration.tollsValueOfTime` | 15 currency/hour |
 | `--tolls-sigma` | `eqasim:networkCalibration.tollsSigma` | 0 |
+| `--compute-cost` | `multiModeRouter.computeCost` | false |
+| `--car-cost-model` | `multiModeRouter.carCostModel`, then Eqasim car cost-model selection | simple |
 
 Config values are resolved during the background initialization, from the same
 config read used for mode routing. Missing modules or individual parameters leave
@@ -225,5 +343,5 @@ was needed to run the HTTP integration test on the local JDK 21.0.12.
 Run the routing tests with:
 
 ```sh
-mvn -pl switzerland -am test -Dtest=TestMultiModeRouterSettings -Dsurefire.failIfNoSpecifiedTests=false
+mvn -pl switzerland -am test -Dtest=TestMultiModeRouterSettings,TestMultiModeRouterCosts -Dsurefire.failIfNoSpecifiedTests=false
 ```

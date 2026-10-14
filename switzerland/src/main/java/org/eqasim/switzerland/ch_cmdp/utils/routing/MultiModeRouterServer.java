@@ -56,7 +56,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 .requireOptions("network-path", "port")
                 .allowOptions("config-path", "events-path", "host", "threads", "batch-size", "chunk-size",
                         "start-time", "end-time", "interval", "departure-time", "routingDistanceUtility",
-                        "tolls-value-of-time", "tolls-sigma", "return-links")
+                        "tolls-value-of-time", "tolls-sigma", "return-links", "compute-cost", "car-cost-model")
                 .build();
     }
 
@@ -77,8 +77,12 @@ public final class MultiModeRouterServer implements AutoCloseable {
         settings.tollsValueOfTime = cmd.getOption("tolls-value-of-time").map(Double::parseDouble)
                 .orElse(settings.tollsValueOfTime);
         settings.tollsSigma = cmd.getOption("tolls-sigma").map(Double::parseDouble).orElse(settings.tollsSigma);
+        settings.computeCost = cmd.getOption("compute-cost").map(value -> MultiModeRouter.booleanValue(value, "compute-cost"))
+                .orElse(settings.computeCost);
+        settings.carCostModel = cmd.getOption("car-cost-model").orElse(settings.carCostModel);
         settings.configFallbackOptions = new java.util.HashSet<>();
-        for (String option : List.of("threads", "routingDistanceUtility", "tolls-value-of-time", "tolls-sigma")) {
+        for (String option : List.of("threads", "routingDistanceUtility", "tolls-value-of-time", "tolls-sigma",
+                "compute-cost", "car-cost-model")) {
             if (!cmd.hasOption(option)) {
                 settings.configFallbackOptions.add(option);
             }
@@ -94,7 +98,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
 
     /** Binds HTTP immediately; start() starts eager background data loading. */
     public MultiModeRouterServer(MultiModeRouter.Settings settings, String host, int port) throws IOException {
-        this(() -> new MultiModeRouter(settings), settings.configPath == null ? Set.of("car") : MultiModeRouter.MODES,
+        this(() -> new MultiModeRouter(settings), settings.configPath == null ? Set.of("car", "car_passenger") : MultiModeRouter.MODES,
                 host, port);
     }
 
@@ -117,22 +121,24 @@ public final class MultiModeRouterServer implements AutoCloseable {
         server.setExecutor(requests);
         server.createContext("/health", exchange -> handleStatus(exchange, false));
         server.createContext("/ready", exchange -> handleStatus(exchange, true));
-        server.createContext("/route", exchange -> {
-            try {
-                routingRequests.execute(() -> {
-                    try {
-                        handleRoute(exchange);
-                    } catch (IOException e) {
-                        logger.debug("Routing response connection closed", e);
-                        exchange.close();
+        for (String endpoint : List.of("route", "cost")) {
+            server.createContext("/" + endpoint, exchange -> {
+                try {
+                    routingRequests.execute(() -> {
+                        try {
+                            handleCsvRequest(exchange, endpoint.equals("cost"));
+                        } catch (IOException e) {
+                            logger.debug("Routing response connection closed", e);
+                            exchange.close();
+                        }
+                    });
+                } catch (RejectedExecutionException e) {
+                    try (exchange) {
+                        respond(exchange, 503, Map.of("error", "Routing request queue is full or server is stopping"));
                     }
-                });
-            } catch (RejectedExecutionException e) {
-                try (exchange) {
-                    respond(exchange, 503, Map.of("error", "Routing request queue is full or server is stopping"));
                 }
-            }
-        });
+            });
+        }
     }
 
     public synchronized void start() {
@@ -173,7 +179,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
 
     private Map<String, Object> statusResponse(State snapshot, String selectedMode) {
         Map<String, Object> modes = new LinkedHashMap<>();
-        for (String mode : List.of("car", "pt", "walk", "bike")) {
+        for (String mode : List.of("car", "car_passenger", "pt", "walk", "bike")) {
             boolean ready = snapshot.router != null && snapshot.router.getAvailableModes().contains(mode);
             String status = ready ? "ready" : snapshot.status.equals("ready") || !expectedModes.contains(mode)
                     ? "unavailable" : snapshot.status;
@@ -184,6 +190,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 || snapshot.router.getAvailableModes().contains(selectedMode));
         response.put("status", snapshot.status);
         response.put("ready", ready);
+        response.put("costReady", snapshot.router != null && snapshot.router.isCostEnabled());
         response.put("modes", modes);
         if (selectedMode != null) {
             response.put("mode", selectedMode);
@@ -211,7 +218,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 }
             }
             if (mode != null && !MultiModeRouter.MODES.contains(mode)) {
-                respond(exchange, 400, Map.of("error", "mode must be car, pt, walk or bike"));
+                respond(exchange, 400, Map.of("error", "mode must be car, car_passenger, pt, walk or bike"));
                 return;
             }
             Map<String, Object> response = statusResponse(state, mode);
@@ -223,7 +230,19 @@ public final class MultiModeRouterServer implements AutoCloseable {
         return server.getAddress().getPort();
     }
 
-    private void handleRoute(HttpExchange exchange) throws IOException {
+    public long cost(String inputCsv, String outputCsv, String mode) throws IOException, InterruptedException {
+        State snapshot = state;
+        if (snapshot.router == null) {
+            throw new IllegalStateException("Router is " + snapshot.status);
+        }
+        return snapshot.router.cost(inputCsv, outputCsv, mode);
+    }
+
+    public long cost(String inputCsv, String outputCsv) throws IOException, InterruptedException {
+        return cost(inputCsv, outputCsv, null);
+    }
+
+    private void handleCsvRequest(HttpExchange exchange, boolean costOnly) throws IOException {
         try (exchange) {
             if (!exchange.getRequestMethod().equals("POST")) {
                 respond(exchange, 405, Map.of("error", "Use POST"));
@@ -242,7 +261,17 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 String input = requiredText(body, "inputCsv");
                 String output = requiredText(body, "outputCsv");
                 String mode = body.hasNonNull("mode") ? requiredText(body, "mode") : null;
-                long count = snapshot.router.route(input, output, mode);
+                long count;
+                if (costOnly) {
+                    count = snapshot.router.cost(input, output, mode);
+                } else if (body.hasNonNull("computeCost")) {
+                    if (!body.get("computeCost").isBoolean()) {
+                        throw new IllegalArgumentException("computeCost must be a boolean");
+                    }
+                    count = snapshot.router.route(input, output, mode, body.get("computeCost").asBoolean());
+                } else {
+                    count = snapshot.router.route(input, output, mode);
+                }
                 respond(exchange, 200, Map.of("trips", count, "outputCsv", output));
             } catch (IllegalArgumentException | JsonProcessingException e) {
                 respond(exchange, 400, Map.of("error", e.getMessage()));

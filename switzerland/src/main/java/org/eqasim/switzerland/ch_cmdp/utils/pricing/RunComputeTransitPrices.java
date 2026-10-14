@@ -339,72 +339,87 @@ public class RunComputeTransitPrices {
             // Predict PT variables once
             SwissPtVariables ptVariables = ptRoutePredictor.predictPtVariables(route);
             if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()) {
-                return new RouteResult(Double.NaN, Double.NaN, Double.NaN, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
+                return new RouteResult(Double.NaN, Double.NaN, Double.NaN, travelTime_min, in_vehicle_time_min,
+                        access_egress_time_min, waiting_time_min, number_of_line_switches);
             }
-
-            Map<String, List<SwissPtLegVariables>> groupedByAuthority = ptVariables.getPricingStrategy();
-
-            // Compute network distance
-            double distance_m = groupedByAuthority.values().stream()
-                .flatMap(List::stream)
-                .mapToDouble(lv -> lv.networkDistance)
-                .sum();
-
-            double distance_km = distance_m / 1000.0;
-
-            // === Apply pricing logic once ===
-            double price = 0.0;
-            double oldPrice = 0.0;
-
-            boolean isGleis7 = request.departureTime_s < 5 * 3600 || request.departureTime_s >= 19 * 3600;
-            boolean hasGleis7FreeTravel = request.age < 25 && request.hasGleis7Abo && isGleis7;
-            boolean hasFreePublicTransport = request.hasGA
-                    || request.age < 6
-                    || (request.age < 16 && request.hasJuniorAbo)
-                    || hasGleis7FreeTravel;
-
-            if (hasFreePublicTransport) {
-                return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
-            }
-
-            boolean hasRegionalSubscription = request.hasVerbundAbo || request.hasStreckenAbo;
-            if (hasRegionalSubscription) {
-                double homeDist = calculateHomeDistance_km(request);
-                if (homeDist <= ptRegionalRadius_km) {
-                    return new RouteResult(0.0, 0.0, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
-                }
-            }
-
-            boolean halfFare = request.hasHalbtaxSubscription || (request.age < 16);
-
-            // New model price
-            for (var entry : groupedByAuthority.entrySet()) {
-                String authority = entry.getKey();
-                List<SwissPtLegVariables> legs = entry.getValue();
-
-                PtStageCostCalculator calc =
-                    swissPtStageCostCalculator.priceCalculators.getOrDefault(authority,
-                        swissPtStageCostCalculator.priceCalculators.get("None"));
-
-                price += calc.calculatePrice(authority, legs, halfFare, personVariables);
-            }
-
-            // Old model price
-            oldPrice = Math.max(2.8, 2*(0.21 * distance_km - 0.00015 * Math.pow(distance_km,2) ));
-            if (halfFare) oldPrice /= 2.0;
-            oldPrice = Math.round(oldPrice * 100.0) / 100.0;
-            price    = Math.round(price * 100.0) / 100.0;
-
-            double maximumPrice = halfFare? 35.0 : 60.0;
-            price = Math.min(price, maximumPrice);
-            oldPrice = Math.min(oldPrice, maximumPrice);
-
-            return new RouteResult(price, oldPrice, distance_km, travelTime_min, in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
+            FareResult fare = calculatePrices(request, ptVariables, swissPtStageCostCalculator, ptRegionalRadius_km);
+            return new RouteResult(fare.price(), fare.oldPrice(), fare.distance_km(), travelTime_min,
+                    in_vehicle_time_min, access_egress_time_min, waiting_time_min, number_of_line_switches);
 
         } catch (Exception e) {
             System.err.println("Routing failed for request " + id + ": " + e.getMessage());
             return new RouteResult(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, 0);
         }
+    }
+
+    public record FareResult(double price, double oldPrice, double distance_km) {}
+
+    /** Price an already routed trip; shared with the multi-mode routing server. */
+    public static FareResult calculatePrices(CSVRequest request, SwissPtVariables ptVariables,
+            SwissPtStageCostCalculator swissPtStageCostCalculator, double regionalRadius_km) {
+        if (ptVariables.legVariables == null || ptVariables.legVariables.isEmpty()) {
+            return new FareResult(0, 0, 0); // A walking-only PT alternative requires no ticket.
+        }
+        PersonVariables personVariables = new PersonVariables(request.age);
+
+        Map<String, List<SwissPtLegVariables>> groupedByAuthority = ptVariables.getPricingStrategy();
+
+        // Compute network distance
+        double distance_m = groupedByAuthority.values().stream()
+            .flatMap(List::stream)
+            .mapToDouble(lv -> lv.networkDistance)
+            .sum();
+
+        double distance_km = distance_m / 1000.0;
+
+        // === Apply pricing logic once ===
+        double price = 0.0;
+        double oldPrice = 0.0;
+
+        boolean isGleis7 = request.departureTime_s < 5 * 3600 || request.departureTime_s >= 19 * 3600;
+        boolean hasGleis7FreeTravel = request.age < 25 && request.hasGleis7Abo && isGleis7;
+        boolean hasFreePublicTransport = request.hasGA
+                || request.age < 6
+                || (request.age < 16 && request.hasJuniorAbo)
+                || hasGleis7FreeTravel;
+
+        if (hasFreePublicTransport) {
+            return new FareResult(0.0, 0.0, distance_km);
+        }
+
+        boolean hasRegionalSubscription = request.hasVerbundAbo || request.hasStreckenAbo;
+        if (hasRegionalSubscription) {
+            double homeDist = calculateHomeDistance_km(request);
+            if (homeDist <= regionalRadius_km) {
+                return new FareResult(0.0, 0.0, distance_km);
+            }
+        }
+
+        boolean halfFare = request.hasHalbtaxSubscription || (request.age < 16);
+
+        // New model price
+        for (var entry : groupedByAuthority.entrySet()) {
+            String authority = entry.getKey();
+            List<SwissPtLegVariables> legs = entry.getValue();
+
+            PtStageCostCalculator calc =
+                swissPtStageCostCalculator.priceCalculators.getOrDefault(authority,
+                    swissPtStageCostCalculator.priceCalculators.get("None"));
+
+            price += calc.calculatePrice(authority, legs, halfFare, personVariables);
+        }
+
+        // Old model price
+        oldPrice = Math.max(2.8, 2*(0.21 * distance_km - 0.00015 * Math.pow(distance_km,2) ));
+        if (halfFare) oldPrice /= 2.0;
+        oldPrice = Math.round(oldPrice * 100.0) / 100.0;
+        price    = Math.round(price * 100.0) / 100.0;
+
+        double maximumPrice = halfFare? 35.0 : 60.0;
+        price = Math.min(price, maximumPrice);
+        oldPrice = Math.min(oldPrice, maximumPrice);
+
+        return new FareResult(price, oldPrice, distance_km);
     }
 
 
@@ -413,7 +428,7 @@ public class RunComputeTransitPrices {
             new Coord(request.originX, request.originY), new Coord(request.homeX, request.homeY));
         double destinationHomeDistance_km = CoordUtils.calcEuclideanDistance(
             new Coord(request.destinationX, request.destinationY), new Coord(request.homeX, request.homeY));
-        return Math.max(originHomeDistance_km, destinationHomeDistance_km);
+        return Math.max(originHomeDistance_km, destinationHomeDistance_km) / 1000.0;
     }
 
     @SuppressWarnings("null")

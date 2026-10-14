@@ -21,7 +21,10 @@ public class SwissWeissCarCostModel extends AbstractCostModel {
 
     @Override
     public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-        double inVehicleDistance_km = getInVehicleDistance_km(elements);
+        return calculateCost_CHF(getInVehicleDistance_km(elements));
+    }
+
+    public double calculateCost_CHF(double inVehicleDistance_km) {
         double carCost_CHF_km = Math.min(0.104 + 0.6 * Math.exp(-1.2*Math.pow(inVehicleDistance_km,0.33)),
                                          0.3);
         return carCost_CHF_km * inVehicleDistance_km;

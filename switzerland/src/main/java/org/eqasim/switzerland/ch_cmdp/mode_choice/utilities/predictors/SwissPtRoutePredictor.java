@@ -161,7 +161,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                 double departureTime = leg.getDepartureTime().seconds();
                 double arrivalTime   = departureTime + leg.getTravelTime().seconds();
 
-				if ("pt".equals(leg.getMode())) {
+				if ("pt".equals(leg.getMode()) || leg.getRoute() instanceof TransitPassengerRoute) {
 					Route route = leg.getRoute();
 
 					if (route instanceof TransitPassengerRoute) {

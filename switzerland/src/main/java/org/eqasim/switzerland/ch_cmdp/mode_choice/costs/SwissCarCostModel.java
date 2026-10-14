@@ -20,6 +20,10 @@ public class SwissCarCostModel extends AbstractCostModel {
 
 	@Override
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
-		return parameters.carCost_CHF_km * getInVehicleDistance_km(elements);
+		return calculateCost_CHF(getInVehicleDistance_km(elements));
+	}
+
+	public double calculateCost_CHF(double distance_km) {
+		return parameters.carCost_CHF_km * distance_km;
 	}
 }
