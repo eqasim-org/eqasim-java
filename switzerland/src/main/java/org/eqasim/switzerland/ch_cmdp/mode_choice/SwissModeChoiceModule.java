@@ -261,8 +261,9 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		return new CmdpOptimizerHandler(calibrationConfig, outputDirectoryHierarchy, eqasimConfigGroup, parameters, optimizer);
 	}
 
+	// Loaded and merged before publication; predictors only read the shared registry.
 	@Provides
-	//@Singleton
+	@Singleton
 	public ZonalRegistry provideZonalRegistry(Config mainConfig) throws IOException, CsvValidationException {
 		SwissPTZonesConfigGroup ptZonesConfig = SwissPTZonesConfigGroup.getOrCreate(getConfig());
 
@@ -295,7 +296,9 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 		return zonalRegistry;
 	}
 
+	// The distance table is populated by the reader and only queried during replanning.
 	@Provides
+	@Singleton
 	public NetworkOfDistances provideNetworkOfDistances(Config mainConfig) throws IOException, CsvValidationException{
 		SwissPTZonesConfigGroup ptZonesConfig = SwissPTZonesConfigGroup.getOrCreate(getConfig());
 
@@ -314,7 +317,9 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 	}
 
+	// Pricing parameters are fixed after parsing; calculations keep per-trip state local.
 	@Provides
+	@Singleton
 	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(Config mainConfig) throws Exception{
 		SwissPTZonesConfigGroup ptZonesConfig = SwissPTZonesConfigGroup.getOrCreate(getConfig());
 

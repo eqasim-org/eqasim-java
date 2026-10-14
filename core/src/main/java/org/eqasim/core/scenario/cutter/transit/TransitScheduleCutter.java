@@ -52,8 +52,9 @@ public class TransitScheduleCutter {
 			StopSequenceCrossingPoint firstCrossingPoint = crossingPoints.get(0);
 			StopSequenceCrossingPoint lastCrossingPoint = crossingPoints.get(crossingPoints.size() - 1);
 
-			int firstIndex = firstCrossingPoint.isOutgoing ? 0 : firstCrossingPoint.index + 1;
-			int lastIndex = lastCrossingPoint.isOutgoing ? lastCrossingPoint.index : originalSequence.size();
+			// Include the adjacent outside stops; subList has an exclusive end index.
+			int firstIndex = firstCrossingPoint.isOutgoing ? 0 : firstCrossingPoint.index;
+			int lastIndex = lastCrossingPoint.isOutgoing ? lastCrossingPoint.index + 2 : originalSequence.size();
 
 			return originalSequence.subList(firstIndex, lastIndex);
 		}

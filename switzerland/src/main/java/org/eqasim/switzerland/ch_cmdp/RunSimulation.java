@@ -4,6 +4,7 @@ import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
+import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeCleaner;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
 import org.eqasim.switzerland.ch_cmdp.utils.link_stats.DetailedLinkStatisticsModule;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
@@ -27,8 +28,10 @@ public class RunSimulation {
 		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
+				.allowOptions(ScenarioAttributeCleaner.OPTION) //
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
 				.build();
+		boolean lightenScenario = ScenarioAttributeCleaner.isEnabled(cmd);
 
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new SampledTransitDwellConfigGroup());
@@ -52,6 +55,9 @@ public class RunSimulation {
 		ScenarioUtils.loadScenario(scenario);
 		configurator.adjustScenario(scenario);
 		configurator.adjustPTpcu(scenario);
+		if (lightenScenario) {
+			ScenarioAttributeCleaner.clean(scenario);
+		}
 		Controler controller = new Controler(scenario);
 		configurator.configureController(controller);
 		controller.addOverridingModule(new PTPassengerCountsModule());

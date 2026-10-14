@@ -48,8 +48,8 @@ public class TransitTripProcessor implements TripProcessor {
 			for (TransitTripCrossingPoint point : crossingPoints) {
 				if (point.isInVehicle) {
 					Activity activity = PopulationUtils.createActivityFromCoord("outside",
-							point.transitRoutePoint.insideStop.getStopFacility().getCoord());
-					activity.setEndTime(point.transitRoutePoint.insideDepartureTime - departureTimeBuffer);
+							point.transitRoutePoint.outsideStop.getStopFacility().getCoord());
+					activity.setEndTime(point.transitRoutePoint.outsideDepartureTime - departureTimeBuffer);
 					result.add(activity);
 				} else {
 					Activity activity = PopulationUtils.createActivityFromCoord("outside",

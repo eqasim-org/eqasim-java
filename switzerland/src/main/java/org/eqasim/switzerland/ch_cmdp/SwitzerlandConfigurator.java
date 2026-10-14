@@ -30,36 +30,41 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 
 	@Override
 	public void adjustScenario(Scenario scenario) {
-		super.adjustScenario(scenario);
-
+		// Only copy inputs consumed by this runner. Person municipalityType and
+		// bikeAvailability are unused (activity municipalityType and bikeAvail are used).
 		for (Household household : scenario.getHouseholds().getHouseholds().values()) {
-			// Compute car ownership ratio by household
-			int numAdults = (int) household.getMemberIds().stream()
-				.map(id -> scenario.getPopulation().getPersons().get(id))
-				.filter(Objects::nonNull)
-				.mapToInt(p -> (int) p.getAttributes().getAttribute("age"))
-				.filter(age -> age >= 18)
-				.count();
-			String numCarsStr = (String) household.getAttributes().getAttribute("numberOfCars");
-			double numCars = Double.parseDouble(numCarsStr.replace("+", ""));
-			double carRatio = numAdults > 0 ? (1.0 - numCars / numAdults) : 0.0;
-
-			// Copy household attributes to persons
-			for (Id<Person> memberId : household.getMemberIds()) {
-				Person person = scenario.getPopulation().getPersons().get(memberId);
-
-				if (person != null) {
-					copyAttribute(household, person, "spRegion");
-					copyAttribute(household, person, "numberOfCars");
-					copyAttribute(household, person, "cantonId");
-					copyAttribute(household, person, "municipalityType");
-					copyAttribute(household, person, "incomePerCapita");
-					copyAttribute(household, person, "cantonName");
-					copyAttribute(household, person, "ovgk");
-					person.getAttributes().putAttribute("carOwnershipRatio", Math.min(Math.max(0.0, carRatio), 1.0));
+			var members = household.getMemberIds().stream()
+					.map(id -> scenario.getPopulation().getPersons().get(id))
+					.filter(Objects::nonNull).toList();
+			for (Person person : members) {
+				for (String attribute : List.of("spRegion", "numberOfCars", "cantonId",
+						"incomePerCapita", "cantonName", "ovgk")) {
+					copyRequiredAttribute(household, person, attribute);
+				}
+			}
+			if (members.stream().anyMatch(p -> p.getAttributes().getAttribute("carOwnershipRatio") == null)) {
+				long adults = members.stream()
+						.filter(p -> ((Number) p.getAttributes().getAttribute("age")).intValue() >= 18).count();
+				for (Person person : members) {
+					if (person.getAttributes().getAttribute("carOwnershipRatio") == null) {
+						double cars = Double.parseDouble(person.getAttributes()
+								.getAttribute("numberOfCars").toString().replace("+", ""));
+						double ratio = adults > 0 ? 1.0 - cars / adults : 0.0;
+						person.getAttributes().putAttribute("carOwnershipRatio", Math.min(Math.max(0.0, ratio), 1.0));
+					}
 				}
 			}
 		}
+	}
+
+	private static void copyRequiredAttribute(Household household, Person person, String attribute) {
+		if (person.getAttributes().getAttribute(attribute) != null) return;
+		Object value = household.getAttributes().getAttribute(attribute);
+		if (value == null) {
+			throw new IllegalArgumentException("Missing required attribute '" + attribute
+					+ "' on person " + person.getId() + " and household " + household.getId());
+		}
+		person.getAttributes().putAttribute(attribute, value);
 	}
 	
 	public void adjustPTpcu(Scenario scenario) {

@@ -94,8 +94,8 @@ public class TestTransitTripProcessor {
 		Assert.assertEquals("pt", ((Leg) result.get(0)).getMode());
 		Assert.assertEquals("outside", ((Activity) result.get(1)).getType());
 		Assert.assertEquals("outside", ((Leg) result.get(2)).getMode());
-		Assert.assertEquals(9.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
-		Assert.assertEquals(new Coord(2.0, 0.0), ((Activity) result.get(1)).getCoord());
+		Assert.assertEquals(19.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
+		Assert.assertEquals(new Coord(1.0, 0.0), ((Activity) result.get(1)).getCoord());
 
 		// One crossing point, outgoing, transfer
 		finderMock = new PublicTransitFinderMock();
@@ -129,8 +129,8 @@ public class TestTransitTripProcessor {
 		Assert.assertEquals("outside", ((Leg) result.get(0)).getMode());
 		Assert.assertEquals("outside", ((Activity) result.get(1)).getType());
 		Assert.assertEquals("pt", ((Leg) result.get(2)).getMode());
-		Assert.assertEquals(9.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
-		Assert.assertEquals(new Coord(2.0, 0.0), ((Activity) result.get(1)).getCoord());
+		Assert.assertEquals(19.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
+		Assert.assertEquals(new Coord(1.0, 0.0), ((Activity) result.get(1)).getCoord());
 
 		// One crossing point, incoming, transfer
 		finderMock = new PublicTransitFinderMock();
@@ -169,9 +169,9 @@ public class TestTransitTripProcessor {
 		Assert.assertEquals("outside", ((Leg) result.get(2)).getMode());
 		Assert.assertEquals("outside", ((Activity) result.get(3)).getType());
 		Assert.assertEquals("pt", ((Leg) result.get(4)).getMode());
-		Assert.assertEquals(9.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
+		Assert.assertEquals(19.0, ((Activity) result.get(1)).getEndTime().seconds(), 1e-3);
 		Assert.assertEquals(50.0, ((Activity) result.get(3)).getEndTime().seconds(), 1e-3);
-		Assert.assertEquals(new Coord(2.0, 0.0), ((Activity) result.get(1)).getCoord());
+		Assert.assertEquals(new Coord(1.0, 0.0), ((Activity) result.get(1)).getCoord());
 		Assert.assertEquals(new Coord(5.0, 0.0), ((Activity) result.get(3)).getCoord());
 	}
 }
