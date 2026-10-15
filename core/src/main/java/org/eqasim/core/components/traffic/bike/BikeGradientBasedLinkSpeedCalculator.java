@@ -28,6 +28,15 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeSpeedCalculator
      */
     @Override
     public double getMaximumBikeVelocity(Vehicle vehicle, Link link, double time) {
+        return calculateVelocity(vehicle, link, time, false);
+    }
+
+    @Override
+    public double getRoutingBikeVelocity(Vehicle vehicle, Link link, double time) {
+        return calculateVelocity(vehicle, link, time, true);
+    }
+
+    private double calculateVelocity(Vehicle vehicle, Link link, double time, boolean routing) {
         double maximumVelocity = link.getFreespeed(time);
         if (!(vehicle == null)){
             maximumVelocity = Math.min(vehicle.getType().getMaximumVelocity(), maximumVelocity);
@@ -45,8 +54,12 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeSpeedCalculator
         // this need to be further investigated, but for now, I assume that the crossing penalty is only half as bad for bikes as for cars, because they can more easily maneuver around obstacles and other vehicles
         // TODO: add a proper delay for bikes
         double travelTime = link.getLength() / expectedVelocity;
-        if (!(vehicle == null)) {
-            travelTime += (crossingPenalty.calculateCrossingPenalty(link, time, vehicle.getId()) / 2.0); // the cutter raises an exception, so we need to check if the vehicle is null
+        if (routing) {
+            // Link-based routing cannot reproduce the path-dependent 30 m rule.
+            // Estimate each link independently, including when no vehicle is supplied.
+            travelTime += crossingPenalty.estimateCrossingPenalty(link, time) / 2.0;
+        } else if (vehicle != null) {
+            travelTime += crossingPenalty.calculateCrossingPenalty(link, time, vehicle.getId()) / 2.0;
         }
         double adjustedSpeed = link.getLength() / travelTime;
         return Math.max(1.0, Math.min(expectedVelocity, adjustedSpeed)); // Ensure speed is no less than 1 m/s and does not exceed expected velocity

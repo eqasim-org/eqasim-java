@@ -17,6 +17,6 @@ public class BikeTravelTime implements TravelTime {
 
     @Override
     public double getLinkTravelTime(Link link, double v, Person person, Vehicle vehicle) {
-        return link.getLength()/bikeSpeedCalculator.getMaximumBikeVelocity(vehicle, link, v);
+        return link.getLength()/bikeSpeedCalculator.getRoutingBikeVelocity(vehicle, link, v);
     }
 }
