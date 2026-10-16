@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.config.EqasimConfigGroup;
@@ -30,6 +32,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import org.matsim.core.router.util.TravelTime;
 
 public class VDFModule extends AbstractEqasimExtension {
 
@@ -41,9 +44,10 @@ public class VDFModule extends AbstractEqasimExtension {
 
 		 for (String mode : vdfConfig.getModes()) {
 			LOGGER.info("Adding VDF travel time for mode " + mode);
-			addTravelTimeBinding(mode).toProvider(new com.google.inject.Provider<org.matsim.core.router.util.TravelTime>() {
-				@com.google.inject.Inject VDFTravelTime travelTime;
-				@Override public org.matsim.core.router.util.TravelTime get() { return travelTime.getRoutingTravelTimes(); }
+			addTravelTimeBinding(mode).toProvider(new Provider<TravelTime>() {
+				@Inject
+				VDFTravelTime travelTime;
+				@Override public TravelTime get() { return travelTime.getRoutingTravelTimes(); }
 			}).in(Singleton.class);
 		}
 
