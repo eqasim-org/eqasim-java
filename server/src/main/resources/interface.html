@@ -23,8 +23,6 @@
     button:disabled { opacity: .55; cursor: default; }
     :focus-visible { outline: 3px solid #eaa91d; outline-offset: 2px; }
     fieldset { border: 0; padding: 0; margin: 12px 0; } legend { font-weight: 700; padding: 0; }
-    .targets { margin: 6px 0; } .targets label { display: inline-flex; align-items: center; gap: 5px; font-weight: 400; }
-    input[type=radio] { width: auto; min-height: auto; }
     .error { color: #9e2424; } .status { padding: 8px; background: #edf3f7; border-radius: 5px; }
     dl { display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; margin: 8px 0; }
     dt { color: #536775; } dd { margin: 0; text-align: right; }
@@ -55,14 +53,7 @@
     <form v-if="ready" @submit.prevent="run">
       <label for="mode">Operation</label>
       <select id="mode" v-model="mode"><option v-for="item in modes" :value="item.id">{{ item.label }}</option></select>
-      <fieldset class="targets">
-        <legend>Map click target</legend>
-        <div class="row">
-          <label><input type="radio" value="start" v-model="target"> {{ isRoute ? 'Start (S)' : 'Origin (O)' }}</label>
-          <label v-if="isRoute"><input type="radio" value="end" v-model="target"> End (E)</label>
-        </div>
-      </fieldset>
-      <p class="muted">Choose a target, then click the map or enter WGS84 coordinates. Drag markers to adjust.</p>
+      <p class="muted">{{ isRoute ? 'Click the map to place the origin, then click again to place the destination.' : 'Click the map to place the origin.' }} Drag markers or edit WGS84 longitude/latitude to adjust them.</p>
       <fieldset v-for="key in (isRoute ? ['start', 'end'] : ['start'])" :key="key">
         <legend>{{ key === 'end' ? 'End' : (isRoute ? 'Start' : 'Origin') }}</legend>
         <div class="row">
@@ -131,7 +122,7 @@ if (!window.Vue || !window.L || !window.proj4) {
 } else {
   const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
   createApp({ setup() {
-    const metadata = ref(null), modes = ref([]), mode = ref(''), target = ref('start');
+    const metadata = ref(null), modes = ref([]), mode = ref('');
     const points = reactive({ start: { lon: '', lat: '' }, end: { lon: '', lat: '' } });
     const day = ref(1), clock = ref('08:00'), cutoff = ref(30);
     const ready = ref(false), initializing = ref(false), initError = ref('');
@@ -191,13 +182,18 @@ if (!window.Vue || !window.L || !window.proj4) {
     function icon(key) {
       return L.divIcon({ className: `point-icon point-${key}`, html: key === 'end' ? 'E' : (isRoute.value ? 'S' : 'O'), iconSize: [28, 28], iconAnchor: [14, 14] });
     }
-    function syncMarkers() {
+    function syncMarkers(updateIcons = false) {
       if (!map) return;
       for (const key of ['start', 'end']) {
         const visible = (key === 'start' || isRoute.value) && !pointError(key);
         if (!visible) { if (markers[key]) { map.removeLayer(markers[key]); delete markers[key]; } continue; }
         const latlng = [Number(points[key].lat), Number(points[key].lon)];
-        if (markers[key]) markers[key].setLatLng(latlng).setIcon(icon(key));
+        if (markers[key]) {
+          markers[key].setLatLng(latlng);
+          // Replacing icons reinitializes Leaflet's drag handler, clearing its
+          // moved flag and allowing a drag's mouseup to become a map click.
+          if (updateIcons) markers[key].setIcon(icon(key));
+        }
         else {
           markers[key] = L.marker(latlng, { draggable: true, icon: icon(key), title: key === 'end' ? 'End' : 'Start / Origin', zIndexOffset: 1000 }).addTo(map);
           markers[key].on('dragend', e => setPoint(key, e.target.getLatLng()));
@@ -205,12 +201,14 @@ if (!window.Vue || !window.L || !window.proj4) {
       }
     }
     function setPoint(key, latlng) {
-      points[key].lon = ((latlng.lng + 180) % 360 + 360) % 360 - 180;
-      points[key].lon = Number(points[key].lon.toFixed(6));
-      points[key].lat = Number(latlng.lat.toFixed(6));
+      const lon = ((latlng.lng + 180) % 360 + 360) % 360 - 180;
+      points[key] = { lon: Number(lon.toFixed(6)), lat: Number(latlng.lat.toFixed(6)) };
     }
-    watch([mode, day, clock, cutoff, () => points.start.lon, () => points.start.lat, () => points.end.lon, () => points.end.lat], () => {
-      invalidate(); if (!isRoute.value) target.value = 'start'; syncMarkers();
+    watch(mode, () => {
+      invalidate(); syncMarkers(true);
+    }, { flush: 'sync' });
+    watch([day, clock, cutoff, () => points.start.lon, () => points.start.lat, () => points.end.lon, () => points.end.lat], () => {
+      invalidate(); syncMarkers();
     }, { flush: 'sync' });
     function fitBounds(bounds) {
       const panel = document.getElementById('app');
@@ -365,10 +363,14 @@ if (!window.Vue || !window.L || !window.proj4) {
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
       overlays = L.featureGroup().addTo(map);
-      map.on('click', e => { if (ready.value) setPoint(target.value, e.latlng); });
+      map.on('click', e => {
+        if (!ready.value) return;
+        if (!markers.start) setPoint('start', e.latlng);
+        else if (isRoute.value && !markers.end) setPoint('end', e.latlng);
+      });
       initialize();
     });
-    return { metadata, modes, mode, target, points, day, clock, cutoff, ready, initializing, initError,
+    return { metadata, modes, mode, points, day, clock, cutoff, ready, initializing, initError,
       loading, error, result, isRoute, pointError, timeError, cutoffError, canRun, initialize, run, fitNetwork, absoluteTime, minutes, kilometers };
   } }).mount('#app');
 }

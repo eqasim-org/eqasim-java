@@ -24,7 +24,9 @@ transit schedule. Missing/unknown CRS attributes or empty/degenerate car network
 produce an explanatory startup error. The browser validates projection conversion
 before enabling queries. No EPSG registry lookup or frontend build is needed.
 
-Enter WGS84 longitude/latitude or choose a map-click target and place/drag markers.
+Click the map once to place the origin and again to place the destination for a
+route. Once placed, adjust markers by dragging them or editing their WGS84
+longitude/latitude fields. Isochrones use a single origin marker.
 Day numbers refer to the schedule's continuous time axis, starting with Day 1;
 arrivals beyond midnight display the next day. Isochrones show reachable point
 samples, not coverage polygons. Road isochrones use free-speed times, which may
