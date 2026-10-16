@@ -37,9 +37,22 @@ public class RunServer {
 
 		int threads = cmd.getOption("threads").map(Integer::parseInt)
 				.orElse(Runtime.getRuntime().availableProcessors());
+		Javalin app = createApplication(services, threads, provideInterface);
 
+		// Run API
+		int port = cmd.getOption("port").map(Integer::parseInt).orElse(0);
+		app.start(port);
+
+		if (cmd.hasOption("port-path")) {
+			BufferedWriter writer = IOUtils.getBufferedWriter(cmd.getOptionStrict("port-path"));
+			writer.write(String.valueOf(app.jettyServer().port()));
+			writer.close();
+		}
+	}
+
+	static Javalin createApplication(Services services, int threads, boolean provideInterface) {
 		// Create Javalin application and enable CORS
-		Javalin app = Javalin.create(config -> {
+		return Javalin.create(config -> {
 			config.bundledPlugins.enableCors(cors -> {
 				cors.addRule(it -> {
 					it.anyHost();
@@ -47,6 +60,7 @@ public class RunServer {
 			});
 
 			ExecutorService executor = Executors.newFixedThreadPool(threads);
+			config.events.serverStopped(executor::shutdownNow);
 
 			RoadRouterEndpoint roadRouterEndpoint = new RoadRouterEndpoint(executor, services.roadRouterService());
 			config.routes.post("/router/road", roadRouterEndpoint::post);
@@ -69,19 +83,10 @@ public class RunServer {
 			config.routes.get("/services", servicesEndpoint::get);
 
 			if (provideInterface) {
-				InterfaceEndpoint interfaceEndpoint = new InterfaceEndpoint();
+				InterfaceEndpoint interfaceEndpoint = new InterfaceEndpoint(services.interfaceMetadata());
 				config.routes.get("/interface", interfaceEndpoint::get);
+				config.routes.get("/interface/metadata", interfaceEndpoint::getMetadata);
 			}
 		});
-
-		// Run API
-		int port = cmd.getOption("port").map(Integer::parseInt).orElse(0);
-		app.start(port);
-
-		if (cmd.hasOption("port-path")) {
-			BufferedWriter writer = IOUtils.getBufferedWriter(cmd.getOptionStrict("port-path"));
-			writer.write(String.valueOf(app.jettyServer().port()));
-			writer.close();
-		}
 	}
 }

@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scenario explorer · eqasim</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.45 system-ui, sans-serif; color: #182b3b; }
+    #map { position: fixed; inset: 0; }
+    .panel { position: fixed; z-index: 1000; top: 16px; left: 16px; width: 350px;
+      max-height: calc(100dvh - 32px); overflow: auto; padding: 18px; background: #fffffff5;
+      border-radius: 12px; box-shadow: 0 3px 20px #182b3b40; }
+    h1 { font-size: 21px; margin: 0; } h2 { font-size: 17px; margin: 16px 0 8px; }
+    p { margin: 8px 0; } .muted { color: #536775; font-size: 12px; }
+    label { display: block; font-weight: 600; } .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; min-width: 0; }
+    input, select, button { font: inherit; min-height: 38px; border: 1px solid #9babb5; border-radius: 5px; }
+    input, select { display: block; width: 100%; padding: 6px 8px; background: white; color: #182b3b; }
+    button { padding: 6px 12px; cursor: pointer; background: #f1f5f7; color: #182b3b; }
+    button.primary { width: 100%; background: #1167a5; color: white; border-color: #1167a5; margin-top: 12px; }
+    button:disabled { opacity: .55; cursor: default; }
+    :focus-visible { outline: 3px solid #eaa91d; outline-offset: 2px; }
+    fieldset { border: 0; padding: 0; margin: 12px 0; } legend { font-weight: 700; padding: 0; }
+    .targets { margin: 6px 0; } .targets label { display: inline-flex; align-items: center; gap: 5px; font-weight: 400; }
+    input[type=radio] { width: auto; min-height: auto; }
+    .error { color: #9e2424; } .status { padding: 8px; background: #edf3f7; border-radius: 5px; }
+    dl { display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; margin: 8px 0; }
+    dt { color: #536775; } dd { margin: 0; text-align: right; }
+    ol { padding-left: 22px; } li { margin-bottom: 12px; }
+    .legend-scale { height: 12px; border-radius: 3px; background: linear-gradient(to right, hsl(220,80%,45%), hsl(165,80%,45%), hsl(110,80%,45%), hsl(55,80%,45%), hsl(0,80%,45%)); }
+    .legend-labels { display: flex; justify-content: space-between; }
+    .point-icon { border: 2px solid white; border-radius: 50%; color: white; text-align: center;
+      font-weight: 700; line-height: 24px; box-shadow: 0 1px 5px #0008; }
+    .point-start { background: #1167a5; } .point-end { background: #b93b64; }
+    .popup { white-space: pre-line; }
+    [v-cloak] { display: none; }
+    @media (max-width: 600px) {
+      .panel { top: auto; bottom: 22px; left: 8px; width: calc(100% - 16px); max-height: 48dvh; padding: 12px; }
+      h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+<div id="map" aria-label="Scenario map"></div>
+<main id="app" class="panel">
+  <h1>Scenario explorer</h1>
+  <p id="boot" role="status">Loading interface… Internet access is required for map tiles and libraries.</p>
+  <div v-cloak>
+    <p class="muted" v-if="metadata">{{ metadata.crs }} · {{ metadata.schedule_day_count }} schedule day(s)</p>
+    <p class="status" role="status" v-if="initializing">Loading scenario metadata…</p>
+    <p class="error" role="alert" v-if="initError">{{ initError }}</p>
+    <button v-if="initError" @click="initialize">Retry initialization</button>
+    <form v-if="ready" @submit.prevent="run">
+      <label for="mode">Operation</label>
+      <select id="mode" v-model="mode"><option v-for="item in modes" :value="item.id">{{ item.label }}</option></select>
+      <fieldset class="targets">
+        <legend>Map click target</legend>
+        <div class="row">
+          <label><input type="radio" value="start" v-model="target"> {{ isRoute ? 'Start (S)' : 'Origin (O)' }}</label>
+          <label v-if="isRoute"><input type="radio" value="end" v-model="target"> End (E)</label>
+        </div>
+      </fieldset>
+      <p class="muted">Choose a target, then click the map or enter WGS84 coordinates. Drag markers to adjust.</p>
+      <fieldset v-for="key in (isRoute ? ['start', 'end'] : ['start'])" :key="key">
+        <legend>{{ key === 'end' ? 'End' : (isRoute ? 'Start' : 'Origin') }}</legend>
+        <div class="row">
+          <label :for="key + '-lon'">Longitude<input :id="key + '-lon'" type="number" step="any" min="-180" max="180" v-model="points[key].lon" required></label>
+          <label :for="key + '-lat'">Latitude<input :id="key + '-lat'" type="number" step="any" min="-90" max="90" v-model="points[key].lat" required></label>
+        </div>
+        <p class="error" v-if="pointError(key)">{{ pointError(key) }}</p>
+      </fieldset>
+      <div class="row">
+        <label for="day">Departure day<select id="day" v-model.number="day"><option v-for="n in metadata.schedule_day_count" :value="n">Day {{ n }}</option></select></label>
+        <label for="clock">Time (24-hour)<input id="clock" type="time" step="60" v-model="clock" required></label>
+      </div>
+      <p class="error" v-if="timeError">{{ timeError }}</p>
+      <fieldset v-if="!isRoute">
+        <label for="cutoff">Maximum travel time (minutes)</label>
+        <input id="cutoff" type="number" step="any" min="0" v-model="cutoff" required>
+        <p class="error" v-if="cutoffError">{{ cutoffError }}</p>
+      </fieldset>
+      <button class="primary" type="submit" :disabled="!canRun || loading">{{ loading ? 'Running…' : 'Run' }}</button>
+      <p><button type="button" @click="fitNetwork">Fit network</button></p>
+      <p class="muted" v-if="mode === 'isochrone/road'">Road isochrones use free-speed times; road routes may use time-dependent times.</p>
+      <p class="muted" v-if="!isRoute">Reachable point samples, not a coverage area. Locations may be snapped to the network or a stop.</p>
+    </form>
+    <p v-if="loading" class="status" role="status" aria-live="polite">Querying the scenario…</p>
+    <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <section v-if="result" aria-label="Results" aria-live="polite">
+      <h2>{{ result.title }}</h2>
+      <p v-if="result.message">{{ result.message }}</p>
+      <dl><template v-for="entry in result.summary"><dt>{{ entry[0] }}</dt><dd>{{ entry[1] }}</dd></template></dl>
+      <div v-if="result.legend">
+        <p>Travel time (minutes)</p><div class="legend-scale"></div>
+        <div class="legend-labels"><span>0</span><span>{{ result.cutoff / 2 }}</span><span>{{ result.cutoff }}</span></div>
+        <p class="muted"><span v-if="mode === 'isochrone/road'">Outlined points are network origins. </span>Colors above the cutoff are clamped; inspection shows actual times.</p>
+      </div>
+      <p v-if="isRoute" class="muted">Solid lines: in vehicle. Dashed lines: walking (transit walking geometry is straight-line).</p>
+      <template v-if="result.legs.length">
+        <h2>Itinerary</h2>
+        <ol><li v-for="(leg, index) in result.legs" :key="index">
+          <strong>{{ leg.type === 'vehicle' ? (leg.mode || 'Transit') : 'Walk · ' + leg.type }}</strong>
+          <span v-if="leg.line_name || leg.line_id"> · {{ leg.line_name || leg.line_id }}</span>
+          <div>{{ absoluteTime(leg.departure_time_s) }} → {{ absoluteTime(leg.arrival_time_s) }}</div>
+          <div>{{ minutes(leg.travel_time_min) }} · {{ kilometers(leg.distance_km) }}</div>
+          <div class="muted" v-if="leg.wait_time_min != null">Waiting: {{ minutes(leg.wait_time_min) }}</div>
+        </li></ol>
+      </template>
+      <template v-if="result.stops.length">
+        <h2>Stops</h2>
+        <ol><li v-for="(stop, index) in result.stops" :key="index">{{ stop.name || stop.id || 'Stop' }}
+          <div class="muted">Arrival {{ absoluteTime(stop.arrival_time_s) }} · departure {{ absoluteTime(stop.departure_time_s) }}</div>
+        </li></ol>
+      </template>
+      <template v-if="result.modeTotals.length">
+        <h2>In-vehicle totals by mode</h2>
+        <dl><template v-for="entry in result.modeTotals"><dt>{{ entry[0] }}</dt><dd>{{ entry[1] }}</dd></template></dl>
+      </template>
+    </section>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.15.0/dist/proj4.js"></script>
+<script>
+'use strict';
+if (!window.Vue || !window.L || !window.proj4) {
+  document.getElementById('boot').textContent = 'Map libraries could not load. Check your internet connection and reload this page.';
+} else {
+  const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
+  createApp({ setup() {
+    const metadata = ref(null), modes = ref([]), mode = ref(''), target = ref('start');
+    const points = reactive({ start: { lon: '', lat: '' }, end: { lon: '', lat: '' } });
+    const day = ref(1), clock = ref('08:00'), cutoff = ref(30);
+    const ready = ref(false), initializing = ref(false), initError = ref('');
+    const loading = ref(false), error = ref(''), result = ref(null);
+    let map, overlays, networkBounds, projection, controller, revision = 0;
+    const markers = {}, renderer = L.canvas({ padding: 0.5 });
+    // Resolve paths from /prefix/interface or /prefix/interface/, preserving proxy prefixes.
+    const base = new URL(window.location.href);
+    base.pathname = base.pathname.replace(/interface\/?$/, ''); base.search = ''; base.hash = '';
+    const endpoint = path => new URL(path, base).href;
+    const isRoute = computed(() => mode.value.startsWith('router/'));
+    const numeric = value => value !== '' && value != null && Number.isFinite(Number(value));
+    const minutes = value => numeric(value) ? Number(value).toFixed(1) + ' min' : '—';
+    const kilometers = value => numeric(value) ? Number(value).toFixed(2) + ' km' : '—';
+    function absoluteTime(value) {
+      if (!numeric(value) || Number(value) < 0) return '—';
+      const seconds = Math.floor(Number(value)), days = Math.floor(seconds / 86400);
+      const hour = Math.floor((seconds % 86400) / 3600), minute = Math.floor((seconds % 3600) / 60);
+      return `Day ${days + 1} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    }
+    function geographic(pair) {
+      if (!pair || !pair.every(Number.isFinite) || Math.abs(pair[0]) > 180 || Math.abs(pair[1]) > 90) {
+        throw new Error('Projection produced invalid geographic coordinates');
+      }
+      return pair;
+    }
+    function projected(point) {
+      const pair = projection.forward([Number(point.lon), Number(point.lat)]);
+      if (!pair.every(Number.isFinite)) throw new Error('Invalid projected coordinates');
+      const back = geographic(projection.inverse(pair));
+      if (Math.abs(back[0] - Number(point.lon)) > 1e-5 || Math.abs(back[1] - Number(point.lat)) > 1e-5) {
+        throw new Error('Coordinates cannot be converted reliably');
+      }
+      return pair;
+    }
+    function pointError(key) {
+      const p = points[key];
+      if (!numeric(p.lon) || !numeric(p.lat)) return 'Enter both longitude and latitude, or select a point on the map.';
+      if (Math.abs(Number(p.lon)) > 180 || Math.abs(Number(p.lat)) > 90) return 'Longitude must be −180…180 and latitude −90…90.';
+      if (projection) { try { projected(p); } catch (_) { return 'This point cannot be converted to the scenario CRS. Choose a point nearer the network.'; } }
+      return '';
+    }
+    const timeError = computed(() => {
+      if (!Number.isInteger(day.value) || day.value < 1 || day.value > (metadata.value?.schedule_day_count || 0)) return 'Choose a valid schedule day.';
+      return /^([01]\d|2[0-3]):[0-5]\d$/.test(clock.value) ? '' : 'Enter a valid 24-hour time (00:00–23:59).';
+    });
+    const cutoffError = computed(() => numeric(cutoff.value) && Number(cutoff.value) > 0 ? '' : 'Maximum travel time must be a positive number.');
+    const canRun = computed(() => ready.value && mode.value && !pointError('start') && (!isRoute.value || !pointError('end')) && !timeError.value && (isRoute.value || !cutoffError.value));
+    function departureSeconds() {
+      const [hour, minute] = clock.value.split(':').map(Number);
+      return (day.value - 1) * 86400 + hour * 3600 + minute * 60;
+    }
+    function invalidate() {
+      revision++; controller?.abort(); controller = null;
+      loading.value = false; error.value = ''; result.value = null; overlays?.clearLayers();
+    }
+    function icon(key) {
+      return L.divIcon({ className: `point-icon point-${key}`, html: key === 'end' ? 'E' : (isRoute.value ? 'S' : 'O'), iconSize: [28, 28], iconAnchor: [14, 14] });
+    }
+    function syncMarkers() {
+      if (!map) return;
+      for (const key of ['start', 'end']) {
+        const visible = (key === 'start' || isRoute.value) && !pointError(key);
+        if (!visible) { if (markers[key]) { map.removeLayer(markers[key]); delete markers[key]; } continue; }
+        const latlng = [Number(points[key].lat), Number(points[key].lon)];
+        if (markers[key]) markers[key].setLatLng(latlng).setIcon(icon(key));
+        else {
+          markers[key] = L.marker(latlng, { draggable: true, icon: icon(key), title: key === 'end' ? 'End' : 'Start / Origin', zIndexOffset: 1000 }).addTo(map);
+          markers[key].on('dragend', e => setPoint(key, e.target.getLatLng()));
+        }
+      }
+    }
+    function setPoint(key, latlng) {
+      points[key].lon = ((latlng.lng + 180) % 360 + 360) % 360 - 180;
+      points[key].lon = Number(points[key].lon.toFixed(6));
+      points[key].lat = Number(latlng.lat.toFixed(6));
+    }
+    watch([mode, day, clock, cutoff, () => points.start.lon, () => points.start.lat, () => points.end.lon, () => points.end.lat], () => {
+      invalidate(); if (!isRoute.value) target.value = 'start'; syncMarkers();
+    }, { flush: 'sync' });
+    function fitBounds(bounds) {
+      const panel = document.getElementById('app');
+      const mobile = window.innerWidth <= 600;
+      map.fitBounds(bounds, { paddingTopLeft: mobile ? [25, 25] : [panel.offsetWidth + 40, 30],
+        paddingBottomRight: mobile ? [25, panel.offsetHeight + 45] : [35, 35], maxZoom: 16 });
+    }
+    function fitNetwork() { if (networkBounds) fitBounds(networkBounds); }
+    async function json(path, options) {
+      const response = await fetch(endpoint(path), options);
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      if (!data || typeof data !== 'object' || Array.isArray(data) || data.error) throw new Error('Unexpected response');
+      return data;
+    }
+    async function initialize() {
+      if (initializing.value) return;
+      initializing.value = true; initError.value = ''; ready.value = false; invalidate();
+      try {
+        const [services, meta] = await Promise.all([json('services'), json('interface/metadata')]);
+        if (!meta.crs || !meta.projection_definition || !Number.isSafeInteger(meta.schedule_day_count) || meta.schedule_day_count < 1) throw new Error('Incomplete scenario metadata');
+        projection = proj4('EPSG:4326', meta.projection_definition);
+        const e = meta.network_extent;
+        if (!e || ![e.min_x, e.min_y, e.max_x, e.max_y].every(Number.isFinite) || !(e.min_x < e.max_x && e.min_y < e.max_y)) throw new Error('Invalid car-network extent');
+        const bounds = [];
+        // Densify the full extent, including corners and edges, to cover curved projection bounds.
+        for (let ix = 0; ix <= 32; ix++) for (let iy = 0; iy <= 32; iy++) {
+          const xy = [e.min_x + (e.max_x - e.min_x) * ix / 32, e.min_y + (e.max_y - e.min_y) * iy / 32];
+          const ll = geographic(projection.inverse(xy)), back = projection.forward(ll);
+          if (!back.every(Number.isFinite) || back.some((v, i) => Math.abs(v - xy[i]) > Math.max(0.01, Math.abs(xy[i]) * 1e-7))) throw new Error('Projection round-trip failed');
+          bounds.push([ll[1], ll[0]]);
+        }
+        networkBounds = L.latLngBounds(bounds);
+        const available = [
+          { id: 'router/road', label: 'Road route' }, { id: 'isochrone/road', label: 'Road isochrone' },
+          { id: 'router/transit', label: 'Transit route' }, { id: 'isochrone/transit', label: 'Transit isochrone' }
+        ].filter(item => Array.isArray(services.services) && services.services.includes(item.id));
+        if (!available.length) throw new Error('No supported operations advertised');
+        metadata.value = meta; modes.value = available; mode.value = available[0].id;
+        ready.value = true; syncMarkers(); fitNetwork();
+      } catch (e) {
+        projection = null;
+        initError.value = 'Cannot initialize the scenario map. Check that the server is running and its network CRS, projection definition and extent are valid, then retry. (' + e.message + ')';
+      } finally { initializing.value = false; }
+    }
+    function latLng(x, y) { const ll = geographic(projection.inverse([Number(x), Number(y)])); return [ll[1], ll[0]]; }
+    function line(wkt, style, layer) {
+      if (!wkt || /\bEMPTY\b/i.test(wkt)) return;
+      const match = /^\s*LINESTRING(?:\s+Z|\s+M|\s+ZM)?\s*\((.*)\)\s*$/i.exec(wkt);
+      if (!match || !match[1].trim()) return;
+      const vertices = match[1].split(',').map(part => {
+        const pair = part.trim().split(/\s+/).map(Number);
+        if (pair.length < 2 || !pair.every(Number.isFinite)) throw new Error('Invalid route geometry');
+        return latLng(pair[0], pair[1]);
+      });
+      if (vertices.length > 1) L.polyline(vertices, { ...style, renderer }).addTo(layer);
+    }
+    function popup(text) { const node = document.createElement('div'); node.className = 'popup'; node.textContent = text; return node; }
+    function color(time, maximum) { return `hsl(${220 * (1 - Math.min(1, Math.max(0, time / maximum)))},80%,45%)`; }
+    function present(data, operation, departure, maximum, layer) {
+      const view = { title: '', summary: [], legs: [], stops: [], modeTotals: [], legend: false, cutoff: maximum };
+      const walkStyle = { color: '#56636c', weight: 3, dashArray: '6 6' };
+      if (operation.startsWith('isochrone/')) {
+        const transit = operation.endsWith('transit'), samples = data[transit ? 'stops' : 'points'];
+        if (!Array.isArray(samples)) throw new Error('Missing reachable samples');
+        view.title = transit ? 'Reachable transit stops' : 'Reachable road points';
+        view.message = samples.length ? `${samples.length} ${transit ? 'stops' : 'points'} returned. Select a point to inspect its values.` : (transit ? 'No reachable stops' : 'No reachable points');
+        view.legend = samples.length > 0;
+        for (const sample of samples) {
+          const highlightOrigin = !transit && sample.is_origin;
+          const marker = L.circleMarker(latLng(sample.x, sample.y), { renderer, radius: highlightOrigin ? 6 : 4,
+            color: highlightOrigin ? '#182b3b' : color(sample.total_travel_time_min, maximum), weight: highlightOrigin ? 2 : 1,
+            fillColor: color(sample.total_travel_time_min, maximum), fillOpacity: 0.85 }).addTo(layer);
+          const text = [sample.node_id || sample.egress_stop_id || (transit ? 'Stop' : 'Road point'),
+            sample.is_origin ? 'Network / stop origin' : '', 'Travel time: ' + minutes(sample.total_travel_time_min),
+            'Arrival: ' + absoluteTime(sample.arrival_time_s), transit ? 'Transfers: ' + sample.transfers : ''].filter(Boolean).join('\n');
+          marker.bindTooltip(popup(text)).bindPopup(popup(text));
+        }
+      } else {
+        if (!numeric(data.total_travel_time_min) || Number(data.total_travel_time_min) < 0) {
+          view.title = 'No route'; view.message = 'No route found for these locations and departure time. Try points nearer the network or another departure.'; return view;
+        }
+        view.summary.push(['Total trip duration', minutes(data.total_travel_time_min)]);
+        if (operation === 'router/road') {
+          view.title = 'Road route';
+          line(data.road_geometry, { color: '#1167a5', weight: 5 }, layer);
+          line(data.access_geometry, walkStyle, layer); line(data.egress_geometry, walkStyle, layer);
+          view.summary.push(['End-to-end arrival', absoluteTime(departure + Number(data.total_travel_time_min) * 60)],
+            ['In-vehicle distance', kilometers(data.in_vehicle_distance_km)], ['In-vehicle time', minutes(data.in_vehicle_time_min)],
+            ['Access walk', `${kilometers(data.access_distance_km)} · ${minutes(data.access_time_min)}`],
+            ['Egress walk', `${kilometers(data.egress_distance_km)} · ${minutes(data.egress_time_min)}`]);
+        } else {
+          view.title = data.is_only_walk ? 'Walking-only route' : 'Transit route';
+          const sum = keys => keys.reduce((total, key) => total + (numeric(data[key]) ? Number(data[key]) : 0), 0);
+          view.summary.push(['Arrival', absoluteTime(data.arrivalTime_s)], ['In-vehicle distance', kilometers(data.in_vehicle_distance_km)],
+            ['In-vehicle time', minutes(data.in_vehicle_travel_time_min)], ['Transfers', data.transfers ?? '—'],
+            ['Walking time', minutes(sum(['access_walk_time_min', 'egress_walk_time_min', 'transfer_walk_time_min']))],
+            ['Walking distance', kilometers(sum(['access_walk_distance_km', 'egress_walk_distance_km', 'transfer_walk_distance_km']))],
+            ['Waiting time', minutes(sum(['initial_wait_time_min', 'transfer_wait_time_min']))]);
+          view.legs = data.itinerary?.legs || []; view.stops = data.itinerary?.stops || [];
+          for (const leg of view.legs) line(leg.geometry, leg.type === 'vehicle' ? { color: '#873eb1', weight: 5 } : walkStyle, layer);
+          const seen = new Set();
+          for (const stop of view.stops) {
+            if (!numeric(stop.x) || !numeric(stop.y)) continue;
+            const key = `${stop.x},${stop.y}`; if (seen.has(key)) continue; seen.add(key);
+            L.circleMarker(latLng(stop.x, stop.y), { renderer, radius: 5, color: '#873eb1', fillColor: 'white', fillOpacity: 1 }).addTo(layer)
+              .bindTooltip(popup(`${stop.name || stop.id || 'Stop'}\nArrival: ${absoluteTime(stop.arrival_time_s)}\nDeparture: ${absoluteTime(stop.departure_time_s)}`));
+          }
+          const totals = data.in_vehicle_travel_time_by_mode_min || {}, distances = data.in_vehicle_distance_by_mode_km || {}, legs = data.vehicle_legs_by_mode || {};
+          for (const key of new Set([...Object.keys(totals), ...Object.keys(distances), ...Object.keys(legs)])) {
+            view.modeTotals.push([key, `${minutes(totals[key])} · ${kilometers(distances[key])} · ${legs[key] ?? 0} legs`]);
+          }
+        }
+      }
+      return view;
+    }
+    async function run() {
+      if (!canRun.value || loading.value) return;
+      invalidate(); const token = revision;
+      controller = new AbortController(); const activeController = controller;
+      const operation = mode.value, departure = departureSeconds(), maximum = Number(cutoff.value);
+      loading.value = true;
+      let layer;
+      try {
+        const origin = projected(points.start);
+        const request = { origin_x: origin[0], origin_y: origin[1], departure_time_s: departure };
+        if (isRoute.value) {
+          const destination = projected(points.end);
+          Object.assign(request, { destination_x: destination[0], destination_y: destination[1], provide_geometry: true });
+          if (operation === 'router/transit') request.provide_itinerary = true;
+        } else {
+          request.maximum_travel_time_min = maximum;
+          request.consider_access = true;
+        }
+        const data = await json(operation, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ request }), signal: activeController.signal });
+        if (token !== revision) return;
+        layer = L.featureGroup(); const view = present(data, operation, departure, maximum, layer);
+        layer.addTo(overlays); result.value = view;
+        const bounds = layer.getBounds();
+        for (const marker of Object.values(markers)) bounds.extend(marker.getLatLng());
+        if (bounds.isValid()) fitBounds(bounds);
+      } catch (e) {
+        if (token === revision && e.name !== 'AbortError') {
+          layer?.remove(); overlays.clearLayers(); result.value = null;
+          error.value = 'The query could not be completed. Check your connection, try locations nearer the network or a different departure time, and run again.';
+        }
+      } finally { if (token === revision) { loading.value = false; controller = null; } }
+    }
+    onMounted(() => {
+      document.getElementById('boot').remove();
+      map = L.map('map', { zoomControl: false }); L.control.zoom({ position: 'topright' }).addTo(map);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+      overlays = L.featureGroup().addTo(map);
+      map.on('click', e => { if (ready.value) setPoint(target.value, e.latlng); });
+      initialize();
+    });
+    return { metadata, modes, mode, target, points, day, clock, cutoff, ready, initializing, initError,
+      loading, error, result, isRoute, pointError, timeError, cutoffError, canRun, initialize, run, fitNetwork, absoluteTime, minutes, kilometers };
+  } }).mount('#app');
+}
+</script>
+</body>
+</html>

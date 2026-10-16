@@ -9,6 +9,7 @@ import org.eqasim.core.scenario.freeflow.FreeflowConfigurator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.core.simulation.vdf.travel_time.VDFTravelTime;
+import org.eqasim.server.api.InterfaceMetadata;
 import org.eqasim.server.services.ServiceConfiguration;
 import org.eqasim.server.services.isochrone.road.RoadIsochroneService;
 import org.eqasim.server.services.isochrone.transit.TransitIsochroneService;
@@ -39,7 +40,8 @@ public class ServiceBuilder {
 			RoadRouterService roadRouterService,
 			RoadIsochroneService roadIsochroneService,
 			TransitRouterService transitRouterService,
-			TransitIsochroneService transitIsochroneService) {
+			TransitIsochroneService transitIsochroneService,
+			InterfaceMetadata interfaceMetadata) {
 	}
 
 	public Services build(CommandLine cmd)
@@ -80,6 +82,9 @@ public class ServiceBuilder {
 		Network roadNetwork = NetworkUtils.createNetwork();
 		new TransportModeNetworkFilter(scenario.getNetwork()).filter(roadNetwork, Collections.singleton("car"));
 		new NetworkCleaner().run(roadNetwork);
+		InterfaceMetadata metadata = cmd.getOption("provide-interface").map(Boolean::parseBoolean).orElse(false)
+				? InterfaceMetadata.create(scenario.getNetwork(), roadNetwork, useTransit ? scenario.getTransitSchedule() : null)
+				: null;
 
 		TravelTime travelTime = new FreeSpeedTravelTime();
 		if (cmd.hasOption("vdf-path")) {
@@ -113,6 +118,6 @@ public class ServiceBuilder {
 			transitIsochroneService = null;
 		}
 
-		return new Services(roadRouterService, roadIsochroneService, transitRouterService, transitIsochroneService);
+		return new Services(roadRouterService, roadIsochroneService, transitRouterService, transitIsochroneService, metadata);
 	}
 }

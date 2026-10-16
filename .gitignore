@@ -8,3 +8,5 @@ dependency-reduced-pom.xml
 *.idea
 simulation_output
 core/melun_test
+opencode.json
+.factorypath
