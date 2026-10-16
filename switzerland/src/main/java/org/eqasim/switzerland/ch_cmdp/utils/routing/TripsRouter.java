@@ -8,14 +8,13 @@ import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.eqasim.core.components.travel_time.RecordedTravelTime;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
-import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.eqasim.core.simulation.policies.routing.ZeroRoutingPenalty;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.network.NetworkUtils;
-import org.matsim.core.router.speedy.SpeedyALTFactory;
+import org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class TripsRouter {
     public static final Logger logger = LogManager.getLogger(TripsRouter.class);
@@ -83,73 +81,105 @@ public class TripsRouter {
         return trips;
     }
 
-    // === ROUTING TRIPS IN PARALLEL ===
-        public static List<RoutedTrip> routeTrips(List<Trip> trips, Network network, TravelTime travelTime, int threads,
+    public static List<RoutedTrip> routeTrips(List<Trip> trips, Network network, TravelTime travelTime, int threads,
             int batchSize, boolean returnLinks, double routingDistanceUtility) throws InterruptedException {
-        logger.info("Routing trips ...");
-        logger.info("\t Batch size: {}", batchSize);
-        logger.info("\t Threads: {}", threads);
-
-        // configure the disutility used during the routing (since we get travel times from events, we use zero penalty)
-        RoutingPenalty zeroPenalty = new ZeroRoutingPenalty();
-        EqasimTravelDisutilityFactory disutilityFactory = new EqasimTravelDisutilityFactory(zeroPenalty, routingDistanceUtility);
-        // router factory
-        SpeedyALTFactory routerFactory = new SpeedyALTFactory();
-        // progression trackers
-        AtomicInteger completed = new AtomicInteger(0);
-        AtomicInteger nextTripIndex = new AtomicInteger(0);
-        AtomicReference<Throwable> failure = new AtomicReference<>(null);
-
-        int total = trips.size();
-        int progressInterval = batchSize *  threads;
-
-        RoutedTrip[] results = new RoutedTrip[total];
-        List<Thread> workers = new ArrayList<>(threads);
-
-        for (int workerIndex = 0; workerIndex < threads; workerIndex++) {
-            Thread worker = new Thread(() -> {
-                try {
-                    TravelDisutility disutility = disutilityFactory.createTravelDisutility(travelTime);
-                    LeastCostPathCalculator router = routerFactory.createPathCalculator(network, disutility, travelTime);
-
-                    while (failure.get() == null) {
-                        int start = nextTripIndex.getAndAdd(batchSize);
-                        if (start >= total) {
-                            return;
-                        }
-
-                        int end = Math.min(total, start + batchSize);
-                        for (int index = start; index < end; index++) {
-                            Trip trip = trips.get(index);
-                            results[index] = routeTrip(trip, network, router, returnLinks);
-                        }
-
-                        int progress = completed.addAndGet(end - start);
-                        if (progress % progressInterval == 0 || progress == total) {
-                            logger.info("\t Progress ({}%): {}/{} trips routed.", (progress * 100 / total), progress, total);
-                        }
-                    }
-                } catch (Throwable e) {
-                    failure.compareAndSet(null, e);
-                }
-            }, "trips-router-" + workerIndex);
-
-            workers.add(worker);
-            worker.start();
+        try (var session = new RoutingSession(network, travelTime, threads, batchSize, routingDistanceUtility)) {
+            return session.route(trips, returnLinks);
         }
-
-        for (Thread worker : workers) {
-            worker.join();
-        }
-
-        if (failure.get() != null) {
-            throw new RuntimeException("Routing failed in worker thread", failure.get());
-        }
-
-        return Arrays.asList(results);
     }
 
-        public static RoutedTrip routeTrip(Trip trip, Network network, LeastCostPathCalculator router,
+    /** Treat the configured batch as a maximum; keep short/uneven requests parallel too. */
+    static int routingBatchSize(int trips, int workers, int maximum) {
+        long targetBatches = 8L * workers;
+        return (int) Math.max(1, Math.min(maximum, (trips + targetBatches - 1) / targetBatches));
+    }
+
+    /** One persistent bounded pool, shared graph/landmarks/times, one private router per job. */
+    public static final class RoutingSession implements AutoCloseable {
+        private final Network network;
+        private final int batchSize;
+        private final List<LeastCostPathCalculator> routers = new ArrayList<>();
+        private final java.util.concurrent.ExecutorService executor;
+        private final java.util.concurrent.locks.ReentrantLock lock = new java.util.concurrent.locks.ReentrantLock(true);
+        private boolean closed;
+
+        public RoutingSession(Network network, TravelTime travelTime, int threads, int batchSize, double distanceUtility) {
+            if (threads < 1 || batchSize < 1 || !Double.isFinite(distanceUtility) || distanceUtility < 0)
+                throw new IllegalArgumentException("threads/batchSize must be positive and routingDistanceUtility finite/nonnegative");
+            if (network.getNodes().isEmpty()) throw new IllegalArgumentException("Network has no nodes");
+            this.network = network;
+            this.batchSize = batchSize;
+            NetworkUtils.getNearestNode(network, network.getNodes().values().iterator().next().getCoord());
+            var factory = new MemoryEfficientSpeedyALTFactory();
+            TravelDisutility costs = new EqasimTravelDisutilityFactory(new ZeroRoutingPenalty(), distanceUtility)
+                    .createTravelDisutility(travelTime);
+            if (travelTime instanceof RecordedTravelTime recorded) {
+                final TravelDisutility delegate = costs;
+                int size = network.getLinks().keySet().stream().mapToInt(id -> id.index()).max().orElse(-1) + 1;
+                double[] minimums = new double[size];
+                for (Link link : network.getLinks().values()) minimums[link.getId().index()] =
+                        recorded.getMinimumLinkTravelTime(link) + distanceUtility * link.getLength() / 10.0;
+                costs = new TravelDisutility() {
+                    public double getLinkTravelDisutility(Link link, double time,
+                            org.matsim.api.core.v01.population.Person person, org.matsim.vehicles.Vehicle vehicle) {
+                        return delegate.getLinkTravelDisutility(link, time, person, vehicle);
+                    }
+                    public double getLinkMinimumTravelDisutility(Link link) { return minimums[link.getId().index()]; }
+                };
+            }
+            for (int i = 0; i < threads; i++) routers.add(factory.createPathCalculator(network, costs, travelTime));
+            executor = java.util.concurrent.Executors.newFixedThreadPool(threads);
+            logger.info("Optimized SpeedyALT prepared: {} workers; shared {} travel times", threads,
+                    travelTime.getClass().getSimpleName());
+        }
+
+        public List<RoutedTrip> route(List<Trip> trips, boolean returnLinks) throws InterruptedException {
+            lock.lockInterruptibly();
+            try {
+                if (closed) throw new IllegalStateException("Routing session is closed");
+                if (trips.isEmpty()) return List.of();
+                var next = new AtomicInteger();
+                var stop = new java.util.concurrent.atomic.AtomicBoolean();
+                int batch = routingBatchSize(trips.size(), routers.size(), batchSize);
+                RoutedTrip[] results = new RoutedTrip[trips.size()];
+                var tasks = new ArrayList<java.util.concurrent.Future<?>>();
+                int count = Math.min(routers.size(), 1 + (trips.size() - 1) / batch);
+                for (int worker = 0; worker < count; worker++) {
+                    var router = routers.get(worker);
+                    tasks.add(executor.submit(() -> {
+                        try {
+                            for (int start; !stop.get() && (start = next.getAndAdd(batch)) < trips.size();) {
+                                int end = (int) Math.min(trips.size(), (long) start + batch);
+                                for (int i = start; i < end && !stop.get(); i++)
+                                    results[i] = routeTrip(trips.get(i), network, router, returnLinks);
+                            }
+                        } catch (RuntimeException | Error e) { stop.set(true); throw e; }
+                    }));
+                }
+                Throwable failure = null;
+                boolean interrupted = false;
+                // Drain every job before releasing its routers to the next request.
+                for (var task : tasks) {
+                    for (boolean done = false; !done;) {
+                        try { task.get(); done = true; }
+                        catch (InterruptedException e) { interrupted = true; stop.set(true); }
+                        catch (java.util.concurrent.ExecutionException e) { failure = e.getCause(); done = true; }
+                    }
+                }
+                if (interrupted) { Thread.currentThread().interrupt(); throw new InterruptedException("Routing interrupted"); }
+                if (failure != null) throw new IllegalStateException("Routing worker failed", failure);
+                return Arrays.asList(results);
+            } finally { lock.unlock(); }
+        }
+
+        @Override public void close() {
+            lock.lock();
+            try { closed = true; executor.shutdown(); }
+            finally { lock.unlock(); }
+        }
+    }
+
+    public static RoutedTrip routeTrip(Trip trip, Network network, LeastCostPathCalculator router,
             boolean returnLinks) {
         Coord fromCoord = new Coord(trip.originX, trip.originY);
         Coord toCoord = new Coord(trip.destinationX, trip.destinationY);
@@ -159,6 +189,9 @@ public class TripsRouter {
 
         LeastCostPathCalculator.Path path = router.calcLeastCostPath(fromNode, toNode, trip.departureTime, null, null);
 
+        if (path == null) return new RoutedTrip(trip.identifier, trip.originX, trip.originY,
+                trip.destinationX, trip.destinationY, trip.departureTime,
+                Double.NaN, Double.NaN, Double.NaN, Double.NaN, -1, "");
         double travelTimeSeconds = path.travelTime;
         double travelDistanceMeters = path.links.stream().mapToDouble(Link::getLength).sum();
         double accessDistance = CoordUtils.calcEuclideanDistance(fromCoord, fromNode.getCoord());

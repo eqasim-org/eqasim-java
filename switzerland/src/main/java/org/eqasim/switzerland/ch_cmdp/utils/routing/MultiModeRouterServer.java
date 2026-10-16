@@ -149,6 +149,9 @@ public final class MultiModeRouterServer implements AutoCloseable {
         server.start();
         logger.info("Multi-mode router listening on http://{}:{} ({})", server.getAddress().getHostString(),
                 getPort(), state.status);
+        var codeSource = MultiModeRouterServer.class.getProtectionDomain().getCodeSource();
+        logger.info("Routing code source: {}; missing routes return NaN metrics",
+                codeSource == null ? "unknown" : codeSource.getLocation());
         if (loader != null) {
             initialization.execute(this::loadRouter);
         }
@@ -264,13 +267,9 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 long count;
                 if (costOnly) {
                     count = snapshot.router.cost(input, output, mode);
-                } else if (body.hasNonNull("computeCost")) {
-                    if (!body.get("computeCost").isBoolean()) {
-                        throw new IllegalArgumentException("computeCost must be a boolean");
-                    }
-                    count = snapshot.router.route(input, output, mode, body.get("computeCost").asBoolean());
                 } else {
-                    count = snapshot.router.route(input, output, mode);
+                    boolean includeCost = optionalBoolean(body, "computeCost", snapshot.router.isCostEnabled());
+                    count = snapshot.router.route(input, output, mode, includeCost);
                 }
                 respond(exchange, 200, Map.of("trips", count, "outputCsv", output));
             } catch (IllegalArgumentException | JsonProcessingException e) {
@@ -283,6 +282,13 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 respond(exchange, 500, Map.of("error", String.valueOf(e.getMessage())));
             }
         }
+    }
+
+    private static boolean optionalBoolean(JsonNode body, String name, boolean fallback) {
+        JsonNode value = body.get(name);
+        if (value == null || value.isNull()) return fallback;
+        if (!value.isBoolean()) throw new IllegalArgumentException(name + " must be a boolean");
+        return value.asBoolean();
     }
 
     private static String requiredText(JsonNode body, String name) {

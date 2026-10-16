@@ -93,8 +93,12 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
                 logger.info("Triggering freespeed calibration update at iteration {} (start={}, interval={})",
                         iteration, updateStartIteration, updateInterval);
                 penaltiesAdapter.disable(); // do not use penalties during this routing (freespeedDisutility is used, but keep this here in case we change it at some point, this is safer)
-                Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats = tripsHandler.routeTrips();
-                penaltiesAdapter.enable(); // reset it
+                Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats;
+                try {
+                    groupStats = tripsHandler.routeTrips();
+                } finally {
+                    penaltiesAdapter.enable(); // also restore penalties if routing fails
+                }
 
                 if (groupStats.isEmpty()) {
                     logger.warn("No valid group stats collected at iteration {}. Factors will remain unchanged. " +

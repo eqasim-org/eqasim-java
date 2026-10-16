@@ -36,7 +36,9 @@ public class VDFTravelTime implements TravelTime {
 	private final VolumeDelayFunction vdf;
 	private final ScenarioExtent updateAreaExtent;
 
-	private final IdMap<Link, double[]> travelTimes = new IdMap<>(Link.class);
+	private final IdMap<Link, float[]> travelTimes = new IdMap<>(Link.class);
+	// Routers share this view; simulation callers retain the vehicle-history-aware method below.
+	private final TravelTime routingTravelTimes = this::routingTravelTime;
 
 	private final Logger logger = LogManager.getLogger(VDFTravelTime.class);
 
@@ -59,8 +61,8 @@ public class VDFTravelTime implements TravelTime {
 
 		for (Link link : network.getLinks().values()) {
 			double travelTime = Math.clamp(link.getLength() / link.getFreespeed(), 1.0, link.getLength() / minimumSpeed);
-			double[] initialTimes = new double[scope.getIntervals()];
-			Arrays.fill(initialTimes, travelTime);
+			float[] initialTimes = new float[scope.getIntervals()];
+			Arrays.fill(initialTimes, (float) travelTime);
 			travelTimes.put(link.getId(), initialTimes);
 		}
 	}
@@ -71,6 +73,13 @@ public class VDFTravelTime implements TravelTime {
 		Id<Vehicle> vehicleId = vehicle==null? null:vehicle.getId();
 		double delay = crossingPenalty.calculateCrossingPenalty(link, time, vehicleId);
 		return travelTimes.get(link.getId())[i] + delay;
+	}
+
+	public TravelTime getRoutingTravelTimes() { return routingTravelTimes; }
+
+	private double routingTravelTime(Link link, double time, Person person, Vehicle vehicle) {
+		return travelTimes.get(link.getId())[scope.getIntervalIndex(time)]
+				+ crossingPenalty.estimateCrossingPenalty(link, time);
 	}
 
 	public void update(IdMap<Link, double[]> counts) {
@@ -94,7 +103,7 @@ public class VDFTravelTime implements TravelTime {
 			}
 
 			double[] linkCounts = entry.getValue();
-			double[] linkTravelTimes = travelTimes.get(entry.getKey());
+			float[] linkTravelTimes = travelTimes.get(entry.getKey());
 
 			for (int i = 0; i < scope.getIntervals(); i++) {
 				double time = scope.getStartTime() + (i + 0.5) * scope.getIntervalTime();
@@ -109,7 +118,7 @@ public class VDFTravelTime implements TravelTime {
 						Math.min(link.getLength() / minimumSpeed, vdf.calculateTravelTime(time, flow, capacity, link))
 				);
 
-				linkTravelTimes[i] = travelTime;
+				linkTravelTimes[i] = (float) travelTime;
 			}
 		}
 	}
@@ -120,7 +129,7 @@ public class VDFTravelTime implements TravelTime {
 					IOUtils.getOutputStream(outputFile.toURI().toURL(), false));
 			outputStream.writeInt(travelTimes.size());
 			outputStream.writeInt(scope.getIntervals());
-			for (Map.Entry<Id<Link>, double[]> entry : travelTimes.entrySet()) {
+			for (Map.Entry<Id<Link>, float[]> entry : travelTimes.entrySet()) {
 				outputStream.writeUTF(entry.getKey().toString());
 				for (double d : entry.getValue()) {
 					outputStream.writeDouble(d);
@@ -142,7 +151,7 @@ public class VDFTravelTime implements TravelTime {
 				Id<Link> linkId = Id.createLinkId(dataInputStream.readUTF());
 				for (int j = 0; j < scope.getIntervals(); j++) {
 					double travelTime = dataInputStream.readDouble();
-					travelTimes.get(linkId)[j] = travelTime;
+					travelTimes.get(linkId)[j] = (float) travelTime;
 				}
 			}
 			Verify.verify(dataInputStream.available() == 0);

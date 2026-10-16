@@ -4,9 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.tools.random.Normal;
 import org.matsim.api.core.v01.Id;
+import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -37,6 +39,8 @@ public class MarginalCostOfTolls {
     private final double secondsPerCurrencyUnit;
     // base seed so the whole population's draws can be reproducibly shifted (e.g. across scenario variants)
     private final long baseSeed;
+    // random generator in case we need it
+    private final Random random;
 
     // each vehicle keeps the same complete seconds-per-currency multiplier for the whole run
     private final Map<Id<Vehicle>, Double> vehicleMultipliers = new ConcurrentHashMap<>();
@@ -56,6 +60,7 @@ public class MarginalCostOfTolls {
         this.mu = -0.5 * sigma * sigma;
         this.secondsPerCurrencyUnit = SECONDS_PER_HOUR / valueOfTime;
         this.baseSeed = baseSeed;
+        this.random = MatsimRandom.getLocalInstance();
 
         logger.info("Initialized MarginalCostOfTolls with: \n\t - sigma={} \n\t - valueOfTime={} \n\t - baseSeed={}", sigma, valueOfTime, baseSeed);
     }
@@ -69,11 +74,21 @@ public class MarginalCostOfTolls {
         if (sigma < 1e-6) {
             return secondsPerCurrencyUnit;
         }
-        return vehicleMultipliers.computeIfAbsent(vehicle.getId(), this::drawMultiplier);
+        return vehicle==null ? drawMultiplier() : vehicleMultipliers.computeIfAbsent(vehicle.getId(), this::drawMultiplier);
     }
 
     // ------------------- HELPER METHODS -------------------
 
+    private double drawMultiplier(Id<Vehicle> vehicleId) {
+        return drawCostSensitivity(vehicleId) * secondsPerCurrencyUnit;
+    }
+
+    private double drawMultiplier() {
+        return drawCostSensitivity() * secondsPerCurrencyUnit;
+    }
+
+
+    // Cost sensitivity
     float drawCostSensitivity(Id<Vehicle> vehicleId) {
         if (sigma<1e-6) {
             return 1.0f;
@@ -87,9 +102,13 @@ public class MarginalCostOfTolls {
         return (float) Math.max(Math.exp(mu + sigma * standardNormalFor(str)), 0.0);
     }
 
-    private double drawMultiplier(Id<Vehicle> vehicleId) {
-        return drawCostSensitivity(vehicleId) * secondsPerCurrencyUnit;
+    float drawCostSensitivity() {
+        if (sigma<1e-6) {
+            return 1.0f;
+        }
+        return (float) Math.max(Math.exp(mu + sigma * standardNormalFor()), 0.0);
     }
+
 
     /**
      * Deterministic standard-normal draw for a vehicle, via Box-Muller on two
@@ -102,5 +121,9 @@ public class MarginalCostOfTolls {
 
     public double standardNormalFor(String str) {
         return Normal.get(str, baseSeed);
+    }
+
+    public double standardNormalFor() {
+        return random.nextGaussian();
     }
 }

@@ -32,6 +32,7 @@ public class TripsRouterServer {
         Settings settings = readSettings(cmd);
         RuntimeState runtime = loadRuntime(settings);
         HttpServer server = buildServer(settings, runtime);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> { server.stop(1); runtime.close(); }, "trips-router-shutdown"));
         server.start();
         logger.info("TripsRouter server listening on http://{}:{}", settings.host, settings.port);
         logger.info("POST /route with JSON array of trips or {\"trips\": [...]}.");
@@ -78,12 +79,24 @@ public class TripsRouterServer {
                 new ObjectMapper());
     }
 
-    private static HttpServer buildServer(Settings settings, RuntimeState runtime) throws IOException {
+    static HttpServer buildServer(Settings settings, RuntimeState runtime) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(settings.host, settings.port), 0);
-        server.setExecutor(Executors.newFixedThreadPool(runtime.threads));
+        runtime.requests = Executors.newFixedThreadPool(2);
+        runtime.routingRequests = new java.util.concurrent.ThreadPoolExecutor(1, 1, 0,
+                java.util.concurrent.TimeUnit.SECONDS, new java.util.concurrent.ArrayBlockingQueue<>(16));
+        server.setExecutor(runtime.requests);
         server.createContext("/health", TripsRouterServer::handleHealth);
         server.createContext("/config", exchange -> handleConfig(exchange, runtime));
-        server.createContext("/route", exchange -> handleRoute(exchange, runtime));
+        server.createContext("/route", exchange -> {
+            try {
+                runtime.routingRequests.execute(() -> {
+                    try { handleRoute(exchange, runtime); }
+                    catch (IOException e) { exchange.close(); logger.debug("Routing response connection closed", e); }
+                });
+            } catch (java.util.concurrent.RejectedExecutionException e) {
+                respond(exchange, 503, "text/plain", "Routing queue is full or server is stopping");
+            }
+        });
         return server;
     }
 
@@ -102,17 +115,7 @@ public class TripsRouterServer {
         }
 
         try {
-            List<TripsRouter.RoutedTrip> routedTrips = TripsRouter.routeTripsFromJsonRequest(
-                    runtime.mapper,
-                    exchange.getRequestBody(),
-                    runtime.network,
-                    runtime.travelTime,
-                    runtime.threads,
-                    runtime.batchSize,
-                    runtime.defaultDepartureTime,
-                    runtime.returnLinks,
-                    runtime.routingDistanceUtility
-            );
+            List<TripsRouter.RoutedTrip> routedTrips = runtime.route(exchange.getRequestBody());
             respondJson(exchange, 200, runtime.mapper.writeValueAsBytes(routedTrips));
         } catch (IllegalArgumentException e) {
             respond(exchange, 400, "text/plain", e.getMessage());
@@ -182,7 +185,7 @@ public class TripsRouterServer {
         }
     }
 
-    private static class Settings {
+    static class Settings {
         final String host;
         final int port;
         final int threads;
@@ -214,17 +217,21 @@ public class TripsRouterServer {
         }
     }
 
-    private static class RuntimeState {
+    static class RuntimeState implements AutoCloseable {
         final RoadNetwork network;
-        final RecordedTravelTime travelTime;
+        final org.matsim.core.router.util.TravelTime travelTime;
         final int threads;
         final int batchSize;
         final double defaultDepartureTime;
         final ObjectMapper mapper;
         volatile double routingDistanceUtility;
         volatile boolean returnLinks;
+        java.util.concurrent.ExecutorService requests;
+        java.util.concurrent.ExecutorService routingRequests;
+        private TripsRouter.RoutingSession session;
+        private double sessionDistanceUtility;
 
-        RuntimeState(RoadNetwork network, RecordedTravelTime travelTime, int threads, int batchSize,
+        RuntimeState(RoadNetwork network, org.matsim.core.router.util.TravelTime travelTime, int threads, int batchSize,
                 double defaultDepartureTime, double routingDistanceUtility, boolean returnLinks,
                 ObjectMapper mapper) {
             this.network = network;
@@ -235,6 +242,25 @@ public class TripsRouterServer {
             this.mapper = mapper;
             this.routingDistanceUtility = routingDistanceUtility;
             this.returnLinks = returnLinks;
+        }
+
+        synchronized List<TripsRouter.RoutedTrip> route(java.io.InputStream body) throws IOException, InterruptedException {
+            var trips = TripsRouter.readTripsFromJsonBody(mapper, body);
+            TripsRouter.applyDefaultDepartureTime(trips, defaultDepartureTime);
+            double utility = routingDistanceUtility;
+            if (session == null || sessionDistanceUtility != utility) {
+                if (session != null) session.close();
+                session = null;
+                session = new TripsRouter.RoutingSession(network, travelTime, threads, batchSize, utility);
+                sessionDistanceUtility = utility;
+            }
+            return session.route(trips, returnLinks);
+        }
+
+        @Override public void close() {
+            if (routingRequests != null) routingRequests.shutdownNow();
+            if (requests != null) requests.shutdownNow();
+            synchronized (this) { if (session != null) session.close(); }
         }
 
         ConfigResponse configResponse() {

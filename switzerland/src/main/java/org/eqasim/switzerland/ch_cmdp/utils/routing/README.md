@@ -201,13 +201,18 @@ Each routed row/alternative gets a cost for its selected mode:
 - **Walk, bike, car_passenger:** Zero. `car_passenger` shares the car network,
   travel times and routing behavior and is available with a network-only server.
 
-PT rows may provide the same traveler fields as the pricing utility: `age`,
-`hasGA`, `hasHalbtaxSubscription`, `hasVerbundAbo`, `hasStreckenAbo`,
-`hasGleis7Abo`, and `hasJuniorAbo`. Missing or blank fields default to age 30 and
-no subscriptions. If a regional subscription is true, provide `homeX`/`homeY`
-(or `home_x`/`home_y`). Its coverage radius comes from the Swiss cost parameters
-(`ptRegionalRadius_km`, default 10 km). Boolean columns accept true/false.
-Pricing inputs and traveler fields are unused when cost estimation is disabled.
+PT rows use the same `subscriptions` attribute as mode choice: `GA` (general
+subscription), `HT` (half fare), `VA` (regional), or `VA+HT` (regional plus half
+fare), case-insensitively. Blank, missing, and unrecognized codes grant no
+subscription. `age` defaults to 30; children receive the mode-choice discounts,
+including half fare through age 16. For `VA` and `VA+HT`, provide `home_x` and
+`home_y` to check regional coverage (`ptRegionalRadius_km`, default 10 km).
+
+When `subscriptions` is absent, legacy boolean fields remain supported: `hasGA`,
+`hasHalbtaxSubscription`, `hasVerbundAbo`, `hasStreckenAbo`, `hasGleis7Abo`, and
+`hasJuniorAbo` (true/false). A present `subscriptions` column takes precedence,
+including when blank. `homeX`/`homeY` remain aliases; `home_x`/`home_y` take
+precedence. Traveler fields are parsed only when the request asks for costs.
 
 ## Separate cost requests
 
@@ -215,17 +220,17 @@ Start with `--compute-cost true` to load the pricing inputs at startup. This
 enables both combined routing/pricing and separate cost requests; `/health`
 reports `costReady: true` when these inputs are ready.
 
-To route first and price later, override cost computation for the routing request:
+To route without any pricing or saved fare-data work, send:
 
 ```json
 {"inputCsv":"trips.csv","outputCsv":"routes.csv","computeCost":false}
 ```
 
-Send this body to `POST /route`. To price the saved alternatives separately,
-send this to **`POST /cost`**:
+Send this body to `POST /route`. Both `cost` and `pt_cost_data` remain empty.
+To calculate prices later, send the original OD/traveler input to **`POST /cost`**:
 
 ```json
-{"inputCsv":"routes.csv","outputCsv":"costs.csv"}
+{"inputCsv":"trips.csv","outputCsv":"costs.csv"}
 ```
 
 The output contains only `identifier`, `mode`, and `cost` (CHF), retaining row
@@ -247,18 +252,20 @@ Cost-only input can be either raw trip requests or saved routing results:
 - Walk, bike and car_passenger rows need only their identifier and mode; their
   costs are zero and no routing search is performed.
 
-The saved traveler profile preserves discounts/subscriptions when `/route` uses
-`computeCost: false` on a cost-enabled server. On a server started with cost
-computation disabled, saved PT profiles use the default adult/no-subscription
-profile. Costs are recalculated from the loaded models; an input `cost` column is
-ignored. Cost jobs use the existing parallel workers, bounded chunks, request
-queue, and safe output replacement.
+`/route` creates saved PT itinerary/traveler data only when cost is requested
+(`computeCost: true`, or the enabled server default). This data preserves
+subscriptions for subsequent repricing. With `computeCost: false`, PT `/cost`
+requests need the original OD/traveler columns and perform another routing
+search. `/cost` itself produces no saved itinerary data. Costs are recalculated
+from the loaded models; an input `cost` column is ignored. Cost jobs use the
+existing parallel workers, bounded chunks, request queue, and safe output
+replacement.
 
 Java methods:
 
 ```java
 router.route("trips.csv", "routes.csv", null, false);
-router.cost("routes.csv", "costs.csv");
+router.cost("trips.csv", "costs.csv"); // Route without costs did not save PT fare data.
 router.cost("car-distances.csv", "car-costs.csv", "car");
 // MultiModeRouterServer also exposes both String-path cost(...) overloads.
 ```

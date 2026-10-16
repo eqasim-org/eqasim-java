@@ -1,9 +1,6 @@
 package org.eqasim.core.components.travel_time;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
@@ -23,8 +20,8 @@ import org.matsim.vehicles.Vehicle;
 
 public class TravelTimeRecorder implements LinkEnterEventHandler, LinkLeaveEventHandler,
 		VehicleEntersTrafficEventHandler, VehicleLeavesTrafficEventHandler {
-	private final Map<Id<Link>, List<Double>> cumulativeTraversalTimes = new HashMap<>();
-	private final Map<Id<Link>, List<Long>> traversalCounts = new HashMap<>();
+	private final Map<Id<Link>, float[]> averages = new HashMap<>();
+	private final Map<Id<Link>, int[]> traversalCounts = new HashMap<>();
 	private final Map<Id<Vehicle>, Double> pendingTimes = new HashMap<>();
 
 	private final double startTime;
@@ -39,11 +36,11 @@ public class TravelTimeRecorder implements LinkEnterEventHandler, LinkLeaveEvent
 		this.interval = interval;
 		this.network = network;
 
-		this.numberOfBins = (int) Math.floor((endTime - startTime) / interval);
+		this.numberOfBins = RecordedTravelTime.binCount(startTime, endTime, interval);
 
 		for (Link link : network.getLinks().values()) {
-			cumulativeTraversalTimes.put(link.getId(), new ArrayList<>(Collections.nCopies(numberOfBins, 0.0)));
-			traversalCounts.put(link.getId(), new ArrayList<>(Collections.nCopies(numberOfBins, 0L)));
+			averages.put(link.getId(), new float[numberOfBins]);
+			traversalCounts.put(link.getId(), new int[numberOfBins]);
 		}
 	}
 
@@ -53,7 +50,7 @@ public class TravelTimeRecorder implements LinkEnterEventHandler, LinkLeaveEvent
 		} else if (time >= endTime) {
 			return numberOfBins - 1;
 		} else {
-			return (int) Math.floor((time - startTime) / interval);
+			return Math.min(numberOfBins - 1, (int) Math.floor((time - startTime) / interval));
 		}
 	}
 
@@ -89,11 +86,14 @@ public class TravelTimeRecorder implements LinkEnterEventHandler, LinkLeaveEvent
 		double travelTime = exitTime - enterTime;
 		int index = getIndex(enterTime);
 
-		List<Double> linkTt= cumulativeTraversalTimes.get(linkId);
-		if (linkTt != null) {
-			linkTt.set(index, cumulativeTraversalTimes.get(linkId).get(index) + travelTime);
-			traversalCounts.get(linkId).set(index, traversalCounts.get(linkId).get(index) + 1);
-		}
+        float[] values = averages.get(linkId);
+        if (values != null) {
+            int[] counts = traversalCounts.get(linkId);
+            int count = counts[index];
+            if (count == Integer.MAX_VALUE) throw new IllegalStateException("Too many travel-time observations");
+            values[index] = (float) (((double) values[index] * count + travelTime) / (count + 1));
+            counts[index] = count + 1;
+        }
 	}
 
 	public RecordedTravelTime getTravelTime() {
@@ -101,20 +101,20 @@ public class TravelTimeRecorder implements LinkEnterEventHandler, LinkLeaveEvent
 	}
 
 	public RecordedTravelTime getTravelTime(TravelTime fallback) {
-		Map<Id<Link>, List<Double>> data = new HashMap<>();
+		Map<Id<Link>, float[]> data = new HashMap<>();
 
 		for (Link link : network.getLinks().values()) {
-			List<Double> linkCumulativeTraversalTimes = cumulativeTraversalTimes.get(link.getId());
-			List<Long> linkTraversalCounts = traversalCounts.get(link.getId());
+			float[] linkAverages = averages.get(link.getId());
+			int[] linkTraversalCounts = traversalCounts.get(link.getId());
 
-			List<Double> values = new ArrayList<>(numberOfBins);
+			float[] values = new float[numberOfBins];
 			data.put(link.getId(), values);
 
 			for (int i = 0; i < numberOfBins; i++) {
-				if (linkTraversalCounts.get(i) == 0) {
-					values.add(Math.max(1.0, link.getLength() / link.getFreespeed()));
+				if (linkTraversalCounts[i] == 0) {
+					values[i] = (float) Math.max(1.0, link.getLength() / link.getFreespeed());
 				} else {
-					values.add(Math.max(1.0, linkCumulativeTraversalTimes.get(i) / linkTraversalCounts.get(i)));
+					values[i] = Math.max(1.0f, linkAverages[i]);
 				}
 			}
 

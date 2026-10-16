@@ -5,6 +5,8 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeCleaner;
+import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
+import org.eqasim.core.components.travel_time.FloatTravelTimeModule;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
 import org.eqasim.switzerland.ch_cmdp.utils.link_stats.DetailedLinkStatisticsModule;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
@@ -28,10 +30,12 @@ public class RunSimulation {
 		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions(ScenarioAttributeCleaner.OPTION) //
+				.allowOptions(ScenarioAttributeCleaner.OPTION, MemoryEfficientRoutingModule.OPTION, FloatTravelTimeModule.OPTION) //
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
 				.build();
 		boolean lightenScenario = ScenarioAttributeCleaner.isEnabled(cmd);
+        boolean efficientRouting = MemoryEfficientRoutingModule.isEnabled(cmd);
+        boolean floatTravelTimes = FloatTravelTimeModule.isEnabled(cmd);
 
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new SampledTransitDwellConfigGroup());
@@ -59,7 +63,9 @@ public class RunSimulation {
 			ScenarioAttributeCleaner.clean(scenario);
 		}
 		Controler controller = new Controler(scenario);
+        if (floatTravelTimes) controller.addOverridingModule(new FloatTravelTimeModule());
 		configurator.configureController(controller);
+        if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
 		controller.addOverridingModule(new PTPassengerCountsModule());
         controller.addOverridingModule(new PTLinkVolumesModule());
 		controller.addOverridingModule(new StrategyWeightDecayModule());

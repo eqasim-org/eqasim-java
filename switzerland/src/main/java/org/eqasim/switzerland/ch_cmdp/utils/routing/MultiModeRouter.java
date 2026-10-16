@@ -33,6 +33,7 @@ import org.eqasim.core.simulation.policies.routing.ZeroRoutingPenalty;
 import org.eqasim.switzerland.ch_cmdp.tolls.EqasimTollsTravelDisutility;
 import org.eqasim.switzerland.ch_cmdp.tolls.MarginalCostOfTolls;
 import org.eqasim.switzerland.ch_cmdp.tolls.Tolls;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils;
 import org.eqasim.switzerland.ch_cmdp.utils.pricing.RunComputeTransitPrices.CSVRequest;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
@@ -49,7 +50,7 @@ import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.DefaultRoutingModules;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.router.LinkWrapperFacility;
-import org.matsim.core.router.speedy.SpeedyALTFactory;
+import org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
@@ -221,7 +222,7 @@ public final class MultiModeRouter implements AutoCloseable {
             return new ModeRouter() {
                 public RoutedTrip route(Trip trip) {
                     RoutedTrip result = carRouter.route(trip);
-                    if (trip.includeCost) {
+                    if (trip.includeCost && Double.isFinite(result.travelDistance)) {
                         result.cost = carCostEstimator.applyAsDouble(result.travelDistance / 1000.0);
                     }
                     return result;
@@ -272,14 +273,14 @@ public final class MultiModeRouter implements AutoCloseable {
                         positive(speedFactor, mode + " freespeed factor");
                         TravelTime cappedFreeflow = (link, t, person, vehicle) -> link.getLength()
                                 / Math.min(link.getFreespeed(t), params.getTeleportedModeFreespeedLimit());
-                        SpeedyALTFactory factory = new SpeedyALTFactory();
+                        MemoryEfficientSpeedyALTFactory factory = new MemoryEfficientSpeedyALTFactory();
                         TravelDisutility cost = new EqasimTravelDisutilityFactory(new ZeroRoutingPenalty(), 0)
                                 .createTravelDisutility(cappedFreeflow);
                         NetworkUtils.getNearestLink(carNetwork, carNetwork.getNodes().values().iterator().next().getCoord());
                         factories.put(mode, () -> {
                             var module = DefaultRoutingModules.createPseudoTransitRouter(mode,
                                     PopulationUtils.getFactory(), carNetwork,
-                                    factory.createPathCalculator(carNetwork, cost, cappedFreeflow), params);
+                                    requirePath(factory.createPathCalculator(carNetwork, cost, cappedFreeflow)), params);
                             return planRouter(module::calcRoute, carNetwork, mode);
                         });
                     } else {
@@ -330,7 +331,7 @@ public final class MultiModeRouter implements AutoCloseable {
             workers[i].put("car_passenger", trip -> {
                 RoutedTrip result = carRouter.route(trip);
                 result.mode = "car_passenger";
-                if (trip.includeCost) {
+                if (trip.includeCost && Double.isFinite(result.travelTime)) {
                     result.cost = 0.0;
                 }
                 return result;
@@ -489,24 +490,28 @@ public final class MultiModeRouter implements AutoCloseable {
         RoutedTrip[] results = new RoutedTrip[trips.size()];
         AtomicInteger next = new AtomicInteger();
         AtomicBoolean stop = new AtomicBoolean();
+        int batch = TripsRouter.routingBatchSize(trips.size(), workers.length, batchSize);
         List<Future<?>> tasks = new ArrayList<>();
-        int taskCount = Math.min(workers.length, 1 + (trips.size() - 1) / batchSize);
+        int taskCount = Math.min(workers.length, 1 + (trips.size() - 1) / batch);
         for (int i = 0; i < taskCount; i++) {
             tasks.add(executor.submit(() -> {
                 try {
                     int start;
-                    while (!stop.get() && (start = next.getAndAdd(batchSize)) < trips.size()) {
-                        int end = (int) Math.min(trips.size(), (long) start + batchSize);
+                    while (!stop.get() && (start = next.getAndAdd(batch)) < trips.size()) {
+                        int end = (int) Math.min(trips.size(), (long) start + batch);
                         for (int j = start; j < end && !stop.get(); j++) {
                             Trip trip = trips.get(j);
-                            if (costOnly) {
+                            if (costOnly && trip.savedDistance != null && Double.isNaN(trip.savedDistance)) {
+                                results[j] = missingRoute(trip);
+                            } else if (costOnly) {
                                 results[j] = result(trip, trip.mode, 0, 0);
                                 results[j].cost = trip.mode.equals("car") || trip.mode.equals("pt")
                                         ? workerRouters.get().get(trip.mode).cost(trip) : 0.0;
                             } else {
                                 results[j] = workerRouters.get().get(trip.mode).route(trip);
                             }
-                            if (trip.includeCost && !trip.mode.equals("car") && !trip.mode.equals("pt")) {
+                            if (trip.includeCost && !trip.mode.equals("car") && !trip.mode.equals("pt")
+                                    && Double.isFinite(results[j].travelTime)) {
                                 results[j].cost = 0.0;
                             }
                         }
@@ -556,6 +561,13 @@ public final class MultiModeRouter implements AutoCloseable {
             trip.identifier = row.getOrDefault("identifier", "");
             trip.mode = mode == null ? row.get("mode") : mode;
             trip.includeCost = includeCost;
+            trip.costOnly = costOnly;
+            // A saved unreachable route is also unpriceable, for every mode.
+            if (costOnly && MODES.contains(trip.mode == null ? "" : trip.mode)
+                    && "NaN".equals(row.get("travel_distance"))) {
+                trip.savedDistance = Double.NaN;
+                return trip;
+            }
             if (costOnly && trip.mode != null && MODES.contains(trip.mode)
                     && !trip.mode.equals("car") && !trip.mode.equals("pt")) {
                 return trip;
@@ -589,23 +601,28 @@ public final class MultiModeRouter implements AutoCloseable {
             if (trip.departureTime < 0) {
                 throw new IllegalArgumentException("departure_time must be non-negative");
             }
-            if (computeCost && trip.mode.equals("pt")) {
+            if (includeCost && trip.mode.equals("pt")) {
                 int age = row.containsKey("age") && !row.get("age").isBlank() ? Integer.parseInt(row.get("age")) : 30;
                 if (age < 0) {
                     throw new IllegalArgumentException("age must be non-negative");
                 }
-                boolean regional = flag(row, "hasVerbundAbo") || flag(row, "hasStreckenAbo");
-                double homeX = regional ? number(row, row.containsKey("homeX") ? "homeX" : "home_x") : trip.originX;
-                double homeY = regional ? number(row, row.containsKey("homeY") ? "homeY" : "home_y") : trip.originY;
+                // Use the same subscription attribute and decoder as mode choice.
+                // Legacy boolean columns remain supported when subscriptions is absent.
+                boolean canonical = row.containsKey("subscriptions");
+                String subscriptions = row.get("subscriptions");
+                boolean ga = canonical ? SwissPredictorUtils.hasGeneralSubscription(subscriptions) : flag(row, "hasGA");
+                boolean halfFare = canonical ? SwissPredictorUtils.hasHalbtaxSubscription(subscriptions)
+                        : flag(row, "hasHalbtaxSubscription");
+                boolean regional = canonical ? SwissPredictorUtils.hasRegionalSubscription(subscriptions)
+                        : flag(row, "hasVerbundAbo") || flag(row, "hasStreckenAbo");
+                boolean junior = canonical ? SwissPredictorUtils.hasJuniorSubscription(subscriptions) : flag(row, "hasJuniorAbo");
+                boolean gleis7 = canonical ? SwissPredictorUtils.hasGleis7Subscription(subscriptions) : flag(row, "hasGleis7Abo");
+                double homeX = regional ? number(row, row.containsKey("home_x") ? "home_x" : "homeX") : trip.originX;
+                double homeY = regional ? number(row, row.containsKey("home_y") ? "home_y" : "homeY") : trip.originY;
                 trip.pricingRequest = new CSVRequest(trip.identifier, trip.originX, trip.originY, trip.destinationX,
-                        trip.destinationY, trip.departureTime, homeX, homeY, flag(row, "hasGA"),
-                        flag(row, "hasHalbtaxSubscription"), flag(row, "hasVerbundAbo"), flag(row, "hasStreckenAbo"),
-                        flag(row, "hasGleis7Abo"), flag(row, "hasJuniorAbo"), age);
-            }
-            if (trip.mode.equals("pt") && trip.pricingRequest == null) {
-                trip.pricingRequest = new CSVRequest(trip.identifier, trip.originX, trip.originY, trip.destinationX,
-                        trip.destinationY, trip.departureTime, trip.originX, trip.originY,
-                        false, false, false, false, false, false, 30);
+                        trip.destinationY, trip.departureTime, homeX, homeY, ga, halfFare,
+                        canonical ? regional : flag(row, "hasVerbundAbo"),
+                        !canonical && flag(row, "hasStreckenAbo"), gleis7, junior, age);
             }
             return trip;
         } catch (IllegalArgumentException e) {
@@ -672,7 +689,7 @@ public final class MultiModeRouter implements AutoCloseable {
 
     private static java.util.function.Supplier<ModeRouter> networkFactory(Network network, TravelTime time,
             TravelDisutility cost, boolean returnLinks, boolean useTollSensitivity) {
-        SpeedyALTFactory factory = new SpeedyALTFactory();
+        MemoryEfficientSpeedyALTFactory factory = new MemoryEfficientSpeedyALTFactory();
         VehicleType vehicleType = useTollSensitivity
                 ? VehicleUtils.createVehicleType(Id.create("csv-car", VehicleType.class)) : null;
         return () -> {
@@ -690,7 +707,7 @@ public final class MultiModeRouter implements AutoCloseable {
                 }
                 var path = calculator.calcLeastCostPath(from, to, trip.departureTime, null, vehicle);
                 if (path == null) {
-                    throw new IllegalArgumentException("No " + trip.mode + " path for trip " + trip.identifier);
+                    return missingRoute(trip);
                 }
                 RoutedTrip result = result(trip, trip.mode, path.travelTime,
                         path.links.stream().mapToDouble(Link::getLength).sum());
@@ -710,9 +727,9 @@ public final class MultiModeRouter implements AutoCloseable {
 
     private static TravelTime bikeTime(Network network) {
         var speed = new BikeGradientBasedLinkSpeedCalculator((link, t, vehicleId) -> 0);
-        double[] times = new double[arraySize(network)];
+        float[] times = new float[arraySize(network)];
         for (Link link : network.getLinks().values()) {
-            times[link.getId().index()] = link.getLength() / speed.getMaximumBikeVelocity(null, link, 0);
+            times[link.getId().index()] = (float) (link.getLength() / speed.getMaximumBikeVelocity(null, link, 0));
         }
         return (link, t, person, vehicle) -> times[link.getId().index()];
     }
@@ -776,21 +793,33 @@ public final class MultiModeRouter implements AutoCloseable {
         ModeRouter routing = trip -> {
             var from = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, origin(trip)));
             var to = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, destination(trip)));
-            var elements = router.apply(DefaultRoutingRequest.withoutAttributes(from, to, trip.departureTime, null));
-            if (elements == null) {
-                throw new IllegalArgumentException("No " + mode + " path for trip " + trip.identifier);
+            List<? extends org.matsim.api.core.v01.population.PlanElement> elements;
+            try {
+                elements = router.apply(DefaultRoutingRequest.withoutAttributes(from, to, trip.departureTime, null));
+            } catch (NoPath e) {
+                return missingRoute(trip);
+            }
+            if (elements == null || elements.isEmpty()) return missingRoute(trip);
+            // RAPTOR can return a direct-walk fallback when no transit journey is
+            // available. Keep zero-distance requests valid, but do not report this
+            // fallback as a successful PT journey.
+            if (mode.equals("pt") && !origin(trip).equals(destination(trip))
+                    && elements.stream().noneMatch(e -> e instanceof Leg leg && leg.getMode().equals("pt"))) {
+                return missingRoute(trip);
             }
             double arrival = trip.departureTime;
             double distance = 0;
             for (var element : elements) {
                 if (element instanceof Leg leg) {
                     double start = leg.getDepartureTime().isDefined() ? leg.getDepartureTime().seconds() : arrival;
+                    if (leg.getTravelTime().isUndefined() || leg.getRoute() == null) return missingRoute(trip);
                     arrival = Math.max(arrival, start) + leg.getTravelTime().seconds();
                     distance += leg.getRoute().getDistance();
                 }
             }
+            if (!Double.isFinite(arrival) || !Double.isFinite(distance)) return missingRoute(trip);
             RoutedTrip result = result(trip, mode, arrival - trip.departureTime, distance);
-            if (mode.equals("pt")) {
+            if (mode.equals("pt") && trip.includeCost && !trip.costOnly) {
                 result.ptCostData = RouterCosts.save(trip.pricingRequest, elements);
             }
             if (trip.includeCost && mode.equals("pt")) {
@@ -807,6 +836,34 @@ public final class MultiModeRouter implements AutoCloseable {
                 return trip.savedPtRoute == null ? route(trip).cost : pricer.price(trip.savedPtRoute);
             }
         };
+    }
+
+    private static final class NoPath extends RuntimeException { }
+
+    /** Preserve link-based routing (and its turn restrictions) when detecting failures. */
+    private static LeastCostPathCalculator requirePath(LeastCostPathCalculator delegate) {
+        return new LeastCostPathCalculator() {
+            private Path check(Path path) {
+                if (path == null) throw new NoPath();
+                return path;
+            }
+            @Override public Path calcLeastCostPath(org.matsim.api.core.v01.network.Node from,
+                    org.matsim.api.core.v01.network.Node to, double time, Person person, Vehicle vehicle) {
+                return check(delegate.calcLeastCostPath(from, to, time, person, vehicle));
+            }
+            @Override public Path calcLeastCostPath(Link from, Link to, double time, Person person, Vehicle vehicle) {
+                return check(delegate.calcLeastCostPath(from, to, time, person, vehicle));
+            }
+        };
+    }
+
+    private static RoutedTrip missingRoute(Trip trip) {
+        RoutedTrip result = result(trip, trip.mode, Double.NaN, Double.NaN);
+        result.accessDistance = Double.NaN;
+        result.egressDistance = Double.NaN;
+        result.linkCount = -1;
+        result.cost = trip.includeCost ? Double.NaN : null;
+        return result;
     }
 
     private static Coord origin(Trip trip) {
@@ -855,6 +912,7 @@ public final class MultiModeRouter implements AutoCloseable {
         String mode;
         CSVRequest pricingRequest;
         boolean includeCost;
+        boolean costOnly;
         Double savedDistance;
         RouterCosts.SavedPtRoute savedPtRoute;
     }

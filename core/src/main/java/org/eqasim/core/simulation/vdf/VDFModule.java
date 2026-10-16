@@ -41,7 +41,10 @@ public class VDFModule extends AbstractEqasimExtension {
 
 		 for (String mode : vdfConfig.getModes()) {
 			LOGGER.info("Adding VDF travel time for mode " + mode);
-			addTravelTimeBinding(mode).to(VDFTravelTime.class);
+			addTravelTimeBinding(mode).toProvider(new com.google.inject.Provider<org.matsim.core.router.util.TravelTime>() {
+				@com.google.inject.Inject VDFTravelTime travelTime;
+				@Override public org.matsim.core.router.util.TravelTime get() { return travelTime.getRoutingTravelTimes(); }
+			}).in(Singleton.class);
 		}
 
 		addControllerListenerBinding().to(VDFUpdateListener.class);

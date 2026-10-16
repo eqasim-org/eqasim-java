@@ -1,9 +1,7 @@
 package org.eqasim.core.components.travel_time;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.eqasim.core.misc.ParallelProgress;
@@ -27,7 +25,7 @@ import org.matsim.vehicles.Vehicle;
  * @author Sebastian Hörl <sebastian.hoerl@ivt.baug.ethz.ch>
  */
 public class RecordedTravelTime implements TravelTime {
-	private final Map<Id<Link>, List<Double>> data;
+	private final Map<Id<Link>, float[]> data;
 
 	private final double startTime;
 	private final double endTime;
@@ -36,16 +34,34 @@ public class RecordedTravelTime implements TravelTime {
 
 	private final TravelTime fallback;
 
-	RecordedTravelTime(double startTime, double endTime, double interval, Map<Id<Link>, List<Double>> data,
+	RecordedTravelTime(double startTime, double endTime, double interval, Map<Id<Link>, float[]> data,
 			TravelTime fallback) {
-		this.data = data;
+		this.data = Map.copyOf(data);
 		this.startTime = startTime;
 		this.endTime = endTime;
 		this.interval = interval;
 		this.fallback = fallback;
 
-		this.numberOfBins = (int) Math.floor((endTime - startTime) / interval);
+		this.numberOfBins = binCount(startTime, endTime, interval);
 	}
+
+	static int binCount(double startTime, double endTime, double interval) {
+        if (!Double.isFinite(startTime) || !Double.isFinite(endTime) || !Double.isFinite(interval)
+                || interval <= 0 || endTime - startTime < interval
+                || (endTime - startTime) / interval > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Travel-time range must contain at least one finite positive bin");
+        }
+        return (int) Math.floor((endTime - startTime) / interval);
+    }
+
+    /** Minimum across stored bins, for admissible routing lower bounds on fixed networks. */
+    public double getMinimumLinkTravelTime(Link link) {
+        float[] values = data.get(link.getId());
+        if (values == null) return fallback.getLinkTravelTime(link, startTime, null, null);
+        double minimum = Double.POSITIVE_INFINITY;
+        for (float value : values) minimum = Math.min(minimum, value);
+        return minimum;
+    }
 
 	public double getStartTime() {
 		return startTime;
@@ -65,14 +81,15 @@ public class RecordedTravelTime implements TravelTime {
 		} else if (time >= endTime) {
 			return numberOfBins - 1;
 		} else {
-			return (int) Math.floor((time - startTime) / interval);
+			return Math.min(numberOfBins - 1, (int) Math.floor((time - startTime) / interval));
 		}
 	}
 
 	@Override
 	public double getLinkTravelTime(Link link, double time, Person person, Vehicle vehicle) {
-		if (data.containsKey(link.getId())) {
-			return data.get(link.getId()).get(getIndex(time));
+		float[] values = data.get(link.getId());
+		if (values != null) {
+			return values[getIndex(time)];
 		}
 
 		return fallback.getLinkTravelTime(link, time, person, vehicle);
@@ -100,12 +117,12 @@ public class RecordedTravelTime implements TravelTime {
 		ParallelProgress progress = new ParallelProgress("Writing travel time ...", numberOfLinks);
 		progress.start();
 
-		for (Map.Entry<Id<Link>, List<Double>> item : travelTime.data.entrySet()) {
+		for (Map.Entry<Id<Link>, float[]> item : travelTime.data.entrySet()) {
 			writer.writeUTF(item.getKey().toString());
-			List<Double> values = item.getValue();
+			float[] values = item.getValue();
 
 			for (int k = 0; k < travelTime.numberOfBins; k++) {
-				writer.writeDouble(values.get(k));
+				writer.writeDouble(values[k]);
 			}
 
 			progress.update();
@@ -127,24 +144,32 @@ public class RecordedTravelTime implements TravelTime {
 
 		int numberOfBins = reader.readInt();
 		int numberOfLinks = reader.readInt();
+        if (numberOfBins != binCount(startTime, endTime, interval) || numberOfLinks < 0)
+            throw new IOException("Invalid recorded travel-time dimensions");
 
-		Map<Id<Link>, List<Double>> data = new HashMap<>();
+		Map<Id<Link>, float[]> data = new HashMap<>();
 
 		ParallelProgress progress = new ParallelProgress("Reading travel time ...", numberOfLinks);
 		progress.start();
 
 		for (int i = 0; i < numberOfLinks; i++) {
 			Id<Link> linkId = Id.createLinkId(reader.readUTF());
-			List<Double> values = new ArrayList<>(numberOfBins);
+			float[] values = new float[numberOfBins];
 
 			for (int k = 0; k < numberOfBins; k++) {
-				values.add(reader.readDouble());
+				values[k] = (float) reader.readDouble();
 			}
 
 			data.put(linkId, values);
 			progress.update();
 		}
 
+        try {
+            progress.close();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedIOException("Interrupted while reading travel times");
+        }
 		return new RecordedTravelTime(startTime, endTime, interval, data, fallback);
 	}
 

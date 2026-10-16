@@ -81,24 +81,32 @@ public class TripsHandler {
 
     private Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> routeTripsAndCollectGroupStats() {
         logger.info("Start routing trips and collecting group stats for freespeed calibration");
+        if (observedTrips.isEmpty()) return Map.of();
         logger.info("Using car TravelTime implementation for calibration routing: {}", carTravelTime.getClass().getName());
-        int workerCount = Math.max(1, Math.min(threads*2, observedTrips.size()));
-        ExecutorService executor = Executors.newFixedThreadPool(workerCount);
+        int workerCount = Math.max(1, Math.min(threads, observedTrips.size()));
+        // Resolve the injected factory once: RunSimulation's optimized-router override
+        // is inherited here. Shared graph/times, private search state per worker.
+        LeastCostPathCalculatorFactory configured = routerFactoryProvider.get();
+        // Factors (and hence ALT lower bounds) change after each calibration pass.
+        // Do not accumulate obsolete landmark sets in the simulation singleton.
+        LeastCostPathCalculatorFactory factory = configured instanceof
+                org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory
+                ? new org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory() : configured;
+        logger.info("Calibration router: {}; workers={}", factory.getClass().getName(), workerCount);
+        var costs = new OnlyTimeDependentTravelDisutility(carTravelTime);
+        var routers = new ArrayList<LeastCostPathCalculator>(workerCount);
+        if (!network.getNodes().isEmpty()) NetworkUtils.getNearestNode(network,
+                network.getNodes().values().iterator().next().getCoord());
+        for (int i = 0; i < workerCount; i++) routers.add(factory.createPathCalculator(network, costs, carTravelTime));
+        var nextTrip = new java.util.concurrent.atomic.AtomicInteger();
         List<Future<RoutingChunkResult>> futures = new ArrayList<>();
-        int chunkSize = Math.max(1, (observedTrips.size() + workerCount - 1) / workerCount);
-
-        for (int start = 0; start < observedTrips.size(); start += chunkSize) {
-            int end = Math.min(observedTrips.size(), start + chunkSize);
-            final int chunkStart = start;
-            final int chunkEnd = end;
-            futures.add(executor.submit(() -> routeTripsChunk(chunkStart, chunkEnd)));
-        }
 
         Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats = new HashMap<>();
         int routedTrips = 0;
         int acceptedTrips = 0;
 
-        try {
+        try (ExecutorService executor = Executors.newFixedThreadPool(workerCount)) {
+            for (var router : routers) futures.add(executor.submit(() -> routeTripsChunk(router, nextTrip)));
             for (Future<RoutingChunkResult> future : futures) {
                 RoutingChunkResult chunkResult = future.get();
                 mergeGroupStats(groupStats, chunkResult.groupStats);
@@ -110,8 +118,6 @@ public class TripsHandler {
             throw new RuntimeException("Interrupted while routing observed trips for freespeed calibration", e);
         } catch (ExecutionException e) {
             throw new RuntimeException("Failed to route observed trips for freespeed calibration", e);
-        } finally {
-            executor.shutdown();
         }
 
         logger.info("\t Routed {} observed trips for freespeed calibration", routedTrips);
@@ -119,18 +125,13 @@ public class TripsHandler {
         return groupStats;
     }
 
-    private RoutingChunkResult routeTripsChunk(int startIndex, int endIndex) {
-        LeastCostPathCalculatorFactory factory = routerFactoryProvider.get();
-        LeastCostPathCalculator router = factory.createPathCalculator(network,
-                new OnlyTimeDependentTravelDisutility(carTravelTime),
-                carTravelTime);
-
-
+    private RoutingChunkResult routeTripsChunk(LeastCostPathCalculator router,
+            java.util.concurrent.atomic.AtomicInteger nextTrip) {
         Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> localStats = new HashMap<>();
         int routedTrips = 0;
         int acceptedTrips = 0;
 
-        for (int i = startIndex; i < endIndex; i++) {
+        for (int i; !Thread.currentThread().isInterrupted() && (i = nextTrip.getAndIncrement()) < observedTrips.size();) {
             ObservedTripsTravelTimesCsvHandler.ObservedSpeedTrip trip = observedTrips.get(i);
             if (trip.travelTimeSeconds <= 0.0) {
                 continue;

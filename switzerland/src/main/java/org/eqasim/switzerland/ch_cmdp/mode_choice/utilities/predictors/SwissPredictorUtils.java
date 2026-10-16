@@ -12,13 +12,22 @@ public class SwissPredictorUtils {
 		// Boolean hasGeneralSubscription = (Boolean) person.getAttributes().getAttribute("ptHasGA");
 		// return hasGeneralSubscription != null && hasGeneralSubscription;
 		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
-        return "GA".equalsIgnoreCase(subscriptions);
+		return hasGeneralSubscription(subscriptions);
+	}
+
+	/** Decode the scenario's subscription attribute, also used by CSV routing. */
+	static public boolean hasGeneralSubscription(String subscriptions) {
+		return "GA".equalsIgnoreCase(subscriptions);
 	}
 
 	static public boolean hasHalbtaxSubscription(Person person) {
 		// Boolean hasHalbtaxSubscription = (Boolean) person.getAttributes().getAttribute("ptHasHalbtax");
 		// return hasHalbtaxSubscription != null && hasHalbtaxSubscription;
 		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
+		return hasHalbtaxSubscription(subscriptions);
+	}
+
+	static public boolean hasHalbtaxSubscription(String subscriptions) {
 		return "HT".equalsIgnoreCase(subscriptions) || "VA+HT".equalsIgnoreCase(subscriptions);
 	}
 
@@ -37,6 +46,10 @@ public class SwissPredictorUtils {
 //		return hasRegionalSubscription;
 
 		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
+		return hasRegionalSubscription(subscriptions);
+	}
+
+	static public boolean hasRegionalSubscription(String subscriptions) {
 		return "VA".equalsIgnoreCase(subscriptions) || "VA+HT".equalsIgnoreCase(subscriptions);
 	}
 
@@ -48,6 +61,10 @@ public class SwissPredictorUtils {
 //		}
 //		return hasJuniorSubscription;
 		String subscriptions = (String) person.getAttributes().getAttribute("subscriptions");
+		return hasJuniorSubscription(subscriptions);
+	}
+
+	static public boolean hasJuniorSubscription(String subscriptions) {
 		return "GA".equalsIgnoreCase(subscriptions);
 	}
 
@@ -59,6 +76,10 @@ public class SwissPredictorUtils {
 //		}
 //		return hasGleis7Subscription;
 		return false;
+	}
+
+	static public boolean hasGleis7Subscription(String subscriptions) {
+		return false; // No subscription code currently enables this in mode choice.
 	}
 
 	static public int getStatedPreferenceRegion(Person person) {

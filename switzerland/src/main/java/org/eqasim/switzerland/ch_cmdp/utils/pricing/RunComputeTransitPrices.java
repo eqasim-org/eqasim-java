@@ -395,7 +395,8 @@ public class RunComputeTransitPrices {
             }
         }
 
-        boolean halfFare = request.hasHalbtaxSubscription || (request.age < 16);
+        // Match the inclusive age boundary used by SwissPtCostModel.
+        boolean halfFare = request.hasHalbtaxSubscription || (request.age <= 16);
 
         // New model price
         for (var entry : groupedByAuthority.entrySet()) {
