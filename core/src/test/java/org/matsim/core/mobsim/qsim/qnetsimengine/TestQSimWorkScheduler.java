@@ -8,6 +8,93 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class TestQSimWorkScheduler {
+    @Test(timeout = 15_000) public void sharedQueueFallbackPublishesEveryBlockAcrossChangingWorkerCounts() {
+        String previous = System.getProperty("eqasim.qsim.localScheduling");
+        System.setProperty("eqasim.qsim.localScheduling", "false");
+        try (var scheduler = new QSimWorkScheduler(8)) {
+            int[] mutations = new int[73];
+            Runnable[] tasks = new Runnable[mutations.length];
+            for (int i = 0; i < tasks.length; i++) {
+                int slot = i;
+                tasks[i] = () -> mutations[slot]++;
+            }
+            for (int phase = 0; phase < 1000; phase++) {
+                scheduler.execute(tasks, tasks.length, (phase & 15) == 0, 1 + phase % 8);
+                for (int value : mutations) assertEquals(phase + 1, value);
+            }
+        } finally {
+            if (previous == null) System.clearProperty("eqasim.qsim.localScheduling");
+            else System.setProperty("eqasim.qsim.localScheduling", previous);
+        }
+    }
+
+    @Test(timeout = 15_000) public void allFortyEightParticipantsCanExecuteAtTheSameTime() {
+        var entered = new CountDownLatch(48);
+        var names = java.util.concurrent.ConcurrentHashMap.<String>newKeySet();
+        try (var scheduler = new QSimWorkScheduler(48)) {
+            Runnable[] tasks = new Runnable[48];
+            for (int i = 0; i < tasks.length; i++) {
+                int owner = i;
+                tasks[i] = new QSimWorkScheduler.LocalTask() {
+                    @Override public int preferredWorker() { return owner; }
+                    @Override public void run() {
+                        names.add(Thread.currentThread().getName());
+                        entered.countDown();
+                        try { assertTrue(entered.await(5, TimeUnit.SECONDS)); }
+                        catch (InterruptedException e) { throw new AssertionError(e); }
+                    }
+                };
+            }
+            scheduler.execute(tasks, tasks.length, true);
+            assertEquals(48, names.size());
+        }
+    }
+
+    @Test(timeout = 60_000) public void manyWorkersHandleSkewedOwnersChangingParallelismAndEmptyPhases() {
+        for (int threads : new int[] {24, 48}) {
+            try (var scheduler = new QSimWorkScheduler(threads)) {
+                int[] state = new int[193];
+                Runnable[] tasks = new Runnable[state.length];
+                for (int i = 0; i < tasks.length; i++) {
+                    int slot = i;
+                    tasks[i] = new QSimWorkScheduler.LocalTask() {
+                        @Override public int preferredWorker() { return slot < 150 ? threads - 1 : slot % threads; }
+                        @Override public void run() { state[slot]++; }
+                    };
+                }
+                for (int phase = 0; phase < 300; phase++) {
+                    scheduler.execute(tasks, tasks.length, (phase & 15) == 0, 1 + phase % threads);
+                    for (int count : state) assertEquals(phase + 1, count);
+                    scheduler.execute(tasks, 0);
+                }
+                assertTrue(Double.isFinite(scheduler.coordinationNanos()));
+            }
+        }
+    }
+
+    @Test(timeout = 10_000) public void preferredWorkersStartTheirOwnBlocksBeforeStealing() {
+        var ready = new CountDownLatch(3);
+        String[] executedBy = new String[3];
+        String coordinator = Thread.currentThread().getName();
+        try (var scheduler = new QSimWorkScheduler(3)) {
+            Runnable[] tasks = new Runnable[3];
+            for (int i = 0; i < 3; i++) {
+                int owner = i;
+                tasks[i] = new QSimWorkScheduler.LocalTask() {
+                    @Override public int preferredWorker() { return owner; }
+                    @Override public void run() {
+                        executedBy[owner] = Thread.currentThread().getName();
+                        ready.countDown();
+                        try { assertTrue(ready.await(3, TimeUnit.SECONDS)); }
+                        catch (InterruptedException e) { throw new AssertionError(e); }
+                    }
+                };
+            }
+            scheduler.execute(tasks, 3, true);
+            assertArrayEquals(new String[] {coordinator, "QSimFast-0", "QSimFast-1"}, executedBy);
+        }
+    }
+
     @Test(timeout = 15_000) public void idleDelayedWorkerDoesNotHoldUpFinishedPhases() throws Exception {
         var releaseWorker = new CountDownLatch(1);
         var phasesFinished = new CountDownLatch(1);

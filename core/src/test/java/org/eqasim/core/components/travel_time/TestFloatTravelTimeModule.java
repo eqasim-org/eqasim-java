@@ -72,6 +72,9 @@ public class TestFloatTravelTimeModule {
         config.global().setNumberOfThreads(2);
         config.qsim().setNumberOfThreads(1);
         config.qsim().setEndTime(3600);
+        config.eventsManager().setNumberOfThreads(4);
+        config.eventsManager().setSynchronizeOnSimSteps(false);
+        config.eventsManager().setOneThreadPerHandler(false);
         config.routing().setNetworkModes(List.of("car", "truck", "car_passenger", "bike"));
         config.routing().removeModeRoutingParams("bike");
         config.travelTimeCalculator().setSeparateModes(false);

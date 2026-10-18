@@ -36,11 +36,13 @@ MATSim's lane class is final and its selection method is private. In addition,
 native visualization code casts lane snapshot data to that class's inner type.
 The repository therefore includes a version-pinned `QueueWithBuffer` adaptation
 from **MATSim 2026.0-2025w33**, retaining its class identity and GPL license.
-The only behavioral edits are seepage queue construction and dispatch to the
-new selector. Existing explicit `VehicleQ` overrides continue to work.
+Seepage queue construction and dispatch use the new selector. The lane's exit
+buffer and previous-vehicle metadata also use compact storage as described in
+[fast_qsim.md](fast_qsim.md). Existing explicit `VehicleQ` overrides continue to work.
 
 When upgrading MATSim, update this source from the new dependency and reapply
-those two edits. Do not carry the old lane mechanics into a new MATSim version.
+the selector and exit-buffer adaptations. Do not carry the old lane mechanics
+into a new MATSim version.
 
 ## Validation
 

@@ -2,6 +2,7 @@ package org.matsim.core.mobsim.qsim.qnetsimengine;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -26,6 +27,15 @@ public final class FastQNetsimEngine extends AbstractQNetsimEngine<FastQNetsimEn
     private Runner[] nodeOrder, linkOrder;
     private Runnable[] work;
     private boolean movingNodes, sample;
+    private final boolean feedback = Boolean.parseBoolean(System.getProperty("eqasim.qsim.partitionFeedback", "true"));
+    private final boolean adaptive = Boolean.parseBoolean(System.getProperty("eqasim.qsim.adaptiveScheduling", "true"));
+    private Node[] partitionNodes;
+    private int[] assignment;
+    private Int2IntOpenHashMap positions;
+    private double[] measuredWork;
+    private double nodeCoordinationNanos, linkCoordinationNanos;
+    private long requestedWorkerPhases, activePhases, fullWorkerPhases;
+    private int maxActiveWorkers;
     private long steps, nodePhaseNanos, linkPhaseNanos, directPhases, parallelPhases;
     private static final Comparator<Runner> NODE_COST = Comparator.comparingDouble((Runner r) -> r.nodeCost).reversed();
     private static final Comparator<Runner> LINK_COST = Comparator.comparingDouble((Runner r) -> r.linkCost).reversed();
@@ -48,7 +58,7 @@ public final class FastQNetsimEngine extends AbstractQNetsimEngine<FastQNetsimEn
         int blocks = Math.max(1, Math.min(qNetwork.getNetsimNodes().size(),
                 numOfThreads == 1 ? 1 : Math.min(QSimWorkScheduler.MAX_TASKS, Math.multiplyExact(numOfThreads, blocksPerThread))));
         var runners = new ArrayList<Runner>(blocks);
-        for (int i = 0; i < blocks; i++) runners.add(new Runner());
+        for (int i = 0; i < blocks; i++) runners.add(new Runner(i * Math.min(numOfThreads, blocks) / blocks));
         return runners;
     }
 
@@ -63,19 +73,31 @@ public final class FastQNetsimEngine extends AbstractQNetsimEngine<FastQNetsimEn
         }
         Node[] nodes = qNetwork.getNetsimNodes().values().stream().map(QNodeI::getNode).toArray(Node[]::new);
         long start = System.nanoTime();
+        partitionNodes = nodes;
+        int[] sizes = new int[runners.size()];
         if (weighted && nodes.length > 0) {
-            // Standalone QSimBuilder users need not install the controller module.
             if (partitionCache == null) partitionCache = new FastQSimPartitionCache();
-            int[] parts = partitionCache.get(nodes, sim.getScenario(), runners.size());
-            for (int i = 0; i < nodes.length; i++) {
-                Runner owner = runners.get(parts[i]);
-                var node = qNetwork.getNetsimNodes().get(nodes[i].getId());
-                if (!(node instanceof AbstractQNode qNode)) throw new IllegalArgumentException("Unsupported QNode: " + node.getClass());
-                qNode.setNetElementActivationRegistry(owner);
-                for (var link : nodes[i].getOutLinks().values()) {
-                    ((AbstractQLink) qNetwork.getNetsimLink(link.getId())).setNetElementActivationRegistry(owner);
-                }
+            assignment = partitionCache.get(nodes, sim.getScenario(), runners.size());
+        } else {
+            assignment = new int[nodes.length];
+            for (int i = 0; i < nodes.length; i++) assignment[i] = i % runners.size();
+        }
+        for (int i = 0; i < nodes.length; i++) {
+            Runner owner = runners.get(assignment[i]);
+            sizes[assignment[i]]++;
+            var node = qNetwork.getNetsimNodes().get(nodes[i].getId());
+            if (!(node instanceof AbstractQNode qNode)) throw new IllegalArgumentException("Unsupported QNode: " + node.getClass());
+            qNode.setNetElementActivationRegistry(owner);
+            for (var link : nodes[i].getOutLinks().values()) {
+                ((AbstractQLink) qNetwork.getNetsimLink(link.getId())).setNetElementActivationRegistry(owner);
             }
+        }
+        for (int i = 0; i < runners.size(); i++) runners.get(i).initializeActivationBuffer(sizes[i]);
+        if (weighted && feedback) {
+            measuredWork = new double[nodes.length];
+            positions = new Int2IntOpenHashMap(nodes.length);
+            positions.defaultReturnValue(-1);
+            for (int i = 0; i < nodes.length; i++) positions.put(nodes[i].getId().index(), i);
         }
         nodeOrder = runners.toArray(Runner[]::new);
         linkOrder = nodeOrder.clone();
@@ -87,7 +109,12 @@ public final class FastQNetsimEngine extends AbstractQNetsimEngine<FastQNetsimEn
     }
 
     @Override protected void run(double time) {
-        for (var runner : nodeOrder) runner.setTime(time);
+        for (var runner : nodeOrder) {
+            runner.setTime(time);
+            // Separate from block cost sampling: two clock reads per active
+            // element only once in 256 steps, to guide the following iteration.
+            runner.measureElements = measuredWork != null && (steps & 255) == 128;
+        }
         sample = (steps & 15) == 0;
         if ((steps & 127) == 0) {
             Arrays.sort(nodeOrder, NODE_COST);
@@ -120,15 +147,36 @@ public final class FastQNetsimEngine extends AbstractQNetsimEngine<FastQNetsimEn
         }
         int threads = numOfThreads;
         if (!unknown && minWorkPerThreadNanos > 0) {
-            threads = Math.max(1, (int) Math.min(numOfThreads, Math.ceil(cost / minWorkPerThreadNanos)));
+            double coordination = movingNodes ? nodeCoordinationNanos : linkCoordinationNanos;
+            double target = Math.max(minWorkPerThreadNanos, adaptive ? 4 * coordination : 0);
+            threads = Math.max(1, (int) Math.min(numOfThreads, Math.ceil(cost / target)));
+            // Occasional two-worker probes prevent a transient OS pause from
+            // leaving otherwise useful parallelism permanently disabled.
+            if (adaptive && (steps & 1023) == 0) threads = Math.min(numOfThreads, Math.max(2, threads));
         }
         if (size > 1 && threads > 1) parallelPhases++; else directPhases++;
+        if (size > 0) {
+            int requested = Math.min(size, threads);
+            requestedWorkerPhases += requested;
+            activePhases++;
+            maxActiveWorkers = Math.max(maxActiveWorkers, requested);
+            if (requested == numOfThreads) fullWorkerPhases++;
+        }
         scheduler.execute(work, size, sample, threads);
+        if (sample && size > 1 && threads > 1) {
+            double overhead = scheduler.lastCoordinationNanos();
+            if (movingNodes) nodeCoordinationNanos = nodeCoordinationNanos == 0 ? overhead
+                    : 0.95 * nodeCoordinationNanos + 0.05 * overhead;
+            else linkCoordinationNanos = linkCoordinationNanos == 0 ? overhead
+                    : 0.95 * linkCoordinationNanos + 0.05 * overhead;
+        }
         Arrays.fill(work, 0, size, null);
     }
 
     @Override protected void finishMultiThreading() {
         if (scheduler != null) scheduler.close();
+        if (measuredWork != null && partitionCache != null)
+            partitionCache.recordWork(sim.getScenario(), assignment, partitionNodes, measuredWork);
         double nodeWork = 0, linkWork = 0;
         for (var runner : getQnetsimEngineRunner()) {
             nodeWork += runner.sampledNodeNanos;
@@ -139,13 +187,31 @@ public final class FastQNetsimEngine extends AbstractQNetsimEngine<FastQNetsimEn
                 nodeWork / 1e6, linkWork / 1e6);
         log.info("Fast QSim sampled parallel-phase worker occupancy: {}% (elapsed time processing blocks, including waits inside blocks; not CPU utilization).",
                 100.0 * scheduler.sampledOccupancy());
+        log.info("Fast QSim coordination estimate={} us; sampled stolen blocks={}%; locality={}, adaptive={}, feedback={}",
+                scheduler.coordinationNanos() / 1000, scheduler.stolenFraction() * 100,
+                System.getProperty("eqasim.qsim.localScheduling", "true"), adaptive, feedback);
+        log.info("Fast QSim requested workers: mean={}, maximum={}, phases requesting all configured workers={}; node/link coordination={} / {} us",
+                activePhases == 0 ? 0 : (double) requestedWorkerPhases / activePhases,
+                maxActiveWorkers, fullWorkerPhases, nodeCoordinationNanos / 1000, linkCoordinationNanos / 1000);
     }
 
-    final class Runner extends AbstractQNetsimEngineRunner implements Runnable {
+    final class Runner extends AbstractQNetsimEngineRunner implements QSimWorkScheduler.LocalTask {
+        private final int preferredWorker;
         private double nodeCost, linkCost;
         private long sampledNodeNanos, sampledLinkNanos;
 
-        Runner() { super(true); }
+        Runner(int preferredWorker) { super(true); this.preferredWorker = preferredWorker; }
+
+        @Override public int preferredWorker() { return preferredWorker; }
+
+        @Override protected void recordNodeWork(QNodeI node, long nanos) { record(node.getNode(), nanos); }
+        @Override protected void recordLinkWork(QLinkI link, long nanos) { record(link.getLink().getFromNode(), nanos); }
+        private void record(Node node, long nanos) {
+            int index = positions.get(node.getId().index());
+            if (index < 0) throw new IllegalStateException("Unknown measured QSim node");
+            // One owner per node and its outgoing links, so no atomic updates.
+            measuredWork[index] += Math.min(1_000_000, Math.max(1, nanos));
+        }
 
         @Override public void run() {
             long start = sample ? System.nanoTime() : 0;

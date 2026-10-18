@@ -23,6 +23,35 @@ import org.matsim.vehicles.VehicleUtils;
 import static org.junit.Assert.*;
 
 public class TestFastQNetsimEngine {
+    @Test(timeout = 120_000) public void holeTrafficModelsAndCapacityVariantsMatchNativeScheduling() {
+        for (var traffic : List.of(QSimConfigGroup.TrafficDynamics.withHoles,
+                QSimConfigGroup.TrafficDynamics.kinematicWaves)) {
+            for (var dynamics : QSimConfigGroup.LinkDynamics.values()) {
+                for (boolean fastCapacity : new boolean[] {false, true}) {
+                    assertEquals(traffic + " / " + dynamics + " / fastCapacity=" + fastCapacity,
+                            run(4, dynamics, false, traffic, fastCapacity),
+                            run(4, dynamics, true, traffic, fastCapacity));
+                }
+            }
+        }
+    }
+
+    @Test(timeout = 120_000) public void manyWorkersAndActivationFallbackPreserveEvents() {
+        var expected = run(4, QSimConfigGroup.LinkDynamics.SeepageQ, false);
+        String previous = System.getProperty("eqasim.qsim.arrayActivations");
+        try {
+            for (int threads : new int[] {24, 48}) {
+                for (String setting : List.of("true", "false")) {
+                    System.setProperty("eqasim.qsim.arrayActivations", setting);
+                    assertEquals(expected, run(threads, QSimConfigGroup.LinkDynamics.SeepageQ, true));
+                }
+            }
+        } finally {
+            if (previous == null) System.clearProperty("eqasim.qsim.arrayActivations");
+            else System.setProperty("eqasim.qsim.arrayActivations", previous);
+        }
+    }
+
     @Test(timeout = 120_000) public void congestedMergesSplitsAndCrossPartitionTripsMatchNative() {
         for (int threads : new int[] {1, 4}) {
             for (var dynamics : QSimConfigGroup.LinkDynamics.values()) {
@@ -33,11 +62,24 @@ public class TestFastQNetsimEngine {
     }
 
     static List<String> run(int threads, QSimConfigGroup.LinkDynamics dynamics, boolean fast) {
+        return run(threads, dynamics, fast, null, null);
+    }
+
+    static List<String> run(int threads, QSimConfigGroup.LinkDynamics dynamics, boolean fast,
+            QSimConfigGroup.TrafficDynamics traffic, Boolean fastCapacity) {
+        return run(threads, dynamics, fast, traffic, fastCapacity, null);
+    }
+
+    static List<String> run(int threads, QSimConfigGroup.LinkDynamics dynamics, boolean fast,
+            QSimConfigGroup.TrafficDynamics traffic, Boolean fastCapacity,
+            org.matsim.core.mobsim.qsim.qnetsimengine.flow_efficiency.FlowEfficiencyCalculator efficiency) {
         MatsimRandom.reset(42);
         var config = ConfigUtils.createConfig();
         config.qsim().setNumberOfThreads(threads);
         config.qsim().setMainModes(Set.of("car", "bike"));
         config.qsim().setLinkDynamics(dynamics);
+        if (traffic != null) config.qsim().setTrafficDynamics(traffic);
+        if (fastCapacity != null) config.qsim().setUsingFastCapacityUpdate(fastCapacity);
         config.qsim().setSeepModes(Set.of("bike"));
         config.qsim().setRestrictingSeepage(true);
         config.qsim().setSeepModeStorageFree(true);
@@ -68,6 +110,7 @@ public class TestFastQNetsimEngine {
             var type = VehicleUtils.createVehicleType(Id.create(mode, org.matsim.vehicles.VehicleType.class));
             type.setNetworkMode(mode); type.setMaximumVelocity(mode.equals("bike") ? 5 : 20);
             type.setPcuEquivalents(mode.equals("bike") ? 0.25 : 1);
+            type.setFlowEfficiencyFactor(mode.equals("bike") ? 0.8 : 1.2);
             scenario.getVehicles().addVehicleType(type);
             for (int i = 0; i < 100; i++) {
                 int origin = i < 80 ? 0 : i % 7;
@@ -99,6 +142,11 @@ public class TestFastQNetsimEngine {
         var qsim = new QSimBuilder(config).useDefaults().addOverridingQSimModule(new AbstractQSimModule() {
             @Override protected void configureQSim() {
                 if (fast) bind(QNetsimEngineI.class).to(FastQNetsimEngine.class).in(Singleton.class);
+                if (efficiency != null) bind(QNetworkFactory.class).toProvider(() -> {
+                    var networkFactory = new ConfigurableQNetworkFactory(events, scenario);
+                    networkFactory.setFlowEfficiencyCalculator(efficiency);
+                    return networkFactory;
+                }).in(Singleton.class);
             }
         }).build(scenario, events);
         qsim.run();

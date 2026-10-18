@@ -44,6 +44,19 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 	private final boolean compact;
 	private final ArrayList<QNodeI> activeNodes;
 	private final List<QLinkI> linksList;
+	private PhaseActivationBuffer<QNodeI> activations;
+	private java.util.function.Consumer<QNodeI> appendActivation;
+	protected boolean measureElements;
+
+	final void initializeActivationBuffer(int ownedNodes) {
+		if (!compact || !Boolean.parseBoolean(System.getProperty("eqasim.qsim.arrayActivations", "true"))) return;
+		if (!nodesQueue.isEmpty()) throw new IllegalStateException("Cannot replace an active node queue");
+		activations = new PhaseActivationBuffer<>(ownedNodes);
+		appendActivation = activeNodes::add;
+	}
+
+	protected void recordNodeWork(QNodeI node, long nanos) { }
+	protected void recordLinkWork(QLinkI link, long nanos) { }
 
 	AbstractQNetsimEngineRunner() { this(false); }
 
@@ -103,11 +116,15 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 			// Producers run only outside the node phase. Drain new activations
 			// behind surviving nodes, retaining the native queue order.
 			QNodeI node;
-			while ((node = nodesQueue.poll()) != null) activeNodes.add(node);
+			if (activations != null) activations.drainTo(appendActivation);
+			else while ((node = nodesQueue.poll()) != null) activeNodes.add(node);
 			int retained = 0;
 			for (int i = 0, size = activeNodes.size(); i < size; i++) {
 				node = activeNodes.get(i);
-				if (node.doSimStep(time)) {
+				long started = measureElements ? System.nanoTime() : 0;
+				boolean remains = node.doSimStep(time);
+				if (measureElements) recordNodeWork(node, System.nanoTime() - started);
+				if (remains) {
 					if (retained != i) activeNodes.set(retained, node);
 					retained++;
 				}
@@ -134,7 +151,10 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 			int retained = 0;
 			for (int i = 0, size = linksList.size(); i < size; i++) {
 				QLinkI link = linksList.get(i);
-				if (link.doSimStep()) {
+				long started = measureElements ? System.nanoTime() : 0;
+				boolean remains = link.doSimStep();
+				if (measureElements) recordLinkWork(link, System.nanoTime() - started);
+				if (remains) {
 					if (retained != i) linksList.set(retained, link);
 					retained++;
 				}
@@ -180,7 +200,10 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 	 */
 	@Override
 	protected final void registerNodeAsActive(QNodeI node) {
-		if (!this.lockNodes) this.nodesQueue.add(node);
+		if (!this.lockNodes) {
+			if (activations != null) activations.add(node);
+			else this.nodesQueue.add(node);
+		}
 		else throw new RuntimeException("Tried to activate a QNode at a time where this was not allowed. Aborting!");
 	}
 
@@ -192,11 +215,11 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 	 */
 	@Override
 	public final int getNumberOfSimulatedNodes() {
-		return this.nodesQueue.size() + (compact ? activeNodes.size() : 0);
+		return (activations != null ? activations.size() : nodesQueue.size()) + (compact ? activeNodes.size() : 0);
 	}
 
 	protected final boolean hasNodesToMove() {
-		return !nodesQueue.isEmpty() || (compact && !activeNodes.isEmpty());
+		return (activations != null ? activations.size() != 0 : !nodesQueue.isEmpty()) || (compact && !activeNodes.isEmpty());
 	}
 
 	protected final boolean hasLinksToMove() { return !linksList.isEmpty(); }
