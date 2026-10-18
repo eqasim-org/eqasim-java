@@ -35,6 +35,9 @@ public class LinkCategorizer {
     private final Map<Id<Link>, Integer> freespeedSpecialRegionByLinkId = new HashMap<>();
     private final boolean hasPenaltySpecialRegions;
     private final boolean hasFreespeedSpecialRegions;
+    // Ten immutable group keys per configured region, shared by all links and
+    // routing workers. Cache the key values, not a link's changing category.
+    private final PenaltyGroupKey[][][] penaltyKeys;
     private final double categoryFivePromotionLaneThreshold;
     private final double categoryFivePromotionSpeedThreshold;
 
@@ -52,6 +55,14 @@ public class LinkCategorizer {
         this.hasFreespeedSpecialRegions = !freespeedSpecialRegionFiles.isEmpty();
 
         initSpecialRegions(network, penaltiesSpecialRegionFiles, freespeedSpecialRegionFiles);
+        penaltyKeys = new PenaltyGroupKey[5][2][penaltiesSpecialRegionFiles.size() + 1];
+        for (int category = 1; category <= 5; category++) {
+            for (int urban = 0; urban <= 1; urban++) {
+                for (int region = 0; region <= penaltiesSpecialRegionFiles.size(); region++) {
+                    penaltyKeys[category - 1][urban][region] = new PenaltyGroupKey(category, urban == 1, region);
+                }
+            }
+        }
     }
 
     /**
@@ -64,7 +75,15 @@ public class LinkCategorizer {
             return null;
         }
 
-        return new PenaltyGroupKey(linkCategory, isUrbanLink(link), getPenaltiesSpecialRegionId(link));
+        // Re-evaluate current lanes/freespeed and attributes above: calibration
+        // can promote category five to four, and penalties are updated separately.
+        boolean urban = isUrbanLink(link);
+        int region = getPenaltiesSpecialRegionId(link);
+        if (linkCategory >= 1 && linkCategory <= 5 && region >= 0 && region < penaltyKeys[0][0].length) {
+            return penaltyKeys[linkCategory - 1][urban ? 1 : 0][region];
+        }
+        // Preserve extension/subclass behavior for regions outside the configured pool.
+        return new PenaltyGroupKey(linkCategory, urban, region);
     }
 
     public FreespeedCalibrationKey getFreespeedCalibrationKey(Link link) {

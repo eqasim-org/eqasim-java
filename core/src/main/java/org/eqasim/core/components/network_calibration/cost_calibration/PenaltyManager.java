@@ -15,6 +15,9 @@ import java.util.Map;
 public class PenaltyManager {
     private static final Logger logger = LogManager.getLogger(PenaltyManager.class);
     private static final int LAST_PENALTY_WINDOW = 4;
+    // getOrDefault evaluates the default even for a hit. Share its immutable
+    // boxed value instead of allocating a Double for every route-cost lookup.
+    private static final Double ZERO_PENALTY = 0.0;
 
     private final Map<PenaltyGroupKey, Double> penalties = new HashMap<>();
     private final Map<PenaltyGroupKey, Deque<Double>> lastFourPenalties = new HashMap<>();
@@ -64,7 +67,7 @@ public class PenaltyManager {
      * Gets the penalty for a category, defaulting to 0.0 if not set.
      */
     public double getPenalty(PenaltyGroupKey key) {
-        return penalties.getOrDefault(key, 0.0);
+        return penalties.getOrDefault(key, ZERO_PENALTY);
     }
 
     public double getAverageOfLastFourPenalties(PenaltyGroupKey key) {
