@@ -5,6 +5,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.core.components.network_calibration.LinkCategorizer;
 import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup;
+import org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory;
+import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
@@ -28,6 +30,7 @@ import java.util.concurrent.Future;
 public class TripsHandler {
     private static final Logger logger = LogManager.getLogger(TripsHandler.class);
 
+    private final Network sourceNetwork;
     private final Network network;
     private final LinkCategorizer categorizer;
     private final List<ObservedTripsTravelTimesCsvHandler.ObservedSpeedTrip> observedTrips;
@@ -45,7 +48,8 @@ public class TripsHandler {
                         TravelTime carTravelTime,
                         Provider<LeastCostPathCalculatorFactory> routerFactoryProvider,
                         int threads) {
-        this.network = network;
+        this.sourceNetwork = network;
+        this.network = new RoadNetwork(network);
         this.freespeedConfig = freespeedConfig;
         this.routerFactoryProvider = routerFactoryProvider;
         this.categorizer = categorizer;
@@ -82,6 +86,12 @@ public class TripsHandler {
     private Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> routeTripsAndCollectGroupStats() {
         logger.info("Start routing trips and collecting group stats for freespeed calibration");
         if (observedTrips.isEmpty()) return Map.of();
+        // Filtering copies links. Keep fallback times and ALT minimum costs in
+        // sync with factors applied to the simulation network in earlier passes.
+        // This happens before workers start; topology/restrictions remain fixed.
+        for (Link link : network.getLinks().values()) {
+            link.setFreespeed(sourceNetwork.getLinks().get(link.getId()).getFreespeed());
+        }
         logger.info("Using car TravelTime implementation for calibration routing: {}", carTravelTime.getClass().getName());
         int workerCount = Math.max(1, Math.min(threads, observedTrips.size()));
         // Resolve the injected factory once: RunSimulation's optimized-router override
@@ -89,9 +99,8 @@ public class TripsHandler {
         LeastCostPathCalculatorFactory configured = routerFactoryProvider.get();
         // Factors (and hence ALT lower bounds) change after each calibration pass.
         // Do not accumulate obsolete landmark sets in the simulation singleton.
-        LeastCostPathCalculatorFactory factory = configured instanceof
-                org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory
-                ? new org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory() : configured;
+        LeastCostPathCalculatorFactory factory = configured instanceof MemoryEfficientSpeedyALTFactory
+                ? new MemoryEfficientSpeedyALTFactory() : configured;
         logger.info("Calibration router: {}; workers={}", factory.getClass().getName(), workerCount);
         var costs = new OnlyTimeDependentTravelDisutility(carTravelTime);
         var routers = new ArrayList<LeastCostPathCalculator>(workerCount);

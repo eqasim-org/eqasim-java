@@ -11,6 +11,8 @@ import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGr
 import org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory;
 import org.eqasim.core.components.travel_time.FloatTravelTimeCalculator;
 import org.junit.Test;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
@@ -21,6 +23,42 @@ import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import static org.junit.Assert.*;
 
 public class TestTripsHandlerRouting {
+    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+
+    @Test public void successiveOptimizedPassesUseUpdatedFreespeedsAndSharedFloatFallback() throws Exception {
+        var network = NetworkUtils.createNetwork();
+        var a = NetworkUtils.createAndAddNode(network, Id.createNodeId("a"), new Coord(0, 0));
+        var b = NetworkUtils.createAndAddNode(network, Id.createNodeId("b"), new Coord(1000, 0));
+        var c = NetworkUtils.createAndAddNode(network, Id.createNodeId("c"), new Coord(2000, 0));
+        var ab = NetworkUtils.createAndAddLink(network, Id.createLinkId("ab"), a, b, 1000, 10, 3600, 1);
+        var bc = NetworkUtils.createAndAddLink(network, Id.createLinkId("bc"), b, c, 1000, 10, 3600, 1);
+        for (var link : List.of(ab, bc)) {
+            link.getAttributes().putAttribute("osm:way:highway", "primary");
+            link.getAttributes().putAttribute("municipalityType", "urban");
+        }
+        // No observations: the shared collector must use the currently calibrated
+        // free speed, rather than the speed from the original filtered network.
+        var collector = new FloatTravelTimeCalculator(network, ConfigUtils.createConfig().travelTimeCalculator());
+        collector.prepareForRouting();
+        var config = new NetworkCalibrationConfigGroup(); config.setActivate(true); config.setCalibrate(true);
+        var settings = config.getFreeSpeedCalibrationConfigGroup(); settings.setActivate(true);
+        settings.setMinTripDistance(1); settings.setMinTripTravelTime(1);
+        var file = temporary.newFile("observed.csv").toPath();
+        Files.writeString(file, "identifier,departure_x,departure_y,arrival_x,arrival_y,departure_time,travel_time,traveled_distance\n"
+                + "1,0,0,2000,0,100,400,2000\n2,0,0,2000,0,100,400,2000\n");
+        settings.setObservedTripsFile(file.toString());
+        var simulationFactory = new MemoryEfficientSpeedyALTFactory();
+        var handler = new TripsHandler(network, config, settings, new LinkCategorizer(network, config),
+                collector.getLinkTravelTimes(), () -> simulationFactory, 2);
+        assertEquals(400, handler.routeTrips().values().iterator().next().simulatedTime, 1e-7);
+        ab.setFreespeed(5); bc.setFreespeed(5);
+        assertEquals(800, handler.routeTrips().values().iterator().next().simulatedTime, 1e-7);
+        assertTrue("Calibration passes must not retain obsolete landmark sets in the simulation factory",
+                simulationFactory.getStatistics().isEmpty());
+        assertEquals(0, collector.getStorageStatistics().linkRows());
+        assertEquals(0, collector.getStorageStatistics().observationCountBytes());
+    }
+
     @Test public void injectedFactoryAndSharedFloatTimesUseOnlyConfiguredPrivateWorkers() throws Exception {
         var network = NetworkUtils.createNetwork();
         var a = NetworkUtils.createAndAddNode(network, Id.createNodeId("a"), new Coord(0, 0));

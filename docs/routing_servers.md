@@ -1,10 +1,26 @@
 # Shared routing in calibration and servers
 
-`RunSimulation --memory-efficient-routing true` selects optimized SpeedyALT for
-simulation routing and freespeed calibration. Float observed travel times are
-enabled by default; `--float-travel-times false` restores the original collector.
+`RunSimulation` selects optimized SpeedyALT and float observed travel times by
+default. `--memory-efficient-routing false` restores the original configured
+router; `--float-travel-times false` restores the original collector.
 Calibration receives the named car travel-time binding, retaining simulated
 conditions rather than substituting synthetic free-speed observations.
+
+All road-routing paths in `org.eqasim.core.components.network_calibration`
+inherit these bindings:
+
+| Component | Routing and travel times |
+| --- | --- |
+| Freespeed calibration | Private worker routers; shared named car travel times; fresh optimized preprocessing each pass |
+| Background relocation (freight and cross-border) | Worker-local `PlanRouter`/`TripRouter`, using the simulation's configured road routers and shared travel times |
+| Cross-border cloning | Worker-local `PlanRouter`/`TripRouter`, using the same simulation bindings for car/truck |
+| Cost calibration | Changes road disutility; retains the simulation's router and travel-time bindings |
+| Agent ASCs, capacity correction, counts/flow processing | No independent path calculator or travel-time table |
+
+The optimized modules must be installed by the application, as in the Switzerland
+runner; `NetworkCalibrationModule` does not install duplicate collectors or
+override mode-specific bike/VDF travel times. PT continues to use its transit
+router, and teleported modes retain their configured routing.
 
 Calibration uses at most `global.numberOfThreads` workers, capped by trip count.
 Workers take trips dynamically and own separate mutable routers and statistics.
@@ -14,6 +30,12 @@ the preprocessing lower bounds afterward, and obsolete calibration landmark sets
 must not accumulate in the simulation's factory. Every worker finishes before
 statistics are returned or factors change. The selected factory and worker count
 are logged. Penalties are restored even if calibration routing fails.
+
+The freespeed handler retains the source simulation network and refreshes the
+speeds in its car-only network before each routing pass. The MATSim mode filter
+copies links, so without this refresh subsequent factor updates would leave
+free-flow fallback times and preprocessing minimum costs using old speeds.
+The shared observed travel-time table is neither copied nor changed by routing.
 
 ## Standalone servers
 

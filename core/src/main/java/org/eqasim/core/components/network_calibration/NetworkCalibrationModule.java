@@ -29,7 +29,6 @@ import org.eqasim.core.components.network_calibration.freespeed_calibration.Free
 import org.eqasim.core.components.flow.LinkFlowCounter;
 import org.eqasim.core.components.network_calibration.freespeed_calibration.TripsHandler;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
-import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.policies.routing.RoutingPenalty;
 import org.matsim.api.core.v01.Scenario;
@@ -212,9 +211,10 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
                                             @Named(TransportMode.car) TravelTime carTravelTime,
                                             Provider<LeastCostPathCalculatorFactory> routerFactoryProvider) {
         int threads = getConfig().global().getNumberOfThreads();
-        RoadNetwork roadNetwork = new RoadNetwork(network);
         NetworkCalibrationConfigGroup config = NetworkCalibrationConfigGroup.getOrCreate(getConfig());
-        return new TripsHandler(roadNetwork, config, config.getFreeSpeedCalibrationConfigGroup(), categorizer, carTravelTime,
+        // Use the same shared, observed travel times as normal simulation routing.
+        // TripsHandler owns its car-only network and refreshes calibrated speeds.
+        return new TripsHandler(network, config, config.getFreeSpeedCalibrationConfigGroup(), categorizer, carTravelTime,
                 routerFactoryProvider, threads);
     }
 

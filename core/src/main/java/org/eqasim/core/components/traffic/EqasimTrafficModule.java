@@ -14,6 +14,7 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.Config;
 import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.mobsim.qsim.qnetsimengine.FastQSimPartitionCache;
 
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -22,6 +23,7 @@ public class EqasimTrafficModule extends AbstractModule {
     private static final Logger logger = LogManager.getLogger(EqasimTrafficModule.class);
     @Override
     public void install() {
+        bind(FastQSimPartitionCache.class).in(Singleton.class);
         // here we check whether the traffic light crossing penalty is based on delays or attributes, and bind the appropriate implementation accordingly
         Config config = getConfig();
         DelaysConfigGroup tlConfig = DelaysConfigGroup.getOrCreate(config);
