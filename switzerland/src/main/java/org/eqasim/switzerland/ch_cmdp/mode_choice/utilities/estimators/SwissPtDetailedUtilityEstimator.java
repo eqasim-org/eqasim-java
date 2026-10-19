@@ -192,30 +192,21 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
     }
 
     protected double estimateServiceQualityUtility(SwissPersonVariables personVariables, DiscreteModeChoiceTrip trip) {
-        return (estimateGoodPtServiceUtility(personVariables) +
-                estimateMediumPtServiceUtility(personVariables) +
-                estimateDestinationMediumPtServiceUtility(trip) +
-                estimateDestinationGoodPtServiceUtility(trip));
+        return estimateHomePtQualityUtility(personVariables) + estimateDestinationPtQualityUtility(trip);
     }
 
     protected double estimateLongDistanceUtility(DiscreteModeChoiceTrip trip) {
         return Utils.isLongDistanceTrip(trip, parameters)? parameters.pt.betaLongDistance_u :0.0;
     }
 
-    protected double estimateGoodPtServiceUtility(SwissPersonVariables personVariables) {
-        return Utils.isGoodPtService(personVariables.ovgk)? parameters.pt.betaGoodService_u :0.0;
+    protected double estimateHomePtQualityUtility(SwissPersonVariables personVariables) {
+        return parameters.pt.betaHomePtQuality_u
+                * Utils.getPtQualityPower(personVariables.ovgk, parameters.pt.homePtQualityExponent);
     }
 
-    protected double estimateMediumPtServiceUtility(SwissPersonVariables personVariablesp) {
-        return Utils.isMediumPtService(personVariablesp.ovgk)? parameters.pt.betaMediumService_u :0.0;
-    }
-
-    protected double estimateDestinationMediumPtServiceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsMediumPtService(trip)? parameters.pt.betaDestinationMediumService_u :0.0;
-    }
-
-    protected double estimateDestinationGoodPtServiceUtility(DiscreteModeChoiceTrip trip) {
-        return Utils.destinationIsGoodPtService(trip)? parameters.pt.betaDestinationGoodService_u :0.0;
+    protected double estimateDestinationPtQualityUtility(DiscreteModeChoiceTrip trip) {
+        return parameters.pt.betaDestinationPtQuality_u
+                * Utils.getDestinationPtQualityPower(trip, parameters.pt.destinationPtQualityExponent);
     }
 
     protected double estimateDensitiesUtility(DiscreteModeChoiceTrip trip) {
@@ -321,8 +312,8 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         ptAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
 
         // service quality used in utility
-        ptAttributes.put("goodPtService", Utils.isGoodPtService(personVariables.ovgk) ? "1" : "0");
-        ptAttributes.put("mediumPtService", Utils.isMediumPtService(personVariables.ovgk) ? "1" : "0");
+        ptAttributes.put("homePtQuality", String.valueOf(Utils.getPtQuality(personVariables.ovgk)));
+        ptAttributes.put("destinationPtQuality", String.valueOf(Utils.getDestinationPtQuality(trip)));
 
         // PT level-of-service terms used in utility
         ptAttributes.put("inVehicleTime_min", String.valueOf(inVehicleTime(ptVariables)));
