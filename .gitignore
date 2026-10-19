@@ -6,4 +6,9 @@ target
 dependency-reduced-pom.xml
 *.iml
 *.idea
+simulation_output_old
 simulation_output
+simulation_output_sev
+scenarios
+simulation_output*
+melun_test

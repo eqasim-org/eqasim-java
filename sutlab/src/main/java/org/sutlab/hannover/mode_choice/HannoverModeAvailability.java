@@ -29,9 +29,11 @@ public class HannoverModeAvailability implements ModeAvailability {
 		}
 
 		// Check bicycle availability
-		if (HannoverPredictorUtils.hasBicycleAvailability(person)) {
-			modes.add(HannoverModeChoiceModule.BICYCLE);
-		}
+//		if (HannoverPredictorUtils.hasBicycleAvailability(person)) {
+//			modes.add(HannoverModeChoiceModule.BICYCLE);
+//		}
+
+		modes.add(HannoverModeChoiceModule.BICYCLE);
 
 		// Add special mode "outside" if applicable
 		if (HannoverPredictorUtils.isOutside(person)) {

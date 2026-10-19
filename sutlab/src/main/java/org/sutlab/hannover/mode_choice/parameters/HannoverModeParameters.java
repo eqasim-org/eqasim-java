@@ -31,11 +31,11 @@ public class HannoverModeParameters extends ModeParameters {
 		parameters.referenceEuclideanDistance_km = 4.4;
 
 		// Car
-		parameters.car.alpha_u = 0.4; // -0.201465;
+		parameters.car.alpha_u = -0.8604; // -0.201465;
 		parameters.car.betaTravelTime_u_min = -0.042431;
 
 		// Car passenger
-		parameters.carPassenger.alpha_u = -1.4; // -1.713201;
+		parameters.carPassenger.alpha_u = -1.9830; // -1.713201;
 		parameters.hannoverCarPassenger.betaDrivingPermit_u = -0.835542;
 		parameters.carPassenger.betaInVehicleTravelTime_u_min = -0.069976;
 
@@ -49,11 +49,11 @@ public class HannoverModeParameters extends ModeParameters {
 		parameters.hannoverPt.onlyBus_u = -1.416309;
 
 		// Bike
-		parameters.bike.alpha_u = -0.5; // -2.927596;
+		parameters.bike.alpha_u = -0.0333; // -2.927596;
 		parameters.bike.betaTravelTime_u_min = -0.093485;
 
 		// Walk
-		parameters.walk.alpha_u = 1.8; // 1.685152;
+		parameters.walk.alpha_u = 2.8531; // 1.685152;
 		parameters.walk.betaTravelTime_u_min = -0.162285;
 
 		return parameters;
