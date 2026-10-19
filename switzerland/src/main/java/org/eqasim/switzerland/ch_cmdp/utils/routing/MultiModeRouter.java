@@ -278,9 +278,7 @@ public final class MultiModeRouter implements AutoCloseable {
                                 .createTravelDisutility(cappedFreeflow);
                         NetworkUtils.getNearestLink(carNetwork, carNetwork.getNodes().values().iterator().next().getCoord());
                         factories.put(mode, () -> {
-                            var module = DefaultRoutingModules.createPseudoTransitRouter(mode,
-                                    PopulationUtils.getFactory(), carNetwork,
-                                    requirePath(factory.createPathCalculator(carNetwork, cost, cappedFreeflow)), params);
+                            var module = createFreespeedFactorRouter(mode, carNetwork, factory, cost, cappedFreeflow, params);
                             return planRouter(module::calcRoute, carNetwork, mode);
                         });
                     } else {
@@ -928,5 +926,15 @@ public final class MultiModeRouter implements AutoCloseable {
         /** Saved itinerary and traveler data for later PT fare calculation. */
         @JsonProperty("pt_cost_data")
         public String ptCostData;
+    }
+
+    /** Keep unreachable-path handling when using MATSim's freespeed-factor router. */
+    private static org.matsim.core.router.RoutingModule createFreespeedFactorRouter(String mode,
+            org.matsim.api.core.v01.network.Network network, MemoryEfficientSpeedyALTFactory factory,
+            TravelDisutility cost, TravelTime time, org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams params) {
+        org.matsim.core.router.util.LeastCostPathCalculatorFactory checked =
+                (net, disutility, travelTime) -> requirePath(factory.createPathCalculator(net, disutility, travelTime));
+        return DefaultRoutingModules.createFreespeedFactorRouter(mode, PopulationUtils.getFactory(), network,
+                checked, time, cost, params);
     }
 }

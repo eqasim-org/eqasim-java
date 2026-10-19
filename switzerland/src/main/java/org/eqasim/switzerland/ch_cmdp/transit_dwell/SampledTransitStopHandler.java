@@ -1,7 +1,7 @@
 package org.eqasim.switzerland.ch_cmdp.transit_dwell;
 
 import java.util.List;
-import org.matsim.core.mobsim.qsim.interfaces.MobsimVehicle;
+import org.matsim.api.core.v01.Message;
 import org.matsim.core.mobsim.qsim.pt.*;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.Vehicle;
@@ -34,10 +34,17 @@ public final class SampledTransitStopHandler implements TransitStopHandler {
         }
     }
 
+    SampledTransitStopHandler(TransitStopHandler delegateHandler) {
+        this.delegateHandler = delegateHandler;
+    }
+
+    @Override public Message toMessage() { return delegateHandler.toMessage(); }
+
     @Override
     public double handleTransitStop(TransitStopFacility stop, double now,
             List<PTPassengerAgent> leavingPassengers, List<PTPassengerAgent> enteringPassengers,
-            PassengerAccessEgress accessEgress, MobsimVehicle vehicle) {
-        return delegateHandler.handleTransitStop(stop, now, leavingPassengers, enteringPassengers, accessEgress, vehicle);
+            List<PTPassengerAgent> relocatingPassengers, PassengerAccessEgress accessEgress, TransitVehicle vehicle) {
+        return delegateHandler.handleTransitStop(stop, now, leavingPassengers, enteringPassengers,
+                relocatingPassengers, accessEgress, vehicle);
     }
 }

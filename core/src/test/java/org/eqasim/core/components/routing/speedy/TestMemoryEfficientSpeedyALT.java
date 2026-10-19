@@ -46,9 +46,9 @@ public class TestMemoryEfficientSpeedyALT {
             Object referenceData = field(reference16, "astarData");
             Object referenceGraph = field(referenceData, "graph");
             var dataConstructor = referenceData.getClass().getDeclaredConstructor(
-                    referenceGraph.getClass(), int.class, TravelDisutility.class);
+                    referenceGraph.getClass(), int.class, TravelDisutility.class, int.class);
             dataConstructor.setAccessible(true);
-            Object data32 = dataConstructor.newInstance(referenceGraph, 32, cost);
+            Object data32 = dataConstructor.newInstance(referenceGraph, 32, cost, 1);
             var routerConstructor = reference16.getClass().getDeclaredConstructor(
                     referenceData.getClass(), TravelTime.class, TravelDisutility.class);
             routerConstructor.setAccessible(true);

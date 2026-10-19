@@ -20,9 +20,11 @@
 	</dependencies>
 
 	<profiles>
+
 		<profile>
 			<id>standalone</id>
 			<build>
+				<finalName>switzerland</finalName>
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -44,6 +46,8 @@
 												<Implementation-Vendor>Eqasim</Implementation-Vendor>
 												<Implementation-Version>
 													${parent.groupId}</Implementation-Version>
+												<Main-Class>org.eqasim.switzerland.ch_cmdp.RunSimulation</Main-Class>
+												<Add-Opens>java.base/jdk.internal.misc java.base/java.lang.invoke</Add-Opens>
 											</manifestEntries>
 										</transformer>
 									</transformers>

@@ -183,12 +183,10 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 		}
 	}
 
-	@Override
 	public void onPrepareSim() {
 		// Nothing to do
 	}
 
-	@Override
 	public void afterSim() {
 		EventsManager eventsManager = internalInterface.getMobsim().getEventsManager();
 		double now = internalInterface.getMobsim().getSimTimer().getTimeOfDay();
@@ -233,4 +231,7 @@ public class VDFEngine implements DepartureHandler, MobsimEngine {
 			return Double.compare(a.arrivalTime, b.arrivalTime);
 		}
 	}
+    // MATSim 2026 renamed the MobsimEngine lifecycle callbacks.
+    public void beforeMobsim() { onPrepareSim(); }
+    public void afterMobsim() { afterSim(); }
 }

@@ -138,14 +138,26 @@ public class SpeedyALT implements LeastCostPathCalculator {
 
 		while (!this.pq.isEmpty()) {
 			final int nodeIdx = this.pq.poll();
-			if (nodeIdx == endNodeIndex) {
+			if (!hasTurnRestrictions && nodeIdx == endNodeIndex) {
 				foundEndNode = true;
 				break;
 			}
 			// if turn restrictions are used, we might be on a colored node, so check for the original node
 			if (hasTurnRestrictions && this.graph.getOriginalNodeIndex(nodeIdx) == endNodeIndex) {
 				foundEndNode = true;
-				endNodeIndex = nodeIdx;
+				// MATSim 2026: different colored approaches have the same ALT
+				// estimate. Select the cheapest destination already on the frontier.
+				int bestNodeIndex = nodeIdx;
+				double bestCost = getCost(nodeIdx);
+				for (int i = 0; i < this.pq.size(); i++) {
+					int candidate = this.pq.nodeAt(i);
+					if (this.graph.getOriginalNodeIndex(candidate) == endNodeIndex
+							&& getCost(candidate) < bestCost) {
+						bestNodeIndex = candidate;
+						bestCost = getCost(candidate);
+					}
+				}
+				endNodeIndex = bestNodeIndex;
 				break;
 			}
 

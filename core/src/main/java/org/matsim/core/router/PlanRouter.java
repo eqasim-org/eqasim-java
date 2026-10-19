@@ -101,6 +101,10 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
     }
 
     private boolean doReRoute(Trip oldTrip, List<? extends PlanElement> newTrip) {
+        // Initial preparation (including switching a mode to teleportation) must install missing routes.
+        if (oldTrip.getLegsOnly().stream().anyMatch(leg -> leg.getRoute() == null || !leg.getTravelTime().isDefined())) {
+            return true;
+        }
         String mainMode = mainMode(oldTrip.getLegsOnly());
         if (mainMode.equals(TransportMode.car) || mainMode.equals(TransportMode.truck)) {
 

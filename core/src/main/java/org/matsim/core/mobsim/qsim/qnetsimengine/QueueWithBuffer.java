@@ -874,8 +874,8 @@ final class QueueWithBuffer implements QLaneI, SignalizeableItem {
 		double now = context.getSimTimer().getTimeOfDay() ;
 
 		for (QVehicle veh : vehQueue) {
-			context.getEventsManager().processEvent( new VehicleAbortsEvent(now, veh.getId(), veh.getCurrentLink().getId()));
-			context.getEventsManager().processEvent( new PersonStuckEvent(now, veh.getDriver().getId(), veh.getCurrentLink().getId(), veh.getDriver().getMode()));
+			context.getEventsManager().processEvent( new VehicleAbortsEvent(now, veh.getId(), qLinkInternalInterface.getLink().getId()));
+			context.getEventsManager().processEvent( new PersonStuckEvent(now, veh.getDriver().getId(), qLinkInternalInterface.getLink().getId(), veh.getDriver().getMode()));
 
 			context.getAgentCounter().incLost();
 			context.getAgentCounter().decLiving();
@@ -883,8 +883,8 @@ final class QueueWithBuffer implements QLaneI, SignalizeableItem {
 		vehQueue.clear();
 
 		if (buffer != null) for (QVehicle veh : buffer) {
-			context.getEventsManager().processEvent( new VehicleAbortsEvent(now, veh.getId(), veh.getCurrentLink().getId()));
-			context.getEventsManager().processEvent( new PersonStuckEvent(now, veh.getDriver().getId(), veh.getCurrentLink().getId(), veh.getDriver().getMode()));
+			context.getEventsManager().processEvent( new VehicleAbortsEvent(now, veh.getId(), qLinkInternalInterface.getLink().getId()));
+			context.getEventsManager().processEvent( new PersonStuckEvent(now, veh.getDriver().getId(), qLinkInternalInterface.getLink().getId(), veh.getDriver().getMode()));
 
 			context.getAgentCounter().incLost();
 			context.getAgentCounter().decLiving();

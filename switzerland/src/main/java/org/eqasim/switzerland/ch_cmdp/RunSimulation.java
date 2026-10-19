@@ -5,6 +5,8 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeCleaner;
+import org.eqasim.switzerland.ch_cmdp.dsim.DsimIntegration;
+import org.eqasim.switzerland.ch_cmdp.dsim.DsimJvmSupport;
 import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
 import org.eqasim.core.components.travel_time.FloatTravelTimeModule;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
@@ -30,18 +32,30 @@ public class RunSimulation {
 		// this is especially important to avoid high waiting times when we cutout scenarios from a larger scenario.
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
-				.allowOptions(ScenarioAttributeCleaner.OPTION, MemoryEfficientRoutingModule.OPTION, FloatTravelTimeModule.OPTION) //
+				.allowOptions(ScenarioAttributeCleaner.OPTION, MemoryEfficientRoutingModule.OPTION,
+                        FloatTravelTimeModule.OPTION, DsimIntegration.OPTION, DsimIntegration.SIMULATE_BIKES_OPTION) //
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
 				.build();
+        if (DsimIntegration.isEnabled(cmd)) {
+            var exit = DsimJvmSupport.runWithModuleAccess(RunSimulation.class.getName(), args);
+            if (exit.isPresent()) {
+                System.exit(exit.getAsInt());
+                return;
+            }
+        }
 		boolean lightenScenario = ScenarioAttributeCleaner.isEnabled(cmd);
         boolean efficientRouting = MemoryEfficientRoutingModule.isEnabled(cmd);
         boolean floatTravelTimes = FloatTravelTimeModule.isEnabled(cmd);
+        DsimIntegration dsim = DsimIntegration.fromCommand(cmd);
 
 		SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new SampledTransitDwellConfigGroup());
 		configurator.updateConfig(config);
 		configurator.configure(config);
 		cmd.applyConfiguration(config);
+        if (dsim == null && "dsim".equals(config.controller().getMobsim())) {
+            throw new IllegalArgumentException("Add --use-dsim true to adapt this scenario for DSim");
+        }
 
 		if (cmd.hasOption("preventwaitingtoentertraffic")) {
 			if (cmd.getOption("preventwaitingtoentertraffic").get().equals("y")) {
@@ -50,6 +64,7 @@ public class RunSimulation {
 			}
 		}
 
+        if (dsim != null) dsim.adaptConfig(config);
 		Scenario scenario = ScenarioUtils.createScenario(config);
 
 		SwissRailRaptorConfigGroup srrConfigGroup = (SwissRailRaptorConfigGroup) config.getModules().getOrDefault("swissRailRaptor", null);
@@ -59,27 +74,32 @@ public class RunSimulation {
 		ScenarioUtils.loadScenario(scenario);
 		configurator.adjustScenario(scenario);
 		configurator.adjustPTpcu(scenario);
+        if (dsim != null) dsim.adaptScenario(scenario);
 		if (lightenScenario) {
 			ScenarioAttributeCleaner.clean(scenario);
 		}
 		Controler controller = new Controler(scenario);
         if (floatTravelTimes) controller.addOverridingModule(new FloatTravelTimeModule());
-		configurator.configureController(controller);
+        if (dsim == null) configurator.configureController(controller);
+        else dsim.configureController(controller, configurator);
         if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
-		controller.addOverridingModule(new PTPassengerCountsModule());
-        controller.addOverridingModule(new PTLinkVolumesModule());
+        if (dsim == null) {
+            controller.addOverridingModule(new PTPassengerCountsModule());
+            controller.addOverridingModule(new PTLinkVolumesModule());
+        }
 		controller.addOverridingModule(new StrategyWeightDecayModule());
 		controller.addOverridingModule(new TollsModule());
 		controller.addOverridingModule(new DetailedLinkStatisticsModule());
 
 		// To use the deterministic pt simulation (Part 1 of 2):
-		controller.addOverridingModule(new SBBTransitModule());
-		// To use the deterministic pt simulation (Part 2 of 2):
-		controller.configureQSimComponents(components -> {
-			new SBBTransitEngineQSimModule().configure(components);
-
-		});
-		controller.addOverridingQSimModule(new SampledTransitDwellQSimModule());
+        if (dsim == null) {
+            controller.addOverridingModule(new SBBTransitModule());
+            // To use the deterministic pt simulation (Part 2 of 2):
+            controller.configureQSimComponents(components -> {
+                new SBBTransitEngineQSimModule().configure(components);
+            });
+            controller.addOverridingQSimModule(new SampledTransitDwellQSimModule());
+        }
 		// save updated config before running the simulation
 		ConfigUtils.writeConfig(config, "run_config.xml");
 		controller.run();
