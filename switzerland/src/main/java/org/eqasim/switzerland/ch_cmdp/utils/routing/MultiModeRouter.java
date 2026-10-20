@@ -73,6 +73,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.OccupancyData;
 import ch.sbb.matsim.routing.pt.raptor.ConfigurableRaptorRouteSelector;
+import ch.sbb.matsim.routing.pt.raptor.ModeSpecificTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
 import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
@@ -304,9 +305,16 @@ public final class MultiModeRouter implements AutoCloseable {
                         scenario.getTransitVehicles(), RaptorUtils.createStaticConfig(config), network, new OccupancyData());
                 NetworkUtils.getNearestLink(network, network.getNodes().values().iterator().next().getCoord());
                 var pricing = computeCost ? RouterCosts.ptPricing(config, costParameters) : null;
+                var raptorConfig = ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
+                boolean useModeSpecificTransferCosts = !raptorConfig.getModeToModeTransferPenaltyParameterSets().isEmpty();
                 factories.put("pt", () -> {
                     var builder = new SwissRailRaptor.Builder(data, config).with(person -> parameters);
-                    if (ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class).isUseRangeQuery()) {
+                    if (useModeSpecificTransferCosts) {
+                        // Match SwissRailRaptorModule: the default calculator deliberately rejects
+                        // configs containing mode-to-mode transfer penalties.
+                        builder.with(new ModeSpecificTransferCostCalculator());
+                    }
+                    if (raptorConfig.isUseRangeQuery()) {
                         builder.with(new ConfigurableRaptorRouteSelector());
                     }
                     return planRouter(builder.build()::calcRoute, network, "pt",

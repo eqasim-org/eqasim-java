@@ -264,6 +264,22 @@ public class TestMultiModeRouterCosts {
     }
 
     @Test
+    public void modeSpecificTransitTransferCostsUseCompatibleRaptorCalculator() throws Exception {
+        Path network = network();
+        Config config = transitConfig();
+        ConfigUtils.addOrGetModule(config, ch.sbb.matsim.config.SwissRailRaptorConfigGroup.class)
+                .addModeToModeTransferPenalty(new ch.sbb.matsim.config.SwissRailRaptorConfigGroup.ModeToModeTransferPenalty(
+                        "bus", "tram", 120));
+        Path input = write("mode-transfer-cost.csv", HEADER + "trip,500,0,1500,0,pt\n");
+        Path output = folder.getRoot().toPath().resolve("mode-transfer-cost-out.csv");
+
+        try (var router = new MultiModeRouter(settings(network, writeConfig(config)))) {
+            assertEquals(1, router.route(input, output));
+            assertTrue(Double.isFinite(Double.parseDouble(rows(output).get(0).get("travel_time"))));
+        }
+    }
+
+    @Test
     public void sharedFareRulesRespectCapsChildDiscountAndRegionalKilometers() {
         var vars = new SwissPtVariables();
         vars.addStage(new SwissPtLegVariables(Map.of(), 0, 100, 100_000, -1, "start", "end", "start", "end"));
