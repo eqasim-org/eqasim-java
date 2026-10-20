@@ -1,10 +1,8 @@
 package org.eqasim.switzerland.ch_cmdp;
 
-//import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Person;
