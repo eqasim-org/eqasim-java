@@ -34,6 +34,9 @@ public class FreeflowConfiguration {
 		@JsonProperty("factor")
 		double factor = 1.0;
 
+		@JsonProperty("crossing_penalty_s")
+		public double crossingPenalty_s = 0.0;
+
 		@JsonProperty("name")
 		String name = "";
 	}
