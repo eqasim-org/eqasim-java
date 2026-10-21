@@ -19,6 +19,14 @@ java -Xmx64g -jar switzerland/target/switzerland.jar --config-path config.xml --
 The upgrade applies to every Maven module in the repository. It requires JDK
 25. The CI workflows and Maven compiler level were changed accordingly.
 
+Guice 7.0.0's default JAR bundles an older ASM that cannot read Java 25 class
+files when formatting injector diagnostics (`Unsupported class file major
+version 69`). The parent POM excludes that JAR from MATSim and its contribs,
+uses Guice's unshaded `classes` classifier, and supplies ASM 9.9.1 explicitly.
+This preserves source-line diagnostics without changing simulation logic or
+requiring additional runtime arguments. See the
+[upstream Guice issue](https://github.com/google/guice/issues/1926).
+
 ## Relevant changes in MATSim 2026
 
 The following upstream changes required work in Eqasim. This is a summary of

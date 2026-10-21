@@ -47,6 +47,19 @@
 	</repositories>
 
 	<dependencies>
+		<!-- Guice's default JAR shades an ASM version that cannot read Java 25.
+		     Use the unshaded classes with an explicit compatible ASM instead. -->
+		<dependency>
+			<groupId>com.google.inject</groupId>
+			<artifactId>guice</artifactId>
+			<version>7.0.0</version>
+			<classifier>classes</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.ow2.asm</groupId>
+			<artifactId>asm</artifactId>
+			<version>9.9.1</version>
+		</dependency>
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-geopkg</artifactId>
@@ -94,36 +107,72 @@
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim</artifactId>
 			<version>${matsim.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.inject</groupId>
+					<artifactId>guice</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>discrete_mode_choice</artifactId>
 			<version>${matsim.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.inject</groupId>
+					<artifactId>guice</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>emissions</artifactId>
 			<version>${matsim.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.inject</groupId>
+					<artifactId>guice</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>drt</artifactId>
 			<version>${matsim.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.inject</groupId>
+					<artifactId>guice</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		
 		<dependency>
 			<groupId>org.matsim.contrib</groupId>
 			<artifactId>sbb-extensions</artifactId>
 			<version>${matsim.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.inject</groupId>
+					<artifactId>guice</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
 			<groupId>org.matsim</groupId>
 			<artifactId>matsim-examples</artifactId>
 			<version>${matsim.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.google.inject</groupId>
+					<artifactId>guice</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
