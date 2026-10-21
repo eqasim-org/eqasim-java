@@ -29,7 +29,9 @@ import org.eqasim.core.components.traffic.bike.BikeDisutilities;
 import org.eqasim.core.components.traffic.bike.BikeGradientBasedLinkSpeedCalculator;
 import org.eqasim.core.components.travel_disutility.EqasimTravelDisutilityFactory;
 import org.eqasim.core.scenario.cutter.network.RoadNetwork;
+import org.eqasim.core.scenario.routing.ReusableRoute;
 import org.eqasim.core.simulation.policies.routing.ZeroRoutingPenalty;
+import org.eqasim.core.simulation.vdf.VDFConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.tolls.EqasimTollsTravelDisutility;
 import org.eqasim.switzerland.ch_cmdp.tolls.MarginalCostOfTolls;
 import org.eqasim.switzerland.ch_cmdp.tolls.Tolls;
@@ -49,13 +51,13 @@ import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.router.DefaultRoutingRequest;
 import org.matsim.core.router.DefaultRoutingModules;
 import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.router.LinkWrapperFacility;
 import org.eqasim.core.components.routing.speedy.MemoryEfficientSpeedyALTFactory;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.pt.router.TransitRouterConfig;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
@@ -85,7 +87,7 @@ import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
  * Requests share a fixed worker pool and are serialized to bound memory use.
  */
 public final class MultiModeRouter implements AutoCloseable {
-    public static final Set<String> MODES = Set.of("car", "car_passenger", "pt", "walk", "bike");
+    public static final Set<String> MODES = Set.of("car", "truck", "car_passenger", "pt", "walk", "bike");
     private final Map<String, ModeRouter>[] workers;
     private final ThreadLocal<Map<String, ModeRouter>> workerRouters = new ThreadLocal<>();
     private final ExecutorService executor;
@@ -95,6 +97,8 @@ public final class MultiModeRouter implements AutoCloseable {
     private final int chunkSize;
     private final double departureTime;
     private final boolean computeCost;
+    private final boolean exportRoutes;
+    private final MarouterAssignment marouter;
     private final Set<String> availableModes;
     private boolean closed;
 
@@ -116,8 +120,18 @@ public final class MultiModeRouter implements AutoCloseable {
         /** Zero keeps toll sensitivity at the population average. */
         public double tollsSigma = 0;
         public boolean returnLinks = false;
+        public boolean exportRoutes = false;
         public boolean computeCost = false;
         public String carCostModel = "simple";
+        public boolean marouter = false;
+        public double marouterIncrement = 0.05;
+        public long marouterSeed = 4711;
+        public double marouterTruckPcu = 2;
+        public double truckMaxSpeed = 80.0 / 3.6;
+        /** Null inherits eqasim.sampleSize, then 1. */
+        public Double marouterSampleSize;
+        public VDFConfigGroup vdfConfig = new VDFConfigGroup();
+        Set<String> vdfTimeOverrides = Set.of();
         // CLI options omitted by the caller may inherit values from the config.
         Set<String> configFallbackOptions = Set.of();
 
@@ -140,6 +154,26 @@ public final class MultiModeRouter implements AutoCloseable {
                 tollsSigma = configValue(config, NetworkCalibrationConfigGroup.GROUP_NAME, "tollsSigma", tollsSigma);
             }
             ConfigGroup routerConfig = config.getModules().get("multiModeRouter");
+            if (configFallbackOptions.contains("export-routes") && routerConfig != null
+                    && routerConfig.getParams().containsKey("exportRoutes"))
+                exportRoutes = booleanValue(routerConfig.getParams().get("exportRoutes"), "exportRoutes");
+            if (routerConfig != null) {
+                var values = routerConfig.getParams();
+                if (configFallbackOptions.contains("marouter") && values.containsKey("marouter"))
+                    marouter = booleanValue(values.get("marouter"), "marouter");
+                if (configFallbackOptions.contains("marouter-increment"))
+                    marouterIncrement = configValue(config, "multiModeRouter", "marouterIncrement", marouterIncrement);
+                if (configFallbackOptions.contains("marouter-truck-pcu"))
+                    marouterTruckPcu = configValue(config, "multiModeRouter", "marouterTruckPcu", marouterTruckPcu);
+                if (configFallbackOptions.contains("truck-max-speed"))
+                    truckMaxSpeed = configValue(config, "multiModeRouter", "truckMaxSpeed", truckMaxSpeed);
+                if (configFallbackOptions.contains("marouter-sample-size") && values.containsKey("marouterSampleSize"))
+                    marouterSampleSize = Double.parseDouble(values.get("marouterSampleSize"));
+            }
+            if (configFallbackOptions.contains("marouter-seed")) {
+                String seed = routerConfig == null ? null : routerConfig.getParams().get("marouterSeed");
+                marouterSeed = seed == null ? config.global().getRandomSeed() : Long.parseLong(seed);
+            }
             if (configFallbackOptions.contains("compute-cost") && routerConfig != null
                     && routerConfig.getParams().containsKey("computeCost")) {
                 computeCost = booleanValue(routerConfig.getParams().get("computeCost"), "computeCost");
@@ -170,6 +204,7 @@ public final class MultiModeRouter implements AutoCloseable {
         }
 
         private void validate() {
+            positive(truckMaxSpeed, "truck-max-speed");
             if (computeCost && (carCostModel == null || !Set.of("simple", "weiss").contains(carCostModel))) {
                 throw new IllegalArgumentException("car-cost-model must be simple or weiss");
             }
@@ -196,6 +231,7 @@ public final class MultiModeRouter implements AutoCloseable {
         Config config = loadConfig(settings);
         settings.applyConfigDefaults(config);
         settings.validate();
+        exportRoutes = settings.exportRoutes;
         batchSize = settings.batchSize;
         chunkSize = settings.chunkSize;
         departureTime = settings.departureTime;
@@ -203,21 +239,42 @@ public final class MultiModeRouter implements AutoCloseable {
         var costParameters = computeCost ? RouterCosts.parameters(config) : null;
         var carCostEstimator = computeCost ? RouterCosts.carModel(settings.carCostModel, costParameters) : null;
         Network network = TripsRouter.loadNetwork(settings.networkPath);
+        boolean useEvents = !settings.marouter && settings.eventsPath != null;
+        TravelTime freeflow = new CalibratedFreeSpeedTravelTime(network);
+        if (settings.marouter && settings.eventsPath != null) {
+            TripsRouter.logger.info("MARouter is enabled; ignoring events file {}", settings.eventsPath);
+        }
+        if (settings.marouter) {
+            VDFConfigGroup vdf = config != null && config.getModules().containsKey(VDFConfigGroup.GROUP_NAME)
+                    ? ConfigUtils.addOrGetModule(config, VDFConfigGroup.class) : settings.vdfConfig;
+            if (settings.vdfTimeOverrides.contains("start-time")) vdf.setStartTime(settings.startTime);
+            if (settings.vdfTimeOverrides.contains("end-time")) vdf.setEndTime(settings.endTime);
+            if (settings.vdfTimeOverrides.contains("interval")) vdf.setInterval(settings.interval);
+            double sampleSize = settings.marouterSampleSize != null ? settings.marouterSampleSize
+                    : config == null ? 1 : Settings.configValue(config, EqasimConfigGroup.GROUP_NAME, "sampleSize", 1);
+            marouter = new MarouterAssignment(network, vdf, sampleSize, settings.marouterIncrement,
+                    settings.marouterSeed, settings.marouterTruckPcu, settings.truckMaxSpeed, freeflow);
+        } else {
+            marouter = null;
+        }
         Map<String, java.util.function.Supplier<ModeRouter>> factories = new LinkedHashMap<>();
 
         RoadNetwork carNetwork = modeNetwork(network, "car");
-        TravelTime freeflow = new FreeSpeedTravelTime();
-        TravelTime carTime = settings.eventsPath == null ? freeflow
+        TravelTime carTime = marouter != null ? marouter.travelTime(false) : !useEvents ? freeflow
                 : TripsRouter.loadTravelTime(settings.eventsPath, carNetwork,
                         settings.startTime, settings.endTime, settings.interval);
         TravelDisutility carBaseCost = new EqasimTravelDisutilityFactory(new ZeroRoutingPenalty(),
                 settings.routingDistanceUtility).createTravelDisutility(carTime);
-        if (settings.eventsPath != null) {
+        if (useEvents) {
             carBaseCost = recordedCost(carNetwork, carTime, carBaseCost, settings);
+        } else {
+            carBaseCost = withMinimumCost(carBaseCost, link -> freeflow.getLinkTravelTime(link, 0, null, null)
+                    + settings.routingDistanceUtility * link.getLength() / 10);
         }
         TravelDisutility carCost = new EqasimTollsTravelDisutility(carBaseCost,
                 new Tolls(), new MarginalCostOfTolls(settings.tollsSigma, settings.tollsValueOfTime));
-        var carFactory = networkFactory(carNetwork, carTime, carCost, settings.returnLinks, settings.tollsSigma > 0);
+        var carFactory = networkFactory(carNetwork, carTime, carCost, settings.returnLinks, settings.tollsSigma > 0,
+                marouter != null);
         factories.put("car", () -> {
             ModeRouter carRouter = carFactory.get();
             return new ModeRouter() {
@@ -235,6 +292,34 @@ public final class MultiModeRouter implements AutoCloseable {
                 }
             };
         });
+
+        if (network.getLinks().values().stream().anyMatch(link -> link.getAllowedModes().contains("truck"))) {
+            Network truckNetwork = modeNetwork(network, "truck");
+            TravelTime truckBaseTime = marouter == null ? carTime : marouter.travelTime(true);
+            TravelTime truckTime = (link, time, person, vehicle) -> Math.max(
+                    truckBaseTime.getLinkTravelTime(link, time, person, vehicle), link.getLength() / settings.truckMaxSpeed);
+            TravelDisutility truckBaseCost = new EqasimTravelDisutilityFactory(new ZeroRoutingPenalty(),
+                    settings.routingDistanceUtility).createTravelDisutility(truckTime);
+            if (useEvents) truckBaseCost = recordedCost(truckNetwork, truckTime, truckBaseCost, settings);
+            else truckBaseCost = withMinimumCost(truckBaseCost,
+                    link -> Math.max(freeflow.getLinkTravelTime(link, 0, null, null), link.getLength() / settings.truckMaxSpeed)
+                            + settings.routingDistanceUtility * link.getLength() / 10);
+            TravelDisutility truckCost = new EqasimTollsTravelDisutility(truckBaseCost,
+                    new Tolls(), new MarginalCostOfTolls(settings.tollsSigma, settings.tollsValueOfTime));
+            var truckFactory = networkFactory(truckNetwork, truckTime, truckCost, settings.returnLinks,
+                    settings.tollsSigma > 0, marouter != null);
+            factories.put("truck", () -> {
+                ModeRouter router = truckFactory.get();
+                return new ModeRouter() {
+                    public RoutedTrip route(Trip trip) {
+                        RoutedTrip result = router.route(trip);
+                        if (trip.includeCost) result.cost = Double.NaN; // No Swiss truck monetary cost model.
+                        return result;
+                    }
+
+                };
+            });
+        }
 
         if (config != null) {
             for (String mode : List.of("walk", "bike")) {
@@ -369,6 +454,8 @@ public final class MultiModeRouter implements AutoCloseable {
         return computeCost;
     }
 
+    public boolean isMarouterEnabled() { return marouter != null; }
+
     static Config loadConfig(Settings settings) {
         if (settings.configPath == null) {
             return null;
@@ -452,7 +539,9 @@ public final class MultiModeRouter implements AutoCloseable {
                     .with(CsvSchema.emptySchema().withHeader()).readValues(inputCsv.toFile());
                     SequenceWriter writer = csv.writerFor(resultType).with(outputSchema)
                             .writeValues(temporary.toFile())) {
-                while (iterator.hasNextValue()) {
+                if (marouter != null) {
+                    count = assignCsv(iterator, writer, mode, includeCost, costOnly, target.getParent());
+                } else while (iterator.hasNextValue()) {
                     List<Trip> trips = new ArrayList<>(Math.min(chunkSize, 100_000));
                     while (trips.size() < chunkSize && iterator.hasNextValue()) {
                         trips.add(parseTrip(iterator.nextValue(), mode, count + trips.size() + 2, includeCost, costOnly));
@@ -492,6 +581,105 @@ public final class MultiModeRouter implements AutoCloseable {
         }
     }
 
+    private long assignCsv(MappingIterator<Map<String, String>> iterator, SequenceWriter writer, String mode,
+            boolean includeCost, boolean costOnly, Path parent) throws IOException, InterruptedException {
+        try (var spool = new AssignmentSpool(parent)) {
+            long count = 0;
+            List<Trip> ordinary = new ArrayList<>();
+            List<Long> ordinaryIndices = new ArrayList<>();
+            while (iterator.hasNextValue()) {
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedException("Assignment interrupted");
+                Map<String, String> row = iterator.nextValue();
+                Trip trip = parseTrip(row, mode, count + 2, includeCost, costOnly);
+                boolean road = trip.mode.equals("car") || trip.mode.equals("truck") || trip.mode.equals("car_passenger");
+                boolean defer = road && (!costOnly || trip.mode.equals("car") && trip.savedDistance == null);
+                if (defer) {
+                    spool.add(marouter.bin(trip.departureTime), trip.mode.equals("car_passenger"), count, row);
+                } else {
+                    ordinary.add(trip);
+                    ordinaryIndices.add(count);
+                    if (ordinary.size() == chunkSize) {
+                        storeChunk(spool, ordinaryIndices, ordinary, costOnly);
+                        ordinary.clear(); ordinaryIndices.clear();
+                    }
+                }
+                count++;
+            }
+            if (!ordinary.isEmpty()) storeChunk(spool, ordinaryIndices, ordinary, costOnly);
+            for (var entry : spool.bins.entrySet()) {
+                marouter.begin(entry.getKey());
+                AssignmentSpool.Bin bin = entry.getValue();
+                TripsRouter.logger.info("MARouter departure bin {}: {} drivers, {} passengers", entry.getKey(),
+                        bin.drivers.count, bin.passengers.count);
+                long[] order = bin.drivers.shuffled(marouter.seed ^ ((long) entry.getKey() * 0x9e3779b97f4a7c15L));
+                int rounds = (int) Math.ceil(1 / marouter.increment);
+                int start = 0;
+                for (int round = 0; round < rounds; round++) {
+                    int end = round == rounds - 1 ? order.length
+                            : (int) Math.ceil(Math.min(1, (round + 1) * marouter.increment) * order.length);
+                    int assigned = start;
+                    while (start < end) {
+                        List<Trip> trips = new ArrayList<>();
+                        List<Long> indices = new ArrayList<>();
+                        int until = (int) Math.min(end, (long) start + chunkSize);
+                        for (; start < until; start++) {
+                            var input = bin.drivers.at(order[start], AssignmentSpool.Input.class);
+                            trips.add(parseTrip(input.row(), mode, input.index() + 2, includeCost, costOnly));
+                            indices.add(input.index());
+                        }
+                        // Cost-only raw car requests still need actual assigned paths, not a projected cost result.
+                        List<RoutedTrip> results = routeChunk(trips, false);
+                        for (int i = 0; i < results.size(); i++) {
+                            RoutedTrip result = results.get(i);
+                            boolean truck = trips.get(i).mode.equals("truck");
+                            marouter.add(result.assignmentPath, truck);
+                            spool.put(indices.get(i), result, truck);
+                        }
+                    }
+                    // No workers are running: publish the next immutable-for-search travel-time snapshot.
+                    if (start > assigned) marouter.update();
+                }
+                // Every route, including the first increment, reports the final full-demand path time.
+                for (long i = 0; i < bin.drivers.count; i++) {
+                    var input = bin.drivers.row(i, AssignmentSpool.Input.class);
+                    var output = spool.get(input.index());
+                    output.result().travelTime = marouter.finalTime(output.path(), output.truck());
+                    if (output.result().route != null)
+                        output.result().route = ReusableRoute.withTravelTime(output.result().route, output.result().travelTime);
+                    spool.put(input.index(), output.result(), output.truck());
+                }
+                // Passengers see final road times but never add another vehicle to demand.
+                for (long i = 0; i < bin.passengers.count;) {
+                    List<Trip> trips = new ArrayList<>();
+                    List<Long> indices = new ArrayList<>();
+                    for (; i < bin.passengers.count && trips.size() < chunkSize; i++) {
+                        var input = bin.passengers.row(i, AssignmentSpool.Input.class);
+                        trips.add(parseTrip(input.row(), mode, input.index() + 2, includeCost, costOnly));
+                        indices.add(input.index());
+                    }
+                    storeChunk(spool, indices, trips, false);
+                }
+                marouter.reset();
+            }
+            for (long i = 0; i < count; i++) {
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedException("Assignment interrupted");
+                RoutedTrip result = spool.get(i).result();
+                if (costOnly) writer.write(new CostResult(result.identifier, result.mode, result.cost));
+                else writer.write(result);
+            }
+            return count;
+        } finally {
+            // Success, failed input, cancellation and client errors must not contaminate another request.
+            marouter.reset();
+        }
+    }
+
+    private void storeChunk(AssignmentSpool spool, List<Long> indices, List<Trip> trips, boolean costOnly)
+            throws IOException, InterruptedException {
+        var results = routeChunk(trips, costOnly);
+        for (int i = 0; i < results.size(); i++) spool.put(indices.get(i), results.get(i), trips.get(i).mode.equals("truck"));
+    }
+
     private List<RoutedTrip> routeChunk(List<Trip> trips, boolean costOnly) throws InterruptedException {
         RoutedTrip[] results = new RoutedTrip[trips.size()];
         AtomicInteger next = new AtomicInteger();
@@ -512,11 +700,23 @@ public final class MultiModeRouter implements AutoCloseable {
                             } else if (costOnly) {
                                 results[j] = result(trip, trip.mode, 0, 0);
                                 results[j].cost = trip.mode.equals("car") || trip.mode.equals("pt")
-                                        ? workerRouters.get().get(trip.mode).cost(trip) : 0.0;
+                                        ? workerRouters.get().get(trip.mode).cost(trip)
+                                        : trip.mode.equals("truck") ? Double.NaN : 0.0;
                             } else {
                                 results[j] = workerRouters.get().get(trip.mode).route(trip);
+                                if (trip.exportRoute && results[j].route == null && Double.isFinite(results[j].travelTime)
+                                        && (trip.mode.equals("walk") || trip.mode.equals("bike"))) {
+                                    var factory = PopulationUtils.getFactory();
+                                    var leg = factory.createLeg(trip.mode);
+                                    var route = factory.getRouteFactories().createRoute(org.matsim.api.core.v01.population.Route.class,
+                                            trip.originLink == null ? null : Id.createLinkId(trip.originLink),
+                                            trip.destinationLink == null ? null : Id.createLinkId(trip.destinationLink));
+                                    route.setDistance(results[j].travelDistance); route.setTravelTime(results[j].travelTime);
+                                    leg.setRoute(route); leg.setDepartureTime(trip.departureTime); leg.setTravelTime(results[j].travelTime);
+                                    results[j].route = ReusableRoute.encode(trip.mode, trip.departureTime, List.of(leg));
+                                }
                             }
-                            if (trip.includeCost && !trip.mode.equals("car") && !trip.mode.equals("pt")
+                            if (trip.includeCost && !trip.mode.equals("car") && !trip.mode.equals("pt") && !trip.mode.equals("truck")
                                     && Double.isFinite(results[j].travelTime)) {
                                 results[j].cost = 0.0;
                             }
@@ -565,6 +765,14 @@ public final class MultiModeRouter implements AutoCloseable {
         Trip trip = new Trip();
         try {
             trip.identifier = row.getOrDefault("identifier", "");
+            trip.personId = optional(row, "person_id");
+            trip.tripId = optional(row, "trip_id");
+            trip.tripIndex = optionalIndex(row, "trip_index");
+            trip.originLink = optional(row, "origin_link_id");
+            trip.destinationLink = optional(row, "destination_link_id");
+            if ((trip.originLink == null) != (trip.destinationLink == null))
+                throw new IllegalArgumentException("Provide both origin_link_id and destination_link_id");
+            trip.exportRoute = exportRoutes && !costOnly;
             trip.mode = mode == null ? row.get("mode") : mode;
             trip.includeCost = includeCost;
             trip.costOnly = costOnly;
@@ -638,12 +846,26 @@ public final class MultiModeRouter implements AutoCloseable {
 
     private void requireMode(String mode) {
         if (mode == null || !MODES.contains(mode)) {
-            throw new IllegalArgumentException("mode must be car, car_passenger, pt, walk or bike");
+            throw new IllegalArgumentException("mode must be car, truck, car_passenger, pt, walk or bike");
         }
         if (!availableModes.contains(mode)) {
+            if (mode.equals("truck")) throw new IllegalArgumentException("Truck routing requires network links allowing truck");
             throw new IllegalArgumentException("Mode " + mode + " requires a config with routing parameters"
                     + (mode.equals("pt") ? " and an enabled transit schedule" : ""));
         }
+    }
+
+    private static String optional(Map<String, String> row, String name) {
+        String value = row.get(name);
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private static Integer optionalIndex(Map<String, String> row, String name) {
+        String value = optional(row, name);
+        if (value == null) return null;
+        int index = Integer.parseInt(value);
+        if (index < 0) throw new IllegalArgumentException(name + " must be non-negative (zero-based)");
+        return index;
     }
 
     private static double number(Map<String, String> row, String name) {
@@ -695,6 +917,11 @@ public final class MultiModeRouter implements AutoCloseable {
 
     private static java.util.function.Supplier<ModeRouter> networkFactory(Network network, TravelTime time,
             TravelDisutility cost, boolean returnLinks, boolean useTollSensitivity) {
+        return networkFactory(network, time, cost, returnLinks, useTollSensitivity, false);
+    }
+
+    private static java.util.function.Supplier<ModeRouter> networkFactory(Network network, TravelTime time,
+            TravelDisutility cost, boolean returnLinks, boolean useTollSensitivity, boolean capturePath) {
         MemoryEfficientSpeedyALTFactory factory = new MemoryEfficientSpeedyALTFactory();
         VehicleType vehicleType = useTollSensitivity
                 ? VehicleUtils.createVehicleType(Id.create("csv-car", VehicleType.class)) : null;
@@ -711,17 +938,44 @@ public final class MultiModeRouter implements AutoCloseable {
                             : trip.identifier;
                     vehicle = VehicleUtils.createVehicle(Id.createVehicleId(identifier), vehicleType);
                 }
-                var path = calculator.calcLeastCostPath(from, to, trip.departureTime, null, vehicle);
-                if (path == null) {
-                    return missingRoute(trip);
+                LeastCostPathCalculator.Path path;
+                List<Link> links;
+                double pathTime;
+                if (trip.originLink != null) {
+                    Link first = network.getLinks().get(Id.createLinkId(trip.originLink));
+                    Link last = network.getLinks().get(Id.createLinkId(trip.destinationLink));
+                    if (first == null || last == null) throw new IllegalArgumentException("Endpoint links must allow " + trip.mode);
+                    links = new ArrayList<>(); links.add(first);
+                    if (!first.getId().equals(last.getId())) {
+                        path = calculator.calcLeastCostPath(first, last, trip.departureTime
+                                + time.getLinkTravelTime(first, trip.departureTime, null, vehicle), null, vehicle);
+                        if (path == null) return missingRoute(trip);
+                        links.addAll(path.links); links.add(last);
+                    }
+                    pathTime = 0;
+                    for (Link link : links) pathTime += time.getLinkTravelTime(link, trip.departureTime + pathTime, null, vehicle);
+                } else {
+                    path = calculator.calcLeastCostPath(from, to, trip.departureTime, null, vehicle);
+                    if (path == null) return missingRoute(trip);
+                    links = path.links; pathTime = path.travelTime;
                 }
-                RoutedTrip result = result(trip, trip.mode, path.travelTime,
-                        path.links.stream().mapToDouble(Link::getLength).sum());
+                RoutedTrip result = result(trip, trip.mode, pathTime,
+                        links.stream().mapToDouble(Link::getLength).sum());
                 result.accessDistance = CoordUtils.calcEuclideanDistance(origin(trip), from.getCoord());
                 result.egressDistance = CoordUtils.calcEuclideanDistance(destination(trip), to.getCoord());
-                result.linkCount = path.links.size();
-                result.links = returnLinks ? String.join("-", path.links.stream()
+                result.linkCount = links.size();
+                if (capturePath) result.assignmentPath = links.stream().mapToInt(link -> link.getId().index()).toArray();
+                result.links = returnLinks ? String.join("-", links.stream()
                         .map(link -> link.getId().toString()).toList()) : "";
+                if (trip.exportRoute && !links.isEmpty()) {
+                    var ids = links.stream().map(Link::getId).toList();
+                    var route = RouteUtils.createLinkNetworkRouteImpl(ids.getFirst(), ids.size() < 3 ? List.of()
+                            : ids.subList(1, ids.size() - 1), ids.getLast());
+                    route.setTravelTime(result.travelTime); route.setDistance(result.travelDistance);
+                    var leg = PopulationUtils.getFactory().createLeg(trip.mode);
+                    leg.setRoute(route); leg.setDepartureTime(trip.departureTime); leg.setTravelTime(result.travelTime);
+                    result.route = ReusableRoute.encode(trip.mode, trip.departureTime, List.of(leg));
+                }
                 return result;
             };
         };
@@ -775,6 +1029,11 @@ public final class MultiModeRouter implements AutoCloseable {
             }
             minimums[link.getId().index()] = minimum + settings.routingDistanceUtility * link.getLength() / 10;
         }
+        return withMinimumCost(delegate, link -> minimums[link.getId().index()]);
+    }
+
+    private static TravelDisutility withMinimumCost(TravelDisutility delegate,
+            java.util.function.ToDoubleFunction<Link> minimum) {
         return new TravelDisutility() {
             @Override
             public double getLinkTravelDisutility(Link link, double t, Person person, Vehicle vehicle) {
@@ -783,7 +1042,7 @@ public final class MultiModeRouter implements AutoCloseable {
 
             @Override
             public double getLinkMinimumTravelDisutility(Link link) {
-                return minimums[link.getId().index()];
+                return minimum.applyAsDouble(link);
             }
         };
     }
@@ -825,6 +1084,7 @@ public final class MultiModeRouter implements AutoCloseable {
             }
             if (!Double.isFinite(arrival) || !Double.isFinite(distance)) return missingRoute(trip);
             RoutedTrip result = result(trip, mode, arrival - trip.departureTime, distance);
+            if (trip.exportRoute) result.route = ReusableRoute.encode(trip.mode, trip.departureTime, elements);
             if (mode.equals("pt") && trip.includeCost && !trip.costOnly) {
                 result.ptCostData = RouterCosts.save(trip.pricingRequest, elements);
             }
@@ -889,6 +1149,9 @@ public final class MultiModeRouter implements AutoCloseable {
         result.destinationY = trip.destinationY;
         result.departureTime = trip.departureTime;
         result.mode = mode;
+        result.personId = trip.personId;
+        result.tripId = trip.tripId; result.tripIndex = trip.tripIndex;
+        result.originLink = trip.originLink; result.destinationLink = trip.destinationLink;
         result.travelTime = time;
         result.travelDistance = distance;
         result.links = "";
@@ -915,6 +1178,9 @@ public final class MultiModeRouter implements AutoCloseable {
     }
 
     private static final class Trip extends TripsRouter.Trip {
+        String personId, tripId, originLink, destinationLink;
+        Integer tripIndex;
+        boolean exportRoute;
         String mode;
         CSVRequest pricingRequest;
         boolean includeCost;
@@ -926,6 +1192,12 @@ public final class MultiModeRouter implements AutoCloseable {
     public record CostResult(String identifier, String mode, double cost) {}
 
     public static final class RoutedTrip extends TripsRouter.RoutedTrip {
+        @JsonProperty("person_id") public String personId;
+        @JsonProperty("trip_id") public String tripId;
+        @JsonProperty("trip_index") public Integer tripIndex;
+        @JsonProperty("origin_link_id") public String originLink;
+        @JsonProperty("destination_link_id") public String destinationLink;
+        @JsonProperty("route") public String route;
         @JsonProperty("mode")
         public String mode;
         /** Estimated monetary cost in CHF; blank when cost computation is disabled. */
@@ -934,6 +1206,8 @@ public final class MultiModeRouter implements AutoCloseable {
         /** Saved itinerary and traveler data for later PT fare calculation. */
         @JsonProperty("pt_cost_data")
         public String ptCostData;
+        @com.fasterxml.jackson.annotation.JsonIgnore
+        int[] assignmentPath;
     }
 
     /** Keep unreachable-path handling when using MATSim's freespeed-factor router. */

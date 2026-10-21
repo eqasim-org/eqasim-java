@@ -56,7 +56,9 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 .requireOptions("network-path", "port")
                 .allowOptions("config-path", "events-path", "host", "threads", "batch-size", "chunk-size",
                         "start-time", "end-time", "interval", "departure-time", "routingDistanceUtility",
-                        "tolls-value-of-time", "tolls-sigma", "return-links", "compute-cost", "car-cost-model")
+                        "tolls-value-of-time", "tolls-sigma", "return-links", "compute-cost", "car-cost-model",
+                        "marouter", "marouter-increment", "marouter-seed", "marouter-truck-pcu", "truck-max-speed",
+                        "marouter-sample-size", "export-routes")
                 .build();
     }
 
@@ -77,12 +79,25 @@ public final class MultiModeRouterServer implements AutoCloseable {
         settings.tollsValueOfTime = cmd.getOption("tolls-value-of-time").map(Double::parseDouble)
                 .orElse(settings.tollsValueOfTime);
         settings.tollsSigma = cmd.getOption("tolls-sigma").map(Double::parseDouble).orElse(settings.tollsSigma);
-        settings.computeCost = cmd.getOption("compute-cost").map(value -> MultiModeRouter.booleanValue(value, "compute-cost"))
+        settings.computeCost = cmd.getOption("compute-cost").map(v -> MultiModeRouter.booleanValue(v, "compute-cost"))
                 .orElse(settings.computeCost);
         settings.carCostModel = cmd.getOption("car-cost-model").orElse(settings.carCostModel);
+        settings.exportRoutes = cmd.getOption("export-routes")
+                .map(v -> MultiModeRouter.booleanValue(v, "export-routes")).orElse(settings.exportRoutes);
+        settings.marouter = cmd.getOption("marouter").map(v -> MultiModeRouter.booleanValue(v, "marouter")).orElse(false);
+        settings.marouterIncrement = cmd.getOption("marouter-increment").map(Double::parseDouble).orElse(settings.marouterIncrement);
+        settings.marouterSeed = cmd.getOption("marouter-seed").map(Long::parseLong).orElse(settings.marouterSeed);
+        settings.marouterTruckPcu = cmd.getOption("marouter-truck-pcu").map(Double::parseDouble).orElse(settings.marouterTruckPcu);
+        settings.truckMaxSpeed = cmd.getOption("truck-max-speed").map(Double::parseDouble).orElse(settings.truckMaxSpeed);
+        settings.marouterSampleSize = cmd.getOption("marouter-sample-size").map(Double::parseDouble).orElse(null);
+        settings.vdfTimeOverrides = new java.util.HashSet<>();
+        for (String option : List.of("start-time", "end-time", "interval")) {
+            if (cmd.hasOption(option)) settings.vdfTimeOverrides.add(option);
+        }
         settings.configFallbackOptions = new java.util.HashSet<>();
         for (String option : List.of("threads", "routingDistanceUtility", "tolls-value-of-time", "tolls-sigma",
-                "compute-cost", "car-cost-model")) {
+                "compute-cost", "car-cost-model", "marouter", "marouter-increment", "marouter-seed",
+                "marouter-truck-pcu", "truck-max-speed", "marouter-sample-size", "export-routes")) {
             if (!cmd.hasOption(option)) {
                 settings.configFallbackOptions.add(option);
             }
@@ -98,7 +113,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
 
     /** Binds HTTP immediately; start() starts eager background data loading. */
     public MultiModeRouterServer(MultiModeRouter.Settings settings, String host, int port) throws IOException {
-        this(() -> new MultiModeRouter(settings), settings.configPath == null ? Set.of("car", "car_passenger") : MultiModeRouter.MODES,
+        this(() -> new MultiModeRouter(settings), settings.configPath == null ? Set.of("car", "truck", "car_passenger") : MultiModeRouter.MODES,
                 host, port);
     }
 
@@ -182,7 +197,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
 
     private Map<String, Object> statusResponse(State snapshot, String selectedMode) {
         Map<String, Object> modes = new LinkedHashMap<>();
-        for (String mode : List.of("car", "car_passenger", "pt", "walk", "bike")) {
+        for (String mode : List.of("car", "truck", "car_passenger", "pt", "walk", "bike")) {
             boolean ready = snapshot.router != null && snapshot.router.getAvailableModes().contains(mode);
             String status = ready ? "ready" : snapshot.status.equals("ready") || !expectedModes.contains(mode)
                     ? "unavailable" : snapshot.status;
@@ -194,6 +209,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
         response.put("status", snapshot.status);
         response.put("ready", ready);
         response.put("costReady", snapshot.router != null && snapshot.router.isCostEnabled());
+        response.put("marouter", snapshot.router != null && snapshot.router.isMarouterEnabled());
         response.put("modes", modes);
         if (selectedMode != null) {
             response.put("mode", selectedMode);
@@ -221,7 +237,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
                 }
             }
             if (mode != null && !MultiModeRouter.MODES.contains(mode)) {
-                respond(exchange, 400, Map.of("error", "mode must be car, car_passenger, pt, walk or bike"));
+                respond(exchange, 400, Map.of("error", "mode must be car, truck, car_passenger, pt, walk or bike"));
                 return;
             }
             Map<String, Object> response = statusResponse(state, mode);

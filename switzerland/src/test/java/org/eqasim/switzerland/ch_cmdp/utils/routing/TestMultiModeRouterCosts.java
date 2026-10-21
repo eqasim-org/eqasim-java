@@ -469,6 +469,52 @@ public class TestMultiModeRouterCosts {
         return MultiModeRouterServer.readSettings(MultiModeRouterServer.commandLine(args.toArray(String[]::new)));
     }
 
+    @Test
+    public void exportedTransitItineraryCanBeReusedWithoutCostEstimationOrAnotherSearch() throws Exception {
+        Path network = network();
+        Config config = ConfigUtils.loadConfig(writeConfig(transitConfig()).toString(), new ch.sbb.matsim.config.SwissRailRaptorConfigGroup());
+        config.network().setInputFile(network.toString());
+        Path configPath = writeConfig(config);
+        var scenario = ScenarioUtils.loadScenario(config);
+        var factory = scenario.getPopulation().getFactory();
+        var person = factory.createPerson(Id.createPersonId("pt-person")); scenario.getPopulation().addPerson(person);
+        var plan = factory.createPlan(); person.addPlan(plan);
+        var from = factory.createActivityFromCoord("home", new Coord(500, 0)); from.setLinkId(Id.createLinkId("first")); from.setEndTime(0);
+        var to = factory.createActivityFromCoord("work", new Coord(1500, 0)); to.setLinkId(Id.createLinkId("second"));
+        plan.addActivity(from); var leg = factory.createLeg("pt");
+        org.matsim.core.router.TripStructureUtils.setRoutingMode(leg, "pt"); plan.addLeg(leg); plan.addActivity(to);
+        Path input = folder.getRoot().toPath().resolve("export-pt.csv"), output = folder.getRoot().toPath().resolve("reuse-pt.csv");
+        org.eqasim.core.scenario.routing.PopulationRoutingIO.enrichTrips(scenario);
+        org.eqasim.core.scenario.routing.PopulationRoutingIO.exportTrips(scenario, input, Set.of());
+        try (var router = new MultiModeRouter(settings(network, configPath, "--export-routes", "true"))) { router.route(input, output); }
+        var row = rows(output).getFirst();
+        assertEquals("", row.get("cost")); assertEquals("", row.get("pt_cost_data"));
+        assertFalse(row.get("route").isBlank());
+        var reused = org.eqasim.core.scenario.routing.PopulationRoutingIO.importRoutes(scenario, output, Set.of());
+        assertFalse(org.eqasim.core.scenario.routing.PopulationRoutingIO.needsRouting(scenario, Set.of(), reused));
+        var imported = org.matsim.core.router.TripStructureUtils.getTrips(plan).getFirst().getLegsOnly();
+        var transit = imported.stream().map(org.matsim.api.core.v01.population.Leg::getRoute)
+                .filter(route -> route instanceof org.matsim.pt.routes.TransitPassengerRoute)
+                .map(route -> (org.matsim.pt.routes.TransitPassengerRoute) route).findFirst().orElseThrow();
+        assertEquals("start", transit.getAccessStopId().toString()); assertEquals("end", transit.getEgressStopId().toString());
+        assertEquals("line", transit.getLineId().toString()); assertEquals("route", transit.getRouteId().toString());
+        assertEquals(Double.parseDouble(row.get("travel_time")), imported.stream().mapToDouble(item -> item.getTravelTime().seconds()).sum(), 1e-6);
+        var access = factory.createLeg("walk");
+        var accessRoute = factory.getRouteFactories().createRoute(org.matsim.api.core.v01.population.Route.class,
+                Id.createLinkId("first"), Id.createLinkId("first"));
+        accessRoute.setDistance(0); accessRoute.setTravelTime(0); access.setRoute(accessRoute); access.setDepartureTime(0); access.setTravelTime(0);
+        var stage = factory.createActivityFromCoord("pt interaction", new Coord(500, 0));
+        stage.setLinkId(Id.createLinkId("first")); stage.setStartTime(0); stage.setMaximumDuration(0);
+        var transitLeg = imported.stream().filter(item -> item.getRoute() instanceof org.matsim.pt.routes.TransitPassengerRoute).findFirst().orElseThrow();
+        var codec = org.eqasim.core.scenario.routing.ReusableRoute.read(org.eqasim.core.scenario.routing.ReusableRoute.encode("pt", 0,
+                List.of(access, stage, transitLeg)));
+        var stages = org.eqasim.core.scenario.routing.ReusableRoute.restore(codec, factory);
+        assertEquals(3, stages.size());
+        var restoredStage = (org.matsim.api.core.v01.population.Activity) stages.get(1);
+        assertEquals("pt interaction", restoredStage.getType());
+        assertEquals(0, restoredStage.getMaximumDuration().seconds(), 0);
+    }
+
     private Path pricedTransitConfig() throws Exception {
         Config config = transitConfig();
         var ptZones = new SwissPTZonesConfigGroup();

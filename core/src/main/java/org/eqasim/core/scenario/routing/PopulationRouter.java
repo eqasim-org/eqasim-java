@@ -2,6 +2,7 @@ package org.eqasim.core.scenario.routing;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eqasim.core.misc.ParallelProgress;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.Population;
 
@@ -21,14 +23,21 @@ public class PopulationRouter {
 	private final boolean replaceExistingRoutes;
 	private final Provider<PlanRouter> routerProvider;
 	private final Set<String> modes;
+	private final Map<Plan, Set<Activity>> reusedRoutes;
 
 	public PopulationRouter(int numberOfThreads, int batchSize, boolean replaceExistingRoutes, Set<String> modes,
 			Provider<PlanRouter> routerProvider) {
+		this(numberOfThreads, batchSize, replaceExistingRoutes, modes, routerProvider, Map.of());
+	}
+
+	public PopulationRouter(int numberOfThreads, int batchSize, boolean replaceExistingRoutes, Set<String> modes,
+			Provider<PlanRouter> routerProvider, Map<Plan, Set<Activity>> reusedRoutes) {
 		this.numberOfThreads = numberOfThreads;
 		this.batchSize = batchSize;
 		this.routerProvider = routerProvider;
 		this.replaceExistingRoutes = replaceExistingRoutes;
 		this.modes = modes;
+		this.reusedRoutes = reusedRoutes;
 	}
 
 	public void run(Population population) throws InterruptedException {
@@ -64,7 +73,9 @@ public class PopulationRouter {
 					PlanRouter router = routerLocal.get();
 					for (Person p : chunk) {
 						for (Plan plan : p.getPlans()) {
-							router.run(plan, replaceExistingRoutes, modes);
+							var reused = reusedRoutes.getOrDefault(plan, Set.of());
+							router.run(plan, replaceExistingRoutes, modes,
+									trip -> !reused.contains(trip.getOriginActivity()));
 						}
 					}
 					progress.update(chunk.size());
