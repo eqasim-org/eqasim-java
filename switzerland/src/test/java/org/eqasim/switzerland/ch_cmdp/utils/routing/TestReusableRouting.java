@@ -223,7 +223,7 @@ public class TestReusableRouting {
                 "wrong-leg-mode", "generic-car")) {
             List<Map<String, String>> inputs = new ArrayList<>();
             for (var original : originals) inputs.add(new java.util.LinkedHashMap<>(original));
-            var row = inputs.stream().filter(value -> value.get("person_id").equals("car")).findFirst().orElseThrow();
+            var row = inputs.stream().filter(v -> v.get("person_id").equals("car")).findFirst().orElseThrow();
             switch (problem) {
                 case "absent" -> inputs.remove(row);
                 case "missing-value" -> row.remove("route");
