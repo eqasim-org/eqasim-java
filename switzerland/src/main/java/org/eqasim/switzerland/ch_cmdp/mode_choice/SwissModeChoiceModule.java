@@ -112,21 +112,22 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 
 		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
 		if (calConfig.isActivate()) {
-			String level = calConfig.getLevel().toLowerCase();
-			switch (level) {
-				case "global":
-					bind(FastCalibration.class).to(GlobalAlphaCalibrator.class).asEagerSingleton();
-					break;
-				case "canton":
-					bind(FastCalibration.class).to(AlphaCantonCalibrator.class).asEagerSingleton();
-					break;
-				case "cluster":
-					bind(FastCalibration.class).to(AlphaClusterCalibrator.class).asEagerSingleton();
-					break;
-				default:
-					throw new IllegalArgumentException("Unknown calibration level: " + level);
-			}
+			bind(FastCalibration.class).to(calibrationClass(calConfig.getLevel())).asEagerSingleton();
 		}
+	}
+
+	static Class<? extends FastCalibration> calibrationClass(String setting) {
+		String level = setting == null ? "" : setting.trim().toLowerCase(java.util.Locale.ROOT);
+		if (level.startsWith("keep_canton:")) {
+			KeepCantonAlphaCalibrator.parseCantons(setting);
+			return KeepCantonAlphaCalibrator.class;
+		}
+		return switch (level) {
+			case "global" -> GlobalAlphaCalibrator.class;
+			case "canton" -> AlphaCantonCalibrator.class;
+			case "cluster" -> AlphaClusterCalibrator.class;
+			default -> throw new IllegalArgumentException("Unknown calibration level: " + setting);
+		};
 	}
 
 	@Provides
