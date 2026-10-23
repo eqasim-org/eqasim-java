@@ -181,7 +181,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 															  EqasimConfigGroup eqasimConfigGroup) {
 		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
 
-		String filePath = calConfig.getFilePath();
+		String filePath = calConfig.getResolvedFilePath(getConfig());
 		if (filePath.isEmpty()) {
 			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
 		}
@@ -207,7 +207,7 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 																EqasimConfigGroup eqasimConfigGroup) {
 		AlphaCalibratorConfig calConfig = AlphaCalibratorConfig.getOrCreate(getConfig());
 
-		String filePath = calConfig.getFilePath();
+		String filePath = calConfig.getResolvedFilePath(getConfig());
 		if (filePath.isEmpty()) {
 			throw new IllegalArgumentException("You must provide the file path to the cantons mode share csv file when using canton level calibration.");
 		}
