@@ -57,7 +57,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
         Map<String, String> comments = super.getComments();
         comments.put(ACTIVATE, "Whether the network-calibration module is active (default: false)");
         comments.put(CALIBRATE, "Optional comma-separated selector of active components whose values are updated: penalty, freespeed, agent, or subpopulations. Active components not listed here use their configured input/default values.");
-        comments.put(OBJECTIVE, "Optional comma-separated selector: penalty, freespeed, agent, or subpopulations. When non-empty, it overrides the activate parameter of every child calibration group.");
+        comments.put(OBJECTIVE, "Comma-separated selector of components to use: penalty, freespeed, agent, or subpopulations. Components not listed here are disabled; child parameter sets only configure their settings.");
         comments.put(COUNTS_FILE, "Counts CSV shared by flow-based calibration components; expected columns include linkId and count");
         comments.put(CORRECT_CAPACITIES, "Whether short-link capacities are corrected when the module is active (default: true)");
         comments.put(MIN_SPEED, "Minimum speed used for capacity correction in km/h (default: 1.0)");
@@ -75,7 +75,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
 
     @StringGetter(CALIBRATE) public String getCalibrate() { return calibrate; }
     @StringSetter(CALIBRATE) public void setCalibrate(String value) { calibrate = value == null ? "" : value; }
-    public List<String> getModulesToBeCalibratedAsList() { return Stream.of(calibrate.split(",")).map(String::trim).filter(value -> !value.isEmpty()).toList(); }
+    public List<String> getModulesToBeCalibratedAsList() { return Stream.of(calibrate.split(",")).map(String::trim).filter(v -> !v.isEmpty()).toList(); }
     public boolean isToBeCalibrated(String value) { return getModulesToBeCalibratedAsList().contains(value); }
     public void setCalibrate(boolean value) {
         calibrate = value ? String.join(",", PENALTY, FREESPEED, AGENT, SUBPOPULATIONS) : "";
@@ -85,9 +85,8 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     @StringSetter(OBJECTIVE)
     public void setObjective(String value) {
         objective = value == null ? "" : value;
-        synchronizeExistingParameterSets();
     }
-    public List<String> getAllObjectives() { return Stream.of(objective.split(",")).map(String::trim).filter(value -> !value.isEmpty()).toList(); }
+    public List<String> getAllObjectives() { return Stream.of(objective.split(",")).map(String::trim).filter(v -> !v.isEmpty()).toList(); }
     public boolean isOneOfObjectives(String value) { return getAllObjectives().contains(value); }
     @StringGetter(COUNTS_FILE) public String getCountsFile() { return countsFile; }
     @StringSetter(COUNTS_FILE) public void setCountsFile(String value) { countsFile = value; }
@@ -120,49 +119,47 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     }
 
     public boolean isLinkPenaltyActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives(PENALTY) : getCostCalibrationConfigGroup().isActivated();
+        return isActivated() && isOneOfObjectives(PENALTY);
     }
 
     public boolean isFreeSpeedFactorActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives(FREESPEED) : getFreeSpeedCalibrationConfigGroup().isActivated();
+        return isActivated() && isOneOfObjectives(FREESPEED);
     }
 
     public boolean isAgentAscsActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives(AGENT) : getAgentAscsCalibrationConfigGroup().isActivated();
+        return isActivated() && isOneOfObjectives(AGENT);
     }
 
     public boolean isSubpopulationsActivated() {
-        return hasObjectiveOverride() ? isOneOfObjectives(SUBPOPULATIONS) : getSubpopulationsCalibrationConfigGroup().isActivated();
+        return isActivated() && isOneOfObjectives(SUBPOPULATIONS);
     }
 
 
     public boolean isLinkPenaltyCalibrationActivated() {
-        return isToBeCalibrated(PENALTY);
+        return isLinkPenaltyActivated() && isToBeCalibrated(PENALTY);
     }
 
     public boolean isFreeSpeedFactorCalibrationActivated() {
-        return isToBeCalibrated(FREESPEED);
+        return isFreeSpeedFactorActivated() && isToBeCalibrated(FREESPEED);
     }
 
     public boolean isAgentAscsCalibrationActivated() {
-        return isToBeCalibrated(AGENT);
+        return isAgentAscsActivated() && isToBeCalibrated(AGENT);
     }
 
     public boolean isSubpopulationsCalibrationActivated() {
-        return isToBeCalibrated(SUBPOPULATIONS);
+        return isSubpopulationsActivated() && isToBeCalibrated(SUBPOPULATIONS);
     }
 
     @Override
     public ConfigGroup createParameterSet(String type) {
-        ConfigGroup parameterSet = switch (type) {
+        return switch (type) {
             case AgentAscsCalibrationConfigGroup.GROUP_NAME -> new AgentAscsCalibrationConfigGroup();
             case SubpopulationsCalibrationConfigGroup.GROUP_NAME -> new SubpopulationsCalibrationConfigGroup();
             case FreeSpeedCalibrationConfigGroup.GROUP_NAME -> new FreeSpeedCalibrationConfigGroup();
             case CostCalibrationConfigGroup.GROUP_NAME -> new CostCalibrationConfigGroup();
             default -> throw new IllegalArgumentException("Unknown network-calibration parameter-set type: " + type);
         };
-        synchronizeActivation(parameterSet);
-        return parameterSet;
     }
 
     public AgentAscsCalibrationConfigGroup getAgentAscsCalibrationConfigGroup() {
@@ -186,41 +183,11 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
             return configClass.cast(parameterSet);
         }
         T parameterSet = factory.get();
-        synchronizeActivation(parameterSet);
         addParameterSet(parameterSet);
         return parameterSet;
     }
 
-    private boolean hasObjectiveOverride() {
-        return !getAllObjectives().isEmpty();
-    }
-
-    private void synchronizeExistingParameterSets() {
-        if (!hasObjectiveOverride()) {
-            return;
-        }
-        getParameterSets().values().stream()
-                .flatMap(java.util.Collection::stream)
-                .forEach(this::synchronizeActivation);
-    }
-
-    private void synchronizeActivation(ConfigGroup parameterSet) {
-        if (!hasObjectiveOverride()) {
-            return;
-        }
-        if (parameterSet instanceof CostCalibrationConfigGroup costConfig) {
-            costConfig.setActivate(isOneOfObjectives(PENALTY));
-        } else if (parameterSet instanceof FreeSpeedCalibrationConfigGroup freespeedConfig) {
-            freespeedConfig.setActivate(isOneOfObjectives(FREESPEED));
-        } else if (parameterSet instanceof AgentAscsCalibrationConfigGroup agentConfig) {
-            agentConfig.setActivate(isOneOfObjectives(AGENT));
-        } else if (parameterSet instanceof SubpopulationsCalibrationConfigGroup subpopulationsConfig) {
-            subpopulationsConfig.setActivate(isOneOfObjectives(SUBPOPULATIONS));
-        }
-    }
-
     public void applyContext(Config config) {
-        synchronizeExistingParameterSets();
         if (!countsFile.isBlank()) {
             URL url = ConfigGroup.getInputFileURL(config.getContext(), countsFile);
             if (url != null) countsFile = url.getPath();

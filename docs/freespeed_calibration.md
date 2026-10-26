@@ -2,6 +2,9 @@
 
 This adds a `freespeed` objective under `eqasim:networkCalibration`.
 
+See [parent configuration and migration](network_calibration.md) for component
+activation. Child parameter sets no longer have an `activate` switch.
+
 ## What it calibrates
 
 - Links are grouped by:
@@ -21,7 +24,11 @@ Under `eqasim:networkCalibration`:
 
 - `activate=true`
 - `objective=freespeed`
-- `observedSpeedTripsFile=path/to/observed_trips.csv`
+- `calibrate=freespeed`
+
+In the `freespeedCalibration` parameter set:
+
+- `observedTripsFile=path/to/observed_trips.csv`
 
 ## Initialization precedence
 

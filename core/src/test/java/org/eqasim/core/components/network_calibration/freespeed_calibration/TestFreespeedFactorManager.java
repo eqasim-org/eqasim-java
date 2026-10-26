@@ -89,7 +89,7 @@ public class TestFreespeedFactorManager {
         config.setActivate(true);
         config.setCalibrate(true);
         FreeSpeedCalibrationConfigGroup freespeedConfig = config.getFreeSpeedCalibrationConfigGroup();
-        freespeedConfig.setActivate(true);
+        config.setObjective("freespeed");
         freespeedConfig.setMinTripsPerGroup(minTripsPerGroup);
         freespeedConfig.setLearningRate(0.5);
         freespeedConfig.setMinFactor(0.7);

@@ -95,7 +95,7 @@ public class TestPenaltiesAdapterInitialization {
         config.setActivate(true);
         config.setCalibrate(true);
         CostCalibrationConfigGroup costConfig = config.getCostCalibrationConfigGroup();
-        costConfig.setActivate(true);
+        config.setObjective("penalty");
         costConfig.setPenaltiesFile("missing-initial-penalties.csv");
         costConfig.setResetPenaltiesToZeros(true);
 

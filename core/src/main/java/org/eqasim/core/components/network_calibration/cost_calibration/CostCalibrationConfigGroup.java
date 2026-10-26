@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "costCalibration";
 
-    private static final String ACTIVATE = "activate";
     private static final String UPDATE_INTERVAL = "updateInterval";
     private static final String WARMUP_ITERATIONS = "warmupIterations";
     private static final String END_ITERATION = "endIteration";
@@ -39,7 +38,6 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String MIN_OBSERVATIONS_SPECIAL_REGION = "minObservationsSpecialRegion";
     private static final String RESET_PENALTIES_TO_ZEROS = "resetPenaltiesToZeros";
 
-    private boolean activate = false;
     private int updateInterval = 3;
     private int warmupIterations = 10;
     private int endIteration = 100;
@@ -72,7 +70,6 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
     @Override
     public Map<String, String> getComments() {
         Map<String, String> comments = super.getComments();
-        comments.put(ACTIVATE, "Whether link-cost calibration is active (default: false)");
         comments.put(UPDATE_INTERVAL, "Iterations between penalty updates (default: 5)");
         comments.put(WARMUP_ITERATIONS, "Iterations before the first penalty update (default: 10)");
         comments.put(END_ITERATION, "Iterations before the first penalty update (default: 100)");
@@ -100,8 +97,6 @@ public class CostCalibrationConfigGroup extends ReflectiveConfigGroup {
         return comments;
     }
 
-    @StringGetter(ACTIVATE) public boolean isActivated() { return activate; }
-    @StringSetter(ACTIVATE) public void setActivate(boolean activate) { this.activate = activate; }
     @StringGetter(UPDATE_INTERVAL) public int getUpdateInterval() { return updateInterval; }
     @StringSetter(UPDATE_INTERVAL) public void setUpdateInterval(int value) { updateInterval = value; }
     @StringGetter(WARMUP_ITERATIONS) public int getWarmupIterations() { return warmupIterations; }

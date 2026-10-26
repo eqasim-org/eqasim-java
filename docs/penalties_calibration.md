@@ -2,6 +2,9 @@
 
 This adds a `penalty` objective under `eqasim:networkCalibration`.
 
+See [parent configuration and migration](network_calibration.md) for component
+activation. Child parameter sets no longer have an `activate` switch.
+
 ## Link penalty attribute behavior
 
 The network can carry a per-link `penalty` attribute. It is a dimensionless
@@ -34,7 +37,8 @@ Under `eqasim:networkCalibration`:
 
 - `activate=true`
 - `objective=penalty`
-- `countsFile=...` or `averageCountsPerCategoryFile=...`
+- `calibrate=penalty`
+- `countsFile=...`
 
 Useful optional parameters:
 
