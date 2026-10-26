@@ -221,8 +221,11 @@ Switzerland's `RunSimulation` supports the opt-in `--cache-pt-routes true`
 wrapper under `org.eqasim.switzerland.ch_cmdp.routing.pt_cache`. It delegates
 misses to the existing SwissRailRaptor provider, stores binary itineraries in a
 run-local indexed disk cache, and shares a bounded RAM cache across workers and
-iterations. Exact routing inputs are keyed; restored itineraries use fresh MATSim
-objects. This adds no upstream class replacement. See the
+iterations. Keys use person ID and exact departure time, with no attribute hashing,
+under the fixed-location mode-choice assumption. Actual DMC selections are
+prefetched in bounded person batches before their workers start; private decoded
+templates avoid repeated binary parsing on memory hits. Restored itineraries use
+fresh MATSim objects. This adds no upstream class replacement. See the
 [PT cache documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/routing/pt_cache/README.md)
 for configuration, supported routing settings and lifecycle behavior.
 

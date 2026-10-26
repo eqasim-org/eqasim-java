@@ -24,14 +24,15 @@ import static org.junit.Assert.*;
 public class TestPtRouteCacheIntegration {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
-    @Test public void realRouterRetainsTransferCostsAndRestoresBoardingInformationFromDisk() throws Exception { check(true); }
-    @Test public void disabledModuleLeavesTheExistingRouterActive() throws Exception { check(false); }
+    @Test public void realRouterRetainsTransferCostsAndRestoresBoardingInformationFromDisk() throws Exception { check(true, 0); }
+    @Test public void memoryTemplatesRetainRealTransitRoutesAndBoardingInformation() throws Exception { check(true, 1); }
+    @Test public void disabledModuleLeavesTheExistingRouterActive() throws Exception { check(false, 0); }
 
-    private void check(boolean enabled) throws Exception {
+    private void check(boolean enabled, int memoryMb) throws Exception {
         var raptor = new SwissRailRaptorConfigGroup();
         raptor.setIntermodalLegOnlyHandling(SwissRailRaptorConfigGroup.IntermodalLegOnlyHandling.forbid);
         raptor.addModeToModeTransferPenalty(new SwissRailRaptorConfigGroup.ModeToModeTransferPenalty("bus", "tram", 0.2));
-        var settings = new PtRouteCacheConfigGroup(); settings.enabled = enabled; settings.memoryMb = 0;
+        var settings = new PtRouteCacheConfigGroup(); settings.enabled = enabled; settings.memoryMb = memoryMb;
         var config = ConfigUtils.createConfig(raptor, settings, new EqasimRaptorConfigGroup());
         config.controller().setOutputDirectory(temporary.newFolder().getAbsolutePath());
         config.transit().setUseTransit(true);
@@ -72,9 +73,10 @@ public class TestPtRouteCacheIntegration {
         var router = injector.getInstance(TripRouter.class);
         var from = FacilitiesUtils.wrapLinkAndCoord(network.getLinks().get(Id.createLinkId(0)), stops.get(0).getCoord());
         var to = FacilitiesUtils.wrapLinkAndCoord(network.getLinks().get(Id.createLinkId(2)), stops.get(2).getCoord());
-        var request = DefaultRoutingRequest.withoutAttributes(from, to, 0, null);
-        var first = router.calcRoute("pt", from, to, 0, null, request.getAttributes());
-        var second = router.calcRoute("pt", from, to, 0, null, request.getAttributes());
+        var person = scenario.getPopulation().getFactory().createPerson(Id.createPersonId("pt-person"));
+        var request = DefaultRoutingRequest.withoutAttributes(from, to, 0, person);
+        var first = router.calcRoute("pt", from, to, 0, person, request.getAttributes());
+        var second = router.calcRoute("pt", from, to, 0, person, request.getAttributes());
         assertArrayEquals(PtItineraryCodec.encode(first), PtItineraryCodec.encode(second));
         var pt = second.stream().filter(Leg.class::isInstance).map(Leg.class::cast).map(Leg::getRoute)
                 .filter(TransitPassengerRoute.class::isInstance).map(TransitPassengerRoute.class::cast).toList();
@@ -83,7 +85,9 @@ public class TestPtRouteCacheIntegration {
         assertTrue(pt.get(0).getBoardingTime().isDefined());
         if (enabled) {
             var cache = injector.getInstance(PtRouteCache.class);
-            assertEquals(1, cache.statistics().misses()); assertEquals(1, cache.statistics().diskHits());
+            assertEquals(1, cache.statistics().misses());
+            assertEquals(memoryMb == 0 ? 1 : 0, cache.statistics().diskHits());
+            assertEquals(memoryMb == 0 ? 0 : 1, cache.statistics().memoryHits());
             assertNotSame(first.getFirst(), second.getFirst()); cache.close();
         }
     }

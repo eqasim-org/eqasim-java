@@ -11,6 +11,9 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.*;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.router.RoutingModule;
+import org.matsim.core.replanning.PlanStrategy;
+import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
+import org.matsim.contribs.discrete_mode_choice.replanning.DiscreteModeChoiceStrategyProvider;
 
 /** Install after SwitzerlandConfigurator's usual routing bindings. */
 public final class PtRouteCacheModule extends AbstractModule {
@@ -35,6 +38,11 @@ public final class PtRouteCacheModule extends AbstractModule {
         addControllerListenerBinding().to(PtRouteCache.class);
         addEventHandlerBinding().to(PtRouteCache.class);
         addRoutingModuleBinding("pt").toProvider(RouterProvider.class);
+        if (getConfig().global().getNumberOfThreads() > 0 && getConfig().replanning().getStrategySettings().stream()
+                .anyMatch(strategy -> DiscreteModeChoiceModule.STRATEGY_NAME.equals(strategy.getStrategyName()))) {
+            bind(DiscreteModeChoiceStrategyProvider.class);
+            addPlanStrategyBinding(DiscreteModeChoiceModule.STRATEGY_NAME).toProvider(PrefetchStrategyProvider.class);
+        }
     }
 
     static void validate(Config config, PtRouteCacheConfigGroup settings) {
@@ -73,5 +81,11 @@ public final class PtRouteCacheModule extends AbstractModule {
         @Override public RoutingModule get() {
             return new CachingPtRoutingModule(original.get(), cache, scenario.getPopulation().getFactory());
         }
+    }
+
+    static final class PrefetchStrategyProvider implements Provider<PlanStrategy> {
+        @Inject DiscreteModeChoiceStrategyProvider original;
+        @Inject PtRouteCache cache;
+        @Override public PlanStrategy get() { return new PtCachePrefetchingStrategy(original.get(), cache); }
     }
 }

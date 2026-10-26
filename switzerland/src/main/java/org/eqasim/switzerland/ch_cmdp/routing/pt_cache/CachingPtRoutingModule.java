@@ -22,14 +22,11 @@ public final class CachingPtRoutingModule implements RoutingModule {
 
     @Override public List<? extends PlanElement> calcRoute(RoutingRequest request) {
         cache.requests.increment();
-        PtRouteKey key;
-        try { key = PtRouteKey.of(request, cache.generation()); }
-        catch (IOException | UnsupportedOperationException e) {
-            bypass(e); return delegate.calcRoute(request);
-        }
-        byte[] value = cache.get(key);
+        PtRouteKey key = PtRouteKey.of(request, cache.generation());
+        if (key == null) { cache.bypasses.increment(); return delegate.calcRoute(request); }
+        PtCachedItinerary value = cache.get(key);
         if (value != null) return restoreOrRoute(value, request);
-        var promise = new CompletableFuture<byte[]>();
+        var promise = new CompletableFuture<PtCachedItinerary>();
         var running = cache.inFlight.putIfAbsent(key, promise);
         if (running != null) {
             cache.coalesced.increment();
@@ -48,7 +45,7 @@ public final class CachingPtRoutingModule implements RoutingModule {
             if (value != null) { promise.complete(value); return restoreOrRoute(value, request); }
             cache.misses.increment();
             var result = delegate.calcRoute(request);
-            try { value = PtItineraryCodec.encode(result); cache.put(key, value); }
+            try { value = cache.put(key, PtItineraryCodec.encode(result)); }
             catch (IOException | UnsupportedOperationException e) { bypass(e); value = null; }
             promise.complete(value);
             return result;
@@ -57,8 +54,8 @@ public final class CachingPtRoutingModule implements RoutingModule {
         } finally { cache.inFlight.remove(key, promise); }
     }
 
-    private List<? extends PlanElement> restoreOrRoute(byte[] value, RoutingRequest request) {
-        try { return PtItineraryCodec.decode(value, factory); }
+    private List<? extends PlanElement> restoreOrRoute(PtCachedItinerary value, RoutingRequest request) {
+        try { return value.restore(factory); }
         catch (IOException | RuntimeException e) {
             cache.bypasses.increment(); cache.invalidate();
             LOG.warn("Could not restore PT cache record; rerouting", e);

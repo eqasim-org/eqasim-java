@@ -46,7 +46,7 @@ public class TestPtRouteCache {
         }
     }
 
-    @Test public void exactDepartureAndMutableInputsCauseMissesAndUnsupportedInputsBypass() throws Exception {
+    @Test public void keysUseOnlyPersonAndExactDepartureAndIgnoreAllMetadata() throws Exception {
         var calls = new AtomicInteger();
         try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
             var router = new CachingPtRoutingModule(request -> { calls.incrementAndGet(); return itinerary(100); },
@@ -54,13 +54,20 @@ public class TestPtRouteCache {
             var one = request(100.1); var two = request(100.9);
             router.calcRoute(one); router.calcRoute(one); router.calcRoute(two);
             assertEquals(2, calls.get());
-            one.getPerson().getAttributes().putAttribute("walkSpeed", 2.0);
-            router.calcRoute(one); assertEquals(3, calls.get());
-            one.getAttributes().putAttribute("requestOption", true);
-            router.calcRoute(one); assertEquals(4, calls.get());
+            one.getPerson().getAttributes().putAttribute("carConstant", 2.0);
+            one.getPerson().getAttributes().putAttribute("opaque", new Object());
             one.getAttributes().putAttribute("opaque", new Object());
-            router.calcRoute(one); router.calcRoute(one); assertEquals(6, calls.get());
-            assertEquals(2, cache.statistics().bypasses());
+            router.calcRoute(one); assertEquals(2, calls.get());
+            var otherPerson = DefaultRoutingRequest.withoutAttributes(one.getFromFacility(), one.getToFacility(),
+                    one.getDepartureTime(), PopulationUtils.getFactory().createPerson(Id.createPersonId("other")));
+            router.calcRoute(otherPerson); assertEquals(3, calls.get());
+            var otherLocations = DefaultRoutingRequest.withoutAttributes(one.getToFacility(), one.getFromFacility(),
+                    one.getDepartureTime(), one.getPerson());
+            router.calcRoute(otherLocations); assertEquals(3, calls.get());
+            assertEquals(0, cache.statistics().bypasses());
+            var anonymous = DefaultRoutingRequest.withoutAttributes(one.getFromFacility(), one.getToFacility(), 100, null);
+            router.calcRoute(anonymous); router.calcRoute(anonymous);
+            assertEquals(5, calls.get()); assertEquals(2, cache.statistics().bypasses());
         }
     }
 
@@ -150,26 +157,115 @@ public class TestPtRouteCache {
         assertTrue(PtRouteCacheModule.cacheDirectory(restored, values).startsWith(folder.getRoot().toPath().resolve("relative-cache")));
     }
 
-    @Test public void standardVehicleAssignmentsAndActivityFacilityIdsAreIncludedInKeys() throws Exception {
-        var request = request(100);
-        var vehicles = new org.matsim.vehicles.PersonVehicles(new HashMap<>(Map.of("car", Id.createVehicleId("car"))));
-        request.getPerson().getAttributes().putAttribute("vehicles", vehicles);
-        var key = PtRouteKey.of(request, 0);
-        assertEquals(key, PtRouteKey.of(request, 0));
-        vehicles.addModeVehicle("bike", Id.createVehicleId("bike"));
-        assertNotEquals(key, PtRouteKey.of(request, 0));
-        var types = new org.matsim.vehicles.PersonVehicleTypes();
-        request.getPerson().getAttributes().putAttribute("vehicleTypes", types);
-        key = PtRouteKey.of(request, 0);
-        types.addModeVehicleType("car", Id.createVehicleTypeId("car"));
-        assertNotEquals(key, PtRouteKey.of(request, 0));
-        var activity = PopulationUtils.createActivityFromCoord("home", new Coord(1, 2));
-        activity.setFacilityId(Id.create("home", org.matsim.facilities.ActivityFacility.class));
-        var wrapped = DefaultRoutingRequest.withoutAttributes(FacilitiesUtils.wrapActivity(activity),
-                request.getToFacility(), 100, request.getPerson());
-        key = PtRouteKey.of(wrapped, 0);
-        activity.setFacilityId(Id.create("other", org.matsim.facilities.ActivityFacility.class));
-        assertNotEquals(key, PtRouteKey.of(wrapped, 0));
+    @Test public void personBatchLoadingAvoidsOneDiskReadPerDeparture() throws Exception {
+        var first = request(100);
+        var key = PtRouteKey.of(first, 0);
+        var calls = new AtomicInteger();
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+            for (int i = 0; i < 8; i++) cache.put(new PtRouteKey(key.person(), Double.doubleToLongBits(100 + i), 0),
+                    PtItineraryCodec.encode(itinerary(100 + i)));
+            // Preparing an unrelated selection evicts the original person's RAM records, not their disk data.
+            cache.prefetch(it.unimi.dsi.fastutil.ints.IntArrayList.of(Id.createPersonId("unselected").index()));
+            long reads = cache.statistics().diskReadQueries();
+            var router = new CachingPtRoutingModule(ignored -> { calls.incrementAndGet(); return null; }, cache, PopulationUtils.getFactory());
+            for (int i = 0; i < 8; i++) assertNotNull(router.calcRoute(request(100 + i)));
+            assertEquals(0, calls.get()); assertEquals(reads + 1, cache.statistics().diskReadQueries());
+            assertEquals(7, cache.statistics().memoryHits());
+        }
+    }
+
+    @Test public void selectedPeopleArePrefetchedBeforeDelegateWorkersAndTemplatesRemainPrivate() throws Exception {
+        var request = request(100); var person = request.getPerson();
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+            cache.put(PtRouteKey.of(request, 0), PtItineraryCodec.encode(itinerary(100)));
+            cache.prefetch(it.unimi.dsi.fastutil.ints.IntArrayList.of(Id.createPersonId("other-selection").index()));
+            var runs = new AtomicInteger(); var finishes = new AtomicInteger();
+            var original = new org.matsim.core.replanning.PlanStrategy() {
+                public void init(org.matsim.core.replanning.ReplanningContext context) { }
+                public void run(HasPlansAndId<Plan, Person> selected) { assertSame(person, selected); runs.incrementAndGet(); }
+                public void finish() {
+                    finishes.incrementAndGet();
+                    assertEquals(1, cache.statistics().prefetchedRoutes());
+                    long reads = cache.statistics().diskReadQueries();
+                    var router = new CachingPtRoutingModule(ignored -> { fail("Prefetched route should avoid routing"); return null; },
+                            cache, PopulationUtils.getFactory());
+                    var first = router.calcRoute(request); var second = router.calcRoute(request);
+                    try { assertArrayEquals(PtItineraryCodec.encode(first), PtItineraryCodec.encode(second)); }
+                    catch (java.io.IOException e) { throw new AssertionError(e); }
+                    assertNotSame(first.getFirst(), second.getFirst());
+                    assertNotSame(((Activity) first.get(1)).getCoord(), ((Activity) second.get(1)).getCoord());
+                    ((Activity) first.get(1)).setType("mutated");
+                    ((Leg) first.getFirst()).getRoute().setRouteDescription("mutated");
+                    var third = router.calcRoute(request);
+                    assertEquals("pt interaction", ((Activity) third.get(1)).getType());
+                    assertEquals("test description", ((Leg) third.getFirst()).getRoute().getRouteDescription());
+                    assertEquals(reads, cache.statistics().diskReadQueries());
+                }
+                public String toString() { return "DiscreteModeChoice-original"; }
+            };
+            var strategy = new PtCachePrefetchingStrategy(original, cache);
+            assertEquals(original.toString(), strategy.toString());
+            strategy.init(() -> 1); strategy.run(person);
+            assertEquals(1, runs.get()); assertEquals(0, finishes.get());
+            strategy.finish(); assertEquals(1, finishes.get());
+        }
+    }
+
+    @Test public void prefetchBatchesDatabaseQueriesAndRespectsMemoryBudget() throws Exception {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+            var selected = new it.unimi.dsi.fastutil.ints.IntArrayList();
+            byte[] bytes = PtItineraryCodec.encode(itinerary(100));
+            for (int i = 0; i < 400; i++) {
+                int person = Id.createPersonId("batch-" + i).index(); selected.add(person);
+                cache.put(new PtRouteKey(person, Double.doubleToLongBits(100), 0), bytes);
+            }
+            cache.prefetch(it.unimi.dsi.fastutil.ints.IntArrayList.of(Id.createPersonId("clear-hot").index()));
+            long reads = cache.statistics().diskReadQueries(); cache.prefetch(selected);
+            assertTrue(cache.statistics().prefetchedRoutes() > 0);
+            assertTrue(cache.statistics().diskReadQueries() - reads <= 16);
+            assertTrue(cache.statistics().estimatedMemoryBytes() <= 1024 * 1024);
+            // Oversized records stay on disk and still route correctly with partial person buckets.
+            var large = itinerary(200); ((Leg) large.getFirst()).getRoute().setRouteDescription("x".repeat(100_000));
+            var key = PtRouteKey.of(request(200), 0);
+            cache.put(key, PtItineraryCodec.encode(large));
+            assertArrayEquals(PtItineraryCodec.encode(large), PtItineraryCodec.encode(cache.get(key).restore(PopulationUtils.getFactory())));
+            assertTrue(cache.statistics().estimatedMemoryBytes() <= 1024 * 1024);
+        }
+    }
+
+    @Test public void nullAndEmptyRoutesArePrefetchedWithoutRepeatingFailedSearches() throws Exception {
+        var calls = new AtomicInteger();
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+            var router = new CachingPtRoutingModule(request -> {
+                calls.incrementAndGet(); return request.getDepartureTime() == 100 ? null : List.of();
+            }, cache, PopulationUtils.getFactory());
+            assertNull(router.calcRoute(request(100))); assertTrue(router.calcRoute(request(200)).isEmpty());
+            cache.prefetch(it.unimi.dsi.fastutil.ints.IntArrayList.of(Id.createPersonId("clear-negative").index()));
+            cache.prefetch(it.unimi.dsi.fastutil.ints.IntArrayList.of(request(100).getPerson().getId().index()));
+            assertNull(router.calcRoute(request(100))); assertTrue(router.calcRoute(request(200)).isEmpty());
+            assertEquals(2, calls.get()); assertEquals(2, cache.statistics().prefetchedRoutes());
+            cache.invalidate(); assertNull(router.calcRoute(request(100))); assertEquals(3, calls.get());
+        }
+    }
+
+    @Test public void prefetchContinuesAcrossFullBatchesInTheSameShard() throws Exception {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 8)) {
+            var selected = new it.unimi.dsi.fastutil.ints.IntArrayList();
+            for (int i = 0; selected.size() < 257; i++) {
+                int person = Id.createPersonId("same-shard-" + i).index();
+                if ((it.unimi.dsi.fastutil.HashCommon.mix(person) & 15) != 0) continue;
+                selected.add(person);
+                cache.put(new PtRouteKey(person, Double.doubleToLongBits(100), 0), PtItineraryCodec.encode(null));
+            }
+            cache.prefetch(it.unimi.dsi.fastutil.ints.IntArrayList.of(Id.createPersonId("clear-batches").index()));
+            long before = cache.statistics().diskReadQueries();
+            cache.prefetch(selected);
+            assertEquals(before + 3, cache.statistics().diskReadQueries());
+            assertEquals(257, cache.statistics().prefetchedRoutes());
+            for (int person : selected)
+                assertNull(cache.get(new PtRouteKey(person, Double.doubleToLongBits(100), 0)).restore(PopulationUtils.getFactory()));
+            assertEquals(before + 3, cache.statistics().diskReadQueries());
+        }
     }
 
     private static CommandLine command(String... args) throws Exception {

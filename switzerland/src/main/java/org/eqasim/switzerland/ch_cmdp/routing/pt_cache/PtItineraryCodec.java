@@ -106,7 +106,11 @@ final class PtItineraryCodec {
     }
     private static Double time(DataInputStream in) throws IOException { return in.readBoolean() ? in.readDouble() : null; }
     private static String id(Id<?> id) { return id == null ? null : id.toString(); }
-    private static void text(DataOutputStream out, String text) throws IOException { PtRouteKey.text(out, text); }
+    private static void text(DataOutputStream out, String text) throws IOException {
+        if (text == null) { out.writeInt(-1); return; }
+        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+        out.writeInt(bytes.length); out.write(bytes);
+    }
     private static String text(DataInputStream in) throws IOException {
         int length = in.readInt(); if (length == -1) return null;
         if (length < 0 || length > in.available()) throw new IOException("Invalid PT string length");
