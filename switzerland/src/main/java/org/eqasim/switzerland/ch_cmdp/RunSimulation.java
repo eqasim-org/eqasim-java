@@ -5,6 +5,7 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeCleaner;
+import org.eqasim.switzerland.ch_cmdp.routing.pt_cache.PtRouteCacheModule;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimIntegration;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimJvmSupport;
 import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
@@ -33,7 +34,8 @@ public class RunSimulation {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions(ScenarioAttributeCleaner.OPTION, MemoryEfficientRoutingModule.OPTION,
-                        FloatTravelTimeModule.OPTION, DsimIntegration.OPTION, DsimIntegration.SIMULATE_BIKES_OPTION) //
+                        FloatTravelTimeModule.OPTION, DsimIntegration.OPTION, DsimIntegration.SIMULATE_BIKES_OPTION,
+                        PtRouteCacheModule.OPTION) //
 				.allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
 				.build();
         if (DsimIntegration.isEnabled(cmd)) {
@@ -53,6 +55,7 @@ public class RunSimulation {
 		configurator.updateConfig(config);
 		configurator.configure(config);
 		cmd.applyConfiguration(config);
+        PtRouteCacheModule.applyCommand(cmd, config);
         if (dsim == null && "dsim".equals(config.controller().getMobsim())) {
             throw new IllegalArgumentException("Add --use-dsim true to adapt this scenario for DSim");
         }
@@ -83,6 +86,7 @@ public class RunSimulation {
         if (dsim == null) configurator.configureController(controller);
         else dsim.configureController(controller, configurator);
         if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
+        controller.addOverridingModule(new PtRouteCacheModule());
         if (dsim == null) {
             controller.addOverridingModule(new PTPassengerCountsModule());
             controller.addOverridingModule(new PTLinkVolumesModule());

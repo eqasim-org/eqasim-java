@@ -12,6 +12,12 @@
 	</parent>
 
 	<dependencies>
+		<!-- Already used by GeoPackage; declared directly for the PT cache's indexed binary store. -->
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.41.2.2</version>
+		</dependency>
 		<dependency>
 			<groupId>org.eqasim</groupId>
 			<artifactId>core</artifactId>
