@@ -15,6 +15,7 @@ import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.vehicles.Vehicle;
+import org.eqasim.core.components.routing.TravelTimeAwareDisutility;
 
 import java.util.*;
 
@@ -44,6 +45,7 @@ public class SpeedyALT implements LeastCostPathCalculator {
 	private final SpeedyALTData astarData;
 	private final TravelTime tt;
 	private final TravelDisutility td;
+	private final TravelTimeAwareDisutility timeAwareDisutility;
 	private final SearchWorkspace workspace;
 	private final double[] destinationFrom, destinationTo;
 	private long queries;
@@ -56,6 +58,8 @@ public class SpeedyALT implements LeastCostPathCalculator {
 		this.astarData = astarData;
 		this.tt = tt;
 		this.td = td;
+		this.timeAwareDisutility = td instanceof TravelTimeAwareDisutility aware
+				&& aware.getTravelTimeCalculator() == tt ? aware : null;
 		this.workspace = new SearchWorkspace(this.graph.nodeCount);
 		this.destinationFrom = new double[astarData.getLandmarksCount()];
 		this.destinationTo = new double[astarData.getLandmarksCount()];
@@ -179,7 +183,9 @@ public class SpeedyALT implements LeastCostPathCalculator {
 
 				double travelTime = this.tt.getLinkTravelTime(link, currTime, person, vehicle);
 				double newTime = currTime + travelTime;
-				double travelCost = this.td.getLinkTravelDisutility(link, currTime, person, vehicle);
+				double travelCost = timeAwareDisutility == null
+						? this.td.getLinkTravelDisutility(link, currTime, person, vehicle)
+						: timeAwareDisutility.getLinkTravelDisutility(link, currTime, person, vehicle, travelTime);
 				double newCost = currCost + travelCost;
 
 				if (workspace.contains(toNode)) {

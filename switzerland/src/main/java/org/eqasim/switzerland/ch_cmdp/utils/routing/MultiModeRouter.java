@@ -996,11 +996,11 @@ public final class MultiModeRouter implements AutoCloseable {
 
     private static TravelDisutility bikeCost(Network network, TravelTime time) {
         // The network is fixed: cache all gradient/road-type calculations, shared by workers.
-        double[] costs = new double[arraySize(network)];
+        float[] costs = new float[arraySize(network)];
         for (Link link : network.getLinks().values()) {
             double tt = time.getLinkTravelTime(link, 0, null, null);
-            costs[link.getId().index()] = tt + BikeDisutilities.linkTypeDisutility(link, tt)
-                    + BikeDisutilities.gradientDisutility(link, tt) + BikeDisutilities.distanceDisutility(link, tt);
+            costs[link.getId().index()] = (float) (tt + BikeDisutilities.linkTypeDisutility(link, tt)
+                    + BikeDisutilities.gradientDisutility(link, tt) + BikeDisutilities.distanceDisutility(link, tt));
         }
         return new TravelDisutility() {
             @Override

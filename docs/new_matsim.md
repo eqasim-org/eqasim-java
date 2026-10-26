@@ -185,6 +185,36 @@ classes.
 
 ## Build and validation
 
+### Replanning cache and bike routing (October 2026)
+
+`org.matsim.contribs.discrete_mode_choice.model.estimation.CachedTripEstimator`
+is an additional MATSim replacement. It keeps the upstream constructor and
+one-second, ceiling-rounded departure-time cache semantics. Trip keys use
+identity hashing because MATSim 2026's `DiscreteModeChoiceTrip.hashCode()` is
+constant. Switching persons clears the worker-local cache, so old trip
+candidates are released instead of accumulating across the worker's population.
+Departure-time keys use primitive longs rather than boxed keys. Review this
+override when updating the discrete-mode-choice dependency.
+
+`BikeLinkData` is shared once per controller/injector, after network preparation.
+It stores slope speed, the fixed travel-time cost multiplier (road type and
+gradient), and the distance cost as three packed floats per link. Dense link ID
+spaces use direct array indexing; sparse spaces use a primitive integer index.
+The table is immutable and shared by simulation speed calculations and routing
+workers. Geometry and road-type changes require a new table. Freespeed updates,
+vehicle speed limits, intersection delays and random disutility remain live.
+Float rounding can slightly change times, costs and route choices.
+
+The optimized SpeedyALT optionally passes its already calculated link time into
+`TravelTimeAwareDisutility`. Bike costs use this path only if their travel-time
+calculator is the same instance as the router's. Other disutilities and routers
+retain the usual API. Each bike cost evaluation still draws exactly one Gaussian
+noise value. The standalone multimodal router also stores its deterministic bike
+cost table as floats.
+
+Use `-Xmx10g` for local simulation/profiling validation runs unless another heap
+size is explicitly requested.
+
 ### PT itinerary caching (October 2026)
 
 Switzerland's `RunSimulation` supports the opt-in `--cache-pt-routes true`

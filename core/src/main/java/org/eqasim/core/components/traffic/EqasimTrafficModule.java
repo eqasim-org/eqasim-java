@@ -7,6 +7,7 @@ import org.eqasim.core.components.traffic.bike.BikeGradientBasedLinkSpeedCalcula
 import org.eqasim.core.components.traffic.bike.BikeSpeedCalculator;
 import org.eqasim.core.components.traffic.bike.BikeTravelDisutilityFactory;
 import org.eqasim.core.components.traffic.bike.BikeTravelTime;
+import org.eqasim.core.components.traffic.bike.BikeLinkData;
 import org.eqasim.core.components.traffic_light.DelaysConfigGroup;
 import org.eqasim.core.components.traffic_light.delays.IntersectionDelay;
 import org.eqasim.core.simulation.vdf.VDFConfigGroup;
@@ -61,8 +62,14 @@ public class EqasimTrafficModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BikeGradientBasedLinkSpeedCalculator provideBikeGradientBasedLinkSpeedCalculator(CrossingPenalty crossingPenalty) {
-        return new BikeGradientBasedLinkSpeedCalculator(crossingPenalty);
+    BikeLinkData provideBikeLinkData(Network network) {
+        return new BikeLinkData(network);
+    }
+
+    @Provides
+    @Singleton
+    BikeGradientBasedLinkSpeedCalculator provideBikeGradientBasedLinkSpeedCalculator(CrossingPenalty crossingPenalty, BikeLinkData linkData) {
+        return new BikeGradientBasedLinkSpeedCalculator(crossingPenalty, linkData);
     }
 
     @Provides
@@ -73,8 +80,8 @@ public class EqasimTrafficModule extends AbstractModule {
 
     @Provides
     @Singleton
-    BikeTravelDisutilityFactory provideBikeTravelDisutilityFactory() {
-        return new BikeTravelDisutilityFactory();
+    BikeTravelDisutilityFactory provideBikeTravelDisutilityFactory(BikeLinkData linkData) {
+        return new BikeTravelDisutilityFactory(linkData);
     }
 
 
