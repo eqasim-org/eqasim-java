@@ -5,6 +5,7 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.eqasim.switzerland.ch_cmdp.StrategyWeightDecay.StrategyWeightDecayModule;
 import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeCleaner;
+import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeArchive;
 import org.eqasim.switzerland.ch_cmdp.routing.pt_cache.PtRouteCacheModule;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimIntegration;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimJvmSupport;
@@ -78,13 +79,12 @@ public class RunSimulation {
 		configurator.adjustScenario(scenario);
 		configurator.adjustPTpcu(scenario);
         if (dsim != null) dsim.adaptScenario(scenario);
-		if (lightenScenario) {
-			ScenarioAttributeCleaner.clean(scenario);
-		}
+        ScenarioAttributeArchive attributeArchive = lightenScenario ? ScenarioAttributeCleaner.cleanAndArchive(scenario) : null;
 		Controler controller = new Controler(scenario);
         if (floatTravelTimes) controller.addOverridingModule(new FloatTravelTimeModule());
         if (dsim == null) configurator.configureController(controller);
         else dsim.configureController(controller, configurator);
+        if (attributeArchive != null) attributeArchive.install(controller);
         if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
         controller.addOverridingModule(new PtRouteCacheModule());
         if (dsim == null) {

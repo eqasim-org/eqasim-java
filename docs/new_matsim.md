@@ -185,6 +185,18 @@ classes.
 
 ## Build and validation
 
+### Cleanup attribute archive (October 2026)
+
+When `RunSimulation` cleans the scenario, removed person/link/household attributes
+are collected as segmented LZ4-compressed binary data, saved to a temporary file,
+and released from memory. The final writer restores them by stable ID before
+exporting the scenario, preserving values already present after simulation.
+`org.eqasim.switzerland.ch_cmdp.memory.AttributeRestoringDumpDataAtEnd` decorates
+the original final writer to preserve core-listener ordering and early termination.
+It is an added adapter, not an upstream class replacement; review its lookup of
+the package-private `DumpDataAtEndImpl` type when upgrading MATSim. See the
+[archive documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/memory/README.md).
+
 ### Replanning cache and bike routing (October 2026)
 
 `org.matsim.contribs.discrete_mode_choice.model.estimation.CachedTripEstimator`
@@ -221,8 +233,11 @@ Switzerland's `RunSimulation` supports the opt-in `--cache-pt-routes true`
 wrapper under `org.eqasim.switzerland.ch_cmdp.routing.pt_cache`. It delegates
 misses to the existing SwissRailRaptor provider, stores binary itineraries in a
 run-local indexed disk cache, and shares a bounded RAM cache across workers and
-iterations. Keys use person ID and exact departure time, with no attribute hashing,
-under the fixed-location mode-choice assumption. Actual DMC selections are
+iterations. Keys use person ID and departure time, with no attribute hashing,
+under the fixed-location mode-choice assumption. The cache defaults to a 512 MiB
+RAM/template budget and reuses departures within 10 seconds. Initial waiting is
+adjusted while scheduled boardings stay fixed; missed boardings trigger a fresh
+search. Set `departureTimeToleranceSeconds=0` for exact-time matching. Actual DMC selections are
 prefetched in bounded person batches before their workers start; private decoded
 templates avoid repeated binary parsing on memory hits. Restored itineraries use
 fresh MATSim objects. This adds no upstream class replacement. See the

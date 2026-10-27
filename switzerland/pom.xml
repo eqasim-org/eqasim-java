@@ -12,6 +12,12 @@
 	</parent>
 
 	<dependencies>
+		<!-- Already supplied by MATSim; used directly for the temporary scenario-attribute archive. -->
+		<dependency>
+			<groupId>org.lz4</groupId>
+			<artifactId>lz4-java</artifactId>
+			<version>1.8.0</version>
+		</dependency>
 		<!-- Already used by GeoPackage; declared directly for the PT cache's indexed binary store. -->
 		<dependency>
 			<groupId>org.xerial</groupId>

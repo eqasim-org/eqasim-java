@@ -14,7 +14,8 @@ Optional configuration:
 ```xml
 <module name="swissPtRouteCache">
   <param name="enabled" value="true" />
-  <param name="memoryMb" value="64" />
+  <param name="memoryMb" value="512" />
+  <param name="departureTimeToleranceSeconds" value="10" />
   <param name="directory" value="pt-cache" />
 </module>
 ```
@@ -34,23 +35,36 @@ Each routing worker has its own delegate; workers share only the cache. Concurre
 requests with identical keys share one calculation without holding a database lock
 while routing.
 
-Keys contain only person ID and exact departure time, plus the timetable-change
+Keys contain only person ID and the stored departure time, plus the timetable-change
 generation. MATSim's run-local integer person index represents the unique person
-ID. There is no SHA-256, attribute serialization, sorting, or coordinate lookup.
+ID. There is no SHA-256, attribute serialization, attribute sorting, or coordinate lookup.
 Changing calibrated mode-choice constants therefore does not invalidate PT routes.
 Anonymous requests and non-finite departure times bypass caching.
 
 This key follows the mode-choice workload's assumption that each person has only
 one trip at a given departure time, with fixed locations and PT routing inputs.
 Changes to locations or person-specific PT routing settings require invalidating
-the cache. Departure times are still exact: candidate tour durations can shift
-later departures even when activity locations stay fixed.
+the cache. An exact hit is preferred when available; otherwise the nearest stored
+departure within 10 seconds can be reused, including across time-bin boundaries.
+The comparison is always against the original stored departure: nearby hits do
+not create aliases that can gradually drift beyond the tolerance. Set
+`departureTimeToleranceSeconds=0` to require exact times.
+
+Returned copies adjust access-leg and initial-stage absolute times. Scheduled
+boarding times, in-vehicle times, downstream transfers and PT arrival stay fixed;
+the first PT leg's waiting time changes accordingly. If a later departure cannot
+catch that boarding, the original router runs and its new result is stored.
+Pure-walk results shift their absolute times while preserving durations. This is
+approximate route selection: an earlier request might have a better connection
+than the reused one. It can change mode-choice and simulation results.
 
 The binary itinerary retains legs, stage activities, route descriptions, boarding
 information, distances, optional times and supported output attributes. Cache hits
 create new MATSim objects; cached routes cannot be modified by a person's plan.
 Null and empty results are cached, including through preloading; exceptions are
-not. A failed search is remembered for that person and exact departure time.
+not. A failed search is remembered within the same departure-time tolerance;
+a feasible route appearing nearby can therefore be missed until a fresh search
+is requested outside that window.
 Fare estimation and mode-choice
 utilities are recalculated normally, including calibrated constants.
 
@@ -74,11 +88,13 @@ Records for unselected people leave the hot cache. Preloading stops when each
 shard's memory budget fills; it does not load the whole selected population into
 unbounded RAM. The remaining requests use normal demand loading. A cold demand
 lookup also loads a person's cached departures together, avoiding one disk query
-per trip. Oversized person groups or records fall back to exact disk lookups.
+per trip. Oversized person groups or records fall back to indexed disk lookups
+within the same tolerance.
 
 ## Memory, disk and diagnostics
 
-The hot-cache budget defaults to 64 MiB across 16 shards. It accounts for person
+The hot-cache budget defaults to 512 MiB across 16 shards. Explicit XML memory
+settings still override this default. It accounts for person
 buckets, payloads, map overhead and estimated decoded-template space. Retained
 records lazily decode a private template once; hits copy fresh legs, activities,
 coordinates and routes rather than parsing the binary record again. Disk-only
@@ -86,7 +102,8 @@ records decode directly. The budget is an estimate of retained data, not a stric
 limit on temporary allocations or process memory. A zero budget disables both
 preloading and the hot cache.
 
-SQLite records use the composite integer key `(generation, person, departure)`;
+SQLite records use the composite key `(generation, person, departure)` with a
+numeric departure time;
 the primary index groups a person's departures together. The index stays on disk,
 with about 1 MiB of SQLite page cache per shard in addition to the hot-cache budget.
 Java index memory does not grow with the total number of stored routes. Disk usage
@@ -99,13 +116,17 @@ An unreadable itinerary invalidates the cache generation and falls back to routi
 
 Iteration and shutdown logs report cumulative requests, memory hits, disk hits,
 misses, coalesced requests, bypasses, bytes written, disk read queries, prefetched
-people/routes and estimated retained memory. These are diagnostic
+people/routes, estimated retained memory, successful `timeWindowHits`, and
+`infeasibleTimeWindowHits` that required a fresh search. Memory/disk hit counters
+include those rejected candidates; subtract the infeasible count when assessing
+useful cache hits. These are diagnostic
 counters rather than an exact partition: a cache miss whose output cannot be
 serialized also contributes a bypass. Cache saturation depends on repeat requests
 at the same departure time; changing tour departure times can require new routes.
 
-Run `TestPtRouteCache` and `TestPtRouteCacheIntegration` for disk-only retrieval,
+Run `TestPtRouteCache`, `TestPtRouteCacheTimeWindow` and `TestPtRouteCacheIntegration` for disk-only retrieval,
 mutable-object isolation, parallel requests, exact person/time keys, ignored
 metadata, selected-person preloading, grouped reads, memory limits, unreachable/
-error behavior, timetable invalidation, configuration parsing and real RAPTOR
+error behavior, ten-second boundaries, fixed boardings, missed connections,
+timetable invalidation, configuration parsing and real RAPTOR
 transfer/boarding reconstruction.

@@ -5,16 +5,18 @@ import java.util.ArrayList;
 import java.util.List;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.population.*;
+import org.matsim.pt.routes.TransitPassengerRoute;
 
 /** Private templates are never returned to callers. Output attributes are codec-validated scalars. */
 final class PtCachedItinerary {
     final byte[] bytes;
+    final double departureTime;
     private final boolean keepTemplate;
     private volatile List<? extends PlanElement> template;
     private volatile boolean decoded;
 
-    PtCachedItinerary(byte[] bytes, boolean keepTemplate) {
-        this.bytes = bytes; this.keepTemplate = keepTemplate;
+    PtCachedItinerary(byte[] bytes, boolean keepTemplate, double departureTime) {
+        this.bytes = bytes; this.keepTemplate = keepTemplate; this.departureTime = departureTime;
     }
 
     // Reserve estimated space for both binary payload and decoded template before admitting a record.
@@ -52,5 +54,29 @@ final class PtCachedItinerary {
             result.add(copy);
         }
         return result;
+    }
+
+    /** Adjust a fresh copy only. Scheduled PT boarding/arrival times and downstream transfers stay fixed. */
+    static boolean retime(List<? extends PlanElement> elements, double delta) {
+        if (delta == 0 || elements == null || elements.isEmpty()) return true;
+        for (var element : elements) {
+            if (element instanceof Leg leg) {
+                if (leg.getRoute() instanceof TransitPassengerRoute route) {
+                    if (!route.getBoardingTime().isDefined() || !leg.getDepartureTime().isDefined()
+                            || !leg.getTravelTime().isDefined()) return false;
+                    double departure = leg.getDepartureTime().seconds() + delta;
+                    if (departure > route.getBoardingTime().seconds() || leg.getTravelTime().seconds() < delta) return false;
+                    leg.setDepartureTime(departure);
+                    leg.setTravelTime(leg.getTravelTime().seconds() - delta);
+                    if (route.getTravelTime().isDefined()) route.setTravelTime(route.getTravelTime().seconds() - delta);
+                    return true;
+                }
+                if (leg.getDepartureTime().isDefined()) leg.setDepartureTime(leg.getDepartureTime().seconds() + delta);
+            } else if (element instanceof Activity activity) {
+                if (activity.getStartTime().isDefined()) activity.setStartTime(activity.getStartTime().seconds() + delta);
+                if (activity.getEndTime().isDefined()) activity.setEndTime(activity.getEndTime().seconds() + delta);
+            }
+        }
+        return true; // Pure walking: shift absolute times, keeping all durations unchanged.
     }
 }

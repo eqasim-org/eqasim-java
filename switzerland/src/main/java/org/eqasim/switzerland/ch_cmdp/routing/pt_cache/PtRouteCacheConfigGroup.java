@@ -7,7 +7,9 @@ public final class PtRouteCacheConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "swissPtRouteCache";
 
     @Parameter public boolean enabled = false;
-    @Parameter public int memoryMb = 64;
+    @Parameter public int memoryMb = 512;
+    /** Maximum departure-time difference for reusing a stored itinerary; zero requires exact times. */
+    @Parameter public double departureTimeToleranceSeconds = 10.0;
     /** Optional local directory, relative to the configuration file. */
     @Parameter public String directory = "";
 

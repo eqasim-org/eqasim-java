@@ -88,7 +88,19 @@ public class TestPtRouteCacheIntegration {
             assertEquals(1, cache.statistics().misses());
             assertEquals(memoryMb == 0 ? 1 : 0, cache.statistics().diskHits());
             assertEquals(memoryMb == 0 ? 0 : 1, cache.statistics().memoryHits());
-            assertNotSame(first.getFirst(), second.getFirst()); cache.close();
+            assertNotSame(first.getFirst(), second.getFirst());
+            var nearby = router.calcRoute("pt", from, to, 5, person, request.getAttributes());
+            var originalLeg = second.stream().filter(Leg.class::isInstance).map(Leg.class::cast)
+                    .filter(leg -> leg.getRoute() instanceof TransitPassengerRoute).findFirst().orElseThrow();
+            var reusedLeg = nearby.stream().filter(Leg.class::isInstance).map(Leg.class::cast)
+                    .filter(leg -> leg.getRoute() instanceof TransitPassengerRoute).findFirst().orElseThrow();
+            assertEquals(((TransitPassengerRoute) originalLeg.getRoute()).getBoardingTime().seconds(),
+                    ((TransitPassengerRoute) reusedLeg.getRoute()).getBoardingTime().seconds(), 0);
+            assertEquals(originalLeg.getDepartureTime().seconds() + 5, reusedLeg.getDepartureTime().seconds(), 1e-9);
+            assertEquals(originalLeg.getDepartureTime().seconds() + originalLeg.getTravelTime().seconds(),
+                    reusedLeg.getDepartureTime().seconds() + reusedLeg.getTravelTime().seconds(), 1e-9);
+            assertEquals(1, cache.statistics().misses()); assertEquals(1, cache.statistics().timeWindowHits());
+            cache.close();
         }
     }
 }

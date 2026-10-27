@@ -26,7 +26,7 @@ public class TestPtRouteCache {
     @Test public void diskHitsPreserveItinerariesAndReturnIndependentObjects() throws Exception {
         var count = new AtomicInteger();
         RoutingModule delegate = request -> { count.incrementAndGet(); return itinerary(request.getDepartureTime()); };
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 0)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 0, 0)) {
             var router = new CachingPtRoutingModule(delegate, cache, PopulationUtils.getFactory());
             var request = request(100);
             var first = router.calcRoute(request);
@@ -48,7 +48,7 @@ public class TestPtRouteCache {
 
     @Test public void keysUseOnlyPersonAndExactDepartureAndIgnoreAllMetadata() throws Exception {
         var calls = new AtomicInteger();
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1, 0)) {
             var router = new CachingPtRoutingModule(request -> { calls.incrementAndGet(); return itinerary(100); },
                     cache, PopulationUtils.getFactory());
             var one = request(100.1); var two = request(100.9);
@@ -80,7 +80,7 @@ public class TestPtRouteCache {
             catch (InterruptedException e) { throw new AssertionError(e); }
             return itinerary(100);
         };
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1);
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1, 0);
                 var workers = Executors.newFixedThreadPool(8)) {
             var request = request(100);
             var router = new CachingPtRoutingModule(delegate, cache, PopulationUtils.getFactory());
@@ -98,7 +98,7 @@ public class TestPtRouteCache {
 
     @Test public void noRouteIsCachedButExceptionsAreRetried() throws Exception {
         var count = new AtomicInteger();
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 0)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 0, 0)) {
             var noRoute = new CachingPtRoutingModule(request -> { count.incrementAndGet(); return null; },
                     cache, PopulationUtils.getFactory());
             assertNull(noRoute.calcRoute(request(100))); assertNull(noRoute.calcRoute(request(100)));
@@ -131,14 +131,14 @@ public class TestPtRouteCache {
     @Test public void corruptRecordAndUnavailableDiskFallBackToRouting() throws Exception {
         var request = request(100); var calls = new AtomicInteger();
         RoutingModule delegate = ignored -> { calls.incrementAndGet(); return itinerary(100); };
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1, 0)) {
             cache.put(PtRouteKey.of(request, cache.generation()), new byte[]{1, 2});
             var router = new CachingPtRoutingModule(delegate, cache, PopulationUtils.getFactory());
             assertNotNull(router.calcRoute(request)); assertEquals(1, calls.get());
             assertEquals(1, cache.statistics().generation());
         }
         // A regular file cannot serve as the cache directory. The hot cache can still be used.
-        try (var cache = new PtRouteCache(folder.newFile().toPath(), 1)) {
+        try (var cache = new PtRouteCache(folder.newFile().toPath(), 1, 0)) {
             var router = new CachingPtRoutingModule(delegate, cache, PopulationUtils.getFactory());
             router.calcRoute(request); router.calcRoute(request);
             assertEquals(2, calls.get()); assertEquals(1, cache.statistics().memoryHits());
@@ -149,11 +149,13 @@ public class TestPtRouteCache {
         var config = ConfigUtils.createConfig(new PtRouteCacheConfigGroup());
         var settings = ConfigUtils.addOrGetModule(config, PtRouteCacheConfigGroup.class);
         settings.enabled = true; settings.memoryMb = 12; settings.directory = "relative-cache";
+        settings.departureTimeToleranceSeconds = 3.5;
         var file = folder.newFile("config.xml");
         new ConfigWriter(config).write(file.toString());
         var restored = ConfigUtils.loadConfig(file.toString(), new PtRouteCacheConfigGroup());
         var values = ConfigUtils.addOrGetModule(restored, PtRouteCacheConfigGroup.class);
         assertTrue(values.enabled); assertEquals(12, values.memoryMb);
+        assertEquals(3.5, values.departureTimeToleranceSeconds, 0);
         assertTrue(PtRouteCacheModule.cacheDirectory(restored, values).startsWith(folder.getRoot().toPath().resolve("relative-cache")));
     }
 
@@ -161,7 +163,7 @@ public class TestPtRouteCache {
         var first = request(100);
         var key = PtRouteKey.of(first, 0);
         var calls = new AtomicInteger();
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1, 0)) {
             for (int i = 0; i < 8; i++) cache.put(new PtRouteKey(key.person(), Double.doubleToLongBits(100 + i), 0),
                     PtItineraryCodec.encode(itinerary(100 + i)));
             // Preparing an unrelated selection evicts the original person's RAM records, not their disk data.
@@ -176,7 +178,7 @@ public class TestPtRouteCache {
 
     @Test public void selectedPeopleArePrefetchedBeforeDelegateWorkersAndTemplatesRemainPrivate() throws Exception {
         var request = request(100); var person = request.getPerson();
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1, 0)) {
             cache.put(PtRouteKey.of(request, 0), PtItineraryCodec.encode(itinerary(100)));
             cache.prefetch(it.unimi.dsi.fastutil.ints.IntArrayList.of(Id.createPersonId("other-selection").index()));
             var runs = new AtomicInteger(); var finishes = new AtomicInteger();
@@ -212,7 +214,7 @@ public class TestPtRouteCache {
     }
 
     @Test public void prefetchBatchesDatabaseQueriesAndRespectsMemoryBudget() throws Exception {
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1, 0)) {
             var selected = new it.unimi.dsi.fastutil.ints.IntArrayList();
             byte[] bytes = PtItineraryCodec.encode(itinerary(100));
             for (int i = 0; i < 400; i++) {
@@ -235,7 +237,7 @@ public class TestPtRouteCache {
 
     @Test public void nullAndEmptyRoutesArePrefetchedWithoutRepeatingFailedSearches() throws Exception {
         var calls = new AtomicInteger();
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 1, 0)) {
             var router = new CachingPtRoutingModule(request -> {
                 calls.incrementAndGet(); return request.getDepartureTime() == 100 ? null : List.of();
             }, cache, PopulationUtils.getFactory());
@@ -249,7 +251,7 @@ public class TestPtRouteCache {
     }
 
     @Test public void prefetchContinuesAcrossFullBatchesInTheSameShard() throws Exception {
-        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 8)) {
+        try (var cache = new PtRouteCache(folder.newFolder().toPath(), 8, 0)) {
             var selected = new it.unimi.dsi.fastutil.ints.IntArrayList();
             for (int i = 0; selected.size() < 257; i++) {
                 int person = Id.createPersonId("same-shard-" + i).index();

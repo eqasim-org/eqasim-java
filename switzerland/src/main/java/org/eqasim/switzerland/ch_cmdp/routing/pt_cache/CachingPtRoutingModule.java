@@ -55,12 +55,30 @@ public final class CachingPtRoutingModule implements RoutingModule {
     }
 
     private List<? extends PlanElement> restoreOrRoute(PtCachedItinerary value, RoutingRequest request) {
-        try { return value.restore(factory); }
+        List<? extends PlanElement> restored;
+        boolean reusable;
+        double delta = request.getDepartureTime() - value.departureTime;
+        try {
+            restored = value.restore(factory);
+            reusable = PtCachedItinerary.retime(restored, delta);
+        }
         catch (IOException | RuntimeException e) {
             cache.bypasses.increment(); cache.invalidate();
             LOG.warn("Could not restore PT cache record; rerouting", e);
             return delegate.calcRoute(request);
         }
+        if (!reusable) {
+            cache.infeasibleTimeWindowHits.increment(); cache.misses.increment();
+            var result = delegate.calcRoute(request);
+            var key = PtRouteKey.of(request, cache.generation());
+            if (key != null) {
+                try { cache.put(key, PtItineraryCodec.encode(result)); }
+                catch (IOException | UnsupportedOperationException e) { bypass(e); }
+            }
+            return result;
+        }
+        if (delta != 0) cache.timeWindowHits.increment();
+        return restored;
     }
 
     private void bypass(Exception reason) {

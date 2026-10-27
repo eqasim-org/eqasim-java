@@ -48,6 +48,8 @@ public final class PtRouteCacheModule extends AbstractModule {
     static void validate(Config config, PtRouteCacheConfigGroup settings) {
         var raptor = ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class);
         if (settings.memoryMb < 0) throw new IllegalArgumentException("PT cache memoryMb must be nonnegative");
+        if (!Double.isFinite(settings.departureTimeToleranceSeconds) || settings.departureTimeToleranceSeconds < 0)
+            throw new IllegalArgumentException("PT cache departureTimeToleranceSeconds must be finite and nonnegative");
         if (raptor.isUseCapacityConstraints() || raptor.isUseIntermodalAccessEgress() || raptor.isUseRangeQuery()
                 || config.network().isTimeVariantNetwork() || config.routing().getNetworkModes().contains("walk")
                 || config.routing().getOrCreateModeRoutingParams("walk").getTeleportedModeFreespeedFactor() != null)
@@ -70,7 +72,7 @@ public final class PtRouteCacheModule extends AbstractModule {
         @Inject Config config;
         @Override public PtRouteCache get() {
             var settings = ConfigUtils.addOrGetModule(config, PtRouteCacheConfigGroup.class);
-            return new PtRouteCache(cacheDirectory(config, settings), settings.memoryMb);
+            return new PtRouteCache(cacheDirectory(config, settings), settings.memoryMb, settings.departureTimeToleranceSeconds);
         }
     }
 
