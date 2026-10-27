@@ -46,7 +46,7 @@ public class NetworkCalibrationConfigGroup extends ReflectiveConfigGroup {
     private double categoryFivePromotionLaneThreshold = 1.0;
     private double categoryFivePromotionSpeedThreshold = 45.0;
     private double tollsValueOfTime = 15.0;
-    private double tollsSigma = 0.5;
+    private double tollsSigma = 2.0;
 
     public NetworkCalibrationConfigGroup() {
         super(GROUP_NAME);
