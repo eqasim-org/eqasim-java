@@ -121,6 +121,8 @@ public final class MultiModeRouter implements AutoCloseable {
         public double tollsSigma = 0;
         public boolean returnLinks = false;
         public boolean exportRoutes = false;
+        /** Headway search extends this many seconds before/after departure; zero disables it. */
+        public double ptHeadwayInterval = 0;
         public boolean computeCost = false;
         public String carCostModel = "simple";
         public boolean marouter = false;
@@ -154,6 +156,8 @@ public final class MultiModeRouter implements AutoCloseable {
                 tollsSigma = configValue(config, NetworkCalibrationConfigGroup.GROUP_NAME, "tollsSigma", tollsSigma);
             }
             ConfigGroup routerConfig = config.getModules().get("multiModeRouter");
+            if (configFallbackOptions.contains("pt-headway-interval"))
+                ptHeadwayInterval = configValue(config, "multiModeRouter", "ptHeadwayInterval", ptHeadwayInterval);
             if (configFallbackOptions.contains("export-routes") && routerConfig != null
                     && routerConfig.getParams().containsKey("exportRoutes"))
                 exportRoutes = booleanValue(routerConfig.getParams().get("exportRoutes"), "exportRoutes");
@@ -204,6 +208,8 @@ public final class MultiModeRouter implements AutoCloseable {
         }
 
         private void validate() {
+            if (!Double.isFinite(ptHeadwayInterval) || ptHeadwayInterval < 0)
+                throw new IllegalArgumentException("pt-headway-interval must be finite and non-negative");
             positive(truckMaxSpeed, "truck-max-speed");
             if (computeCost && (carCostModel == null || !Set.of("simple", "weiss").contains(carCostModel))) {
                 throw new IllegalArgumentException("car-cost-model must be simple or weiss");
@@ -402,8 +408,13 @@ public final class MultiModeRouter implements AutoCloseable {
                     if (raptorConfig.isUseRangeQuery()) {
                         builder.with(new ConfigurableRaptorRouteSelector());
                     }
-                    return planRouter(builder.build()::calcRoute, network, "pt",
-                            pricing == null ? null : pricing.pricer(scenario.getTransitSchedule()));
+                    var raptor = builder.build();
+                    var headway = settings.ptHeadwayInterval > 0
+                            ? new org.eqasim.core.components.headway.HeadwayCalculator(raptor,
+                                    settings.ptHeadwayInterval, settings.ptHeadwayInterval) : null;
+                    return planRouter(raptor::calcRoute, network, "pt",
+                            pricing == null ? null : pricing.pricer(scenario.getTransitSchedule()),
+                            scenario.getTransitSchedule(), headway);
                 });
             }
         }
@@ -632,7 +643,7 @@ public final class MultiModeRouter implements AutoCloseable {
                         for (int i = 0; i < results.size(); i++) {
                             RoutedTrip result = results.get(i);
                             boolean truck = trips.get(i).mode.equals("truck");
-                            marouter.add(result.assignmentPath, truck);
+                            marouter.add(result.assignmentPath, truck, trips.get(i).weight);
                             spool.put(indices.get(i), result, truck);
                         }
                     }
@@ -774,6 +785,11 @@ public final class MultiModeRouter implements AutoCloseable {
                 throw new IllegalArgumentException("Provide both origin_link_id and destination_link_id");
             trip.exportRoute = exportRoutes && !costOnly;
             trip.mode = mode == null ? row.get("mode") : mode;
+            if (marouter != null && ("car".equals(trip.mode) || "truck".equals(trip.mode))) {
+                trip.weight = optional(row, "weight") == null ? 1 : number(row, "weight");
+                if (trip.weight < 0 || !Double.isFinite(trip.weight * ("truck".equals(trip.mode) ? marouter.truckPcu : 1)))
+                    throw new IllegalArgumentException("weight * vehicle PCU must be finite and non-negative");
+            }
             trip.includeCost = includeCost;
             trip.costOnly = costOnly;
             // A saved unreachable route is also unpriceable, for every mode.
@@ -1055,6 +1071,13 @@ public final class MultiModeRouter implements AutoCloseable {
     private static ModeRouter planRouter(java.util.function.Function<org.matsim.core.router.RoutingRequest,
             List<? extends org.matsim.api.core.v01.population.PlanElement>> router, Network network, String mode,
             RouterCosts.PtPricer pricer) {
+        return planRouter(router, network, mode, pricer, null, null);
+    }
+
+    private static ModeRouter planRouter(java.util.function.Function<org.matsim.core.router.RoutingRequest,
+            List<? extends org.matsim.api.core.v01.population.PlanElement>> router, Network network, String mode,
+            RouterCosts.PtPricer pricer, org.matsim.pt.transitSchedule.api.TransitSchedule schedule,
+            org.eqasim.core.components.headway.HeadwayCalculator headway) {
         ModeRouter routing = trip -> {
             var from = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, origin(trip)));
             var to = new LinkWrapperFacility(NetworkUtils.getNearestLink(network, destination(trip)));
@@ -1069,7 +1092,8 @@ public final class MultiModeRouter implements AutoCloseable {
             // available. Keep zero-distance requests valid, but do not report this
             // fallback as a successful PT journey.
             if (mode.equals("pt") && !origin(trip).equals(destination(trip))
-                    && elements.stream().noneMatch(e -> e instanceof Leg leg && leg.getMode().equals("pt"))) {
+                    && elements.stream().noneMatch(e -> e instanceof Leg leg
+                            && leg.getRoute() instanceof org.matsim.pt.routes.TransitPassengerRoute)) {
                 return missingRoute(trip);
             }
             double arrival = trip.departureTime;
@@ -1084,6 +1108,11 @@ public final class MultiModeRouter implements AutoCloseable {
             }
             if (!Double.isFinite(arrival) || !Double.isFinite(distance)) return missingRoute(trip);
             RoutedTrip result = result(trip, mode, arrival - trip.departureTime, distance);
+            if (mode.equals("pt")) {
+                result.populatePtMetrics(elements, schedule);
+                result.headway_min = headway == null ? Double.NaN
+                        : headway.calculateHeadway_min(from, to, trip.departureTime);
+            }
             if (trip.exportRoute) result.route = ReusableRoute.encode(trip.mode, trip.departureTime, elements);
             if (mode.equals("pt") && trip.includeCost && !trip.costOnly) {
                 result.ptCostData = RouterCosts.save(trip.pricingRequest, elements);
@@ -1178,6 +1207,7 @@ public final class MultiModeRouter implements AutoCloseable {
     }
 
     private static final class Trip extends TripsRouter.Trip {
+        double weight = 1;
         String personId, tripId, originLink, destinationLink;
         Integer tripIndex;
         boolean exportRoute;
@@ -1191,7 +1221,7 @@ public final class MultiModeRouter implements AutoCloseable {
 
     public record CostResult(String identifier, String mode, double cost) {}
 
-    public static final class RoutedTrip extends TripsRouter.RoutedTrip {
+    public static final class RoutedTrip extends PublicTransportRoutingMetrics {
         @JsonProperty("person_id") public String personId;
         @JsonProperty("trip_id") public String tripId;
         @JsonProperty("trip_index") public Integer tripIndex;

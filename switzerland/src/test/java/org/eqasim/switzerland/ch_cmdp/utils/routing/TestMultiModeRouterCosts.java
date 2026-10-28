@@ -470,6 +470,49 @@ public class TestMultiModeRouterCosts {
     }
 
     @Test
+    public void ptModeChoiceColumnsAreIndependentOfItineraryExportAndPricing() throws Exception {
+        Path network = network();
+        Path config = writeConfig(transitConfig());
+        Path input = write("pt-components.csv", HEADER + "trip,500,0,1500,0,pt\n"
+                + "walk,500,0,500,0,pt\nmissing,2000,0,0,0,pt\n");
+        Path output = folder.getRoot().toPath().resolve("pt-components-out.csv");
+        List<Map<String, String>> plain;
+        try (var router = new MultiModeRouter(settings(network, config))) {
+            router.route(input, output, "pt");
+            plain = rows(output);
+            assertEquals("", plain.getFirst().get("route"));
+            assertEquals("", plain.getFirst().get("pt_cost_data"));
+            assertEquals(100.0 / 60, Double.parseDouble(plain.getFirst().get("in_vehicle_time_bus_min")), 1e-9);
+            assertEquals("0", plain.getFirst().get("transfers"));
+            assertEquals("0", plain.getFirst().get("is_only_walk"));
+            assertEquals("NaN", plain.getFirst().get("headway_min"));
+            assertEquals("1", plain.get(1).get("is_only_walk"));
+            assertEquals(0, Double.parseDouble(plain.get(1).get("in_vehicle_time_total_min")), 0);
+            assertEquals("", plain.get(2).get("in_vehicle_time_total_min"));
+            var result = plain.getFirst();
+            double minutes = Double.parseDouble(result.get("total_walk_travel_time_min"))
+                    + Double.parseDouble(result.get("initial_waiting_time_min"))
+                    + Double.parseDouble(result.get("transfer_waiting_time_min"))
+                    + Double.parseDouble(result.get("in_vehicle_time_total_min"));
+            assertEquals(Double.parseDouble(result.get("travel_time")), minutes * 60, 1e-6);
+            double km = Double.parseDouble(result.get("total_walk_distance_km"))
+                    + Double.parseDouble(result.get("in_vehicle_distance_total_km"));
+            assertEquals(Double.parseDouble(result.get("travel_distance")), km * 1000, 1e-6);
+        }
+        try (var router = new MultiModeRouter(settings(network, config, "--export-routes", "true",
+                "--pt-headway-interval", "300", "--marouter", "true"))) {
+            router.route(input, output);
+            var exported = rows(output);
+            assertFalse(exported.getFirst().get("route").isBlank());
+            assertEquals(10, Double.parseDouble(exported.getFirst().get("headway_min")), 1e-9);
+            for (var entry : plain.getFirst().entrySet()) {
+                if (!Set.of("route", "headway_min").contains(entry.getKey()))
+                    assertEquals(entry.getKey(), entry.getValue(), exported.getFirst().get(entry.getKey()));
+            }
+        }
+    }
+
+    @Test
     public void exportedTransitItineraryCanBeReusedWithoutCostEstimationOrAnotherSearch() throws Exception {
         Path network = network();
         Config config = ConfigUtils.loadConfig(writeConfig(transitConfig()).toString(), new ch.sbb.matsim.config.SwissRailRaptorConfigGroup());

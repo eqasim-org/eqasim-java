@@ -115,9 +115,15 @@ final class MarouterAssignment {
     }
 
     void add(int[] path, boolean truck) {
+        add(path, truck, 1);
+    }
+
+    void add(int[] path, boolean truck, double weight) {
+        if (!Double.isFinite(weight) || weight < 0 || !Double.isFinite(weight * (truck ? truckPcu : 1)))
+            throw new IllegalArgumentException("MARouter weight * vehicle PCU must be finite and non-negative");
         Bin state = active;
-        if (path == null) return; // Unreachable trips contribute no link flow.
-        double pcu = truck ? truckPcu : 1;
+        if (path == null || weight == 0) return; // Unreachable/zero-weight trips contribute no link flow.
+        double pcu = weight * (truck ? truckPcu : 1);
         for (int index : path) {
             if (state.counts[index] == 0) state.touched.add(index);
             state.counts[index] += pcu;
@@ -129,7 +135,7 @@ final class MarouterAssignment {
         for (int index : state.touched) {
             Link link = links[index];
             if (link.getLength() == 0) { state.times[index] = 0; continue; }
-            // Counts are sampled demand: reduce interval capacity by the same sample fraction.
+            // Counts include trip weights; population sampling independently scales capacity.
             // This is equivalent to VDFTravelTime's flow/sampleSize; apply sampling only once.
             double capacity = sampleSize * capacityFactor * scope.getIntervalTime() * link.getCapacity(state.time) / capacityPeriod;
             positive(capacity, "Interval capacity on " + link.getId());

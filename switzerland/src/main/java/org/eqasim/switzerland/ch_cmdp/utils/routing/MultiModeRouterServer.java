@@ -58,7 +58,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
                         "start-time", "end-time", "interval", "departure-time", "routingDistanceUtility",
                         "tolls-value-of-time", "tolls-sigma", "return-links", "compute-cost", "car-cost-model",
                         "marouter", "marouter-increment", "marouter-seed", "marouter-truck-pcu", "truck-max-speed",
-                        "marouter-sample-size", "export-routes")
+                        "marouter-sample-size", "export-routes", "pt-headway-interval")
                 .build();
     }
 
@@ -84,6 +84,8 @@ public final class MultiModeRouterServer implements AutoCloseable {
         settings.carCostModel = cmd.getOption("car-cost-model").orElse(settings.carCostModel);
         settings.exportRoutes = cmd.getOption("export-routes")
                 .map(v -> MultiModeRouter.booleanValue(v, "export-routes")).orElse(settings.exportRoutes);
+        settings.ptHeadwayInterval = cmd.getOption("pt-headway-interval").map(Double::parseDouble)
+                .orElse(settings.ptHeadwayInterval);
         settings.marouter = cmd.getOption("marouter").map(v -> MultiModeRouter.booleanValue(v, "marouter")).orElse(false);
         settings.marouterIncrement = cmd.getOption("marouter-increment").map(Double::parseDouble).orElse(settings.marouterIncrement);
         settings.marouterSeed = cmd.getOption("marouter-seed").map(Long::parseLong).orElse(settings.marouterSeed);
@@ -97,7 +99,7 @@ public final class MultiModeRouterServer implements AutoCloseable {
         settings.configFallbackOptions = new java.util.HashSet<>();
         for (String option : List.of("threads", "routingDistanceUtility", "tolls-value-of-time", "tolls-sigma",
                 "compute-cost", "car-cost-model", "marouter", "marouter-increment", "marouter-seed",
-                "marouter-truck-pcu", "truck-max-speed", "marouter-sample-size", "export-routes")) {
+                "marouter-truck-pcu", "truck-max-speed", "marouter-sample-size", "export-routes", "pt-headway-interval")) {
             if (!cmd.hasOption(option)) {
                 settings.configFallbackOptions.add(option);
             }

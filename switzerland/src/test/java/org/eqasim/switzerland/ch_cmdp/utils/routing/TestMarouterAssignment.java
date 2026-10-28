@@ -90,9 +90,9 @@ public class TestMarouterAssignment {
     public void resultsDoNotDependOnWorkerCountOrCsvChunkBoundaries() throws Exception {
         Path network = writeNetwork(parallelRoads());
         Path config = config(vdf(1, 2), 1, true);
-        StringBuilder input = new StringBuilder(HEADER);
+        StringBuilder input = new StringBuilder(HEADER.stripTrailing() + ",weight\n");
         for (int i = 0; i < 80; i++) input.append(i).append(",0,0,2000,0,0,")
-                .append(i % 3 == 0 ? "truck" : "car").append('\n');
+                .append(i % 3 == 0 ? "truck" : "car").append(',').append((i % 7) * 0.25).append('\n');
         Path trips = write(input.toString());
         Path a = folder.getRoot().toPath().resolve("a.csv");
         Path b = folder.getRoot().toPath().resolve("b.csv");
@@ -190,11 +190,66 @@ public class TestMarouterAssignment {
         try (var router = new MultiModeRouter(settings(networkPath, config))) {
             router.route(input, output);
             assertEquals(125, Double.parseDouble(rows(output).getFirst().get("travel_time")), 1e-9);
+            // All sampled people can be routed as car alternatives, with an expected 50% car share.
+            Path alternatives = write(HEADER.stripTrailing() + ",weight\ncar,0,0,2000,0,0,car,0.5\n");
+            router.route(alternatives, output);
+            // Capacity still equals 0.1 * 20 = 2; weighted vehicle consumption is 0.5 PCU.
+            assertEquals(100 * (1 + Math.pow(0.5 / 2, 2)),
+                    Double.parseDouble(rows(output).getFirst().get("travel_time")), 1e-9);
         }
         try (var router = new MultiModeRouter(settings(networkPath, config, "--marouter-sample-size", "1"))) {
             router.route(input, output);
             assertEquals(100.25, Double.parseDouble(rows(output).getFirst().get("travel_time")), 1e-9);
         }
+    }
+
+    @Test
+    public void weightedCarsAndTrucksConsumeWeightedPcuAndDefaultBlankWeightsToOne() throws Exception {
+        Path network = writeNetwork(parallelRoads());
+        Path config = config(vdf(1, 2), 1, true);
+        Path input = write(HEADER.stripTrailing() + ",weight\n"
+                + "half-car,0,0,2000,0,0,car,0.5\n"
+                + "expanded-truck,0,0,2000,0,0,truck,10\n"
+                + "default-car,0,0,2000,0,0,car,\n"
+                + "probe,0,0,2000,0,0,car,0\n"
+                + "passenger,0,0,2000,0,0,car_passenger,999\n");
+        Path output = folder.getRoot().toPath().resolve("weighted.csv");
+        // One frozen routing increment keeps all paths fixed for an exact BPR check.
+        try (var router = new MultiModeRouter(settings(network, config, "--marouter-increment", "1"))) {
+            router.route(input, output);
+            // 0.5 + 10 * 2 + 1 = 21.5 PCU on 20 PCU/h links; probes/passengers add zero.
+            for (var result : rows(output).subList(0, 4))
+                assertEquals(100 * (1 + Math.pow(21.5 / 20, 2)),
+                        Double.parseDouble(result.get("travel_time")), 1e-9);
+            // Passenger can choose the now faster uncongested detour after all drivers are assigned.
+            assertEquals(150, Double.parseDouble(rows(output).get(4).get("travel_time")), 1e-9);
+            byte[] saved = Files.readAllBytes(output);
+            for (String invalid : List.of("-1", "NaN", "Infinity", "bad", "1.7976931348623157E308")) {
+                Path bad = write(HEADER.stripTrailing() + ",weight\nbad,0,0,2000,0,0,truck," + invalid + "\n");
+                assertThrows(IllegalArgumentException.class, () -> router.route(bad, output));
+                assertArrayEquals(saved, Files.readAllBytes(output));
+            }
+        }
+        assertNoSpools();
+    }
+
+    @Test
+    public void weightedDemandMatchesEquivalentUnweightedDemandAcrossSampleSizes() {
+        Network network = parallelRoads();
+        var config = vdf(1, 2);
+        int[] fast = {Id.createLinkId("fast1").index(), Id.createLinkId("fast2").index()};
+        for (double sample : List.of(0.1, 1.0)) {
+            var weighted = new MarouterAssignment(network, config, sample, 0.05, 4711, 2, 100);
+            var reference = new MarouterAssignment(network, config, sample, 0.05, 4711, 2, 100);
+            weighted.begin(0); reference.begin(0);
+            weighted.add(fast, false, 10); weighted.add(fast, true, 0.5);
+            for (int i = 0; i < 11; i++) reference.add(fast, false);
+            weighted.update(); reference.update();
+            assertEquals(reference.finalTime(fast, false), weighted.finalTime(fast, false), 0);
+        }
+        var zero = new MarouterAssignment(network, config, 1, 0.05, 4711, 2, 100);
+        zero.begin(0); zero.add(fast, false, 0); zero.update();
+        assertEquals(100, zero.finalTime(fast, false), 0);
     }
 
     @Test

@@ -168,6 +168,38 @@ PT trips leave network path metadata empty/zero. PT time includes walking,
 waiting and in-vehicle time, and PT distance includes walking and transit legs.
 PT endpoints use nearest-link facilities, matching `RunBatchPublicTransportRouter`.
 
+Every successful PT row also returns the following mode-choice columns, using
+the names and units of `RunBatchPublicTransportRouter`. They are computed from
+the same routing search, whether or not costs or itinerary export are enabled:
+
+| Columns | Meaning |
+| --- | --- |
+| `access_travel_time_min`, `access_distance_km` | Walk to the first boarding |
+| `egress_travel_time_min`, `egress_distance_km` | Walk after the last alighting |
+| `transfer_travel_time_min`, `transfer_distance_km` | Walking between transit legs |
+| `total_walk_travel_time_min`, `total_walk_distance_km` | Sum of access, egress and transfer walking |
+| `initial_waiting_time_min`, `transfer_waiting_time_min` | First boarding wait and subsequent boarding waits |
+| `in_vehicle_time_{rail,subway,bus,tram,other,total}_min` | In-vehicle time excluding waiting, by transit mode and total |
+| `in_vehicle_distance_{rail,subway,bus,tram,other,total}_km` | Transit distance by mode and total |
+| `transfers` | Boardings minus one, with a minimum of zero |
+| `is_only_walk` | 1 for a walk-only result, otherwise 0 |
+| `headway_min` | Optional timetable headway estimate |
+
+PT-specific columns are blank for other modes and unreachable trips. A valid
+zero-distance walk-only PT result has zero in-vehicle time and transfers.
+Nonzero direct-walk fallbacks remain unreachable PT results, as before.
+The existing `access_distance` and `egress_distance` columns contain the same
+PT walking distances in meters.
+
+Headway defaults to `NaN`, matching the batch router when headway calculation
+is disabled. Set `--pt-headway-interval 900` (or
+`multiModeRouter.ptHeadwayInterval=900`; Java `settings.ptHeadwayInterval`) to
+search 900 seconds before and after departure using `HeadwayCalculator`.
+This performs an additional timetable search per successful PT trip; the other
+components require no extra search. This option is independent of the events
+and VDF `--interval` option. `--export-routes true` optionally adds the itinerary
+in `route` while retaining all these columns.
+
 ## Exporting routes for population routing
 
 Start the server with `--export-routes true`, or set
@@ -442,7 +474,7 @@ increment sees the same frozen travel times. Each trip is routed once; the
 previous paths stay assigned. The BPR calculation is:
 
 ```text
-flow = cumulative sampled PCU
+flow = sum(weight * vehiclePcu) over assigned trips using the link
 capacity = sampleSize * capacityFactor * interval * link.capacity / network.capacityPeriod
 travelTime = freeflowTime * (1 + bprFactor * (flow / capacity)^bprExponent)
 ```
@@ -471,8 +503,25 @@ dividing sampled flow by 0.1 against full capacity; sampling is applied only onc
 Sample size comes from `eqasim.sampleSize` unless explicitly overridden in the
 router config or CLI.
 
-Set `--marouter-sample-size 1` if the CSV contains full demand even when the
-simulation config uses a population sample. The increment must be between
+An optional CSV column `weight` scales each car/truck's contribution to link
+flow. Missing or blank weights default to 1. Weights must be finite and
+non-negative; zero-weight trips are routed but contribute no flow. For example,
+with the default truck PCU of 2, a truck of weight 0.5 contributes 1 PCU. Weights
+affect congestion and subsequent path choices; they do not scale the reported
+individual time, distance or cost. Other modes, including car passengers,
+ignore this column and never contribute to MARouter flow.
+
+Sample size and trip weight apply independently and can be used together.
+Sample size scales link capacity; weight scales vehicle PCU consumption.
+For example, keep `eqasim.sampleSize=0.1` when routing every person in a 10%
+population sample. If only 50% are expected to drive, give each car alternative
+`weight=0.5`: every trip gets a route, while each contributes 0.5 PCU against
+the 10%-scaled capacity. A truck with the same weight contributes 1 PCU with
+the default truck PCU of 2. Providing weights never changes or disables the
+configured sample size. Increments remain fractions of trip rows, using their
+weighted cumulative flows to update travel times.
+
+The increment must be between
 0.0001 and 1; a final smaller increment handles other fractions and small bins.
 Link times are capped by the VDF minimum speed, with a one-second floor on used
 nonzero-length links, and never fall below freeflow. Departures outside the VDF
