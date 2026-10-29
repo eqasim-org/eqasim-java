@@ -10,6 +10,7 @@ import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeCleaner;
 import org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntime;
 import org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntimeConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.routing.pt_cache.PtRouteCacheModule;
+import org.eqasim.switzerland.ch_cmdp.routing.MissingTripRoutingModule;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimIntegration;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimJvmSupport;
 import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
@@ -60,6 +61,9 @@ import java.io.IOException;
  * </ul>
  *
  * <p>Preprocessing adaptations are restored at normal shutdown before final scenario writers.
+ * Initial preparation fills only missing or incompatible trip routes, including network bike
+ * routes when enabled. DSim first clears every bike route to prepare it for the chosen bike behavior;
+ * other complete trips are preserved. Teleported bikes require no network search.
  * Final config export restores the original engine settings while preserving simulation updates.
  * {@code run_config.xml} records the runtime settings, including temporary adaptations.
  */
@@ -119,6 +123,7 @@ public class RunSimulation {
         if (dsim == null) configurator.configureController(controller);
         else dsim.configureController(controller, configurator);
         runtime.install(controller);
+        controller.addOverridingModule(new MissingTripRoutingModule());
         if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
         controller.addOverridingModule(new PtRouteCacheModule());
         if (dsim == null) {

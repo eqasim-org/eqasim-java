@@ -106,6 +106,30 @@ public class TestDsimIntegration {
         }
     }
 
+    @Test public void clearsEveryBikePlanButPreservesCarRoutesInBothDsimModes() throws Exception {
+        for (boolean networkBikes : new boolean[]{false, true}) {
+            var scenario = scenario(networkBikes ? 2 : 1, networkBikes);
+            var person = scenario.getPopulation().getPersons().get(Id.createPersonId("bike"));
+            var link = scenario.getNetwork().getLinks().values().stream()
+                    .filter(l -> l.getAllowedModes().contains("bike")).findFirst().orElseThrow();
+            var route = RouteUtils.createLinkNetworkRouteImpl(link.getId(), link.getId()); route.setTravelTime(100);
+            var existing = TripStructureUtils.getLegs(person.getSelectedPlan()).getFirst();
+            existing.setRoute(route); existing.setTravelTime(100);
+            var pf = scenario.getPopulation().getFactory(); var alternative = pf.createPlan();
+            alternative.addActivity(pf.createActivityFromLinkId("home", link.getId()));
+            var second = pf.createLeg("bike"); second.setRoute(route.clone()); second.setTravelTime(100);
+            alternative.addLeg(second); alternative.addActivity(pf.createActivityFromLinkId("home", link.getId()));
+            person.addPlan(alternative);
+            var car = TripStructureUtils.getLegs(scenario.getPopulation().getPersons()
+                    .get(Id.createPersonId("car")).getSelectedPlan()).getFirst();
+            var carRoute = car.getRoute();
+            new DsimIntegration2026(networkBikes).adaptScenario(scenario);
+            assertNull(existing.getRoute()); assertFalse(existing.getTravelTime().isDefined());
+            assertNull(second.getRoute()); assertFalse(second.getTravelTime().isDefined());
+            assertSame(carRoute, car.getRoute());
+        }
+    }
+
     @Test public void bicycleUsesIsolatedNetworkLayerWhenExplicitlyRequested() throws Exception {
         var scenario = scenario(2, true);
         assertEquals(0.0, scenario.getVehicles().getVehicleTypes().get(

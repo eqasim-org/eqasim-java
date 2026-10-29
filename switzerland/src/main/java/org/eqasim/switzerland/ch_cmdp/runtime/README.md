@@ -25,6 +25,37 @@ attributes remain intact; missing stable objects are not recreated.
 Home-coordinate normalization is also journaled in the compressed archive: original values and
 missing keys are restored only while the values installed by cleanup remain unchanged.
 
+## Initial routing and repairing a population
+
+`RunSimulation` installs `MissingTripRoutingModule` in MATSim's initial preparation phase,
+after vehicle/facility/routing-mode preparation and before the normal whole-plan checks.
+It fills missing trip routes and replaces incompatible ones (for example, a generic teleported
+bike route when a network route is now required, or a bike route referencing the original road
+layer after creation of the isolated DSim layer). Complete trips, their route objects and stored
+plans remain intact except for DSim's explicit bike reset: DSim always clears the routes and
+travel times of bike legs in all stored plans during preprocessing. With `--dsim-simulate-bikes true`,
+initial preparation routes those bike trips on the duplicated bike-only network; otherwise it
+prepares fresh teleportation routes without a network search. QSim retains selective bike routing.
+Normal iteration replanning is unchanged.
+
+Work is parallel with a separate TripRouter per worker. Router construction is serialized to
+protect network initialization; routing queries run in parallel. If no repair is needed, no
+worker routers are created. Departure times account for preceding activities and preserved trips.
+If bikes are teleported, missing teleportation data use the inexpensive beeline module, with no
+network routing. This pass checks route presence/type/timing and network endpoint permissions;
+it is not a full validation of every intermediate link in every stored route.
+
+To repair plans without running a simulation:
+
+```text
+java -Xmx10g -cp switzerland.jar org.eqasim.switzerland.ch_cmdp.routing.RunMissingPopulationRouting --config-path config.xml --output-path routed_plans.xml.gz --threads 4
+```
+
+Optional `--modes bike,car` restricts the trip modes to repair; default: all modes. All stored
+plans are inspected. The tool follows `routing.networkModes` in the config and uses the Swiss
+routing modules with the optimized router and float travel-time storage by default. It creates
+no DSim network layer and writes only the repaired population; the source plans remain untouched.
+
 On normal shutdown (including early termination), the final-writer decorator:
 
 1. Restores archived person, household and link attributes.

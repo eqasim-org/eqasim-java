@@ -93,7 +93,6 @@ public final class SimulationRuntime implements ShutdownListener {
     public void preprocess(Scenario scenario, boolean lighten) throws IOException {
         this.scenario = scenario;
         prepareDsimScenario();
-        if (dsim == null && teleportBike) invalidateBikeRoutes();
         archive = lighten ? ScenarioAttributeCleaner.cleanAndArchive(scenario) : null;
     }
 
