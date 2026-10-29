@@ -244,6 +244,17 @@ fresh MATSim objects. This adds no upstream class replacement. See the
 [PT cache documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/routing/pt_cache/README.md)
 for configuration, supported routing settings and lifecycle behavior.
 
+### PT access-stop search retries (October 2026)
+
+The core module shadows `ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor` from MATSim
+2026.0. Standard walking-access searches now retry with a wider access/egress radius
+when nearby stops provide no PT itinerary, for at most five total attempts. Successful
+initial searches, direct-walk preferences, tree queries and intermodal radius limits
+retain their existing behavior. Request-local radius views avoid mutating shared routing
+parameters. The factory, builders and cached routing delegate automatically receive this
+change. See the [search retry documentation](../core/src/main/java/ch/sbb/matsim/routing/pt/raptor/README.md)
+and compare this source override with upstream on future MATSim upgrades.
+
 Build the common artifact with JDK 25:
 
 ```text
