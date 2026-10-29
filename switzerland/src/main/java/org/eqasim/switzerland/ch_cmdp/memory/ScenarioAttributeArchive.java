@@ -20,8 +20,9 @@ import org.matsim.utils.objectattributes.attributable.Attributes;
 /** Removed metadata is compressed during cleanup, saved once, and restored before final scenario export. */
 public final class ScenarioAttributeArchive implements ShutdownListener {
     private static final Logger LOG = LogManager.getLogger(ScenarioAttributeArchive.class);
-    private static final int MAGIC = 0x45514141, VERSION = 1, BLOCK_SIZE = 1 << 20;
+    private static final int MAGIC = 0x45514141, VERSION = 2, BLOCK_SIZE = 1 << 20;
     static final int PERSON = 1, LINK = 2, HOUSEHOLD = 3;
+    private static final int PERSON_CHANGE = 4;
     private final Scenario scenario;
     private final Path file;
     private final long attributes;
@@ -56,6 +57,19 @@ public final class ScenarioAttributeArchive implements ShutdownListener {
                     int count = readSize(input);
                     for (int i = 0; i < count; i++) {
                         String name = readSymbol(input, dictionary);
+                        if (kind == PERSON_CHANGE) {
+                            boolean existed = input.readBoolean();
+                            Object previous = readValue(input, dictionary, converters);
+                            Object installed = readValue(input, dictionary, converters);
+                            if (target != null && target.getAsMap().containsKey(name)
+                                    && Objects.equals(target.getAttribute(name), installed)) {
+                                if (existed) target.putAttribute(name, previous);
+                                else target.removeAttribute(name);
+                                applied++;
+                            }
+                            read++;
+                            continue;
+                        }
                         Object value = readValue(input, dictionary, converters);
                         if (target != null && !target.getAsMap().containsKey(name)) {
                             target.putAttribute(name, value); applied++;
@@ -76,7 +90,7 @@ public final class ScenarioAttributeArchive implements ShutdownListener {
 
     private Attributes target(int kind, String id) throws IOException {
         return switch (kind) {
-            case PERSON -> { var value = scenario.getPopulation().getPersons().get(Id.createPersonId(id)); yield value == null ? null : value.getAttributes(); }
+            case PERSON, PERSON_CHANGE -> { var value = scenario.getPopulation().getPersons().get(Id.createPersonId(id)); yield value == null ? null : value.getAttributes(); }
             case LINK -> { var value = scenario.getNetwork().getLinks().get(Id.createLinkId(id)); yield value == null ? null : value.getAttributes(); }
             case HOUSEHOLD -> { var value = scenario.getHouseholds().getHouseholds().get(Id.create(id, Household.class)); yield value == null ? null : value.getAttributes(); }
             default -> throw new IOException("Unknown attribute owner type " + kind);
@@ -113,6 +127,15 @@ public final class ScenarioAttributeArchive implements ShutdownListener {
             out = new DataOutputStream(new LZ4BlockOutputStream(chunks, BLOCK_SIZE,
                     LZ4Factory.fastestJavaInstance().fastCompressor()));
             out.writeInt(MAGIC); out.writeInt(VERSION);
+        }
+
+        /** Journal coordinate normalization too, without retaining per-person undo objects during simulation. */
+        void capturePersonChange(String id, Attributes source, String name, Object installed) {
+            try {
+                out.writeByte(PERSON_CHANGE); writeString(out, id); writeSize(out, 1); symbol(name);
+                out.writeBoolean(source.getAsMap().containsKey(name));
+                writeValue(source.getAttribute(name)); writeValue(installed); attributes++;
+            } catch (IOException e) { throw new UncheckedIOException("Could not capture changed person coordinate", e); }
         }
 
         /** Filters unencodable values out of the removal list; they remain in the scenario rather than being lost. */

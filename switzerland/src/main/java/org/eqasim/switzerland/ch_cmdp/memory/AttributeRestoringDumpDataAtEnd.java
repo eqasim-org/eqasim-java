@@ -9,24 +9,29 @@ import org.matsim.core.controler.listener.ShutdownListener;
 /** Decorates the original final writer, including its core-listener position. No upstream class is replaced. */
 public final class AttributeRestoringDumpDataAtEnd implements DumpDataAtEnd, ShutdownListener {
     private final ShutdownListener delegate;
-    private final ScenarioAttributeArchive archive;
+    private final Runnable before;
+    private final Runnable after;
 
-    public static AbstractModule module(ScenarioAttributeArchive archive) {
+    /** Shared final-export boundary for runtime scenario adaptations and attribute cleanup. */
+    public static AbstractModule module(Runnable before, Runnable after, ShutdownListener lifecycle) {
         Class<? extends ShutdownListener> implementation = originalWriterType();
         return new AbstractModule() {
             @Override public void install() {
-                bind(ScenarioAttributeArchive.class).toInstance(archive);
                 bind(implementation).in(Singleton.class);
                 var original = binder().getProvider(implementation);
                 bind(DumpDataAtEnd.class).toProvider(() ->
-                        new AttributeRestoringDumpDataAtEnd(original.get(), archive)).in(Singleton.class);
-                addControllerListenerBinding().toInstance(archive);
+                        new AttributeRestoringDumpDataAtEnd(original.get(), before, after)).in(Singleton.class);
+                addControllerListenerBinding().toInstance(lifecycle);
             }
         };
     }
 
-    private AttributeRestoringDumpDataAtEnd(ShutdownListener delegate, ScenarioAttributeArchive archive) {
-        this.delegate = delegate; this.archive = archive;
+    public static AbstractModule module(ScenarioAttributeArchive archive) {
+        return module(archive::restore, () -> {}, archive);
+    }
+
+    private AttributeRestoringDumpDataAtEnd(ShutdownListener delegate, Runnable before, Runnable after) {
+        this.delegate = delegate; this.before = before; this.after = after;
     }
 
     /** Package-private in MATSim: resolve its type once; Guice handles construction and member injection. */
@@ -44,7 +49,10 @@ public final class AttributeRestoringDumpDataAtEnd implements DumpDataAtEnd, Shu
     @Override public double priority() { return delegate.priority(); }
 
     @Override public void notifyShutdown(ShutdownEvent event) {
-        if (!event.isUnexpected()) archive.restore();
+        if (!event.isUnexpected()) {
+            before.run();
+        }
         delegate.notifyShutdown(event);
+        if (!event.isUnexpected()) after.run();
     }
 }

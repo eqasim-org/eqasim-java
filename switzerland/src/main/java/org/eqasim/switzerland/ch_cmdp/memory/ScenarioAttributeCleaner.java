@@ -158,6 +158,10 @@ public final class ScenarioAttributeCleaner {
         // Calibration already falls back to the complete legacy pair if either
         // normal coordinate is absent. Make that pair available to mode choice too.
         if (normalX == null || normalY == null) {
+            if (archive != null) {
+                archive.capturePersonChange(personId, attributes, "home_x", legacyX);
+                archive.capturePersonChange(personId, attributes, "home_y", legacyY);
+            }
             attributes.putAttribute("home_x", legacyX);
             attributes.putAttribute("home_y", legacyY);
             normalX = legacyX;

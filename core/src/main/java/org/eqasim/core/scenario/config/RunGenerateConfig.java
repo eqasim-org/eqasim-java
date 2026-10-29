@@ -23,6 +23,7 @@ public class RunGenerateConfig {
 		int randomSeed = cmd.getOption("random-seed").map(Integer::parseInt).orElse(0);
 		int threads = Integer.parseInt(cmd.getOptionStrict("threads"));
 
+		// Includes editable DSim settings; QSim remains selected unless explicitly overridden.
 		new GenerateConfig(cmd, prefix, sampleSize, randomSeed, threads).run(config);
 
 		new ConfigWriter(config).write(cmd.getOptionStrict("output-path"));

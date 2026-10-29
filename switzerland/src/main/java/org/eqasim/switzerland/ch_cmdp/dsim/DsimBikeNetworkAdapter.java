@@ -35,8 +35,7 @@ public final class DsimBikeNetworkAdapter {
         var existingNodes = network.getNodes().values().stream()
                 .filter(node -> node.getId().toString().startsWith(NODE_PREFIX)).map(node -> (Node) node).toList();
         if (marked) {
-            existingNodes.forEach(node -> clearAttributes(node.getAttributes(), Set.of()));
-            existingLinks.forEach(DsimBikeNetworkAdapter::cleanBikeLink);
+            // Existing layers belong to the input. Attribute cleanup has its own reversible archive.
             validateExistingLayer(network, existingNodes, existingLinks);
             log.info("Reusing existing DSim bicycle layer with {} nodes and {} links", existingNodes.size(), existingLinks.size());
             return new Result(existingNodes.size(), existingLinks.size(), true);
@@ -110,19 +109,6 @@ public final class DsimBikeNetworkAdapter {
         if (restrictions == null) return;
         restrictions.removeDisallowedLinkSequences(TransportMode.bike);
         if (restrictions.isEmpty()) NetworkUtils.removeDisallowedNextLinks(link);
-    }
-
-    private static void cleanBikeLink(Link link) {
-        clearAttributes(link.getAttributes(), ROUTING_ATTRIBUTES);
-        NetworkUtils.removeDisallowedNextLinks(link);
-    }
-
-    private static void clearAttributes(org.matsim.utils.objectattributes.attributable.Attributes attributes,
-            Set<String> retained) {
-        List<String> keys = List.copyOf(attributes.getAsMap().keySet());
-        for (String key : keys) {
-            if (!retained.contains(key)) attributes.removeAttribute(key);
-        }
     }
 
     private static void validateExistingLayer(Network network, List<Node> nodes, List<Link> links) {

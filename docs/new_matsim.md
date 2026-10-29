@@ -244,6 +244,19 @@ fresh MATSim objects. This adds no upstream class replacement. See the
 [PT cache documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/routing/pt_cache/README.md)
 for configuration, supported routing settings and lifecycle behavior.
 
+`ch_cmdp.RunSimulation` now coordinates DSim adaptations and attribute cleanup through
+`runtime.SimulationRuntime`. Final scenario files undo the temporary bike layer and
+restore bicycle restrictions, PCUs and link references. Final output configs restore
+the baseline engine/mode settings while retaining calibration and the DSim module.
+The live locked config remains the runtime config; the export uses a separate copy.
+The optional `--teleport-bike true` / `switzerlandSimulation.teleportBike` setting also
+supports QSim (4 m/s, distance factor 1.4). See the
+[runtime lifecycle documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/runtime/README.md).
+Generated configs include DSim settings but default to QSim. Selecting `controller.mobsim=dsim`
+automatically enables adaptations without `--use-dsim`. Final output keeps the configured engine;
+an argument-only DSim switch is temporary. Named preprocessing/postprocessing operations undo
+only their own changes and preserve subsequent simulation updates.
+
 ### PT access-stop search retries (October 2026)
 
 The core module shadows `ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor` from MATSim

@@ -31,11 +31,16 @@ public interface DsimIntegration {
     }
 
     static DsimIntegration fromCommand(CommandLine command) throws CommandLine.ConfigurationException {
-        boolean enabled = isEnabled(command);
+        return fromCommand(command, null);
+    }
+
+    /** XML selects the baseline engine; --use-dsim true may temporarily enable DSim on a QSim config. */
+    static DsimIntegration fromCommand(CommandLine command, Config config) throws CommandLine.ConfigurationException {
+        boolean enabled = isEnabled(command) || (config != null && "dsim".equals(config.controller().getMobsim()));
         boolean simulateBikes = simulateBikes(command);
         if (simulateBikes && !enabled) {
             throw new CommandLine.ConfigurationException("--" + SIMULATE_BIKES_OPTION
-                    + " is only valid together with --" + OPTION + " true");
+                    + " requires controller.mobsim=dsim or --" + OPTION + " true");
         }
         if (enabled) return load(simulateBikes);
         return null;
