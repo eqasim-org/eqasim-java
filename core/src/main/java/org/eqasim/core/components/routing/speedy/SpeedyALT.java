@@ -95,7 +95,7 @@ public class SpeedyALT implements LeastCostPathCalculator {
 		int startNodeIndex = graph.getStartNodeIndex(fromLink);
 		int endNodeIndex = graph.getNodeIndex(toLink.getFromNode());
 
-		Path path = calcLeastCostPathImpl(startNodeIndex, endNodeIndex, starttime, person, vehicle);
+		Path path = calcLeastCostPathImpl(startNodeIndex, endNodeIndex, starttime, person, vehicle, toLink);
 		if(path == null) {
 			LOG.warn("No route was found from link " + fromLink.getId() + " to link " + toLink.getId() + ". Some possible reasons:");
 		  LOG.warn("  * Network is not connected.  Run NetworkUtils.cleanNetwork(Network network, Set<String> modes).") ;
@@ -108,7 +108,7 @@ public class SpeedyALT implements LeastCostPathCalculator {
 
 	@Override
 	public Path calcLeastCostPath(Node startNode, Node endNode, double startTime, Person person, Vehicle vehicle) {
-		Path path = calcLeastCostPathImpl(graph.getNodeIndex(startNode), graph.getNodeIndex(endNode), startTime, person, vehicle);
+		Path path = calcLeastCostPathImpl(graph.getNodeIndex(startNode), graph.getNodeIndex(endNode), startTime, person, vehicle, null);
 		if(path == null) {
       LOG.warn("No route was found from node " + startNode.getId() + " to node " + endNode.getId() + ". Some possible reasons:");
 		  LOG.warn("  * Network is not connected.  Run NetworkUtils.cleanNetwork(Network network, Set<String> modes).") ;
@@ -119,7 +119,8 @@ public class SpeedyALT implements LeastCostPathCalculator {
 		return path;
 	}
 
-	private Path calcLeastCostPathImpl(int startNodeIndex, int endNodeIndex, double startTime, Person person, Vehicle vehicle) {
+	private Path calcLeastCostPathImpl(int startNodeIndex, int endNodeIndex, double startTime, Person person, Vehicle vehicle,
+			Link destinationLink) {
 		pq.clear();
 		if (workspace.beginQuery()) pq.useDensePositions();
 		queries++;
@@ -133,7 +134,27 @@ public class SpeedyALT implements LeastCostPathCalculator {
 			destinationFrom[i] = astarData.getTravelCostFromLandmark(endNodeIndex, i);
 			destinationTo[i] = astarData.getTravelCostToLandmark(endNodeIndex, i);
 		}
-		double estimation = astarData.estimate(startNodeIndex, destinationFrom, destinationTo);
+
+		// The goal is any legal approach to the destination link, not only the
+		// uncolored node. Bound the heuristic against all equivalent states;
+		// using just the uncolored state can overestimate a colored goal and
+		// stop at a longer route. Including forbidden approaches is conservative.
+		if (hasTurnRestrictions && destinationLink != null) {
+			// The original state's backward row may have been reduced by
+			// consolidation with a colored landmark at this physical node.
+			// Its true value is no longer recoverable. Disable that bound only
+			// for destinations with colored copies, without another landmark table.
+			if (graph.getNextEquivalentNode(endNodeIndex) >= 0) {
+				java.util.Arrays.fill(destinationTo, Double.POSITIVE_INFINITY);
+			}
+			for (int goal = graph.getNextEquivalentNode(endNodeIndex); goal >= 0;
+					goal = graph.getNextEquivalentNode(goal)) {
+				for (int i = 0; i < destinationFrom.length; i++) {
+					destinationFrom[i] = Math.min(destinationFrom[i], astarData.getTravelCostFromLandmark(goal, i));
+				}
+			}
+		}
+		double estimation = astarData.estimate(startNodeIndex, destinationFrom, destinationTo, hasTurnRestrictions && destinationLink != null);
 
 		setData(startNodeIndex, 0, startTime);
 		workspace.incoming(startNodeIndex, -1);
@@ -147,7 +168,11 @@ public class SpeedyALT implements LeastCostPathCalculator {
 				break;
 			}
 			// if turn restrictions are used, we might be on a colored node, so check for the original node
-			if (hasTurnRestrictions && this.graph.getOriginalNodeIndex(nodeIdx) == endNodeIndex) {
+			// The routing module appends the destination link to our path. Reaching
+			// its from-node is insufficient if this colored approach forbids that
+			// final turn. Continue searching for a legal approach instead.
+			if (hasTurnRestrictions && this.graph.getOriginalNodeIndex(nodeIdx) == endNodeIndex
+					&& (destinationLink == null || graph.canEnterLink(nodeIdx, destinationLink))) {
 				foundEndNode = true;
 				// MATSim 2026: different colored approaches have the same ALT
 				// estimate. Select the cheapest destination already on the frontier.
@@ -156,6 +181,7 @@ public class SpeedyALT implements LeastCostPathCalculator {
 				for (int i = 0; i < this.pq.size(); i++) {
 					int candidate = this.pq.nodeAt(i);
 					if (this.graph.getOriginalNodeIndex(candidate) == endNodeIndex
+							&& (destinationLink == null || graph.canEnterLink(candidate, destinationLink))
 							&& getCost(candidate) < bestCost) {
 						bestNodeIndex = candidate;
 						bestCost = getCost(candidate);
@@ -167,7 +193,8 @@ public class SpeedyALT implements LeastCostPathCalculator {
 
 			// ignore dead-ends
 			int deadend = this.astarData.getNodeDeadend(nodeIdx);
-			if (deadend >= 0 && deadend != startDeadend && deadend != endDeadend) {
+			if (deadend >= 0 && deadend != startDeadend && deadend != endDeadend
+					&& !(hasTurnRestrictions && destinationLink != null && containsDestinationDeadend(endNodeIndex, deadend))) {
 				continue; // it's a dead-end we're not interested in
 			}
 			expanded++;
@@ -192,13 +219,13 @@ public class SpeedyALT implements LeastCostPathCalculator {
 					// this node was already visited in this route-query
 					double oldCost = getCost(toNode);
 					if (newCost < oldCost) {
-						estimation = astarData.estimate(toNode, destinationFrom, destinationTo);
+						estimation = astarData.estimate(toNode, destinationFrom, destinationTo, hasTurnRestrictions && destinationLink != null);
 						this.pq.decreaseKey(toNode, newCost + estimation);
 						setData(toNode, newCost, newTime);
 						workspace.incoming(toNode, linkIdx);
 					}
 				} else {
-					estimation = astarData.estimate(toNode, destinationFrom, destinationTo);
+					estimation = astarData.estimate(toNode, destinationFrom, destinationTo, hasTurnRestrictions && destinationLink != null);
 					setData(toNode, newCost, newTime);
 					this.pq.insert(toNode, newCost + estimation);
 					workspace.incoming(toNode, linkIdx);
@@ -216,6 +243,16 @@ public class SpeedyALT implements LeastCostPathCalculator {
 			return constructPath(endNodeIndex, startTime);
 		}
 		return null;
+	}
+
+	private boolean containsDestinationDeadend(int endNodeIndex, int deadend) {
+		// A colored destination approach may belong to a different dead-end
+		// component from its original node; do not prune that legal approach.
+		for (int goal = graph.getNextEquivalentNode(endNodeIndex); goal >= 0;
+				goal = graph.getNextEquivalentNode(goal)) {
+			if (astarData.getNodeDeadend(goal) == deadend) return true;
+		}
+		return false;
 	}
 
 
