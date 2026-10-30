@@ -115,6 +115,10 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
     }
 
     private boolean doReRoute(Trip oldTrip, List<? extends PlanElement> newTrip, String personId, int tripIndex) {
+        // Initial preparation must install missing routes before probabilistic acceptance applies.
+        if (oldTrip.getLegsOnly().stream().anyMatch(leg -> leg.getRoute() == null || !leg.getTravelTime().isDefined())) {
+            return true;
+        }
         String mainMode = mainMode(oldTrip.getLegsOnly());
         if (mainMode.equals(TransportMode.car) || mainMode.equals(TransportMode.truck)) {
 

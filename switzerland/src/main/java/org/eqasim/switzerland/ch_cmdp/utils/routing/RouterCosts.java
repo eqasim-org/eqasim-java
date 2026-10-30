@@ -139,7 +139,8 @@ final class RouterCosts {
         SwissCostParameters parameters = SwissCostParameters.buildDefault();
         ConfigGroup eqasim = config == null ? null : config.getModules().get(EqasimConfigGroup.GROUP_NAME);
         String path = eqasim == null ? null : eqasim.getParams().get("costParametersPath");
-        if (path != null && !path.isBlank()) {
+        // Generic MATSim config groups retain the XML spelling of an absent optional path.
+        if (path != null && !path.isBlank() && !path.equals("null")) {
             ParameterDefinition.applyFile(file(config, path), parameters);
         }
         if (!Double.isFinite(parameters.carCost_CHF_km) || parameters.carCost_CHF_km < 0

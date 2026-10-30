@@ -22,8 +22,11 @@ import org.matsim.utils.objectattributes.attributable.AttributesImpl;
 
 public class TestDiscreteModeChoiceTripCache {
 	private DiscreteModeChoiceTrip trip(int personHash, int tripHash) {
-		return new DiscreteModeChoiceTrip(null, null, "car", List.of(), personHash, tripHash, tripHash,
+		var trip = new DiscreteModeChoiceTrip(null, null, "car", List.of(), personHash, tripHash, tripHash,
 				new AttributesImpl());
+		// MATSim 2026 caches alternatives separately by their departure time.
+		trip.setDepartureTime(0.0);
+		return trip;
 	}
 
 	@Test

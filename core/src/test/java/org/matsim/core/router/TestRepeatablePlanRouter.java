@@ -23,6 +23,7 @@ public class TestRepeatablePlanRouter {
         return new TripRouter.Builder(config).setRoutingModule("car", request -> {
             var leg = PopulationUtils.createLeg("car");
             leg.setTravelTime(IMPROVED_TIME);
+            leg.setRoute(org.matsim.core.population.routes.RouteUtils.createGenericRouteImpl(null, null));
             TripStructureUtils.setRoutingMode(leg, "car");
             return List.of(leg);
         }).build();
@@ -36,6 +37,8 @@ public class TestRepeatablePlanRouter {
         plan.addActivity(home);
         var leg = PopulationUtils.createLeg("car");
         leg.setTravelTime(1000);
+        // Complete existing routes exercise acceptance; missing routes must always be prepared.
+        leg.setRoute(org.matsim.core.population.routes.RouteUtils.createGenericRouteImpl(null, null));
         TripStructureUtils.setRoutingMode(leg, "car");
         plan.addLeg(leg);
         plan.addActivity(PopulationUtils.createActivityFromCoord("work", new Coord(1000, 0)));
@@ -74,6 +77,18 @@ public class TestRepeatablePlanRouter {
         for (int id = 0; id < 256; id++) if (expected[0][id] != expected[1][id]) different++;
         assertTrue(different > 64);
         assertTrue(different < 192);
+    }
+
+    @Test public void missingRoutesAreInstalledRegardlessOfAcceptanceDraw() {
+        var config = ConfigUtils.createConfig();
+        var router = new PlanRouter(router(config), null, TimeInterpretation.create(config), 1);
+        for (int id = 0; id < 32; id++) {
+            var plan = plan(id);
+            ((Leg) plan.getPlanElements().get(1)).setRoute(null);
+            router.run(plan);
+            assertTrue(accepted(plan));
+            assertNotNull(((Leg) plan.getPlanElements().get(1)).getRoute());
+        }
     }
 
     @Test public void drawsChangeWithSeedAndTripAndStayUniform() {

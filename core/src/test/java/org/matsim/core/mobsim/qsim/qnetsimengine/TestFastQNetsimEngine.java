@@ -118,6 +118,7 @@ public class TestFastQNetsimEngine {
                 var vehicle = VehicleUtils.createVehicle(Id.createVehicleId(id), type);
                 scenario.getVehicles().addVehicle(vehicle);
                 var person = population.createPerson(id);
+                VehicleUtils.insertVehicleIdsIntoAttributes(person, java.util.Map.of(mode, vehicle.getId()));
                 var plan = population.createPlan();
                 var start = Id.createLinkId((i % 2 == 0 ? "a" : "b") + origin);
                 var home = population.createActivityFromLinkId("home", start);

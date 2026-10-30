@@ -1,9 +1,9 @@
 # Memory-efficient SpeedyALT
 
 The optional implementation in `org.eqasim.core.components.routing.speedy` is
-adapted from the MATSim **2026.0-2025w33** sources used by this branch. The
-SpeedyALT factory is bound through Eqasim. Separate routing and QSim compatibility
-overrides are described below; no MATSim dependency upgrade is required.
+adapted from MATSim **2026.0-2025w33** and updated for the branch's MATSim
+**2026.0** runtime. The SpeedyALT factory is bound through Eqasim. Separate
+routing and QSim compatibility overrides are described below.
 
 Build the standalone artifact with
 `mvn -Pstandalone -pl switzerland -am package`. The runnable artifact is

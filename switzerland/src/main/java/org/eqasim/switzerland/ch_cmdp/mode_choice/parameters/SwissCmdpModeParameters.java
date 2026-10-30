@@ -143,10 +143,10 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         public double betaRetired_u = 0.0;
         public double betaJunior_u = 0.0;
         public double betaLongDistance_u = 0.0;
-        public double betaGoodService_u = 0.0;
-        public double betaMediumService_u = 0.0;
-        public double betaDestinationGoodService_u = 0.0;
-        public double betaDestinationMediumService_u = 0.0;
+        public double betaHomePtQuality_u = 0.0;
+        public double homePtQualityExponent = 1.0;
+        public double betaDestinationPtQuality_u = 0.0;
+        public double destinationPtQualityExponent = 1.0;
         public double betaDensities_u = 0.0;
     }
 
@@ -288,8 +288,10 @@ public class SwissCmdpModeParameters extends SwissModeParameters {
         parameters.pt.betaRetired_u = 0.0;
         parameters.pt.betaJunior_u = -0.29545862768485365;
         parameters.pt.betaLongDistance_u = 0.0;
-        parameters.pt.betaGoodService_u = 0.5578317653721179;
-        parameters.pt.betaMediumService_u = 0.14846956364547517;
+        parameters.pt.betaHomePtQuality_u = 0.0;
+        parameters.pt.homePtQualityExponent = 1.0;
+        parameters.pt.betaDestinationPtQuality_u = 0.0;
+        parameters.pt.destinationPtQualityExponent = 1.0;
         // walk
         parameters.walk.alpha_u = 10.661470169149224;
         parameters.walk.betaTravelTime_u_min = -9.566189215264982;

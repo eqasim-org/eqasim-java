@@ -29,10 +29,10 @@ import org.matsim.core.router.TripRouter;
 import org.matsim.core.utils.timing.TimeInterpretation;
 import org.matsim.facilities.ActivityFacilities;
 
-import jakarta.inject.Provider;
+import com.google.inject.Provider;
 
 /**
- * Compatibility override of MATSim 2026.0-2025w33: pass the iteration to
+ * Compatibility override of MATSim 2026.0: pass the iteration to
  * deterministic route acceptance. Review against upstream when upgrading.
  *
  * Uses the routing algorithm provided by the {@linkplain Controler} for

@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 public class FreeSpeedCalibrationConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "freespeedCalibration";
 
-    private static final String ACTIVATE = "activate";
     private static final String UPDATE_INTERVAL = "updateInterval";
     private static final String WARMUP_ITERATIONS = "warmupIterations";
     private static final String OBSERVED_TRIPS_FILE = "observedTripsFile";
@@ -41,7 +40,6 @@ public class FreeSpeedCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String MIN_TRAVEL_TIME_ERROR = "minTravelTimeError";
     private static final String MAX_TRAVEL_TIME_ERROR = "maxTravelTimeError";
 
-    private boolean activate = false;
     private int updateInterval = 5;
     private int warmupIterations = 30;
     private String observedTripsFile = "";
@@ -76,7 +74,6 @@ public class FreeSpeedCalibrationConfigGroup extends ReflectiveConfigGroup {
     @Override
     public Map<String, String> getComments() {
         Map<String, String> comments = super.getComments();
-        comments.put(ACTIVATE, "Whether freespeed calibration is active (default: false)");
         comments.put(UPDATE_INTERVAL, "Iterations between freespeed-factor updates (default: 5)");
         comments.put(WARMUP_ITERATIONS, "Iterations before the first freespeed update (default: 20)");
         comments.put(OBSERVED_TRIPS_FILE, "Observed trips CSV used for freespeed calibration");
@@ -106,8 +103,6 @@ public class FreeSpeedCalibrationConfigGroup extends ReflectiveConfigGroup {
         return comments;
     }
 
-    @StringGetter(ACTIVATE) public boolean isActivated() { return activate; }
-    @StringSetter(ACTIVATE) public void setActivate(boolean value) { activate = value; }
     @StringGetter(UPDATE_INTERVAL) public int getUpdateInterval() { return updateInterval; }
     @StringSetter(UPDATE_INTERVAL) public void setUpdateInterval(int value) { updateInterval = value; }
     @StringGetter(WARMUP_ITERATIONS) public int getWarmupIterations() { return warmupIterations; }

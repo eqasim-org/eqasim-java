@@ -68,6 +68,7 @@ public class TestCopyAvoidingSeepageQSim {
                 var vehicle = VehicleUtils.createVehicle(Id.createVehicleId(id), type);
                 scenario.getVehicles().addVehicle(vehicle);
                 var person = population.createPerson(id);
+                VehicleUtils.insertVehicleIdsIntoAttributes(person, java.util.Map.of(mode, vehicle.getId()));
                 var plan = population.createPlan();
                 var home = population.createActivityFromLinkId("home", Id.createLinkId(0));
                 home.setEndTime(i % 10); plan.addActivity(home);

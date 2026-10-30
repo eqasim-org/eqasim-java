@@ -7,6 +7,12 @@ for the agent- and activity-based transport simulation framework [MATSim](https:
 This repository contains the Java parts of the project which extend MATSim and
 provide functionality to generate the simulation data.
 
+This branch requires **JDK 25** and uses **MATSim 2026.0**. The Switzerland
+runner includes QSim (default) and DSim in the same build; see
+[running with DSim](docs/dsim.md) for the `--use-dsim true` switch and the
+[MATSim 2026 upgrade notes](docs/new_matsim.md) for API changes and overridden
+MATSim classes.
+
 Therefore, this repository has two functions: First, to provide the code to run
 `eqasim` simulations (and extend them), second, to act as a dependency for the
 various pipelines that generate runnable MATSim scenarios from raw data sets,

@@ -102,7 +102,8 @@ public class SBBTransitQSimEngine extends TransitQSimEngine /*implements Departu
     SBBTransitQSimEngine(QSim qSim, ReplanningContext context, TransitStopAgentTracker agentTracker, TransitDriverAgentFactory networkDriverFactory) {
         // ( https://github.com/google/guice/wiki/KeepConstructorsHidden )
 
-        super(qSim, new SimpleTransitStopHandlerFactory(), new ReconstructingUmlaufBuilder(qSim.getScenario()), agentTracker, networkDriverFactory);
+        super(qSim, new SimpleTransitStopHandlerFactory(), new ReconstructingUmlaufBuilder(qSim.getScenario()), agentTracker,
+                org.matsim.core.utils.timing.TimeInterpretation.create(qSim.getScenario().getConfig()), networkDriverFactory);
         // (it feels a bit odd to inject TransitStopHandlerFactory, but to put the simple version here as an argument.  kai, feb '25)
 
         this.qSim = qSim;
@@ -154,7 +155,7 @@ public class SBBTransitQSimEngine extends TransitQSimEngine /*implements Departu
     }
 
     @Override
-    public void onPrepareSim() {
+    public void beforeMobsim() {
         // not much to do, all pre-processing is done in insertAgentsIntoMobsim
         if (this.context != null) {
             int iteration = this.context.getIteration();
@@ -185,7 +186,7 @@ public class SBBTransitQSimEngine extends TransitQSimEngine /*implements Departu
     }
 
     @Override
-    public void afterSim() {
+    public void afterMobsim() {
         // check that all agents have arrived, generate stuck events otherwise
         double now = this.qSim.getSimTimer().getTimeOfDay();
         for (Map.Entry<Id<TransitStopFacility>, List<PTPassengerAgent>> agentsAtStop : this.agentTracker.getAgentsAtStop().entrySet()) {

@@ -21,7 +21,7 @@ thread. No routing request is needed to trigger loading. You can start the Java
 process from Python, do other work, and check readiness before routing.
 `GET /health` is available during loading and always returns HTTP 200 with the
 current state. `GET /ready` returns 200 when initialization is complete and 503
-otherwise. `GET /ready?mode=car` (or `pt`, `walk`, `bike`) checks a particular
+otherwise. `GET /ready?mode=car` (or `truck`, `pt`, `walk`, `bike`) checks a particular
 mode. These endpoints remain responsive while routing requests are running.
 
 An example status response during loading:
@@ -149,7 +149,10 @@ coordinate columns are required and finite; `identifier` is optional.
 `departure_time` is seconds and defaults to zero if its column is absent.
 `--departure-time` overrides all rows. With an explicit request mode, the CSV
 `mode` column is optional and ignored. Otherwise it is required. Supported values
-are `car`, `car_passenger`, `pt`, `walk`, and `bike`. Extra columns are ignored.
+are `car`, `truck`, `car_passenger`, `pt`, `walk`, and `bike`. Truck routing requires
+links whose allowed modes include `truck`. Optional matching columns `person_id`,
+`trip_id`, and `trip_index` are retained in routed output. Other
+extra columns are ignored.
 
 Output contains the input identifier, coordinates and departure time, plus
 `mode`, `travel_time` (seconds), `travel_distance` (meters), `access_distance`,
@@ -164,6 +167,140 @@ distances report the straight-line gaps to those nodes separately.
 PT trips leave network path metadata empty/zero. PT time includes walking,
 waiting and in-vehicle time, and PT distance includes walking and transit legs.
 PT endpoints use nearest-link facilities, matching `RunBatchPublicTransportRouter`.
+
+Every successful PT row also returns the following mode-choice columns, using
+the names and units of `RunBatchPublicTransportRouter`. They are computed from
+the same routing search, whether or not costs or itinerary export are enabled:
+
+| Columns | Meaning |
+| --- | --- |
+| `access_travel_time_min`, `access_distance_km` | Walk to the first boarding |
+| `egress_travel_time_min`, `egress_distance_km` | Walk after the last alighting |
+| `transfer_travel_time_min`, `transfer_distance_km` | Walking between transit legs |
+| `total_walk_travel_time_min`, `total_walk_distance_km` | Sum of access, egress and transfer walking |
+| `initial_waiting_time_min`, `transfer_waiting_time_min` | First boarding wait and subsequent boarding waits |
+| `in_vehicle_time_{rail,subway,bus,tram,other,total}_min` | In-vehicle time excluding waiting, by transit mode and total |
+| `in_vehicle_distance_{rail,subway,bus,tram,other,total}_km` | Transit distance by mode and total |
+| `transfers` | Boardings minus one, with a minimum of zero |
+| `is_only_walk` | 1 for a walk-only result, otherwise 0 |
+| `headway_min` | Optional timetable headway estimate |
+
+PT-specific columns are blank for other modes and unreachable trips. A valid
+zero-distance walk-only PT result has zero in-vehicle time and transfers.
+Nonzero direct-walk fallbacks remain unreachable PT results, as before.
+The existing `access_distance` and `egress_distance` columns contain the same
+PT walking distances in meters.
+
+Headway defaults to `NaN`, matching the batch router when headway calculation
+is disabled. Set `--pt-headway-interval 900` (or
+`multiModeRouter.ptHeadwayInterval=900`; Java `settings.ptHeadwayInterval`) to
+search 900 seconds before and after departure using `HeadwayCalculator`.
+This performs an additional timetable search per successful PT trip; the other
+components require no extra search. This option is independent of the events
+and VDF `--interval` option. `--export-routes true` optionally adds the itinerary
+in `route` while retaining all these columns.
+
+## Exporting routes for population routing
+
+Start the server with `--export-routes true`, or set
+`multiModeRouter.exportRoutes=true` in the MATSim config. The default is false;
+Java users can set `settings.exportRoutes = true`. Each successful routed row
+then includes a `route` column containing versioned JSON. It is independent of
+`--return-links` and `--compute-cost`.
+
+The JSON preserves MATSim route types, complete network link ID arrays,
+teleported routes, PT line/route/stop descriptions, leg departure/travel times,
+and intermediate stage activities with their locations and times. Link IDs
+containing hyphens are unambiguous. MARouter exports the assigned path and its
+final congested travel time. Disabled export, unreachable trips, and empty
+node-to-node network paths leave `route` blank; those rows do not replace a
+population route. The format is separate from `pt_cost_data`, which is for fares.
+
+Use this workflow with the same population, network, transit schedule and
+coordinate system:
+
+1. Export trips from the population, without routing:
+
+   ```sh
+   java -cp switzerland/target/switzerland-2.0.0.jar \
+     org.eqasim.core.scenario.routing.RunPopulationRouting \
+     --config-path config.xml --export-trips-path trips.csv --export-only true
+   ```
+
+   Use your normal `--eqasim-configurator` argument if needed. Export-only does
+   not require `--output-path` or initialize routing workers. The config still
+   supplies population, network, facilities and vehicles as in ordinary
+   `RunPopulationRouting`.
+
+2. Route this CSV on a server started with `--export-routes true`:
+
+   ```python
+   router.route("trips.csv", "routed-trips.csv")
+   ```
+
+3. Reuse the routes when writing the routed population:
+
+   ```sh
+   java -cp switzerland/target/switzerland-2.0.0.jar \
+     org.eqasim.core.scenario.routing.RunPopulationRouting \
+     --config-path config.xml --routes-path routed-trips.csv \
+     --output-path routed-population.xml.gz
+   ```
+
+The trip export contains `person_id`, `trip_id`, `trip_index`,
+coordinates, departure time, mode, and `origin_link_id`/`destination_link_id`.
+Trip indices are **zero-based** and count all trips between
+main activities, excluding stage activities, before any mode filtering. All
+trips of each person's selected plan are exported, matching the single-plan
+discrete mode choice workflow. Existing origin-activity `trip_id` attributes are retained;
+otherwise the default trip ID is the string form of the trip index within that
+plan. `RunPopulationRouting` also writes person/trip identifiers into the
+origin activity's trip attributes in its output population.
+
+You can also supply your own CSV directly. Provide `person_id` matching the
+MATSim person ID and `trip_index` identifying the trip within that person's
+selected plan. The server preserves these values; it does not derive them from
+coordinates or the optional `identifier` row label. For example:
+
+```csv
+identifier,person_id,trip_index,origin_x,origin_y,destination_x,destination_y,departure_time,mode
+my-row-A,person-123,0,2680000,1240000,2681000,1240500,28800,car
+my-row-B,person-123,1,2681000,1240500,2680000,1240000,61200,car
+```
+
+Here `identifier` and `trip_id` are both optional. Route export retains
+`person_id` and `trip_index`, which `RunPopulationRouting --routes-path ...`
+uses for matching regardless of CSV row order. `identifier` alone is sufficient
+for ordinary routing, but does not provide a population matching key.
+
+Network requests with both endpoint link columns use link-based routing,
+respecting turn restrictions, and export a complete path including its endpoint
+links. The CSV time and distance cover that complete path. This keeps imported
+network routes compatible with population activity/facility links. Requests
+without these columns continue to use nearest nodes; their exported routes can
+only be reused when their endpoint links match the population. Keep the endpoint
+columns from the trip export for the normal round-trip workflow.
+
+Import matches `person_id` plus `trip_index` (or `trip_id`) in the selected plan.
+There is no `plan_index` column. If both trip keys are supplied,
+they must agree. The row's mode must match the population trip's routing mode;
+other-mode alternatives and unknown persons are skipped. Duplicate matching
+routes are treated as conflicting and fall back to routing. Departure time, available OD coordinates,
+network continuity, allowed modes, endpoint compatibility, and PT schedule
+references are checked before reuse. Incompatible matching routes are skipped
+and the affected trips are routed normally.
+
+Matched trips keep the imported itinerary even though normal population routing
+replaces existing routes. Missing rows or route columns, empty routes,
+`NaN`/`null` route values, nonfinite travel times/distances, malformed or
+unsupported JSON, mismatched trip keys, and invalid network/PT itineraries fall
+back to ordinary routing. Invalid rows do not abort the job. A summary is logged,
+with details for the first ten invalid rows. Validation does not modify activity
+endpoints on rejected routes.
+`--modes` limits both export and routing/reuse, without renumbering trips. When
+all eligible trips are imported, no population routing injector or workers are
+initialized. Import streams rows directly into plans, retaining only matched
+activity references for skip checks.
 
 ## Optional monetary cost estimation
 
@@ -200,6 +337,7 @@ Each routed row/alternative gets a cost for its selected mode:
   A PT alternative containing only walking has zero ticket cost.
 - **Walk, bike, car_passenger:** Zero. `car_passenger` shares the car network,
   travel times and routing behavior and is available with a network-only server.
+- **Truck:** `NaN`; a truck monetary cost model is not defined.
 
 PT rows use the same `subscriptions` attribute as mode choice: `GA` (general
 subscription), `HT` (half fare), `VA` (regional), or `VA+HT` (regional plus half
@@ -285,9 +423,142 @@ response = requests.post(base + "/cost", json={
 response.raise_for_status()
 ```
 
+## Incremental road assignment (`--marouter true`)
+
+Enable incremental BPR assignment at startup:
+
+```sh
+java -cp switzerland/target/switzerland-2.0.0.jar \
+  org.eqasim.switzerland.ch_cmdp.utils.routing.MultiModeRouterServer \
+  --network-path network.xml.gz --config-path config.xml --port 8080 \
+  --marouter true --threads 16
+```
+
+The existing `/route` API is unchanged. Put car and truck trips in **one mixed-mode
+CSV request** to assign their traffic jointly. Each request starts with zero flow.
+`/health` reports `marouter: true` once initialization completes; check
+`/ready?mode=car` or `/ready?mode=truck` before requesting routes. A truck mode is
+available only when the network explicitly permits `truck` on some links.
+
+The router reuses `VDFConfigGroup`, `VDFScope`, and `BPRFunction` from the core VDF
+implementation. Configure them in the existing MATSim config module:
+
+```xml
+<module name="eqasim:vdf">
+  <param name="startTime" value="00:00:00" />
+  <param name="endTime" value="24:00:00" />
+  <param name="interval" value="01:00:00" />
+  <param name="bpr:factor" value="0.15" />
+  <param name="bpr:exponent" value="4.0" />
+  <param name="capacityFactor" value="1.0" />
+  <param name="minimumSpeed" value="1.3888888889" />
+</module>
+<module name="multiModeRouter">
+  <param name="marouter" value="true" />
+  <param name="marouterIncrement" value="0.05" />
+  <param name="marouterTruckPcu" value="2.0" />
+</module>
+```
+
+Without this module, `VDFConfigGroup` defaults apply (the example above shows
+their relevant values). Explicit `--start-time`, `--end-time`, and `--interval`
+override those VDF fields, in seconds. Other VDF fields are set in the config or
+through Java `settings.vdfConfig` when no VDF module is supplied. `minimumSpeed`
+and truck speed limits use meters/second. Simulation-specific VDF flow history,
+input files, update areas and output settings are not used by this assignment.
+
+For each departure-time bin, the router shuffles driver trips once with a fixed
+seed, assigns disjoint 5% increments, and updates cumulative link flows after
+each increment. The first increment uses freeflow. Every worker within an
+increment sees the same frozen travel times. Each trip is routed once; the
+previous paths stay assigned. The BPR calculation is:
+
+```text
+flow = sum(weight * vehiclePcu) over assigned trips using the link
+capacity = sampleSize * capacityFactor * interval * link.capacity / network.capacityPeriod
+travelTime = freeflowTime * (1 + bprFactor * (flow / capacity)^bprExponent)
+```
+
+Flow is **not** extrapolated by the fraction of increments processed. Cars count
+as 1 PCU and trucks as 2 PCU by default. Trucks respect their mode's allowed links
+and speed ceiling. Passengers route against the final bin times and contribute
+no vehicle flow. PT, walk and bike retain their ordinary routing behavior. All
+road trips report travel time along their assigned path using **final** bin
+flows, including trips assigned in the first increment. Car monetary costs use
+the assigned path distance as usual.
+
+| CLI option | Config fallback | Default |
+| --- | --- | --- |
+| `--marouter` | `multiModeRouter.marouter` | false |
+| `--marouter-increment` | `multiModeRouter.marouterIncrement` | 0.05 |
+| `--marouter-seed` | `multiModeRouter.marouterSeed`, then `global.randomSeed` | 4711 without a config |
+| `--marouter-truck-pcu` | `multiModeRouter.marouterTruckPcu` | 2 |
+| `--truck-max-speed` | `multiModeRouter.truckMaxSpeed` | 80/3.6 m/s |
+| `--marouter-sample-size` | `multiModeRouter.marouterSampleSize`, then `eqasim.sampleSize` | 1 |
+
+With `eqasim.sampleSize=0.1`, MARouter uses 10% of the full interval capacity for
+the sampled trips. For example, a capacity of 1000 PCU/hour becomes 100 PCU/hour
+for a one-hour bin with `capacityFactor=1`. This is mathematically equivalent to
+dividing sampled flow by 0.1 against full capacity; sampling is applied only once.
+Sample size comes from `eqasim.sampleSize` unless explicitly overridden in the
+router config or CLI.
+
+An optional CSV column `weight` scales each car/truck's contribution to link
+flow. Missing or blank weights default to 1. Weights must be finite and
+non-negative; zero-weight trips are routed but contribute no flow. For example,
+with the default truck PCU of 2, a truck of weight 0.5 contributes 1 PCU. Weights
+affect congestion and subsequent path choices; they do not scale the reported
+individual time, distance or cost. Other modes, including car passengers,
+ignore this column and never contribute to MARouter flow.
+
+Sample size and trip weight apply independently and can be used together.
+Sample size scales link capacity; weight scales vehicle PCU consumption.
+For example, keep `eqasim.sampleSize=0.1` when routing every person in a 10%
+population sample. If only 50% are expected to drive, give each car alternative
+`weight=0.5`: every trip gets a route, while each contributes 0.5 PCU against
+the 10%-scaled capacity. A truck with the same weight contributes 1 PCU with
+the default truck PCU of 2. Providing weights never changes or disables the
+configured sample size. Increments remain fractions of trip rows, using their
+weighted cumulative flows to update travel times.
+
+The increment must be between
+0.0001 and 1; a final smaller increment handles other fractions and small bins.
+Link times are capped by the VDF minimum speed, with a one-second floor on used
+nonzero-length links, and never fall below freeflow. Departures outside the VDF
+time range are clamped to its first/last bin, following `VDFScope`.
+
+This is static incremental assignment: all links of a trip use its departure
+bin. It does not propagate queues or spill traffic into later bins, and it does
+not iterate to equilibrium. With MARouter enabled, `--events-path` is ignored
+(the file is not opened); the assignment starts from calibrated freeflow and
+estimates its own congestion.
+
+The network, mode graphs, spatial indices, landmarks and workers are loaded once
+in the background. Routing runs in parallel within each increment; increments
+and bins run sequentially to preserve shared-flow updates. Changing thread count
+or CSV chunk size does not change seeded results. Input partitions and indexed
+results are spooled to temporary `.marouter-*` files beside the output, then
+deleted on success or failure. Allow temporary disk space for the request and
+its assigned paths. Memory retains one bin's shuffle offsets (8 bytes per driver),
+one set of link flow/time arrays, and bounded routing chunks.
+
+Separate `/cost` requests price saved distances/itineraries directly. Raw car OD
+rows perform a fresh incremental assignment using those raw car rows as demand.
+To reprice the exact joint car/truck assignment, pass its saved routing output.
+
 ## Routing parameters
 
 - **Car:** Freeflow link times unless `--events-path events.xml.gz` is given.
+  Without events, the link's persisted `speedFactor` calibration attribute
+  multiplies its network freespeed: `speed = max(0.1, freespeed * speedFactor)`
+  in meters/second, matching `FreespeedAdapter`. Missing, malformed, nonfinite
+  or nonpositive factors default to 1. Numeric and numeric-string attributes
+  are accepted. This applies to both ordinary freeflow and the MARouter BPR
+  baseline, including ALT routing lower bounds. Factors are read once at startup.
+  The same calibrated times apply to car passengers and trucks, with trucks
+  additionally respecting `--truck-max-speed`. Shared bike/PT network speeds
+  are not modified. Event-derived times are used directly without applying the
+  factor again. MARouter ignores events even when a path is supplied.
   Recorded times use `--start-time` (default 0), `--end-time` (86400), and
   `--interval` (900); unobserved links/time bins fall back to freeflow.
   `EqasimTollsTravelDisutility` adds numeric link `toll` attributes to the
@@ -311,7 +582,7 @@ response.raise_for_status()
   Network bike uses `BikeGradientBasedLinkSpeedCalculator` and the road-type,
   gradient and distance penalties in `BikeDisutilities`. Costs are deterministic
   so parallel requests are reproducible; no per-edge random noise is added.
-  Events affect car only. Bike crossing delay is zero because CSV requests do
+  Bike crossing delay is zero because CSV requests do
   not carry simulated vehicle state.
 
 Startup values follow **explicit CLI option → config parameter → Settings default**:
@@ -323,6 +594,7 @@ Startup values follow **explicit CLI option → config parameter → Settings de
 | `--tolls-value-of-time` | `eqasim:networkCalibration.tollsValueOfTime` | 15 currency/hour |
 | `--tolls-sigma` | `eqasim:networkCalibration.tollsSigma` | 0 |
 | `--compute-cost` | `multiModeRouter.computeCost` | false |
+| `--export-routes` | `multiModeRouter.exportRoutes` | false |
 | `--car-cost-model` | `multiModeRouter.carCostModel`, then Eqasim car cost-model selection | simple |
 
 Config values are resolved during the background initialization, from the same
@@ -350,5 +622,5 @@ was needed to run the HTTP integration test on the local JDK 21.0.12.
 Run the routing tests with:
 
 ```sh
-mvn -pl switzerland -am test -Dtest=TestMultiModeRouterSettings,TestMultiModeRouterCosts -Dsurefire.failIfNoSpecifiedTests=false
+mvn -pl switzerland -am test -Dtest=TestMultiModeRouterSettings,TestMultiModeRouterCosts,TestMarouterAssignment,TestReusableRouting,TestMultiModeRouterBikes -Dsurefire.failIfNoSpecifiedTests=false
 ```

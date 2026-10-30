@@ -23,9 +23,18 @@ import com.google.inject.Injector;
 public class RunPopulationRouting {
 	static public void main(String[] args) throws ConfigurationException, InterruptedException, ExecutionException {
 		CommandLine cmd = new CommandLine.Builder(args) //
-				.requireOptions("config-path", "output-path") //
-				.allowOptions("threads", "batch-size", "modes", EqasimConfigurator.CONFIGURATOR) //
+				.requireOptions("config-path") //
+				.allowOptions("output-path", "threads", "batch-size", "modes", "routes-path", "export-trips-path",
+						"export-only", EqasimConfigurator.CONFIGURATOR) //
 				.build();
+		boolean exportOnly = cmd.getOption("export-only").map(v -> {
+			if (!v.equalsIgnoreCase("true") && !v.equalsIgnoreCase("false"))
+				throw new IllegalArgumentException("export-only must be true or false");
+			return Boolean.parseBoolean(v);
+		}).orElse(false);
+		if (exportOnly && !cmd.hasOption("export-trips-path"))
+			throw new IllegalArgumentException("export-only requires export-trips-path");
+		if (!exportOnly) cmd.getOptionStrict("output-path");
 
 		EqasimConfigurator configurator = EqasimConfigurator.getInstance(cmd);
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
@@ -56,15 +65,27 @@ public class RunPopulationRouting {
 				modes.add(mode.trim());
 			}
 		}
+		PopulationRoutingIO.enrichTrips(scenario);
+		try {
+			if (cmd.hasOption("export-trips-path")) PopulationRoutingIO.exportTrips(scenario,
+					java.nio.file.Path.of(cmd.getOptionStrict("export-trips-path")), modes);
+			if (exportOnly) return;
+			var reused = cmd.hasOption("routes-path") ? PopulationRoutingIO.importRoutes(scenario,
+					java.nio.file.Path.of(cmd.getOptionStrict("routes-path")), modes)
+					: java.util.Map.<org.matsim.api.core.v01.population.Plan, Set<org.matsim.api.core.v01.population.Activity>>of();
 
-		// TODO: Check what we can remove here
-		Injector injector = new InjectorBuilder(scenario, configurator) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes)) //
-				.addOverridingModule(new TimeInterpretationModule()).build();
+			if (PopulationRoutingIO.needsRouting(scenario, modes, reused)) {
+				Injector injector = new InjectorBuilder(scenario, configurator) //
+						.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes, reused)) //
+						.addOverridingModule(new TimeInterpretationModule()).build();
 
-		PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
-		populationRouter.run(scenario.getPopulation());
+				PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
+				populationRouter.run(scenario.getPopulation());
+			}
 
-		new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-path"));
+			new PopulationWriter(scenario.getPopulation()).write(cmd.getOptionStrict("output-path"));
+		} catch (java.io.IOException e) {
+			throw new java.io.UncheckedIOException("Could not read/write population routing CSV", e);
+		}
 	}
 }

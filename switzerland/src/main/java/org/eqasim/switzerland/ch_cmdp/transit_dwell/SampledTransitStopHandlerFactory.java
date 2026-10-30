@@ -21,4 +21,9 @@ public final class SampledTransitStopHandlerFactory implements TransitStopHandle
     public TransitStopHandler createTransitStopHandler(Vehicle vehicle) {
         return new SampledTransitStopHandler(delegate, vehicle, sampleSize);
     }
+
+    @Override public TransitStopHandler createTransitStopHandler(org.matsim.api.core.v01.Message message) {
+        // The message already contains scaled service times; do not scale a second time.
+        return new SampledTransitStopHandler(delegate.createTransitStopHandler(message));
+    }
 }

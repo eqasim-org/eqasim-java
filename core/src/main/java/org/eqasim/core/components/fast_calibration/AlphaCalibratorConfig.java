@@ -1,8 +1,11 @@
 package org.eqasim.core.components.fast_calibration;
 
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
 
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -46,8 +49,8 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
         map.put(WALK_MODE_SHARE, "Target mode share for walking");
         map.put(BIKE_MODE_SHARE, "Target mode share for biking");
         map.put(CAR_PASSENGER_MODE_SHARE, "Target mode share for car passengers");
-        map.put(FILE_PATH, "In case of using canton level calibration, this is the path to the csv file containing modes shares per canton");
-        map.put(LEVEL, "Level of calibration: current implementation contains either 'global', 'canton', or 'cluster'");
+        map.put(FILE_PATH, "CSV containing target mode shares for canton or cluster calibration. Relative paths are resolved against the config file directory; absolute paths are also supported.");
+        map.put(LEVEL, "Level of calibration: 'global', 'canton', or 'cluster'. CH_CMDP also supports 'keep_canton:geneva;vaud' to preserve the initial shares of selected cantons (names must match person cantonName attributes; no target CSV needed).");
         map.put(CALIBRATED_MODES, "Comma-separated list of modes to be calibrated (default: car,pt,walk,bike,car_passenger)," +
                 "in the default case, pt is used as reference mode, while the other modes are calibrated to match the target mode shares");
         return map;
@@ -69,6 +72,18 @@ public class AlphaCalibratorConfig extends ReflectiveConfigGroup {
     @StringSetter(FILE_PATH)
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    /** Resolve only when opening the input, keeping the serialized config path portable. */
+    public String getResolvedFilePath(Config config) {
+        if (filePath.isBlank()) {
+            return filePath;
+        }
+        try {
+            return Path.of(ConfigGroup.getInputFileURL(config.getContext(), filePath).toURI()).toString();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid alpha calibration filePath: " + filePath, e);
+        }
     }
     @StringGetter(LEVEL)
     public String getLevel() {

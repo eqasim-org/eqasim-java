@@ -145,13 +145,11 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 		}
 	}
 
-	@Override
 	public void onPrepareSim() {
 		departures.clear();
 		arrivals.clear();
 	}
 
-	@Override
 	public void afterSim() {
 		double time = internalInterface.getMobsim().getSimTimer().getTimeOfDay();
 		Set<MobsimAgent> processedAgents = new HashSet<>();
@@ -176,4 +174,8 @@ public class EqasimTransitEngine implements DepartureHandler, MobsimEngine {
 	public void setInternalInterface(InternalInterface internalInterface) {
 		this.internalInterface = internalInterface;
 	}
+
+    // MATSim 2026 renamed the MobsimEngine lifecycle callbacks.
+    public void beforeMobsim() { onPrepareSim(); }
+    public void afterMobsim() { afterSim(); }
 }

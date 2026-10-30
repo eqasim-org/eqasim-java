@@ -12,6 +12,18 @@
 	</parent>
 
 	<dependencies>
+		<!-- Already supplied by MATSim; used directly for the temporary scenario-attribute archive. -->
+		<dependency>
+			<groupId>org.lz4</groupId>
+			<artifactId>lz4-java</artifactId>
+			<version>1.8.0</version>
+		</dependency>
+		<!-- Already used by GeoPackage; declared directly for the PT cache's indexed binary store. -->
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.41.2.2</version>
+		</dependency>
 		<dependency>
 			<groupId>org.eqasim</groupId>
 			<artifactId>core</artifactId>
@@ -20,9 +32,11 @@
 	</dependencies>
 
 	<profiles>
+
 		<profile>
 			<id>standalone</id>
 			<build>
+				<finalName>switzerland</finalName>
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -44,6 +58,8 @@
 												<Implementation-Vendor>Eqasim</Implementation-Vendor>
 												<Implementation-Version>
 													${parent.groupId}</Implementation-Version>
+												<Main-Class>org.eqasim.switzerland.ch_cmdp.RunSimulation</Main-Class>
+												<Add-Opens>java.base/jdk.internal.misc java.base/java.lang.invoke</Add-Opens>
 											</manifestEntries>
 										</transformer>
 									</transformers>

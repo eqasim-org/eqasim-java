@@ -6,6 +6,8 @@ import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParame
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPersonVariables;
 import org.matsim.contribs.discrete_mode_choice.model.DiscreteModeChoiceTrip;
 
+import java.util.Locale;
+
 public class Utils {
     // purposes
     public static String HOME = "home";
@@ -139,12 +141,23 @@ public class Utils {
         return isJunior(person.age_a);
     }
 
-    public static boolean isGoodPtService(String ovgk){
-        return (ovgk.equals("A")) || (ovgk.equals("B"));
+    public static int getPtQuality(String ovgk) {
+        if (ovgk == null) {
+            return 4;
+        }
+
+        return switch (ovgk.strip().toUpperCase(Locale.ROOT)) {
+            case "A" -> 0;
+            case "B" -> 1;
+            case "C" -> 2;
+            case "D" -> 3;
+            default -> 4;
+        };
     }
 
-    public static boolean isMediumPtService(String ovgk){
-        return (ovgk.equals("C") || (ovgk.equals("D")));
+    public static double getPtQualityPower(String ovgk, double exponent) {
+        int quality = getPtQuality(ovgk);
+        return quality > 0 ? Math.pow(quality, exponent) : 0.0;
     }
 
     public static double interaction(double distance_km, double income_CHF, SwissCmdpModeParameters parameters){
@@ -191,20 +204,14 @@ public class Utils {
         return densityValue;
     }
 
-    public static boolean destinationIsGoodPtService(DiscreteModeChoiceTrip trip){
+    public static int getDestinationPtQuality(DiscreteModeChoiceTrip trip) {
         Object ovgk = trip.getDestinationActivity().getAttributes().getAttribute("ovgk");
-        if (!(ovgk instanceof String)) {
-            return false;
-        }
-        return isGoodPtService((String) ovgk);
+        return getPtQuality(ovgk == null ? null : ovgk.toString());
     }
 
-    public static boolean destinationIsMediumPtService(DiscreteModeChoiceTrip trip){
-        Object ovgk = trip.getDestinationActivity().getAttributes().getAttribute("ovgk");
-        if (!(ovgk instanceof String)) {
-            return false;
-        }
-        return isMediumPtService((String) ovgk);
+    public static double getDestinationPtQualityPower(DiscreteModeChoiceTrip trip, double exponent) {
+        int quality = getDestinationPtQuality(trip);
+        return quality > 0 ? Math.pow(quality, exponent) : 0.0;
     }
 
     public static String ZURICH = "zurich";

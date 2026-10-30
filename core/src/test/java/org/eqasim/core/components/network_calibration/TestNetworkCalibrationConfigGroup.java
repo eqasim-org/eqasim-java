@@ -18,65 +18,82 @@ import static org.junit.Assert.assertTrue;
 
 public class TestNetworkCalibrationConfigGroup {
     @Test
-    public void testNonEmptyObjectiveOverridesChildActivation() {
+    public void testOnlyParentSelectsComponents() {
         NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
-        calibration.getCostCalibrationConfigGroup().setActivate(true);
-        calibration.getFreeSpeedCalibrationConfigGroup().setActivate(false);
-        calibration.getAgentAscsCalibrationConfigGroup().setActivate(true);
-        calibration.getSubpopulationsCalibrationConfigGroup().setActivate(true);
-
+        calibration.setActivate(true);
         calibration.setObjective("freespeed, subpopulations");
 
-        assertFalse(calibration.getCostCalibrationConfigGroup().isActivated());
-        assertTrue(calibration.getFreeSpeedCalibrationConfigGroup().isActivated());
-        assertFalse(calibration.getAgentAscsCalibrationConfigGroup().isActivated());
-        assertTrue(calibration.getSubpopulationsCalibrationConfigGroup().isActivated());
-    }
+        // Creating/configuring parameter sets cannot change activation.
+        calibration.getCostCalibrationConfigGroup().setUpdateInterval(3);
+        calibration.getAgentAscsCalibrationConfigGroup().setUpdateInterval(4);
+        assertFalse(calibration.isLinkPenaltyActivated());
+        assertTrue(calibration.isFreeSpeedFactorActivated());
+        assertFalse(calibration.isAgentAscsActivated());
+        assertTrue(calibration.isSubpopulationsActivated());
 
-    @Test
-    public void testObjectiveAppliesToParameterSetsCreatedLater() {
-        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
         calibration.setObjective("penalty, agent");
-
-        assertTrue(calibration.getCostCalibrationConfigGroup().isActivated());
-        assertFalse(calibration.getFreeSpeedCalibrationConfigGroup().isActivated());
-        assertTrue(calibration.getAgentAscsCalibrationConfigGroup().isActivated());
-        assertFalse(calibration.getSubpopulationsCalibrationConfigGroup().isActivated());
-    }
-
-    @Test
-    public void testObjectiveIsReappliedAfterParameterSetsAreParsed() {
-        Config config = ConfigUtils.createConfig();
-        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
-        config.addModule(calibration);
-        calibration.setObjective("freespeed");
-
-        // Simulate child activate parameters being read after the parent objective.
-        calibration.getCostCalibrationConfigGroup().setActivate(true);
-        calibration.getFreeSpeedCalibrationConfigGroup().setActivate(false);
-        calibration.applyContext(config);
-
-        assertFalse(calibration.getCostCalibrationConfigGroup().isActivated());
-        assertTrue(calibration.getFreeSpeedCalibrationConfigGroup().isActivated());
-    }
-
-    @Test
-    public void testEmptyObjectiveLeavesChildActivationIndependent() {
-        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
-        calibration.setObjective("");
-        calibration.getCostCalibrationConfigGroup().setActivate(true);
-
         assertTrue(calibration.isLinkPenaltyActivated());
         assertFalse(calibration.isFreeSpeedFactorActivated());
+        assertTrue(calibration.isAgentAscsActivated());
+        assertFalse(calibration.isSubpopulationsActivated());
+    }
+
+    @Test
+    public void testGlobalSwitchDisablesUseAndCalibration() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        calibration.setObjective("penalty,freespeed,agent,subpopulations");
+        calibration.setCalibrate(true);
+        calibration.setActivate(true);
+        assertTrue(calibration.isFreeSpeedFactorCalibrationActivated());
+        calibration.setActivate(false);
+
+        assertFalse(calibration.isLinkPenaltyActivated());
+        assertFalse(calibration.isFreeSpeedFactorActivated());
+        assertFalse(calibration.isAgentAscsActivated());
+        assertFalse(calibration.isSubpopulationsActivated());
+        assertFalse(calibration.isLinkPenaltyCalibrationActivated());
+        assertFalse(calibration.isFreeSpeedFactorCalibrationActivated());
+        assertFalse(calibration.isAgentAscsCalibrationActivated());
+        assertFalse(calibration.isSubpopulationsCalibrationActivated());
+    }
+
+    @Test
+    public void testCalibrationCannotEnableUnselectedComponent() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        calibration.setActivate(true);
+        calibration.setObjective("freespeed");
+        calibration.setCalibrate("penalty, freespeed");
+        assertFalse(calibration.isLinkPenaltyCalibrationActivated());
+        assertTrue(calibration.isFreeSpeedFactorCalibrationActivated());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEmptyObjectiveDoesNotEnableParameterSets() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        calibration.setActivate(true);
+        calibration.getCostCalibrationConfigGroup();
+        calibration.setObjective("");
+        assertFalse(calibration.isLinkPenaltyActivated());
+        NetworkCalibrationModule.validateConfiguration(calibration);
+    }
+
+    @Test
+    public void testParameterSetsDoNotExposeActivationSwitches() {
+        NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
+        for (String type : List.of(CostCalibrationConfigGroup.GROUP_NAME, FreeSpeedCalibrationConfigGroup.GROUP_NAME,
+                AgentAscsCalibrationConfigGroup.GROUP_NAME, SubpopulationsCalibrationConfigGroup.GROUP_NAME)) {
+            var child = calibration.createParameterSet(type);
+            assertFalse(child.getParams().containsKey("activate"));
+            assertFalse(child.getParams().containsKey("calibrate"));
+            assertFalse(child.getComments().containsKey("activate"));
+        }
     }
 
     @Test
     public void testActivationAndCalibrationAreIndependentPerComponent() {
         NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
-        calibration.getCostCalibrationConfigGroup().setActivate(true);
-        calibration.getFreeSpeedCalibrationConfigGroup().setActivate(true);
-        calibration.getAgentAscsCalibrationConfigGroup().setActivate(true);
-        calibration.getSubpopulationsCalibrationConfigGroup().setActivate(true);
+        calibration.setActivate(true);
+        calibration.setObjective("penalty,freespeed,agent,subpopulations");
         calibration.setCalibrate("freespeed, agent");
 
         assertTrue(calibration.isLinkPenaltyActivated());
@@ -93,10 +110,7 @@ public class TestNetworkCalibrationConfigGroup {
     public void testFixedComponentsDoNotRequireCalibrationInputs() {
         NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
         calibration.setActivate(true);
-        calibration.getCostCalibrationConfigGroup().setActivate(true);
-        calibration.getFreeSpeedCalibrationConfigGroup().setActivate(true);
-        calibration.getAgentAscsCalibrationConfigGroup().setActivate(true);
-        calibration.getSubpopulationsCalibrationConfigGroup().setActivate(true);
+        calibration.setObjective("penalty,freespeed,agent,subpopulations");
         calibration.setCalibrate("");
 
         NetworkCalibrationModule.validateConfiguration(calibration);
@@ -106,7 +120,7 @@ public class TestNetworkCalibrationConfigGroup {
     public void testCalibratedFlowComponentRequiresCounts() {
         NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
         calibration.setActivate(true);
-        calibration.getCostCalibrationConfigGroup().setActivate(true);
+        calibration.setObjective("penalty");
         calibration.setCalibrate("penalty");
 
         NetworkCalibrationModule.validateConfiguration(calibration);
@@ -116,7 +130,7 @@ public class TestNetworkCalibrationConfigGroup {
     public void testUnknownCalibrationComponentIsRejected() {
         NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
         calibration.setActivate(true);
-        calibration.getCostCalibrationConfigGroup().setActivate(true);
+        calibration.setObjective("penalty");
         calibration.setCalibrate("unknown");
 
         NetworkCalibrationModule.validateConfiguration(calibration);
@@ -128,21 +142,19 @@ public class TestNetworkCalibrationConfigGroup {
         NetworkCalibrationConfigGroup calibration = new NetworkCalibrationConfigGroup();
         config.addModule(calibration);
         calibration.setActivate(true);
+        calibration.setObjective("penalty,freespeed,agent,subpopulations");
         calibration.setCalibrate("penalty, agent");
         calibration.setCountsFile("counts.csv");
 
         CostCalibrationConfigGroup cost = calibration.getCostCalibrationConfigGroup();
-        cost.setActivate(true);
         cost.setUpdateInterval(3);
         cost.setMaximumPenaltyUpdate(0.04);
 
         FreeSpeedCalibrationConfigGroup freespeed = calibration.getFreeSpeedCalibrationConfigGroup();
-        freespeed.setActivate(true);
         freespeed.setUpdateInterval(7);
         freespeed.setMaxDistanceError(0.15);
 
         AgentAscsCalibrationConfigGroup agent = calibration.getAgentAscsCalibrationConfigGroup();
-        agent.setActivate(true);
         agent.setUpdateInterval(11);
         agent.setGridRebuildUpdates("1,3");
         agent.setGridRebuildInitialCellSizes("9000,7000");
@@ -150,7 +162,6 @@ public class TestNetworkCalibrationConfigGroup {
         agent.setGridRebuildMaxPopulations("800,400");
 
         SubpopulationsCalibrationConfigGroup subpopulations = calibration.getSubpopulationsCalibrationConfigGroup();
-        subpopulations.setActivate(true);
         subpopulations.setUpdateInterval(13);
         subpopulations.setCalibrateCrossBorder(false);
         subpopulations.setCrossBorderCloningIterations("12,24");
@@ -164,6 +175,11 @@ public class TestNetworkCalibrationConfigGroup {
             NetworkCalibrationConfigGroup loaded = NetworkCalibrationConfigGroup.getOrCreate(loadedConfig);
 
             assertTrue(loaded.isActivated());
+            assertEquals("penalty,freespeed,agent,subpopulations", loaded.getObjective());
+            assertTrue(loaded.isLinkPenaltyCalibrationActivated());
+            assertFalse(loaded.isFreeSpeedFactorCalibrationActivated());
+            loaded.getParameterSets().values().stream().flatMap(java.util.Collection::stream)
+                    .forEach(child -> assertFalse(child.getParams().containsKey("activate")));
             assertEquals(List.of("penalty", "agent"), loaded.getModulesToBeCalibratedAsList());
             assertEquals(3, loaded.getCostCalibrationConfigGroup().getUpdateInterval());
             assertEquals(0.04, loaded.getCostCalibrationConfigGroup().getMaximumPenaltyUpdate(), 1.0e-12);
@@ -182,9 +198,9 @@ public class TestNetworkCalibrationConfigGroup {
     }
 
     @Test
-    public void testCrossBorderCalibrationIsEnabledByDefault() {
+    public void testCrossBorderCalibrationIsDisabledByDefault() {
         SubpopulationsCalibrationConfigGroup config = new SubpopulationsCalibrationConfigGroup();
-        assertTrue(config.isCrossBorderCalibrationEnabled());
+        assertFalse(config.isCrossBorderCalibrationEnabled());
         assertEquals(0.05, config.getFlowUnderEstimationThreshold(), 1.0e-12);
         assertEquals(0.05, config.getFlowOverEstimationThreshold(), 1.0e-12);
     }

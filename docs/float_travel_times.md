@@ -6,7 +6,7 @@ original MATSim observed collector. This switch is independent of
 `--memory-efficient-routing`; the float times work with either router.
 
 The implementation is in `org.eqasim.core.components.travel_time`, adapted from
-the branch's pinned MATSim 2026.0-2025w33 event collector. It does not shadow any
+the earlier MATSim 2026.0-2025w33 event collector and used with MATSim 2026.0. It does not shadow any
 MATSim classes. The public `TravelTime` API still returns doubles; the stored
 link/time-bin averages are floats. Routing costs, accumulated arrival times,
 landmarks, event timestamps, and simulation clocks retain their existing precision.

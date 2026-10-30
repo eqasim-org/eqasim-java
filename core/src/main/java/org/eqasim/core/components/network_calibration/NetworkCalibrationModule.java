@@ -300,7 +300,7 @@ public class NetworkCalibrationModule extends AbstractEqasimExtension {
         boolean agentActive = config.isAgentAscsActivated();
         boolean subpopulationsActive = config.isSubpopulationsActivated();
         if (!costActive && !freespeedActive && !agentActive && !subpopulationsActive) {
-            throw new IllegalArgumentException("Network calibration is active, but no child calibration group is active.");
+            throw new IllegalArgumentException("Network calibration is active, but objective selects no components.");
         }
 
         if (((costActive && config.isLinkPenaltyCalibrationActivated())

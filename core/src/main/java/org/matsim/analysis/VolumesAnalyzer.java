@@ -67,8 +67,8 @@ public class VolumesAnalyzer implements LinkLeaveEventHandler, VehicleEntersTraf
     private final IdMap<Link, Map<String, int[]>> linksPerMode;
 
     @Inject
-    VolumesAnalyzer(Network network, EventsManager eventsManager, FlowUtils flowUtils) {
-        this(3600, 24 * 3600 - 1, network, false, flowUtils);
+    VolumesAnalyzer(Network network, EventsManager eventsManager, Scenario scenario) {
+        this(3600, 24 * 3600 - 1, network, false, scenario);
         eventsManager.addHandler(this);
     }
 

@@ -150,6 +150,10 @@ class DAryMinHeap {
 		return this.size;
 	}
 
+	int nodeAt(int index) {
+		return this.heap[index];
+	}
+
 	boolean isEmpty() {
 		return this.size == 0;
 	}

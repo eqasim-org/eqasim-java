@@ -2,6 +2,9 @@
 
 This adds a `freespeed` objective under `eqasim:networkCalibration`.
 
+See [parent configuration and migration](network_calibration.md) for component
+activation. Child parameter sets no longer have an `activate` switch.
+
 ## What it calibrates
 
 - Links are grouped by:
@@ -21,19 +24,40 @@ Under `eqasim:networkCalibration`:
 
 - `activate=true`
 - `objective=freespeed`
-- `observedSpeedTripsFile=path/to/observed_trips.csv`
+- `calibrate=freespeed`
+
+In the `freespeedCalibration` parameter set:
+
+- `observedTripsFile=path/to/observed_trips.csv`
 
 ## Initialization precedence
 
-For freespeed groups, initial factors are resolved in this order:
+During calibration, or when explicitly loading a grouped CSV, initial factors
+are resolved in this order:
 
 1. `speedFactor` link attribute (group-averaged by category + municipality type)
-2. `freespeedFactorsFile` CSV (overrides attribute values for matching groups)
+2. `factorsFile` CSV in `freespeedCalibration` (overrides matching groups)
 
-If `calibrate=false`, the loaded factors are applied and kept fixed.
-If `calibrate=true`, these values are used as initial factors before iterative updates.
+When the freespeed objective is active but `freespeed` is omitted from the
+`calibrate` selector (for example, `calibrate=""`), the loaded factors are
+applied and kept fixed. With `calibrate="freespeed"`, these values are used
+as initial factors before iterative updates.
 
-At shutdown, the module restores each link's original freespeed and writes back the final `speedFactor` attribute.
+Fixed runs without a factors CSV use each car link's `speedFactor` directly,
+without averaging it into a group. Special-region files are not loaded, even
+if their paths remain in the config; they can be omitted or unavailable.
+Links without a valid positive factor retain their original speed. The
+stored link attributes are preserved when saving the output network. An
+explicit group CSV still requires the region definitions for its regional
+keys, as does calibration of the freespeed component.
+
+At the end of the last iteration, before MATSim writes `output_network`, the
+module restores the original freespeeds and stores the factors in the
+`speedFactor` link attribute. This applies both during calibration and when
+using fixed factors. On restart, the saved freespeeds remain the base values:
+the module loads the factors and applies them once for the simulation, then
+restores the base values again before writing the next output network. A
+configured factors CSV overrides the saved factors for matching groups.
 
 Useful optional parameters:
 

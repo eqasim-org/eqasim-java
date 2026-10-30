@@ -2,7 +2,8 @@
 
 `EqasimTrafficQSimModule` selects `FastQNetsimEngine` by default when VDF is
 absent. Switzerland's existing `RunSimulation` picks this up automatically.
-This is a scheduling and storage adaptation of **MATSim 2026.0-2025w33**.
+This is a scheduling and storage adaptation originally based on MATSim
+**2026.0-2025w33**, updated to run with MATSim **2026.0**.
 Native network/node behavior, lane traffic rules, link speeds, intersection
 delays, transit integration and both node/link phase barriers remain.
 

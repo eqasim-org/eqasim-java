@@ -13,7 +13,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.mobsim.qsim.AbstractQSimModule;
 import org.matsim.core.mobsim.qsim.InternalInterface;
 import org.matsim.core.mobsim.qsim.QSim;
-import org.matsim.core.mobsim.qsim.interfaces.MobsimVehicle;
+
 import org.matsim.core.mobsim.qsim.pt.*;
 import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -30,11 +30,19 @@ import static org.mockito.Mockito.*;
 
 public class TestSampledTransitDwell {
     @Test
+    public void restoredHandlerDoesNotScaleServiceTimesTwice() {
+        var factory = new SampledTransitStopHandlerFactory(0.1);
+        var handler = factory.createTransitStopHandler(vehicle(VehicleType.DoorOperationMode.serial, 2.0, 3.0));
+        var restored = factory.createTransitStopHandler(handler.toMessage());
+        assertEquals(serve(handler, 2, 2), serve(restored, 2, 2));
+    }
+
+    @Test
     public void suppliedFactoryReceivesScaledTimingsAndDelegateReceivesOriginalArguments() {
         var vehicle = vehicle(VehicleType.DoorOperationMode.parallel, 2.0, 3.0);
         var delegate = mock(TransitStopHandler.class);
         var delegateFactory = mock(TransitStopHandlerFactory.class);
-        when(delegateFactory.createTransitStopHandler(any())).thenReturn(delegate);
+        when(delegateFactory.createTransitStopHandler(any(Vehicle.class))).thenReturn(delegate);
         var handler = new SampledTransitStopHandler(delegateFactory, vehicle, 0.1);
 
         var captured = org.mockito.ArgumentCaptor.forClass(Vehicle.class);
@@ -53,11 +61,11 @@ public class TestSampledTransitDwell {
         var leaving = passengers("leave", 1);
         var entering = passengers("enter", 2);
         var access = mock(PassengerAccessEgress.class);
-        var mobsimVehicle = mock(MobsimVehicle.class);
-        when(delegate.handleTransitStop(stop, 10.0, leaving, entering, access, mobsimVehicle)).thenReturn(7.0);
-        assertEquals(7.0, handler.handleTransitStop(stop, 10.0, leaving, entering, access, mobsimVehicle), 0.0);
+        var mobsimVehicle = mock(TransitVehicle.class);
+        when(delegate.handleTransitStop(stop, 10.0, leaving, entering, List.of(), access, mobsimVehicle)).thenReturn(7.0);
+        assertEquals(7.0, handler.handleTransitStop(stop, 10.0, leaving, entering, List.of(), access, mobsimVehicle), 0.0);
         verify(delegate).handleTransitStop(same(stop), eq(10.0), same(leaving), same(entering),
-                same(access), same(mobsimVehicle));
+                eq(List.of()), same(access), same(mobsimVehicle));
     }
 
     @Test
@@ -112,19 +120,19 @@ public class TestSampledTransitDwell {
         var stop = stop("stop");
         var passenger = mock(PTPassengerAgent.class);
         var entering = new ArrayList<>(List.of(passenger));
-        var mobsimVehicle = mock(MobsimVehicle.class);
+        var mobsimVehicle = mock(TransitVehicle.class);
         var access = mock(PassengerAccessEgress.class);
         when(access.handlePassengerEntering(passenger, mobsimVehicle, stop.getId(), 2.0)).thenReturn(true);
-        assertEquals(1.0, first.handleTransitStop(stop, 0.0, new ArrayList<>(), entering, access, mobsimVehicle), 0.0);
-        assertEquals(1.0, first.handleTransitStop(stop, 1.0, new ArrayList<>(), entering, access, mobsimVehicle), 0.0);
+        assertEquals(1.0, first.handleTransitStop(stop, 0.0, new ArrayList<>(), entering, List.of(), access, mobsimVehicle), 0.0);
+        assertEquals(1.0, first.handleTransitStop(stop, 1.0, new ArrayList<>(), entering, List.of(), access, mobsimVehicle), 0.0);
         assertEquals(1, entering.size());
-        first.handleTransitStop(stop, 2.0, new ArrayList<>(), entering, access, mobsimVehicle);
+        first.handleTransitStop(stop, 2.0, new ArrayList<>(), entering, List.of(), access, mobsimVehicle);
         assertTrue(entering.isEmpty());
         verify(access).handlePassengerEntering(passenger, mobsimVehicle, stop.getId(), 1.0);
         verify(access).handlePassengerEntering(passenger, mobsimVehicle, stop.getId(), 2.0);
         // The other vehicle still needs to open its doors and makes no callback yet.
         var untouchedAccess = mock(PassengerAccessEgress.class);
-        second.handleTransitStop(stop, 2.0, new ArrayList<>(), new ArrayList<>(List.of(passenger)), untouchedAccess, mobsimVehicle);
+        second.handleTransitStop(stop, 2.0, new ArrayList<>(), new ArrayList<>(List.of(passenger)), List.of(), untouchedAccess, mobsimVehicle);
         verifyNoInteractions(untouchedAccess);
     }
 
@@ -227,7 +235,7 @@ public class TestSampledTransitDwell {
         List<PTPassengerAgent> entering = passengers("enter", boarding);
         List<PTPassengerAgent> leaving = passengers("leave", alighting);
         List<String> callbacks = new ArrayList<>();
-        var vehicle = mock(MobsimVehicle.class);
+        var vehicle = mock(TransitVehicle.class);
         var stop = stop("stop");
         var access = mock(PassengerAccessEgress.class);
         var stopId = stop.getId();
@@ -242,7 +250,7 @@ public class TestSampledTransitDwell {
         });
         double now = 0.0;
         while (now < 1000.0) {
-            double wait = handler.handleTransitStop(stop, now, leaving, entering, access, vehicle);
+            double wait = handler.handleTransitStop(stop, now, leaving, entering, List.of(), access, vehicle);
             if (wait == 0.0) {
                 assertTrue(entering.isEmpty());
                 assertTrue(leaving.isEmpty());

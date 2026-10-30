@@ -48,10 +48,19 @@ public class LinkCategorizer {
     public LinkCategorizer(Network network, NetworkCalibrationConfigGroup config) {
         this.categoryFivePromotionLaneThreshold = config.getCategoryFivePromotionLaneThreshold();
         this.categoryFivePromotionSpeedThreshold = config.getCategoryFivePromotionSpeedThreshold() / 3.6;
-        List<String> penaltiesSpecialRegionFiles = config.getCostCalibrationConfigGroup().getSpecialRegionFiles();
+        // Fixed link attributes already contain the regional calibration result.
+        // Only calibration or an explicit group CSV needs spatial classification.
+        var costConfig = config.getCostCalibrationConfigGroup();
+        boolean penaltyGroupsNeeded = config.isActivated() && config.isLinkPenaltyActivated()
+                && (config.isLinkPenaltyCalibrationActivated()
+                    || (costConfig.hasPenaltiesFile() && !costConfig.getResetPenaltiesToZeros()));
+        List<String> penaltiesSpecialRegionFiles = penaltyGroupsNeeded ? costConfig.getSpecialRegionFiles() : List.of();
         this.hasPenaltySpecialRegions = !penaltiesSpecialRegionFiles.isEmpty();
 
-        List<String> freespeedSpecialRegionFiles = config.getFreeSpeedCalibrationConfigGroup().getSpecialRegionFiles();
+        var speedConfig = config.getFreeSpeedCalibrationConfigGroup();
+        boolean freespeedGroupsNeeded = config.isActivated() && config.isFreeSpeedFactorActivated()
+                && (config.isFreeSpeedFactorCalibrationActivated() || speedConfig.hasFactorsFile());
+        List<String> freespeedSpecialRegionFiles = freespeedGroupsNeeded ? speedConfig.getSpecialRegionFiles() : List.of();
         this.hasFreespeedSpecialRegions = !freespeedSpecialRegionFiles.isEmpty();
 
         initSpecialRegions(network, penaltiesSpecialRegionFiles, freespeedSpecialRegionFiles);

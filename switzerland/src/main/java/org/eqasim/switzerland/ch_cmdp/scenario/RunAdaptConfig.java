@@ -26,7 +26,7 @@ import java.util.*;
 
 public class RunAdaptConfig {
 
-	private static double storageCapExponent = 0.75;
+	private static double storageCapExponent = 1.0; // This is the old value: 0.75. It is no longer accepted in MATSim 2026
 
 	static public void main(String[] args) throws ConfigurationException {
 		CommandLine cmd = new CommandLine.Builder(args).allowAnyOption(true).build();

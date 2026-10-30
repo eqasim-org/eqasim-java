@@ -35,7 +35,7 @@ public class DefaultDrtPredictor implements DrtPredictor {
 
                 // We use worst case here
                 travelTime_min = route.getMaxTravelTime() / 60.0;
-                waitingTime_min = route.getConstraints().getMaxWaitTime() / 60.0;
+                waitingTime_min = route.getConstraints().maxWaitDuration() / 60.0;
 
                 cost_MU = costModels.get(leg.getMode()).calculateCost_MU(person, trip, elements);
 
@@ -50,4 +50,5 @@ public class DefaultDrtPredictor implements DrtPredictor {
 
         return new DrtVariables(travelTime_min, cost_MU, euclideanDistance_km, waitingTime_min, accessEgressTime_min);
     }
+
 }

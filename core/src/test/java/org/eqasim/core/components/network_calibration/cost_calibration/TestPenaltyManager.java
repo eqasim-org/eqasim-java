@@ -71,7 +71,7 @@ public class TestPenaltyManager {
         config.setActivate(true);
         config.setCalibrate(true);
         CostCalibrationConfigGroup costConfig = config.getCostCalibrationConfigGroup();
-        costConfig.setActivate(true);
+        config.setObjective("penalty");
         costConfig.setMinPenalty(-0.1);
         costConfig.setMaxPenalty(0.3);
         return config;

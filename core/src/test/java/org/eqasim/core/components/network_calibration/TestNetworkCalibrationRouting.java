@@ -38,6 +38,7 @@ import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.router.util.LeastCostPathCalculatorFactory;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.vehicles.VehicleUtils;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -95,6 +96,18 @@ public class TestNetworkCalibrationRouting {
             restrictions.addDisallowedLinkSequence(mode, List.of(Id.createLinkId("2_4")));
         }
         NetworkUtils.setDisallowedNextLinks(network.getLinks().get(Id.createLinkId("1_2")), restrictions);
+        var vehicleTypes = new java.util.HashMap<String, org.matsim.vehicles.VehicleType>();
+        for (String mode : List.of("car", "truck", "car_passenger")) {
+            var type = VehicleUtils.createVehicleType(Id.create(mode, org.matsim.vehicles.VehicleType.class));
+            type.setNetworkMode(mode);
+            scenario.getVehicles().addVehicleType(type);
+            vehicleTypes.put(mode, type);
+        }
+        for (int i = 0; i < 12; i++) {
+            String mode = List.of("car", "truck", "car_passenger").get(i % 3);
+            scenario.getVehicles().addVehicle(VehicleUtils.createVehicle(
+                    Id.createVehicleId(i), vehicleTypes.get(mode)));
+        }
         TravelTime bike = (link, time, person, vehicle) -> 321;
         var controller = new Controler(scenario);
         // Same override order as RunSimulation: floats, normal modules, optimized router.
@@ -147,6 +160,8 @@ public class TestNetworkCalibrationRouting {
                 jobs.add(() -> {
                     var populationFactory = scenario.getPopulation().getFactory();
                     var person = populationFactory.createPerson(Id.createPersonId(personId));
+                    VehicleUtils.insertVehicleIdsIntoAttributes(person,
+                            Map.of(mode, Id.createVehicleId(personId)));
                     var plan = populationFactory.createPlan();
                     plan.setPerson(person);
                     var home = populationFactory.createActivityFromLinkId("home", Id.createLinkId("0_1"));
