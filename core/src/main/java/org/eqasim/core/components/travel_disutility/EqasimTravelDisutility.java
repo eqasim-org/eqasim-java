@@ -14,8 +14,15 @@ public class EqasimTravelDisutility implements TravelDisutility {
 	private final double sigma;
 	private final boolean useRandomness;
 	private final long baseSeed;
+	private final long[] linkIdHashes;
 
 	public EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty, double routingDistanceUtility, double sigma, long baseSeed) {
+		this(delegate, penalty, routingDistanceUtility, sigma, baseSeed, null);
+	}
+
+	EqasimTravelDisutility(TravelDisutility delegate, RoutingPenalty penalty,
+			double routingDistanceUtility, double sigma, long baseSeed, long[] linkIdHashes) {
+		this.linkIdHashes = linkIdHashes;
 		this.delegate = delegate;
 		this.penalty = penalty;
 		this.routingDistanceUtility = routingDistanceUtility;
@@ -38,7 +45,13 @@ public class EqasimTravelDisutility implements TravelDisutility {
 		disutility += penalty.getLinkPenalty(link, person, time, disutility);
 		disutility += routingDistanceUtility * (link.getLength() / 10.0); // 10.0 is for the scale, to be in the same order as travel time
 		if (useRandomness){
-			double normalNoise = sigma * Normal.get(link.getId().toString(), person.getId().toString(), baseSeed);
+			// New IDs created after the factory snapshot use the same exact
+			// hash path without caching; no network or person state is retained.
+			int index = link.getId().index();
+			double draw = linkIdHashes != null && index < linkIdHashes.length
+					? Normal.getWithPrefix(linkIdHashes[index], person.getId().toString(), baseSeed)
+					: Normal.get(link.getId().toString(), person.getId().toString(), baseSeed);
+			double normalNoise = sigma * draw;
 			disutility *= Math.max(1.0 + normalNoise, 1e-3); // we need to keep it positive, otherwise it doesn't make sense
 		}
 		return disutility;

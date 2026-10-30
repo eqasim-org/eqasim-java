@@ -17,7 +17,8 @@ import static org.junit.Assert.*;
 public class TestMemoryEfficientRoutingModule {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
-    @Test public void switchDefaultsToOptimizedAndRejectsTypos() throws Exception {
+    @Test public void switchDefaultsToEfficientRoutingAndRejectsTypos() throws Exception {
+        // Match the runner's default while retaining an explicit legacy-router opt-out.
         assertTrue(MemoryEfficientRoutingModule.isEnabled(command()));
         assertTrue(MemoryEfficientRoutingModule.isEnabled(command("--memory-efficient-routing", "true")));
         assertFalse(MemoryEfficientRoutingModule.isEnabled(command("--memory-efficient-routing", "false")));

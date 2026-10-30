@@ -21,6 +21,7 @@ package org.matsim.core.router;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.core.tools.random.Uniform;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
@@ -51,6 +52,8 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
     private final TripRouter tripRouter;
     private final ActivityFacilities facilities;
     private final TimeInterpretation timeInterpretation;
+    private final long randomSeed;
+    private final int iteration;
 
     /**
      * Initialises an instance.
@@ -60,9 +63,17 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
      * origin and destination activity.
      */
     public PlanRouter( final TripRouter tripRouter, final ActivityFacilities facilities, final TimeInterpretation timeInterpretation) {
+        this(tripRouter, facilities, timeInterpretation, tripRouter.getConfig().controller().getFirstIteration());
+    }
+
+    /** ReRoute supplies the current iteration; standalone routing uses the configured first iteration. */
+    public PlanRouter(final TripRouter tripRouter, final ActivityFacilities facilities,
+            final TimeInterpretation timeInterpretation, final int iteration) {
         this.tripRouter = tripRouter;
         this.facilities = facilities;
         this.timeInterpretation = timeInterpretation;
+        this.randomSeed = tripRouter.getConfig().global().getRandomSeed();
+        this.iteration = iteration;
     }
 
     /**
@@ -77,7 +88,10 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
         final List<Trip> trips = TripStructureUtils.getTrips( plan );
         TimeTracker timeTracker = new TimeTracker(timeInterpretation);
 
-        for (Trip oldTrip : trips) {
+        // Trip ordinals are local to this plan, independent of worker count/order.
+        String personId = plan.getPerson() == null ? "" : plan.getPerson().getId().toString();
+        for (int tripIndex = 0; tripIndex < trips.size(); tripIndex++) {
+            Trip oldTrip = trips.get(tripIndex);
             final String routingMode = TripStructureUtils.identifyMainMode( oldTrip.getTripElements() );
             timeTracker.addActivity(oldTrip.getOriginActivity());
 
@@ -90,7 +104,7 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
                     oldTrip.getTripAttributes() //
             );
 
-            if (doReRoute(oldTrip, newTripElements)) {
+            if (doReRoute(oldTrip, newTripElements, personId, tripIndex)) {
                 putVehicleFromOldTripIntoNewTripIfMeaningful(oldTrip, newTripElements);
                 TripRouter.insertTrip(plan, oldTrip.getOriginActivity(), newTripElements, oldTrip.getDestinationActivity());
                 timeTracker.addElements(newTripElements);
@@ -100,8 +114,8 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
         }
     }
 
-    private boolean doReRoute(Trip oldTrip, List<? extends PlanElement> newTrip) {
-        // Initial preparation (including switching a mode to teleportation) must install missing routes.
+    private boolean doReRoute(Trip oldTrip, List<? extends PlanElement> newTrip, String personId, int tripIndex) {
+        // Initial preparation must install missing routes before probabilistic acceptance applies.
         if (oldTrip.getLegsOnly().stream().anyMatch(leg -> leg.getRoute() == null || !leg.getTravelTime().isDefined())) {
             return true;
         }
@@ -117,7 +131,9 @@ public final class PlanRouter implements PlanAlgorithm, PersonAlgorithm {
             }
 
             double probability = 1 - Math.exp(-delta / 800);
-            if (Math.random() < probability) {
+            // Keep the acceptance policy, but isolate its draws from scheduling,
+            // global RNG consumption and the order in which strategies execute.
+            if (Uniform.get(personId, randomSeed, iteration, tripIndex) < probability) {
                 return true; // The new route is better, but not much better. Rerouting is realistic in this case, but not always.
             }
 

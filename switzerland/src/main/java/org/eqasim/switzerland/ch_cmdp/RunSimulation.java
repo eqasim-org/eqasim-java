@@ -15,6 +15,7 @@ import org.eqasim.switzerland.ch_cmdp.dsim.DsimIntegration;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimJvmSupport;
 import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
 import org.eqasim.core.components.travel_time.FloatTravelTimeModule;
+import org.eqasim.core.components.scoring.AnalysisOnlyScoringModule;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
 import org.eqasim.switzerland.ch_cmdp.utils.link_stats.DetailedLinkStatisticsModule;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
@@ -51,6 +52,8 @@ import java.io.IOException;
  *       archive and restore removed person, household and link attributes before final export.</li>
  *   <li>{@code --memory-efficient-routing}: default {@code true}. Use optimized SpeedyALT routing.</li>
  *   <li>{@code --float-travel-times}: default {@code true}. Share compact float travel-time storage.</li>
+ *   <li>{@code --analysis-only-scoring}: default {@code true}. Skip conventional scoring for compatible
+ *       QSim DMC configurations; DSim retains its scoring setup.</li>
  *   <li>{@code --cache-pt-routes}: default {@code false}. Enable the PT itinerary cache;
  *       its budget and time tolerance are configured in the PT cache config module.</li>
  *   <li>{@code --mode-parameter:NAME VALUE} and {@code --cost-parameter:NAME VALUE}:
@@ -76,12 +79,13 @@ public class RunSimulation {
                 .requireOptions("config-path") //
                 .allowOptions(ScenarioAttributeCleaner.OPTION, MemoryEfficientRoutingModule.OPTION,
                         FloatTravelTimeModule.OPTION, DsimIntegration.OPTION, DsimIntegration.SIMULATE_BIKES_OPTION,
-                        PtRouteCacheModule.OPTION, SimulationRuntime.TELEPORT_BIKE_OPTION) //
+                        PtRouteCacheModule.OPTION, SimulationRuntime.TELEPORT_BIKE_OPTION, AnalysisOnlyScoringModule.OPTION) //
                 .allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
                 .build();
         boolean lightenScenario = ScenarioAttributeCleaner.isEnabled(cmd);
         boolean efficientRouting = MemoryEfficientRoutingModule.isEnabled(cmd);
         boolean floatTravelTimes = FloatTravelTimeModule.isEnabled(cmd);
+        boolean analysisOnlyScoring = AnalysisOnlyScoringModule.isEnabled(cmd);
 
         SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new SampledTransitDwellConfigGroup(),
@@ -122,6 +126,9 @@ public class RunSimulation {
         if (floatTravelTimes) controller.addOverridingModule(new FloatTravelTimeModule());
         if (dsim == null) configurator.configureController(controller);
         else dsim.configureController(controller, configurator);
+        // Preserve the tested QSim scoring optimization; DSim retains its own scoring setup.
+        // The module falls back to conventional scoring when the configuration requires it.
+        if (dsim == null && analysisOnlyScoring) controller.addOverridingModule(new AnalysisOnlyScoringModule());
         runtime.install(controller);
         controller.addOverridingModule(new MissingTripRoutingModule());
         if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
