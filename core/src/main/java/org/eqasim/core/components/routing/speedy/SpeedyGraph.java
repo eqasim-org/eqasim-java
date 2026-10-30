@@ -48,6 +48,7 @@ public class SpeedyGraph {
     private final int[] restrictedLinkIds;
     private final int[] restrictedStartNodes;
     private final boolean turnRestrictions;
+    private final int[] nextEquivalentNode;
 
 	SpeedyGraph(int[] nodeData, int[] linkData, Node[] nodes, Link[] links,
                 int originalNodeCount, int legacyNodeSlots, int[] originalNodeIds, int[] coloredOriginalIndices,
@@ -65,6 +66,16 @@ public class SpeedyGraph {
         this.restrictedLinkIds = restrictedLinkIds;
         this.restrictedStartNodes = restrictedStartNodes;
         this.turnRestrictions = turnRestrictions;
+        // A destination has several approach states when turns are restricted.
+        // Share this compact lookup across routers rather than scanning every
+        // colored node, or allocating a destination list, for each query.
+        this.nextEquivalentNode = turnRestrictions ? new int[nodes.length] : new int[0];
+        Arrays.fill(nextEquivalentNode, -1);
+        for (int i = originalNodeCount; i < nodes.length; i++) {
+            int original = coloredOriginalIndices[i - originalNodeCount];
+            nextEquivalentNode[i] = nextEquivalentNode[original];
+            nextEquivalentNode[original] = i;
+        }
     }
 
     int getNodeIndex(Node node) {
@@ -85,6 +96,20 @@ public class SpeedyGraph {
     }
 
     boolean hasTurnRestrictions() { return turnRestrictions; }
+
+    int getNextEquivalentNode(int nodeIndex) { return nextEquivalentNode[nodeIndex]; }
+
+    /** Whether this approach permits the final transition into an activity link. */
+    boolean canEnterLink(int nodeIndex, Link destination) {
+        // Colored nodes retain the complete restriction history, including
+        // multi-link restrictions. Test their actual outgoing edges rather
+        // than only the last physical link of the reconstructed route.
+        for (int index = nodeData[nodeIndex * NODE_SIZE]; index >= 0;
+                index = linkData[index * LINK_SIZE]) {
+            if (links[index].getId().equals(destination.getId())) return true;
+        }
+        return false;
+    }
 
     public LinkIterator getOutLinkIterator() {
         return new OutLinkIterator(this);

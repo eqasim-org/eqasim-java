@@ -397,13 +397,33 @@ class SpeedyALTData {
 
 	/** The same ALT expressions, with each row resolved once and target rows cached per query. */
 	double estimate(int node, double[] destinationFrom, double[] destinationTo) {
+		return estimate(node, destinationFrom, destinationTo, false);
+	}
+
+	double estimate(int node, double[] destinationFrom, double[] destinationTo, boolean linkDestination) {
 		int fromRow = fromLandmarks.row(node), toRow = toLandmarks.row(node);
 		double[] from = fromLandmarks.block(fromRow), to = toLandmarks.block(toRow);
 		int fromOffset = fromLandmarks.offset(fromRow), toOffset = toLandmarks.offset(toRow);
 		double best = 0;
+		// Preprocessing consolidates original nodes with the minimum of their
+		// colored copies. Such a forward distance can be too small for this
+		// exact search state, so its subtraction is not a safe lower bound.
+		// The caller also disables a backward bound whose destination row was
+		// consolidated. Node queries retain the legacy expression unchanged.
+		boolean useForward = !linkDestination || node >= graph.originalNodeCount
+				|| graph.getNextEquivalentNode(node) < 0;
 		for (int i = 0; i < landmarksCount; i++) {
-			double estimate = Math.max(to[toOffset + i] - destinationTo[i], destinationFrom[i] - from[fromOffset + i]);
-			if (estimate > best) best = estimate;
+			if (!linkDestination) {
+				double estimate = Math.max(to[toOffset + i] - destinationTo[i], destinationFrom[i] - from[fromOffset + i]);
+				if (estimate > best) best = estimate;
+			} else {
+				// Evaluate independently: infinity minus infinity is NaN and
+				// must not hide the other, finite lower bound.
+				double backward = to[toOffset + i] - destinationTo[i];
+				if (backward > best) best = backward;
+				double forward = useForward ? destinationFrom[i] - from[fromOffset + i] : 0;
+				if (forward > best) best = forward;
+			}
 		}
 		return best;
 	}
