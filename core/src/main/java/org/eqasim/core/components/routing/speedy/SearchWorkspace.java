@@ -8,7 +8,7 @@ import java.util.Arrays;
  */
 final class SearchWorkspace {
     private final int nodeCount;
-    private final int[] index;
+    private int[] index;
     private double[] data;
     private int[] incoming;
     private int[] nodes;
@@ -18,7 +18,6 @@ final class SearchWorkspace {
 
     SearchWorkspace(int nodeCount) {
         this.nodeCount = nodeCount;
-        index = new int[nodeCount];
         int initial = Math.min(nodeCount, 64);
         data = new double[initial * 2];
         incoming = new int[initial];
@@ -27,6 +26,9 @@ final class SearchWorkspace {
 
     /** Returns true when the heap must replace its packed position mapping. */
     boolean beginQuery() {
+        // Strategies construct many routers before knowing which modes are used.
+        // Defer the full node index until the first real query; reuse it thereafter.
+        if (index == null) index = new int[nodeCount];
         if (!dense && incoming.length >= nodeCount * 0.875) {
             dense = true;
             if (incoming.length != nodeCount) {
@@ -51,7 +53,7 @@ final class SearchWorkspace {
         return false;
     }
 
-    boolean contains(int node) { return dense ? index[node] == generation : index[node] != 0; }
+    boolean contains(int node) { return index != null && (dense ? index[node] == generation : index[node] != 0); }
 
     int slot(int node) { return dense ? node : index[node] - 1; }
 
@@ -89,6 +91,6 @@ final class SearchWorkspace {
     int visited() { return size; }
     int capacity() { return incoming.length; }
     boolean dense() { return dense; }
-    long bytes() { return 4L * index.length + 8L * data.length + 4L * incoming.length
+    long bytes() { return (index == null ? 0 : 4L * index.length) + 8L * data.length + 4L * incoming.length
             + (nodes == null ? 0 : 4L * nodes.length); }
 }
