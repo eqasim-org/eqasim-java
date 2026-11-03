@@ -23,7 +23,6 @@ public class RunSimulation {
 		Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"));
 		configurator.updateConfig(config);
 
-		// Existing scenario configs use the core walk estimator, switch to the Seville one
 		EqasimConfigGroup.get(config).setEstimator(TransportMode.walk, SevilleModeChoiceModule.WALK_ESTIMATOR_NAME);
 
 		cmd.applyConfiguration(config);
