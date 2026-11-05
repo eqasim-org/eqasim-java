@@ -10,6 +10,8 @@ import org.eqasim.switzerland.ch_cmdp.memory.ScenarioAttributeCleaner;
 import org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntime;
 import org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntimeConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.routing.pt_cache.PtRouteCacheModule;
+import org.eqasim.switzerland.ch_cmdp.rustRouting.RustRoutingConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.rustRouting.RustRoutingModule;
 import org.eqasim.switzerland.ch_cmdp.routing.MissingTripRoutingModule;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimIntegration;
 import org.eqasim.switzerland.ch_cmdp.dsim.DsimJvmSupport;
@@ -56,6 +58,11 @@ import java.io.IOException;
  *       QSim DMC configurations; DSim retains its scoring setup.</li>
  *   <li>{@code --cache-pt-routes}: default {@code false}. Enable the PT itinerary cache;
  *       its budget and time tolerance are configured in the PT cache config module.</li>
+ *   <li>{@code --useRustRouter}: default {@code false}. Use the native Rust scheduled PT router.
+ *       Preprocessing runs in the background; mode-choice workers share the immutable timetable.
+ *       Compatible with the PT itinerary cache. Uses a supplied/bundled library, otherwise installs
+ *       a cached compiled release or clones/builds the pinned source (swissRustRouting settings).
+ *       Automatic installation and preprocessing run in the background.</li>
  *   <li>{@code --mode-parameter:NAME VALUE} and {@code --cost-parameter:NAME VALUE}:
  *       override mode-choice and cost coefficients.</li>
  *   <li>{@code --samplingRateForPT VALUE}: multiply transit vehicle PCU equivalents by this factor.</li>
@@ -79,7 +86,8 @@ public class RunSimulation {
                 .requireOptions("config-path") //
                 .allowOptions(ScenarioAttributeCleaner.OPTION, MemoryEfficientRoutingModule.OPTION,
                         FloatTravelTimeModule.OPTION, DsimIntegration.OPTION, DsimIntegration.SIMULATE_BIKES_OPTION,
-                        PtRouteCacheModule.OPTION, SimulationRuntime.TELEPORT_BIKE_OPTION, AnalysisOnlyScoringModule.OPTION) //
+                        PtRouteCacheModule.OPTION, SimulationRuntime.TELEPORT_BIKE_OPTION, AnalysisOnlyScoringModule.OPTION,
+                        RustRoutingModule.OPTION) //
                 .allowPrefixes("mode-parameter", "cost-parameter", "preventwaitingtoentertraffic", "samplingRateForPT") //
                 .build();
         boolean lightenScenario = ScenarioAttributeCleaner.isEnabled(cmd);
@@ -89,11 +97,12 @@ public class RunSimulation {
 
         SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new SampledTransitDwellConfigGroup(),
-                new SimulationRuntimeConfigGroup());
+                new SimulationRuntimeConfigGroup(), new RustRoutingConfigGroup());
         configurator.updateConfig(config);
         configurator.configure(config);
         cmd.applyConfiguration(config);
         PtRouteCacheModule.applyCommand(cmd, config);
+        var rustSettings = RustRoutingModule.applyCommand(cmd, config);
         DsimIntegration dsim = DsimIntegration.fromCommand(cmd, config);
         boolean teleportBike = cmd.hasOption(SimulationRuntime.TELEPORT_BIKE_OPTION) ? SimulationRuntime.teleportBike(cmd)
                 : ConfigUtils.addOrGetModule(config, SimulationRuntimeConfigGroup.class).isTeleportBike();
@@ -122,35 +131,41 @@ public class RunSimulation {
         configurator.adjustScenario(scenario);
         configurator.adjustPTpcu(scenario);
         runtime.preprocess(scenario, lightenScenario);
-        Controler controller = new Controler(scenario);
-        if (floatTravelTimes) controller.addOverridingModule(new FloatTravelTimeModule());
-        if (dsim == null) configurator.configureController(controller);
-        else dsim.configureController(controller, configurator);
-        // Preserve the tested QSim scoring optimization; DSim retains its own scoring setup.
-        // The module falls back to conventional scoring when the configuration requires it.
-        if (dsim == null && analysisOnlyScoring) controller.addOverridingModule(new AnalysisOnlyScoringModule());
-        runtime.install(controller);
-        controller.addOverridingModule(new MissingTripRoutingModule());
-        if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
-        controller.addOverridingModule(new PtRouteCacheModule());
-        if (dsim == null) {
-            controller.addOverridingModule(new PTPassengerCountsModule());
-            controller.addOverridingModule(new PTLinkVolumesModule());
-        }
-        controller.addOverridingModule(new StrategyWeightDecayModule());
-        controller.addOverridingModule(new TollsModule());
-        controller.addOverridingModule(new DetailedLinkStatisticsModule());
+        // Start after temporary network edits: route distances read the network, which must be stable.
+        // Native preprocessing overlaps controller setup; close also covers injection/run failures.
+        try (var rust = RustRoutingModule.prepare(scenario, rustSettings)) {
+            Controler controller = new Controler(scenario);
+            if (floatTravelTimes) controller.addOverridingModule(new FloatTravelTimeModule());
+            if (dsim == null) configurator.configureController(controller);
+            else dsim.configureController(controller, configurator);
+            // Preserve the tested QSim scoring optimization; DSim retains its own scoring setup.
+            // The module falls back to conventional scoring when the configuration requires it.
+            if (dsim == null && analysisOnlyScoring) controller.addOverridingModule(new AnalysisOnlyScoringModule());
+            runtime.install(controller);
+            controller.addOverridingModule(new MissingTripRoutingModule());
+            if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
+            if (rust != null) controller.addOverridingModule(new RustRoutingModule(rust));
+            // The optional cache wraps whichever PT backend was selected above.
+            controller.addOverridingModule(new PtRouteCacheModule());
+            if (dsim == null) {
+                controller.addOverridingModule(new PTPassengerCountsModule());
+                controller.addOverridingModule(new PTLinkVolumesModule());
+            }
+            controller.addOverridingModule(new StrategyWeightDecayModule());
+            controller.addOverridingModule(new TollsModule());
+            controller.addOverridingModule(new DetailedLinkStatisticsModule());
 
-        // Install QSim-specific transit engines; DSim provides its own scheduled PT engine.
-        if (dsim == null) {
-            controller.addOverridingModule(new SBBTransitModule());
-            controller.configureQSimComponents(components -> {
-                new SBBTransitEngineQSimModule().configure(components);
-            });
-            controller.addOverridingQSimModule(new SampledTransitDwellQSimModule());
+            // Install QSim-specific transit engines; DSim provides its own scheduled PT engine.
+            if (dsim == null) {
+                controller.addOverridingModule(new SBBTransitModule());
+                controller.configureQSimComponents(components -> {
+                    new SBBTransitEngineQSimModule().configure(components);
+                });
+                controller.addOverridingQSimModule(new SampledTransitDwellQSimModule());
+            }
+            // Record the actual runtime config; final output configs are restored by SimulationRuntime.
+            ConfigUtils.writeConfig(config, "run_config.xml");
+            controller.run();
         }
-        // Record the actual runtime config; final output configs are restored by SimulationRuntime.
-        ConfigUtils.writeConfig(config, "run_config.xml");
-        controller.run();
     }
 }

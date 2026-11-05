@@ -14,6 +14,8 @@ import org.matsim.core.router.RoutingModule;
 import org.matsim.core.replanning.PlanStrategy;
 import org.matsim.contribs.discrete_mode_choice.modules.DiscreteModeChoiceModule;
 import org.matsim.contribs.discrete_mode_choice.replanning.DiscreteModeChoiceStrategyProvider;
+import org.eqasim.switzerland.ch_cmdp.rustRouting.RustRoutingConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.rustRouting.RustRoutingModule.RustPtRoutingModuleProvider;
 
 /** Install after SwitzerlandConfigurator's usual routing bindings. */
 public final class PtRouteCacheModule extends AbstractModule {
@@ -33,7 +35,8 @@ public final class PtRouteCacheModule extends AbstractModule {
         var settings = ConfigUtils.addOrGetModule(getConfig(), PtRouteCacheConfigGroup.class);
         if (!settings.enabled || !getConfig().transit().isUseTransit()) return;
         validate(getConfig(), settings);
-        bind(SwissRailRaptorRoutingModuleProvider.class);
+        if (!ConfigUtils.addOrGetModule(getConfig(), RustRoutingConfigGroup.class).enabled)
+            bind(SwissRailRaptorRoutingModuleProvider.class);
         bind(PtRouteCache.class).toProvider(CacheProvider.class).in(Singleton.class);
         addControllerListenerBinding().to(PtRouteCache.class);
         addEventHandlerBinding().to(PtRouteCache.class);
@@ -77,11 +80,15 @@ public final class PtRouteCacheModule extends AbstractModule {
     }
 
     static final class RouterProvider implements Provider<RoutingModule> {
-        @Inject SwissRailRaptorRoutingModuleProvider original;
+        @Inject Injector injector;
         @Inject PtRouteCache cache;
         @Inject Scenario scenario;
         @Override public RoutingModule get() {
-            return new CachingPtRoutingModule(original.get(), cache, scenario.getPopulation().getFactory());
+            // Resolve only the selected backend: injecting both would also build Raptor's transfer data.
+            RoutingModule original = ConfigUtils.addOrGetModule(scenario.getConfig(), RustRoutingConfigGroup.class).enabled
+                    ? injector.getInstance(RustPtRoutingModuleProvider.class).get()
+                    : injector.getInstance(SwissRailRaptorRoutingModuleProvider.class).get();
+            return new CachingPtRoutingModule(original, cache, scenario.getPopulation().getFactory());
         }
     }
 

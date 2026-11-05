@@ -89,3 +89,34 @@ The CLI overrides XML. Default: false. Speed: **4 m/s**; beeline factor: **1.4**
 `ch_cmdp.scenario.RunAdaptConfig`. Bikes are removed from network routing, QSim main modes and
 measured modes, but physical bike links remain in the input network. This conflicts with
 `--dsim-simulate-bikes true`. DSim already teleports bikes by default.
+
+## Restarting final DSim outputs with QSim
+
+Use the matching final `output_network`, `output_plans`, `output_vehicles`, `output_households`,
+`output_transitSchedule`, `output_transitVehicles` and facilities files from a normal shutdown.
+Update the input paths in the restart config to those files; `output_config.xml` does not
+automatically redirect its original input paths to the output files. Do not pair raw `ITERS`
+plans or `output_experienced_plans` with the restored final network: those files describe the
+runtime DSim layer and are not postprocessed by this restoration hook.
+
+For a QSim restart with network bicycles and road buses:
+
+- Select `controller.mobsim=qsim`; omit `--use-dsim true` and `--dsim-simulate-bikes true`.
+  `--use-dsim false` alone does not override DSim selected in XML.
+- Include bike in `routing.networkModes` and `qsim.mainModes`, preserving the other desired
+  modes. Remove the bike teleportation parameter set and disable `--teleport-bike` /
+  `switzerlandSimulation.teleportBike`. The normal Swiss bike setup uses `SeepageQ`,
+  `seepModes=bike` and `seepModeStorageFree=true`.
+- Enable `transit.useTransit` and `transit.usingTransitInMobsim`, and set
+  `eqasim.useScheduleBasedTransport=false` for actual bus boarding instead of Eqasim's
+  timetable teleportation engine.
+
+Restoration returns the original settings; it does not enable bikes or buses that were disabled
+in the original configuration. The startup missing-route pass handles absent bike routes and
+old teleported bike routes after network routing is enabled.
+
+Two integration tests run DSim for iterations 0–1, reload its final files, and run QSim iteration 0
+with network bikes and SBB road transit. They cover teleported and isolated-layer DSim bikes,
+XML-selected and argument-selected DSim, previously disabled bike/bus simulation, restored
+metadata, real bike/bus link events, passenger boarding and arrivals without stuck agents.
+These are small-scenario regression tests, not a full Switzerland benchmark.

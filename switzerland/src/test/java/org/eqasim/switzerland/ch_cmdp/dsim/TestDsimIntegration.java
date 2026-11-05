@@ -161,11 +161,99 @@ public class TestDsimIntegration {
                 .noneMatch(link -> link.getAllowedModes().contains(TransportMode.bike)));
     }
 
+    @Test public void restartTeleportedBikeDsimOutputsWithQsimBikesAndRoadTransit() throws Exception { restart(false); }
+    @Test public void restartIsolatedBikeDsimOutputsWithQsimBikesAndRoadTransit() throws Exception { restart(true); }
+
+    /** Run real DSim, reload its final files, then run real QSim with the production startup/restore hooks. */
+    private void restart(boolean networkBikes) throws Exception {
+        var prepared = prepareScenario(1, networkBikes, true);
+        var scenario = prepared.scenario();
+        var first = new Controler(scenario);
+        first.addOverridingModule(new AbstractModule() {
+            @Override public void install() {
+                bind(org.eqasim.core.components.flow.FlowUtils.class).toInstance(new org.eqasim.core.components.flow.FlowUtils(scenario));
+                bind(CrossingPenalty.class).toInstance((link, now, vehicle) -> 0.0);
+                bind(DepartureFinder.class).to(DefaultDepartureFinder.class);
+            }
+        });
+        first.addOverridingModule(new EqasimDsimModule());
+        first.addOverridingQSimModule(EqasimDsimModule.engineModule());
+        first.addOverridingModule(new org.eqasim.switzerland.ch_cmdp.routing.MissingTripRoutingModule());
+        prepared.runtime().install(first);
+        first.run();
+        var folder = java.nio.file.Path.of(first.getConfig().controller().getOutputDirectory());
+        var config = ConfigUtils.loadConfig(folder.resolve("output_config.xml").toString(), new EqasimConfigGroup(),
+                new org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup());
+        assertEquals(networkBikes ? "dsim" : "qsim", config.controller().getMobsim());
+        assertEquals(networkBikes, config.transit().isUsingTransitInMobsim());
+        assertEquals(!networkBikes, EqasimConfigGroup.get(config).getUseScheduleBasedTransport());
+        assertEquals(networkBikes, config.routing().getNetworkModes().contains("bike"));
+        assertEquals(QSimConfigGroup.LinkDynamics.SeepageQ, config.qsim().getLinkDynamics());
+        config.controller().setMobsim("qsim");
+        config.qsim().setMainModes(Set.of("car", "bike"));
+        config.routing().setNetworkModes(Set.of("car", "bike"));
+        config.routing().removeTeleportedModeParams("bike");
+        config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
+        config.qsim().setSeepModes(List.of("bike")); config.qsim().setSeepModeStorageFree(true);
+        config.transit().setUsingTransitInMobsim(true);
+        EqasimConfigGroup.get(config).setUseScheduleBasedTransport(false);
+        config.controller().setOutputDirectory(temp.newFolder("qsimRestart").toString());
+        config.controller().setFirstIteration(0); config.controller().setLastIteration(0);
+        config.network().setInputFile(folder.resolve("output_network.xml.gz").toString());
+        config.plans().setInputFile(folder.resolve("output_plans.xml.gz").toString());
+        config.vehicles().setVehiclesFile(folder.resolve("output_vehicles.xml.gz").toString());
+        config.households().setInputFile(folder.resolve("output_households.xml.gz").toString());
+        config.transit().setTransitScheduleFile(folder.resolve("output_transitSchedule.xml.gz").toString());
+        config.transit().setVehiclesFile(folder.resolve("output_transitVehicles.xml.gz").toString());
+        var runtime = new org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntime(config, null, false);
+        var reloaded = ScenarioUtils.loadScenario(config);
+        assertEquals(6, reloaded.getNetwork().getLinks().size());
+        assertFalse(reloaded.getNetwork().getLinks().keySet().stream().anyMatch(DsimBikeNetworkAdapter::isBikeLink));
+        assertEquals("road metadata", reloaded.getNetwork().getLinks().get(Id.createLinkId("l1")).getAttributes().getAttribute("sourceMetadata"));
+        assertEquals("person metadata", reloaded.getPopulation().getPersons().get(Id.createPersonId("bike")).getAttributes().getAttribute("sourceMetadata"));
+        assertEquals("household metadata", reloaded.getHouseholds().getHouseholds().get(Id.create("h", org.matsim.households.Household.class)).getAttributes().getAttribute("sourceMetadata"));
+        runtime.preprocess(reloaded, true);
+        var events = new ConcurrentLinkedQueue<Event>();
+        var second = new Controler(reloaded);
+        second.addOverridingModule(new org.eqasim.switzerland.ch_cmdp.routing.MissingTripRoutingModule());
+        second.addOverridingQSimModule(new org.eqasim.core.components.transit.EqasimTransitQSimModule());
+        second.configureQSimComponents(components -> org.eqasim.core.components.transit.EqasimTransitQSimModule.configure(components, config));
+        second.addOverridingModule(new ch.sbb.matsim.mobsim.qsim.SBBTransitModule());
+        second.configureQSimComponents(components -> new ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule().configure(components));
+        second.addOverridingQSimModule(new org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellQSimModule());
+        second.addOverridingModule(new AbstractModule() {
+            @Override public void install() {
+                bind(DepartureFinder.class).to(DefaultDepartureFinder.class);
+                addEventHandlerBinding().toInstance(new BasicEventHandler() {
+                    @Override public void handleEvent(Event event) { events.add(event); }
+                });
+            }
+        });
+        runtime.install(second); second.run();
+        assertFalse(events.stream().anyMatch(event -> event instanceof PersonStuckEvent));
+        for (String id : List.of("car", "bike", "early", "missed"))
+            assertTrue("QSim arrival for " + id, events.stream().anyMatch(event -> event instanceof PersonArrivalEvent arrival
+                    && arrival.getPersonId().toString().equals(id)));
+        assertTrue("Bikes must move on the road network", events.stream().anyMatch(event -> event instanceof LinkEnterEvent enter
+                && enter.getVehicleId().toString().contains("bike") && !DsimBikeNetworkAdapter.isBikeLink(enter.getLinkId())));
+        assertTrue("Buses must move on the road network", events.stream().anyMatch(event -> event instanceof LinkEnterEvent enter
+                && enter.getVehicleId().toString().startsWith("bus-")));
+        assertTrue("PT passengers must actually board road buses", events.stream().anyMatch(event ->
+                event instanceof org.matsim.api.core.v01.events.PersonEntersVehicleEvent board
+                        && board.getPersonId().toString().equals("early") && board.getVehicleId().toString().startsWith("bus-")));
+    }
+
     private Scenario scenario(int threads) throws Exception {
         return scenario(threads, false);
     }
 
     private Scenario scenario(int threads, boolean networkBikes) throws Exception {
+        return prepareScenario(threads, networkBikes, false).scenario();
+    }
+
+    private record Prepared(Scenario scenario, org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntime runtime) { }
+
+    private Prepared prepareScenario(int threads, boolean networkBikes, boolean restartTest) throws Exception {
         var config = ConfigUtils.createConfig(new EqasimConfigGroup());
         config.controller().setOutputDirectory(temp.newFolder("run" + threads).toString());
         config.controller().setLastIteration(1);
@@ -184,7 +272,20 @@ public class TestDsimIntegration {
         config.routing().getOrCreateModeRoutingParams("walk").setBeelineDistanceFactor(1.3);
         config.scoring().addActivityParams(new org.matsim.core.config.groups.ScoringConfigGroup.ActivityParams("home").setTypicalDuration(3600));
         var adapter = new DsimIntegration2026(networkBikes);
-        adapter.adaptConfig(config);
+        org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntime runtime = null;
+        if (restartTest) {
+            config.controller().setCompressionType(org.matsim.core.config.groups.ControllerConfigGroup.CompressionType.gzip);
+            config.controller().setMobsim(networkBikes ? "dsim" : "qsim");
+            if (networkBikes) config.routing().removeTeleportedModeParams("bike");
+            else {
+                config.routing().setNetworkModes(Set.of("car"));
+                config.qsim().setMainModes(Set.of("car"));
+            }
+            config.qsim().setLinkDynamics(QSimConfigGroup.LinkDynamics.SeepageQ);
+            config.transit().setUsingTransitInMobsim(networkBikes);
+            EqasimConfigGroup.get(config).setUseScheduleBasedTransport(!networkBikes);
+            runtime = new org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntime(config, adapter, false);
+        } else adapter.adaptConfig(config);
         var scenario = ScenarioUtils.createScenario(config);
         var network = scenario.getNetwork();
         for (int i = 0; i < 4; i++) NetworkUtils.createAndAddNode(network, Id.createNodeId(i), new Coord(i * 100, 0));
@@ -227,7 +328,24 @@ public class TestDsimIntegration {
             var end = pf.createActivityFromCoord("home", new Coord(300, 0)); end.setLinkId(b.getLinkId()); plan.addActivity(end);
             person.addPlan(plan); scenario.getPopulation().addPerson(person);
         }
-        adapter.adaptScenario(scenario);
-        return scenario;
+        if (restartTest) {
+            var type = scenario.getTransitVehicles().getFactory().createVehicleType(
+                    Id.create("bus", org.matsim.vehicles.VehicleType.class));
+            type.setNetworkMode("car");
+            type.getCapacity().setSeats(40); type.setPcuEquivalents(1.0);
+            scenario.getTransitVehicles().addVehicleType(type);
+            for (var departure : service.getDepartures().values()) {
+                var vehicle = scenario.getTransitVehicles().getFactory().createVehicle(
+                        Id.createVehicleId("bus-" + departure.getId()), type);
+                scenario.getTransitVehicles().addVehicle(vehicle); departure.setVehicleId(vehicle.getId());
+            }
+            scenario.getNetwork().getLinks().get(Id.createLinkId("l1")).getAttributes().putAttribute("sourceMetadata", "road metadata");
+            scenario.getPopulation().getPersons().get(Id.createPersonId("bike")).getAttributes().putAttribute("sourceMetadata", "person metadata");
+            var household = scenario.getHouseholds().getFactory().createHousehold(Id.create("h", org.matsim.households.Household.class));
+            household.getMemberIds().add(Id.createPersonId("bike")); household.getAttributes().putAttribute("sourceMetadata", "household metadata");
+            scenario.getHouseholds().getHouseholds().put(household.getId(), household);
+            runtime.preprocess(scenario, true);
+        } else adapter.adaptScenario(scenario);
+        return new Prepared(scenario, runtime);
     }
 }

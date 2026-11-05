@@ -26,8 +26,8 @@ public final class SimulationRuntimeConfigGroup extends ReflectiveConfigGroup {
     public Map<String, String> getComments() {
         Map<String, String> comments = super.getComments();
         comments.put("teleportBike", "Teleport bikes at 4 m/s with beeline distance factor 1.4, "
-                + "without changing the network. Default: false. --teleport-bike overrides this setting. "
-                + "Incompatible with --dsim-simulate-bikes true; DSim already teleports bikes by default.");
+                + "without changing the network. Default: false. The teleport-bike argument overrides this setting. "
+                + "Incompatible with dsim-simulate-bikes=true; DSim already teleports bikes by default.");
         return comments;
     }
 }
