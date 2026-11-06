@@ -11,7 +11,6 @@ import org.matsim.core.router.*;
 import org.matsim.facilities.Facility;
 import org.matsim.pt.routes.DefaultTransitPassengerRoute;
 import org.matsim.pt.routes.TransitPassengerRoute;
-import org.matsim.pt.transitSchedule.TransitScheduleUtils;
 import org.matsim.pt.transitSchedule.api.*;
 
 import java.util.*;
@@ -72,10 +71,11 @@ final class RustPtRoutingModule implements RoutingModule {
         double radius = snapshot.parameters.getSearchRadius();
         double[] journey = null;
         for (int attempt = 0; attempt < 5; attempt++) {
+            if (attempt > 0) runtime.recordExpansion();
             var access = candidates(snapshot, request.getFromFacility(), radius, true);
             var egress = candidates(snapshot, request.getToFacility(), radius, false);
             journey =
-                    NativePtRouter.route(
+                    runtime.routeNative(
                             ready.handle(),
                             NativePtRouter.millis(request.getDepartureTime()),
                             runtime.settings.maxBoardings,
@@ -130,14 +130,15 @@ final class RustPtRoutingModule implements RoutingModule {
                             nearest + snapshot.parameters.getExtensionRadius());
         }
         // Stable integer order makes ties reproducible regardless of QuadTree traversal order.
-        int[] ids = stops.stream().mapToInt(Integer::intValue).sorted().toArray();
+        int[] ids = new int[stops.size()];
+        int position = 0;
+        for (int id : stops) ids[position++] = id;
+        Arrays.sort(ids);
         int[] pairs = new int[ids.length * 2];
         for (int i = 0; i < ids.length; i++) {
             var stop = snapshot.stops[ids[i]];
             double extra =
-                    access
-                            ? TransitScheduleUtils.getStopAccessTime(stop)
-                            : TransitScheduleUtils.getStopEgressTime(stop);
+                    access ? snapshot.stopAccessSeconds[ids[i]] : snapshot.stopEgressSeconds[ids[i]];
             pairs[2 * i] = ids[i];
             pairs[2 * i + 1] =
                     Math.toIntExact(

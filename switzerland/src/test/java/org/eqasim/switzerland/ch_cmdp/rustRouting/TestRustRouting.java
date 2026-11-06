@@ -31,6 +31,8 @@ public class TestRustRouting {
         var settings = new RustRoutingConfigGroup();
         settings.enabled = true;
         settings.libraryPath = "native/router.dll";
+        settings.networkPartition = true;
+        settings.transferBlocks = true;
         var runtimeSettings =
                 new org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntimeConfigGroup();
         runtimeSettings.setTeleportBike(true);
@@ -46,6 +48,8 @@ public class TestRustRouting {
                                     .SimulationRuntimeConfigGroup());
             var nativeSettings = ConfigUtils.addOrGetModule(restored, RustRoutingConfigGroup.class);
             assertTrue(nativeSettings.enabled);
+            assertTrue(nativeSettings.networkPartition);
+            assertTrue(nativeSettings.transferBlocks);
             assertEquals("native/router.dll", nativeSettings.libraryPath);
             assertTrue(
                     ConfigUtils.addOrGetModule(
@@ -84,6 +88,8 @@ public class TestRustRouting {
         var settings = ConfigUtils.addOrGetModule(config, RustRoutingConfigGroup.class);
         settings.enabled = true;
         settings.libraryPath = System.getProperty("rust.router.test.library", "");
+        settings.networkPartition = true;
+        settings.transferBlocks = true;
         Scenario scenario = ScenarioUtils.createScenario(config);
         var network = scenario.getNetwork();
         var factory = network.getFactory();

@@ -35,6 +35,9 @@
 		<!-- Override for a different checkout location or Cargo installation. -->
 		<rust.router.project>${project.basedir}/../../MultiModalRouter</rust.router.project>
 		<rust.router.library></rust.router.library>
+		<!-- Portable default for the common Windows workstation -> Linux cluster deployment. -->
+		<rust.router.platforms>host,linux-x86_64</rust.router.platforms>
+		<rust.router.nativeDirectory></rust.router.nativeDirectory>
 		<rust.router.version>v0.2.0</rust.router.version>
 		<rust.router.bundle.skip>true</rust.router.bundle.skip>
 		<cargo.executable>cargo</cargo.executable>
@@ -57,8 +60,14 @@
 							<argument>--source=${rust.router.project}</argument>
 							<argument>--library=${rust.router.library}</argument>
 							<argument>--version=${rust.router.version}</argument>
+							<argument>--platforms=${rust.router.platforms}</argument>
+							<argument>--native-directory=${rust.router.nativeDirectory}</argument>
 						</arguments>
-						<systemProperties><systemProperty><key>eqasim.rust.cargo</key><value>${cargo.executable}</value></systemProperty></systemProperties>
+						<systemProperties>
+							<systemProperty><key>eqasim.rust.cargo</key><value>${cargo.executable}</value></systemProperty>
+							<!-- Build-time credentials only; compute nodes use the libraries in the jar. -->
+							<systemProperty><key>eqasim.rust.gitCredentials</key><value>true</value></systemProperty>
+						</systemProperties>
 					</configuration>
 				</execution></executions>
 			</plugin>

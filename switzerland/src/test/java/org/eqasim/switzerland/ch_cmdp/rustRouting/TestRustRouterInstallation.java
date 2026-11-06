@@ -82,6 +82,59 @@ public class TestRustRouterInstallation {
     }
 
     @Test
+    public void portableBundleIncludesLinuxAndDeduplicatesLinuxHost() {
+        var windows = RustRouterInstallation.Platform.of("Windows", "amd64");
+        var linux = RustRouterInstallation.Platform.of("Linux", "amd64");
+        assertEquals(
+                List.of(windows, linux), RustRouterBundler.platforms("host,linux-x86_64", windows));
+        assertEquals(List.of(linux), RustRouterBundler.platforms("host,linux-x86_64", linux));
+        assertEquals(List.of(windows), RustRouterBundler.platforms("host", windows));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> RustRouterBundler.platforms("host,../../invalid", windows));
+        assertThrows(
+                IllegalArgumentException.class, () -> RustRouterBundler.platforms("", windows));
+    }
+
+    @Test
+    public void bundlePreservesBothWindowsAndLinuxAndTheirChecksums() throws Exception {
+        Path output = temporary.newFolder().toPath();
+        Path windows = temporary.newFile().toPath(), linux = temporary.newFile().toPath();
+        Files.write(windows, new byte[] {1, 2});
+        Files.write(linux, new byte[] {3, 4});
+        Path dll =
+                RustRouterBundler.bundle(
+                        output,
+                        windows,
+                        RustRouterInstallation.Platform.named("windows-x86_64"),
+                        "v0.2.0");
+        Path so =
+                RustRouterBundler.bundle(
+                        output,
+                        linux,
+                        RustRouterInstallation.Platform.named("linux-x86_64"),
+                        "v0.2.0");
+        assertArrayEquals(new byte[] {1, 2}, Files.readAllBytes(dll));
+        assertArrayEquals(new byte[] {3, 4}, Files.readAllBytes(so));
+        assertTrue(
+                Files.readString(so.getParent().resolve("build.properties"))
+                        .contains(RustRouterInstallation.sha256(linux)));
+    }
+
+    @Test
+    public void cachedGitCredentialParsingDoesNotRequireOrStoreUsername() {
+        assertEquals(
+                "example-build-password",
+                RustRouterBuildCredentials.password(
+                        "protocol=https\n"
+                            + "host=github.com\n"
+                            + "username=builder\n"
+                            + "password=example-build-password\n"));
+        assertNull(RustRouterBuildCredentials.password("username=builder\n"));
+        assertNull(RustRouterBuildCredentials.password("password=\n"));
+    }
+
+    @Test
     public void buildBundlesNamespacedBinaryAndRemovesOnlyLegacyGeneratedLibraries()
             throws Exception {
         Path output = temporary.newFolder().toPath();

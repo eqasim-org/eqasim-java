@@ -56,6 +56,14 @@ public final class RustRoutingConfigGroup extends ReflectiveConfigGroup {
     @Comment("Maximum journey duration in seconds, including access/egress walking.")
     public double maxDurationSeconds = 172800;
 
+    @Parameter
+    @Comment("Use service-aware nested partition refinement for regional lower bounds.")
+    public boolean networkPartition = true;
+
+    @Parameter
+    @Comment("Experimental cost-aware transfer suffix pruning; uses additional shared memory.")
+    public boolean transferBlocks = false;
+
     public RustRoutingConfigGroup() {
         super(GROUP_NAME);
     }

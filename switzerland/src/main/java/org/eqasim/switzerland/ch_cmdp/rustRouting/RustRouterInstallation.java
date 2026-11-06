@@ -29,6 +29,18 @@ final class RustRouterInstallation {
     private static final long MAX_LIBRARY_BYTES = 64 * 1024 * 1024;
 
     record Platform(String id, String library) {
+        static Platform named(String id) {
+            return switch (id) {
+                case "windows-x86_64" -> of("Windows", "amd64");
+                case "windows-aarch64" -> of("Windows", "aarch64");
+                case "linux-x86_64" -> of("Linux", "amd64");
+                case "linux-aarch64" -> of("Linux", "aarch64");
+                case "macos-x86_64" -> of("Mac OS X", "amd64");
+                case "macos-aarch64" -> of("Mac OS X", "aarch64");
+                default -> throw new IllegalArgumentException("Unsupported native platform: " + id);
+            };
+        }
+
         static Platform current() {
             return of(System.getProperty("os.name"), System.getProperty("os.arch"));
         }
@@ -88,8 +100,17 @@ final class RustRouterInstallation {
         }
         if (!settings.autoInstall)
             throw new IOException(
-                    "No Rust library supplied/bundled; set swissRustRouting.libraryPath or enable"
-                            + " autoInstall");
+                    "No Rust library for "
+                            + platform.id()
+                            + ". Bundled platforms: "
+                            + bundledPlatforms()
+                            + ". Rebuild the standalone jar with this platform included or set"
+                            + " swissRustRouting.libraryPath.");
+        LOG.info(
+                "No bundled native library for {}; bundled platforms: {}. Trying installation"
+                    + " cache/release.",
+                platform.id(),
+                bundledPlatforms());
         Path root =
                 settings.installationDirectory.isBlank()
                         ? Path.of(System.getProperty("user.home"), ".eqasim", "rust-router")
@@ -105,6 +126,26 @@ final class RustRouterInstallation {
         return resource != null
                 ? resource
                 : NativePtRouter.class.getResourceAsStream("/native/" + platform.library());
+    }
+
+    static List<String> bundledPlatforms() {
+        return List.of(
+                        "windows-x86_64",
+                        "windows-aarch64",
+                        "linux-x86_64",
+                        "linux-aarch64",
+                        "macos-x86_64",
+                        "macos-aarch64")
+                .stream()
+                .filter(
+                        id ->
+                                NativePtRouter.class.getResource(
+                                                "/native/"
+                                                        + id
+                                                        + "/"
+                                                        + Platform.named(id).library())
+                                        != null)
+                .toList();
     }
 
     /**
@@ -204,8 +245,15 @@ final class RustRouterInstallation {
      */
     private static void downloadRelease(
             String version, Platform platform, Path directory, Path library) throws Exception {
-        String assetName =
-                "MultiModalMatsimRouter-" + version.substring(1) + "-" + platform.id() + ".zip";
+        var candidates =
+                List.of(
+                        "mmrouter-native-" + version.substring(1) + "-" + platform.id() + ".zip",
+                        "MultiModalMatsimRouter-"
+                                + version.substring(1)
+                                + "-"
+                                + platform.id()
+                                + ".zip");
+        String token = RustRouterBuildCredentials.resolve();
         var client =
                 HttpClient.newBuilder()
                         .connectTimeout(Duration.ofSeconds(20))
@@ -216,16 +264,20 @@ final class RustRouterInstallation {
                         "https://api.github.com/repos/Dib-AEK/MultiModalMatsimRouter/releases/tags/"
                                 + version);
         byte[] body;
-        try (var input = request(client, api, "application/vnd.github+json")) {
+        try (var input = request(client, api, "application/vnd.github+json", token)) {
             body = input.readNBytes(2 * 1024 * 1024 + 1);
         }
         if (body.length > 2 * 1024 * 1024)
             throw new IOException("Oversized GitHub release metadata");
         JsonNode assets = new ObjectMapper().readTree(body).path("assets");
         JsonNode asset = null;
-        for (var candidate : assets)
-            if (assetName.equals(candidate.path("name").asText())) asset = candidate;
+        for (String name : candidates) {
+            for (var candidate : assets)
+                if (name.equals(candidate.path("name").asText())) asset = candidate;
+            if (asset != null) break;
+        }
         if (asset == null) throw new IOException("No " + platform.id() + " binary in " + version);
+        String assetName = asset.path("name").asText();
         String digest = asset.path("digest").asText();
         if (!digest.matches("sha256:[a-f0-9]{64}"))
             throw new IOException("Release asset has no SHA-256 digest");
@@ -236,7 +288,8 @@ final class RustRouterInstallation {
                             request(
                                     client,
                                     URI.create(asset.path("url").asText()),
-                                    "application/octet-stream");
+                                    "application/octet-stream",
+                                    token);
                     var output = Files.newOutputStream(archive)) {
                 long copied =
                         input.transferTo(
@@ -273,7 +326,8 @@ final class RustRouterInstallation {
     }
 
     /** Redirects may carry signed URLs; never forward a GitHub token to an asset host. */
-    private static java.io.InputStream request(HttpClient client, URI uri, String accept)
+    private static java.io.InputStream request(
+            HttpClient client, URI uri, String accept, String token)
             throws IOException, InterruptedException {
         for (int redirects = 0; redirects < 6; redirects++) {
             if (!uri.getScheme().equals("https"))
@@ -283,8 +337,6 @@ final class RustRouterInstallation {
                             .timeout(Duration.ofMinutes(3))
                             .header("Accept", accept)
                             .header("User-Agent", "eqasim-rust-router");
-            String token = System.getenv("GITHUB_TOKEN");
-            if (token == null || token.isBlank()) token = System.getenv("GH_TOKEN");
             if ("api.github.com".equals(uri.getHost()) && token != null && !token.isBlank())
                 builder.header("Authorization", "Bearer " + token);
             var response =

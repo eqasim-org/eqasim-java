@@ -15,13 +15,19 @@ final class NativePtRouter {
             if (protocolVersion() != 1)
                 throw new IllegalStateException(
                         "Unsupported Rust router protocol; rebuild the jar and native library"
-                            + " together");
+                                + " together");
             loaded = true;
         } catch (Exception | UnsatisfiedLinkError e) {
             throw new IllegalStateException(
-                    "Cannot initialize Rust PT routing. Supply swissRustRouting.libraryPath, bundle"
-                        + " a native library, or enable autoInstall. Private GitHub downloads need"
-                        + " GITHUB_TOKEN/GH_TOKEN; source builds need Git/Cargo and a linker.",
+                    "Cannot initialize Rust PT routing for "
+                            + System.getProperty("os.name")
+                            + "/"
+                            + System.getProperty("os.arch")
+                            + ". Jar includes: "
+                            + RustRouterInstallation.bundledPlatforms()
+                            + ". Rebuild standalone with this platform included, or set"
+                            + " swissRustRouting.libraryPath to its compiled library. A bundled"
+                            + " matching library needs no Git/network on the compute node.",
                     e);
         }
     }

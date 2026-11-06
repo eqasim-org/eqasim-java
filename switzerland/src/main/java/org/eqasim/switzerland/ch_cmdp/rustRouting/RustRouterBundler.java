@@ -1,4 +1,5 @@
-// Acquires and embeds the host's Rust JNI library during the normal standalone Maven build.
+// Embeds configured platform libraries so the standalone jar runs on workstation and cluster
+// without setup.
 package org.eqasim.switzerland.ch_cmdp.rustRouting;
 
 import org.matsim.core.config.ConfigUtils;
@@ -18,34 +19,88 @@ public final class RustRouterBundler {
             if (!argument.startsWith("--") || separator < 3)
                 throw new IllegalArgumentException("Expected --name=value bundler arguments");
             String key = argument.substring(2, separator);
-            if (!Set.of("output", "source", "library", "version").contains(key)
+            if (!Set.of("output", "source", "library", "version", "platforms", "native-directory")
+                            .contains(key)
                     || options.put(key, argument.substring(separator + 1)) != null)
                 throw new IllegalArgumentException("Unknown or duplicate bundler option: " + key);
         }
         if (!options.containsKey("output") || options.get("output").isBlank())
             throw new IllegalArgumentException("Missing native resource output directory");
         Path output = Path.of(options.get("output")).toAbsolutePath();
-        var platform = RustRouterInstallation.Platform.current();
+        var host = RustRouterInstallation.Platform.current();
         String version = options.getOrDefault("version", "v0.2.0");
+        var platforms = platforms(options.getOrDefault("platforms", "host,linux-x86_64"), host);
+        for (var platform : platforms) {
+            Path library = acquire(options, version, platform, host);
+            Path bundled = bundle(output, library, platform, version);
+            System.out.println("Bundled Rust PT router for " + platform.id() + ": " + bundled);
+        }
+        Files.writeString(
+                output.resolve("native/platforms.properties"),
+                "# Native platforms embedded by the standalone build.\nplatforms="
+                        + String.join(
+                                ",",
+                                platforms.stream()
+                                        .map(RustRouterInstallation.Platform::id)
+                                        .toList())
+                        + "\n");
+    }
+
+    /** Resolve/deduplicate explicit platforms; foreign targets must use precompiled libraries. */
+    static List<RustRouterInstallation.Platform> platforms(
+            String configured, RustRouterInstallation.Platform host) {
+        var result = new LinkedHashSet<RustRouterInstallation.Platform>();
+        for (String item : configured.split(",", -1)) {
+            String name = item.trim();
+            result.add(name.equals("host") ? host : RustRouterInstallation.Platform.named(name));
+        }
+        return List.copyOf(result);
+    }
+
+    private static Path acquire(
+            Map<String, String> options,
+            String version,
+            RustRouterInstallation.Platform platform,
+            RustRouterInstallation.Platform host)
+            throws Exception {
         Path library;
+        String directory = options.getOrDefault("native-directory", "");
+        if (!directory.isBlank()) {
+            Path candidate = Path.of(directory).resolve(platform.id()).resolve(platform.library());
+            if (Files.isRegularFile(candidate)) return candidate.toAbsolutePath();
+        }
         String explicit = options.getOrDefault("library", "");
-        if (!explicit.isBlank()) {
+        if (platform.equals(host) && !explicit.isBlank()) {
             library = Path.of(explicit).toAbsolutePath();
         } else {
             var settings = new RustRoutingConfigGroup();
             settings.version = version;
+            // A normal Cargo build produces the host binary, never a foreign-platform binary.
+            settings.allowSourceBuild = platform.equals(host);
             String source = options.getOrDefault("source", "");
-            if (!source.isBlank() && Files.isRegularFile(Path.of(source).resolve("Cargo.toml")))
+            if (platform.equals(host)
+                    && !source.isBlank()
+                    && Files.isRegularFile(Path.of(source).resolve("Cargo.toml")))
                 settings.sourceDirectory = Path.of(source).toAbsolutePath().toString();
-            library =
-                    RustRouterInstallation.install(
-                            ConfigUtils.createConfig(),
-                            settings,
-                            platform,
-                            Path.of(System.getProperty("user.home"), ".eqasim", "rust-router"));
+            try {
+                library =
+                        RustRouterInstallation.install(
+                                ConfigUtils.createConfig(),
+                                settings,
+                                platform,
+                                Path.of(System.getProperty("user.home"), ".eqasim", "rust-router"));
+            } catch (Exception failure) {
+                throw new IOException(
+                        "Cannot bundle Rust router for "
+                                + platform.id()
+                                + ". Supply rust.router.nativeDirectory/<platform>/<library> or"
+                                + " authenticate GitHub on the build machine. The build will not"
+                                + " omit a requested platform. For a deliberately host-only jar set"
+                                + " -Drust.router.platforms=host.",
+                        failure);
+            }
         }
-        Path bundled = bundle(output, library, platform, version);
-        System.out.println("Bundled Rust PT router for " + platform.id() + ": " + bundled);
+        return library;
     }
 
     /** Namespaced resources avoid selecting the wrong architecture when multiple builds coexist. */

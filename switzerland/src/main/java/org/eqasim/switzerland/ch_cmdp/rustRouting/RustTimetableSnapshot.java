@@ -25,6 +25,8 @@ final class RustTimetableSnapshot {
     record Trip(Profile profile, double departure) {}
 
     final TransitStopFacility[] stops;
+    final double[] stopAccessSeconds;
+    final double[] stopEgressSeconds;
     final List<Trip> trips = new ArrayList<>();
     final Map<Id<TransitStopFacility>, Integer> indices = new HashMap<>();
     final QuadTree<Integer> spatial;
@@ -51,6 +53,13 @@ final class RustTimetableSnapshot {
                     for (var stop : route.getStops())
                         served.put(stop.getStopFacility().getId(), stop.getStopFacility());
         stops = served.values().toArray(TransitStopFacility[]::new);
+        // The native backend requires a static schedule; share these values across routing workers.
+        stopAccessSeconds = new double[stops.length];
+        stopEgressSeconds = new double[stops.length];
+        for (int i = 0; i < stops.length; i++) {
+            stopAccessSeconds[i] = org.matsim.pt.transitSchedule.TransitScheduleUtils.getStopAccessTime(stops[i]);
+            stopEgressSeconds[i] = org.matsim.pt.transitSchedule.TransitScheduleUtils.getStopEgressTime(stops[i]);
+        }
         if (stops.length == 0)
             throw new IllegalArgumentException("Rust PT routing needs a nonempty served schedule");
         double minX = Double.POSITIVE_INFINITY, minY = minX, maxX = -minX, maxY = -minX;
@@ -278,6 +287,11 @@ final class RustTimetableSnapshot {
                                                 "cost",
                                                 p.transferPenalty))
                         .toList());
+        var search = ConfigUtils.addOrGetModule(scenario.getConfig(), RustRoutingConfigGroup.class);
+        // Omit default options to retain compatibility with existing protocol-1 libraries.
+        if (!search.networkPartition || search.transferBlocks)
+            costs.put("_search", Map.of("network_partition", search.networkPartition,
+                    "transfer_blocks", search.transferBlocks));
         return new ObjectMapper().writeValueAsString(costs);
     }
 }
