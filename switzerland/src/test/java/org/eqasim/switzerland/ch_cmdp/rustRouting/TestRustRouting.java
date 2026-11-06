@@ -33,6 +33,11 @@ public class TestRustRouting {
         settings.libraryPath = "native/router.dll";
         settings.networkPartition = true;
         settings.transferBlocks = true;
+        settings.localBoundSettlements = 3;
+        settings.coordinateWorkBudget = 1234;
+        settings.qualityWaitSeconds = 600;
+        settings.qualityJourneySeconds = 7200;
+        settings.qualityRadiusMeters = 1500;
         var runtimeSettings =
                 new org.eqasim.switzerland.ch_cmdp.runtime.SimulationRuntimeConfigGroup();
         runtimeSettings.setTeleportBike(true);
@@ -50,6 +55,11 @@ public class TestRustRouting {
             assertTrue(nativeSettings.enabled);
             assertTrue(nativeSettings.networkPartition);
             assertTrue(nativeSettings.transferBlocks);
+            assertEquals(3,nativeSettings.localBoundSettlements);
+            assertEquals(1234, nativeSettings.coordinateWorkBudget);
+            assertEquals(600, nativeSettings.qualityWaitSeconds, 0);
+            assertEquals(7200, nativeSettings.qualityJourneySeconds, 0);
+            assertEquals(1500, nativeSettings.qualityRadiusMeters, 0);
             assertEquals("native/router.dll", nativeSettings.libraryPath);
             assertTrue(
                     ConfigUtils.addOrGetModule(
@@ -75,7 +85,7 @@ public class TestRustRouting {
                         new SwissRailRaptorConfigGroup(),
                         new EqasimRaptorConfigGroup());
         config.transit().setUseTransit(true);
-        config.global().setNumberOfThreads(12);
+        config.global().setNumberOfThreads(8);
         config.transitRouter().setSearchRadius(100);
         config.transitRouter().setExtensionRadius(100);
         config.transitRouter().setMaxBeelineWalkConnectionDistance(300);
@@ -90,6 +100,7 @@ public class TestRustRouting {
         settings.libraryPath = System.getProperty("rust.router.test.library", "");
         settings.networkPartition = true;
         settings.transferBlocks = true;
+        settings.localBoundSettlements = 3;
         Scenario scenario = ScenarioUtils.createScenario(config);
         var network = scenario.getNetwork();
         var factory = network.getFactory();
@@ -154,6 +165,10 @@ public class TestRustRouting {
     }
 
     private static RoutingRequest request(double departure) {
+        return request(departure, 20000);
+    }
+
+    private static RoutingRequest request(double departure, double destinationX) {
         // Request facilities are independent of the schedule and can be used by parallel workers.
         var factory = FacilitiesUtils.createActivityFacilities().getFactory();
         var origin =
@@ -164,7 +179,7 @@ public class TestRustRouting {
         var destination =
                 factory.createActivityFacility(
                         Id.create("to", org.matsim.facilities.ActivityFacility.class),
-                        new Coord(20000, 0),
+                        new Coord(destinationX, 0),
                         Id.createLinkId("l2"));
         return DefaultRoutingRequest.of(
                 origin,
@@ -172,6 +187,31 @@ public class TestRustRouting {
                 departure,
                 PopulationUtils.getFactory().createPerson(Id.createPersonId("person")),
                 null);
+    }
+
+    @Test
+    public void limitedCoordinateSearchMarksFeasibleLegsAndResolvesMissingWitnessExactly() {
+        requireNative();
+        var scenario = scenario();
+        var settings = ConfigUtils.addOrGetModule(scenario.getConfig(), RustRoutingConfigGroup.class);
+        settings.coordinateWorkBudget = 1;
+        settings.qualityWaitSeconds = 0;
+        settings.qualityJourneySeconds = 0;
+        settings.qualityRadiusMeters = 0;
+        try (var runtime = new RustRoutingRuntime(scenario, settings)) {
+            runtime.prepared();
+            assertTrue(NativePtRouter.hasCoordinatePolicy);
+            var router = new RustPtRoutingModule(runtime, null);
+            var direct = router.transitLegs(request(90, 10000));
+            assertNotNull(direct);
+            assertTrue(direct.stream().anyMatch(leg -> Boolean.TRUE.equals(
+                    leg.getAttributes().getAttribute("rustRoutingBudgetLimited"))));
+            // One work unit cannot reach the second boarding: resolve rather than return no PT.
+            var connecting = router.transitLegs(request(90));
+            assertNotNull(connecting);
+            assertFalse(connecting.stream().anyMatch(leg -> Boolean.TRUE.equals(
+                    leg.getAttributes().getAttribute("rustRoutingBudgetLimited"))));
+        }
     }
 
     @Test
@@ -215,7 +255,7 @@ public class TestRustRouting {
                     expectedCost,
                     (Double) rides.getFirst().getAttributes().getAttribute("totalRouteCost"),
                     1e-9);
-            var pool = Executors.newFixedThreadPool(12);
+            var pool = Executors.newFixedThreadPool(8);
             try {
                 List<Callable<List<? extends PlanElement>>> tasks = new ArrayList<>();
                 for (int i = 0; i < 120; i++) tasks.add(() -> router.calcRoute(request(90)));
@@ -258,6 +298,57 @@ public class TestRustRouting {
                                     10000000,
                                     new int[] {0, 0},
                                     new int[] {2, 0}));
+        }
+    }
+
+    @Test
+    public void coordinateBoundaryMatchesExplicitEndpointsAndBoundsFailedSearchExpansion() {
+        requireNative();
+        var scenario = scenario();
+        var settings = ConfigUtils.addOrGetModule(scenario.getConfig(), RustRoutingConfigGroup.class);
+        try (var runtime = new RustRoutingRuntime(scenario, settings)) {
+            var ready = runtime.prepared();
+            double[] expected = NativePtRouter.route(ready.handle(), 90000, settings.maxBoardings,
+                    NativePtRouter.millis(settings.maxDurationSeconds), new int[] {0, 0}, new int[] {2, 0});
+            double[] actual = NativePtRouter.routeCoordinates(ready.handle(), 90000, settings.maxBoardings,
+                    NativePtRouter.millis(settings.maxDurationSeconds), 0, 0, 20000, 0);
+            assertEquals(1, actual[0], 0);
+            assertArrayEquals(expected, Arrays.copyOfRange(actual, 1, actual.length), 0);
+            double[] missed = NativePtRouter.routeCoordinates(ready.handle(), 2000000, settings.maxBoardings,
+                    NativePtRouter.millis(settings.maxDurationSeconds), 0, 0, 20000, 0);
+            assertEquals(1, missed.length);
+            assertEquals(5, missed[0], 0);
+        }
+    }
+
+    @Test
+    public void coordinatesUseEffectiveRaptorWalkingSpeedAndStopAccessEgressTimes() throws Exception {
+        requireNative();
+        var scenario = scenario();
+        // TransitRouterConfig prefers transit_walk, then non_network_walk, then walk.
+        scenario.getConfig().routing().getOrCreateModeRoutingParams("walk").setTeleportedModeSpeed(0.7);
+        var walk = scenario.getConfig().routing().getOrCreateModeRoutingParams("transit_walk");
+        walk.setTeleportedModeSpeed(2.6);
+        walk.setBeelineDistanceFactor(1.3);
+        var stops = scenario.getTransitSchedule().getFacilities();
+        stops.get(Id.create("s0", TransitStopFacility.class)).getAttributes().putAttribute("accessTime", 7.25);
+        stops.get(Id.create("s2", TransitStopFacility.class)).getAttributes().putAttribute("egressTime", 3.5);
+        var settings = ConfigUtils.addOrGetModule(scenario.getConfig(), RustRoutingConfigGroup.class);
+        try (var runtime = new RustRoutingRuntime(scenario, settings)) {
+            var ready = runtime.prepared();
+            assertTrue(NativePtRouter.hasCoordinates);
+            assertEquals(2.0, ready.snapshot().parameters.getBeelineWalkSpeed(), 1e-12);
+            var exported = new com.fasterxml.jackson.databind.ObjectMapper().readTree(ready.snapshot().costsJson());
+            assertEquals(ready.snapshot().parameters.getBeelineWalkSpeed(),
+                    exported.get("_coordinates").get("speed").asDouble(), 0);
+            double[] expected = NativePtRouter.route(ready.handle(), 80000, settings.maxBoardings,
+                    NativePtRouter.millis(settings.maxDurationSeconds), new int[] {0, 9250}, new int[] {2, 6500});
+            double[] actual = NativePtRouter.routeCoordinates(ready.handle(), 80000, settings.maxBoardings,
+                    NativePtRouter.millis(settings.maxDurationSeconds), 3, 0, 20005, 0);
+            assertTrue(expected.length > 0);
+            assertArrayEquals(expected, Arrays.copyOfRange(actual, 1, actual.length), 0);
+            assertEquals(9250, actual[3], 0);
+            assertEquals(6500, actual[5], 0);
         }
     }
 
@@ -327,6 +418,10 @@ public class TestRustRouting {
                 IllegalArgumentException.class,
                 () -> RustRoutingModule.validate(scenario.getConfig(), settings));
         settings.maxBoardings = 64;
+        settings.qualityWaitSeconds = Double.NaN;
+        assertThrows(IllegalArgumentException.class,
+                () -> RustRoutingModule.validate(scenario.getConfig(), settings));
+        settings.qualityWaitSeconds = 1800;
         ConfigUtils.addOrGetModule(scenario.getConfig(), SwissRailRaptorConfigGroup.class)
                 .setUseRangeQuery(true);
         assertThrows(
@@ -372,6 +467,10 @@ public class TestRustRouting {
         var settings = ConfigUtils.addOrGetModule(config, RustRoutingConfigGroup.class);
         settings.enabled = true;
         settings.libraryPath = System.getProperty("rust.router.test.library");
+        // This historical reference exercises exact legacy candidate selection.
+        settings.coordinateWorkBudget = 0;
+        settings.qualityWaitSeconds = 0;
+        settings.qualityJourneySeconds = 0;
         var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
         var requests = java.nio.file.Files.readAllLines(base.resolve("requests.jsonl"));
         var reference = java.nio.file.Files.readAllLines(base.resolve("rust_results.jsonl"));
@@ -379,7 +478,7 @@ public class TestRustRouting {
         try (var runtime = new RustRoutingRuntime(scenario, settings)) {
             runtime.prepared();
             var router = new RustPtRoutingModule(runtime, null);
-            var pool = Executors.newFixedThreadPool(12);
+            var pool = Executors.newFixedThreadPool(8);
             try {
                 List<Callable<Void>> tasks = new ArrayList<>();
                 for (int i = 0; i < requests.size(); i++) {

@@ -32,6 +32,8 @@ public final class RustRoutingRuntime
     private final LongAdder nativeNanos = new LongAdder();
     private final LongAdder noPaths = new LongAdder();
     private final LongAdder expansions = new LongAdder();
+    private final LongAdder budgetLimited = new LongAdder();
+    record CoordinateResult(double[] data, boolean truncated) {}
 
     /** Start after scenario/network adaptations; the worker overlaps controller construction. */
     public RustRoutingRuntime(Scenario scenario, RustRoutingConfigGroup settings) {
@@ -66,6 +68,10 @@ public final class RustRoutingRuntime
                                         snapshot.stops.length,
                                         snapshot.trips.size(),
                                         (System.nanoTime() - start) / 1e9);
+                                LOG.info("Rust coordinate routing: {}", NativePtRouter.hasCoordinates ? "native" : "legacy Java endpoints");
+                                LOG.info("Rust coordinate heuristics supported: {}; budget={}, wait trigger={} s, journey trigger={} s, quality radius={} m",
+                                        NativePtRouter.hasCoordinatePolicy, settings.coordinateWorkBudget,
+                                        settings.qualityWaitSeconds, settings.qualityJourneySeconds, settings.qualityRadiusMeters);
                                 return new Prepared(handle, snapshot);
                             } catch (Exception e) {
                                 throw new CompletionException(
@@ -106,6 +112,36 @@ public final class RustRoutingRuntime
         }
     }
 
+    /** Coordinate searches and retries run in Rust on the calling MATSim worker. */
+    double[] routeCoordinates(long handle, org.matsim.core.router.RoutingRequest request) {
+        return routeCoordinatesResult(handle, request).data();
+    }
+    CoordinateResult routeCoordinatesResult(long handle, org.matsim.core.router.RoutingRequest request) {
+        if (!NativePtRouter.hasCoordinates)
+            return new CoordinateResult(LegacyRustEndpoints.route(prepared().snapshot(), this, handle, request), false);
+        var from = request.getFromFacility().getCoord();
+        var to = request.getToFacility().getCoord();
+        long started = System.nanoTime();
+        try {
+            boolean detailed = NativePtRouter.hasCoordinatePolicy;
+            double[] data = detailed ? NativePtRouter.routeCoordinatesDetailed(handle,
+                    NativePtRouter.millis(request.getDepartureTime()), settings.maxBoardings,
+                    NativePtRouter.millis(settings.maxDurationSeconds), from.getX(), from.getY(), to.getX(), to.getY())
+                    : NativePtRouter.routeCoordinates(handle,
+                    NativePtRouter.millis(request.getDepartureTime()), settings.maxBoardings,
+                    NativePtRouter.millis(settings.maxDurationSeconds), from.getX(), from.getY(), to.getX(), to.getY());
+            int header = detailed ? 2 : 1;
+            boolean limited = detailed && data[1] != 0;
+            expansions.add((long) data[0] - 1);
+            if (limited) budgetLimited.increment();
+            if (data.length == header) noPaths.increment();
+            return new CoordinateResult(java.util.Arrays.copyOfRange(data, header, data.length), limited);
+        } finally {
+            nativeQueries.increment();
+            nativeNanos.add(System.nanoTime() - started);
+        }
+    }
+
     void recordExpansion() { expansions.increment(); }
 
     @Override
@@ -113,9 +149,9 @@ public final class RustRoutingRuntime
         long queries = nativeQueries.sumThenReset();
         long nanos = nativeNanos.sumThenReset();
         LOG.info("Rust PT iteration {}: {} native queries, {} empty results, {} expanded searches; "
-                        + "mean native call {} ms, summed parallel worker time {} s",
+                        + "mean native call {} ms, summed parallel worker time {} s, budget-limited results {}",
                 event.getIteration(), queries, noPaths.sumThenReset(), expansions.sumThenReset(),
-                queries == 0 ? 0.0 : nanos / (queries * 1e6), nanos / 1e9);
+                queries == 0 ? 0.0 : nanos / (queries * 1e6), nanos / 1e9, budgetLimited.sumThenReset());
     }
 
     @Override

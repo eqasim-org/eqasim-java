@@ -5,6 +5,8 @@ import org.matsim.core.config.Config;
 
 final class NativePtRouter {
     private static boolean loaded;
+    static boolean hasCoordinates;
+    static boolean hasCoordinatePolicy;
 
     private NativePtRouter() {}
 
@@ -16,6 +18,10 @@ final class NativePtRouter {
                 throw new IllegalStateException(
                         "Unsupported Rust router protocol; rebuild the jar and native library"
                                 + " together");
+            try { hasCoordinates = coordinateProtocolVersion() == 1; }
+            catch (UnsatisfiedLinkError olderRelease) { hasCoordinates = false; }
+            try { hasCoordinatePolicy = coordinatePolicyVersion() == 1; }
+            catch (UnsatisfiedLinkError olderRelease) { hasCoordinatePolicy = false; }
             loaded = true;
         } catch (Exception | UnsatisfiedLinkError e) {
             throw new IllegalStateException(
@@ -47,6 +53,17 @@ final class NativePtRouter {
             long maxDurationMillis,
             int[] accessStopDurationPairs,
             int[] egressStopDurationPairs);
+
+    static native int coordinateProtocolVersion();
+
+    // Header: native attempt count, followed by the existing endpoint/leg payload.
+    static native double[] routeCoordinates(long handle, long departure, int boardings,
+            long duration, double originX, double originY, double destinationX, double destinationY);
+
+    static native int coordinatePolicyVersion();
+    // Header: attempts, selected-search-truncated flag, then the original route payload.
+    static native double[] routeCoordinatesDetailed(long handle, long departure, int boardings,
+            long duration, double originX, double originY, double destinationX, double destinationY);
 
     static native void close(long handle);
 

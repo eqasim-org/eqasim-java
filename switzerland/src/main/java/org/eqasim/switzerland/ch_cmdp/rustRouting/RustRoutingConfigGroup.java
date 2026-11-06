@@ -64,6 +64,23 @@ public final class RustRoutingConfigGroup extends ReflectiveConfigGroup {
     @Comment("Experimental cost-aware transfer suffix pruning; uses additional shared memory.")
     public boolean transferBlocks = false;
 
+    @Parameter
+    @Comment("Maximum stops settled while preparing query-local lower bounds; 0 is unlimited. Does not limit the route search.")
+    public int localBoundSettlements = 1024;
+
+    @Parameter
+    @Comment("Heuristic connection/transfer work budget per coordinate candidate search; 0 is exact. A feasible best-so-far route may be returned and marked rustRoutingBudgetLimited.")
+    public int coordinateWorkBudget = 2000000;
+    @Parameter
+    @Comment("Expand found journeys with a pre-departure gap above this many seconds; 0 disables this trigger.")
+    public double qualityWaitSeconds = 1800;
+    @Parameter
+    @Comment("Expand found journeys longer than this many seconds; 0 disables this trigger.")
+    public double qualityJourneySeconds = 10800;
+    @Parameter
+    @Comment("Maximum radius in metres for quality-triggered expansion; existing no-path retries remain supported.")
+    public double qualityRadiusMeters = 2000;
+
     public RustRoutingConfigGroup() {
         super(GROUP_NAME);
     }

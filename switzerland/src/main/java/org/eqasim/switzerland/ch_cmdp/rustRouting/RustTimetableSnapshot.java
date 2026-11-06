@@ -288,10 +288,24 @@ final class RustTimetableSnapshot {
                                                 p.transferPenalty))
                         .toList());
         var search = ConfigUtils.addOrGetModule(scenario.getConfig(), RustRoutingConfigGroup.class);
-        // Omit default options to retain compatibility with existing protocol-1 libraries.
-        if (!search.networkPartition || search.transferBlocks)
-            costs.put("_search", Map.of("network_partition", search.networkPartition,
-                    "transfer_blocks", search.transferBlocks));
+        // Omit default options to retain compatibility with existing native libraries.
+        if (!search.networkPartition || search.transferBlocks || search.localBoundSettlements != 1024) {
+            Map<String,Object> options = new LinkedHashMap<>();
+            options.put("network_partition",search.networkPartition);
+            options.put("transfer_blocks",search.transferBlocks);
+            if (search.localBoundSettlements != 1024)
+                options.put("local_bound_settlements",search.localBoundSettlements);
+            costs.put("_search",options);
+        }
+        if (NativePtRouter.hasCoordinates) costs.put("_coordinates", Map.of("radius", parameters.getSearchRadius(),
+                "extension", parameters.getExtensionRadius(), "speed", parameters.getBeelineWalkSpeed(),
+                "direct_factor", parameters.getDirectWalkFactor(),
+                "walk_per_second", -parameters.getMarginalUtilityOfTravelTime_utl_s("walk"),
+                "access", stopAccessSeconds, "egress", stopEgressSeconds,
+                "policy", Map.of("work_budget", search.coordinateWorkBudget,
+                        "quality_wait_seconds", search.qualityWaitSeconds,
+                        "quality_journey_seconds", search.qualityJourneySeconds,
+                        "quality_radius_m", search.qualityRadiusMeters)));
         return new ObjectMapper().writeValueAsString(costs);
     }
 }

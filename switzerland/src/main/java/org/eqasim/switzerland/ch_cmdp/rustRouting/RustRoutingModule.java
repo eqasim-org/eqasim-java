@@ -71,12 +71,17 @@ public final class RustRoutingModule extends AbstractModule {
                     "Rust PT routing supports static single-query scheduled PT with teleported"
                         + " walking; capacity constraints, range/intermodal queries, passenger mode"
                         + " mappings and time-variant/network walking are unsupported");
-        if (settings.maxBoardings < 1
+        if (settings.coordinateWorkBudget < 0 || !Double.isFinite(settings.qualityWaitSeconds)
+                || settings.qualityWaitSeconds < 0 || !Double.isFinite(settings.qualityJourneySeconds)
+                || settings.qualityJourneySeconds < 0 || !Double.isFinite(settings.qualityRadiusMeters)
+                || settings.qualityRadiusMeters < 0)
+            throw new IllegalArgumentException("Invalid Rust coordinate work/quality policy");
+        if (settings.localBoundSettlements < 0 || settings.maxBoardings < 1
                 || settings.maxBoardings > 64
                 || !Double.isFinite(settings.maxDurationSeconds)
                 || settings.maxDurationSeconds <= 0)
             throw new IllegalArgumentException(
-                    "Invalid Rust routing maxBoardings/maxDurationSeconds");
+                    "Invalid Rust routing maxBoardings/maxDurationSeconds/localBoundSettlements");
         NativePtRouter.millis(settings.maxDurationSeconds);
         var walk = ch.sbb.matsim.routing.pt.raptor.RaptorUtils.createStaticConfig(config);
         if (!Double.isFinite(walk.getBeelineWalkSpeed()) || walk.getBeelineWalkSpeed() <= 0)

@@ -18,6 +18,84 @@ public class TestRustRouterInstallation {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
+    public void latestRevisionRefreshesAndNeverFallsBackToReleaseCache() throws Exception {
+        Path root = temporary.newFolder().toPath();
+        String[] revision = {"a".repeat(40)};
+        List<List<String>> commands = new ArrayList<>();
+        RustRouterInstallation.ProcessRunner runner = (command, cwd, log) -> {
+            commands.add(command);
+            if (command.contains("ls-remote"))
+                Files.writeString(log, revision[0] + "\trefs/heads/main\n");
+            if (command.contains("checkout")) Files.writeString(cwd.resolve("Cargo.toml"), "fixture");
+        };
+        var first = LatestRustRouterBuild.resolve(root, "", runner);
+        assertEquals(revision[0], first.revision());
+        var again = LatestRustRouterBuild.resolve(root, "", runner);
+        assertEquals(first.directory(), again.directory());
+        assertEquals(1, commands.stream().filter(c -> c.contains("fetch")).count());
+        revision[0] = "b".repeat(40);
+        var updated = LatestRustRouterBuild.resolve(root, "", runner);
+        assertNotEquals(first.directory(), updated.directory());
+        assertTrue(commands.stream().anyMatch(c -> c.contains("fetch") && c.contains(revision[0])));
+        assertThrows(java.io.IOException.class, () -> LatestRustRouterBuild.resolve(root, "",
+                (command, cwd, log) -> { throw new java.io.IOException("offline"); }));
+        assertThrows(java.io.IOException.class, () -> LatestRustRouterBuild.parseRevision("v0.2.0"));
+    }
+
+    @Test
+    public void latestCacheIsValidatedAndLocalSourcesAlwaysRebuild() throws Exception {
+        Path root = temporary.newFolder().toPath();
+        Files.writeString(root.resolve("Cargo.toml"), "fixture");
+        var platform = RustRouterInstallation.Platform.named("linux-x86_64");
+        var source = new LatestRustRouterBuild.Source(root, root.resolve("cache"), "a".repeat(40), true);
+        int[] builds = {0};
+        RustRouterInstallation.ProcessRunner runner = (command, cwd, log) -> {
+            builds[0]++;
+            Path built = cwd.resolve("build/release").resolve(platform.library());
+            Files.createDirectories(built.getParent());
+            Files.writeString(built, "compiled");
+        };
+        Path library = LatestRustRouterBuild.build(source, platform, platform, runner);
+        LatestRustRouterBuild.build(source, platform, platform, runner);
+        assertEquals(1, builds[0]);
+        Files.writeString(library, "corrupt");
+        LatestRustRouterBuild.build(source, platform, platform, runner);
+        assertEquals(2, builds[0]);
+        var local = new LatestRustRouterBuild.Source(root, source.cache(), "local-working-tree", false);
+        LatestRustRouterBuild.build(local, platform, platform, runner);
+        LatestRustRouterBuild.build(local, platform, platform, runner);
+        assertEquals(4, builds[0]);
+    }
+
+    @Test
+    public void windowsCrossBuildUsesSameSourceAndPortableLinuxTarget() throws Exception {
+        Path root = temporary.newFolder().toPath();
+        var source = new LatestRustRouterBuild.Source(root, root.resolve("cache/revision"), "a".repeat(40), true);
+        List<List<String>> commands = new ArrayList<>();
+        Path library = LatestRustRouterBuild.build(source,
+                RustRouterInstallation.Platform.named("linux-x86_64"),
+                RustRouterInstallation.Platform.named("windows-x86_64"),
+                (command, cwd, log) -> {
+                    commands.add(command);
+                    if (command.contains("zigbuild")) {
+                        assertTrue(command.contains(root.resolve("Cargo.toml").toString()));
+                        assertTrue(command.contains("x86_64-unknown-linux-gnu.2.17"));
+                        assertTrue(command.contains("--locked"));
+                        Path built = cwd.resolve("build/x86_64-unknown-linux-gnu/release/libmatsim_pt_router.so");
+                        Files.createDirectories(built.getParent());
+                        Files.writeString(built, "linux");
+                    }
+                });
+        assertEquals("linux", Files.readString(library));
+        assertTrue(commands.stream().anyMatch(c -> c.contains("venv")));
+        assertTrue(commands.stream().anyMatch(c -> c.contains("ziglang==0.17.1")));
+        assertThrows(IllegalArgumentException.class, () -> RustRouterBundler.supplied(
+                Map.of("native-directory", root.resolve("missing").toString()),
+                RustRouterInstallation.Platform.named("linux-x86_64"),
+                RustRouterInstallation.Platform.named("windows-x86_64")));
+    }
+
+    @Test
     public void disabledMeansNoInstallationOrTransitRequirement() {
         var settings = new RustRoutingConfigGroup();
         settings.installationDirectory = "unusable:directory";

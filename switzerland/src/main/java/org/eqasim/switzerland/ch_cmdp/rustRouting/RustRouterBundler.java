@@ -28,11 +28,23 @@ public final class RustRouterBundler {
             throw new IllegalArgumentException("Missing native resource output directory");
         Path output = Path.of(options.get("output")).toAbsolutePath();
         var host = RustRouterInstallation.Platform.current();
-        String version = options.getOrDefault("version", "v0.2.0");
+        String version = options.getOrDefault("version", "latest");
         var platforms = platforms(options.getOrDefault("platforms", "host,linux-x86_64"), host);
+        LatestRustRouterBuild.Source latest = null;
+        if (version.equals("latest") && platforms.stream().anyMatch(p -> supplied(options, p, host) == null)) {
+            latest = LatestRustRouterBuild.resolve(
+                    Path.of(System.getProperty("user.home"), ".eqasim", "rust-router", "main-builds"),
+                    options.getOrDefault("source", ""), RustRouterInstallation::run);
+            System.out.println("Building Rust PT router revision " + latest.revision());
+        }
         for (var platform : platforms) {
-            Path library = acquire(options, version, platform, host);
-            Path bundled = bundle(output, library, platform, version);
+            Path explicit = supplied(options, platform, host);
+            Path library = explicit != null ? explicit : latest != null
+                    ? LatestRustRouterBuild.build(latest, platform, host, RustRouterInstallation::run)
+                    : acquire(options, version, platform, host);
+            String identity = explicit != null && version.equals("latest") ? "explicit-library"
+                    : latest != null ? latest.revision() : version;
+            Path bundled = bundle(output, library, platform, identity);
             System.out.println("Bundled Rust PT router for " + platform.id() + ": " + bundled);
         }
         Files.writeString(
@@ -44,6 +56,19 @@ public final class RustRouterBundler {
                                         .map(RustRouterInstallation.Platform::id)
                                         .toList())
                         + "\n");
+    }
+
+    /** An explicit binary override wins; a missing requested override must never fall back. */
+    static Path supplied(Map<String, String> options, RustRouterInstallation.Platform platform,
+            RustRouterInstallation.Platform host) {
+        String directory = options.getOrDefault("native-directory", "");
+        Path path = !directory.isBlank()
+                ? Path.of(directory).resolve(platform.id()).resolve(platform.library())
+                : platform.equals(host) && !options.getOrDefault("library", "").isBlank()
+                        ? Path.of(options.get("library")) : null;
+        if (path != null && !Files.isRegularFile(path))
+            throw new IllegalArgumentException("Missing explicitly supplied Rust library: " + path);
+        return path == null ? null : path.toAbsolutePath();
     }
 
     /** Resolve/deduplicate explicit platforms; foreign targets must use precompiled libraries. */

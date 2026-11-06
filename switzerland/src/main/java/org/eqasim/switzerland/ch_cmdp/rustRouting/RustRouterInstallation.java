@@ -466,7 +466,7 @@ final class RustRouterInstallation {
                 StandardCopyOption.REPLACE_EXISTING);
     }
 
-    private static void run(List<String> command, Path directory, Path log) throws Exception {
+    static void run(List<String> command, Path directory, Path log) throws Exception {
         var builder =
                 new ProcessBuilder(command)
                         .directory(directory.toFile())

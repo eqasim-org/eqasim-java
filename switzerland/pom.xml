@@ -33,12 +33,13 @@
 
 	<properties>
 		<!-- Override for a different checkout location or Cargo installation. -->
-		<rust.router.project>${project.basedir}/../../MultiModalRouter</rust.router.project>
+		<rust.router.project></rust.router.project>
 		<rust.router.library></rust.router.library>
 		<!-- Portable default for the common Windows workstation -> Linux cluster deployment. -->
 		<rust.router.platforms>host,linux-x86_64</rust.router.platforms>
 		<rust.router.nativeDirectory></rust.router.nativeDirectory>
-		<rust.router.version>v0.2.0</rust.router.version>
+		<!-- Resolve main once per build; all bundled platforms use the same immutable commit. -->
+		<rust.router.version>latest</rust.router.version>
 		<rust.router.bundle.skip>true</rust.router.bundle.skip>
 		<cargo.executable>cargo</cargo.executable>
 	</properties>
