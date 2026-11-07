@@ -89,7 +89,7 @@ public class TripsRouter {
     }
 
     /** Treat the configured batch as a maximum; keep short/uneven requests parallel too. */
-    static int routingBatchSize(int trips, int workers, int maximum) {
+    public static int routingBatchSize(int trips, int workers, int maximum) {
         long targetBatches = 8L * workers;
         return (int) Math.max(1, Math.min(maximum, (trips + targetBatches - 1) / targetBatches));
     }

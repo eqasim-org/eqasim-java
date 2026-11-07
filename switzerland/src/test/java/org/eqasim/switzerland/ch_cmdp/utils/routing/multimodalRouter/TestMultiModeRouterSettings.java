@@ -1,4 +1,12 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.TripsRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.MultiModeRouterServer;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.AssignmentSpool;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.MarouterAssignment;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.CalibratedFreeSpeedTravelTime;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.pt.PublicTransportRoutingMetrics;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.costs.RouterCosts;
+
 
 import static org.junit.Assert.*;
 
@@ -152,7 +160,7 @@ public class TestMultiModeRouterSettings {
     }
 
     private MultiModeRouter.Settings settings(Path config, String... options) throws Exception {
-        List<String> args = new ArrayList<>(List.of("--network-path", "unused-network.xml", "--port", "8080"));
+        List<String> args = new ArrayList<>(List.of("--network-path", "unused-network.xml", "--port", "8080", "--use-rust-pt-router", "false"));
         if (config != null) {
             args.addAll(List.of("--config-path", config.toString()));
         }

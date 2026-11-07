@@ -1,4 +1,6 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server;
+
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.MultiModeRouter;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -14,9 +16,9 @@ import java.util.TreeMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /** Disk-backed input partitions and indexed output, avoiding whole-request trip/path retention. */
-final class AssignmentSpool implements AutoCloseable {
+public final class AssignmentSpool implements AutoCloseable {
     private static final ObjectMapper JSON = new ObjectMapper();
-    final Map<Integer, Bin> bins = new TreeMap<>();
+    public final Map<Integer, Bin> bins = new TreeMap<>();
     private final Path directory;
     private final List<Path> files = new ArrayList<>();
     private final List<Rows> open = new ArrayList<>();
@@ -27,12 +29,12 @@ final class AssignmentSpool implements AutoCloseable {
     public record Input(long index, Map<String, String> row) {}
     public record Output(MultiModeRouter.RoutedTrip result, int[] path, boolean truck) {}
 
-    final class Rows implements AutoCloseable {
+    public final class Rows implements AutoCloseable {
         RandomAccessFile data;
         RandomAccessFile offsets;
         final Path dataPath;
         final Path offsetsPath;
-        long count;
+        public long count;
 
         Rows(String name) throws IOException {
             dataPath = directory.resolve(name + ".data");
@@ -63,7 +65,7 @@ final class AssignmentSpool implements AutoCloseable {
             return position;
         }
 
-        <T> T at(long position, Class<T> type) throws IOException {
+        public <T> T at(long position, Class<T> type) throws IOException {
             ensureOpen();
             data.seek(position);
             byte[] bytes = new byte[data.readInt()];
@@ -71,13 +73,13 @@ final class AssignmentSpool implements AutoCloseable {
             return JSON.readValue(bytes, type);
         }
 
-        <T> T row(long index, Class<T> type) throws IOException {
+        public <T> T row(long index, Class<T> type) throws IOException {
             ensureOpen();
             offsets.seek(index * Long.BYTES);
             return at(offsets.readLong(), type);
         }
 
-        long[] shuffled(long seed) throws IOException {
+        public long[] shuffled(long seed) throws IOException {
             ensureOpen();
             long[] positions = new long[Math.toIntExact(count)];
             offsets.seek(0);
@@ -100,16 +102,16 @@ final class AssignmentSpool implements AutoCloseable {
         }
     }
 
-    final class Bin {
-        final Rows drivers;
-        final Rows passengers;
+    public final class Bin {
+        public final Rows drivers;
+        public final Rows passengers;
         Bin(int bin) throws IOException {
             drivers = new Rows("bin-" + bin + "-drivers");
             passengers = new Rows("bin-" + bin + "-passengers");
         }
     }
 
-    AssignmentSpool(Path parent) throws IOException {
+    public AssignmentSpool(Path parent) throws IOException {
         directory = Files.createTempDirectory(parent, ".marouter-");
         RandomAccessFile offsets = null;
         try {
@@ -125,19 +127,19 @@ final class AssignmentSpool implements AutoCloseable {
         }
     }
 
-    void add(int bin, boolean passenger, long index, Map<String, String> row) throws IOException {
+    public void add(int bin, boolean passenger, long index, Map<String, String> row) throws IOException {
         Bin target = bins.get(bin);
         if (target == null) { target = new Bin(bin); bins.put(bin, target); }
         (passenger ? target.passengers : target.drivers).append(new Input(index, row));
     }
 
-    void put(long index, MultiModeRouter.RoutedTrip result, boolean truck) throws IOException {
+    public void put(long index, MultiModeRouter.RoutedTrip result, boolean truck) throws IOException {
         long position = results.append(new Output(result, result.assignmentPath, truck));
         resultOffsets.seek(index * Long.BYTES);
         resultOffsets.writeLong(position);
     }
 
-    Output get(long index) throws IOException {
+    public Output get(long index) throws IOException {
         resultOffsets.seek(index * Long.BYTES);
         return results.at(resultOffsets.readLong(), Output.class);
     }

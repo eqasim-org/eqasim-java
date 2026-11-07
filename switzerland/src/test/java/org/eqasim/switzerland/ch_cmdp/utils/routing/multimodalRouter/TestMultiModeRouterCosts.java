@@ -1,4 +1,12 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.TripsRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.MultiModeRouterServer;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.AssignmentSpool;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.MarouterAssignment;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.CalibratedFreeSpeedTravelTime;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.pt.PublicTransportRoutingMetrics;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.costs.RouterCosts;
+
 
 import static org.junit.Assert.*;
 
@@ -463,7 +471,7 @@ public class TestMultiModeRouterCosts {
     }
 
     private MultiModeRouter.Settings settings(Path network, Path config, String... options) throws Exception {
-        List<String> args = new ArrayList<>(List.of("--network-path", network.toString(), "--port", "8080", "--threads", "3"));
+        List<String> args = new ArrayList<>(List.of("--network-path", network.toString(), "--port", "8080", "--use-rust-pt-router", "false", "--threads", "3"));
         if (config != null) args.addAll(List.of("--config-path", config.toString()));
         args.addAll(List.of(options));
         return MultiModeRouterServer.readSettings(MultiModeRouterServer.commandLine(args.toArray(String[]::new)));
@@ -556,6 +564,35 @@ public class TestMultiModeRouterCosts {
         var restoredStage = (org.matsim.api.core.v01.population.Activity) stages.get(1);
         assertEquals("pt interaction", restoredStage.getType());
         assertEquals(0, restoredStage.getMaximumDuration().seconds(), 0);
+    }
+
+    @Test
+    public void nativePtBackendReturnsMetricsAndExportsReusableRoutes() throws Exception {
+        String library = System.getProperty("rust.router.test.library");
+        org.junit.Assume.assumeTrue("Set rust.router.test.library to test the actual JNI backend", library != null);
+        Path network = network();
+        Config config = transitConfig();
+        var nativeConfig = ConfigUtils.addOrGetModule(config,
+                org.eqasim.switzerland.ch_cmdp.rustRouting.RustRoutingConfigGroup.class);
+        nativeConfig.libraryPath = library;
+        nativeConfig.autoInstall = false;
+        Path input = write("native-pt.csv", HEADER + "native,500,0,1500,0,pt\n");
+        Path output = folder.getRoot().toPath().resolve("native-pt-out.csv");
+        var settings = settings(network, writeConfig(config), "--export-routes", "true");
+        settings.useRustPtRouter = true;
+        assertTrue(new MultiModeRouter.Settings().useRustPtRouter);
+        try (var router = new MultiModeRouter(settings)) {
+            Files.delete(network); // Readiness/constructor completion includes the native timetable.
+            router.route(input, output);
+            var row = rows(output).getFirst();
+            assertEquals(100.0 / 60, Double.parseDouble(row.get("in_vehicle_time_bus_min")), 1e-9);
+            assertEquals("0", row.get("transfers"));
+            assertFalse(row.get("route").isBlank());
+            assertTrue(Double.isFinite(Double.parseDouble(row.get("travel_time"))));
+            byte[] first = Files.readAllBytes(output);
+            router.route(input, output);
+            assertArrayEquals(first, Files.readAllBytes(output));
+        }
     }
 
     private Path pricedTransitConfig() throws Exception {

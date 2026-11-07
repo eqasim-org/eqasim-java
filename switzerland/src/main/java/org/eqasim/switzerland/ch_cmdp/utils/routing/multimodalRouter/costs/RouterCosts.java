@@ -1,4 +1,4 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.costs;
 
 import java.io.File;
 import java.util.function.DoubleUnaryOperator;
@@ -36,7 +36,7 @@ import org.eqasim.switzerland.ch_cmdp.utils.pricing.RunComputeTransitPrices.CSVR
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /** Cost inputs shared by all workers, loaded only when cost estimation is enabled. */
-final class RouterCosts {
+public final class RouterCosts {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     /** Compact, self-contained fare inputs persisted in the routed CSV. */
@@ -95,7 +95,7 @@ final class RouterCosts {
         }
     }
 
-    static String save(CSVRequest request, List<? extends PlanElement> elements) {
+    public static String save(CSVRequest request, List<? extends PlanElement> elements) {
         List<PtLeg> legs = new ArrayList<>();
         for (PlanElement element : elements) {
             if (element instanceof Leg leg && leg.getRoute() instanceof TransitPassengerRoute route) {
@@ -116,7 +116,7 @@ final class RouterCosts {
         }
     }
 
-    static SavedPtRoute read(String data) {
+    public static SavedPtRoute read(String data) {
         try {
             return JSON.readValue(data, SavedPtRoute.class);
         } catch (Exception e) {
@@ -124,18 +124,18 @@ final class RouterCosts {
         }
     }
 
-    record PtPricer(SwissPtRoutePredictor predictor, TransitSchedule schedule, PtPricing pricing) {
-        double price(CSVRequest request, List<? extends PlanElement> elements) {
+    public record PtPricer(SwissPtRoutePredictor predictor, TransitSchedule schedule, PtPricing pricing) {
+        public double price(CSVRequest request, List<? extends PlanElement> elements) {
             return RunComputeTransitPrices.calculatePrices(request, predictor.predictPtVariables(elements),
                     pricing.calculators, pricing.regionalRadius_km).price();
         }
 
-        double price(SavedPtRoute saved) {
+        public double price(SavedPtRoute saved) {
             List<Leg> legs = saved.restore(schedule);
             return price(saved.traveler.request(), legs);
         }
     }
-    static SwissCostParameters parameters(Config config) {
+    public static SwissCostParameters parameters(Config config) {
         SwissCostParameters parameters = SwissCostParameters.buildDefault();
         ConfigGroup eqasim = config == null ? null : config.getModules().get(EqasimConfigGroup.GROUP_NAME);
         String path = eqasim == null ? null : eqasim.getParams().get("costParametersPath");
@@ -150,7 +150,7 @@ final class RouterCosts {
         return parameters;
     }
 
-    static DoubleUnaryOperator carModel(String model, SwissCostParameters parameters) {
+    public static DoubleUnaryOperator carModel(String model, SwissCostParameters parameters) {
         return switch (model) {
             case "simple" -> new SwissCarCostModel(parameters)::calculateCost_CHF;
             case "weiss" -> new SwissWeissCarCostModel(parameters)::calculateCost_CHF;
@@ -158,14 +158,14 @@ final class RouterCosts {
         };
     }
 
-    record PtPricing(ZonalRegistry zones, NetworkOfDistances distances, SwissPtStageCostCalculator calculators,
+    public record PtPricing(ZonalRegistry zones, NetworkOfDistances distances, SwissPtStageCostCalculator calculators,
             double regionalRadius_km) {
-        PtPricer pricer(TransitSchedule schedule) {
+        public PtPricer pricer(TransitSchedule schedule) {
             return new PtPricer(new SwissPtRoutePredictor(schedule, zones, distances), schedule, this);
         }
     }
 
-    static PtPricing ptPricing(Config config, SwissCostParameters parameters) {
+    public static PtPricing ptPricing(Config config, SwissCostParameters parameters) {
         var ptZones = ConfigUtils.addOrGetModule(config, SwissPTZonesConfigGroup.class);
         if (ptZones.getZonePath() == null || ptZones.getSBBDistancesPath() == null
                 || ptZones.getPricingDescriptionPath() == null) {

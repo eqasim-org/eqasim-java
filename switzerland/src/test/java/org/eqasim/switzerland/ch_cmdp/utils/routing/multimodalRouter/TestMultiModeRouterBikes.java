@@ -1,4 +1,12 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.TripsRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.MultiModeRouterServer;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.AssignmentSpool;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.MarouterAssignment;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.CalibratedFreeSpeedTravelTime;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.pt.PublicTransportRoutingMetrics;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.costs.RouterCosts;
+
 
 import static org.junit.Assert.*;
 
@@ -132,7 +140,7 @@ public class TestMultiModeRouterBikes {
     }
     private MultiModeRouter.Settings settings(Path network, Path config, boolean assignment) throws Exception {
         return MultiModeRouterServer.readSettings(MultiModeRouterServer.commandLine(new String[]{"--network-path", network.toString(),
-                "--config-path", config.toString(), "--port", "8080", "--threads", "4", "--chunk-size", "13", "--batch-size", "3",
+                "--config-path", config.toString(), "--port", "8080", "--use-rust-pt-router", "false", "--threads", "4", "--chunk-size", "13", "--batch-size", "3",
                 "--compute-cost", "true", "--return-links", "true", "--export-routes", "true", "--marouter", String.valueOf(assignment)}));
     }
     private Path write(String text) throws Exception { Path path = folder.newFile().toPath(); Files.writeString(path, text); return path; }

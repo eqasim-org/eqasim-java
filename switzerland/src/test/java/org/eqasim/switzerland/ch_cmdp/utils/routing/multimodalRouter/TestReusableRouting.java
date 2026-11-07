@@ -1,4 +1,12 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.TripsRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.MultiModeRouterServer;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.AssignmentSpool;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.MarouterAssignment;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.CalibratedFreeSpeedTravelTime;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.pt.PublicTransportRoutingMetrics;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.costs.RouterCosts;
+
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -277,7 +285,7 @@ public class TestReusableRouting {
 
     private MultiModeRouter.Settings settings(Path network, Path config, boolean assignment, boolean export) throws Exception {
         return MultiModeRouterServer.readSettings(MultiModeRouterServer.commandLine(new String[]{"--network-path", network.toString(),
-                "--config-path", config.toString(), "--port", "8080", "--threads", "2", "--chunk-size", "2",
+                "--config-path", config.toString(), "--port", "8080", "--use-rust-pt-router", "false", "--threads", "2", "--chunk-size", "2",
                 "--export-routes", Boolean.toString(export), "--marouter", Boolean.toString(assignment)}));
     }
     private Path file(String name) { return folder.getRoot().toPath().resolve(name); }

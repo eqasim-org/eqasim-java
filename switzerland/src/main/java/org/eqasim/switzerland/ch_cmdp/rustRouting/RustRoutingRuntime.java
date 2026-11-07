@@ -89,6 +89,15 @@ public final class RustRoutingRuntime
         executor.shutdown();
     }
 
+    /** Eager readiness barrier for long-lived tools that do not create a simulation controller. */
+    public void awaitReady() { prepared(); }
+
+    /** Fresh adapter per worker; all adapters share this runtime's immutable timetable. */
+    public org.matsim.pt.router.TransitRouter createTransitRouter() {
+        var adapter = new RustPtRoutingModule(this, null);
+        return adapter::transitLegs;
+    }
+
     Prepared prepared() {
         if (closed.get()) throw new IllegalStateException("Rust PT router is closed");
         try {

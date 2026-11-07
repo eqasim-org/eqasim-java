@@ -5,7 +5,7 @@ Start the server using the Switzerland standalone JAR (built with
 
 ```sh
 java -cp switzerland/target/switzerland-2.0.0.jar \
-  org.eqasim.switzerland.ch_cmdp.utils.routing.MultiModeRouterServer \
+  org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.RunServer \
   --network-path network.xml.gz --config-path config.xml \
   --port 8080 --threads 16 --batch-size 128 --chunk-size 65536
 ```
@@ -135,6 +135,56 @@ try (var router = new MultiModeRouter(settings)) {
     router.route("mixed-trips.csv", "mixed.csv");
 }
 ```
+
+## Package layout and server arguments
+
+The entry point is `org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.RunServer`.
+Its class documentation lists every supported argument, its meaning, units and defaults.
+Java users import `multimodalRouter.MultiModeRouter` and
+`multimodalRouter.server.MultiModeRouterServer`.
+The package contains:
+
+- `cars`: calibrated freeflow, truck constraints and weighted BPR assignment state.
+- `pt`: timetable loading, Rust/RAPTOR worker adapters and mode-choice metrics.
+- `bikes`: cached gradient-aware link speeds and disutility.
+- `walks`: configured teleported distance policy, also used by teleported bikes.
+- `costs`: Swiss car and public-transport cost models and saved fare inputs.
+- `server`: HTTP lifecycle, bounded disk spool and log destinations.
+
+## Logging
+
+`--log-file router.log` selects the main log file. When omitted, existing Log4j
+appenders remain active. `--initialization-log-file router-loading.log` sends
+background network/config/schedule/worker initialization and native timetable
+preparation to a separate file. Without it, initialization uses the main log.
+Files are appended and parent directories are created. Use different paths
+for the two destinations. Readiness messages also appear in the initialization
+log, while request starts, progress and completion appear in the main log.
+This logging configuration belongs to the CLI process; embedded Java callers
+can keep their application logging configuration.
+
+Startup reports the chosen road source (MARouter/BPR, recorded events or
+calibrated freeflow), PT backend, thread/batch/chunk sizes, cost/export settings,
+and the effective VDF parameters. Road progress reports bin, iteration/total,
+assigned vehicles, changed paths, used links, link-PCU, relative time change and
+elapsed seconds. Routing progress reports cumulative completed rows by mode,
+batch unreachable counts and elapsed time. Long chunks also report completed rows
+at most once every ten seconds. Road counts include repeated passes;
+PT/walk/bike rows are routed once per request.
+
+## PT backend
+
+`--use-rust-pt-router true` is the default. It uses the same native backend,
+configuration module (`swissRustRouting`), automatic installation/cache and
+itinerary conversion as `RunSimulation`. The timetable loads once; workers
+share it, and `/ready?mode=pt` succeeds only after native preprocessing completes.
+Unsupported native configurations or native initialization failures are reported
+as startup failures. Choose `--use-rust-pt-router false` to use RAPTOR.
+`multiModeRouter.useRustPtRouter` is the config fallback; explicit CLI wins.
+Only the selected itinerary backend is prepared, except that enabling
+`--pt-headway-interval` also prepares RAPTOR for the batch tool's headway search.
+All mode-choice components, fare estimation and optional itinerary export apply
+to both backends.
 
 ## CSV format and units
 
@@ -423,15 +473,17 @@ response = requests.post(base + "/cost", json={
 response.raise_for_status()
 ```
 
-## Incremental road assignment (`--marouter true`)
+## Iterative road assignment (`--marouter true`)
 
 Enable incremental BPR assignment at startup:
 
 ```sh
 java -cp switzerland/target/switzerland-2.0.0.jar \
-  org.eqasim.switzerland.ch_cmdp.utils.routing.MultiModeRouterServer \
+  org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.RunServer \
   --network-path network.xml.gz --config-path config.xml --port 8080 \
-  --marouter true --threads 16
+  --marouter true --marouter-iterations 10 --threads 16 \
+  --use-rust-pt-router true --log-file router.log \
+  --initialization-log-file router-loading.log
 ```
 
 The existing `/route` API is unchanged. Put car and truck trips in **one mixed-mode
@@ -455,7 +507,7 @@ implementation. Configure them in the existing MATSim config module:
 </module>
 <module name="multiModeRouter">
   <param name="marouter" value="true" />
-  <param name="marouterIncrement" value="0.05" />
+  <param name="marouterIncrement" value="0.10" />
   <param name="marouterTruckPcu" value="2.0" />
 </module>
 ```
@@ -468,10 +520,9 @@ and truck speed limits use meters/second. Simulation-specific VDF flow history,
 input files, update areas and output settings are not used by this assignment.
 
 For each departure-time bin, the router shuffles driver trips once with a fixed
-seed, assigns disjoint 5% increments, and updates cumulative link flows after
+seed, assigns disjoint 10% increments, and updates cumulative link flows after
 each increment. The first increment uses freeflow. Every worker within an
-increment sees the same frozen travel times. Each trip is routed once; the
-previous paths stay assigned. The BPR calculation is:
+increment sees the same frozen travel times. Each trip is routed once per iteration; paths from completed increments stay assigned within that pass. The BPR calculation is:
 
 ```text
 flow = sum(weight * vehiclePcu) over assigned trips using the link
@@ -490,7 +541,8 @@ the assigned path distance as usual.
 | CLI option | Config fallback | Default |
 | --- | --- | --- |
 | `--marouter` | `multiModeRouter.marouter` | false |
-| `--marouter-increment` | `multiModeRouter.marouterIncrement` | 0.05 |
+| `--marouter-iterations` | `multiModeRouter.marouterIterations` | 1 |
+| `--marouter-increment` | `multiModeRouter.marouterIncrement` | 0.10 |
 | `--marouter-seed` | `multiModeRouter.marouterSeed`, then `global.randomSeed` | 4711 without a config |
 | `--marouter-truck-pcu` | `multiModeRouter.marouterTruckPcu` | 2 |
 | `--truck-max-speed` | `multiModeRouter.truckMaxSpeed` | 80/3.6 m/s |
@@ -527,9 +579,22 @@ Link times are capped by the VDF minimum speed, with a one-second floor on used
 nonzero-length links, and never fall below freeflow. Departures outside the VDF
 time range are clamped to its first/last bin, following `VDFScope`.
 
-This is static incremental assignment: all links of a trip use its departure
-bin. It does not propagate queues or spill traffic into later bins, and it does
-not iterate to equilibrium. With MARouter enabled, `--events-path` is ignored
+`--marouter-iterations N` selects the total number of passes, including the
+first incremental pass (default 1). Every pass uses the configured increments
+(default 10%). Subsequent passes begin with the previous pass's travel times
+and update BPR after each increment. With fraction `f` of the trips reassigned,
+`flow = previousFlow + (newAssignedFlow - f * previousFlow) / iteration`.
+This retains the previous flow for trips still awaiting reassignment. At the end
+of the pass, `f=1`, giving the usual successive average of complete pass flows. BPR times are updated
+from those averaged flows. This method of successive averages reduces oscillation
+between competing paths. Demand is replaced each pass, never counted repeatedly.
+Final output contains the last pass's paths with travel times evaluated against
+the final averaged flows. PT/walk/bike are routed once; car passengers see the
+final road times and add no flow. Each request and departure bin starts independently.
+
+This is static assignment: all links of a trip use its departure bin. It does
+not propagate queues or spill traffic into later bins. More passes can improve
+stability, but the pass count is a fixed budget rather than an equilibrium guarantee. With MARouter enabled, `--events-path` is ignored
 (the file is not opened); the assignment starts from calibrated freeflow and
 estimates its own congestion.
 
@@ -554,7 +619,7 @@ To reprice the exact joint car/truck assignment, pass its saved routing output.
   in meters/second, matching `FreespeedAdapter`. Missing, malformed, nonfinite
   or nonpositive factors default to 1. Numeric and numeric-string attributes
   are accepted. This applies to both ordinary freeflow and the MARouter BPR
-  baseline, including ALT routing lower bounds. Factors are read once at startup.
+  baseline, including ALT routing lower bounds. A single startup pass multiplies the owned road network's freespeeds by these factors; later routing does not apply them again.
   The same calibrated times apply to car passengers and trucks, with trucks
   additionally respecting `--truck-max-speed`. Shared bike/PT network speeds
   are not modified. Event-derived times are used directly without applying the

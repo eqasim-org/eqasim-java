@@ -1,4 +1,6 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.pt;
+
+import org.eqasim.switzerland.ch_cmdp.utils.routing.TripsRouter;
 
 import java.util.List;
 
@@ -42,7 +44,7 @@ public class PublicTransportRoutingMetrics extends TripsRouter.RoutedTrip {
     @JsonProperty("headway_min") public Double headway_min;
     @JsonProperty("is_only_walk") public Integer isOnlyWalk;
 
-    void populatePtMetrics(List<? extends PlanElement> elements, TransitSchedule schedule) {
+    public void populatePtMetrics(List<? extends PlanElement> elements, TransitSchedule schedule) {
         accessTravelTime_min = 0.0;
         accessDistance_km = 0.0;
         egressTravelTime_min = 0.0;

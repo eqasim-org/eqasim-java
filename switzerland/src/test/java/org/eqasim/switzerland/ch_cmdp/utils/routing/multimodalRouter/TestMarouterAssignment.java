@@ -1,4 +1,12 @@
-package org.eqasim.switzerland.ch_cmdp.utils.routing;
+package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.TripsRouter;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.MultiModeRouterServer;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.server.AssignmentSpool;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.MarouterAssignment;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.cars.CalibratedFreeSpeedTravelTime;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.pt.PublicTransportRoutingMetrics;
+import org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.costs.RouterCosts;
+
 
 import static org.junit.Assert.*;
 
@@ -96,10 +104,10 @@ public class TestMarouterAssignment {
         Path trips = write(input.toString());
         Path a = folder.getRoot().toPath().resolve("a.csv");
         Path b = folder.getRoot().toPath().resolve("b.csv");
-        try (var router = new MultiModeRouter(settings(network, config, "--marouter", "true", "--threads", "1", "--chunk-size", "7"))) {
+        try (var router = new MultiModeRouter(settings(network, config, "--marouter", "true", "--threads", "1", "--chunk-size", "7", "--marouter-iterations", "4"))) {
             router.route(trips, a);
         }
-        try (var router = new MultiModeRouter(settings(network, config, "--marouter", "true", "--threads", "4", "--chunk-size", "31"))) {
+        try (var router = new MultiModeRouter(settings(network, config, "--marouter", "true", "--threads", "4", "--chunk-size", "31", "--marouter-iterations", "4"))) {
             router.route(trips, b);
         }
         assertArrayEquals(Files.readAllBytes(a), Files.readAllBytes(b));
@@ -345,6 +353,28 @@ public class TestMarouterAssignment {
         assertNoSpools();
     }
 
+    @Test
+    public void reassignmentKeepsPreviousTimesAndAveragesReplacementDemandInsteadOfAddingPopulation() {
+        Network network = parallelRoads();
+        var assignment = new MarouterAssignment(network, vdf(1, 2), 0.1, 0.05, 4711, 2, 100);
+        int[] path = {Id.createLinkId("fast1").index(), Id.createLinkId("fast2").index()};
+        assignment.begin(0);
+        assignment.add(path, false, 0.5);
+        assignment.update();
+        double first = 100 * (1 + Math.pow(0.5 / 2, 2));
+        assertEquals(first, assignment.finalTime(path, false), 1e-9);
+        assignment.nextIteration();
+        assertEquals(first, assignment.finalTime(path, false), 1e-9);
+        assignment.add(path, false, 0.5);
+        assignment.finishIteration(2);
+        assertEquals(first, assignment.finalTime(path, false), 1e-9); // Identical demand was replaced.
+        assignment.nextIteration();
+        assignment.finishIteration(3); // A route abandoned in the new pass retains only its averaged flow.
+        assertEquals(100 * (1 + Math.pow((0.5 * 2 / 3) / 2, 2)), assignment.finalTime(path, false), 1e-9);
+        assignment.begin(1);
+        assertEquals(100, assignment.finalTime(path, false), 0); // Other bins start independently.
+    }
+
     private VDFConfigGroup vdf(double factor, double exponent) {
         var config = new VDFConfigGroup();
         config.setBprFactor(factor); config.setBprExponent(exponent); config.setInterval(3600);
@@ -404,15 +434,39 @@ public class TestMarouterAssignment {
 
     @Test
     public void calibratedSpeedFloorAndInvalidAttributeFallbackMatchCalibration() {
-        Network network = parallelRoads();
-        var link = network.getLinks().get(Id.createLinkId("fast1"));
-        for (Object invalid : List.of(0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, "invalid")) {
-            link.getAttributes().putAttribute("speedFactor", invalid);
-            assertEquals(50, new CalibratedFreeSpeedTravelTime(network).getLinkTravelTime(link, 0, null, null), 0);
+        for (Object factor : List.of(0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, "invalid", 0.001, 2.0)) {
+            Network network = parallelRoads();
+            var link = network.getLinks().get(Id.createLinkId("fast1"));
+            link.getAttributes().putAttribute("speedFactor", factor);
+            double speed = factor.equals(0.001) ? 0.1 : factor.equals(2.0) ? 40 : 20;
+            var time = new CalibratedFreeSpeedTravelTime(network);
+            assertEquals(speed, link.getFreespeed(), 0);
+            assertEquals(1000 / speed, time.getLinkTravelTime(link, 0, null, null), 0);
+            new CalibratedFreeSpeedTravelTime(network);
+            assertEquals(speed, link.getFreespeed(), 0); // Startup calibration cannot be applied twice.
         }
-        link.getAttributes().putAttribute("speedFactor", 0.001);
-        assertEquals(10_000, new CalibratedFreeSpeedTravelTime(network).getLinkTravelTime(link, 0, null, null), 0);
-        assertEquals(20, link.getFreespeed(), 0); // Calibration never mutates the shared network.
+    }
+
+    @Test
+    public void laterPassUpdatesTimesAfterEachIncrementWhileRetainingUnassignedDemand() {
+        Network network = parallelRoads();
+        var assignment = new MarouterAssignment(network, vdf(1, 2), 1, 0.1, 4711, 2, 100);
+        int[] path = {Id.createLinkId("fast1").index(), Id.createLinkId("fast2").index()};
+        assignment.begin(0); assignment.add(path, false, 10); assignment.update();
+        assertEquals(125, assignment.finalTime(path, false), 1e-9);
+        assignment.nextIteration();
+        assertEquals(125, assignment.finalTime(path, false), 1e-9);
+        // First 10% choose other links: only that fraction of previous demand is replaced, damped by 1/2.
+        assignment.updateIncrement(2, 0.1);
+        assertEquals(100 * (1 + Math.pow(9.5 / 20, 2)), assignment.finalTime(path, false), 1e-9);
+        assignment.updateIncrement(2, 0.5);
+        assertEquals(100 * (1 + Math.pow(7.5 / 20, 2)), assignment.finalTime(path, false), 1e-9);
+        assignment.finishIteration(2);
+        assertEquals(106.25, assignment.finalTime(path, false), 1e-9);
+        assignment.nextIteration(); // Next pass begins with that final averaged flow, rather than zero.
+        assignment.updateIncrement(3, 0.1);
+        assertEquals(100 * (1 + Math.pow((5 - 0.5 / 3) / 20, 2)), assignment.finalTime(path, false), 1e-9);
+        assertEquals(0.1, new MultiModeRouter.Settings().marouterIncrement, 0);
     }
 
     private Path config(VDFConfigGroup vdf, double sampleSize, boolean enabled) throws Exception {
@@ -427,7 +481,7 @@ public class TestMarouterAssignment {
 
     private MultiModeRouter.Settings settings(Path network, Path config, String... options) throws Exception {
         List<String> args = new ArrayList<>(List.of("--network-path", network.toString(), "--config-path", config.toString(),
-                "--port", "8080", "--threads", "3", "--chunk-size", "7", "--batch-size", "2", "--return-links", "true"));
+                "--port", "8080", "--use-rust-pt-router", "false", "--threads", "3", "--chunk-size", "7", "--batch-size", "2", "--return-links", "true"));
         // Replace defaults rather than specifying a CLI option twice.
         for (int i = 0; i < options.length; i += 2) {
             int index = args.indexOf(options[i]);
