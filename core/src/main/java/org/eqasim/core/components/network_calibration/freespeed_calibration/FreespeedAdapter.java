@@ -100,31 +100,42 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
-        if (isActivated && isCalibrating) {
-            int iteration = event.getIteration();
-            if (shouldUpdateAtIteration(iteration)) {
-                logger.info("Triggering freespeed calibration update at iteration {} (start={}, interval={})",
-                        iteration, updateStartIteration, updateInterval);
-                penaltiesAdapter.disable(); // do not use penalties during this routing (freespeedDisutility is used, but keep this here in case we change it at some point, this is safer)
-                Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats;
-                try {
-                    groupStats = tripsHandler.routeTrips();
-                } finally {
-                    penaltiesAdapter.enable(); // also restore penalties if routing fails
-                }
-
-                if (groupStats.isEmpty()) {
-                    logger.warn("No valid group stats collected at iteration {}. Factors will remain unchanged. " +
-                                    "Check observed trips coverage, acceptance filters, and minTripsPerGroup.",
-                            iteration);
-                }
-
-                factorManager.updateFactors(groupStats, iteration);
-                applyFactors();
-                saveOutputs(iteration, groupStats);
-            }
-
+        long start = System.nanoTime();
+        int iteration = event.getIteration();
+        boolean updateScheduled = isActivated && isCalibrating && shouldUpdateAtIteration(iteration);
+        boolean completed = false;
+        try {
+            if (updateScheduled) calibrate(iteration);
+            completed = true;
+        } finally {
+            logger.info("Freespeed iteration-start listener: iteration={}, updateScheduled={}, completed={}, seconds={}",
+                    iteration, updateScheduled, completed, (System.nanoTime() - start) / 1e9);
         }
+    }
+
+    private void calibrate(int iteration) {
+        logger.info("Triggering freespeed calibration update at iteration {} (start={}, interval={})",
+                iteration, updateStartIteration, updateInterval);
+        penaltiesAdapter.disable();
+        Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats;
+        try {
+            groupStats = tripsHandler.routeTrips();
+        } finally {
+            penaltiesAdapter.enable(); // Restore penalties even if routing fails.
+        }
+        if (groupStats.isEmpty()) {
+            logger.warn("No valid group stats collected at iteration {}. Factors will remain unchanged. " +
+                    "Check observed trips coverage, acceptance filters, and minTripsPerGroup.", iteration);
+        }
+        long start = System.nanoTime();
+        factorManager.updateFactors(groupStats, iteration);
+        logger.info("Freespeed factor update: iteration={}, seconds={}", iteration, (System.nanoTime() - start) / 1e9);
+        start = System.nanoTime();
+        applyFactors();
+        logger.info("Freespeed factor application: iteration={}, seconds={}", iteration, (System.nanoTime() - start) / 1e9);
+        start = System.nanoTime();
+        saveOutputs(iteration, groupStats);
+        logger.info("Freespeed diagnostics output: iteration={}, seconds={}", iteration, (System.nanoTime() - start) / 1e9);
     }
 
     @Override

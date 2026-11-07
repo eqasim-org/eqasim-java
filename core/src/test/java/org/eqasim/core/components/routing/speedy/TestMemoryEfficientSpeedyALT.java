@@ -22,7 +22,7 @@ import org.matsim.core.router.util.TravelTime;
 import static org.junit.Assert.*;
 
 public class TestMemoryEfficientSpeedyALT {
-    @Test public void thirtyTwoLandmarksSharePreprocessingAndMatchPinnedMatsim() throws Exception {
+    @Test public void thirtyTwoLandmarksSharePreprocessingAndUseConservativeBounds() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> new MemoryEfficientSpeedyALTFactory(0));
         assertThrows(IllegalArgumentException.class, () -> new MemoryEfficientSpeedyALTFactory(-1));
         for (boolean restrictions : new boolean[]{false, true}) {
@@ -39,8 +39,8 @@ public class TestMemoryEfficientSpeedyALT {
             assertEquals(32, statistics.landmarksPerSet());
             assertEquals(1, statistics.landmarkSets());
             assertEquals(16L * 32 * statistics.routingNodes(), statistics.uncompressedLandmarkBytes());
-            // Compare the adaptation with the pinned MATSim algorithm at the same
-            // count. Different counts can change restricted-network search results.
+            // Compare landmark storage at the same count. Restricted query bounds
+            // deliberately correct upstream overestimation of colored goals.
             var reference16 = new org.matsim.core.router.speedy.SpeedyALTFactory()
                     .createPathCalculator(network, cost, TIMES);
             Object referenceData = field(reference16, "astarData");
@@ -62,10 +62,8 @@ public class TestMemoryEfficientSpeedyALT {
                 var expected = reference32.calcLeastCostPath(from, to, 18000, null, null);
                 var actual = router32.calcLeastCostPath(from, to, 18000, null, null);
                 var repeated = otherWorker.calcLeastCostPath(from, to, 18000, null, null);
-                same(expected, actual);
-                if (expected != null) {
-                    assertEquals(expected.travelCost, actual.travelCost, 1e-8);
-                    assertEquals(expected.travelTime, actual.travelTime, 1e-8);
+                sameNodeQuery(restrictions, expected, actual);
+                if (actual != null) {
                     assertEquals(actual.travelCost, repeated.travelCost, 0);
                     assertEquals(actual.travelTime, repeated.travelTime, 0);
                 }
@@ -110,7 +108,7 @@ public class TestMemoryEfficientSpeedyALT {
         }
     }
 
-    @Test public void exactPathsTimesCostsAndLandmarksWithAndWithoutRestrictions() throws Exception {
+    @Test public void unrestrictedParityAndRestrictedRouteQuality() throws Exception {
         for (boolean restrictions : new boolean[]{false, true}) {
             // Allocate unrelated IDs deliberately: the original graph has holes.
             for (int i = 0; i < 300; i++) {
@@ -125,7 +123,7 @@ public class TestMemoryEfficientSpeedyALT {
             var optimized = factory.createPathCalculator(network, cost, TIMES);
             for (Node from : network.getNodes().values()) for (Node to : network.getNodes().values()) {
                 for (double departure : new double[]{18000, 18899, 18900, 79100}) {
-                    same(original.calcLeastCostPath(from, to, departure, null, null),
+                    sameNodeQuery(restrictions, original.calcLeastCostPath(from, to, departure, null, null),
                             optimized.calcLeastCostPath(from, to, departure, null, null));
                 }
             }
@@ -176,7 +174,7 @@ public class TestMemoryEfficientSpeedyALT {
         for (int i = 0; i < 1000; i++) {
             double time = 18000 + random.nextDouble() * 61200;
             Node from = nodes.get(random.nextInt(nodes.size())), to = nodes.get(random.nextInt(nodes.size()));
-            same(original.calcLeastCostPath(from, to, time, null, null),
+            sameNodeQuery(NetworkUtils.hasTurnRestrictions(network), original.calcLeastCostPath(from, to, time, null, null),
                     optimized.calcLeastCostPath(from, to, time, null, null));
             Link first = links.get(random.nextInt(links.size())), last = links.get(random.nextInt(links.size()));
             sameLinkQuery(NetworkUtils.hasTurnRestrictions(network), first, last, original.calcLeastCostPath(first, last, time, null, null),
@@ -269,6 +267,21 @@ public class TestMemoryEfficientSpeedyALT {
                 assertNotNull(after);
                 assertTrue("from=" + first.getId() + " to=" + last.getId() + " before=" + before.travelCost + " after=" + after.travelCost + " before links=" + before.links + " after links=" + after.links, after.travelCost <= before.travelCost + 1e-8);
             }
+        }
+    }
+
+    private static void sameNodeQuery(boolean restricted, LeastCostPathCalculator.Path before,
+                                     LeastCostPathCalculator.Path after) {
+        if (!restricted) {
+            same(before, after);
+        } else {
+            // Upstream's node-goal heuristic can stop at a more costly colored
+            // approach. Independent Dijkstra tests check exact restricted costs.
+            if (before != null) {
+                assertNotNull(after);
+                assertTrue(after.travelCost <= before.travelCost + 1e-8);
+            }
+            if (after != null) assertTrue(TestNodeDestinationRestrictions.legal(after));
         }
     }
 

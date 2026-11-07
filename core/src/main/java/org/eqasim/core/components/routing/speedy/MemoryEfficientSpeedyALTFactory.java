@@ -17,7 +17,7 @@ import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 
 /**
- * SpeedyALT with compact storage, preserving MATSim 2026.0-2025w33 search order.
+ * SpeedyALT with compact storage and conservative bounds for turn-restricted destinations.
  * One factory per injector; graph/landmarks are shared, search workspaces are not.
  * Topology and minimum link costs must remain stable for the factory's lifetime,
  * as with the original factory. Actual time-dependent costs remain live.

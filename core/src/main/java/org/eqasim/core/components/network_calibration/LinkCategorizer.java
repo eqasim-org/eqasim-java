@@ -3,6 +3,7 @@ package org.eqasim.core.components.network_calibration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.IdMap;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.eqasim.core.components.network_calibration.cost_calibration.PenaltyGroupKey;
@@ -14,7 +15,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Handles categorization of links based on OSM highway types and urban/rural distinction.
+ * Categorizes links by road type and location. Freespeed groups capture the input
+ * network before factor application; penalty categories follow live link properties.
  */
 public class LinkCategorizer {
     private static final Logger logger = LogManager.getLogger(LinkCategorizer.class);
@@ -38,6 +40,9 @@ public class LinkCategorizer {
     // Ten immutable group keys per configured region, shared by all links and
     // routing workers. Cache the key values, not a link's changing category.
     private final PenaltyGroupKey[][][] penaltyKeys;
+    // Indexed by link ID so filtered routing copies use exactly the same group.
+    // Values are immutable and shared by links belonging to the same group.
+    private final IdMap<Link, FreespeedCalibrationKey> freespeedKeys = new IdMap<>(Link.class);
     private final double categoryFivePromotionLaneThreshold;
     private final double categoryFivePromotionSpeedThreshold;
 
@@ -64,6 +69,7 @@ public class LinkCategorizer {
         this.hasFreespeedSpecialRegions = !freespeedSpecialRegionFiles.isEmpty();
 
         initSpecialRegions(network, penaltiesSpecialRegionFiles, freespeedSpecialRegionFiles);
+        initializeFreespeedGroups(network);
         penaltyKeys = new PenaltyGroupKey[5][2][penaltiesSpecialRegionFiles.size() + 1];
         for (int category = 1; category <= 5; category++) {
             for (int urban = 0; urban <= 1; urban++) {
@@ -95,13 +101,20 @@ public class LinkCategorizer {
         return new PenaltyGroupKey(linkCategory, urban, region);
     }
 
+    /** Stable input-network group, also for routing copies with the same link ID; null if initially ineligible. */
     public FreespeedCalibrationKey getFreespeedCalibrationKey(Link link) {
-        int category = getBaseCategory(link);
-        if (!isCarLink(link) || category == UNKNOWN_CATEGORY) {
-            return null;
-        }
+        return freespeedKeys.get(link.getId());
+    }
 
-        return new FreespeedCalibrationKey(category, getMunicipalityType(link), getFreespeedSpecialRegionId(link));
+    /** Capture groups before initial factors are applied; calibration must not regroup its own observations. */
+    private void initializeFreespeedGroups(Network network) {
+        Map<FreespeedCalibrationKey, FreespeedCalibrationKey> groups = new HashMap<>();
+        for (Link link : network.getLinks().values()) {
+            int category = getBaseCategory(link);
+            if (category == UNKNOWN_CATEGORY) continue;
+            var key = new FreespeedCalibrationKey(category, getMunicipalityType(link), getFreespeedSpecialRegionId(link));
+            freespeedKeys.put(link.getId(), groups.computeIfAbsent(key, v -> v));
+        }
     }
 
     /**

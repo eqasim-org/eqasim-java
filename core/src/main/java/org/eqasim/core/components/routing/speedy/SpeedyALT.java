@@ -135,11 +135,12 @@ public class SpeedyALT implements LeastCostPathCalculator {
 			destinationTo[i] = astarData.getTravelCostToLandmark(endNodeIndex, i);
 		}
 
-		// The goal is any legal approach to the destination link, not only the
-		// uncolored node. Bound the heuristic against all equivalent states;
-		// using just the uncolored state can overestimate a colored goal and
-		// stop at a longer route. Including forbidden approaches is conservative.
-		if (hasTurnRestrictions && destinationLink != null) {
+		// A node destination accepts every colored approach. A link destination
+		// accepts only approaches permitting its final turn. Bound both against
+		// all equivalent states: the uncolored state alone can overestimate a
+		// colored goal and stop at a longer route. Including forbidden approaches
+		// is conservative.
+		if (hasTurnRestrictions) {
 			// The original state's backward row may have been reduced by
 			// consolidation with a colored landmark at this physical node.
 			// Its true value is no longer recoverable. Disable that bound only
@@ -154,7 +155,7 @@ public class SpeedyALT implements LeastCostPathCalculator {
 				}
 			}
 		}
-		double estimation = astarData.estimate(startNodeIndex, destinationFrom, destinationTo, hasTurnRestrictions && destinationLink != null);
+		double estimation = astarData.estimate(startNodeIndex, destinationFrom, destinationTo);
 
 		setData(startNodeIndex, 0, startTime);
 		workspace.incoming(startNodeIndex, -1);
@@ -194,7 +195,7 @@ public class SpeedyALT implements LeastCostPathCalculator {
 			// ignore dead-ends
 			int deadend = this.astarData.getNodeDeadend(nodeIdx);
 			if (deadend >= 0 && deadend != startDeadend && deadend != endDeadend
-					&& !(hasTurnRestrictions && destinationLink != null && containsDestinationDeadend(endNodeIndex, deadend))) {
+					&& !(hasTurnRestrictions && containsDestinationDeadend(endNodeIndex, deadend))) {
 				continue; // it's a dead-end we're not interested in
 			}
 			expanded++;
@@ -219,13 +220,13 @@ public class SpeedyALT implements LeastCostPathCalculator {
 					// this node was already visited in this route-query
 					double oldCost = getCost(toNode);
 					if (newCost < oldCost) {
-						estimation = astarData.estimate(toNode, destinationFrom, destinationTo, hasTurnRestrictions && destinationLink != null);
+						estimation = astarData.estimate(toNode, destinationFrom, destinationTo);
 						this.pq.decreaseKey(toNode, newCost + estimation);
 						setData(toNode, newCost, newTime);
 						workspace.incoming(toNode, linkIdx);
 					}
 				} else {
-					estimation = astarData.estimate(toNode, destinationFrom, destinationTo, hasTurnRestrictions && destinationLink != null);
+					estimation = astarData.estimate(toNode, destinationFrom, destinationTo);
 					setData(toNode, newCost, newTime);
 					this.pq.insert(toNode, newCost + estimation);
 					workspace.incoming(toNode, linkIdx);

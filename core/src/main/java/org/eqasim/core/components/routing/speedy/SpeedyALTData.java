@@ -395,12 +395,9 @@ class SpeedyALTData {
 	long landmarkBytes() { return fromLandmarks.bytes() + toLandmarks.bytes(); }
 	long uncompressedLandmarkBytes() { return fromLandmarks.uncompressedBytes() + toLandmarks.uncompressedBytes(); }
 
-	/** The same ALT expressions, with each row resolved once and target rows cached per query. */
+	/** Both destination APIs need conservative bounds for equivalent turn-restriction states. */
 	double estimate(int node, double[] destinationFrom, double[] destinationTo) {
-		return estimate(node, destinationFrom, destinationTo, false);
-	}
-
-	double estimate(int node, double[] destinationFrom, double[] destinationTo, boolean linkDestination) {
+		boolean restricted = graph.hasTurnRestrictions();
 		int fromRow = fromLandmarks.row(node), toRow = toLandmarks.row(node);
 		double[] from = fromLandmarks.block(fromRow), to = toLandmarks.block(toRow);
 		int fromOffset = fromLandmarks.offset(fromRow), toOffset = toLandmarks.offset(toRow);
@@ -409,11 +406,11 @@ class SpeedyALTData {
 		// colored copies. Such a forward distance can be too small for this
 		// exact search state, so its subtraction is not a safe lower bound.
 		// The caller also disables a backward bound whose destination row was
-		// consolidated. Node queries retain the legacy expression unchanged.
-		boolean useForward = !linkDestination || node >= graph.originalNodeCount
+		// consolidated. This applies to both node and link destinations.
+		boolean useForward = !restricted || node >= graph.originalNodeCount
 				|| graph.getNextEquivalentNode(node) < 0;
 		for (int i = 0; i < landmarksCount; i++) {
-			if (!linkDestination) {
+			if (!restricted) {
 				double estimate = Math.max(to[toOffset + i] - destinationTo[i], destinationFrom[i] - from[fromOffset + i]);
 				if (estimate > best) best = estimate;
 			} else {

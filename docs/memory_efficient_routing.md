@@ -60,8 +60,9 @@ travel times. Trips unreachable in both cases are counted separately; when no
 trips are reachable in both, similarity is reported as not evaluated. Float
 precision can change values and route choices, so original-vs-optimized results
 combine router/storage changes. The 16-vs-32 comparison isolates the landmark
-count. Changing landmark counts can also change restricted-network search results;
-both optimized counts are tested against pinned MATSim at the corresponding count.
+count. Pinned MATSim's restricted endpoint heuristic can overestimate route costs;
+restricted query correctness is checked with independent Dijkstra tests rather
+than requiring reproduction of those upstream errors.
 The legacy `--memory-efficient-routing` flag
 is accepted with a warning; this benchmark always runs all four cases.
 
@@ -133,8 +134,17 @@ router. The default implementation keeps double precision, the original 16-landm
 selection/count rules, restriction expansion, adjacency order, queue comparisons,
 time-dependent cost evaluation and path reconstruction semantics.
 
-Tests compare exact link/node sequences and bitwise travel times, costs and
-landmark tables. Cases cover overlapping multi-link restrictions, link endpoints,
+Unrestricted tests compare exact link/node sequences and bitwise travel times,
+costs and landmark tables. With turn restrictions, both node and link destinations
+use conservative bounds across all equivalent colored approaches. Consolidated
+landmark rows must not overestimate the cost of reaching a legal goal, and
+dead-end pruning must retain its colored approaches. Node destinations may stop
+before a forbidden continuation; link destinations still check their final turn.
+These corrections can produce shorter routes than pinned MATSim's legacy endpoint
+heuristic. Independent Dijkstra tests check restricted node and link costs;
+landmark storage still matches the pinned implementation.
+
+Cases cover overlapping multi-link restrictions, link endpoints,
 ties, disconnected/tiny networks, unused global IDs, concurrent factory requests,
 and incompatible minimum costs. A controller integration runs two iterations.
 Storage tests cover sparse growth/reset, dense conversion, generation wrap,

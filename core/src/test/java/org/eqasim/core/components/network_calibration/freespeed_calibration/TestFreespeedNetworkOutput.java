@@ -63,7 +63,29 @@ public class TestFreespeedNetworkOutput {
         assertNetwork(run(result.network(), false, null).network(), 1.1);
     }
 
+    @Test
+    public void thresholdCrossingKeepsOneGroupThroughApplicationCalibrationAndExport() throws Exception {
+        Network input = network();
+        double baseSpeed = 50 / 3.6;
+        for (String id : List.of("road", "reverse")) {
+            var link = input.getLinks().get(Id.createLinkId(id));
+            link.setFreespeed(baseSpeed);
+            link.getAttributes().putAttribute("osm:way:highway", "residential");
+        }
+        // Initial factor .8 lowers 50 km/h to 40 km/h, crossing the category threshold
+        // before the first calibration pass. Output must still persist that group's factor.
+        Result calibrated = run(input, true, null);
+        Result restarted = run(calibrated.network(), false, null);
+        for (String id : List.of("road", "reverse")) {
+            var link = restarted.network().getLinks().get(Id.createLinkId(id));
+            assertEquals(baseSpeed, link.getFreespeed(), 0);
+            assertEquals(calibrated.factor(), NetworkCalibrationUtils.readDoubleAttribute(link,
+                    NetworkCalibrationUtils.SPEED_FACTOR_ATTRIBUTE).orElseThrow(), 1e-9);
+        }
+    }
+
     private Result run(Network input, boolean calibrating, Path csv) throws Exception {
+        double baseSpeed = input.getLinks().get(Id.createLinkId("road")).getFreespeed();
         var calibration = new NetworkCalibrationConfigGroup();
         calibration.setActivate(true);
         calibration.setObjective("freespeed");
@@ -92,7 +114,7 @@ public class TestFreespeedNetworkOutput {
         var key = categorizer.getFreespeedCalibrationKey(network.getLinks().get(Id.createLinkId("road")));
         var trips = mock(TripsHandler.class);
         var stats = new FreespeedFactorManager.GroupStats(freespeed);
-        stats.addStat(20, 10, 1, 100, BASE_SPEED);
+        stats.addStat(20, 10, 1, 100, baseSpeed);
         when(trips.routeTrips()).thenReturn(Map.of(key, stats));
         List<Double> simulatedSpeeds = new ArrayList<>();
         var controller = new Controler(scenario);
@@ -116,8 +138,8 @@ public class TestFreespeedNetworkOutput {
                 ? NetworkCalibrationUtils.readDoubleAttribute(network.getLinks().get(Id.createLinkId("road")),
                         NetworkCalibrationUtils.SPEED_FACTOR_ATTRIBUTE).orElse(1.0)
                 : manager.getFactor(key);
-        assertEquals(BASE_SPEED * finalFactor, simulatedSpeeds.getLast(), 1e-9);
-        assertEquals(BASE_SPEED, network.getLinks().get(Id.createLinkId("road")).getFreespeed(), 0);
+        assertEquals(baseSpeed * finalFactor, simulatedSpeeds.getLast(), 1e-9);
+        assertEquals(baseSpeed, network.getLinks().get(Id.createLinkId("road")).getFreespeed(), 0);
         if (calibrating) verify(trips).routeTrips();
         else verifyNoInteractions(trips);
         Network saved = NetworkUtils.createNetwork();
