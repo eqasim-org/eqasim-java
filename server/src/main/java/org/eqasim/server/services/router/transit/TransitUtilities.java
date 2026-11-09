@@ -1,5 +1,7 @@
 package org.eqasim.server.services.router.transit;
 
+import java.util.Map;
+
 public class TransitUtilities {
 	public Double rail_u_h = null;
 	public Double subway_u_h = null;
@@ -9,4 +11,7 @@ public class TransitUtilities {
 	public Double wait_u_h = null;
 	public Double walk_u_h = null;
 	public Double transfer_u = null;
+
+	// fromMode -> toMode -> penalty (raptor cost units, like transfer_u)
+	public Map<String, Map<String, Double>> transfer_penalties = null;
 }

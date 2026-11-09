@@ -1,5 +1,6 @@
 package org.eqasim.server.services.router.transit;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
 import ch.sbb.matsim.routing.pt.raptor.RaptorStopFinder;
 import ch.sbb.matsim.routing.pt.raptor.RaptorTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
+import ch.sbb.matsim.routing.pt.raptor.RequestTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 import jakarta.annotation.Nullable;
@@ -53,7 +55,7 @@ public class TransitRouterService {
 
 	private final RaptorRouteSelector routeSelector = new LeastCostRaptorRouteSelector();
 	private final RaptorInVehicleCostCalculator inVehicleCostCalculator = new DefaultRaptorInVehicleCostCalculator();
-	private final RaptorTransferCostCalculator transferCostCalculator = new DefaultRaptorTransferCostCalculator();
+	private final RaptorTransferCostCalculator defaultTransferCostCalculator = new DefaultRaptorTransferCostCalculator();
 	private final RaptorStopFinder stopFinder = new DefaultRaptorStopFinder(null, null);
 
 	private final Config config;
@@ -95,6 +97,8 @@ public class TransitRouterService {
 
 		RaptorParameters parameters = createParameters(config, configuration, walkConfiguration, appliedUtilities,
 				schedule);
+		RaptorTransferCostCalculator transferCostCalculator = createTransferCostCalculator(appliedUtilities);
+
 		SwissRailRaptor router = new SwissRailRaptor(data, person -> parameters, routeSelector, stopFinder,
 				inVehicleCostCalculator, transferCostCalculator);
 
@@ -401,6 +405,20 @@ public class TransitRouterService {
 		return response;
 	}
 
+	/**
+	 * Mode-to-mode transfer penalties given with the request override the ones
+	 * from the static configuration (--raptorPenalties), so they can be changed
+	 * without restarting the server. The cost is computed as by
+	 * DefaultRaptorTransferCostCalculator (see RequestTransferCostCalculator).
+	 */
+	private RaptorTransferCostCalculator createTransferCostCalculator(@Nullable TransitUtilities utilities) {
+		if (utilities == null || utilities.transfer_penalties == null || utilities.transfer_penalties.isEmpty()) {
+			return defaultTransferCostCalculator;
+		}
+
+		return new RequestTransferCostCalculator(utilities.transfer_penalties);
+	}
+
 	static public record WalkParameters(double beelineWalkFactor, double beelineWalkSpeed_m_s) {
 	}
 
@@ -551,6 +569,7 @@ public class TransitRouterService {
 		copy.wait_u_h = globalUtilities.wait_u_h;
 		copy.walk_u_h = globalUtilities.walk_u_h;
 		copy.transfer_u = globalUtilities.transfer_u;
+		copy.transfer_penalties = copyPenalties(globalUtilities.transfer_penalties);
 
 		if (requestUtilities != null) {
 			if (requestUtilities.rail_u_h != null) {
@@ -584,6 +603,31 @@ public class TransitRouterService {
 			if (requestUtilities.transfer_u != null) {
 				copy.transfer_u = requestUtilities.transfer_u;
 			}
+
+			if (requestUtilities.transfer_penalties != null) {
+				if (copy.transfer_penalties == null) {
+					copy.transfer_penalties = new HashMap<>();
+				}
+
+				for (var entry : requestUtilities.transfer_penalties.entrySet()) {
+					copy.transfer_penalties.computeIfAbsent(entry.getKey(), k -> new HashMap<>())
+							.putAll(entry.getValue());
+				}
+			}
+		}
+
+		return copy;
+	}
+
+	static private Map<String, Map<String, Double>> copyPenalties(Map<String, Map<String, Double>> penalties) {
+		if (penalties == null) {
+			return null;
+		}
+
+		Map<String, Map<String, Double>> copy = new HashMap<>();
+
+		for (var entry : penalties.entrySet()) {
+			copy.put(entry.getKey(), new HashMap<>(entry.getValue()));
 		}
 
 		return copy;
