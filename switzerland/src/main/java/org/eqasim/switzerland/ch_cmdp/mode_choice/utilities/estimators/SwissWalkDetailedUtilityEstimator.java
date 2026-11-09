@@ -181,47 +181,11 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
 
     private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, WalkVariables walkVariables,
                                      SwissPersonVariables personVariables, double utility) {
-        double departureTime = trip.getDepartureTime();
-        int tripIndex = trip.getIndex();
-        String personId = person.getId().toString();
-        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-
-        Map<String, String> walkAttributes = new HashMap<>();
-
-        walkAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
-
-        // person attributes used in utility
-        walkAttributes.put("age", String.valueOf(personVariables.age_a));
-        walkAttributes.put("sex", String.valueOf(personVariables.sex));
-        walkAttributes.put("region", String.valueOf(personVariables.cantonCluster));
-        walkAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
-        walkAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        walkAttributes.put("lowIncome", Utils.isLowIncome(personVariables, parameters) ? "1" : "0");
-        walkAttributes.put("income", String.valueOf(personVariables.income));
-
-        // canton attribute
-        Object cantonObj = person.getAttributes().getAttribute("cantonName");
-        walkAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
-
-        // purposes used in utility
-        walkAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
-        walkAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
-        walkAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
-        walkAttributes.put("destinationEducation", Utils.destinationIsEducation(trip) ? "1" : "0");
-        walkAttributes.put("destinationShopping", Utils.destinationIsShopping(trip) ? "1" : "0");
-        walkAttributes.put("destinationLeisure", Utils.destinationIsLeisure(trip) ? "1" : "0");
-        walkAttributes.put("destinationOther", Utils.destinationIsOther(trip) ? "1" : "0");
-
-        // location/distance used in utility
-        walkAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
-        walkAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        walkAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip, parameters) ? "1" : "0");
-        walkAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
-
-        // main level-of-service term used in utility
-        walkAttributes.put("travelTime_min", String.valueOf(walkVariables.travelTime_min));
-
-        CmdpCalibrationVariables.addCommon(walkAttributes, trip, personVariables, parameters);
-        variablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
+        Map<String, String> attributes = new HashMap<>();
+        CmdpCalibrationVariables.addCommon(attributes, person, trip, personVariables, parameters,
+                PredictorUtils.calculateEuclideanDistance_km(trip));
+        attributes.put("travelTime_min", String.valueOf(walkVariables.travelTime_min));
+        variablesWriter.writeVariables("walk", person.getId().toString(), trip.getIndex(),
+                trip.getDepartureTime(), utility, attributes);
     }
 }

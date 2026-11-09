@@ -275,60 +275,18 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
 
     private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, PtVariables ptVariables,
                                      SwissPersonVariables personVariables, double utility) {
-        double departureTime = trip.getDepartureTime();
-        int tripIndex = trip.getIndex();
-        String personId = person.getId().toString();
-        double euclideanDistance_km = ptVariables.euclideanDistance_km;
-
-        Map<String, String> ptAttributes = new HashMap<>();
-
-        ptAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
-
-        // person attributes used in utility
-        ptAttributes.put("age", String.valueOf(personVariables.age_a));
-        ptAttributes.put("sex", String.valueOf(personVariables.sex));
-        ptAttributes.put("region", String.valueOf(personVariables.cantonCluster));
-        ptAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
-        ptAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        ptAttributes.put("lowIncome", Utils.isLowIncome(personVariables, parameters) ? "1" : "0");
-        ptAttributes.put("income", String.valueOf(personVariables.income));
-
-        // canton attribute
-        Object cantonObj = person.getAttributes().getAttribute("cantonName");
-        ptAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
-
-        // purposes used in utility
-        ptAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
-        ptAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
-        ptAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
-        ptAttributes.put("destinationEducation", Utils.destinationIsEducation(trip) ? "1" : "0");
-        ptAttributes.put("destinationShopping", Utils.destinationIsShopping(trip) ? "1" : "0");
-        ptAttributes.put("destinationLeisure", Utils.destinationIsLeisure(trip) ? "1" : "0");
-        ptAttributes.put("destinationOther", Utils.destinationIsOther(trip) ? "1" : "0");
-
-        // location/distance used in utility
-        ptAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
-        ptAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        ptAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip, parameters) ? "1" : "0");
-        ptAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
-
-        // service quality used in utility
-        ptAttributes.put("homePtQuality", String.valueOf(Utils.getPtQuality(personVariables.ovgk)));
-        ptAttributes.put("destinationPtQuality", String.valueOf(Utils.getDestinationPtQuality(trip)));
-
-        // PT level-of-service terms used in utility
-        ptAttributes.put("inVehicleTime_min", String.valueOf(inVehicleTime(ptVariables)));
-        ptAttributes.put("accessEgressTime_min", String.valueOf(acessEgressTime(ptVariables)));
-        ptAttributes.put("waitingTime_min", String.valueOf(waitingTime(ptVariables)));
-        ptAttributes.put("numberOfLineSwitches", String.valueOf(lineSwitches(ptVariables)));
-
-        // monetary terms used in utility
-        ptAttributes.put("cost_MU", String.valueOf(ptVariables.cost_MU));
-
-        CmdpCalibrationVariables.addCommon(ptAttributes, trip, personVariables, parameters);
-        ptAttributes.put("ptRegionalRadius_km", String.valueOf(swissCostParameters.ptRegionalRadius_km));
-        variablesWriter.writeVariables("pt", personId, tripIndex, departureTime, utility, ptAttributes);
+        Map<String, String> attributes = new HashMap<>();
+        CmdpCalibrationVariables.addCommon(attributes, person, trip, personVariables, parameters,
+                ptVariables.euclideanDistance_km);
+        attributes.put("homePtQuality", String.valueOf(Utils.getPtQuality(personVariables.ovgk)));
+        attributes.put("destinationPtQuality", String.valueOf(Utils.getDestinationPtQuality(trip)));
+        attributes.put("ptRegionalRadius_km", String.valueOf(swissCostParameters.ptRegionalRadius_km));
+        attributes.put("inVehicleTime_min", String.valueOf(inVehicleTime(ptVariables)));
+        attributes.put("accessEgressTime_min", String.valueOf(acessEgressTime(ptVariables)));
+        attributes.put("waitingTime_min", String.valueOf(waitingTime(ptVariables)));
+        attributes.put("numberOfLineSwitches", String.valueOf(lineSwitches(ptVariables)));
+        attributes.put("cost_MU", String.valueOf(ptVariables.cost_MU));
+        variablesWriter.writeVariables("pt", person.getId().toString(), trip.getIndex(),
+                trip.getDepartureTime(), utility, attributes);
     }
-
-
 }
