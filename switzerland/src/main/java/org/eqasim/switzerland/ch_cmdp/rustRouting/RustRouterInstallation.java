@@ -24,7 +24,7 @@ import java.util.zip.ZipFile;
 final class RustRouterInstallation {
     private static final Logger LOG = LogManager.getLogger(RustRouterInstallation.class);
     private static final String REPOSITORY =
-            "https://github.com/Dib-AEK/MultiModalMatsimRouter.git";
+            "https://github.com/matsim-eth/RustRouter.git";
     private static final long MAX_ARCHIVE_BYTES = 100 * 1024 * 1024;
     private static final long MAX_LIBRARY_BYTES = 64 * 1024 * 1024;
 
@@ -261,7 +261,7 @@ final class RustRouterInstallation {
                         .build();
         URI api =
                 URI.create(
-                        "https://api.github.com/repos/Dib-AEK/MultiModalMatsimRouter/releases/tags/"
+                        "https://api.github.com/repos/matsim-eth/RustRouter/releases/tags/"
                                 + version);
         byte[] body;
         try (var input = request(client, api, "application/vnd.github+json", token)) {

@@ -7,7 +7,7 @@ import java.nio.file.*;
 import java.util.*;
 
 final class LatestRustRouterBuild {
-    private static final String REPOSITORY = "https://github.com/Dib-AEK/MultiModalMatsimRouter.git";
+    private static final String REPOSITORY = "https://github.com/matsim-eth/RustRouter.git";
 
     record Source(Path directory, Path cache, String revision, boolean reusable) {}
 
