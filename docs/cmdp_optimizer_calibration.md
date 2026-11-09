@@ -54,7 +54,7 @@ constants are used for all five modes. Individual constants can be optimized
 using bounds such as `swissCanton.car.vaud:0.2`; output retains Java's canton-map
 YAML format.
 
-Fresh checkouts default to `https://github.com/Dib-AEK/EqasimParametersCalibration.git`,
+Fresh checkouts default to `https://github.com/matsim-eth/EqasimParametersCalibration.git`,
 branch `polars`, pinned commit `07d401ab8f966e4fa1b4a4aa4034d45e424c093d`.
 An existing config that explicitly sets an older `repoCommit` or another
 `optimizerPath` overrides these defaults; update those entries when switching

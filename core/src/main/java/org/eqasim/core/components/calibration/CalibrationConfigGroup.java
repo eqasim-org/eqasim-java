@@ -13,7 +13,7 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
     private boolean runCalibration = false;
     private int startIteration = 2;
 
-    private String repoUrl = "https://github.com/Dib-AEK/EqasimParametersCalibration.git";
+    private String repoUrl = "https://github.com/matsim-eth/EqasimParametersCalibration.git";
     private String repoBranch = "polars";
     private String repoCommit = "07d401ab8f966e4fa1b4a4aa4034d45e424c093d";
 
