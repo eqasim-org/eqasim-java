@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpCalibrationVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.WalkUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.WalkPredictor;
@@ -220,6 +221,7 @@ public class SwissWalkDetailedUtilityEstimator extends WalkUtilityEstimator {
         // main level-of-service term used in utility
         walkAttributes.put("travelTime_min", String.valueOf(walkVariables.travelTime_min));
 
+        CmdpCalibrationVariables.addCommon(walkAttributes, trip, personVariables, parameters);
         variablesWriter.writeVariables("walk", personId, tripIndex, departureTime, utility, walkAttributes);
     }
 }

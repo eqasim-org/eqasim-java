@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpCalibrationVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
@@ -252,6 +253,7 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
         // main level-of-service term used in utility
         cpAttributes.put("travelTime_min", String.valueOf(cpVariables.travelTime_min));
 
+        CmdpCalibrationVariables.addCommon(cpAttributes, trip, personVariables, parameters);
         variablesWriter.writeVariables("car_passenger", personId, tripIndex, departureTime, utility, cpAttributes);
     }
 

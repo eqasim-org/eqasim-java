@@ -15,9 +15,9 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
 
     private String repoUrl = "https://github.com/Dib-AEK/EqasimParametersCalibration.git";
     private String repoBranch = "polars";
-    private String repoCommit = "b72fae6c3860169f5a837d4648dbf4b2dc7ac3a0";
+    private String repoCommit = "07d401ab8f966e4fa1b4a4aa4034d45e424c093d";
 
-    private String optimizerPath = "optimizer";
+    private String optimizerPath = "EqasimParametersCalibration";
     private String optimizer = "cmaes";
     private String metric = "mse";
     private String selector = "MultinomialLogit";
@@ -79,7 +79,10 @@ public class CalibrationConfigGroup extends ReflectiveConfigGroup {
                         "                                 'TNC', 'COBYLA','COBYQA','SLSQP','trust-constr','dogleg','trust-ncg',\n" +
                         "                                 'trust-exact','trust-krylov'");
         comments.put(OPTIMIZER_PATH,
-                "The path to the python file that runs optimization.");
+                "Optimizer checkout directory containing run.py; relative to the working directory. A missing checkout is cloned using repoUrl and repoCommit.");
+        comments.put(REPO_URL, "Git repository cloned when the optimizer checkout is missing.");
+        comments.put(REPO_BRANCH, "Branch used for a fresh clone when repoCommit is empty.");
+        comments.put(REPO_COMMIT, "Pinned optimizer commit for fresh clones. Existing local checkouts are preserved.");
         comments.put(METRIC,
                 "The loss function to minimise. Metrics: mse, mae, cosine, kl, js, hellinger, tv.");
         comments.put(MAX_EVAL,

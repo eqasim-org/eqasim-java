@@ -16,6 +16,7 @@ import org.matsim.contribs.discrete_mode_choice.model.trip_based.TripEstimator;
 import org.matsim.contribs.discrete_mode_choice.model.trip_based.candidates.TripCandidate;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.eqasim.core.components.calibration.writer.CalibrationVariableReferences;
 
 /** Worker-local cache. Trip equality is identity; the upstream trip hash is constant. */
 public class CachedTripEstimator implements TripEstimator {
@@ -31,19 +32,27 @@ public class CachedTripEstimator implements TripEstimator {
     @Override
     public TripCandidate estimateTrip(Person person, String mode, DiscreteModeChoiceTrip trip,
             List<TripCandidate> previousCandidates) {
+        CalibrationVariableReferences.beginPerson(person);
         if (person != currentPerson) {
             for (var trips : cache.values()) trips.clear();
             currentPerson = person;
         }
         var trips = cache.get(mode);
-        if (trips == null) return delegate.estimateTrip(person, mode, trip, previousCandidates);
+        if (trips == null) return estimateAndBind(person, mode, trip, previousCandidates);
         var departures = trips.computeIfAbsent(trip, ignored -> new Long2ObjectOpenHashMap<>(2));
         long departure = (long) Math.ceil(trip.getDepartureTime());
         TripCandidate candidate = departures.get(departure);
         if (candidate == null) {
-            candidate = delegate.estimateTrip(person, mode, trip, previousCandidates);
+            candidate = estimateAndBind(person, mode, trip, previousCandidates);
             departures.put(departure, candidate);
         }
+        return candidate;
+    }
+
+    private TripCandidate estimateAndBind(Person person, String mode, DiscreteModeChoiceTrip trip,
+            List<TripCandidate> previousCandidates) {
+        TripCandidate candidate = delegate.estimateTrip(person, mode, trip, previousCandidates);
+        CalibrationVariableReferences.bind(candidate);
         return candidate;
     }
 }

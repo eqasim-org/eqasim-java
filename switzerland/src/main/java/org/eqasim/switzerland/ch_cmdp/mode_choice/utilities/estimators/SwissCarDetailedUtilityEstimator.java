@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpCalibrationVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
@@ -292,6 +293,9 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
         carAttributes.put("cost_MU", String.valueOf(carVariables.cost_MU));
         carAttributes.put("parking_cost_MU", String.valueOf(parkingCost_MU));
 
+        CmdpCalibrationVariables.addCommon(carAttributes, trip, personVariables, parameters);
+        carAttributes.put("destinationCity", getMainCity(trip));
+        carAttributes.put("carASC", String.valueOf(estimateAgentUtility(person)));
         variablesWriter.writeVariables("car", personId, tripIndex, departureTime, utility, carAttributes);
     }
 

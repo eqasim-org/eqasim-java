@@ -60,9 +60,9 @@ public class CmdpOptimizer extends StandardOptimizer {
             args.put("--modes-in-loss", "car,pt,walk,bike,car_passenger");
             args.put("--beta-decay-method", "constant");
             // Append to command list
-            args.forEach((key, value) -> {
+            args.forEach((key, v) -> {
                 command.add(key);
-                command.add(value);
+                command.add(v);
             });
 
             // Execute the Python script
@@ -86,8 +86,17 @@ public class CmdpOptimizer extends StandardOptimizer {
 
             int exitCode = process.waitFor();
             logger.info("Calibration script exited with code: " + exitCode+"\n\n");
+            if (exitCode != 0) {
+                throw new IllegalStateException("CMDP optimizer failed with exit code " + exitCode);
+            }
+            if (!java.nio.file.Files.isRegularFile(java.nio.file.Path.of(newParametersFilePath))) {
+                throw new IllegalStateException("CMDP optimizer did not write " + newParametersFilePath);
+            }
 
-        } catch (IOException | InterruptedException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("CMDP optimizer interrupted", e);
+        } catch (IOException e) {
             throw new RuntimeException("Failed to execute calibration script", e);
         }
     }

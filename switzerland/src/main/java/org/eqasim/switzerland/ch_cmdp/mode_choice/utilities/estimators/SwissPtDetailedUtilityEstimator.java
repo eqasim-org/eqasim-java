@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpCalibrationVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.PtUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PtPredictor;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.PtVariables;
@@ -324,6 +325,8 @@ public class SwissPtDetailedUtilityEstimator extends PtUtilityEstimator {
         // monetary terms used in utility
         ptAttributes.put("cost_MU", String.valueOf(ptVariables.cost_MU));
 
+        CmdpCalibrationVariables.addCommon(ptAttributes, trip, personVariables, parameters);
+        ptAttributes.put("ptRegionalRadius_km", String.valueOf(swissCostParameters.ptRegionalRadius_km));
         variablesWriter.writeVariables("pt", personId, tripIndex, departureTime, utility, ptAttributes);
     }
 
