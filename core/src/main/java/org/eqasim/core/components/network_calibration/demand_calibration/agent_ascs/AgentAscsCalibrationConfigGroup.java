@@ -9,7 +9,6 @@ import java.util.Map;
 public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "agentAscsCalibration";
 
-    private static final String ACTIVATE = "activate";
     private static final String UPDATE_INTERVAL = "updateInterval";
     private static final String WARMUP_ITERATIONS = "warmupIterations";
     private static final String LEARNING_RATE = "learningRate";
@@ -37,7 +36,6 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     private static final String GRID_REBUILD_MAX_POPULATIONS = "gridRebuildMaxPopulations";
     private static final String RESET_AGENT_ASCS_TO_ZERO = "resetAgentAscsToZero";
 
-    private boolean activate = false;
     private int updateInterval = 0;
     private int warmupIterations = 20;
     private double learningRate = 2.0;
@@ -72,7 +70,6 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
     @Override
     public Map<String, String> getComments() {
         Map<String, String> comments = super.getComments();
-        comments.put(ACTIVATE, "Whether per-agent car-ASC calibration is active (default: false)");
         comments.put(UPDATE_INTERVAL, "Iterations between ASC updates; values <= 0 use  1/(DMC strategy weight) (default: 0)");
         comments.put(WARMUP_ITERATIONS, "Iterations before the first ASC update (default: 20)");
         comments.put(LEARNING_RATE, "Initial ASC learning rate (default: 2.0)");
@@ -102,8 +99,6 @@ public class AgentAscsCalibrationConfigGroup extends ReflectiveConfigGroup {
         return comments;
     }
 
-    @StringGetter(ACTIVATE) public boolean isActivated() { return activate; }
-    @StringSetter(ACTIVATE) public void setActivate(boolean value) { activate = value; }
     @StringGetter(UPDATE_INTERVAL) public int getUpdateInterval() { return updateInterval; }
     @StringSetter(UPDATE_INTERVAL) public void setUpdateInterval(int value) { updateInterval = value; }
     @StringGetter(WARMUP_ITERATIONS) public int getWarmupIterations() { return warmupIterations; }

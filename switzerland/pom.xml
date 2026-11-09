@@ -12,6 +12,18 @@
 	</parent>
 
 	<dependencies>
+		<!-- Already supplied by MATSim; used directly for the temporary scenario-attribute archive. -->
+		<dependency>
+			<groupId>org.lz4</groupId>
+			<artifactId>lz4-java</artifactId>
+			<version>1.8.0</version>
+		</dependency>
+		<!-- Already used by GeoPackage; declared directly for the PT cache's indexed binary store. -->
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.41.2.2</version>
+		</dependency>
 		<dependency>
 			<groupId>org.eqasim</groupId>
 			<artifactId>core</artifactId>
@@ -19,10 +31,60 @@
 		</dependency>
 	</dependencies>
 
+	<properties>
+		<!-- Override for a different checkout location or Cargo installation. -->
+		<rust.router.project></rust.router.project>
+		<rust.router.library></rust.router.library>
+		<!-- Portable default for the common Windows workstation -> Linux cluster deployment. -->
+		<rust.router.platforms>host,linux-x86_64</rust.router.platforms>
+		<rust.router.nativeDirectory></rust.router.nativeDirectory>
+		<!-- Resolve main once per build; all bundled platforms use the same immutable commit. -->
+		<rust.router.version>latest</rust.router.version>
+		<rust.router.bundle.skip>true</rust.router.bundle.skip>
+		<cargo.executable>cargo</cargo.executable>
+	</properties>
+	<build>
+		<resources>
+			<resource><directory>src/main/resources</directory></resource>
+		</resources>
+		<plugins>
+			<!-- Runs after Java compilation so packaging reuses the same installer as the application. -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId><artifactId>exec-maven-plugin</artifactId><version>3.5.0</version>
+				<executions><execution><id>bundle-rust-pt-router</id><phase>process-classes</phase><goals><goal>java</goal></goals>
+					<configuration>
+						<skip>${rust.router.bundle.skip}</skip>
+						<mainClass>org.eqasim.switzerland.ch_cmdp.rustRouting.RustRouterBundler</mainClass>
+						<cleanupDaemonThreads>false</cleanupDaemonThreads>
+						<arguments>
+							<argument>--output=${project.build.outputDirectory}</argument>
+							<argument>--source=${rust.router.project}</argument>
+							<argument>--library=${rust.router.library}</argument>
+							<argument>--version=${rust.router.version}</argument>
+							<argument>--platforms=${rust.router.platforms}</argument>
+							<argument>--native-directory=${rust.router.nativeDirectory}</argument>
+						</arguments>
+						<systemProperties>
+							<systemProperty><key>eqasim.rust.cargo</key><value>${cargo.executable}</value></systemProperty>
+							<!-- Build-time credentials only; compute nodes use the libraries in the jar. -->
+							<systemProperty><key>eqasim.rust.gitCredentials</key><value>true</value></systemProperty>
+						</systemProperties>
+					</configuration>
+				</execution></executions>
+			</plugin>
+		</plugins>
+	</build>
+
 	<profiles>
+		<!-- Compatibility profile: standalone now bundles the native router by default. -->
+		<profile>
+			<id>rust-router</id>
+			<properties><rust.router.bundle.skip>false</rust.router.bundle.skip></properties>
+		</profile>
 
 		<profile>
 			<id>standalone</id>
+			<properties><rust.router.bundle.skip>false</rust.router.bundle.skip></properties>
 			<build>
 				<finalName>switzerland</finalName>
 				<plugins>
@@ -47,6 +109,7 @@
 												<Implementation-Version>
 													${parent.groupId}</Implementation-Version>
 												<Main-Class>org.eqasim.switzerland.ch_cmdp.RunSimulation</Main-Class>
+												<Enable-Native-Access>ALL-UNNAMED</Enable-Native-Access>
 												<Add-Opens>java.base/jdk.internal.misc java.base/java.lang.invoke</Add-Opens>
 											</manifestEntries>
 										</transformer>

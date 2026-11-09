@@ -1,6 +1,8 @@
 package org.eqasim.switzerland.ch_cmdp.memory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,13 +83,30 @@ public final class ScenarioAttributeCleaner {
 
     /** Returns the number of removed attribute entries; call before controller construction. */
     public static long clean(Scenario scenario) {
+        return clean(scenario, null);
+    }
+
+    /** Cleans as usual, saving removed stable-object metadata for final output restoration. */
+    public static ScenarioAttributeArchive cleanAndArchive(Scenario scenario) throws IOException {
+        return cleanAndArchive(scenario, null);
+    }
+
+    public static ScenarioAttributeArchive cleanAndArchive(Scenario scenario, Path temporaryParent) throws IOException {
+        try (var archive = new ScenarioAttributeArchive.Builder()) {
+            clean(scenario, archive);
+            return archive.finish(scenario, temporaryParent);
+        } catch (UncheckedIOException e) { throw e.getCause(); }
+    }
+
+    private static long clean(Scenario scenario, ScenarioAttributeArchive.Builder archive) {
         Set<String> configured = new HashSet<>();
         scenario.getConfig().getModules().values().forEach(group -> collectConfiguredAttributes(group, configured));
         Map<String, Long> removed = new TreeMap<>();
 
         scenario.getPopulation().getPersons().values().forEach(person -> {
-            consolidateHomeCoordinates(person.getAttributes(), configured, removed);
-            retain(person.getAttributes(), PERSON, configured, "persons", removed);
+            consolidateHomeCoordinates(person.getAttributes(), configured, removed, archive, person.getId().toString());
+            retain(person.getAttributes(), PERSON, configured, "persons", removed, archive,
+                    ScenarioAttributeArchive.PERSON, person.getId().toString());
             person.getPlans().forEach(plan -> {
                 retain(plan.getAttributes(), PLAN, configured, "plans", removed);
                 plan.getPlanElements().forEach(element -> {
@@ -100,12 +119,14 @@ public final class ScenarioAttributeCleaner {
             });
         });
         scenario.getNetwork().getLinks().values().forEach(link ->
-                retain(link.getAttributes(), LINK, configured, "links", removed));
+                retain(link.getAttributes(), LINK, configured, "links", removed, archive,
+                        ScenarioAttributeArchive.LINK, link.getId().toString()));
         scenario.getNetwork().getNodes().values().forEach(node ->
                 retain(node.getAttributes(), Set.of(), configured, "nodes", removed));
         // Household attributes have already been copied; preserve household membership and income fields.
         scenario.getHouseholds().getHouseholds().values().forEach(household ->
-                retain(household.getAttributes(), Set.of(), configured, "households", removed));
+                retain(household.getAttributes(), Set.of(), configured, "households", removed, archive,
+                        ScenarioAttributeArchive.HOUSEHOLD, household.getId().toString()));
         scenario.getActivityFacilities().getFacilities().values().forEach(facility ->
                 retain(facility.getAttributes(), Set.of(), configured, "facilities", removed));
         scenario.getTransitSchedule().getFacilities().values().forEach(stop ->
@@ -128,7 +149,7 @@ public final class ScenarioAttributeCleaner {
     }
 
     private static void consolidateHomeCoordinates(Attributes attributes, Set<String> configured,
-                                                   Map<String, Long> removed) {
+                                                   Map<String, Long> removed, ScenarioAttributeArchive.Builder archive, String personId) {
         Object legacyX = attributes.getAttribute("home_coordinate_x");
         Object legacyY = attributes.getAttribute("home_coordinate_y");
         if (!(legacyX instanceof Number x) || !(legacyY instanceof Number y)) return;
@@ -137,6 +158,10 @@ public final class ScenarioAttributeCleaner {
         // Calibration already falls back to the complete legacy pair if either
         // normal coordinate is absent. Make that pair available to mode choice too.
         if (normalX == null || normalY == null) {
+            if (archive != null) {
+                archive.capturePersonChange(personId, attributes, "home_x", legacyX);
+                archive.capturePersonChange(personId, attributes, "home_y", legacyY);
+            }
             attributes.putAttribute("home_x", legacyX);
             attributes.putAttribute("home_y", legacyY);
             normalX = legacyX;
@@ -144,11 +169,12 @@ public final class ScenarioAttributeCleaner {
         }
         if (normalX instanceof Number nx && normalY instanceof Number ny
                 && nx.doubleValue() == x.doubleValue() && ny.doubleValue() == y.doubleValue()) {
-            for (String key : Set.of("home_coordinate_x", "home_coordinate_y")) {
-                if (!configured.contains(key)) {
-                    attributes.removeAttribute(key);
-                    removed.merge("persons." + key, 1L, Long::sum);
-                }
+            var aliases = new ArrayList<String>();
+            for (String key : Set.of("home_coordinate_x", "home_coordinate_y")) if (!configured.contains(key)) aliases.add(key);
+            if (archive != null) archive.capture(ScenarioAttributeArchive.PERSON, personId, attributes, aliases);
+            for (String key : aliases) {
+                attributes.removeAttribute(key);
+                removed.merge("persons." + key, 1L, Long::sum);
             }
         }
         // Keep conflicting pairs: removing them would discard distinct input data.
@@ -168,6 +194,12 @@ public final class ScenarioAttributeCleaner {
 
     private static void retain(Attributes attributes, Set<String> required, Set<String> configured,
                                String category, Map<String, Long> removed) {
+        retain(attributes, required, configured, category, removed, null, 0, null);
+    }
+
+    private static void retain(Attributes attributes, Set<String> required, Set<String> configured,
+                               String category, Map<String, Long> removed, ScenarioAttributeArchive.Builder archive,
+                               int kind, String id) {
         if (attributes.isEmpty()) return;
         // Attributes.getAsMap() is a view whose behavior is undefined during mutation.
         var unused = new ArrayList<String>();
@@ -178,6 +210,7 @@ public final class ScenarioAttributeCleaner {
                 unused.add(name);
             }
         }
+        if (archive != null) archive.capture(kind, id, attributes, unused);
         if (unused.isEmpty()) return;
         if (unused.size() == attributes.size()) {
             // clear() reuses AttributesImpl's shared empty arrays; removing keys
@@ -190,10 +223,10 @@ public final class ScenarioAttributeCleaner {
     }
 
     private static void collectConfiguredAttributes(ConfigGroup group, Set<String> names) {
-        group.getParams().forEach((parameter, value) -> {
-            if (ATTRIBUTE_NAME_PARAMETERS.contains(parameter) && value != null && !value.isBlank()
-                    && !"null".equalsIgnoreCase(value)) {
-                names.add("personFilter".equals(parameter) && value.startsWith("!") ? value.substring(1) : value);
+        group.getParams().forEach((parameter, v) -> {
+            if (ATTRIBUTE_NAME_PARAMETERS.contains(parameter) && v != null && !v.isBlank()
+                    && !"null".equalsIgnoreCase(v)) {
+                names.add("personFilter".equals(parameter) && v.startsWith("!") ? v.substring(1) : v);
             }
         });
         group.getParameterSets().values().forEach(groups ->

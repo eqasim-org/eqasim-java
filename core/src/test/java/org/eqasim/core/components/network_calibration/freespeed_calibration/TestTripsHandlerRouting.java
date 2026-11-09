@@ -41,7 +41,7 @@ public class TestTripsHandlerRouting {
         var collector = new FloatTravelTimeCalculator(network, ConfigUtils.createConfig().travelTimeCalculator());
         collector.prepareForRouting();
         var config = new NetworkCalibrationConfigGroup(); config.setActivate(true); config.setCalibrate(true);
-        var settings = config.getFreeSpeedCalibrationConfigGroup(); settings.setActivate(true);
+        var settings = config.getFreeSpeedCalibrationConfigGroup(); config.setObjective("freespeed");
         settings.setMinTripDistance(1); settings.setMinTripTravelTime(1);
         var file = temporary.newFile("observed.csv").toPath();
         Files.writeString(file, "identifier,departure_x,departure_y,arrival_x,arrival_y,departure_time,travel_time,traveled_distance\n"
@@ -93,7 +93,7 @@ public class TestTripsHandlerRouting {
             };
         };
         var config = new NetworkCalibrationConfigGroup(); config.setActivate(true); config.setCalibrate(true);
-        var settings = config.getFreeSpeedCalibrationConfigGroup(); settings.setActivate(true);
+        var settings = config.getFreeSpeedCalibrationConfigGroup(); config.setObjective("freespeed");
         settings.setMinTripDistance(1); settings.setMinTripTravelTime(1);
         var file = Files.createTempFile("calibration-observed", ".csv");
         try {

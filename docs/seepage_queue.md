@@ -38,7 +38,9 @@ The repository therefore includes a version-pinned `QueueWithBuffer` adaptation
 from **MATSim 2026.0-2025w33**, retaining its class identity and GPL license.
 Seepage queue construction and dispatch use the new selector. The lane's exit
 buffer and previous-vehicle metadata also use compact storage as described in
-[fast_qsim.md](fast_qsim.md). Existing explicit `VehicleQ` overrides continue to work.
+[fast_qsim.md](fast_qsim.md). Existing explicit `VehicleQ` overrides continue to work. They use the reusable
+`SeepageVehicleSelector` fallback, preserving native tie order without allocating
+a fresh passing queue for each lookup.
 
 When upgrading MATSim, update this source from the new dependency and reapply
 the selector and exit-buffer adaptations. Do not carry the old lane mechanics

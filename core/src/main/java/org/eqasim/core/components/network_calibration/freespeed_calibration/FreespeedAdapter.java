@@ -34,6 +34,7 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
     private final boolean isActivated;
     private final boolean isCalibrating;
     private final boolean hasFactorsFile;
+    private final boolean useLinkAttributes;
     private final PenaltiesAdapter penaltiesAdapter;
     private final TripsHandler tripsHandler;
 
@@ -57,19 +58,29 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
         this.isActivated = config.isFreeSpeedFactorActivated() && config.isActivated();
         this.isCalibrating = this.isActivated && config.isFreeSpeedFactorCalibrationActivated();
         this.hasFactorsFile = freespeedConfig.hasFactorsFile();
+        this.useLinkAttributes = !isCalibrating && !hasFactorsFile;
 
         if (isActivated) {
             for (Link link : network.getLinks().values()) {
-                if (categorizer.getFreespeedCalibrationKey(link) != null) {
+                boolean eligible;
+                if (useLinkAttributes) {
+                    OptionalDouble factor = NetworkCalibrationUtils.readDoubleAttribute(link, NetworkCalibrationUtils.SPEED_FACTOR_ATTRIBUTE);
+                    eligible = categorizer.isCarLink(link) && factor.isPresent() && factor.getAsDouble() > 0;
+                } else {
+                    eligible = categorizer.getFreespeedCalibrationKey(link) != null;
+                }
+                if (eligible) {
                     baseFreespeeds.put(link.getId(), link.getFreespeed());
                 }
             }
 
-            Map<FreespeedCalibrationKey, Double> initialFactors = loadFactorsFromNetworkAttributes();
-            if (hasFactorsFile) {
-                initialFactors.putAll(FreespeedCsvHandler.readFactors(freespeedConfig.getFactorsFile()));
+            if (!useLinkAttributes) {
+                Map<FreespeedCalibrationKey, Double> initialFactors = loadFactorsFromNetworkAttributes();
+                if (hasFactorsFile) {
+                    initialFactors.putAll(FreespeedCsvHandler.readFactors(freespeedConfig.getFactorsFile()));
+                }
+                factorManager.loadFactors(initialFactors);
             }
-            factorManager.loadFactors(initialFactors);
             applyFactors();
 
             if (isCalibrating) {
@@ -80,52 +91,80 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
                 logger.info("Freespeed updates will start at iteration {} and then repeat every {} iterations",
                         updateStartIteration, updateInterval);
             } else {
-                logger.info("Freespeed objective is active in fixed mode. Factors are loaded from CSV when provided, otherwise from link attributes.");
+                logger.info("Freespeed objective is active in fixed mode. {}",
+                        useLinkAttributes ? "Using each link's speedFactor directly, without regional grouping."
+                                : "Using grouped factors with CSV overrides.");
             }
         }
     }
 
     @Override
     public void notifyIterationStarts(IterationStartsEvent event) {
-        if (isActivated && isCalibrating) {
-            int iteration = event.getIteration();
-            if (shouldUpdateAtIteration(iteration)) {
-                logger.info("Triggering freespeed calibration update at iteration {} (start={}, interval={})",
-                        iteration, updateStartIteration, updateInterval);
-                penaltiesAdapter.disable(); // do not use penalties during this routing (freespeedDisutility is used, but keep this here in case we change it at some point, this is safer)
-                Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats;
-                try {
-                    groupStats = tripsHandler.routeTrips();
-                } finally {
-                    penaltiesAdapter.enable(); // also restore penalties if routing fails
-                }
-
-                if (groupStats.isEmpty()) {
-                    logger.warn("No valid group stats collected at iteration {}. Factors will remain unchanged. " +
-                                    "Check observed trips coverage, acceptance filters, and minTripsPerGroup.",
-                            iteration);
-                }
-
-                factorManager.updateFactors(groupStats, iteration);
-                applyFactors();
-                saveOutputs(iteration, groupStats);
-            }
-
+        long start = System.nanoTime();
+        int iteration = event.getIteration();
+        boolean updateScheduled = isActivated && isCalibrating && shouldUpdateAtIteration(iteration);
+        boolean completed = false;
+        try {
+            if (updateScheduled) calibrate(iteration);
+            completed = true;
+        } finally {
+            logger.info("Freespeed iteration-start listener: iteration={}, updateScheduled={}, completed={}, seconds={}",
+                    iteration, updateScheduled, completed, (System.nanoTime() - start) / 1e9);
         }
+    }
+
+    private void calibrate(int iteration) {
+        logger.info("Triggering freespeed calibration update at iteration {} (start={}, interval={})",
+                iteration, updateStartIteration, updateInterval);
+        penaltiesAdapter.disable();
+        Map<FreespeedCalibrationKey, FreespeedFactorManager.GroupStats> groupStats;
+        try {
+            groupStats = tripsHandler.routeTrips();
+        } finally {
+            penaltiesAdapter.enable(); // Restore penalties even if routing fails.
+        }
+        if (groupStats.isEmpty()) {
+            logger.warn("No valid group stats collected at iteration {}. Factors will remain unchanged. " +
+                    "Check observed trips coverage, acceptance filters, and minTripsPerGroup.", iteration);
+        }
+        long start = System.nanoTime();
+        factorManager.updateFactors(groupStats, iteration);
+        logger.info("Freespeed factor update: iteration={}, seconds={}", iteration, (System.nanoTime() - start) / 1e9);
+        start = System.nanoTime();
+        applyFactors();
+        logger.info("Freespeed factor application: iteration={}, seconds={}", iteration, (System.nanoTime() - start) / 1e9);
+        start = System.nanoTime();
+        saveOutputs(iteration, groupStats);
+        logger.info("Freespeed diagnostics output: iteration={}, seconds={}", iteration, (System.nanoTime() - start) / 1e9);
     }
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        // No action needed at iteration end for this class
+        if (isActivated && event.isLastIteration()) {
+            // MATSim's core shutdown listeners write output_network before user
+            // shutdown listeners run. Prepare the network while still in the
+            // final iteration, also when applying fixed factors without calibration.
+            restoreBaseFreespeedsAndStoreFactors();
+        }
     }
 
     @Override
     public void notifyShutdown(ShutdownEvent event) {
-        if (!isCalibrating) {
+        if (!isActivated) {
             return;
         }
 
-        // inject back the factors to link attributes
+        // Fallback for interrupted runs. On normal completion the network was
+        // already restored before MATSim's output writer ran.
+        restoreBaseFreespeedsAndStoreFactors();
+
+        if (isCalibrating) {
+            String filename = outputHierarchy.getOutputFilename("final_freespeed_factors_by_group.csv");
+            FreespeedCsvHandler.writeFactors(filename, factorManager.getFactorsSnapshot());
+        }
+    }
+
+    private void restoreBaseFreespeedsAndStoreFactors() {
         int restored = 0;
         int persisted = 0;
         for (Link link : network.getLinks().values()) {
@@ -135,6 +174,10 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
 
             link.setFreespeed(baseFreespeeds.get(link.getId()));
             restored++;
+
+            if (useLinkAttributes) {
+                continue; // Preserve each stored factor exactly, including regional differences.
+            }
 
             FreespeedCalibrationKey key = categorizer.getFreespeedCalibrationKey(link);
             if (key == null) {
@@ -148,9 +191,6 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
         logger.info("Restored base freespeeds for {} links and persisted '{}' for {} links.",
                 restored, NetworkCalibrationUtils.SPEED_FACTOR_ATTRIBUTE, persisted);
 
-        // save the factors in a separate file that can be used by python
-        String filename = outputHierarchy.getOutputFilename("final_freespeed_factors_by_group.csv");
-        FreespeedCsvHandler.writeFactors(filename, factorManager.getFactorsSnapshot());
     }
 
     public boolean shouldUpdateAtIteration(int iteration) {
@@ -161,6 +201,15 @@ public class FreespeedAdapter implements IterationEndsListener, IterationStartsL
     }
 
     private void applyFactors() {
+        if (useLinkAttributes) {
+            baseFreespeeds.forEach((id, baseSpeed) -> {
+                Link link = network.getLinks().get(id);
+                double factor = NetworkCalibrationUtils.readDoubleAttribute(link,
+                        NetworkCalibrationUtils.SPEED_FACTOR_ATTRIBUTE).orElse(1.0);
+                link.setFreespeed(Math.max(0.1, baseSpeed * factor));
+            });
+            return;
+        }
         for (Link link : network.getLinks().values()) {
             FreespeedCalibrationKey key = categorizer.getFreespeedCalibrationKey(link);
             if (key == null) {

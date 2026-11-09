@@ -149,20 +149,25 @@ public final class DsimIntegration2026 implements DsimIntegration {
             prepareCapacityFreeBikeVehicles(scenario);
             DsimBikeNetworkAdapter.adapt(scenario.getNetwork());
         }
-        long reset = 0;
+        invalidateBikeRoutes(scenario);
+    }
+
+    /** Every DSim run prepares fresh bike routes for its teleportation mode or isolated network layer. */
+    private void invalidateBikeRoutes(Scenario scenario) {
+        long cleared = 0;
         for (var person : scenario.getPopulation().getPersons().values()) {
             for (var plan : person.getPlans()) {
                 for (var element : plan.getPlanElements()) {
                     if (element instanceof Leg leg && TransportMode.bike.equals(leg.getMode())) {
-                        // PrepareForSim recalculates all affected plans, including saved output plans.
                         leg.setRoute(null);
                         leg.setTravelTimeUndefined();
-                        reset++;
+                        cleared++;
                     }
                 }
             }
         }
-        log.info("DSim: invalidated {} bicycle legs so they are rerouted for the selected DSim bicycle behavior", reset);
+        log.info("DSim: cleared {} bike legs for initial {} preparation", cleared,
+                simulateBikes ? "routing on the isolated bicycle network" : "teleportation");
     }
 
     private void prepareCapacityFreeBikeVehicles(Scenario scenario) {

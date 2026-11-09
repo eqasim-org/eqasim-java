@@ -1,7 +1,5 @@
 package org.eqasim.core.components.network_calibration.cost_calibration;
 
-import java.util.Objects;
-
 /**
  * Group key for penalties calibration and lookup.
  */
@@ -51,7 +49,11 @@ public final class PenaltyGroupKey {
 
     @Override
     public int hashCode() {
-        return Objects.hash(linkCategory, urban, specialRegion);
+        // Exactly Objects.hash's 31-fold integer result, without its varargs
+        // array or primitive boxing on each routing lookup. Preserve overflow.
+        int hash = 31 + linkCategory;
+        hash = 31 * hash + Boolean.hashCode(urban);
+        return 31 * hash + specialRegion;
     }
 
     @Override

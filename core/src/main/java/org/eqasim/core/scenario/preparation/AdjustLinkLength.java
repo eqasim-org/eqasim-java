@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
-import org.matsim.core.utils.geometry.CoordUtils;
 
 public class AdjustLinkLength {
 	private final Logger logger = LogManager.getLogger(AdjustLinkLength.class);
@@ -33,8 +32,13 @@ public class AdjustLinkLength {
 				adjustedLengthCount++;
 			}
 
-			double directLength = CoordUtils.calcEuclideanDistance(link.getFromNode().getCoord(),
-					link.getToNode().getCoord());
+			// This is a horizontal-geometry sanity check. Missing elevations may be
+			// encoded as zero outside the elevation coverage; interpreting that as
+			// a real height would turn short border links into artificial climbs.
+			// Keep the supplied road length (and the minimum travel-time rule above).
+			var from = link.getFromNode().getCoord();
+			var to = link.getToNode().getCoord();
+			double directLength = Math.hypot(to.getX() - from.getX(), to.getY() - from.getY());
 
 			if (link.getLength() < directLength) {
 				minimumLengthCount++;

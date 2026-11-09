@@ -185,6 +185,89 @@ classes.
 
 ## Build and validation
 
+### Cleanup attribute archive (October 2026)
+
+When `RunSimulation` cleans the scenario, removed person/link/household attributes
+are collected as segmented LZ4-compressed binary data, saved to a temporary file,
+and released from memory. The final writer restores them by stable ID before
+exporting the scenario, preserving values already present after simulation.
+`org.eqasim.switzerland.ch_cmdp.memory.AttributeRestoringDumpDataAtEnd` decorates
+the original final writer to preserve core-listener ordering and early termination.
+It is an added adapter, not an upstream class replacement; review its lookup of
+the package-private `DumpDataAtEndImpl` type when upgrading MATSim. See the
+[archive documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/memory/README.md).
+
+### Replanning cache and bike routing (October 2026)
+
+`org.matsim.contribs.discrete_mode_choice.model.estimation.CachedTripEstimator`
+is an additional MATSim replacement. It keeps the upstream constructor and
+one-second, ceiling-rounded departure-time cache semantics. Trip keys use
+identity hashing because MATSim 2026's `DiscreteModeChoiceTrip.hashCode()` is
+constant. Switching persons clears the worker-local cache, so old trip
+candidates are released instead of accumulating across the worker's population.
+Departure-time keys use primitive longs rather than boxed keys. Review this
+override when updating the discrete-mode-choice dependency.
+
+`BikeLinkData` is shared once per controller/injector, after network preparation.
+It stores slope speed, the fixed travel-time cost multiplier (road type and
+gradient), and the distance cost as three packed floats per link. Dense link ID
+spaces use direct array indexing; sparse spaces use a primitive integer index.
+The table is immutable and shared by simulation speed calculations and routing
+workers. Geometry and road-type changes require a new table. Freespeed updates,
+vehicle speed limits, intersection delays and random disutility remain live.
+Float rounding can slightly change times, costs and route choices.
+
+The optimized SpeedyALT optionally passes its already calculated link time into
+`TravelTimeAwareDisutility`. Bike costs use this path only if their travel-time
+calculator is the same instance as the router's. Other disutilities and routers
+retain the usual API. Each bike cost evaluation still draws exactly one Gaussian
+noise value. The standalone multimodal router also stores its deterministic bike
+cost table as floats.
+
+Use `-Xmx10g` for local simulation/profiling validation runs unless another heap
+size is explicitly requested.
+
+### PT itinerary caching (October 2026)
+
+Switzerland's `RunSimulation` supports the opt-in `--cache-pt-routes true`
+wrapper under `org.eqasim.switzerland.ch_cmdp.routing.pt_cache`. It delegates
+misses to the existing SwissRailRaptor provider, stores binary itineraries in a
+run-local indexed disk cache, and shares a bounded RAM cache across workers and
+iterations. Keys use person ID and departure time, with no attribute hashing,
+under the fixed-location mode-choice assumption. The cache defaults to a 512 MiB
+RAM/template budget and reuses departures within 10 seconds. Initial waiting is
+adjusted while scheduled boardings stay fixed; missed boardings trigger a fresh
+search. Set `departureTimeToleranceSeconds=0` for exact-time matching. Actual DMC selections are
+prefetched in bounded person batches before their workers start; private decoded
+templates avoid repeated binary parsing on memory hits. Restored itineraries use
+fresh MATSim objects. This adds no upstream class replacement. See the
+[PT cache documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/routing/pt_cache/README.md)
+for configuration, supported routing settings and lifecycle behavior.
+
+`ch_cmdp.RunSimulation` now coordinates DSim adaptations and attribute cleanup through
+`runtime.SimulationRuntime`. Final scenario files undo the temporary bike layer and
+restore bicycle restrictions, PCUs and link references. Final output configs restore
+the baseline engine/mode settings while retaining calibration and the DSim module.
+The live locked config remains the runtime config; the export uses a separate copy.
+The optional `--teleport-bike true` / `switzerlandSimulation.teleportBike` setting also
+supports QSim (4 m/s, distance factor 1.4). See the
+[runtime lifecycle documentation](../switzerland/src/main/java/org/eqasim/switzerland/ch_cmdp/runtime/README.md).
+Generated configs include DSim settings but default to QSim. Selecting `controller.mobsim=dsim`
+automatically enables adaptations without `--use-dsim`. Final output keeps the configured engine;
+an argument-only DSim switch is temporary. Named preprocessing/postprocessing operations undo
+only their own changes and preserve subsequent simulation updates.
+
+### PT access-stop search retries (October 2026)
+
+The core module shadows `ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor` from MATSim
+2026.0. Standard walking-access searches now retry with a wider access/egress radius
+when nearby stops provide no PT itinerary, for at most five total attempts. Successful
+initial searches, direct-walk preferences, tree queries and intermodal radius limits
+retain their existing behavior. Request-local radius views avoid mutating shared routing
+parameters. The factory, builders and cached routing delegate automatically receive this
+change. See the [search retry documentation](../core/src/main/java/ch/sbb/matsim/routing/pt/raptor/README.md)
+and compare this source override with upstream on future MATSim upgrades.
+
 Build the common artifact with JDK 25:
 
 ```text

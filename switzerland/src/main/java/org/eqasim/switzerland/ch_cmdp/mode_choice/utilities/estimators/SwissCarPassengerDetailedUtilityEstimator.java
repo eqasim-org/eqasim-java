@@ -130,7 +130,7 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
 
     protected double estimateDistanceUtility(DiscreteModeChoiceTrip trip) {
         double distance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-        return parameters.cp.betaDistance_u_km * Math.max(distance_km-35.0,0.0) / parameters.distanceScale_km ;
+        return parameters.cp.betaDistance_u_km * Math.max(distance_km-30.0,0.0) / parameters.distanceScale_km ;
     }
 
     protected double estimateCarOwnershipUtility(SwissPersonVariables personVariables) {

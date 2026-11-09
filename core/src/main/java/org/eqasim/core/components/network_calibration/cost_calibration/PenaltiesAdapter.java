@@ -44,6 +44,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     private final PenaltyKeyManager penaltyKeyManager;
     private final boolean isActivated;
     private final boolean isCalibrating;
+    private final boolean useLinkAttributes;
     private final int warmupIterations;
     private final int endIteration;
     private final boolean hasPenaltiesFile;
@@ -86,6 +87,7 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
         this.warmupIterations = costConfig.getWarmupIterations();
         this.endIteration = costConfig.getEndIteration();
         this.hasPenaltiesFile = costConfig.hasPenaltiesFile();
+        this.useLinkAttributes = !isCalibrating && !hasPenaltiesFile && !costConfig.getResetPenaltiesToZeros();
         this.initialLearningRate = costConfig.getInitialLearningRate();
         this.minimumLearningRate = costConfig.getMinimumLearningRate();
         this.learningRateDecayScale = costConfig.getLearningRateDecayScale();
@@ -106,6 +108,8 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
             if (costConfig.getResetPenaltiesToZeros()) {
                 penaltyManager.loadInitialPenalties(Map.of());
                 logger.info("Penalty calibration starts from zero; network attributes and penalties CSV are ignored.");
+            } else if (useLinkAttributes) {
+                logger.info("Penalty objective is active in fixed mode. Using each link's penalty directly, without regional grouping.");
             } else {
                 penaltyManager.loadInitialPenalties(loadInitialPenaltiesFromNetwork());
                 if (hasPenaltiesFile) {
@@ -126,6 +130,15 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
             return 0.0;
         }
 
+        if (useLinkAttributes) {
+            if (!categorizer.isCarLink(link) || categorizer.isOutsideLink(link)) {
+                return 0.0;
+            }
+            double factor = NetworkCalibrationUtils.readDoubleAttribute(link,
+                    NetworkCalibrationUtils.PENALTY_ATTRIBUTE).orElse(0.0);
+            return computeRoutingPenalty(link, applyLinkTypeFactor(link, factor));
+        }
+
         PenaltyGroupKey calibrationKey = penaltyKeyManager.toCalibrationKey(link);
         if (calibrationKey == null) {
             return 0.0;
@@ -141,7 +154,10 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
     }
 
     private double getGroupPenaltyForLink(Link link, PenaltyGroupKey key) {
-        double penalty = penaltyManager.getPenalty(key);
+        return applyLinkTypeFactor(link, penaltyManager.getPenalty(key));
+    }
+
+    private double applyLinkTypeFactor(Link link, double penalty) {
         if (NetworkCalibrationUtils.isRamp(link)) {
             return penalty * rampFactor;
         }
@@ -218,6 +234,9 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
                 }
             }
         }
+        if (isActivated && !useLinkAttributes && iterationEndsEvent.isLastIteration()) {
+            persistPenaltiesToNetwork();
+        }
     }
 
     @Override
@@ -229,10 +248,20 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
 
     @Override
     public void notifyShutdown(ShutdownEvent event) {
-        if (!isCalibrating) {
+        if (!isActivated || useLinkAttributes) {
             return;
         }
-        // save penalties in the network
+        // Normal runs persist at the end of the final iteration, before MATSim's
+        // core shutdown writer. Keep a fallback for interrupted runs.
+        persistPenaltiesToNetwork();
+
+        if (isCalibrating) {
+            String filename = outputHierarchy.getOutputFilename("final_link_category_penalties.csv");
+            penaltyManager.saveToCsvWithAllKeys(filename, penaltyKeyManager);
+        }
+    }
+
+    private void persistPenaltiesToNetwork() {
         int persisted = 0;
         for (Link link : network.getLinks().values()) {
             PenaltyGroupKey calibrationKey = penaltyKeyManager.toCalibrationKey(link);
@@ -240,15 +269,14 @@ public class PenaltiesAdapter implements IterationStartsListener, IterationEndsL
                 continue;
             }
 
-            double penaltyFactor = Math.round(penaltyManager.getAverageOfLastFourPenalties(calibrationKey) * 1000.0)/1000.0;
+            double penaltyFactor = isCalibrating
+                    ? Math.round(penaltyManager.getAverageOfLastFourPenalties(calibrationKey) * 1000.0) / 1000.0
+                    : penaltyManager.getPenalty(calibrationKey);
             NetworkCalibrationUtils.writeDoubleAttribute(link, NetworkCalibrationUtils.PENALTY_ATTRIBUTE, penaltyFactor);
             persisted++;
         }
         logger.info("Persisted penalty attribute '{}' for {} links.", NetworkCalibrationUtils.PENALTY_ATTRIBUTE, persisted);
 
-        // return the penalties too, in real keys format
-        String filename = outputHierarchy.getOutputFilename("final_link_category_penalties.csv");
-        penaltyManager.saveToCsvWithAllKeys(filename, penaltyKeyManager);
     }
 
 

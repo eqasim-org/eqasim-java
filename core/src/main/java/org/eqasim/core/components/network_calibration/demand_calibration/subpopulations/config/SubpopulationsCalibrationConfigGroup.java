@@ -9,7 +9,6 @@ import java.util.Map;
 public class SubpopulationsCalibrationConfigGroup extends ReflectiveConfigGroup {
     public static final String GROUP_NAME = "subpopulationsCalibration";
 
-    private static final String ACTIVATE = "activate";
     private static final String WARMUP_ITERATIONS = "warmupIterations";
     private static final String UPDATE_INTERVAL = "updateInterval";
     private static final String EARLY_UPDATE_INTERVAL = "earlyUpdateInterval";
@@ -29,7 +28,6 @@ public class SubpopulationsCalibrationConfigGroup extends ReflectiveConfigGroup 
     private static final String FREIGHT_RELOCATION_TRY_FRACTION = "freightRelocationTryFraction";
     private static final String DESTINATION_SELECTION_PROBABILITY = "destinationSelectionProbability";
 
-    private boolean activate=false;
     private int warmupIterations = 16;
     private int updateInterval = 5;
     private int earlyUpdateInterval = 8;
@@ -56,7 +54,6 @@ public class SubpopulationsCalibrationConfigGroup extends ReflectiveConfigGroup 
     @Override
     public Map<String, String> getComments() {
         Map<String, String> comments = super.getComments();
-        comments.put(ACTIVATE, "Whether subpopulation demand calibration is active (default: false)");
         comments.put(WARMUP_ITERATIONS, "Iterations before demand-reduction updates begin (default: 16)");
         comments.put(UPDATE_INTERVAL, "Iterations between updates after the early phase (default: 5)");
         comments.put(EARLY_UPDATE_INTERVAL, "Iterations between updates during the early phase (default: 8)");
@@ -78,8 +75,6 @@ public class SubpopulationsCalibrationConfigGroup extends ReflectiveConfigGroup 
         return comments;
     }
 
-    @StringGetter(ACTIVATE) public boolean isActivated() { return activate; }
-    @StringSetter(ACTIVATE) public void setActivate(boolean value) { activate = value; }
     @StringGetter(WARMUP_ITERATIONS) public int getWarmupIterations() { return warmupIterations; }
     @StringSetter(WARMUP_ITERATIONS) public void setWarmupIterations(int value) { warmupIterations = value; }
     @StringGetter(UPDATE_INTERVAL) public int getUpdateInterval() { return updateInterval; }

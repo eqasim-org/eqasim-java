@@ -81,6 +81,9 @@ public class GenerateConfig {
 		config.transit().setUseTransit(true);
 
 		// QSim settings
+		// Include DSim's editable settings without selecting it as the simulation engine.
+		config.dsim().setThreads(threads);
+		config.controller().setMobsim("qsim");
 		config.qsim().setEndTime(30.0 * 3600.0);
 		config.qsim().setNumberOfThreads(Math.min(12, threads));
 		config.qsim().setFlowCapFactor(sampleSize);

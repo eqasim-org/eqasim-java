@@ -1,11 +1,8 @@
 package org.eqasim.core.components.traffic.bike;
 
 import org.eqasim.core.components.traffic.CrossingPenalty;
-import org.eqasim.core.components.traffic.EqasimLinkSpeedCalculator;
 import org.matsim.api.core.v01.Coord;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Link;
-import org.matsim.core.mobsim.qsim.qnetsimengine.QVehicle;
 import org.matsim.vehicles.Vehicle;
 
 /**
@@ -14,9 +11,15 @@ import org.matsim.vehicles.Vehicle;
  */
 public class BikeGradientBasedLinkSpeedCalculator implements BikeSpeedCalculator {
     private final CrossingPenalty crossingPenalty;
+    private final BikeLinkData linkData;
 
     public BikeGradientBasedLinkSpeedCalculator(CrossingPenalty crossingPenalty) {
+        this(crossingPenalty, null);
+    }
+
+    public BikeGradientBasedLinkSpeedCalculator(CrossingPenalty crossingPenalty, BikeLinkData linkData) {
         this.crossingPenalty = crossingPenalty;
+        this.linkData = linkData;
     }
 
     /**
@@ -42,7 +45,7 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeSpeedCalculator
             maximumVelocity = Math.min(vehicle.getType().getMaximumVelocity(), maximumVelocity);
         }
 
-        double gradientBasedSpeed = getLinkSpeed(link);
+        double gradientBasedSpeed = linkData == null ? slopeSpeed(link) : linkData.slopeSpeed(link);
         double expectedVelocity = Math.min(maximumVelocity, gradientBasedSpeed);
 
         // if the bike speed is already slow, we do not need to add the crossing penalty
@@ -71,7 +74,7 @@ public class BikeGradientBasedLinkSpeedCalculator implements BikeSpeedCalculator
      * @param link The link.
      * @return The gradient-based speed in m/s.
      */
-    private double getLinkSpeed(Link link) {
+    public static double slopeSpeed(Link link) {
         // Get gradient in percentage
         double gradient = percentageGradient(link);
 

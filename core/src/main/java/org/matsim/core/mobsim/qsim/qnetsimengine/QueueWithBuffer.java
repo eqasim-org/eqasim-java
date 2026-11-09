@@ -1060,18 +1060,10 @@ final class QueueWithBuffer implements QLaneI, SignalizeableItem {
 				return seepageQueue.peekSeepageVehicle(now);
 			}
 
-			VehicleQ<QVehicle> newVehQueue = new PassingVehicleQ();
-			newVehQueue.addAll(vehQueue);
-
-			Iterator<QVehicle> it = newVehQueue.iterator();
-
-			while(it.hasNext()){
-				QVehicle veh = newVehQueue.poll();
-				if( veh.getEarliestLinkExitTime()<=now && context.qsimConfig.getSeepModes().contains(veh.getDriver().getMode()) ) {
-					returnVeh = veh;
-					break;
-				}
-			}
+			// Explicit VehicleQ overrides do not have the seepage index. Keep our
+			// reusable selector as their fallback, preserving native tie order
+			// without allocating a fresh passing queue on each lookup.
+			returnVeh = SeepageVehicleSelector.select(vehQueue, now, context.qsimConfig.getSeepModes());
 		}
 		return returnVeh;
 	}

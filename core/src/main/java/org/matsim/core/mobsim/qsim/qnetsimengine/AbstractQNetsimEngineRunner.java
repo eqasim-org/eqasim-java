@@ -32,7 +32,7 @@ import org.matsim.core.mobsim.qsim.QSim;
 
 /**
  * These are the "threads" of the {@link QNetsimEngineWithThreadpool}. The "run()" method is implicitly called by starting the thread.
- * 
+ *
  * @author droeder after
  * @author (of this documentation) nagel
  *
@@ -99,7 +99,7 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 
 	/*package*/ long[] runTimes;
 	private long startTime = 0;
-	{	
+	{
 		if (QSim.analyzeRunTimes) runTimes = new long[QNetsimEngineWithThreadpool.numObservedTimeSteps];
 		else runTimes = null;
 	}
@@ -144,7 +144,7 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 		}
 		this.lockNodes = false;
 	}
-	
+
 	protected final void moveLinks() {
 		if (compact) {
 			lockLinks = true;
@@ -225,7 +225,7 @@ abstract class AbstractQNetsimEngineRunner extends NetElementActivationRegistry 
 	protected final boolean hasLinksToMove() { return !linksList.isEmpty(); }
 
 	protected final void startMeasure() {
-		if (QSim.analyzeRunTimes) this.startTime = System.nanoTime();		
+		if (QSim.analyzeRunTimes) this.startTime = System.nanoTime();
 	}
 
 	protected final void endMeasure() {

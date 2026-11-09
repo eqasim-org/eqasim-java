@@ -5,6 +5,20 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class TestCompactRoutingStorage {
+    @Test public void unusedRoutersDoNotAllocateANetworkSizedIndex() {
+        var state = new SearchWorkspace(2_000_000);
+        long emptyBytes = state.bytes();
+        assertTrue(emptyBytes < 2048);
+        assertFalse(state.contains(1_999_999));
+        state.beginQuery();
+        assertEquals(emptyBytes + 8_000_000L, state.bytes());
+        state.set(1_999_999, 3.5, 7.25);
+        assertEquals(3.5, state.cost(1_999_999), 0);
+        state.beginQuery();
+        assertFalse(state.contains(1_999_999));
+        assertEquals(emptyBytes + 8_000_000L, state.bytes());
+    }
+
     @Test public void sparseRecordsGrowResetAndReuseWithoutFullNodeArrays() {
         var state = new SearchWorkspace(100000);
         assertFalse(state.beginQuery());

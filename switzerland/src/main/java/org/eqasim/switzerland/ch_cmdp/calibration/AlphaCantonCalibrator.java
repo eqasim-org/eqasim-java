@@ -236,10 +236,7 @@ public class AlphaCantonCalibrator implements FastCalibration {
 
                 for (DiscreteModeChoiceTrip trip : trips) {
                     String mode = trip.getInitialMode();
-                    boolean sameLocation = trip.getOriginActivity().getCoord().equals(trip.getDestinationActivity().getCoord());
-                    boolean consideredTrip = AlphaCalibrationUtils.isConsideredTrip(trip);
-
-                    if (consideredTrip && consideredModes.contains(mode) && !sameLocation) {
+                    if (CantonCalibrationTrips.isConsidered(trip)) {
                         // for the global mode shares, we should not consider the external population.
                         if (AlphaCalibrationUtils.isConsideredPerson(person, "isExternalFR")) {
                             modeCounts.put(mode, modeCounts.getOrDefault(mode, 0.0) + 1.0);

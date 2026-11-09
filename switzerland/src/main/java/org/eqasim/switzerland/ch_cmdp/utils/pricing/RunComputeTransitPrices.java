@@ -49,6 +49,8 @@ import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvValidationException;
 
 import ch.sbb.matsim.routing.pt.raptor.OccupancyData;
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.routing.pt.raptor.ModeSpecificTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
 import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
@@ -433,6 +435,17 @@ public class RunComputeTransitPrices {
     }
 
     @SuppressWarnings("null")
+    static SwissRailRaptor createRouter(SwissRailRaptorData data, Config config) {
+        var builder = new SwissRailRaptor.Builder(data, config);
+        // Direct builders do not select this calculator automatically, unlike
+        // SwissRailRaptorModule. Keep the pricing workers consistent with it.
+        if (!ConfigUtils.addOrGetModule(config, SwissRailRaptorConfigGroup.class)
+                .getModeToModeTransferPenaltyParameterSets().isEmpty()) {
+            builder.with(new ModeSpecificTransferCostCalculator());
+        }
+        return builder.build();
+    }
+
     static public void main(String[] args) throws Exception {
 
 		CommandLine cmd = new CommandLine.Builder(args) //
@@ -484,7 +497,7 @@ public class RunComputeTransitPrices {
         SwissRailRaptorData srrData = SwissRailRaptorData.create(transitSchedule,
 				scenario.getTransitVehicles(), srrStaticConfig, network, occupancyData);
 
-        ThreadLocal<SwissRailRaptor> threadLocalRouter                       = ThreadLocal.withInitial(() -> new SwissRailRaptor.Builder(srrData, config).build()); 
+        ThreadLocal<SwissRailRaptor> threadLocalRouter                       = ThreadLocal.withInitial(() -> createRouter(srrData, config));
         ThreadLocal<SwissPtRoutePredictor> threadLocalPtRoutePredictor       = ThreadLocal.withInitial(() -> new SwissPtRoutePredictor(transitSchedule, zonalRegistry, sbbNetwork)); 
         ThreadLocal<SwissPtStageCostCalculator> threadLocalPtStageCalculator = ThreadLocal.withInitial(() -> swissPtStageCostCalculator); 
 

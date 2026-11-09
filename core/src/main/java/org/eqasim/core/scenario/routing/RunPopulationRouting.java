@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.eqasim.core.misc.InjectorBuilder;
+import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
 import org.eqasim.core.scenario.validation.VehiclesValidator;
 import org.eqasim.core.simulation.EqasimConfigurator;
 import org.eqasim.core.simulation.termination.EqasimTerminationConfigGroup;
@@ -13,6 +14,7 @@ import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.ControllerConfigGroup.RoutingAlgorithmType;
 import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.timing.TimeInterpretationModule;
@@ -25,7 +27,7 @@ public class RunPopulationRouting {
 		CommandLine cmd = new CommandLine.Builder(args) //
 				.requireOptions("config-path") //
 				.allowOptions("output-path", "threads", "batch-size", "modes", "routes-path", "export-trips-path",
-						"export-only", EqasimConfigurator.CONFIGURATOR) //
+						"export-only", MemoryEfficientRoutingModule.OPTION, EqasimConfigurator.CONFIGURATOR) //
 				.build();
 		boolean exportOnly = cmd.getOption("export-only").map(v -> {
 			if (!v.equalsIgnoreCase("true") && !v.equalsIgnoreCase("false"))
@@ -75,9 +77,18 @@ public class RunPopulationRouting {
 					: java.util.Map.<org.matsim.api.core.v01.population.Plan, Set<org.matsim.api.core.v01.population.Activity>>of();
 
 			if (PopulationRoutingIO.needsRouting(scenario, modes, reused)) {
-				Injector injector = new InjectorBuilder(scenario, configurator) //
+				InjectorBuilder builder = new InjectorBuilder(scenario, configurator) //
 						.addOverridingModule(new PopulationRouterModule(numberOfThreads, batchSize, true, modes, reused)) //
-						.addOverridingModule(new TimeInterpretationModule()).build();
+						.addOverridingModule(new TimeInterpretationModule());
+
+				// Use the same corrected link-to-link router as simulation. The
+				// upstream router can miss a restriction on the final activity link;
+				// preparation must not create routes that already violate that turn.
+				if (config.controller().getRoutingAlgorithmType() == RoutingAlgorithmType.SpeedyALT
+						&& MemoryEfficientRoutingModule.isEnabled(cmd)) {
+					builder.addOverridingModule(new MemoryEfficientRoutingModule());
+				}
+				Injector injector = builder.build();
 
 				PopulationRouter populationRouter = injector.getInstance(PopulationRouter.class);
 				populationRouter.run(scenario.getPopulation());
