@@ -22,6 +22,18 @@ public class CmdpOptimizerHandler extends StandardOptimizerHandler {
     }
 
     @Override
+    protected boolean runOptimizer(int iteration, String newPath, String lastPath, String variablesPath) {
+        // Supply the complete effective parameters, including defaults and preceding ASC updates.
+        String inputPath = outputDirectoryHierarchy.getIterationFilename(iteration, "mode_parameters_input.yml");
+        try {
+            swissParameters.saveToYamlFile(inputPath);
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException("Cannot export optimizer input parameters", e);
+        }
+        return super.runOptimizer(iteration, newPath, inputPath, variablesPath);
+    }
+
+    @Override
     protected void applyParameters(String parameterFilePath, boolean isOptimized) {
         File file = new File(parameterFilePath);
         if (file.exists() && file.isFile()) {

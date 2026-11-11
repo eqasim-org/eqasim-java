@@ -268,6 +268,14 @@ parameters. The factory, builders and cached routing delegate automatically rece
 change. See the [search retry documentation](../core/src/main/java/ch/sbb/matsim/routing/pt/raptor/README.md)
 and compare this source override with upstream on future MATSim upgrades.
 
+The local `CachedTripEstimator` and `UtilityWriter` overrides also support exact
+calibration-export references. During CMDP variable export, each candidate trip
+retains the identifier of the input row that produced its utility, including when
+the same trip is evaluated at different departure times. This adds export
+metadata without altering candidate utilities or selection. Detailed utility
+exports retain full numeric precision and escape person IDs. See
+[CMDP optimizer calibration](cmdp_optimizer_calibration.md).
+
 Build the common artifact with JDK 25:
 
 ```text

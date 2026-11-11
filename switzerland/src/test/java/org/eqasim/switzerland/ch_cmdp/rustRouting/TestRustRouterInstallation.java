@@ -29,6 +29,8 @@ public class TestRustRouterInstallation {
             if (command.contains("checkout")) Files.writeString(cwd.resolve("Cargo.toml"), "fixture");
         };
         var first = LatestRustRouterBuild.resolve(root, "", runner);
+        assertTrue(commands.stream().anyMatch(c -> c.contains("ls-remote")
+                && c.contains("https://github.com/matsim-eth/RustRouter.git")));
         assertEquals(revision[0], first.revision());
         var again = LatestRustRouterBuild.resolve(root, "", runner);
         assertEquals(first.directory(), again.directory());

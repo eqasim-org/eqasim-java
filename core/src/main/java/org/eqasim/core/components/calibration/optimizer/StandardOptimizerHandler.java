@@ -93,7 +93,7 @@ public class StandardOptimizerHandler implements OptimizerHandler, ShutdownListe
             optimizer.run(iteration, newPath, lastPath, variablesPath);
             return true;
         } catch (Exception e) {
-            logger.warn("Optimizer failed to run for iteration " + iteration);
+            logger.warn("Optimizer failed to run for iteration " + iteration, e);
             return false;
         }
     }

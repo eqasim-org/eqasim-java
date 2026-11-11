@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpCalibrationVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.UtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
@@ -206,53 +207,14 @@ public class SwissCarPassengerDetailedUtilityEstimator implements UtilityEstimat
 
     private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, SwissCarPassengerVariables cpVariables,
                                      SwissPersonVariables personVariables, double utility) {
-        double departureTime = trip.getDepartureTime();
-        int tripIndex = trip.getIndex();
-        String personId = person.getId().toString();
-        double euclideanDistance_km = cpVariables.euclideanDistance_km;
-
-        Map<String, String> cpAttributes = new HashMap<>();
-
-        cpAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
-
-        // person attributes used in utility
-        cpAttributes.put("age", String.valueOf(personVariables.age_a));
-        cpAttributes.put("sex", String.valueOf(personVariables.sex));
-        cpAttributes.put("region", String.valueOf(personVariables.cantonCluster));
-        cpAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
-        cpAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        cpAttributes.put("lowIncome", Utils.isLowIncome(personVariables, parameters) ? "1" : "0");
-        cpAttributes.put("income", String.valueOf(personVariables.income));
-        cpAttributes.put("drivingLicense", String.valueOf(personVariables.drivingLicense));
-
-        // purposes used in utility
-        cpAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
-        cpAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
-        cpAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
-        cpAttributes.put("destinationEducation", Utils.destinationIsEducation(trip) ? "1" : "0");
-        cpAttributes.put("destinationShopping", Utils.destinationIsShopping(trip) ? "1" : "0");
-        cpAttributes.put("destinationLeisure", Utils.destinationIsLeisure(trip) ? "1" : "0");
-        cpAttributes.put("destinationOther", Utils.destinationIsOther(trip) ? "1" : "0");
-
-        // location/distance used in utility
-        cpAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
-        cpAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        cpAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip, parameters) ? "1" : "0");
-        cpAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
-        cpAttributes.put("veryLongDistance", Utils.isVeryLongDistanceTrip(trip, parameters) ? "1" : "0");
-
-        // canton
-        Object cantonObj = person.getAttributes().getAttribute("cantonName");
-        cpAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
-
-        // car ownership used in utility
-        cpAttributes.put("carOwnershipRatio", String.valueOf(personVariables.carOwnershipRatio));
-        cpAttributes.put("hasCar", personVariables.hasCar ? "1" : "0");
-
-        // main level-of-service term used in utility
-        cpAttributes.put("travelTime_min", String.valueOf(cpVariables.travelTime_min));
-
-        variablesWriter.writeVariables("car_passenger", personId, tripIndex, departureTime, utility, cpAttributes);
+        Map<String, String> attributes = new HashMap<>();
+        CmdpCalibrationVariables.addCommon(attributes, person, trip, personVariables, parameters,
+                cpVariables.euclideanDistance_km);
+        attributes.put("drivingLicense", String.valueOf(personVariables.drivingLicense));
+        attributes.put("veryLongDistance", Utils.isVeryLongDistanceTrip(trip, parameters) ? "1" : "0");
+        attributes.put("hasCar", personVariables.hasCar ? "1" : "0");
+        attributes.put("travelTime_min", String.valueOf(cpVariables.travelTime_min));
+        variablesWriter.writeVariables("car_passenger", person.getId().toString(), trip.getIndex(),
+                trip.getDepartureTime(), utility, attributes);
     }
-
 }

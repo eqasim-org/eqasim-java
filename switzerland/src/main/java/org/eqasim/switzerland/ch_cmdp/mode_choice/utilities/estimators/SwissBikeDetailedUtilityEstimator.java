@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpCalibrationVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.BikeUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.PredictorUtils;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BikeVariables;
@@ -179,49 +180,13 @@ public class SwissBikeDetailedUtilityEstimator extends BikeUtilityEstimator {
         return utility;
     }
 
-    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, BikeVariables bikevariable,
+    private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, BikeVariables bikeVariables,
                                      SwissPersonVariables personVariables, double utility) {
-        double departureTime = trip.getDepartureTime();
-        int tripIndex = trip.getIndex();
-        String personId = person.getId().toString();
-        double euclideanDistance_km = PredictorUtils.calculateEuclideanDistance_km(trip);
-
-        Map<String, String> bikeAttributes = new HashMap<>();
-
-        bikeAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
-
-        // person attributes used in utility
-        bikeAttributes.put("age", String.valueOf(personVariables.age_a));
-        bikeAttributes.put("sex", String.valueOf(personVariables.sex));
-        bikeAttributes.put("region", String.valueOf(personVariables.cantonCluster));
-        bikeAttributes.put("retired", Utils.isRetired(personVariables) ? "1" : "0");
-        bikeAttributes.put("junior", Utils.isJunior(personVariables) ? "1" : "0");
-        bikeAttributes.put("lowIncome", Utils.isLowIncome(personVariables, parameters) ? "1" : "0");
-        bikeAttributes.put("income", String.valueOf(personVariables.income));
-
-        // purposes used in utility
-        bikeAttributes.put("originHome", Utils.originIsHome(trip) ? "1" : "0");
-        bikeAttributes.put("destinationWork", Utils.destinationIsWork(trip) ? "1" : "0");
-        bikeAttributes.put("destinationHome", Utils.destinationIsHome(trip) ? "1" : "0");
-        bikeAttributes.put("destinationEducation", Utils.destinationIsEducation(trip) ? "1" : "0");
-        bikeAttributes.put("destinationShopping", Utils.destinationIsShopping(trip) ? "1" : "0");
-        bikeAttributes.put("destinationLeisure", Utils.destinationIsLeisure(trip) ? "1" : "0");
-        bikeAttributes.put("destinationOther", Utils.destinationIsOther(trip) ? "1" : "0");
-
-        // location/distance used in utility
-        bikeAttributes.put("urbanDestination", Utils.destinationIsUrban(trip) ? "1" : "0");
-        bikeAttributes.put("urbancoreDestination", Utils.destinationIsUrbanCore(trip) ? "1" : "0");
-        bikeAttributes.put("shortDistance", Utils.isShortDistanceTrip(trip, parameters) ? "1" : "0");
-        bikeAttributes.put("longDistance", Utils.isLongDistanceTrip(trip, parameters) ? "1" : "0");
-
-        // canton
-        Object cantonObj = person.getAttributes().getAttribute("cantonName");
-        bikeAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
-
-        // main level-of-service term used in utility
-        bikeAttributes.put("travelTime_min", String.valueOf(bikevariable.travelTime_min));
-
-        variablesWriter.writeVariables("bike", personId, tripIndex, departureTime, utility, bikeAttributes);
+        Map<String, String> attributes = new HashMap<>();
+        CmdpCalibrationVariables.addCommon(attributes, person, trip, personVariables, parameters,
+                PredictorUtils.calculateEuclideanDistance_km(trip));
+        attributes.put("travelTime_min", String.valueOf(bikeVariables.travelTime_min));
+        variablesWriter.writeVariables("bike", person.getId().toString(), trip.getIndex(),
+                trip.getDepartureTime(), utility, attributes);
     }
-
 }

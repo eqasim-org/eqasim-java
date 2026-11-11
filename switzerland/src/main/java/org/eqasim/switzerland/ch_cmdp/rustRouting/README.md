@@ -1,7 +1,8 @@
 <!-- Describes native PT integration, worker ownership, build, and supported behavior. -->
 # Native Rust public transport routing
 
-The router is maintained separately in MultiModalRouter. Its `docs/interop.md` covers the shared
+The router is maintained publicly at [matsim-eth/RustRouter](https://github.com/matsim-eth/RustRouter).
+The local checkout may still be named `MultiModalRouter`. Its `docs/interop.md` covers the shared
 Python/standalone Java API and clone/build workflow. MATSim keeps this specialized adapter so its
 queries use numeric JNI calls directly, without JSON conversion or nested query pools. The native
 library protocol is checked at startup; deploy a matching jar/library pair.

@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.estimators;
 
 import com.google.inject.Inject;
 import org.eqasim.core.components.calibration.VariablesWriter;
+import org.eqasim.switzerland.ch_cmdp.calibration.CmdpCalibrationVariables;
 import org.eqasim.core.simulation.mode_choice.utilities.estimators.CarUtilityEstimator;
 import org.eqasim.core.simulation.mode_choice.utilities.variables.CarVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissParkingCostModel;
@@ -244,55 +245,17 @@ public class SwissCarDetailedUtilityEstimator extends CarUtilityEstimator {
 
     private void writeVariablesToCsv(Person person, DiscreteModeChoiceTrip trip, CarVariables carVariables,
                                      SwissPersonVariables personVariables, double utility) {
-        double departureTime = trip.getDepartureTime();
-        int tripIndex = trip.getIndex();
-        String personId = person.getId().toString();
-        double euclideanDistance_km = carVariables.euclideanDistance_km;
-
-        Map<String, String> carAttributes = new HashMap<>();
-
-        carAttributes.put("euclideanDistance_km", String.valueOf(euclideanDistance_km));
-
-        // person attributes used in utility
-        carAttributes.put("age", String.valueOf(personVariables.age_a));
-        carAttributes.put("sex", String.valueOf(personVariables.sex));
-        carAttributes.put("region", String.valueOf(personVariables.cantonCluster));
-        carAttributes.put("retired", isRetired(personVariables) ? "1" : "0");
-        carAttributes.put("junior", isJunior(personVariables) ? "1" : "0");
-        carAttributes.put("lowIncome", isLowIncome(personVariables, parameters) ? "1" : "0");
-        carAttributes.put("income", String.valueOf(personVariables.income));
-
-        // purposes used in utility
-        carAttributes.put("originHome", originIsHome(trip) ? "1" : "0");
-        carAttributes.put("destinationWork", destinationIsWork(trip) ? "1" : "0");
-        carAttributes.put("destinationHome", destinationIsHome(trip) ? "1" : "0");
-        carAttributes.put("destinationEducation", destinationIsEducation(trip) ? "1" : "0");
-        carAttributes.put("destinationShopping", destinationIsShopping(trip) ? "1" : "0");
-        carAttributes.put("destinationLeisure", destinationIsLeisure(trip) ? "1" : "0");
-        carAttributes.put("destinationOther", destinationIsOther(trip) ? "1" : "0");
-
-        // location/distance used in utility
-        carAttributes.put("urbanDestination", destinationIsUrban(trip) ? "1" : "0");
-        carAttributes.put("urbancoreDestination", destinationIsUrbanCore(trip) ? "1" : "0");
-        carAttributes.put("suburbanDestination", destinationIsSuburban(trip) ? "1" : "0");
-        carAttributes.put("shortDistance", isShortDistanceTrip(trip, parameters) ? "1" : "0");
-        carAttributes.put("longDistance", isLongDistanceTrip(trip, parameters) ? "1" : "0");
-
-        // car ownership and canton used in utility
-        carAttributes.put("carOwnershipRatio", String.valueOf(personVariables.carOwnershipRatio));
-        Object cantonObj = person.getAttributes().getAttribute("cantonName");
-        carAttributes.put("canton", cantonObj instanceof String ? (String) cantonObj : "");
-
-        // level-of-service + monetary components used in utility
-        double parkingSearch_min = getParkingSearchDuration(trip);
-        double parkingCost_MU = parkingCostModel.getParkingPrice_CFH(trip, carVariables);
-
-        carAttributes.put("travelTime_min", String.valueOf(carVariables.travelTime_min));
-        carAttributes.put("parking_searching_duration_min", String.valueOf(parkingSearch_min));
-        carAttributes.put("cost_MU", String.valueOf(carVariables.cost_MU));
-        carAttributes.put("parking_cost_MU", String.valueOf(parkingCost_MU));
-
-        variablesWriter.writeVariables("car", personId, tripIndex, departureTime, utility, carAttributes);
+        Map<String, String> attributes = new HashMap<>();
+        CmdpCalibrationVariables.addCommon(attributes, person, trip, personVariables, parameters,
+                carVariables.euclideanDistance_km);
+        attributes.put("suburbanDestination", destinationIsSuburban(trip) ? "1" : "0");
+        attributes.put("destinationCity", getMainCity(trip));
+        attributes.put("carASC", String.valueOf(estimateAgentUtility(person)));
+        attributes.put("travelTime_min", String.valueOf(carVariables.travelTime_min));
+        attributes.put("parking_searching_duration_min", String.valueOf(getParkingSearchDuration(trip)));
+        attributes.put("cost_MU", String.valueOf(carVariables.cost_MU));
+        attributes.put("parking_cost_MU", String.valueOf(parkingCostModel.getParkingPrice_CFH(trip, carVariables)));
+        variablesWriter.writeVariables("car", person.getId().toString(), trip.getIndex(),
+                trip.getDepartureTime(), utility, attributes);
     }
-
 }

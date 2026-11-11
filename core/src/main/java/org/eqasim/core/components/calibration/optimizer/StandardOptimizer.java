@@ -46,6 +46,11 @@ public class StandardOptimizer implements Optimizer {
 
     protected void getOptimizerIfMissing() {
         Path path = Paths.get(runScript);
+        if (Files.isRegularFile(path)) {
+            // An explicitly supplied checkout may contain local utility updates. Never switch it away.
+            logger.info("Using existing optimizer at {}", optimizerPath);
+            return;
+        }
         if (Files.notExists(path)) {
             logger.info("Optimizer path not found. Attempting to clone repository...");
             cloneRepository();
@@ -99,7 +104,7 @@ public class StandardOptimizer implements Optimizer {
             }
 
             ProcessBuilder builder;
-            if (repoCommit == null) {
+            if (repoCommit == null || repoCommit.isBlank()) {
                 builder = new ProcessBuilder("git", "-C", optimizerPath, "checkout", repoBranch);
             } else {
                 builder = new ProcessBuilder("git", "-C", optimizerPath, "checkout", repoCommit);

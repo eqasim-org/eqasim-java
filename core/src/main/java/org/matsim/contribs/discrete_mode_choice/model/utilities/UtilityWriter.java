@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.eqasim.core.components.calibration.writer.CalibrationVariableReferences;
 
 /**
  * UtilityWriter is responsible for logging utility candidates and their selection status
@@ -59,7 +60,7 @@ public class UtilityWriter {
 	}
 
 	private static void writeHeader() throws IOException {
-		writer.write("person_id;trips_index;selection_id;candidate_mode;utilities;utility;selected\n");
+		writer.write("person_id;trips_index;selection_id;candidate_mode;utilities;utility;selected;variables_id\n");
 		writer.flush();
 		logger.info("Head is written");
 	}
@@ -86,15 +87,16 @@ public class UtilityWriter {
 					.collect(Collectors.joining(","));
 
 				for (UtilityCandidate candidate : candidates) {
-					String line = String.format("%s;%s;%d;%s;%s;%.4f;%b\n",
-						personId.toString(),
+					String line = String.format(java.util.Locale.ROOT, "%s;%s;%d;%s;%s;%s;%b;%s\n",
+						escape(personId.toString()),
 						// startTime,
 						index,
 						selectionId,
 						getModes(candidate),
 						getUtilities(candidate),
-						candidate.getUtility(),
-						candidate.equals(selectedCandidate));
+						Double.toString(candidate.getUtility()),
+						candidate.equals(selectedCandidate),
+						getVariableReferences(candidate));
 					writer.write(line);
 				}
 				writer.flush(); // Consider buffering writes for large volumes
@@ -120,13 +122,26 @@ public class UtilityWriter {
 	public static String getUtilities(UtilityCandidate candidate){
 		if (candidate instanceof DefaultTourCandidate){
 			return ((DefaultTourCandidate) candidate).getTripCandidates().stream()
-				.map(t -> String.format("%.4f", t.getUtility())) // Formats to 3 decimal places
+					.map(t -> Double.toString(t.getUtility()))
 				.collect(Collectors.joining(","));
 		}
 		if (candidate instanceof DefaultTripCandidate){
 			return Double.toString(((DefaultTripCandidate) candidate).getUtility());
 		}
 		return "";
+	}
+
+	private static String getVariableReferences(UtilityCandidate candidate) {
+		if (candidate instanceof DefaultTourCandidate tour) {
+			return tour.getTripCandidates().stream().map(c -> Long.toString(CalibrationVariableReferences.get(c)))
+					.collect(Collectors.joining(","));
+		}
+		return candidate instanceof TripCandidate trip ? Long.toString(CalibrationVariableReferences.get(trip)) : "";
+	}
+
+	private static String escape(String value) {
+		return value.contains(";") || value.contains("\"") || value.contains("\n") || value.contains("\r")
+				? "\"" + value.replace("\"", "\"\"") + "\"" : value;
 	}
 
 	/**
@@ -137,6 +152,8 @@ public class UtilityWriter {
 			if (writer != null) {
 				try {
 					writer.close();
+					writer = null;
+					csvFilePath = null;
 				} catch (IOException e) {
 					logger.error("Failed to close CSV writer: " + e.getMessage());
 				}
