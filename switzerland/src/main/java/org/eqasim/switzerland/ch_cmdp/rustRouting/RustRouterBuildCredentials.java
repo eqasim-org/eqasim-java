@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 final class RustRouterBuildCredentials {
     private RustRouterBuildCredentials() {}
 
+    @SuppressWarnings("null")
     static String resolve() throws InterruptedException {
         String token = System.getenv("GITHUB_TOKEN");
         if (token == null || token.isBlank()) token = System.getenv("GH_TOKEN");

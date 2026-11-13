@@ -269,7 +269,9 @@ public class TripsRouterServer {
     }
 
     private static class ConfigResponse {
+        @SuppressWarnings("unused")
         public final boolean return_links;
+        @SuppressWarnings("unused")
         public final double routing_distance_utility;
 
         ConfigResponse(boolean returnLinks, double routingDistanceUtility) {

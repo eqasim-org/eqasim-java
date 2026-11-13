@@ -40,7 +40,8 @@ import org.eqasim.switzerland.ch_cmdp.tolls.EqasimTollsTravelDisutility;
 import org.eqasim.switzerland.ch_cmdp.tolls.MarginalCostOfTolls;
 import org.eqasim.switzerland.ch_cmdp.tolls.Tolls;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.RunComputeTransitPrices.CSVRequest;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RegionalSubscription;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RunComputeTransitPrices.CSVRequest;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
@@ -309,6 +310,7 @@ public final class MultiModeRouter implements AutoCloseable {
         factories.put("car", () -> {
             ModeRouter carRouter = carFactory.get();
             return new ModeRouter() {
+                @SuppressWarnings("null")
                 public RoutedTrip route(Trip trip) {
                     RoutedTrip result = carRouter.route(trip);
                     if (trip.includeCost && Double.isFinite(result.travelDistance)) {
@@ -317,6 +319,7 @@ public final class MultiModeRouter implements AutoCloseable {
                     return result;
                 }
 
+                @SuppressWarnings("null")
                 public double cost(Trip trip) {
                     return trip.savedDistance == null ? route(trip).cost
                             : carCostEstimator.applyAsDouble(trip.savedDistance / 1000.0);
@@ -710,6 +713,7 @@ public final class MultiModeRouter implements AutoCloseable {
         for (int i = 0; i < results.size(); i++) spool.put(indices.get(i), results.get(i), trips.get(i).mode.equals("truck"));
     }
 
+    @SuppressWarnings("null")
     private List<RoutedTrip> routeChunk(List<Trip> trips, boolean costOnly) throws InterruptedException {
         RoutedTrip[] results = new RoutedTrip[trips.size()];
         AtomicInteger next = new AtomicInteger();
@@ -885,7 +889,8 @@ public final class MultiModeRouter implements AutoCloseable {
                 trip.pricingRequest = new CSVRequest(trip.identifier, trip.originX, trip.originY, trip.destinationX,
                         trip.destinationY, trip.departureTime, homeX, homeY, ga, halfFare,
                         canonical ? regional : flag(row, "hasVerbundAbo"),
-                        !canonical && flag(row, "hasStreckenAbo"), gleis7, junior, age);
+                        !canonical && flag(row, "hasStreckenAbo"), gleis7, junior, age,
+                        row.getOrDefault(RegionalSubscription.ATTRIBUTE, ""));
             }
             return trip;
         } catch (IllegalArgumentException e) {
@@ -969,6 +974,7 @@ public final class MultiModeRouter implements AutoCloseable {
         return networkFactory(network, time, cost, returnLinks, useTollSensitivity, false);
     }
 
+    @SuppressWarnings({ "deprecation", "null" })
     private static java.util.function.Supplier<ModeRouter> networkFactory(Network network, TravelTime time,
             TravelDisutility cost, boolean returnLinks, boolean useTollSensitivity, boolean capturePath) {
         MemoryEfficientSpeedyALTFactory factory = new MemoryEfficientSpeedyALTFactory();
@@ -1145,6 +1151,7 @@ public final class MultiModeRouter implements AutoCloseable {
                 if (path == null) throw new NoPath();
                 return path;
             }
+            @SuppressWarnings("deprecation")
             @Override public Path calcLeastCostPath(org.matsim.api.core.v01.network.Node from,
                     org.matsim.api.core.v01.network.Node to, double time, Person person, Vehicle vehicle) {
                 return check(delegate.calcLeastCostPath(from, to, time, person, vehicle));

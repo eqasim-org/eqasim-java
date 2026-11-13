@@ -37,6 +37,7 @@ public final class RunMissingPopulationRouting {
         config.controller().setMobsim("qsim");
         int threads = cmd.getOption("threads").map(Integer::parseInt).orElse(config.global().getNumberOfThreads());
         if (threads < 1) throw new IllegalArgumentException("threads must be positive");
+        @SuppressWarnings("null")
         Set<String> modes = Arrays.stream(cmd.getOption("modes").orElse("").split(","))
                 .map(String::trim).filter(mode -> !mode.isEmpty()).collect(Collectors.toSet());
         var scenario = ScenarioUtils.createScenario(config);

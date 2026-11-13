@@ -5,20 +5,42 @@ import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
 
+/**
+ * The PT subscriptions of a person: the subscriptions attribute of the current populations (none, GA, HT, VA or VA+HT,
+ * decoded as in ch_cmdp), else the boolean attributes of the older ones (ptHasGA, ptHasHalbtax, ptHasVerbund).
+ */
 public class SwissPredictorUtils {
+	static public final String SUBSCRIPTIONS = "subscriptions";
+
+	private static String subscriptions(Person person) {
+		Object subscriptions = person.getAttributes().getAttribute(SUBSCRIPTIONS);
+		return subscriptions == null ? null : subscriptions.toString();
+	}
+
+	private static boolean flag(Person person, String attribute) {
+		Object value = person.getAttributes().getAttribute(attribute);
+		return value instanceof Boolean flag ? flag : value != null && Boolean.parseBoolean(value.toString());
+	}
+
 	static public boolean hasGeneralSubscription(Person person) {
-		Boolean hasGeneralSubscription = (Boolean) person.getAttributes().getAttribute("ptHasGA");
-		return hasGeneralSubscription != null && hasGeneralSubscription;
+		String subscriptions = subscriptions(person);
+		return subscriptions != null
+				? org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils.hasGeneralSubscription(subscriptions)
+				: flag(person, "ptHasGA");
 	}
 
 	static public boolean hasHalbtaxSubscription(Person person) {
-		Boolean hasHalbtaxSubscription = (Boolean) person.getAttributes().getAttribute("ptHasHalbtax");
-		return hasHalbtaxSubscription != null && hasHalbtaxSubscription;
+		String subscriptions = subscriptions(person);
+		return subscriptions != null
+				? org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils.hasHalbtaxSubscription(subscriptions)
+				: flag(person, "ptHasHalbtax");
 	}
 
 	static public boolean hasRegionalSubscription(Person person) {
-		Boolean hasRegionalSubscription = (Boolean) person.getAttributes().getAttribute("ptHasVerbund");
-		return hasRegionalSubscription != null && hasRegionalSubscription;
+		String subscriptions = subscriptions(person);
+		return subscriptions != null
+				? org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils.hasRegionalSubscription(subscriptions)
+				: flag(person, "ptHasVerbund");
 	}
 
 	static public int getStatedPreferenceRegion(Person person) {

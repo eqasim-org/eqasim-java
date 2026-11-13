@@ -30,6 +30,7 @@ public final class DsimIntegration2026 implements DsimIntegration {
         this.simulateBikes = simulateBikes;
     }
 
+    @SuppressWarnings("deprecation")
     @Override public void adaptConfig(Config config) {
         // These extensions require live QSim state. Silently dropping them would invalidate the model.
         for (String group : Set.of("multiModeDrt", "dvrp", "eqasim:vdf", "eqasim:vdf_engine",

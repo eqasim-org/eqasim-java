@@ -381,7 +381,7 @@ Each routed row/alternative gets a cost for its selected mode:
 - **PT:** Uses the same fare calculation as `RunComputeTransitPrices`, including
   authority grouping, half-fare and subscription rules, rounding and fare caps.
   It prices the already calculated route. When PT is configured, cost estimation
-  requires all three `ptZones` paths: `ptZonesFilePath`, `sbbDistancesPath`, and
+  requires all three `ptPricing` paths: `ptZonesFilePath`, `sbbDistancesPath`, and
   `pricingDescriptionPath`, resolved relative to the config. These inputs are
   loaded once before the server reports readiness, and shared by its workers.
   A PT alternative containing only walking has zero ticket cost.

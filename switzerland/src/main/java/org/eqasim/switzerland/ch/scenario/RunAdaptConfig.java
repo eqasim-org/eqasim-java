@@ -102,6 +102,7 @@ public class RunAdaptConfig {
 		ScoringConfigGroup scoringConfig0 = config.scoring();
 
 		for (String activityType : NEW_ACTIVITY_TYPES) {
+			@SuppressWarnings("deprecation")
 			ActivityParams activityParams = scoringConfig0.getActivityParams(activityType);
 
 			if (activityParams == null) {
@@ -156,6 +157,7 @@ public class RunAdaptConfig {
 			ScoringConfigGroup scoringConfig = config.scoring();
 
 			for (String activityType : SwissConfigAdapter.activityTypes) {
+				@SuppressWarnings("deprecation")
 				ScoringConfigGroup.ActivityParams activityParams = scoringConfig.getActivityParams(activityType);
 
 				if (activityParams == null) {

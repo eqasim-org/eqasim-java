@@ -8,6 +8,8 @@ public class SwissCostParameters implements ParameterDefinition {
 	public double ptCost_CHF_km = 0.0;
 	public double ptMinimumCost_CHF = 0.0;
 
+	// No longer used by the PT price: a regional subscription covers the zones of RegionalSubscriptionProducts.
+	// Kept so that the existing cost parameter files remain valid.
 	public double ptRegionalRadius_km = 0.0;
 
 	public static SwissCostParameters buildDefault() {

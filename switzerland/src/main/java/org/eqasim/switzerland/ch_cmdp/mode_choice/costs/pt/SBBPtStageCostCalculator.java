@@ -80,11 +80,7 @@ public class SBBPtStageCostCalculator implements PtStageCostCalculator {
             }
         }
 
-        if (roundedDistance < 69) {
-            price = Math.ceil(price * 5.0) / 5.0;
-        } else {
-            price = Math.ceil(price);
-        }
+        price = PtFareRounding.fareRounding(price, roundedDistance);
 
         if (hasHalbtax){
             price = price / 2.0;

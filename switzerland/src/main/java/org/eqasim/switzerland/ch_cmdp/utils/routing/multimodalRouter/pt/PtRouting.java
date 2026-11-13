@@ -55,6 +55,7 @@ public final class PtRouting implements AutoCloseable {
     public TransitSchedule schedule() { return scenario.getTransitSchedule(); }
     public record Worker(Function<RoutingRequest, List<? extends PlanElement>> route, HeadwayCalculator headway) {}
 
+    @SuppressWarnings("null")
     public Worker createWorker() {
         SwissRailRaptor raptor = null;
         if (raptorData != null) {

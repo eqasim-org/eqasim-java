@@ -1,26 +1,22 @@
 package org.eqasim.switzerland.ch_cmdp.utils.routing.multimodalRouter.costs;
 
-import java.io.File;
 import java.util.function.DoubleUnaryOperator;
 import java.util.List;
 import java.util.ArrayList;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
-import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtPricingConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.SwissWeissCarCostModel;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.NetworkOfDistances;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.PricingDescriptionReader;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.SBBDistanceReader;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalReader;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.ZonalRegistry;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.NetworkOfDistances;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.SwissPtPricingInputs;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.ZonalRegistry;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Leg;
@@ -31,8 +27,8 @@ import org.matsim.pt.routes.DefaultTransitPassengerRoute;
 import org.matsim.pt.transitSchedule.api.TransitLine;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.RunComputeTransitPrices;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.RunComputeTransitPrices.CSVRequest;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RunComputeTransitPrices;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RunComputeTransitPrices.CSVRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /** Cost inputs shared by all workers, loaded only when cost estimation is enabled. */
@@ -43,7 +39,7 @@ public final class RouterCosts {
     public record FareProfile(String identifier, double originX, double originY, double destinationX,
             double destinationY, double departureTime, double homeX, double homeY, boolean hasGA,
             boolean hasHalbtaxSubscription, boolean hasVerbundAbo, boolean hasStreckenAbo,
-            boolean hasGleis7Abo, boolean hasJuniorAbo, int age) {
+            boolean hasGleis7Abo, boolean hasJuniorAbo, int age, String regionalSubscriptionProducts) {
         CSVRequest request() {
             if (age < 0 || !Double.isFinite(originX) || !Double.isFinite(originY)
                     || !Double.isFinite(destinationX) || !Double.isFinite(destinationY)
@@ -53,7 +49,7 @@ public final class RouterCosts {
             }
             return new CSVRequest(identifier, originX, originY, destinationX, destinationY, departureTime,
                     homeX, homeY, hasGA, hasHalbtaxSubscription, hasVerbundAbo, hasStreckenAbo,
-                    hasGleis7Abo, hasJuniorAbo, age);
+                    hasGleis7Abo, hasJuniorAbo, age, regionalSubscriptionProducts);
         }
     }
 
@@ -108,7 +104,7 @@ public final class RouterCosts {
         var profile = new FareProfile(request.requestId, request.originX, request.originY, request.destinationX,
                 request.destinationY, request.departureTime_s, request.homeX, request.homeY, request.hasGA,
                 request.hasHalbtaxSubscription, request.hasVerbundAbo, request.hasStreckenAbo,
-                request.hasGleis7Abo, request.hasJuniorAbo, request.age);
+                request.hasGleis7Abo, request.hasJuniorAbo, request.age, request.regionalSubscriptionProducts);
         try {
             return JSON.writeValueAsString(new SavedPtRoute(profile, legs));
         } catch (Exception e) {
@@ -127,7 +123,7 @@ public final class RouterCosts {
     public record PtPricer(SwissPtRoutePredictor predictor, TransitSchedule schedule, PtPricing pricing) {
         public double price(CSVRequest request, List<? extends PlanElement> elements) {
             return RunComputeTransitPrices.calculatePrices(request, predictor.predictPtVariables(elements),
-                    pricing.calculators, pricing.regionalRadius_km).price();
+                    pricing.calculators, predictor).price();
         }
 
         public double price(SavedPtRoute saved) {
@@ -158,40 +154,34 @@ public final class RouterCosts {
         };
     }
 
-    public record PtPricing(ZonalRegistry zones, NetworkOfDistances distances, SwissPtStageCostCalculator calculators,
-            double regionalRadius_km) {
+    public record PtPricing(ZonalRegistry zones, NetworkOfDistances distances, SwissPtStageCostCalculator calculators) {
         public PtPricer pricer(TransitSchedule schedule) {
             return new PtPricer(new SwissPtRoutePredictor(schedule, zones, distances), schedule, this);
         }
     }
 
     public static PtPricing ptPricing(Config config, SwissCostParameters parameters) {
-        var ptZones = ConfigUtils.addOrGetModule(config, SwissPTZonesConfigGroup.class);
-        if (ptZones.getZonePath() == null || ptZones.getSBBDistancesPath() == null
-                || ptZones.getPricingDescriptionPath() == null) {
-            throw new IllegalArgumentException("compute-cost requires complete ptZones configuration for PT: "
-                    + "ptZonesFilePath, sbbDistancesPath and pricingDescriptionPath");
+        // the inputs of the ptPricing module (or of its former name, ptZones), relative to the config file; without
+        // pricingDescriptionPath, the bundled pricing description
+        var group = SwissPtPricingConfigGroup.getOrCreate(config);
+        if (!SwissPtPricingConfigGroup.isSet(group.getZonePath()) || !SwissPtPricingConfigGroup.isSet(group.getSBBDistancesPath())) {
+            throw new IllegalArgumentException("compute-cost requires the ptPricing configuration for PT: "
+                    + "ptZonesFilePath and sbbDistancesPath (pricingDescriptionPath is optional)");
         }
         try {
-            var reader = new ZonalReader();
-            File zoneFile = file(config, ptZones.getZonePath());
-            var authorities = reader.readTarifNetworks(zoneFile);
-            var zones = new ZonalRegistry(authorities, reader.readZones(zoneFile, authorities));
-            File distanceFile = file(config, ptZones.getSBBDistancesPath());
-            zones.merge(SBBDistanceReader.createZonalRegistry(SBBDistanceReader.createZone(distanceFile)));
-            return new PtPricing(zones, SBBDistanceReader.createNetworkOfDistances(distanceFile),
-                    PricingDescriptionReader.readPriceDescription(file(config, ptZones.getPricingDescriptionPath())),
-                    parameters.ptRegionalRadius_km);
+            return new PtPricing(SwissPtPricingInputs.readZonalRegistry(config, group),
+                    SwissPtPricingInputs.readNetworkOfDistances(config, group),
+                    SwissPtPricingInputs.readCalculator(config, group));
         } catch (Exception e) {
             throw new IllegalArgumentException("Could not load PT pricing inputs: " + e.getMessage(), e);
         }
     }
 
-    private static File file(Config config, String path) {
+    private static java.io.File file(Config config, String path) {
         try {
-            return new File(ConfigGroup.getInputFileURL(config.getContext(), path).toURI());
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid local pricing input path: " + path, e);
+            return SwissPtPricingInputs.file(config, path);
+        } catch (java.io.IOException e) {
+            throw new IllegalArgumentException("Invalid local input path: " + path, e);
         }
     }
 }

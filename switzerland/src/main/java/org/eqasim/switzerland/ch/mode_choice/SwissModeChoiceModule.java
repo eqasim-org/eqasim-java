@@ -3,7 +3,6 @@ package org.eqasim.switzerland.ch.mode_choice;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Map;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
@@ -13,12 +12,12 @@ import org.eqasim.core.simulation.mode_choice.AbstractEqasimExtension;
 import org.eqasim.core.simulation.mode_choice.ParameterDefinition;
 import org.eqasim.core.simulation.mode_choice.parameters.ModeParameters;
 import org.eqasim.switzerland.ch_cmdp.calibration.AlphaCantonCalibrator;
-import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtPricingConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.BorderConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.LoopModesConstraint;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissCarCostModel;
 import org.eqasim.switzerland.ch.mode_choice.costs.SwissPtCostModel;
-import org.eqasim.switzerland.ch.mode_choice.costs.pt.SwissPtStageCostCalculator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch.mode_choice.parameters.SwissModeParameters;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissBikeUtilityEstimator;
@@ -27,13 +26,10 @@ import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissPtUtility
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissWalkUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.estimators.SwissZeroUtilityEstimator;
 import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPersonPredictor;
-import org.eqasim.switzerland.ch.mode_choice.utilities.predictors.SwissPtRoutePredictor;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Authority;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.NetworkOfDistances;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.SBBDistanceReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalReader;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.ZonalRegistry;
-import org.eqasim.switzerland.ch.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.NetworkOfDistances;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.SwissPtPricingInputs;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.ZonalRegistry;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCmdpModeParameters;
 import org.matsim.api.core.v01.Scenario;
@@ -154,57 +150,26 @@ public class SwissModeChoiceModule extends AbstractEqasimExtension {
 	}
 
 	@Provides
-	//@Singleton
-	public ZonalRegistry provideZonalRegistry(SwissPTZonesConfigGroup ptZonesConfig, Config mainConfig) throws IOException, CsvValidationException{
-		ZonalReader zonalReader = new ZonalReader();
-		ZonalRegistry zonalRegistry = null;
-		ZonalRegistry sbbZonalRegistry = null;
-
-		if (ptZonesConfig.getZonePath() != null){
-			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), ptZonesConfig.getZonePath());
-			File path = new File(url.getPath());
-			Collection<Authority> authorities = zonalReader.readTarifNetworks(path);
-			Collection<Zone> zones = zonalReader.readZones(path, authorities);
-			zonalRegistry = new ZonalRegistry(authorities, zones);
-		}
-		else{
-			throw new IOException("No input file detected to create the zonal registry.");
-		}
-
-		if (ptZonesConfig.getSBBDistancesPath() != null) {
-			URL url = ConfigGroup.getInputFileURL(mainConfig.getContext(), ptZonesConfig.getSBBDistancesPath());
-			File path = new File(url.getPath());
-			Zone sbbZone = SBBDistanceReader.createZone(path);
-			sbbZonalRegistry = SBBDistanceReader.createZonalRegistry(sbbZone);
-			zonalRegistry.merge(sbbZonalRegistry);
-		}
-		else{
-			throw new IOException("No input file detected to create the SBB network.");
-		}
-
-		return zonalRegistry;
+	@Singleton
+	public ZonalRegistry provideZonalRegistry(Config mainConfig) throws IOException, CsvValidationException {
+		return SwissPtPricingInputs.readZonalRegistry(mainConfig, SwissPtPricingConfigGroup.getOrCreate(mainConfig));
 	}
 
 	@Provides
-	public NetworkOfDistances provideNetworkOfDistances(SwissPTZonesConfigGroup ptZonesConfig) throws IOException, CsvValidationException{
-		String file_path = "";
-		NetworkOfDistances sbbNetwork = new NetworkOfDistances();
-
-		if (ptZonesConfig.getSBBDistancesPath() != null){
-			file_path = ptZonesConfig.getSBBDistancesPath();
-			File path = new File(file_path);
-			sbbNetwork = SBBDistanceReader.createNetworkOfDistances(path);
-		}
-		else{
-			throw new IOException("No input file detected to create the SBB network.");
-		}
-
-		return sbbNetwork;
-
+	@Singleton
+	public NetworkOfDistances provideNetworkOfDistances(Config mainConfig) throws IOException, CsvValidationException {
+		return SwissPtPricingInputs.readNetworkOfDistances(mainConfig, SwissPtPricingConfigGroup.getOrCreate(mainConfig));
 	}
 
 	@Provides
-	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(){
-		return new SwissPtStageCostCalculator();
+	@Singleton
+	public SwissPtStageCostCalculator provideSwissPtStageCostCalculator(Config mainConfig) throws Exception {
+		// the bundled pricing description without pricingDescriptionPath, and the Léman Pass if the config has it
+		return SwissPtPricingInputs.readCalculator(mainConfig, SwissPtPricingConfigGroup.getOrCreate(mainConfig));
+	}
+
+	/** The fares of the pricing description bundled with eqasim (as used by eqasim-switzerland), for a config without one. */
+	public static SwissPtStageCostCalculator createDefaultPtStageCostCalculator() {
+		return SwissPtPricingInputs.readDefaultCalculator();
 	}
 }

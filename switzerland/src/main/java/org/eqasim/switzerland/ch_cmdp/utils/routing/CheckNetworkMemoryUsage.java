@@ -270,6 +270,7 @@ public final class CheckNetworkMemoryUsage {
         return report.toString();
     }
 
+    @SuppressWarnings("null")
     private static void appendDifferenceStatistics(StringBuilder report, String label, List<Double> values) {
         if (values.isEmpty()) { report.append(label).append(": N/A\n"); return; }
         values.sort(Double::compare);
@@ -395,6 +396,7 @@ public final class CheckNetworkMemoryUsage {
 
     record Trip(Id<Node> from, Id<Node> to, double departure) { }
 
+    @SuppressWarnings({ "null", "deprecation" })
     private static void runWorker(CommandLine cmd) throws Exception {
         String name = cmd.getOptionStrict("worker-case");
         boolean efficientRouting = name.equals("optimized-with-restrictions") || name.equals("optimized-32-with-restrictions");

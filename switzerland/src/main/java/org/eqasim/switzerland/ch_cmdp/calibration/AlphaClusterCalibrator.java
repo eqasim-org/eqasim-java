@@ -204,6 +204,7 @@ public class AlphaClusterCalibrator implements FastCalibration {
         modeCounts.clear();
     }
 
+    @SuppressWarnings("null")
     private void updateShares() {
         Map<String, Double> estimatedGlobalShares = new HashMap<>();
         double total = modeCounts.values().stream().mapToDouble(Double::doubleValue).sum()+1e-10; // Avoid division by zero

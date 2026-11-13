@@ -34,26 +34,36 @@ public class EqasimRaptorUtils {
 		parameters.setMarginalUtilityOfWaitingPt_utl_s(raptorConfig.waitTime_u_h / 3600.0);
 		parameters.setMarginalUtilityOfTravelTime_utl_s("walk", raptorConfig.walkTime_u_h / 3600.0);
 
-		Set<String> requiredModes = new HashSet<>();
+		Set<String> otherModes = setOtherModesUtility(parameters, schedule, raptorConfig.travelTimeOther_u_h);
 
-		for (TransitLine transitLine : schedule.getTransitLines().values()) {
-			for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
-				requiredModes.add(transitRoute.getTransportMode());
-			}
-		}
-
-		requiredModes.removeAll(Arrays.asList("rail", "subway", "bus", "tram", "walk"));
-
-		if (requiredModes.size() > 0) {
-			if (verbose) {
-				logger.warn("Setting 'other' routing cost for following modes: " + String.join(", ", requiredModes));
-			}
-
-			for (String mode : requiredModes) {
-				parameters.setMarginalUtilityOfTravelTime_utl_s(mode, raptorConfig.travelTimeOther_u_h / 3600.0);
-			}
+		if (verbose && otherModes.size() > 0) {
+			logger.warn("Setting 'other' routing cost for following modes: " + String.join(", ", otherModes));
 		}
 
 		return parameters;
+	}
+
+	/**
+	 * Sets the in-vehicle utility of all the transport modes of the schedule
+	 * which are not rail, subway, bus or tram (ferry, funicular, cable car, ...)
+	 * to the given value per hour. Returns these modes.
+	 */
+	static public Set<String> setOtherModesUtility(RaptorParameters parameters, TransitSchedule schedule,
+			double otherUtility_u_h) {
+		Set<String> otherModes = new HashSet<>();
+
+		for (TransitLine transitLine : schedule.getTransitLines().values()) {
+			for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
+				otherModes.add(transitRoute.getTransportMode());
+			}
+		}
+
+		otherModes.removeAll(Arrays.asList("rail", "subway", "bus", "tram", "walk"));
+
+		for (String mode : otherModes) {
+			parameters.setMarginalUtilityOfTravelTime_utl_s(mode, otherUtility_u_h / 3600.0);
+		}
+
+		return otherModes;
 	}
 }

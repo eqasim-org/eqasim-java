@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Authority;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.inputs.Zone;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.Authority;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.inputs.Zone;
 
 public class SwissPtVariables implements BaseVariables  {
     
@@ -43,63 +43,62 @@ public class SwissPtVariables implements BaseVariables  {
     }
 
 
-    @SuppressWarnings("null")
+    /**
+     * Which network prices which legs, one ticket each (group_rides in eqasim-switzerland, utils/gtfs_router/pricing.py).
+     *
+     * If one network covers all the legs, it prices the whole trip (the one of the highest priority if there are
+     * several). Otherwise only the networks of the highest priority of each leg count: each leg goes to one it shares
+     * with another leg (the one of the lowest priority), or else to its own (the one of the highest priority). Ties are
+     * broken by the network id, so that the tickets never depend on the order of a hash set.
+     */
     public Map<String, List<SwissPtLegVariables>> getPricingStrategy(){
         Map<String, List<SwissPtLegVariables>> groupedByAuthority = new HashMap<>();
+        if (this.legVariables.isEmpty()) {
+            return groupedByAuthority;
+        }
 
-        List<Set<Authority>> allAuthorities = new ArrayList<Set<Authority>>();
-        Map<Authority, Integer> frequency   = new HashMap<>();
-        
+        Comparator<Authority> byPriority = Comparator.comparingInt(Authority::getPriority).thenComparing(Authority::getId);
+
+        List<Set<Authority>> allAuthorities = new ArrayList<>();
         for (SwissPtLegVariables currentLeg : this.legVariables){
-            Set<Authority> authorities = extractAuthorities(currentLeg);
-            allAuthorities.add(authorities);
+            allAuthorities.add(extractAuthorities(currentLeg));
+        }
 
-            for (Authority auth : authorities) {
+        // One network for all the legs: the one of the highest priority
+        Set<Authority> everywhere = new HashSet<>(allAuthorities.get(0));
+        for (Set<Authority> authorities : allAuthorities) {
+            everywhere.retainAll(authorities);
+        }
+
+        if (!everywhere.isEmpty()) {
+            groupedByAuthority.put(everywhere.stream().max(byPriority).get().getId(), this.legVariables);
+            return groupedByAuthority;
+        }
+
+        // Otherwise, only the networks of the highest priority of each leg
+        List<Set<Authority>> highest = new ArrayList<>();
+        Map<Authority, Integer> frequency = new HashMap<>();
+        for (Set<Authority> authorities : allAuthorities) {
+            int top = authorities.stream().mapToInt(Authority::getPriority).max().getAsInt();
+            Set<Authority> kept = authorities.stream().filter(a -> a.getPriority() == top).collect(Collectors.toSet());
+            highest.add(kept);
+            for (Authority auth : kept) {
                 frequency.merge(auth, 1, Integer::sum);
             }
         }
 
-        int numLegs = allAuthorities.size();
+        for (int i = 0; i < legVariables.size(); i++){
+            Set<Authority> authorities = highest.get(i);
+            List<Authority> sharedWithOtherLegs = authorities.stream().filter(a -> frequency.getOrDefault(a, 0) > 1).collect(Collectors.toList());
 
-        // Check if one authority covers all legs
-        List<Authority> globalAuthorities = frequency.entrySet().stream()
-            .filter(e -> e.getValue() == numLegs) // appears in every leg
-            .map(Map.Entry::getKey)
-            .collect(Collectors.toList());
+            Authority chosen = sharedWithOtherLegs.isEmpty()
+                ? authorities.stream().max(byPriority).orElseThrow(() -> new RuntimeException("No authority found"))
+                : sharedWithOtherLegs.stream().min(byPriority).get();
 
-         if (!globalAuthorities.isEmpty()) {
-            // If multiple → pick the one with highest priority
-            Authority chosenGlobal = globalAuthorities.stream()
-                .max(Comparator.comparingInt(Authority::getPriority))
-                .get();
-
-            groupedByAuthority.put(chosenGlobal.getId(), legVariables);
-
-            //System.out.println("   The following authority is common for all legs: " + chosenGlobal.getId());
-
-            return groupedByAuthority;
-        }
-
-        // Assign legs to authorities
-        for (int i = 0; i< legVariables.size(); i++){
-            SwissPtLegVariables legVariable = legVariables.get(i);
-            Set<Authority> authorities = allAuthorities.get(i);
-
-            List<Authority> sharedWithOtherLegs = authorities.stream().filter(a -> frequency.getOrDefault(a, 0) >1).collect(Collectors.toList());
-
-            Authority chosen;
-            if (! sharedWithOtherLegs.isEmpty()){
-                chosen = sharedWithOtherLegs.stream().min(Comparator.comparingInt(Authority::getPriority)).get();
-            } else {
-                chosen = authorities.stream().max(Comparator.comparingInt(Authority::getPriority)).orElseThrow(() -> new RuntimeException("No authority found"));
-            }
-
-            //System.out.println("   The following authority applies for the leg from " + legVariable.fromNodeName + " to " + legVariable.toNodeName + ": " + chosen.getId());
-            groupedByAuthority.computeIfAbsent(chosen.getId(), k -> new ArrayList<>()).add(legVariable);
+            groupedByAuthority.computeIfAbsent(chosen.getId(), k -> new ArrayList<>()).add(legVariables.get(i));
         }
 
         return groupedByAuthority;
-        
     }
 
 

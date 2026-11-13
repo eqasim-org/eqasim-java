@@ -34,15 +34,16 @@ import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
-import org.eqasim.switzerland.ch_cmdp.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtPricingConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.parameters.SwissCostParameters;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPredictorUtils;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.predictors.SwissPtRoutePredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.DefaultDistanceBasedCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtVariables;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.RunComputeTransitPrices;
-import org.eqasim.switzerland.ch_cmdp.utils.pricing.RunComputeTransitPrices.CSVRequest;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RunComputeTransitPrices;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RunComputeTransitPrices.CSVRequest;
 
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -131,14 +132,14 @@ public class TestMultiModeRouterCosts {
     public void ptPricesUseLoadedFareInputsAndOptionalTravelerColumns() throws Exception {
         Path network = network();
         Config config = transitConfig();
-        Path zones = write("zones.csv", "stop_id,tarif network,zones\nstart,[],\nend,[],\n");
+        Path zones = write("zones.csv", "stop_id,tarif network,zones\n8500001,[],\n8500002,[],\n");
         Path distances = write("distances.csv", "origin_id,destination_id,distance\n");
         Path pricing = write("pricing.xml", """
                 <pricing><distanceBasedDefault>
                   <flatRatePrice value="4"/><pricePerKM value="2"/><power2Factor value="0"/>
                 </distanceBasedDefault></pricing>
                 """);
-        var ptZones = new SwissPTZonesConfigGroup();
+        var ptZones = new SwissPtPricingConfigGroup();
         ptZones.setZonePath(zones.getFileName().toString());
         ptZones.setSBBDistancesPath(distances.getFileName().toString());
         ptZones.setPricingDescriptionPath(pricing.getFileName().toString());
@@ -148,7 +149,6 @@ public class TestMultiModeRouterCosts {
         Path input = write("pt.csv", header + "full,500,0,1500,0,pt,,,,,,\n"
                 + "half,500,0,1500,0,pt,false,true,false,,,30\n"
                 + "ga,500,0,1500,0,pt,true,false,false,,,30\n"
-                + "regional,500,0,1500,0,pt,false,false,true,0,0,30\n"
                 + "child,500,0,1500,0,pt,false,false,false,,,5\n"
                 + "walkonly,500,0,500,0,pt,false,false,false,,,30\n");
         Path output = folder.getRoot().toPath().resolve("pt-out.csv");
@@ -202,19 +202,22 @@ public class TestMultiModeRouterCosts {
     public void scenarioSubscriptionsUseModeChoiceDecodingAndSavedProfiles() throws Exception {
         Path network = network();
         Path config = pricedTransitConfig();
-        record Traveler(String subscriptions, int age, double homeX, double price) {}
-        var travelers = List.of(new Traveler("GA", 30, 0, 0), new Traveler("HT", 30, 0, 3),
-                new Traveler("VA", 30, 0, 0), new Traveler("VA+HT", 30, 0, 0),
-                new Traveler("VA", 30, 100_000, 6), new Traveler("VA+HT", 30, 100_000, 3),
-                new Traveler("ht", 30, 0, 3), new Traveler("none", 30, 0, 6),
-                new Traveler("", 30, 0, 6), new Traveler("unknown", 30, 0, 6),
-                new Traveler("none", 5, 0, 0), new Traveler("none", 16, 0, 3));
-        StringBuilder csv = new StringBuilder("identifier,origin_x,origin_y,destination_x,destination_y,mode,subscriptions,age,home_x,home_y,hasGA,homeX,homeY\n");
+        // The trip is in zone 1 of LOCAL: a Verbundabo is valid for it only if LOCAL:1 is in its zones
+        // (RegionalSubscriptionProducts), wherever the home is.
+        record Traveler(String subscriptions, int age, String zones, double price) {}
+        var travelers = List.of(new Traveler("GA", 30, "", 0), new Traveler("HT", 30, "", 3),
+                new Traveler("VA", 30, "LOCAL:1", 0), new Traveler("VA+HT", 30, "LOCAL:1,2", 0),
+                new Traveler("VA", 30, "LOCAL:2", 6), new Traveler("VA+HT", 30, "", 3),
+                new Traveler("none", 30, "LOCAL:1", 6),
+                new Traveler("ht", 30, "", 3), new Traveler("none", 30, "", 6),
+                new Traveler("", 30, "", 6), new Traveler("unknown", 30, "", 6),
+                new Traveler("none", 5, "", 0), new Traveler("none", 16, "", 6));
+        StringBuilder csv = new StringBuilder("identifier,origin_x,origin_y,destination_x,destination_y,mode,subscriptions,age,home_x,home_y,hasGA,homeX,homeY,RegionalSubscriptionProducts\n");
         for (int i = 0; i < travelers.size(); i++) {
             var traveler = travelers.get(i);
             // Canonical fields take precedence over legacy boolean and home-coordinate columns.
             csv.append(i).append(",500,0,1500,0,pt,").append(traveler.subscriptions).append(',')
-                    .append(traveler.age).append(',').append(traveler.homeX).append(",0,unused,1000000,0\n");
+                    .append(traveler.age).append(",0,0,unused,1000000,0,\"").append(traveler.zones).append("\"\n");
         }
         Path input = write("subscriptions.csv", csv.toString());
         Path output = folder.getRoot().toPath().resolve("subscriptions-out.csv");
@@ -233,6 +236,7 @@ public class TestMultiModeRouterCosts {
                 assertEquals(SwissPredictorUtils.hasRegionalSubscription(person), profile.hasVerbundAbo());
                 assertEquals(SwissPredictorUtils.hasJuniorSubscription(person), profile.hasJuniorAbo());
                 assertEquals(SwissPredictorUtils.hasGleis7Subscription(person), profile.hasGleis7Abo());
+                assertEquals(traveler.zones, profile.regionalSubscriptionProducts());
             }
             router.cost(output, costs);
             var savedPrices = rows(costs);
@@ -266,7 +270,7 @@ public class TestMultiModeRouterCosts {
         }
         var enabled = settings(network, configPath, "--compute-cost", "true");
         assertTrue(assertThrows(IllegalArgumentException.class, () -> new MultiModeRouter(enabled))
-                .getMessage().contains("ptZones"));
+                .getMessage().contains("ptPricing"));
         var invalid = settings(network, null, "--compute-cost", "true", "--car-cost-model", "invalid");
         assertThrows(IllegalArgumentException.class, () -> new MultiModeRouter(invalid));
     }
@@ -288,16 +292,17 @@ public class TestMultiModeRouterCosts {
     }
 
     @Test
-    public void sharedFareRulesRespectCapsChildDiscountAndRegionalKilometers() {
+    public void sharedFareRulesRespectCapsAndChildDiscount() {
         var vars = new SwissPtVariables();
         vars.addStage(new SwissPtLegVariables(Map.of(), 0, 100, 100_000, -1, "start", "end", "start", "end"));
         var calculators = new SwissPtStageCostCalculator(Map.of("None", new DefaultDistanceBasedCalculator(2, 4, 0)));
-        assertEquals(60, RunComputeTransitPrices.calculatePrices(request(30, false), vars, calculators, 10).price(), 0);
-        assertEquals(35, RunComputeTransitPrices.calculatePrices(request(30, true), vars, calculators, 10).price(), 0);
-        assertEquals(35, RunComputeTransitPrices.calculatePrices(request(15, false), vars, calculators, 10).price(), 0);
-        assertEquals(35, RunComputeTransitPrices.calculatePrices(request(16, false), vars, calculators, 10).price(), 0);
-        assertEquals(0, RunComputeTransitPrices.calculatePrices(request(5, false), vars, calculators, 10).price(), 0);
-        assertEquals(1.5, RunComputeTransitPrices.calculateHomeDistance_km(request(30, false)), 0);
+        // Without a regional subscription, the predictor (which compares its zones with the trip) is not consulted
+        var predictor = new SwissPtRoutePredictor(null, null, null);
+        assertEquals(60, RunComputeTransitPrices.calculatePrices(request(30, false), vars, calculators, predictor).price(), 0);
+        assertEquals(35, RunComputeTransitPrices.calculatePrices(request(30, true), vars, calculators, predictor).price(), 0);
+        assertEquals(35, RunComputeTransitPrices.calculatePrices(request(15, false), vars, calculators, predictor).price(), 0);
+        assertEquals(60, RunComputeTransitPrices.calculatePrices(request(16, false), vars, calculators, predictor).price(), 0);
+        assertEquals(0, RunComputeTransitPrices.calculatePrices(request(5, false), vars, calculators, predictor).price(), 0);
     }
 
     @Test
@@ -416,12 +421,12 @@ public class TestMultiModeRouterCosts {
         config.routing().setNetworkModes(Set.of("car", "walk", "bike"));
         config.routing().removeModeRoutingParams("walk");
         config.routing().removeModeRoutingParams("bike");
-        Path zones = write("missing-zones.csv", "stop_id,tarif network,zones\nstart,[],\nend,[],\n");
+        Path zones = write("missing-zones.csv", "stop_id,tarif network,zones\n8500001,[],\n8500002,[],\n");
         Path distances = write("missing-distances.csv", "origin_id,destination_id,distance\n");
         Path pricing = write("missing-pricing.xml", "<pricing><distanceBasedDefault>"
                 + "<flatRatePrice value=\"4\"/><pricePerKM value=\"2\"/><power2Factor value=\"0\"/>"
                 + "</distanceBasedDefault></pricing>");
-        var ptZones = new SwissPTZonesConfigGroup();
+        var ptZones = new SwissPtPricingConfigGroup();
         ptZones.setZonePath(zones.toString()); ptZones.setSBBDistancesPath(distances.toString());
         ptZones.setPricingDescriptionPath(pricing.toString()); config.addModule(ptZones);
         Path configPath = writeConfig(config);
@@ -547,7 +552,7 @@ public class TestMultiModeRouterCosts {
         var transit = imported.stream().map(org.matsim.api.core.v01.population.Leg::getRoute)
                 .filter(route -> route instanceof org.matsim.pt.routes.TransitPassengerRoute)
                 .map(route -> (org.matsim.pt.routes.TransitPassengerRoute) route).findFirst().orElseThrow();
-        assertEquals("start", transit.getAccessStopId().toString()); assertEquals("end", transit.getEgressStopId().toString());
+        assertEquals("8500001", transit.getAccessStopId().toString()); assertEquals("8500002", transit.getEgressStopId().toString());
         assertEquals("line", transit.getLineId().toString()); assertEquals("route", transit.getRouteId().toString());
         assertEquals(Double.parseDouble(row.get("travel_time")), imported.stream().mapToDouble(item -> item.getTravelTime().seconds()).sum(), 1e-6);
         var access = factory.createLeg("walk");
@@ -597,8 +602,9 @@ public class TestMultiModeRouterCosts {
 
     private Path pricedTransitConfig() throws Exception {
         Config config = transitConfig();
-        var ptZones = new SwissPTZonesConfigGroup();
-        ptZones.setZonePath(write("zones.csv", "stop_id,tarif network,zones\nstart,[],\nend,[],\n").toString());
+        var ptZones = new SwissPtPricingConfigGroup();
+        // Both stops are in zone 1 of LOCAL, a network without its own prices (priced by distance, as "None")
+        ptZones.setZonePath(write("zones.csv", "stop_id,tarif network,zones\n8500001,[LOCAL],LOCAL:1\n8500002,[LOCAL],LOCAL:1\n").toString());
         ptZones.setSBBDistancesPath(write("distances.csv", "origin_id,destination_id,distance\n").toString());
         ptZones.setPricingDescriptionPath(write("pricing.xml", """
                 <pricing><distanceBasedDefault>
@@ -618,8 +624,8 @@ public class TestMultiModeRouterCosts {
         config.transitRouter().setExtensionRadius(100);
         var schedule = ScenarioUtils.createScenario(config).getTransitSchedule();
         var factory = schedule.getFactory();
-        var start = factory.createTransitStopFacility(Id.create("start", TransitStopFacility.class), new Coord(500, 0), false);
-        var end = factory.createTransitStopFacility(Id.create("end", TransitStopFacility.class), new Coord(1500, 0), false);
+        var start = factory.createTransitStopFacility(Id.create("8500001", TransitStopFacility.class), new Coord(500, 0), false);
+        var end = factory.createTransitStopFacility(Id.create("8500002", TransitStopFacility.class), new Coord(1500, 0), false);
         start.setName("start"); end.setName("end");
         start.setLinkId(Id.createLinkId("first")); end.setLinkId(Id.createLinkId("second"));
         schedule.addStopFacility(start); schedule.addStopFacility(end);

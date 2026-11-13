@@ -2,7 +2,7 @@ package org.eqasim.switzerland.ch;
 
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.core.simulation.EqasimConfigurator;
-import org.eqasim.switzerland.ch.config.SwissPTZonesConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtPricingConfigGroup;
 import org.eqasim.switzerland.ch.mode_choice.SwissModeChoiceModule;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -18,8 +18,15 @@ public class SwitzerlandConfigurator extends EqasimConfigurator {
 		super(cmd);
 		this.cmd = cmd;
 		
-		registerConfigGroup(new SwissPTZonesConfigGroup(), true);
+		registerConfigGroup(new SwissPtPricingConfigGroup(), true);
 		registerModule(new SwissModeChoiceModule(cmd));
+	}
+
+	@Override
+	public void updateConfig(Config config) {
+		// the configs written before the rename call the PT pricing module ptZones
+		SwissPtPricingConfigGroup.migrateLegacyModule(config);
+		super.updateConfig(config);
 	}
 
 	@Override

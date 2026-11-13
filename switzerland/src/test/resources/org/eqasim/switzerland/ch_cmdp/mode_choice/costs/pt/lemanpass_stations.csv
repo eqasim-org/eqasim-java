@@ -1,0 +1,151 @@
+stop_id,station,zone,country
+8774600,Annecy (LEX),380,FR
+Parent8774600,Annecy (LEX),380,FR
+StopPoint:OCETrain:::TER-87746008,Annecy (LEX),380,FR
+8774549,Annemasse (LEX),210,FR
+Parent8774549,Annemasse (LEX),210,FR
+StopPoint:OCETrain:::TER-87745497,Annemasse (LEX),210,FR
+StopPoint:OCETrain:::TER-87745000,Bellegarde (LEX),400,FR
+8774633,Bonneville,,FR
+Parent8774633,Bonneville,,FR
+StopPoint:OCETrain:::TER-87746339,Bonneville,,FR
+8774559,Bons-en-Chablais,,FR
+Parent8774559,Bons-en-Chablais,,FR
+StopPoint:OCETrain:::TER-87745596,Bons-en-Chablais,,FR
+8501020,Chambésy (LEX),10,SW
+8501020:0:1,Chambésy (LEX),10,SW
+8501020:0:2,Chambésy (LEX),10,SW
+Parent8501020,Chambésy (LEX),10,SW
+StopPoint:OCETrain:::TER-85010207,Chambésy (LEX),10,SW
+8516274,Chêne-Bourg (LEX),10,SW
+8516274:0:1,Chêne-Bourg (LEX),10,SW
+8516274:0:2,Chêne-Bourg (LEX),10,SW
+Parent8516274,Chêne-Bourg (LEX),10,SW
+StopPoint:OCETrain:::TER-85162743,Chêne-Bourg (LEX),10,SW
+StopPoint:OCETrain:::TER-87746370,Cluses,,FR
+8501023,Coppet (LEX),,SW
+8501023:0:1,Coppet (LEX),,SW
+8501023:0:2,Coppet (LEX),,SW
+8501023:0:3,Coppet (LEX),,SW
+Parent8501023,Coppet (LEX),,SW
+StopPoint:OCETrain:::TER-85010231,Coppet (LEX),,SW
+8501012,Creux-de-Genthod (LEX),10,SW
+8501012:0:1,Creux-de-Genthod (LEX),10,SW
+8501012:0:2,Creux-de-Genthod (LEX),10,SW
+Parent8501012,Creux-de-Genthod (LEX),10,SW
+StopPoint:OCETrain:::TER-85010124,Creux-de-Genthod (LEX),10,SW
+8501021,Genthod-Bellevue (LEX),10,SW
+8501021:0:1,Genthod-Bellevue (LEX),10,SW
+Parent8501021,Genthod-Bellevue (LEX),10,SW
+StopPoint:OCETrain:::TER-85010215,Genthod-Bellevue (LEX),10,SW
+8501008,Genève (LEX),10,SW
+8501008:0:1,Genève (LEX),10,SW
+8501008:0:2,Genève (LEX),10,SW
+8501008:0:2E-H,Genève (LEX),10,SW
+8501008:0:3,Genève (LEX),10,SW
+8501008:0:4,Genève (LEX),10,SW
+8501008:0:5,Genève (LEX),10,SW
+8501008:0:6,Genève (LEX),10,SW
+8501008:0:7,Genève (LEX),10,SW
+Parent8501008,Genève (LEX),10,SW
+8516272,Genève-Champel (LEX),10,SW
+8516272:0:1,Genève-Champel (LEX),10,SW
+8516272:0:2,Genève-Champel (LEX),10,SW
+Parent8516272,Genève-Champel (LEX),10,SW
+StopPoint:OCETrain:::TER-85162727,Genève-Champel (LEX),10,SW
+8516273,Genève-Eaux-Vives (LEX),10,SW
+8516273:0:1,Genève-Eaux-Vives (LEX),10,SW
+8516273:0:2,Genève-Eaux-Vives (LEX),10,SW
+Parent8516273,Genève-Eaux-Vives (LEX),10,SW
+StopPoint:OCETrain:::TER-85162735,Genève-Eaux-Vives (LEX),10,SW
+8516283,Genève-Sécheron (LEX),10,SW
+8516283:0:1,Genève-Sécheron (LEX),10,SW
+Parent8516283,Genève-Sécheron (LEX),10,SW
+StopPoint:OCETrain:::TER-85162834,Genève-Sécheron (LEX),10,SW
+8774624,Groisy - Thorens - La Caille (LEX),380,FR
+Parent8774624,Groisy - Thorens - La Caille (LEX),380,FR
+StopPoint:OCETrain:::TER-87746248,Groisy - Thorens - La Caille (LEX),380,FR
+8774630,La Roche-sur-Foron,,FR
+Parent8774630,La Roche-sur-Foron,,FR
+StopPoint:OCETrain:::TER-87746305,La Roche-sur-Foron,,FR
+8517142,Lancy-Bachet (LEX),10,SW
+8517142:0:1,Lancy-Bachet (LEX),10,SW
+8517142:0:2,Lancy-Bachet (LEX),10,SW
+Parent8517142,Lancy-Bachet (LEX),10,SW
+StopPoint:OCETrain:::TER-85171421,Lancy-Bachet (LEX),10,SW
+8516155,Lancy-Pont-Rouge (LEX),10,SW
+8516155:0:1,Lancy-Pont-Rouge (LEX),10,SW
+8516155:0:2,Lancy-Pont-Rouge (LEX),10,SW
+Parent8516155,Lancy-Pont-Rouge (LEX),10,SW
+StopPoint:OCETrain:::TER-85161554,Lancy-Pont-Rouge (LEX),10,SW
+8501011,Les Tuileries (LEX),10,SW
+8501011:0:1,Les Tuileries (LEX),10,SW
+Parent8501011,Les Tuileries (LEX),10,SW
+StopPoint:OCETrain:::TER-85010116,Les Tuileries (LEX),10,SW
+8774558,Machilly,210,FR
+Parent8774558,Machilly,210,FR
+StopPoint:OCETrain:::TER-87745588,Machilly,210,FR
+8774641,Magland,,FR
+Parent8774641,Magland,,FR
+StopPoint:OCETrain:::TER-87746412,Magland,,FR
+8774634,Marignier,,FR
+Parent8774634,Marignier,,FR
+StopPoint:OCETrain:::TER-87746347,Marignier,,FR
+8501014,Mies (LEX),,SW
+8501014:0:1,Mies (LEX),,SW
+8501014:0:2,Mies (LEX),,SW
+Parent8501014,Mies (LEX),,SW
+StopPoint:OCETrain:::TER-85010140,Mies (LEX),,SW
+8774562,Perrignier,,FR
+Parent8774562,Perrignier,,FR
+StopPoint:OCETrain:::TER-87745620,Perrignier,,FR
+8501013,Pont-Céard (LEX),10,SW
+8501013:0:1,Pont-Céard (LEX),10,SW
+Parent8501013,Pont-Céard (LEX),10,SW
+StopPoint:OCETrain:::TER-85010132,Pont-Céard (LEX),10,SW
+8774538,Pougny - Chancy (LEX),240,FR
+Parent8774538,Pougny - Chancy (LEX),240,FR
+StopPoint:OCETrain:::TER-87745380,Pougny - Chancy (LEX),240,FR
+StopPoint:OCETrain:::TER-87746206,Pringy (LEX),380,FR
+8774651,Reignier,,FR
+Parent8774651,Reignier,,FR
+StopPoint:OCETrain:::TER-87746511,Reignier,,FR
+8501002:0:1,Russin (LEX),10,SW
+8501002:0:2,Russin (LEX),10,SW
+Parent8501002,Russin (LEX),10,SW
+StopPoint:OCETrain:::TER-85010025,Russin (LEX),10,SW
+StopPoint:OCETrain:::TER-87746479,Saint-Gervais-les-Bains Le Fayet,,FR
+8774543,Saint-Julien-en-Genevois (LEX),230,FR
+Parent8774543,Saint-Julien-en-Genevois (LEX),230,FR
+StopPoint:OCETrain:::TER-87745430,Saint-Julien-en-Genevois (LEX),230,FR
+8501003:0:1,Satigny (LEX),10,SW
+8501003:0:2,Satigny (LEX),10,SW
+Parent8501003,Satigny (LEX),10,SW
+StopPoint:OCETrain:::TER-85010033,Satigny (LEX),10,SW
+8501015,Tannay (LEX),,SW
+8501015:0:1,Tannay (LEX),,SW
+Parent8501015,Tannay (LEX),,SW
+StopPoint:OCETrain:::TER-85010157,Tannay (LEX),,SW
+8774564,Thonon-les-Bains (LEX),300,FR
+Parent8774564,Thonon-les-Bains (LEX),300,FR
+StopPoint:OCETrain:::TER-87745646,Thonon-les-Bains (LEX),300,FR
+8774541,Valleiry (LEX),230,FR
+Parent8774541,Valleiry (LEX),230,FR
+StopPoint:OCETrain:::TER-87745414,Valleiry (LEX),230,FR
+8501007:0:1,Vernier (LEX),10,SW
+8501007:0:2,Vernier (LEX),10,SW
+Parent8501007,Vernier (LEX),10,SW
+StopPoint:OCETrain:::TER-85010074,Vernier (LEX),10,SW
+8501022,Versoix (LEX),10,SW
+8501022:0:1,Versoix (LEX),10,SW
+8501022:0:2,Versoix (LEX),10,SW
+8501022:0:3,Versoix (LEX),10,SW
+Parent8501022,Versoix (LEX),10,SW
+StopPoint:OCETrain:::TER-85010223,Versoix (LEX),10,SW
+8501000:0:1,Zimeysa (LEX),10,SW
+8501000:0:2,Zimeysa (LEX),10,SW
+Parent8501000,Zimeysa (LEX),10,SW
+StopPoint:OCETrain:::TER-85010009,Zimeysa (LEX),10,SW
+8774567,Évian-les-Bains (LEX),300,FR
+Parent8774567,Évian-les-Bains (LEX),300,FR
+StopPoint:OCETrain:::TER-87745679,Évian-les-Bains (LEX),300,FR

@@ -45,6 +45,7 @@ final class PtBenchmarkStatistics {
         double[] sorted=Arrays.stream(values).filter(Double::isFinite).sorted().toArray();
         return sorted.length==0?Double.NaN:sorted[(int)Math.ceil(fraction*(sorted.length-1))];
     }
+    @SuppressWarnings("null")
     static Map<String,Object> summarize(List<Result> rows,List<Double> times) {
         Map<String,Object> result=new LinkedHashMap<>();
         result.put("batch_seconds",times);result.put("median_batch_seconds",median(times.stream().mapToDouble(Double::doubleValue).toArray()));
@@ -63,6 +64,7 @@ final class PtBenchmarkStatistics {
         result.put("p95_query_ms",percentile(rows.stream().mapToDouble(Result::latencyMs).toArray(),.95));
         return result;
     }
+    @SuppressWarnings("null")
     static Map<String,Object> compare(List<Result> reference,List<Result> candidate,double absolute,double percent) {
         int both=0,neither=0,onlyReference=0,onlyCandidate=0,similar=0,sameTransfers=0,sameSequence=0,errors=0;
         List<Double> deltas=new ArrayList<>(),distances=new ArrayList<>(),costs=new ArrayList<>();

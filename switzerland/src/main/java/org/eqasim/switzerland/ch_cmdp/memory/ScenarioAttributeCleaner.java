@@ -98,6 +98,7 @@ public final class ScenarioAttributeCleaner {
         } catch (UncheckedIOException e) { throw e.getCause(); }
     }
 
+    @SuppressWarnings("null")
     private static long clean(Scenario scenario, ScenarioAttributeArchive.Builder archive) {
         Set<String> configured = new HashSet<>();
         scenario.getConfig().getModules().values().forEach(group -> collectConfiguredAttributes(group, configured));
@@ -148,6 +149,7 @@ public final class ScenarioAttributeCleaner {
         return total;
     }
 
+    @SuppressWarnings("null")
     private static void consolidateHomeCoordinates(Attributes attributes, Set<String> configured,
                                                    Map<String, Long> removed, ScenarioAttributeArchive.Builder archive, String personId) {
         Object legacyX = attributes.getAttribute("home_coordinate_x");
@@ -197,6 +199,7 @@ public final class ScenarioAttributeCleaner {
         retain(attributes, required, configured, category, removed, null, 0, null);
     }
 
+    @SuppressWarnings("null")
     private static void retain(Attributes attributes, Set<String> required, Set<String> configured,
                                String category, Map<String, Long> removed, ScenarioAttributeArchive.Builder archive,
                                int kind, String id) {

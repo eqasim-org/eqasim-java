@@ -43,7 +43,6 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 
 	// Setup part: Handling indices and making space
 
-	@SuppressWarnings("null")
 	public SmoothingTravelTime(double startTime, double endTime, double interval, double increasingAlpha,
 			double decreasingAlpha, boolean fixTravelTime, Network network) {
 		this.increasingAlpha = increasingAlpha;
@@ -120,6 +119,7 @@ public class SmoothingTravelTime implements TravelTime, LinkEnterEventHandler, L
 
 	// Estimation part: After Mobsim, consolidate travel times
 
+	@SuppressWarnings("null")
 	@Override
 	public void notifyAfterMobsim(AfterMobsimEvent event) {
 		for (int l = 0; l < numberOfLinks; l++) {

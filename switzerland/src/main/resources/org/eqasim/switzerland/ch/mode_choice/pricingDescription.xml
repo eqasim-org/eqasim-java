@@ -1,0 +1,181 @@
+<pricing>
+    <distanceBasedDefault>
+        <flatRatePrice value="4.08"/>
+        <pricePerKM value="0.38"/>
+        <power2Factor value="-0.00022"/>
+        <rounding when="distance_below_69" how="0.2"/>
+        <rounding when="distance_above_69" how="1"/>
+    </distanceBasedDefault>
+
+    <sbb>
+        <minimumPrice value="3.0"/>
+        <minimumPriceHalbtax value="2.20"/>
+        <priceByKMByDistanceBin distance_min="0" distance_max="4" priceByKM="0.4623" first="true"/>        
+        <priceByKMByDistanceBin distance_min="5" distance_max="14" priceByKM="0.4393"/>        
+        <priceByKMByDistanceBin distance_min="15" distance_max="48" priceByKM="0.3867"/>     
+        <priceByKMByDistanceBin distance_min="49" distance_max="150" priceByKM="0.2755"/>     
+        <priceByKMByDistanceBin distance_min="151" distance_max="200" priceByKM="0.2670"/>     
+        <priceByKMByDistanceBin distance_min="201" distance_max="250" priceByKM="0.2373"/>     
+        <priceByKMByDistanceBin distance_min="251" distance_max="300" priceByKM="0.2142"/>     
+        <priceByKMByDistanceBin distance_min="301" distance_max="480" priceByKM="0.2087"/>     
+        <priceByKMByDistanceBin distance_min="481" distance_max="2000" priceByKM="0.2061" last="true"/>
+    </sbb>
+    
+    <authority>
+    	<name value="ZVV"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="4.70, 4.70, 7.20, 9.40, 11.40, 13.60, 15.80, 18.00"/>
+    	<priceListByZone halbtax="true" prices="3.30, 3.30, 3.60, 4.70, 5.70, 6.80, 7.90, 9.00"/>
+    	<zonesCountingAsTwo zones="110, 120"/>
+    </authority>
+    
+    <authority>
+    	<name value="Unireso"/>
+    	<zonalBased value="centerbased"/>
+    	<centerZoneID zone="10"/>
+    	<priceCenterZone halbtax="false" price="3.00"/>
+    	<priceCenterZone halbtax="true" price="2.00"/>
+    	<priceAdditionalZone price="1.60"/>
+    	<targetedPricing discount="100" age_range="0_18"/>
+    </authority>
+    
+    <authority>
+    	<name value="ZPassOstwind"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="6.40, 6.40, 7.40, 10.20, 13.00, 15.20, 18.00, 21.40, 24.40, 26.80"/>
+    	<priceListByZone halbtax="true" prices="3.20, 3.20, 3.70, 5.10, 6.50, 7.60, 9.00, 10.70, 12.20, 13.40"/>
+    	<zonesCountingAsTwo zones="110, 120"/>
+    </authority>
+    
+    <authority>
+    	<name value="ZPassAwelle"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="7.00, 7.00, 8.60, 11.20, 14.20, 17.00, 20.40, 23.80, 27.00, 29.80"/>
+    	<priceListByZone halbtax="true" prices="3.50, 3.50, 4.30, 5.60, 7.10, 8.50, 10.20, 11.90, 13.50, 14.90"/>
+    	<zonesCountingAsTwo zones="110, 120"/>
+    </authority>
+    
+    <authority>
+    	<name value="ZPassSchwyzZug"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="6.60, 6.60, 7.20, 9.60, 12.40, 14.60, 18.20, 20.80, 23.00, 25.60, 28.20, 30.40, 33.00, 33.80"/>
+    	<priceListByZone halbtax="true" prices="3.30, 3.30, 3.60, 4.80, 6.20, 7.30, 9.10, 10.40, 11.50, 12.80, 14.10, 15.20, 16.50, 16.90"/>
+    	<zonesCountingAsTwo zones="110, 120"/>
+    </authority>
+    
+    <authority>
+    	<name value="TNW"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="4.20, 5.10, 6.60, 9.40, 10.80, 12.40, 14.40, 16.00"/>
+    	<priceListByZone halbtax="true" prices="2.90, 3.40, 4.20, 4.70, 5.40, 5.70, 7.20, 8.00"/>
+    </authority>
+    
+    <authority>
+    	<name value="OndeVerte"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="4.40, 4.40, 6.60, 8.80, 11.00, 13.20"/>
+    	<priceListByZone halbtax="true" prices="2.30, 2.30, 3.30, 4.40, 5.50, 6.60"/>
+    </authority>
+    
+    <authority>
+    	<name value="Frimobil"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.00, 5.40, 7.80, 10.40, 12.80, 15.20, 17.40"/>
+    	<priceListByZone halbtax="true" prices="2.30, 3.20, 3.90, 5.20, 6.40, 7.60, 8.70"/>
+    </authority>
+    
+    <authority>
+    	<name value="Passepartout"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="4.00, 5.20, 7.80, 10.40, 13.00, 15.60, 18.20, 20.80, 23.40, 26.00, 28.6, 31.20, 33.80"/>
+    	<priceListByZone halbtax="true" prices="3.00, 3.70, 4.30, 5.20, 6.50, 7.80, 9.10, 10.40, 11.70, 13.00, 14.30, 15.60, 16.90"/>
+    	<zonesCountingAsTwo zones="10"/>
+    </authority>
+    
+    <authority>
+    	<name value="ZVB"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.30, 4.40, 6.00, 8.00, 8.80"/>
+    	<priceListByZone halbtax="true" prices="2.70, 3.20, 3.60, 4.00, 4.40"/>
+    </authority>
+    
+    <authority>
+    	<name value="Libero"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="5.20, 5.20, 8.00, 10.40, 13.20, 15.60, 18.40, 20.80, 23.60, 26.00, 28.80, 31.20, 34.00, 36.40, 39.20"/>
+    	<priceListByZone halbtax="true" prices="3.00, 3.00, 4.20, 5.20, 6.60, 7.80, 9.20, 10.40, 11.80, 13.00, 14.40, 15.60, 17.00, 18.20, 19.60"/>
+    </authority>
+    
+    <authority>
+    	<name value="Ostwind"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.30, 5.00, 7.60, 10.00, 12.60, 15.00, 17.40, 20.00, 22.40, 25.00, 27.20, 29.60, 31.80"/>
+    	<priceListByZone halbtax="true" prices="2.70, 3.00, 3.80, 5.00, 6.30, 7.50, 8.70, 10.00, 11.20, 12.50, 13.60, 14.80, 15.90"/>
+    </authority>
+    
+    <authority>
+    	<name value="Arcobaleno"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="2.60, 5.20, 7.80, 10.40, 13.00, 15.60, 18.20, 20.80"/>
+    	<priceListByZone halbtax="true" prices="2.00, 2.60, 3.90, 5.20, 6.50, 7.80, 9.10, 10.40"/>
+    </authority>
+    
+    <authority>
+    	<name value="TVSZ"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.70, 5.10, 7.00, 9.40, 11.50, 12.90"/>
+    	<priceListByZone halbtax="true" prices="2.80, 3.30, 3.70, 4.70, 5.80, 6.50"/>
+    </authority>    
+    
+    <authority>
+    	<name value="Davos"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.00, 5.40, 7.80, 10.20, 13.20"/>
+    	<priceListByZone halbtax="true" prices="2.20, 2.70, 3.90, 5.10, 6.60"/>
+    </authority>
+    
+    <authority>
+    	<name value="EngadinMobil"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.00, 5.80, 8.60, 11.40, 14.40, 17.20, 20.00"/>
+    	<priceListByZone halbtax="true" prices="2.20, 2.90, 4.30, 5.70, 7.20, 8.60, 10.00"/>
+    </authority>
+    
+    <authority>
+    	<name value="Transreno"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.00, 4.80, 6.60, 8.40, 10.20, 12.00"/>
+    	<priceListByZone halbtax="true" prices="2.20, 2.40, 3.30, 4.20, 5.10, 6.00"/>
+    </authority>
+    
+    <authority>
+    	<name value="Klosters"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.00, 5.40"/>
+    	<priceListByZone halbtax="true" prices="2.20, 2.70"/>
+    </authority>
+    
+    <authority>
+    	<name value="SionPT"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="2.80, 3.40, 5.00"/>
+    	<priceListByZone halbtax="true" prices="1.50, 2.20, 2.50"/>
+    </authority>
+    
+    <authority>
+    	<name value="Awelle"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.80, 5.30, 7.60, 9.80, 12.40, 14.60, 17.20, 19.60"/>
+    	<priceListByZone halbtax="true" prices="2.90, 3.60, 4.20, 4.90, 6.20, 7.30, 8.60, 9.80"/>
+    </authority>
+    
+    <authority>
+    	<name value="Mobilis"/>
+    	<zonalBased value="true"/>
+    	<priceListByZone halbtax="false" prices="3.20, 3.90, 5.80, 7.80, 9.60, 11.60, 13.60, 15.40, 17.40, 19.20, 21.20, 23.20, 25.00, 27.00, 28.80"/>
+    	<priceListByZone halbtax="true" prices="2.40, 2.40, 2.90, 3.90, 4.80, 5.80, 6.80, 7.70, 8.70, 9.60, 10.60, 11.60, 12.50, 13.50, 14.40"/>
+    </authority>
+    
+    
+    
+</pricing>

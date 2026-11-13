@@ -111,6 +111,7 @@ public final class AssignmentSpool implements AutoCloseable {
         }
     }
 
+    @SuppressWarnings("unused")
     public AssignmentSpool(Path parent) throws IOException {
         directory = Files.createTempDirectory(parent, ".marouter-");
         RandomAccessFile offsets = null;

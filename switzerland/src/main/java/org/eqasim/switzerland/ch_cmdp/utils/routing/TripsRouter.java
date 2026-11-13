@@ -179,6 +179,7 @@ public class TripsRouter {
         }
     }
 
+    @SuppressWarnings({ "deprecation", "null" })
     public static RoutedTrip routeTrip(Trip trip, Network network, LeastCostPathCalculator router,
             boolean returnLinks) {
         Coord fromCoord = new Coord(trip.originX, trip.originY);

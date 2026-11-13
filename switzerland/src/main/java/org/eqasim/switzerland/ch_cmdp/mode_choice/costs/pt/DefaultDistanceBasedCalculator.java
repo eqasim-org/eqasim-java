@@ -56,13 +56,7 @@ public class DefaultDistanceBasedCalculator implements PtStageCostCalculator {
             price = price / 2;
         }
 
-        if (distance < 69) {
-            price = Math.ceil(price * 5.0) / 5.0;
-        } else {
-            price = Math.ceil(price);
-        }
-
-        return Math.round(price * 100.0) / 100.0;
+        return PtFareRounding.roundToCents(PtFareRounding.fareRounding(price, distance));
 
     }
     

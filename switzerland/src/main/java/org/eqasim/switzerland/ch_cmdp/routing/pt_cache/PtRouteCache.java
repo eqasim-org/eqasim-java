@@ -292,6 +292,7 @@ public final class PtRouteCache implements BasicEventHandler, IterationEndsListe
             }
         }
 
+        @SuppressWarnings("deprecation")
         void prefetch(IntList selected, long epoch) throws SQLException {
             var wanted = new IntOpenHashSet(selected);
             var iterator = hot.entrySet().iterator();

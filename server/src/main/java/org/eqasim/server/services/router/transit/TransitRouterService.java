@@ -38,6 +38,7 @@ import ch.sbb.matsim.routing.pt.raptor.DefaultRaptorInVehicleCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.DefaultRaptorStopFinder;
 import ch.sbb.matsim.routing.pt.raptor.DefaultRaptorTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.LeastCostRaptorRouteSelector;
+import ch.sbb.matsim.routing.pt.raptor.ModeSpecificTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.RaptorInVehicleCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.RaptorParameters;
 import ch.sbb.matsim.routing.pt.raptor.RaptorRouteSelector;
@@ -45,7 +46,6 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorStaticConfig;
 import ch.sbb.matsim.routing.pt.raptor.RaptorStopFinder;
 import ch.sbb.matsim.routing.pt.raptor.RaptorTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.RaptorUtils;
-import ch.sbb.matsim.routing.pt.raptor.RequestTransferCostCalculator;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptor;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorData;
 import jakarta.annotation.Nullable;
@@ -55,7 +55,7 @@ public class TransitRouterService {
 
 	private final RaptorRouteSelector routeSelector = new LeastCostRaptorRouteSelector();
 	private final RaptorInVehicleCostCalculator inVehicleCostCalculator = new DefaultRaptorInVehicleCostCalculator();
-	private final RaptorTransferCostCalculator defaultTransferCostCalculator = new DefaultRaptorTransferCostCalculator();
+	private final RaptorTransferCostCalculator staticTransferCostCalculator;
 	private final RaptorStopFinder stopFinder = new DefaultRaptorStopFinder(null, null);
 
 	private final Config config;
@@ -66,9 +66,13 @@ public class TransitRouterService {
 	private final TransitConfiguration configuration;
 	private final WalkConfiguration walkConfiguration;
 
-	TransitRouterService(SwissRailRaptorData data, Config config, Network network, TransitConfiguration configuration,
-			WalkConfiguration walkConfiguration, TransitSchedule schedule) {
+	private final RaptorStaticConfig staticConfig;
+
+	TransitRouterService(SwissRailRaptorData data, RaptorStaticConfig staticConfig, Config config, Network network,
+			TransitConfiguration configuration, WalkConfiguration walkConfiguration, TransitSchedule schedule) {
 		this.data = data;
+		this.staticConfig = staticConfig;
+		this.staticTransferCostCalculator = createTransferCostCalculator(staticConfig, null);
 		this.configuration = configuration;
 		this.config = config;
 		this.network = network;
@@ -97,7 +101,9 @@ public class TransitRouterService {
 
 		RaptorParameters parameters = createParameters(config, configuration, walkConfiguration, appliedUtilities,
 				schedule);
-		RaptorTransferCostCalculator transferCostCalculator = createTransferCostCalculator(appliedUtilities);
+		RaptorTransferCostCalculator transferCostCalculator = hasRequestTransferPenalties(appliedUtilities)
+				? createTransferCostCalculator(staticConfig, appliedUtilities.transfer_penalties)
+				: staticTransferCostCalculator;
 
 		SwissRailRaptor router = new SwissRailRaptor(data, person -> parameters, routeSelector, stopFinder,
 				inVehicleCostCalculator, transferCostCalculator);
@@ -405,18 +411,38 @@ public class TransitRouterService {
 		return response;
 	}
 
+	static private boolean hasRequestTransferPenalties(@Nullable TransitUtilities utilities) {
+		return utilities != null && utilities.transfer_penalties != null && !utilities.transfer_penalties.isEmpty();
+	}
+
 	/**
-	 * Mode-to-mode transfer penalties given with the request override the ones
-	 * from the static configuration (--raptorPenalties), so they can be changed
-	 * without restarting the server. The cost is computed as by
-	 * DefaultRaptorTransferCostCalculator (see RequestTransferCostCalculator).
+	 * Chooses the transfer cost calculator as SwissRailRaptorModule does for the
+	 * simulation: DefaultRaptorTransferCostCalculator without mode-to-mode
+	 * penalties (it rejects them), ModeSpecificTransferCostCalculator otherwise.
+	 * The latter is the eqasim core override that charges each penalty once per
+	 * actual transfer.
+	 *
+	 * Penalties given with the request (fromMode -> toMode -> penalty) take
+	 * precedence over the static ones (config file and --raptorPenalties), so they
+	 * can be changed without restarting the server.
 	 */
-	private RaptorTransferCostCalculator createTransferCostCalculator(@Nullable TransitUtilities utilities) {
-		if (utilities == null || utilities.transfer_penalties == null || utilities.transfer_penalties.isEmpty()) {
-			return defaultTransferCostCalculator;
+	static public RaptorTransferCostCalculator createTransferCostCalculator(RaptorStaticConfig staticConfig,
+			@Nullable Map<String, Map<String, Double>> requestPenalties) {
+		boolean hasRequestPenalties = requestPenalties != null && !requestPenalties.isEmpty();
+
+		if (!hasRequestPenalties && !staticConfig.isUseModeToModeTransferPenalty()) {
+			return new DefaultRaptorTransferCostCalculator();
 		}
 
-		return new RequestTransferCostCalculator(utilities.transfer_penalties);
+		if (!hasRequestPenalties) {
+			return new ModeSpecificTransferCostCalculator();
+		}
+
+		return new ModeSpecificTransferCostCalculator((fromMode, toMode, config) -> {
+			Map<String, Double> fromPenalties = requestPenalties.get(fromMode);
+			Double penalty = fromPenalties == null ? null : fromPenalties.get(toMode);
+			return penalty != null ? penalty : config.getModeToModeTransferPenalty(fromMode, toMode);
+		});
 	}
 
 	static public record WalkParameters(double beelineWalkFactor, double beelineWalkSpeed_m_s) {
@@ -439,7 +465,7 @@ public class TransitRouterService {
 		return new WalkParameters(beelineWalkFactor, beelineWalkSpeed_m_s);
 	}
 
-	static private RaptorParameters createParameters(Config config, TransitConfiguration configuration,
+	static RaptorParameters createParameters(Config config, TransitConfiguration configuration,
 			WalkConfiguration walkConfiguration, @Nullable TransitUtilities utilities, TransitSchedule schedule) {
 		RaptorParameters parameters = RaptorUtils.createParameters(config);
 
@@ -471,6 +497,11 @@ public class TransitRouterService {
 
 			if (utilities.tram_u_h != null) {
 				parameters.setMarginalUtilityOfTravelTime_utl_s("tram", utilities.tram_u_h / 3600.0);
+			}
+
+			if (utilities.other_u_h != null) {
+				// ferry, funicular, cable car, ...: all the schedule modes except rail, subway, bus and tram
+				EqasimRaptorUtils.setOtherModesUtility(parameters, schedule, utilities.other_u_h);
 			}
 
 			if (utilities.wait_u_h != null) {
@@ -548,7 +579,8 @@ public class TransitRouterService {
 
 		SwissRailRaptorData data = SwissRailRaptorData.create(schedule, null, staticConfig, network, null);
 
-		return new TransitRouterService(data, config, network, configuration, walkConfiguration, schedule);
+		return new TransitRouterService(data, staticConfig, config, network, configuration, walkConfiguration,
+				schedule);
 	}
 
 	static public TransitUtilities mergeUtilities(TransitUtilities globalUtilities, TransitUtilities requestUtilities) {

@@ -34,6 +34,7 @@ final class RustTimetableSnapshot {
     final RaptorStaticConfig walking;
     final Scenario scenario;
 
+    @SuppressWarnings("null")
     RustTimetableSnapshot(Scenario scenario) {
         this.scenario = scenario;
         parameters =

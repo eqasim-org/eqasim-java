@@ -12,6 +12,7 @@ public final class RustRouterBundler {
     private RustRouterBundler() {}
 
     /** A supplied binary avoids compilation; an existing source checkout is built as-is. */
+    @SuppressWarnings("null")
     public static void main(String[] args) throws Exception {
         Map<String, String> options = new HashMap<>();
         for (String argument : args) {
