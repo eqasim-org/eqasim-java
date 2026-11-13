@@ -19,6 +19,8 @@ import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
 import org.eqasim.core.components.travel_time.FloatTravelTimeModule;
 import org.eqasim.core.components.scoring.AnalysisOnlyScoringModule;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
+import org.eqasim.switzerland.ch_cmdp.walk.WalkModule;
+import org.eqasim.switzerland.ch_cmdp.walk.WalkConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.trucks.TruckRoutingModule;
 import org.eqasim.switzerland.ch_cmdp.utils.link_stats.DetailedLinkStatisticsModule;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
@@ -98,7 +100,7 @@ public class RunSimulation {
 
         SwitzerlandConfigurator configurator = new SwitzerlandConfigurator(cmd);
         Config config = ConfigUtils.loadConfig(cmd.getOptionStrict("config-path"), new SampledTransitDwellConfigGroup(),
-                new SimulationRuntimeConfigGroup(), new RustRoutingConfigGroup());
+                new SimulationRuntimeConfigGroup(), new RustRoutingConfigGroup(), new WalkConfigGroup());
         configurator.updateConfig(config);
         configurator.configure(config);
         cmd.applyConfiguration(config);
@@ -143,6 +145,7 @@ public class RunSimulation {
             // The module falls back to conventional scoring when the configuration requires it.
             if (dsim == null && analysisOnlyScoring) controller.addOverridingModule(new AnalysisOnlyScoringModule());
             runtime.install(controller);
+            controller.addOverridingModule(new WalkModule());
             controller.addOverridingModule(new MissingTripRoutingModule());
             if (efficientRouting) controller.addOverridingModule(new MemoryEfficientRoutingModule());
             if (rust != null) controller.addOverridingModule(new RustRoutingModule(rust));
