@@ -7,6 +7,7 @@ import org.matsim.vehicles.Vehicle;
 import org.eqasim.core.tools.random.Normal;
 import org.eqasim.switzerland.ch_cmdp.tolls.Tolls;
 import org.eqasim.switzerland.ch_cmdp.tolls.MarginalCostOfTolls;
+import org.eqasim.switzerland.ch_cmdp.tolls.borderCrossingLinks;
 import org.matsim.core.router.util.TravelTime;
 
 /** Self-contained truck cost in seconds. Edit the formula/helpers here to change truck preferences. */
@@ -17,15 +18,17 @@ public final class TruckTravelDisutility implements TravelDisutility {
     private final long seed;
     private final Tolls tolls;
     private final MarginalCostOfTolls marginalCostOfTolls;
+    private final borderCrossingLinks borderCrossings;
 
     public TruckTravelDisutility(TravelTime travelTime, double distanceWeight, double sigma, long seed,
-            Tolls tolls, MarginalCostOfTolls marginalCostOfTolls) {
+            Tolls tolls, MarginalCostOfTolls marginalCostOfTolls, borderCrossingLinks borderCrossings) {
         this.travelTime = travelTime;
         this.distanceWeight = distanceWeight;
         this.sigma = sigma;
         this.seed = seed;
         this.tolls = tolls;
         this.marginalCostOfTolls = marginalCostOfTolls;
+        this.borderCrossings = borderCrossings;
     }
 
     @Override public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
@@ -34,14 +37,15 @@ public final class TruckTravelDisutility implements TravelDisutility {
         double distanceCost = distanceCost(link);
         return (timeCost + distanceCost) * routingMultiplier(link, person)
                 // + tollCost(link, vehicle)
-                + roadClassPenalty(link);
+                + roadClassPenalty(link)
+                + borderCrossings.getDisutility(link);
     }
 
     @Override public double getLinkMinimumTravelDisutility(Link link) {
         // Tolls are nonnegative. Account for the random multiplier's floor to keep ALT bounds valid.
         double minimumMultiplier = sigma > 1e-6 ? 1e-3 : 1.0;
         return (link.getLength() / link.getFreespeed() + distanceCost(link)) * minimumMultiplier
-                + roadClassPenalty(link);
+                + roadClassPenalty(link) + borderCrossings.getDisutility(link);
     }
 
     private double distanceCost(Link link) { return distanceWeight * (link.getLength() / 100.0); }

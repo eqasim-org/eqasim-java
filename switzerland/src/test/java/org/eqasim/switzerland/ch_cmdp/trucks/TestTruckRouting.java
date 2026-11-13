@@ -37,7 +37,7 @@ public class TestTruckRouting {
     @Test public void roadClassesUseFreeflowTimeRatherThanCongestedTime() {
         var link = link();
         link.getAttributes().putAttribute("toll", 7.0);
-        var costs = new TruckTravelDisutilityFactory(0, 0, 4711, new Tolls(), new MarginalCostOfTolls(0, 3600, 4711))
+        var costs = new TruckTravelDisutilityFactory(0, 0, 4711, new Tolls(), new MarginalCostOfTolls(0, 3600, 4711), new borderCrossingLinks(List.of(link)))
                 .createTravelDisutility((l, t, p, v) -> 300);
         for (String type : List.of("motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link",
                 "secondary", "secondary_link", "tertiary", "tertiary_link", "residential", "unclassified", "unknown")) {
@@ -71,7 +71,7 @@ public class TestTruckRouting {
         var link = link();
         var person = org.matsim.core.population.PopulationUtils.getFactory().createPerson(Id.createPersonId("driver"));
         TravelTime time = (l, t, p, v) -> 300;
-        var costs = new TruckTravelDisutilityFactory(2, .3, 4711, new Tolls(), new MarginalCostOfTolls(0, 3600, 4711))
+        var costs = new TruckTravelDisutilityFactory(2, .3, 4711, new Tolls(), new MarginalCostOfTolls(0, 3600, 4711), new borderCrossingLinks(List.of(link)))
                 .createTravelDisutility(time);
         double multiplier = Math.max(1 + .3 * org.eqasim.core.tools.random.Normal.get("ab", "driver", 4711), .001);
         double expected = 320 * multiplier + 20;
@@ -100,7 +100,7 @@ public class TestTruckRouting {
         controller.addOverridingModule(new FloatTravelTimeModule());
         var penaltyCalls = new java.util.concurrent.atomic.AtomicInteger();
         var baseFactory = new EqasimTravelDisutilityFactory((l, p, t, base) -> { penaltyCalls.incrementAndGet(); return 50; }, 2);
-        var carFactory = new EqasimTollsTravelDisutilityFactory(baseFactory, new Tolls(), new MarginalCostOfTolls(0, 3600, 4711));
+        var carFactory = new EqasimTollsTravelDisutilityFactory(baseFactory, new Tolls(), new MarginalCostOfTolls(0, 3600, 4711), new borderCrossingLinks(scenario.getNetwork()));
         link.getAttributes().putAttribute("toll", 7.0);
         var vehicle = org.matsim.vehicles.VehicleUtils.createVehicle(Id.createVehicleId("truck"), org.matsim.vehicles.VehicleUtils.createDefaultVehicleType());
         controller.addOverridingModule(new AbstractModule() {

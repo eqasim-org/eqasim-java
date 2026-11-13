@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import org.eqasim.core.components.config.EqasimConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.tolls.MarginalCostOfTolls;
 import org.eqasim.switzerland.ch_cmdp.tolls.Tolls;
+import org.eqasim.switzerland.ch_cmdp.tolls.borderCrossingLinks;
 import org.matsim.core.config.Config;
 import org.matsim.core.router.costcalculators.TravelDisutilityFactory;
 import org.matsim.core.router.util.TravelDisutility;
@@ -16,23 +17,25 @@ public final class TruckTravelDisutilityFactory implements TravelDisutilityFacto
     private final long seed;
     private final Tolls tolls;
     private final MarginalCostOfTolls marginalCostOfTolls;
+    private final borderCrossingLinks borderCrossings;
 
     @Inject public TruckTravelDisutilityFactory(EqasimConfigGroup settings, Config config,
-            Tolls tolls, MarginalCostOfTolls marginalCostOfTolls) {
+            Tolls tolls, MarginalCostOfTolls marginalCostOfTolls, borderCrossingLinks borderCrossings) {
         this(settings.getRoutingDistanceUtility(), settings.getSigmaRoutingRandomness(),
-                config.global().getRandomSeed(), tolls, marginalCostOfTolls);
+                config.global().getRandomSeed(), tolls, marginalCostOfTolls, borderCrossings);
     }
 
     public TruckTravelDisutilityFactory(double distanceWeight, double sigma, long seed,
-            Tolls tolls, MarginalCostOfTolls marginalCostOfTolls) {
+            Tolls tolls, MarginalCostOfTolls marginalCostOfTolls, borderCrossingLinks borderCrossings) {
         this.distanceWeight = distanceWeight;
         this.sigma = sigma;
         this.seed = seed;
         this.tolls = tolls;
         this.marginalCostOfTolls = marginalCostOfTolls;
+        this.borderCrossings = borderCrossings;
     }
 
     @Override public TravelDisutility createTravelDisutility(TravelTime travelTime) {
-        return new TruckTravelDisutility(travelTime, distanceWeight, sigma, seed, tolls, marginalCostOfTolls);
+        return new TruckTravelDisutility(travelTime, distanceWeight, sigma, seed, tolls, marginalCostOfTolls, borderCrossings);
     }
 }

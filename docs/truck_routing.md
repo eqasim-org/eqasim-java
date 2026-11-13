@@ -14,12 +14,13 @@ Car routing in this runner combines:
 - The configured routing distance preference.
 - Optional reproducible routing randomness applied to the above subtotal.
 - Monetary link tolls converted to routing cost using vehicle-specific toll sensitivity.
+- A fixed 180-second disutility for each link marked `ch_border_crossing=true`.
 
 Truck disutility is calculated independently in `TruckTravelDisutility`, with no
 car disutility/factory calls and no `RoutingPenalty` dependency:
 
 ```
-cost = (carTravelTime + distanceCost) * randomMultiplier + roadClassPenalty
+cost = (carTravelTime + distanceCost) * randomMultiplier + roadClassPenalty + borderCost
 distanceCost = distanceWeight * length / 100
 randomMultiplier = max(1 + sigma * reproducibleNormalDraw, 0.001)
 ```
@@ -38,6 +39,12 @@ travel time (`length / freespeed`): 0% for motorway/trunk/primary, 10% for secon
 their parent class. Classification reads `osm:way:highway`. Freespeed is read at
 calculation time so calibration cannot leave stale surcharge values. The surcharge
 changes routing cost only, not the reported travel time or vehicle simulation.
+
+`tolls.borderCrossingLinks` scans the network once and shares an immutable set of
+marked link IDs across all car/truck routing workers. `DISUTILITY_SECONDS` is the
+final 180-second border cost. It is added outside routing randomness and monetary
+toll conversion, and is included in both routers' minimum-cost bounds. Scenario
+cleanup preserves the marker so it is available when the index is constructed.
 
 `getLinkMinimumTravelDisutility` supplies the router's free-flow lower bound,
 including the road-class surcharge and the random multiplier's minimum when

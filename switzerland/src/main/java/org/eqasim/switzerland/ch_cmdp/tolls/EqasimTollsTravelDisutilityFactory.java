@@ -9,15 +9,18 @@ public class EqasimTollsTravelDisutilityFactory implements TravelDisutilityFacto
     private final EqasimTravelDisutilityFactory delegate;
     private final Tolls tolls;
     private final MarginalCostOfTolls marginalCostOfTolls;
+    private final borderCrossingLinks borderCrossings;
 
-    public EqasimTollsTravelDisutilityFactory(EqasimTravelDisutilityFactory delegate, Tolls tolls, MarginalCostOfTolls marginalCostOfTolls) {
+    public EqasimTollsTravelDisutilityFactory(EqasimTravelDisutilityFactory delegate, Tolls tolls, MarginalCostOfTolls marginalCostOfTolls,
+            borderCrossingLinks borderCrossings) {
         this.delegate = delegate;
         this.tolls = tolls;
         this.marginalCostOfTolls = marginalCostOfTolls;
+        this.borderCrossings = borderCrossings;
     }
 
     @Override
     public TravelDisutility createTravelDisutility(TravelTime travelTime) {
-        return new EqasimTollsTravelDisutility(delegate.createTravelDisutility(travelTime), tolls, marginalCostOfTolls);
+        return new EqasimTollsTravelDisutility(delegate.createTravelDisutility(travelTime), tolls, marginalCostOfTolls, borderCrossings);
     }
 }

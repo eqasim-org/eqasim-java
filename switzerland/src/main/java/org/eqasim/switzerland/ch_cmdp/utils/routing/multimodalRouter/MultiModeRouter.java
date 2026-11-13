@@ -290,6 +290,7 @@ public final class MultiModeRouter implements AutoCloseable {
         try {
         Map<String, java.util.function.Supplier<ModeRouter>> factories = new LinkedHashMap<>();
 
+        var borderCrossings = new org.eqasim.switzerland.ch_cmdp.tolls.borderCrossingLinks(network);
         RoadNetwork carNetwork = modeNetwork(roadNetwork, "car");
         TravelTime carTime = marouter != null ? marouter.travelTime(false) : !useEvents ? freeflow
                 : TripsRouter.loadTravelTime(settings.eventsPath, carNetwork,
@@ -303,7 +304,7 @@ public final class MultiModeRouter implements AutoCloseable {
                     + settings.routingDistanceUtility * link.getLength() / 10);
         }
         TravelDisutility carCost = new EqasimTollsTravelDisutility(carBaseCost,
-                new Tolls(), new MarginalCostOfTolls(settings.tollsSigma, settings.tollsValueOfTime));
+                new Tolls(), new MarginalCostOfTolls(settings.tollsSigma, settings.tollsValueOfTime), borderCrossings);
         var carFactory = networkFactory(carNetwork, carTime, carCost, settings.returnLinks, settings.tollsSigma > 0,
                 marouter != null);
         factories.put("car", () -> {
@@ -336,7 +337,7 @@ public final class MultiModeRouter implements AutoCloseable {
                     link -> Math.max(freeflow.getLinkTravelTime(link, 0, null, null), link.getLength() / settings.truckMaxSpeed)
                             + settings.routingDistanceUtility * link.getLength() / 10);
             TravelDisutility truckCost = new EqasimTollsTravelDisutility(truckBaseCost,
-                    new Tolls(), new MarginalCostOfTolls(settings.tollsSigma, settings.tollsValueOfTime));
+                    new Tolls(), new MarginalCostOfTolls(settings.tollsSigma, settings.tollsValueOfTime), borderCrossings);
             var truckFactory = networkFactory(truckNetwork, truckTime, truckCost, settings.returnLinks,
                     settings.tollsSigma > 0, marouter != null);
             factories.put("truck", () -> {

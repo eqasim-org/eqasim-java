@@ -56,7 +56,7 @@ public final class ScenarioAttributeCleaner {
     // LinkCategorizer, IntersectionGroups, delay models, tolls and MATSim routing.
     private static final Set<String> LINK = Set.of(
             "osm:way:highway", "osm:way:name", "municipalityType", "speedFactor", "penalty",
-            "traffic_light", "toll", "crossingPenalty", "disallowedNextLinks", "allowed_speed");
+            "traffic_light", "toll", "ch_border_crossing", "crossingPenalty", "disallowedNextLinks", "allowed_speed");
     private static final Set<String> STOP = Set.of("accessTime", "egressTime");
     private static final Set<String> VEHICLE = Set.of("initialLinkId");
     private static final Set<String> VEHICLE_TYPE = Set.of(

@@ -11,14 +11,16 @@ import com.google.inject.Singleton;
 public class TollsModule extends AbstractModule {
     @Override
     public void install() {
+        bind(borderCrossingLinks.class).in(Singleton.class);
         addTravelDisutilityFactoryBinding(TransportMode.car).to(EqasimTollsTravelDisutilityFactory.class);
         addTravelDisutilityFactoryBinding(TransportMode.truck).to(EqasimTollsTravelDisutilityFactory.class);
     }
 
     @Provides
     @Singleton
-    EqasimTollsTravelDisutilityFactory provideEqasimTollsTravelDisutilityFactory(EqasimTravelDisutilityFactory delegate, Tolls tolls, MarginalCostOfTolls marginalCostOfTolls) {
-    	return new EqasimTollsTravelDisutilityFactory(delegate,  tolls, marginalCostOfTolls);
+    EqasimTollsTravelDisutilityFactory provideEqasimTollsTravelDisutilityFactory(EqasimTravelDisutilityFactory delegate, Tolls tolls, MarginalCostOfTolls marginalCostOfTolls,
+            borderCrossingLinks borderCrossings) {
+        return new EqasimTollsTravelDisutilityFactory(delegate, tolls, marginalCostOfTolls, borderCrossings);
     }
 
     @Provides
