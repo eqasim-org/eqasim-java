@@ -24,6 +24,7 @@ import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -136,7 +137,27 @@ public class TestBackgroundRelocation {
         assertEquals(0.0, proposalTrips.getFirst().getDestinationActivity().getCoord().getX(), 1.0e-9);
         assertEquals(0.0, proposalTrips.get(2).getDestinationActivity().getCoord().getX(), 1.0e-9);
         assertEquals(5_000.0, sourceInland.getCoord().getX(), 1.0e-9);
-        verify(tripRouter, times(2)).calcRoute(anyString(), any(), any(), anyDouble(), any(), any());
+        verify(tripRouter, times(2)).calcRoute(eq("car"), any(), any(), anyDouble(), any(), any());
+    }
+
+    @Test public void freightRelocationRequestsTruckRoutingRatherThanCarRouting() {
+        Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+        var person = scenario.getPopulation().getFactory().createPerson(Id.createPersonId("freight"));
+        person.getAttributes().putAttribute("isFreight", true);
+        Plan source = plan(scenario, person, new Coord(0, 0), new Coord(10000, 0));
+        person.addPlan(source); person.setSelectedPlan(source); scenario.getPopulation().addPerson(person);
+        var factory = scenario.getActivityFacilities().getFactory();
+        var original = factory.createActivityFacility(Id.create("original", ActivityFacility.class), new Coord(10000, 0), Id.createLinkId("inland"));
+        var replacement = factory.createActivityFacility(Id.create("replacement", ActivityFacility.class), new Coord(10500, 0), Id.createLinkId("inland"));
+        scenario.getActivityFacilities().addActivityFacility(original); scenario.getActivityFacilities().addActivityFacility(replacement);
+        TripStructureUtils.getTrips(source).getFirst().getDestinationActivity().setFacilityId(original.getId());
+        var router = mock(TripRouter.class);
+        when(router.calcRoute(anyString(), any(), any(), anyDouble(), any(), any())).thenAnswer(invocation ->
+                List.of(scenario.getPopulation().getFactory().createLeg(invocation.getArgument(0))));
+        var relocator = new BackgroundPlanRelocator(scenario, () -> router, .2, 200, 5000, 1.0);
+        assertNotNull(relocator.propose(person, new Random(1)));
+        verify(router, times(1)).calcRoute(eq("truck"), any(), any(), anyDouble(), any(), any());
+        verify(router, times(0)).calcRoute(eq("car"), any(), any(), anyDouble(), any(), any());
     }
 
     private static Plan plan(Scenario scenario, Person person, Coord origin, Coord destination) {

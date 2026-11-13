@@ -19,6 +19,7 @@ import org.eqasim.core.components.routing.speedy.MemoryEfficientRoutingModule;
 import org.eqasim.core.components.travel_time.FloatTravelTimeModule;
 import org.eqasim.core.components.scoring.AnalysisOnlyScoringModule;
 import org.eqasim.switzerland.ch_cmdp.tolls.TollsModule;
+import org.eqasim.switzerland.ch_cmdp.trucks.TruckRoutingModule;
 import org.eqasim.switzerland.ch_cmdp.utils.link_stats.DetailedLinkStatisticsModule;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellQSimModule;
@@ -153,6 +154,8 @@ public class RunSimulation {
             }
             controller.addOverridingModule(new StrategyWeightDecayModule());
             controller.addOverridingModule(new TollsModule());
+            // Share car travel-time storage; truck routing computes its own cost expression.
+            controller.addOverridingModule(new TruckRoutingModule());
             controller.addOverridingModule(new DetailedLinkStatisticsModule());
 
             // Install QSim-specific transit engines; DSim provides its own scheduled PT engine.
