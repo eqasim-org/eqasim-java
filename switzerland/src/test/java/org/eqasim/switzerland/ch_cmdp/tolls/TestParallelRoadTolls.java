@@ -76,7 +76,7 @@ public class TestParallelRoadTolls {
         var scenario = scenario(OUTPUT.resolve("attributes"), true);
         var tolls = new Tolls();
         var costs = new EqasimTollsTravelDisutilityFactory(delegate(0.0), tolls,
-                new MarginalCostOfTolls(0.0, VALUE_OF_TIME, SEED)).createTravelDisutility(FREE_FLOW);
+                new MarginalCostOfTolls(0.0, VALUE_OF_TIME, SEED), new borderCrossingLinks(scenario.getNetwork())).createTravelDisutility(FREE_FLOW);
         var vehicle = vehicle("check");
         assertEquals(17, scenario.getNetwork().getLinks().size());
         for (int road = 0; road < RATES.length; road++) {
@@ -102,7 +102,7 @@ public class TestParallelRoadTolls {
         Arrays.fill(equalSpeeds, SPEEDS_KMH[0]);
         var scenario = scenario(OUTPUT.resolve("deterministic"), true, equalSpeeds);
         var factory = new EqasimTollsTravelDisutilityFactory(delegate(0.0),
-                new Tolls(), new MarginalCostOfTolls(TOLL_SIGMA, VALUE_OF_TIME, SEED));
+                new Tolls(), new MarginalCostOfTolls(TOLL_SIGMA, VALUE_OF_TIME, SEED), new borderCrossingLinks(scenario.getNetwork()));
         int[] counts = routePopulation(scenario, factory);
         double cheapest = Arrays.stream(RATES).min().orElseThrow();
         for (int road = 0; road < RATES.length; road++) {

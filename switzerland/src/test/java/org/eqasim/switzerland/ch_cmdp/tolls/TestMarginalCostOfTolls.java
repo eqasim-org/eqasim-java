@@ -13,7 +13,7 @@ public class TestMarginalCostOfTolls {
     public void defaultsAndXmlParametersUseIndependentTollSettings() {
         var config = new org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGroup();
         assertEquals(15.0, config.getTollsValueOfTime(), 0.0);
-        assertEquals(0.5, config.getTollsSigma(), 0.0);
+        assertEquals(2.0, config.getTollsSigma(), 0.0);
         config.addParam("tollsSigma", "0.0");
         config.addParam("tollsValueOfTime", "18.0");
         assertEquals(200.0, new MarginalCostOfTolls(config.getTollsSigma(), config.getTollsValueOfTime())

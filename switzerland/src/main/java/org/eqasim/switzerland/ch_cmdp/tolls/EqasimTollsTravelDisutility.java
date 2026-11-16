@@ -9,16 +9,19 @@ public class EqasimTollsTravelDisutility implements TravelDisutility {
     private final TravelDisutility delegate;
     private final Tolls tolls;
     private final MarginalCostOfTolls marginalCostOfTolls;
+    private final borderCrossingLinks borderCrossings;
 
-    public EqasimTollsTravelDisutility(TravelDisutility delegate, Tolls tolls, MarginalCostOfTolls marginalCostOfTolls) {
+    public EqasimTollsTravelDisutility(TravelDisutility delegate, Tolls tolls, MarginalCostOfTolls marginalCostOfTolls,
+            borderCrossingLinks borderCrossings) {
         this.delegate = delegate;
         this.tolls = tolls;
         this.marginalCostOfTolls = marginalCostOfTolls;
+        this.borderCrossings = borderCrossings;
     }
 
     @Override
     public double getLinkTravelDisutility(Link link, double time, Person person, Vehicle vehicle) {
-        double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle);
+        double disutility = delegate.getLinkTravelDisutility(link, time, person, vehicle) + borderCrossings.getDisutility(link);
         double linkCost = tolls.getToll(link);
         if (linkCost>0){
             return disutility+linkCost * marginalCostOfTolls.getMarginalCostOfTolls(vehicle);
@@ -28,6 +31,6 @@ public class EqasimTollsTravelDisutility implements TravelDisutility {
 
     @Override
     public double getLinkMinimumTravelDisutility(Link link) {
-        return delegate.getLinkMinimumTravelDisutility(link);
+        return delegate.getLinkMinimumTravelDisutility(link) + borderCrossings.getDisutility(link);
     }
 }

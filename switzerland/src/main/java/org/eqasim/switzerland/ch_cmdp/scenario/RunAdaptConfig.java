@@ -12,6 +12,8 @@ import org.matsim.contribs.discrete_mode_choice.modules.config.MultinomialLogitS
 import org.matsim.core.config.CommandLine;
 import org.matsim.core.config.CommandLine.ConfigurationException;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
+import org.eqasim.switzerland.ch_cmdp.walk.WalkConfigGroup;
 import org.matsim.core.config.groups.*;
 import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
 import org.matsim.core.config.groups.ReplanningConfigGroup.StrategySettings;
@@ -260,6 +262,14 @@ public class RunAdaptConfig {
 		if (!SwissConfigAdapter.speedsFile.isEmpty()){ netCalibConfig.getFreeSpeedCalibrationConfigGroup().setObservedTripsFile(SwissConfigAdapter.speedsFile);}
 		if (!SwissConfigAdapter.speedsSpecialRegionPath.isEmpty()){ netCalibConfig.getFreeSpeedCalibrationConfigGroup().setSpecialRegionPath(SwissConfigAdapter.speedsSpecialRegionPath);}
 
+		// walking module
+		WalkConfigGroup walking = ConfigUtils.addOrGetModule(config, WalkConfigGroup.class);
+		walking.setModel(SwissConfigAdapter.walkModel);
+		walking.setK(SwissConfigAdapter.walkK);
+		walking.setV0MetersPerSecond(SwissConfigAdapter.walkV0);
+		walking.setUphillPenalty(SwissConfigAdapter.walkUphillPenalty);
+		walking.setFlatGrade(SwissConfigAdapter.walkFlatGrade);
+		walking.setDetourFactor(SwissConfigAdapter.walkDetourFactor);
 	}
 
 }
