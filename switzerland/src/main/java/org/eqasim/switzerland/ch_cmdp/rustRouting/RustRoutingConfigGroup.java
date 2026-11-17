@@ -28,7 +28,7 @@ public final class RustRoutingConfigGroup extends ReflectiveConfigGroup {
     @Comment(
             "Router release/tag used for automatic installation; cached installations are"
                 + " versioned.")
-    public String version = "v0.2.0";
+    public String version = "v0.3.0";
 
     @Parameter
     @Comment(

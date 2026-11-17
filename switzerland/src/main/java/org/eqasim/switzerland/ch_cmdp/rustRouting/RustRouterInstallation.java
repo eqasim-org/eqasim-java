@@ -239,6 +239,22 @@ final class RustRouterInstallation {
         }
     }
 
+    /** Resolve the newest published binary release without requiring Git or Rust. */
+    static String latestReleaseVersion() throws Exception {
+        var client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20))
+                .followRedirects(HttpClient.Redirect.NEVER).build();
+        try (var input = request(client,
+                URI.create("https://api.github.com/repos/matsim-eth/RustRouter/releases/latest"),
+                "application/vnd.github+json", RustRouterBuildCredentials.resolve())) {
+            byte[] body = input.readNBytes(2 * 1024 * 1024 + 1);
+            if (body.length > 2 * 1024 * 1024) throw new IOException("Oversized release metadata");
+            String tag = new ObjectMapper().readTree(body).path("tag_name").asText();
+            if (!tag.matches("v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?"))
+                throw new IOException("Invalid latest Rust release tag");
+            return tag;
+        }
+    }
+
     /**
      * Prefer a compiled release. A token is read only from the environment, never from
      * config/output files.
