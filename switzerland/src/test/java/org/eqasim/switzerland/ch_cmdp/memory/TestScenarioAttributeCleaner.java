@@ -44,6 +44,7 @@ public class TestScenarioAttributeCleaner {
         person.getAttributes().putAttribute("bikeAvail", "always");
         person.getAttributes().putAttribute("hasWalkLoopTrip", true);
         person.getAttributes().putAttribute("subscriptions", "GA");
+        person.getAttributes().putAttribute("RegionalSubscriptionProducts", "ZVV:110,121");
         person.getAttributes().putAttribute("carASC", 1.5);
         person.getAttributes().putAttribute("unusedPersonMetadata", "discard");
         var plan = factory.createPlan();
@@ -81,6 +82,7 @@ public class TestScenarioAttributeCleaner {
 
         assertEquals(modes, availability.getAvailableModes(person, List.of()));
         assertTrue(SwissPredictorUtils.hasGeneralSubscription(person));
+        assertEquals("ZVV:110,121", person.getAttributes().getAttribute("RegionalSubscriptionProducts"));
         assertEquals(4000.0, SwissPredictorUtils.getIncomePerCapita(person), 0.0);
         assertEquals(0.0, SwissPredictorUtils.getCarOwnershipRatio(person), 0.0);
         assertEquals(1.5, SwissPredictorUtils.getCarASC(person), 0.0);

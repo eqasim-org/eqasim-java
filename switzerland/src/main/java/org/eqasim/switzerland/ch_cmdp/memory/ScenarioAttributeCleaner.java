@@ -12,6 +12,7 @@ import java.util.TreeMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RegionalSubscription;
 import org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;
@@ -34,10 +35,11 @@ public final class ScenarioAttributeCleaner {
     public static final String OPTION = "lighten-scenario";
     private static final Logger logger = LogManager.getLogger(ScenarioAttributeCleaner.class);
 
-    // SwissPredictorUtils, SwissDetailedModeAvailability, calibration Tools and
-    // MATSim scoring/replanning/vehicle assignment; flags also feed final statistics.
+    // SwissPredictorUtils, SwissDetailedModeAvailability, the PT pricing (the zones of
+    // the Verbundabos, read by RegionalSubscription.of during mode choice), calibration
+    // Tools and MATSim scoring/replanning/vehicle assignment; flags also feed final statistics.
     private static final Set<String> PERSON = Set.of(
-            "age", "sex", "hasLicense", "carAvail", "bikeAvail", "subscriptions",
+            "age", "sex", "hasLicense", "carAvail", "bikeAvail", "subscriptions", RegionalSubscription.ATTRIBUTE,
             "spRegion", "incomePerCapita", "carOwnershipRatio", "cantonId", "cantonName",
             "ovgk", "numberOfCars", "home_x", "home_y", "home_coordinate_x", "home_coordinate_y",
             "carASC", "isFreight", "isCrossBorder", "isExternalFR", "isOutside", "outside",
