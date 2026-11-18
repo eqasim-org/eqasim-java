@@ -4,10 +4,13 @@ import org.eqasim.core.scenario.cutter.network.RoadNetwork;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.network.NetworkUtils;
+import org.matsim.core.population.routes.NetworkRoute;
+import org.matsim.pt.routes.TransitPassengerRoute;
 import org.matsim.facilities.ActivityFacilities;
 import org.matsim.facilities.ActivityFacility;
 
@@ -44,12 +47,23 @@ public class OutsideActivityAdapter {
 										+ activity.getCoord() + ". \nThis should not happen, but we ignore the reason why this is happening for now, but it should be investigated in the future.");
 							}
 
-							ActivityFacility facility = facilityAdapter.getFacility(activityLink);
+							ActivityFacility facility = facilityAdapter.getFacility(activityLink,
+									activity.getCoord() == null ? activityLink.getCoord() : activity.getCoord());
 
 							activity.setCoord(facility.getCoord());
 							activity.setLinkId(facility.getLinkId());
 							activity.setFacilityId(facility.getId());
 						}
+					}
+				}
+
+				// Generic routes do not encode a network path: update their endpoints after assigning boundary links.
+				for (int i = 1; i < plan.getPlanElements().size(); i += 2) {
+					Leg leg = (Leg) plan.getPlanElements().get(i);
+					if (leg.getRoute() != null && !(leg.getRoute() instanceof NetworkRoute)
+							&& !(leg.getRoute() instanceof TransitPassengerRoute)) {
+						leg.getRoute().setStartLinkId(((Activity) plan.getPlanElements().get(i - 1)).getLinkId());
+						leg.getRoute().setEndLinkId(((Activity) plan.getPlanElements().get(i + 1)).getLinkId());
 					}
 				}
 

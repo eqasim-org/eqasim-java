@@ -32,8 +32,8 @@ public class PlanCutter {
 		if (extent.isInside(activity.getCoord())) {
 			plan.add(activity);
 		} else {
-			Activity virtualActivity = PopulationUtils.createActivityFromCoord(Constants.OUTSIDE_ACTIVITY_TYPE,
-					activity.getCoord());
+			Activity virtualActivity = PopulationUtils.createActivity(activity);
+			virtualActivity.setType(Constants.OUTSIDE_ACTIVITY_TYPE);
 
 			if (activity.getEndTime().isDefined()) {
 				virtualActivity.setEndTime(activity.getEndTime().seconds());
@@ -41,7 +41,9 @@ public class PlanCutter {
 				virtualActivity.setEndTimeUndefined();
 			}
 
-			virtualActivity.getAttributes().putAttribute(Constants.TYPE_BEFORE_CUTTING_ATTRIBUTE, activity.getType());
+			if (!Constants.OUTSIDE_ACTIVITY_TYPE.equals(activity.getType())) {
+				virtualActivity.getAttributes().putAttribute(Constants.TYPE_BEFORE_CUTTING_ATTRIBUTE, activity.getType());
+			}
 
 			plan.add(virtualActivity);
 		}

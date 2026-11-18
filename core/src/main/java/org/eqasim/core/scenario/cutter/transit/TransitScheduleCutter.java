@@ -99,15 +99,11 @@ public class TransitScheduleCutter {
 	}
 
 	private TransitRoute reduceRoute(TransitRoute originalRoute, TransitScheduleFactory factory) {
-		List<TransitRouteStop> originalStopSequence = originalRoute.getStops();
 		List<TransitRouteStop> reducedStopSequence = reduceStopSequence(originalRoute.getStops());
 
 		if (reducedStopSequence.size() < 2) {
 			return null;
 		} else {
-			double departureOffset = reducedStopSequence.get(0).getDepartureOffset().seconds()
-					- originalStopSequence.get(0).getDepartureOffset().seconds();
-
 			Id<Link> routeStartLinkId = reducedStopSequence.get(0).getStopFacility().getLinkId();
 			Id<Link> routeEndLinkId = reducedStopSequence.get(reducedStopSequence.size() - 1).getStopFacility()
 					.getLinkId();
@@ -118,8 +114,9 @@ public class TransitScheduleCutter {
 					reducedStopSequence, originalRoute.getTransportMode());
 
 			for (Departure originalDeparture : originalRoute.getDepartures().values()) {
+				// Stop offsets are retained, so departures must also retain their original time.
 				Departure reducedDeparture = factory.createDeparture(originalDeparture.getId(),
-						originalDeparture.getDepartureTime() - departureOffset);
+						originalDeparture.getDepartureTime());
 				reducedDeparture.setVehicleId(originalDeparture.getVehicleId());
 				reducedRoute.addDeparture(reducedDeparture);
 			}

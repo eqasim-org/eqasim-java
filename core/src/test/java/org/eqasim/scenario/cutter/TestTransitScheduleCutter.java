@@ -67,6 +67,11 @@ public class TestTransitScheduleCutter {
         assertEquals(IntStream.range(first + 1, last).mapToObj(Id::createLinkId).toList(),
                 reduced.getRoute().getLinkIds());
         assertEquals(departure.getVehicleId(), reduced.getDepartures().get(departure.getId()).getVehicleId());
+        for (var stop : reduced.getStops()) {
+            assertEquals(departure.getDepartureTime() + stop.getDepartureOffset().seconds(),
+                    reduced.getDepartures().get(departure.getId()).getDepartureTime()
+                            + stop.getDepartureOffset().seconds(), 1e-9);
+        }
     }
 
     @Test public void retainsAdjacentOutsideStops() {
