@@ -3,6 +3,7 @@ package org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.eqasim.core.simulation.mode_choice.utilities.variables.BaseVariables;
@@ -33,22 +34,32 @@ public class SwissPtLegVariables implements BaseVariables {
     public String    mode           = "";
 
     /**
-     * Whether a stop of the leg is in Switzerland, and whether one is outside (SWISS_STOP): the half-fare card only
-     * holds on the tickets with the Swiss fares (SwissPtStageCostCalculator.hasSwissFares). Without the stops, the leg
-     * is taken to be in Switzerland.
+     * Whether a stop of the leg is in the area of the Swiss fares, and whether one is outside: the half-fare card only
+     * holds on the tickets with the Swiss fares (SwissPtStageCostCalculator.hasSwissFares). The predictor locates the
+     * stops with the 'in switzerland' column of gtfs_zones.csv (locate); without it, by their ids (SWISS_STOP). Without
+     * the stops, the leg is taken to be in Switzerland.
      */
     public boolean   inSwitzerland  = true;
     public boolean   abroad         = false;
 
     /**
-     * The stops in Switzerland, by their id (SWISS_STOP in eqasim-switzerland, utils/gtfs_router/pricing.py): the Swiss
-     * stops (8501008, 8501008:0:3, Parent8501008), the SLOIDs, and the Swiss stations in the French feed
-     * (StopPoint:OCETrain:::TER-85162735). Not the French coaches stopping in Geneva (FR:...).
+     * The stops in Switzerland by their id, only for the inputs that do not locate the stops (gtfs_zones.csv without
+     * the 'in switzerland' column): the Swiss stops (8501008, 8501008:0:3, Parent8501008), the SLOIDs of at most 6
+     * digits (ch:1:sloid:1008:0:3; the stops abroad of the Swiss feed have 7: ch:1:sloid:1400001 is Évian-les-Bains),
+     * and the Swiss stations in the French feed (StopPoint:OCETrain:::TER-85162735).
      */
-    public static final Pattern SWISS_STOP = Pattern.compile("^(?:Parent)?85\\d{5}(?::|$)|^ch:1:sloid:|^StopPoint:OCE\\w*:::\\w*-85\\d{6}$");
+    public static final Pattern SWISS_STOP = Pattern.compile("^(?:Parent)?85\\d{5}(?::|$)|^(?:Parent)?ch:1:sloid:\\d{1,6}(?!\\d)|^StopPoint:OCE\\w*:::\\w*-85\\d{6}$");
 
     public static boolean isSwissStop(String stopId) {
         return SWISS_STOP.matcher(stopId).find();
+    }
+
+    /** Sets inSwitzerland and abroad from where each stop of the leg is (isSwiss: by its id). */
+    public void locate(Predicate<String> isSwiss) {
+        if (!stopIds.isEmpty()) {
+            this.inSwitzerland = stopIds.stream().anyMatch(isSwiss);
+            this.abroad = !stopIds.stream().allMatch(isSwiss);
+        }
     }
 
     public SwissPtLegVariables(Map<String, List<Zone>> visitedZones, double departureTime, double arrivalTime, double networkDistance, double sbbDistance, String fromNode, String toNode, String fromNodeName, String toNodeName,
@@ -60,11 +71,7 @@ public class SwissPtLegVariables implements BaseVariables {
         this.stopIds         = List.copyOf(stopIds);
         this.stopZones       = List.copyOf(stopZones);
         this.stopDistances_m = stopDistances_m.clone();
-
-        if (!stopIds.isEmpty()) {
-            this.inSwitzerland = stopIds.stream().anyMatch(SwissPtLegVariables::isSwissStop);
-            this.abroad = !stopIds.stream().allMatch(SwissPtLegVariables::isSwissStop);
-        }
+        locate(SwissPtLegVariables::isSwissStop);
     }
 
     public SwissPtLegVariables(Map<String, List<Zone>> visitedZones, double departureTime, double arrivalTime, double networkDistance, double sbbDistance, String fromNode, String toNode, String fromNodeName, String toNodeName) {

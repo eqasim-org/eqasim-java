@@ -169,7 +169,18 @@ public class PricingDescriptionReader {
                             if (!inCentralZoneBasedAuthority){
                                 String pricesAttr    = attributes.getValue("prices");
                                 double[] prices      = Arrays.stream(pricesAttr.split(",")).map(String::trim).mapToDouble(Double::parseDouble).toArray();
-                                if (halbtax){
+                                String ageRange      = attributes.getValue("age_range");
+                                if (ageRange != null){
+                                    // the prices of some ages (age_range="6_15"), on the tickets within some zones if
+                                    // zones is given (zones="A, B")
+                                    String[] ages = ageRange.split("_");
+                                    String zonesAttr = attributes.getValue("zones");
+                                    Set<String> zones = zonesAttr == null ? null
+                                        : Arrays.stream(zonesAttr.split(",")).map(String::trim).collect(Collectors.toSet());
+                                    authorityPricing.addAgePriceList(new ZoneBasedPricing.AgePriceList(
+                                        Integer.parseInt(ages[0].trim()), Integer.parseInt(ages[1].trim()), prices, zones));
+                                }
+                                else if (halbtax){
                                     authorityPricing.setHalbTaxPriceList(prices);
                                 }
                                 else{

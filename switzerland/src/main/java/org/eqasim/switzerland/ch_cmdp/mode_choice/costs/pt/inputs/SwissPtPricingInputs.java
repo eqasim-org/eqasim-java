@@ -49,7 +49,10 @@ public final class SwissPtPricingInputs {
         return path;
     }
 
-    /** The zones of the stops (ptZonesFilePath) and the SBB zone of the stops of the SBB distances (sbbDistancesPath). */
+    /**
+     * The zones of the stops (ptZonesFilePath) and the SBB zone of the stops of the SBB distances (sbbDistancesPath),
+     * with where the stops are (the optional 'in switzerland' column of ptZonesFilePath).
+     */
     public static ZonalRegistry readZonalRegistry(Config config, SwissPtPricingConfigGroup group)
             throws IOException, CsvValidationException {
         File zonesFile = file(config, required(group.getZonePath(), "ptZonesFilePath"));
@@ -59,6 +62,7 @@ public final class SwissPtPricingInputs {
         Collection<Authority> authorities = reader.readTarifNetworks(zonesFile);
         ZonalRegistry registry = new ZonalRegistry(authorities, reader.readZones(zonesFile, authorities));
         registry.merge(SBBDistanceReader.createZonalRegistry(SBBDistanceReader.createZone(distancesFile)));
+        registry.setStopLocations(reader.readStopLocations(zonesFile));
         return registry;
     }
 

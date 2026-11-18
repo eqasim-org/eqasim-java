@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.SwissPtStageCostCalculator;
 import org.eqasim.core.simulation.mode_choice.utilities.predictors.CachedVariablePredictor;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt.RegionalSubscription;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.utilities.variables.SwissPtLegVariables;
@@ -132,9 +133,81 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
             }
         }
 
+        // STEP 4: A French local network (priority 3) prices a leg with the fewest zones that hold one zone of each of
+        // its stops: a stop shared by two of its operators is in both of their zones (Thonon: STAR'T A, EVA'D), for the
+        // transfers, but a bus ride Évian - Thonon is one EVA'D zone (smallest_zone_cover in eqasim-switzerland).
+        for (Authority auth : selectedAuthorities) {
+            List<Zone> zones = filtered.get(auth.getId());
+            if (auth.getPriority() < SwissPtStageCostCalculator.LOCAL_PRIORITY || zones == null || zones.size() < 2) {
+                continue;
+            }
+            List<Set<String>> stopZoneIds = new ArrayList<>();
+            for (String stopId : stopIds) {
+                stopZoneIds.add(zonesByStopAndAuth.get(stopId).getOrDefault(auth, List.of()).stream()
+                        .map(Zone::getZoneId).collect(Collectors.toSet()));
+            }
+            Set<String> cover = new HashSet<>(smallestZoneCover(stopZoneIds));
+            filtered.put(auth.getId(), zones.stream().filter(z -> cover.contains(z.getZoneId())).collect(Collectors.toList()));
+        }
+
         return filtered;
     }
 
+    /**
+     * The fewest zones that hold one zone of each stop (each set: the zones of a stop); between as few zones, the ones
+     * held by the most stops, then the first by their ids. The same rule as smallest_zone_cover in eqasim-switzerland
+     * (utils/gtfs_router/pricing.py).
+     */
+    public static List<String> smallestZoneCover(List<Set<String>> stopZones) {
+        List<String> all = stopZones.stream().flatMap(Set::stream).distinct().sorted().collect(Collectors.toList());
+        List<Set<String>> needed = stopZones.stream().filter(s -> !s.isEmpty()).collect(Collectors.toList());
+        for (int size = 1; size <= all.size(); size++) {
+            List<String> best = null;
+            long bestHeld = -1;
+            for (List<String> candidate : combinations(all, size)) {
+                if (needed.stream().allMatch(s -> candidate.stream().anyMatch(s::contains))) {
+                    long held = needed.stream().mapToLong(s -> candidate.stream().filter(s::contains).count()).sum();
+                    if (held > bestHeld) {   // the combinations come in the order of the ids: the first one wins ties
+                        best = candidate;
+                        bestHeld = held;
+                    }
+                }
+            }
+            if (best != null) {
+                return best;
+            }
+        }
+        return all;
+    }
+
+    /** The combinations of size elements of a sorted list, in lexicographic order. */
+    private static List<List<String>> combinations(List<String> items, int size) {
+        List<List<String>> result = new ArrayList<>();
+        combine(items, size, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    private static void combine(List<String> items, int size, int from, List<String> current, List<List<String>> result) {
+        if (current.size() == size) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+        for (int i = from; i < items.size(); i++) {
+            current.add(items.get(i));
+            combine(items, size, i + 1, current, result);
+            current.remove(current.size() - 1);
+        }
+    }
+
+
+    /**
+     * Whether a stop is in the area of the Swiss fares: as eqasim-switzerland located it with the Swiss border (the
+     * 'in switzerland' column of gtfs_zones.csv); for a stop it does not locate (older inputs), by its id.
+     */
+    private boolean isSwissStop(String stopId) {
+        Boolean located = zonalRegistry.isInSwitzerland(stopId);
+        return located != null ? located : SwissPtLegVariables.isSwissStop(stopId);
+    }
 
     private Stream<Zone> getZones(ZonalRegistry registry, String stopId) {
         // Direct match
@@ -298,6 +371,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
             SwissPtLegVariables legVariables = new SwissPtLegVariables(zones, departureTime, arrivalTime, networkDistance, sbbDistance, accessStopId, egressStopId, accessStop.getName(), egressStop.getName(),
                     stopIds, stopZones, stopDistances(visitedStops, networkDistance));
             legVariables.mode = transitRoute.getTransportMode() == null ? "" : transitRoute.getTransportMode();
+            legVariables.locate(this::isSwissStop);
             tripDescription.addStage(legVariables);
         }
 
@@ -426,6 +500,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
                 fromId, toId, begin == 0 ? leg.fromNodeName : fromId, end == n - 1 ? leg.toNodeName : toId,
                 leg.stopIds.subList(begin, end + 1), leg.stopZones.subList(begin, end + 1), distances);
         part.mode = leg.mode;
+        part.locate(this::isSwissStop);
         return part;
     }
 

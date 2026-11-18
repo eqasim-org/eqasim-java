@@ -11,6 +11,8 @@ public class ZonalRegistry {
     private final Map<String, Collection<Zone>> zonesByStopId       = new HashMap<>();
 	private final Map<String, Authority> authoritiesById            = new HashMap<>();
 	private final Map<Authority, Collection<Zone>> zonesByAuthority = new HashMap<>();
+	// the stops in the area of the Swiss fares, by their id ('in switzerland' column of gtfs_zones.csv); null without it
+	private Map<String, Boolean> inSwitzerland = null;
 
 	public ZonalRegistry(Collection<Authority> authorities, Collection<Zone> zones) {
 		for (Authority authority : authorities) {
@@ -33,6 +35,20 @@ public class ZonalRegistry {
 
 	public Authority getAuthority(String authorityId) {
 		return authoritiesById.get(authorityId);
+	}
+
+	/** Where the stops are: {stop id: in the area of the Swiss fares} (ZonalReader.readStopLocations). */
+	public void setStopLocations(Map<String, Boolean> inSwitzerland) {
+		this.inSwitzerland = inSwitzerland;
+	}
+
+	/**
+	 * Whether a stop is in the area of the Swiss fares (Switzerland, Liechtenstein, Büsingen and Campione), as
+	 * eqasim-switzerland located it ('in switzerland' column of gtfs_zones.csv), by its id; null for a stop the file
+	 * does not locate, or without the column (older inputs).
+	 */
+	public Boolean isInSwitzerland(String stopId) {
+		return inSwitzerland == null ? null : inSwitzerland.get(stopId);
 	}
 
 	public Zone getZone(Authority authority, String zoneId) {

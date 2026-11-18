@@ -1,5 +1,6 @@
 package org.eqasim.switzerland.ch_cmdp.mode_choice.costs.pt;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,18 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
     private double priceInAdditionalZoneHalbtax = Double.NaN;
     private PtStageCostCalculator defaultCalculator = new DefaultDistanceBasedCalculator(0.38, 4.08, -0.00022);
     private Map<Integer, Double> ageDiscounts = new HashMap<>();
+    private final List<AgePriceList> agePriceLists = new ArrayList<>();
+
+    /**
+     * The prices by number of zones for the travellers aged min to max (inclusive), on the tickets whose zones are all in
+     * zones (null: any ticket): priceListByZone with age_range (and zones) in pricingDescription.xml, e.g. the children
+     * and the seniors of the French local networks. They replace the full and half-fare lists for those travellers.
+     */
+    public record AgePriceList(int minAge, int maxAge, double[] prices, Set<String> zones) {
+        boolean applies(int age, Set<String> visitedZoneIds) {
+            return minAge <= age && age <= maxAge && (zones == null || zones.containsAll(visitedZoneIds));
+        }
+    }
 
     public ZoneBasedPricing(){}
 
@@ -50,6 +63,10 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
 
     public void setHalbTaxPriceList(double[] priceList){
         this.halbTaxPrices = priceList;
+    }
+
+    public void addAgePriceList(AgePriceList priceList){
+        this.agePriceLists.add(priceList);
     }
 
     public void setDoubleCountingZones(Set<String> zones){
@@ -121,6 +138,9 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
         if (list) {
             if (fullPrices == null) {
                 LOG.warn("Zone network {}: no full price list, the half-fare one is used for everyone", authority);
+            } else if (halbTaxPrices == null && !agePriceLists.isEmpty()) {
+                // the French local networks: no half-fare card, their own prices for some ages
+                LOG.info("Zone network {}: no half-fare prices, {} price lists by age", authority, agePriceLists.size());
             } else if (halbTaxPrices == null) {
                 LOG.warn("Zone network {}: no half-fare price list, the full one is used with the half-fare card", authority);
             }
@@ -154,8 +174,11 @@ public class ZoneBasedPricing implements PtStageCostCalculator {
         double price;
 
         if (this.fullPrices != null || this.halbTaxPrices != null) {
-            // without one of the two lists, the other one (see checkPrices)
-            double[] prices = hasHalbtax
+            // the list of the traveller's age if one applies to the zones; else, without one of the two lists, the
+            // other one (see checkPrices)
+            AgePriceList byAge = personVariables == null ? null : agePriceLists.stream()
+                .filter(l -> l.applies(personVariables.age_a, visitedZoneIds)).findFirst().orElse(null);
+            double[] prices = byAge != null ? byAge.prices() : hasHalbtax
                 ? (this.halbTaxPrices != null ? this.halbTaxPrices : this.fullPrices)
                 : (this.fullPrices != null ? this.fullPrices : this.halbTaxPrices);
 

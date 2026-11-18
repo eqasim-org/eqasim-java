@@ -65,8 +65,20 @@ public class SwissPtStageCostCalculator {
         return legs.stream().anyMatch(leg -> leg.inSwitzerland);
     }
 
-    /** The usual tickets of some legs: their price, and whether one is a Unireso ticket abroad (see price). */
-    private record Tickets(double price, boolean uniresoAbroad) {}
+    /**
+     * The usual tickets of some legs: their price, whether one is a Unireso ticket abroad, and whether all are tickets
+     * of the French local networks (see price).
+     */
+    private record Tickets(double price, boolean uniresoAbroad, boolean allLocal) {}
+
+    /** The priority above which a network is a French local network (ZonalReader: network priority column). */
+    public static final int LOCAL_PRIORITY = 3;
+
+    /** Whether the ticket of an authority is one of a French local network: the priority of its zones on the legs. */
+    private static boolean isLocalNetwork(String authority, List<SwissPtLegVariables> group) {
+        return group.stream().flatMap(leg -> leg.zones.getOrDefault(authority, List.of()).stream())
+                .anyMatch(zone -> zone.getAuthority().getPriority() >= LOCAL_PRIORITY);
+    }
 
     /**
      * The price of the usual tickets of some legs, one per network (getPricingStrategy): half fare under 16, or with
@@ -79,13 +91,14 @@ public class SwissPtStageCostCalculator {
 
     private Tickets tickets(List<SwissPtLegVariables> legs, boolean hasHalbtax, PersonVariables personVariables) {
         if (legs.isEmpty()) {
-            return new Tickets(0.0, false);
+            return new Tickets(0.0, false, false);
         }
         SwissPtVariables trip = new SwissPtVariables();
         legs.forEach(trip::addStage);
 
         boolean childFare = hasChildFare(personVariables);
         boolean uniresoAbroad = false;
+        boolean allLocal = true;
         double price = 0.0;
         for (Map.Entry<String, List<SwissPtLegVariables>> entry : trip.getPricingStrategy().entrySet()) {
             String authority = entry.getKey();
@@ -93,8 +106,9 @@ public class SwissPtStageCostCalculator {
             boolean halfFare = childFare || (hasHalbtax && hasSwissFares(authority, group));
             price += calculator(authority).calculatePrice(authority, group, halfFare, personVariables);
             uniresoAbroad |= lemanPass != null && lemanPass.isAbroadTicket(authority, group);
+            allLocal &= isLocalNetwork(authority, group);
         }
-        return new Tickets(PtFareRounding.roundToCents(price), uniresoAbroad);
+        return new Tickets(PtFareRounding.roundToCents(price), uniresoAbroad, allLocal);
     }
 
     /**
@@ -110,7 +124,8 @@ public class SwissPtStageCostCalculator {
      * With the Léman Pass, Unireso only sells the tickets of Zone 10: its zones abroad (the French zones of
      * gtfs_zones.csv) are those of the Léman Pass, so a way of paying with a Unireso ticket abroad is not kept (nor
      * the Unireso discounts, e.g. free travel under 19, on those rides). Only if no Léman Pass ticket fits the trip is
-     * the Unireso price kept.
+     * the Unireso price kept. A trip whose usual tickets are all of the French local networks (STAR'T, EVA'D, TAC) is
+     * priced by them: their zone prices come before the Léman Pass.
      */
     public double price(List<SwissPtLegVariables> legs, List<SwissPtLegVariables> paid, boolean hasHalbtax,
             PersonVariables personVariables) {
@@ -122,7 +137,7 @@ public class SwissPtStageCostCalculator {
             return 0.0;
         }
         Tickets usual = tickets(rest, hasHalbtax, personVariables);
-        if (lemanPass == null) {
+        if (lemanPass == null || usual.allLocal()) {
             return usual.price();
         }
 
