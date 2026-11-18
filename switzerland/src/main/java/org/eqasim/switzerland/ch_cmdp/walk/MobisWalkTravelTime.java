@@ -40,9 +40,7 @@ public final class MobisWalkTravelTime implements WalkTravelTime {
 
     public double travelTime(double euclideanDistance, double nodesElevationChange) {
         double length = detourFactor * euclideanDistance;
-        if (length == 0) {
-            if (nodesElevationChange != 0)
-                throw new IllegalArgumentException("Endpoint-grade model cannot represent purely vertical walking");
+        if (length<1) { // for numerical errors, but anyway a length less than 1 meter is one step, so 0 travel time
             return 0;
         }
         // Match the fitted Python equation: grade uses the detour-adjusted actual endpoint distance.

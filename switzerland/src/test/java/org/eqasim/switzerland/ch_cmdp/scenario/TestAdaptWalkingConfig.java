@@ -2,6 +2,7 @@ package org.eqasim.switzerland.ch_cmdp.scenario;
 
 import static org.junit.Assert.*;
 import org.eqasim.core.components.config.EqasimConfigGroup;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
 import org.eqasim.switzerland.ch_cmdp.walk.*;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,6 +38,19 @@ public class TestAdaptWalkingConfig {
         // Existing adaptations retain their own settings: MOBIS coefficients live only in swissWalking.
         assertEquals(1.3, adapted.routing().getOrCreateModeRoutingParams("walk").getTeleportedModeSpeed(), 0);
         assertEquals(1.3, adapted.routing().getOrCreateModeRoutingParams("walk").getBeelineDistanceFactor(), 0);
+    }
+
+    @Test public void airportConstraintAndActivityAreIncludedInWrittenConfig() throws Exception {
+        var adapted = adapt(ConfigUtils.createConfig(new EqasimConfigGroup(), new DiscreteModeChoiceConfigGroup()));
+        var dmc = ConfigUtils.addOrGetModule(adapted, DiscreteModeChoiceConfigGroup.class);
+        assertTrue(dmc.getTripConstraints().contains(SwissModeChoiceModule.AIRPORT_CONSTRAINT_NAME));
+        assertTrue(dmc.getTripConstraints().contains(SwissModeChoiceModule.BORDER_CONSTRAINT_NAME));
+        var activity = adapted.scoring().getActivityParams("airport");
+        assertNotNull(activity);
+        assertFalse(activity.isScoringThisActivityAtAll());
+        assertTrue(adapted.replanning().getStrategySettings().stream()
+                .anyMatch(strategy -> "ReRoute".equals(strategy.getStrategyName())
+                        && strategy.getSubpopulation() == null && strategy.getWeight() > 0));
     }
 
     private Config adapt(Config original, String... options) throws Exception {

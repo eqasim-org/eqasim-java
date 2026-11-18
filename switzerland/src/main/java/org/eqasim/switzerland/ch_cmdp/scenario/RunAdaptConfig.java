@@ -5,6 +5,7 @@ import org.eqasim.core.components.network_calibration.NetworkCalibrationConfigGr
 import org.eqasim.core.simulation.mode_choice.EqasimModeChoiceModule;
 import org.eqasim.switzerland.ch_cmdp.SwitzerlandConfigurator;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.SwissModeChoiceModule;
+import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.AirportConstraint;
 import org.eqasim.switzerland.ch_cmdp.mode_choice.constraints.RemoteWalkConstraint;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contribs.discrete_mode_choice.modules.config.DiscreteModeChoiceConfigGroup;
@@ -99,8 +100,9 @@ public class RunAdaptConfig {
 			qsimConfigGroup.setStorageCapFactor(Math.pow(SwissConfigAdapter.downsamplingRate, RunAdaptConfig.storageCapExponent));
 		}
 
-		// Primary_secondary activities
-		List<String> NEW_ACTIVITY_TYPES  = Arrays.asList("home_secondary", "work_secondary", "education_secondary", "border");
+		// Register additional activity types without activity-duration scoring, as in the base config.
+		List<String> NEW_ACTIVITY_TYPES  = Arrays.asList("home_secondary", "work_secondary", "education_secondary", "border",
+				AirportConstraint.AIRPORT_ACTIVITY);
 		ScoringConfigGroup scoringConfig0 = config.scoring();
 
 		for (String activityType : NEW_ACTIVITY_TYPES) {
@@ -225,7 +227,8 @@ public class RunAdaptConfig {
 		dmcConfig.setTripConstraints(Arrays.asList("OutsideConstraint", "TransitWalk",
 									SwissModeChoiceModule.LOOP_CONSTRAINT_NAME,
 									SwissModeChoiceModule.REMOTE_WALK_CONSTRAINT_NAME,
-									SwissModeChoiceModule.BORDER_CONSTRAINT_NAME));
+									SwissModeChoiceModule.BORDER_CONSTRAINT_NAME,
+									SwissModeChoiceModule.AIRPORT_CONSTRAINT_NAME));
 
 		// adapting Scoring config with custom activities
 		if (SwissConfigAdapter.hasCustomActivities) {
