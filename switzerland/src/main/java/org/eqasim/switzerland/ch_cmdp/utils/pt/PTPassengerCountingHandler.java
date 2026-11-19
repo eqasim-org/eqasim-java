@@ -13,29 +13,42 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.zip.GZIPOutputStream;
 
+import org.eqasim.core.components.transit.events.PublicTransitEvent;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.events.GenericEvent;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
+import org.matsim.api.core.v01.events.handler.GenericEventHandler;
 import org.matsim.core.api.experimental.events.VehicleArrivesAtFacilityEvent;
 import org.matsim.core.api.experimental.events.VehicleDepartsAtFacilityEvent;
 import org.matsim.core.api.experimental.events.handler.VehicleArrivesAtFacilityEventHandler;
 import org.matsim.core.api.experimental.events.handler.VehicleDepartsAtFacilityEventHandler;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.vehicles.Vehicle;
 
 
 public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEventHandler, VehicleDepartsAtFacilityEventHandler, 
-        PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler {
+        PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, GenericEventHandler {
 
     private static final int BIN_SIZE = 900; // 15 minutes in seconds
     private final Map<Id<Vehicle>, ArrivalInfo> vehicleArrivalMap = new HashMap<>();
     private final Map<BinKey, Counter> binCounts = new HashMap<>();
     private final Map<Id<Vehicle>, TransitTripInfo> vehicleToLineRoute;
+    private final TransitSchedule schedule;
+    private final Map<TransitRoute, TransitTripInfo> scheduledRouteInfo = new HashMap<>();
 
     public PTPassengerCountingHandler(Map<Id<Vehicle>, TransitTripInfo> vehicleToLineRoute) {
+        this(vehicleToLineRoute, null);
+    }
+
+    /** The schedule resolves timetable ride events, which do not have physical vehicle events. */
+    public PTPassengerCountingHandler(Map<Id<Vehicle>, TransitTripInfo> vehicleToLineRoute, TransitSchedule schedule) {
         this.vehicleToLineRoute = vehicleToLineRoute;
+        this.schedule = schedule;
     }
 
     static class ArrivalInfo {
@@ -84,12 +97,13 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
                    Objects.equals(stopId, b.stopId) &&
                    Objects.equals(lineId, b.lineId) &&
                    Objects.equals(routeId, b.routeId)&&
+                   Objects.equals(departureId, b.departureId) &&
                    Objects.equals(vehicleId, b.vehicleId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(timeBin, stopId, lineId, routeId, vehicleId);
+            return Objects.hash(time, stopId, lineId, routeId, departureId, vehicleId);
         }
     }
 
@@ -145,10 +159,53 @@ public class PTPassengerCountingHandler implements VehicleArrivesAtFacilityEvent
         binCounts.computeIfAbsent(key, k -> new Counter()).alightings++;
     }
 
+    /** One completed timetable ride contributes one boarding and one alighting, also for transfers. */
+    @Override
+    public void handleEvent(GenericEvent event) {
+        if (!PublicTransitEvent.TYPE.equals(event.getEventType())) return;
+        if (schedule == null) {
+            throw new IllegalStateException("A transit schedule is required to count pt_transit events");
+        }
+        PublicTransitEvent pt = event instanceof PublicTransitEvent transit ? transit : PublicTransitEvent.convert(event);
+        var line = schedule.getTransitLines().get(pt.getTransitLineId());
+        var route = line.getRoutes().get(pt.getTransitRouteId());
+        var departure = route.getDepartures().get(pt.getDepartureId());
+        // Cache direction labels per route, not per passenger or departure.
+        var metadata = scheduledRouteInfo.computeIfAbsent(route, key -> {
+            var directions = TransitTripInfo.findLineRouteInfo(line, route);
+            return new TransitTripInfo(line.getId().toString(),
+                    line.getName() == null ? line.getId().toString() : line.getName(), route.getId().toString(),
+                    "", directions.get(0), directions.get(1));
+        });
+        // vehicleDepartureTime is the departure from the boarding stop, not from the route origin.
+        // Match its offset so repeated visits to the same stop on a loop are distinguished.
+        var boardingStop = route.getStops().stream()
+                .filter(stop -> stop.getStopFacility().getId().equals(pt.getAccessStopId()))
+                .filter(stop -> Math.abs(departure.getDepartureTime()
+                        + stop.getDepartureOffset().orElse(Double.NaN) - pt.getVehicleDepartureTime()) < 1e-6)
+                .findFirst().orElseThrow(() -> new IllegalArgumentException(
+                        "Cannot resolve boarding stop for pt_transit on " + route.getId() + "/" + departure.getId()));
+        // Physical vehicle events group boardings by vehicle arrival at the stop. Use the same convention.
+        double boardingArrival = departure.getDepartureTime()
+                + boardingStop.getArrivalOffset().orElse(boardingStop.getDepartureOffset().seconds());
+        timetableCounter(boardingArrival, pt.getAccessStopId(), metadata, departure.getId().toString(),
+                departure.getVehicleId()).boardings++;
+        timetableCounter(pt.getTime(), pt.getEgressStopId(), metadata, departure.getId().toString(),
+                departure.getVehicleId()).alightings++;
+    }
+
+    private Counter timetableCounter(double time, Id<TransitStopFacility> stop, TransitTripInfo info,
+            String departure, Id<Vehicle> vehicle) {
+        var key = new BinKey((int) time / BIN_SIZE, time, stop, info.lineId, info.lineName, info.routeId,
+                departure, vehicle, info.routeDirection, info.routeMainDirection);
+        return binCounts.computeIfAbsent(key, ignored -> new Counter());
+    }
+
     @Override
     public void reset(int iteration) {
         vehicleArrivalMap.clear();
         binCounts.clear();
+        scheduledRouteInfo.clear();
     }
 
     private String formatTime(int seconds) {
