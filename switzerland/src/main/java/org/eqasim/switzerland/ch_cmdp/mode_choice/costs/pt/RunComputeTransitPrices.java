@@ -395,8 +395,7 @@ public class RunComputeTransitPrices {
 
         boolean isGleis7 = request.departureTime_s < 5 * 3600 || request.departureTime_s >= 19 * 3600;
         boolean hasGleis7FreeTravel = request.age < 25 && request.hasGleis7Abo && isGleis7;
-        boolean hasFreePublicTransport = request.hasGA
-                || request.age < 6
+        boolean hasFreePublicTransport = request.age < 6
                 || (request.age < 16 && request.hasJuniorAbo)
                 || hasGleis7FreeTravel;
 
@@ -404,8 +403,12 @@ public class RunComputeTransitPrices {
             return new FareResult(0.0, 0.0, distance_km);
         }
 
-        // A regional subscription covers its zones (RegionalSubscriptionProducts): only the rest of the trip is paid
+        // A regional subscription covers its zones (RegionalSubscriptionProducts): only the rest of the trip is paid.
+        // The GA covers Switzerland (SwissPtTripCost.withGeneralSubscription): only the parts abroad are paid
         List<SwissPtLegVariables> paid = ptRoutePredictor.uncoveredLegs(ptVariables, request.subscription());
+        if (request.hasGA) {
+            paid = SwissPtTripCost.withGeneralSubscription(paid, ptRoutePredictor);
+        }
         if (paid.stream().allMatch(Objects::isNull)) {
             return new FareResult(0.0, 0.0, distance_km);
         }

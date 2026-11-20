@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -202,11 +203,23 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
 
     /**
      * Whether a stop is in the area of the Swiss fares: as eqasim-switzerland located it with the Swiss border (the
-     * 'in switzerland' column of gtfs_zones.csv); for a stop it does not locate (older inputs), by its id.
+     * 'in switzerland' column of gtfs_zones.csv); for a stop it does not locate (older inputs), by its id. The stops of
+     * the MATSim schedule are the feed stops with the link they were mapped to (ch:1:sloid:1950.link:442882): the
+     * column is looked up with the id of the feed stop (feedStopId).
      */
-    private boolean isSwissStop(String stopId) {
+    public boolean isSwissStop(String stopId) {
         Boolean located = zonalRegistry.isInSwitzerland(stopId);
-        return located != null ? located : SwissPtLegVariables.isSwissStop(stopId);
+        if (located == null) {
+            String feedStopId = feedStopId(stopId);
+            located = feedStopId.equals(stopId) ? null : zonalRegistry.isInSwitzerland(feedStopId);
+        }
+        return located != null ? located : SwissPtLegVariables.isSwissStop(feedStopId(stopId));
+    }
+
+    /** The id of the feed stop of a MATSim stop: without the link it was mapped to (".link:..."). */
+    public static String feedStopId(String stopId) {
+        int link = stopId.indexOf(".link:");
+        return link < 0 ? stopId : stopId.substring(0, link);
     }
 
     private Stream<Zone> getZones(ZonalRegistry registry, String stopId) {
@@ -445,10 +458,51 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
         }
 
         boolean[] covered = new boolean[n];
+        for (int i = 0; i < n; i++) {
+            covered[i] = isCovered(leg.stopZones.get(i), subscription);
+        }
+        return remainingPart(leg, covered, (stopId, zone) -> isZoneCovered(stopId, zone.getZoneId(), subscription));
+    }
+
+    /**
+     * The part of a leg still to pay with a GA, which holds in Switzerland only (withGeneralSubscription in
+     * SwissPtTripCost), or null if the leg stays there: as uncoveredPart, with the stops in Switzerland (isSwissStop) as
+     * the covered ones. A leg that crosses the border once is paid from the last Swiss stop before it to the end (or from
+     * the start to the first Swiss stop after it), on the zones of its stops abroad only: the ticket a GA holder buys
+     * for the rest of the journey (Genève - Annemasse: the French Unireso zones, not Zone 10). A leg whose stops are
+     * unknown is paid in full if it goes abroad.
+     */
+    public SwissPtLegVariables abroadPart(SwissPtLegVariables leg) {
+        int n = leg.stopIds.size();
+        if (n == 0) {
+            return leg.abroad ? leg : null;
+        }
+
+        boolean[] covered = new boolean[n];
+        Set<String> zonesAbroad = new HashSet<>();
+        for (int i = 0; i < n; i++) {
+            covered[i] = isSwissStop(leg.stopIds.get(i));
+            if (!covered[i]) {
+                for (Zone zone : leg.stopZones.get(i)) {
+                    zonesAbroad.add(zone.getAuthority().getId() + ":" + zone.getZoneId());
+                }
+            }
+        }
+        return remainingPart(leg, covered,
+                (network, zone) -> !zonesAbroad.contains(zone.getAuthority().getId() + ":" + zone.getZoneId()));
+    }
+
+    /**
+     * The part of a leg still to pay (uncoveredPart, abroadPart), or null if all of it is covered. covered: whether
+     * each stop is covered; zoneCovered: whether a zone of a network (the zones of the part, by network, see
+     * cleanZoneInfo) is covered, to leave it out of the ticket.
+     */
+    private SwissPtLegVariables remainingPart(SwissPtLegVariables leg, boolean[] covered,
+            BiPredicate<String, Zone> zoneCovered) {
+        int n = leg.stopIds.size();
         int first = -1;
         int last = -1;
         for (int i = 0; i < n; i++) {
-            covered[i] = isCovered(leg.stopZones.get(i), subscription);
             if (!covered[i]) {
                 if (first < 0) first = i;
                 last = i;
@@ -476,7 +530,7 @@ public class SwissPtRoutePredictor extends CachedVariablePredictor<SwissPtVariab
         Map<String, List<Zone>> unpaid = new LinkedHashMap<>();
         for (Map.Entry<String, List<Zone>> entry : partZones.entrySet()) {
             List<Zone> zones = entry.getValue().stream()
-                .filter(zone -> !isZoneCovered(entry.getKey(), zone.getZoneId(), subscription))
+                .filter(zone -> !zoneCovered.test(entry.getKey(), zone))
                 .collect(Collectors.toList());
             if (!zones.isEmpty()) {
                 unpaid.put(entry.getKey(), zones);

@@ -51,18 +51,12 @@ public class SwissPtStageCostCalculator {
 
     /**
      * Whether the ticket of a network for some legs has the Swiss fares, where the half-fare card holds (_swiss_ticket
-     * in eqasim-switzerland, utils/gtfs_router/pricing.py): SBB always; the legs in no network ("None") if none has a
-     * stop abroad; a zone network if one of the legs has a stop in Switzerland (tpg sells Unireso Zone 10 + Zone 210 at
-     * the reduced fare, but a ticket all in France has no half fare).
+     * in eqasim-switzerland, utils/gtfs_router/pricing.py): the same rule as the GA (SwissPtTripCost
+     * .withGeneralSubscription), only if none of the legs has a stop abroad, whatever the network (a Unireso ticket
+     * Zone 10 + Zone 210 has no half fare).
      */
     public static boolean hasSwissFares(String authority, List<SwissPtLegVariables> legs) {
-        if ("SBB".equals(authority)) {
-            return true;
-        }
-        if ("None".equals(authority)) {
-            return legs.stream().noneMatch(leg -> leg.abroad);
-        }
-        return legs.stream().anyMatch(leg -> leg.inSwitzerland);
+        return legs.stream().noneMatch(leg -> leg.abroad);
     }
 
     /**
@@ -118,8 +112,9 @@ public class SwissPtStageCostCalculator {
      * legs: the whole legs of the trip; paid: for each of them, the part still to pay with the regional subscriptions
      * (SwissPtRoutePredictor.uncoveredLegs), null when they cover it. The usual tickets of the paid parts, or, with the
      * Léman Pass, a single ticket for some of the legs (bought whole, whatever the subscriptions cover) and the usual
-     * tickets of the others, whichever is cheaper. The Léman Pass price is used as it is: it has its own prices for
-     * children, youth and the half-fare card. 2nd class: the Java model has no 1st class.
+     * tickets of the others, whichever is cheaper. The Léman Pass price is used as it is, with its own prices for
+     * children and youth, but not its reduced price with the half-fare card: a Léman Pass ticket goes abroad, where the
+     * half-fare card does not hold (hasSwissFares). 2nd class: the Java model has no 1st class.
      *
      * With the Léman Pass, Unireso only sells the tickets of Zone 10: its zones abroad (the French zones of
      * gtfs_zones.csv) are those of the Léman Pass, so a way of paying with a Unireso ticket abroad is not kept (nor
@@ -142,7 +137,7 @@ public class SwissPtStageCostCalculator {
         }
 
         double best = usual.uniresoAbroad() ? Double.POSITIVE_INFINITY : usual.price();
-        for (LemanPass.Ticket ticket : lemanPass.singleTickets(legs, personVariables.age_a, hasHalbtax, 2)) {
+        for (LemanPass.Ticket ticket : lemanPass.singleTickets(legs, personVariables.age_a, false, 2)) {
             List<SwissPtLegVariables> outside = new ArrayList<>();
             for (int k = 0; k < paid.size(); k++) {
                 if ((k < ticket.start() || k >= ticket.end()) && paid.get(k) != null) {

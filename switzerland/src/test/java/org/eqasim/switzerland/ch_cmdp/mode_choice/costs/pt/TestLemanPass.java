@@ -272,11 +272,11 @@ public class TestLemanPass {
 
     @Test
     public void lemanPassIsKeptWhenCheaper() {
-        // Saint-Julien -> Genève by bus with the half-fare card: Léman Pass Zone 10 + Zone 230 at 3.30, rather than the
-        // Unireso half fare 3.60 (centre zone 2.00 + 1.60)
+        // Saint-Julien -> Genève by bus with the half-fare card: a stop abroad, so no half fare (as the GA), neither on
+        // Unireso (4.60) nor on the Léman Pass (its reduced price is not used)
         List<SwissPtLegVariables> stJulien = List.of(leg("bus", "FR:stjulien@230", "8587057@10"));
-        assertEquals(3.60, fares(false).price(stJulien, true, ADULT), 1e-9);
-        assertEquals(3.30, fares(true).price(stJulien, true, ADULT), 1e-9);
+        assertEquals(4.60, fares(false).price(stJulien, true, ADULT), 1e-9);
+        assertEquals(4.60, fares(true).price(stJulien, true, ADULT), 1e-9);
         // without the half-fare card, Unireso (4.60) and the Léman Pass (4.60) cost the same
         assertEquals(4.60, fares(true).price(stJulien, false, ADULT), 1e-9);
 
@@ -286,7 +286,7 @@ public class TestLemanPass {
         assertEquals(4.60, fares(false).price(annemasse, false, ADULT), 1e-9);
         assertEquals(0.00, fares(false).price(annemasse, false, new PersonVariables(10)), 1e-9);
         assertEquals(4.70, fares(true).price(annemasse, false, ADULT), 1e-9);
-        assertEquals(3.70, fares(true).price(annemasse, true, ADULT), 1e-9);
+        assertEquals(4.70, fares(true).price(annemasse, true, ADULT), 1e-9);   // no half fare abroad
         assertEquals(3.90, fares(true).price(annemasse, false, new PersonVariables(10)), 1e-9);
 
         // the train Thonon -> Genève-Eaux-Vives: the Léman Pass (11.50) rather than Unireso Zone 300 + Zone 10 (4.60)
@@ -306,8 +306,9 @@ public class TestLemanPass {
 
     @Test
     public void lemanPassIsBoughtWholeAndTheOtherLegsAsUsual() {
-        // with the half-fare card: an SBB train Lausanne -> Genève, the train Genève -> Lancy-Bachet and the bus to
-        // Saint-Julien. Usual: SBB + Unireso Zone 10 + Zone 230 (3.60); or SBB + Léman Pass Zone 10 + Zone 230 (3.30)
+        // with the half-fare card: an SBB train Lausanne -> Genève (half fare: all in Switzerland), the train Genève ->
+        // Lancy-Bachet and the bus to Saint-Julien (no half fare: the bus goes abroad). Usual: SBB + Unireso Zone 10 +
+        // Zone 230 (4.60); or SBB + Léman Pass Zone 10 + Zone 230 (4.60, without its reduced price)
         var sbbTrain = leg("rail", "8501120", GENEVE);
         sbbTrain.zones = Map.of("SBB", List.of(new Zone(SBB, "SBB", List.of())));
         sbbTrain.sbbDistance = 60;
@@ -317,8 +318,9 @@ public class TestLemanPass {
 
         SwissPtStageCostCalculator fares = fares(true);
         double sbb = fares.ticketsPrice(List.of(sbbTrain), true, ADULT);
-        assertEquals(PtFareRounding.roundToCents(3.60 + sbb), fares(false).price(journey, true, ADULT), 1e-9);
-        assertEquals(PtFareRounding.roundToCents(3.30 + sbb), fares.price(journey, true, ADULT), 1e-9);
+        assertTrue(sbb < fares.ticketsPrice(List.of(sbbTrain), false, ADULT));
+        assertEquals(PtFareRounding.roundToCents(4.60 + sbb), fares(false).price(journey, true, ADULT), 1e-9);
+        assertEquals(PtFareRounding.roundToCents(4.60 + sbb), fares.price(journey, true, ADULT), 1e-9);
 
         // a Unireso subscription covering the two last legs: they are free, and the Léman Pass does not help
         List<SwissPtLegVariables> paid = new ArrayList<>();
@@ -358,15 +360,22 @@ public class TestLemanPass {
         // a Unireso ticket all in France (Zone 210 -> Zone 230, priced by distance without the centre zone): no half fare
         var uniresoFrance = leg("bus", "FR:annemasse@210", "FR:stjulien@230");
         assertEquals(fares.price(List.of(uniresoFrance), false, ADULT), fares.price(List.of(uniresoFrance), true, ADULT), 0);
-        // a Unireso ticket into Switzerland: half fare
+        // a Unireso ticket into Switzerland: a stop abroad, no half fare either (the same rule as the GA)
         var uniresoGeneva = leg("bus", "FR:annemasse@210", "8587057@10");
-        assertEquals(3.60, fares.price(List.of(uniresoGeneva), true, ADULT), 1e-9);
+        assertEquals(4.60, fares.price(List.of(uniresoGeneva), true, ADULT), 1e-9);
+        // a Unireso ticket in Geneva: half fare
+        var uniresoSwiss = leg("tram", "8587057@10", "8592000@10");
+        assertTrue(fares.price(List.of(uniresoSwiss), true, ADULT) < fares.price(List.of(uniresoSwiss), false, ADULT));
 
-        // SBB: always half fare
-        var sbb = leg("rail", "8774549", "8501008");
+        // SBB: half fare in Switzerland, none with a stop abroad
+        var sbb = leg("rail", "8501120", "8501008");
         sbb.zones = Map.of("SBB", List.of(new Zone(SBB, "SBB", List.of())));
         sbb.sbbDistance = 10;
         assertTrue(fares.price(List.of(sbb), true, ADULT) < fares.price(List.of(sbb), false, ADULT));
+        var sbbAbroad = leg("rail", "8774549", "8501008");
+        sbbAbroad.zones = Map.of("SBB", List.of(new Zone(SBB, "SBB", List.of())));
+        sbbAbroad.sbbDistance = 10;
+        assertEquals(fares.price(List.of(sbbAbroad), false, ADULT), fares.price(List.of(sbbAbroad), true, ADULT), 0);
 
         // the legs without their stops are in Switzerland
         Map<String, List<Zone>> none = new HashMap<>();

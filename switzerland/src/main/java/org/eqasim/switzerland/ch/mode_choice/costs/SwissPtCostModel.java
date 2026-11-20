@@ -37,13 +37,13 @@ public class SwissPtCostModel extends AbstractCostModel {
 	public double calculateCost_MU(Person person, DiscreteModeChoiceTrip trip, List<? extends PlanElement> elements) {
 		SwissPersonVariables personVariables = predictor.predictVariables(person, trip, elements);
 
-		if (SwissPtTripCost.hasFreeTravel(personVariables.age_a, personVariables.hasGeneralSubscription, false, false,
-				trip::getDepartureTime)) {
+		if (SwissPtTripCost.hasFreeTravel(personVariables.age_a, false, false, trip::getDepartureTime)) {
 			return 0.0;
 		}
 
 		SwissPtVariables ptVariables = ptRoutePredictor.predictVariables(person, trip, elements);
 		return SwissPtTripCost.price(person, personVariables, personVariables.hasHalbtaxSubscription,
-				personVariables.hasRegionalSubscription, ptVariables, ptRoutePredictor, calculators);
+				personVariables.hasRegionalSubscription, personVariables.hasGeneralSubscription, ptVariables,
+				ptRoutePredictor, calculators);
 	}
 }
