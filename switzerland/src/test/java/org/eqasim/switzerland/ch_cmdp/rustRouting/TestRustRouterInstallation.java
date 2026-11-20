@@ -18,6 +18,60 @@ public class TestRustRouterInstallation {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
+    public void missingCompilerUsesReleaseOrOmitsOptionalLibraryWithoutFailing() throws Exception {
+        var platform = RustRouterInstallation.Platform.named("linux-x86_64");
+        Path root = temporary.newFolder().toPath();
+        assertFalse(RustRouterBundler.toolchainAvailable(root,
+                (command, cwd, log) -> { throw new java.io.IOException("cargo not installed"); }));
+        var prebuilt = new RustRouterBundler.Library(temporary.newFile().toPath(), "v0.2.0");
+        assertSame(prebuilt, RustRouterBundler.optionalLibrary(platform,
+                () -> { throw new java.io.IOException("rustc not installed"); }, () -> prebuilt));
+        assertNull(RustRouterBundler.optionalLibrary(platform, null,
+                () -> { throw new java.io.IOException("no binary available offline"); }));
+    }
+
+    @Test
+    public void missingRustCompilerSkipsSourceAndDoesNotHideInterruptions() throws Exception {
+        Path root = temporary.newFolder().toPath();
+        int[] probes = {0};
+        assertFalse(RustRouterBundler.toolchainAvailable(root, (command, cwd, log) -> {
+            if (++probes[0] == 2) throw new java.io.IOException("rustc not installed");
+        }));
+        assertEquals(2, probes[0]);
+        try {
+            assertThrows(InterruptedException.class, () -> RustRouterBundler.optionalLibrary(
+                    RustRouterInstallation.Platform.named("linux-x86_64"),
+                    () -> { throw new InterruptedException("cancelled"); },
+                    () -> { fail("Cancellation must not start a download"); return null; }));
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    public void unavailablePlatformRemovesStaleBinaryAndManifestListsOnlySuccesses() throws Exception {
+        Path output = temporary.newFolder().toPath();
+        Path file = temporary.newFile().toPath();
+        Files.writeString(file, "prebuilt");
+        var windows = RustRouterInstallation.Platform.named("windows-x86_64");
+        var linux = RustRouterInstallation.Platform.named("linux-x86_64");
+        RustRouterBundler.bundle(output, file, windows, "v0.2.0");
+        RustRouterBundler.bundle(output, file, linux, "v0.2.0");
+        RustRouterBundler.removeGenerated(output, linux);
+        RustRouterBundler.writePlatforms(output, List.of(windows.id()));
+        assertFalse(Files.exists(output.resolve("native/linux-x86_64/libmatsim_pt_router.so")));
+        assertFalse(Files.exists(output.resolve("native/linux-x86_64/build.properties")));
+        assertTrue(Files.exists(output.resolve("native/windows-x86_64/matsim_pt_router.dll")));
+        assertTrue(Files.readString(output.resolve("native/platforms.properties")).contains("platforms=windows-x86_64\n"));
+        RustRouterBundler.removeGenerated(output, windows);
+        Files.writeString(output.resolve("native/matsim_pt_router.dll"), "legacy");
+        RustRouterBundler.writePlatforms(output, List.of());
+        assertTrue(Files.readString(output.resolve("native/platforms.properties")).endsWith("platforms=\n"));
+        assertFalse(Files.exists(output.resolve("native/matsim_pt_router.dll")));
+    }
+
+    @Test
     public void latestRevisionRefreshesAndNeverFallsBackToReleaseCache() throws Exception {
         Path root = temporary.newFolder().toPath();
         String[] revision = {"a".repeat(40)};
@@ -139,7 +193,7 @@ public class TestRustRouterInstallation {
         var restored = ConfigUtils.addOrGetModule(config, RustRoutingConfigGroup.class);
         assertFalse(restored.autoInstall);
         assertFalse(restored.allowSourceBuild);
-        assertEquals("v0.2.0", restored.version);
+        assertEquals("v0.3.0", restored.version);
         assertEquals(
                 file.getParent().resolve("cache"),
                 RustRouterInstallation.inputPath(config, restored.installationDirectory));

@@ -42,7 +42,7 @@ public class PTPassengerCountsModule extends AbstractModule{
                     if (vehicleId != null) {
                         vehicleToTripInfo.put(vehicleId, new TransitTripInfo(
                             line.getId().toString(),
-                            line.getName().toString(),
+                            line.getName() == null ? line.getId().toString() : line.getName(),
                             route.getId().toString(),
                             dep.getId().toString(),
                             routeLineInfo.get(0),
@@ -53,7 +53,7 @@ public class PTPassengerCountsModule extends AbstractModule{
             }
         }
 
-        return new PTPassengerCountingHandler(vehicleToTripInfo);
+        return new PTPassengerCountingHandler(vehicleToTripInfo, schedule);
 	}
 
 }

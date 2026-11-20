@@ -10,6 +10,7 @@ import org.eqasim.core.scenario.cutter.population.trips.NetworkTripProcessor;
 import org.eqasim.core.scenario.cutter.population.trips.TeleportationTripProcessor;
 import org.eqasim.core.scenario.cutter.population.trips.TransitTripProcessor;
 import org.eqasim.core.scenario.cutter.population.trips.TripProcessor;
+import org.eqasim.core.scenario.cutter.population.trips.RoutedTripProcessor;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkRouteCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.DefaultNetworkTripCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.network.NetworkRouteCrossingPointFinder;
@@ -21,7 +22,6 @@ import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.Default
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.DefaultTransitTripCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.TransitRouteCrossingPointFinder;
 import org.eqasim.core.scenario.cutter.population.trips.crossing.transit.TransitTripCrossingPointFinder;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.core.config.groups.RoutingConfigGroup;
 import org.matsim.core.config.groups.RoutingConfigGroup.TeleportedModeParams;
@@ -61,6 +61,7 @@ public class PopulationCutterModule extends AbstractModule {
 		bind(TeleportationTripProcessor.class);
 
 		bind(PlanCutter.class);
+		bind(RoutedTripProcessor.class);
 
 		bind(ScenarioExtent.class).toInstance(extent);
 		bind(LinkTimingRegistry.class).toInstance(linkTimingRegistry);
@@ -78,11 +79,8 @@ public class PopulationCutterModule extends AbstractModule {
 			String mode = entry.getKey();
 			TeleportedModeParams params = entry.getValue();
 
-			if (params.getTeleportedModeFreespeedFactor() != null) {
-				throw new IllegalStateException("Cutter does not support teleportedModeFreespeedFactor yet!");
-			}
-
-			if (params.getTeleportedModeSpeed() != null) {
+			// Routed input already contains durations, including freespeed-factor teleportation modes.
+			if (params.getTeleportedModeSpeed() != null || params.getTeleportedModeFreespeedFactor() != null) {
 				teleportedModes.add(mode);
 			}
 		}
@@ -109,8 +107,7 @@ public class PopulationCutterModule extends AbstractModule {
 	@Provides
 	public ModeAwareTripProcessor provideModeAwareTripProcessor(RoutingConfigGroup routingConfig,
 			TransitConfigGroup transitConfig, ScenarioExtent extent,
-			TeleportationTripProcessor teleportationTripProcessor, NetworkTripProcessor networkTripProcessor,
-			TransitTripProcessor transitTripProcessor) {
+			RoutedTripProcessor routedTripProcessor) {
 		ModeAwareTripProcessor tripProcessor = new ModeAwareTripProcessor();
 
 		Collection<String> networkModes = new HashSet<>(routingConfig.getNetworkModes());
@@ -121,16 +118,18 @@ public class PopulationCutterModule extends AbstractModule {
 		}
 
 		for (String networkMode : networkModes) {
-			tripProcessor.setProcessor(networkMode, networkTripProcessor);
+			tripProcessor.setProcessor(networkMode, routedTripProcessor);
 		}
 
 		for (String teleportedMode : teleportedModes) {
-			tripProcessor.setProcessor(teleportedMode, teleportationTripProcessor);
+			tripProcessor.setProcessor(teleportedMode, routedTripProcessor);
 		}
 
 		if (transitConfig.isUseTransit()) {
-			// TODO: This may not only be "pt"!
-			tripProcessor.setProcessor(TransportMode.pt, transitTripProcessor);
+			// All configured transit routing modes use passenger-route clipping.
+			for (String mode : transitConfig.getTransitModes()) {
+				tripProcessor.setProcessor(mode, routedTripProcessor);
+			}
 		}
 
 		return tripProcessor;

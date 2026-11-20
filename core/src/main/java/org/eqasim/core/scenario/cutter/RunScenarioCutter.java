@@ -168,22 +168,20 @@ public class RunScenarioCutter {
 		ConfigCutter configCutter = new ConfigCutter(prefix);
 		configCutter.run(config);
 
-		// Final routing
-		// TODO: Check if we can remove stuff
-		Injector routingInjector = new InjectorBuilder(scenario, configurator) //
-				.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, false)) //
-				.addOverridingModule(new CutterTravelTimeModule(eventData.getTravelTime())) //
-				.addOverridingModule(new TimeInterpretationModule()) //
-				.build();
-
+		// Cutting preserves and trims routes. Skip the routing injector entirely when retaining them.
 		boolean skipRouting = Boolean.parseBoolean(cmd.getOption("skip-routing").orElse("false"));
 
 		if (!skipRouting) {
+			Injector routingInjector = new InjectorBuilder(scenario, configurator)
+					.addOverridingModule(new PopulationRouterModule(numberOfThreads, 100, true))
+					.addOverridingModule(new CutterTravelTimeModule(eventData.getTravelTime()))
+					.addOverridingModule(new TimeInterpretationModule())
+					.build();
 			PopulationRouter router = routingInjector.getInstance(PopulationRouter.class);
 			router.run(scenario.getPopulation());
-			// Check validity after cutting
-			scenarioValidator.checkScenario(scenario);
 		}
+		// Also validate preserved routes when no routing was requested.
+		scenarioValidator.checkScenario(scenario);
 
 		// Write scenario
 		LinkRegionClassifier.clear(scenario.getNetwork());

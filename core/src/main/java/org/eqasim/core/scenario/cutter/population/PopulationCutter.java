@@ -94,12 +94,16 @@ public class PopulationCutter {
 
 					List<Plan> newPlans = new LinkedList<>();
 					List<Plan> oldPlans = new LinkedList<>();
+					Plan selectedPlan = person.getSelectedPlan();
+					Plan newSelectedPlan = null;
 
 					for (Plan oldPlan : person.getPlans()) {
 						List<PlanElement> newPlanElements = planCutter.processPlan(person.getId(),
 								oldPlan.getPlanElements());
 
 						Plan newPlan = populationFactory.createPlan();
+						oldPlan.getAttributes().getAsMap().forEach(newPlan.getAttributes()::putAttribute);
+						if (oldPlan == selectedPlan) newSelectedPlan = newPlan;
 
 						for (int k = 0; k < newPlanElements.size(); k++) {
 							if (k % 2 == 0) {
@@ -120,6 +124,7 @@ public class PopulationCutter {
 
 					oldPlans.forEach(person::removePlan);
 					newPlans.forEach(person::addPlan);
+					if (newSelectedPlan != null) person.setSelectedPlan(newSelectedPlan);
 
 					person.getAttributes().putAttribute(Constants.OUTSIDE_AGENT_ATTRIBUTE, isPersonOutside);
 				}

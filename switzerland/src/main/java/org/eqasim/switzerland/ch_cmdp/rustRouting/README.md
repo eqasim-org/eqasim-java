@@ -23,12 +23,13 @@ The normal `standalone` profile now embeds the host's native library and Linux x
 mvn -Pstandalone --projects switzerland --also-make package -DskipTests
 ```
 
-The build resolves the latest Rust repository `main` commit on every invocation and builds that
+When the compiler tools are available, the build resolves the latest Rust repository `main` commit and builds that
 same immutable revision for every bundled platform. It caches compiled outputs by commit and checks
-their SHA-256 before reuse. It never silently selects an older release or a sibling working checkout.
-Git, Cargo/Rust and a native linker are required on the build machine. Windows-to-Linux builds also
+their SHA-256 before reuse. A sibling working checkout is used only when explicitly requested.
+Source compilation needs Git, Cargo/Rust and a native linker. Windows-to-Linux source builds also
 require Python; Maven provisions isolated Zig/cargo-zigbuild tools and targets glibc 2.17. The build
-fails if a requested platform cannot be produced. Non-standalone development builds do not acquire Rust.
+does not fail because Rust is absent: it instead tries a verified precompiled GitHub release. If no
+compiled library can be acquired, it warns and omits Rust for that platform. Non-standalone development builds do not acquire Rust.
 Use `-Drust.router.project=/path/to/checkout` only to explicitly build a local working tree instead.
 
 To build without a Rust toolchain, supply already compiled libraries for all requested platforms:
@@ -201,8 +202,11 @@ mvn -Pstandalone --projects switzerland --also-make package -DskipTests
 
 It checks GitHub on each build and caches compiled binaries by immutable commit and platform.
 `native/<platform>/build.properties` records that commit and the library SHA-256. If the latest
-revision cannot be resolved or built, packaging fails instead of silently using an older release.
-The first build requires Git, Cargo/Rust and the host linker. Windows-to-Linux builds additionally
+revision cannot be resolved or built, packaging warns and tries the latest published binary release.
+Missing compiler tools skip source acquisition entirely. If the binary is unavailable too, packaging
+continues without Rust for that platform; the manifest lists only successfully bundled platforms.
+Stale generated binaries for omitted platforms are removed.
+Only source builds require Git, Cargo/Rust and the host linker. Windows-to-Linux builds additionally
 use Python to provision isolated, pinned Zig/cargo-zigbuild tools and a Rust Linux target.
 Later builds reuse verified binaries when the remote commit has not changed. Private-repository
 access uses the existing noninteractive Git credential helper. The resulting jar needs no such
@@ -299,3 +303,15 @@ For exact legacy coordinate behavior, set all four parameters to zero. Both expl
 routing and the generic stop-to-stop API remain exact. Older native releases continue to work but
 do not support these policies or report budget-limited results; startup logs show capability support.
 For cluster use, bundle a native library built from this source rather than a previous release.
+
+## Building without Rust
+
+Your normal Maven command needs no additional flags. If Cargo or rustc is absent, Maven attempts
+to download a SHA-256-verified precompiled release from `matsim-eth/RustRouter`, reusing the verified
+release cache when possible. Binary downloads do not require Cargo, Rust, rustup or Git. A release
+can lag behind `main`; its actual tag is recorded in the bundled `build.properties` and build log.
+If neither compilation nor a binary download succeeds, Maven prints a warning and continues.
+SwissRailRaptor and the rest of eqasim remain usable. Rust routing on an omitted platform requires
+a supplied library or runtime installation; leave `--useRustRouter` disabled if neither is available.
+Explicit missing library overrides and invalid build options remain errors, rather than silently
+ignoring a user-specified artifact.

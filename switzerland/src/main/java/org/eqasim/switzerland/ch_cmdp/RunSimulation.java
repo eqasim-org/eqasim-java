@@ -151,8 +151,9 @@ public class RunSimulation {
             if (rust != null) controller.addOverridingModule(new RustRoutingModule(rust));
             // The optional cache wraps whichever PT backend was selected above.
             controller.addOverridingModule(new PtRouteCacheModule());
+            // Count both physical vehicle boardings (QSim) and completed timetable rides (DSim).
+            controller.addOverridingModule(new PTPassengerCountsModule());
             if (dsim == null) {
-                controller.addOverridingModule(new PTPassengerCountsModule());
                 controller.addOverridingModule(new PTLinkVolumesModule());
             }
             controller.addOverridingModule(new StrategyWeightDecayModule());

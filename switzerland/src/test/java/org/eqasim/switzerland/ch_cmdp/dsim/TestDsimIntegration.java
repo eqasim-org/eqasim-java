@@ -87,7 +87,9 @@ public class TestDsimIntegration {
             });
             controller.addOverridingModule(new EqasimDsimModule());
             controller.addOverridingQSimModule(EqasimDsimModule.engineModule());
+            controller.addOverridingModule(new org.eqasim.switzerland.ch_cmdp.PTPassengerCountsModule());
             controller.run();
+            assertPassengerCounts(controller);
             for (var person : scenario.getPopulation().getPersons().values()) {
                 assertNotNull(person.getSelectedPlan().getScore());
                 assertTrue(Double.isFinite(person.getSelectedPlan().getScore()));
@@ -178,9 +180,11 @@ public class TestDsimIntegration {
         });
         first.addOverridingModule(new EqasimDsimModule());
         first.addOverridingQSimModule(EqasimDsimModule.engineModule());
+        first.addOverridingModule(new org.eqasim.switzerland.ch_cmdp.PTPassengerCountsModule());
         first.addOverridingModule(new org.eqasim.switzerland.ch_cmdp.routing.MissingTripRoutingModule());
         prepared.runtime().install(first);
         first.run();
+        assertPassengerCounts(first);
         var folder = java.nio.file.Path.of(first.getConfig().controller().getOutputDirectory());
         var config = ConfigUtils.loadConfig(folder.resolve("output_config.xml").toString(), new EqasimConfigGroup(),
                 new org.eqasim.switzerland.ch_cmdp.transit_dwell.SampledTransitDwellConfigGroup());
@@ -215,6 +219,7 @@ public class TestDsimIntegration {
         runtime.preprocess(reloaded, true);
         var events = new ConcurrentLinkedQueue<Event>();
         var second = new Controler(reloaded);
+        second.addOverridingModule(new org.eqasim.switzerland.ch_cmdp.PTPassengerCountsModule());
         second.addOverridingModule(new org.eqasim.switzerland.ch_cmdp.routing.MissingTripRoutingModule());
         second.addOverridingQSimModule(new org.eqasim.core.components.transit.EqasimTransitQSimModule());
         second.configureQSimComponents(components -> org.eqasim.core.components.transit.EqasimTransitQSimModule.configure(components, config));
@@ -230,6 +235,7 @@ public class TestDsimIntegration {
             }
         });
         runtime.install(second); second.run();
+        assertPassengerCounts(second);
         assertFalse(events.stream().anyMatch(event -> event instanceof PersonStuckEvent));
         for (String id : List.of("car", "bike", "early", "missed"))
             assertTrue("QSim arrival for " + id, events.stream().anyMatch(event -> event instanceof PersonArrivalEvent arrival
@@ -241,6 +247,23 @@ public class TestDsimIntegration {
         assertTrue("PT passengers must actually board road buses", events.stream().anyMatch(event ->
                 event instanceof org.matsim.api.core.v01.events.PersonEntersVehicleEvent board
                         && board.getPersonId().toString().equals("early") && board.getVehicleId().toString().startsWith("bus-")));
+    }
+
+    /** Final-iteration output must count the two PT agents once, not both iterations or vehicle drivers. */
+    private static void assertPassengerCounts(Controler controller) throws Exception {
+        var output = java.nio.file.Path.of(controller.getConfig().controller().getOutputDirectory(),
+                "pt_passenger_counts.csv.gz");
+        assertTrue("PT counts must exist for " + controller.getConfig().controller().getMobsim(),
+                java.nio.file.Files.isRegularFile(output));
+        try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(
+                new java.util.zip.GZIPInputStream(java.nio.file.Files.newInputStream(output)),
+                java.nio.charset.StandardCharsets.UTF_8))) {
+            var rows = reader.lines().skip(1).map(line -> line.split(";", -1)).toList();
+            assertFalse(rows.isEmpty());
+            assertEquals(2, rows.stream().mapToInt(row -> Integer.parseInt(row[8])).sum());
+            assertEquals(2, rows.stream().mapToInt(row -> Integer.parseInt(row[9])).sum());
+            assertTrue(rows.stream().allMatch(row -> row[2].equals("line") && row[4].equals("service")));
+        }
     }
 
     private Scenario scenario(int threads) throws Exception {

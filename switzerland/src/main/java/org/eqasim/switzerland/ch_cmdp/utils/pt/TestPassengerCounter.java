@@ -52,7 +52,9 @@ public class TestPassengerCounter {
                     Id<Vehicle> vehicleId = dep.getVehicleId();
                     List<String> routeLineInfo = TransitTripInfo.findLineRouteInfo(line, route);
                     if (vehicleId != null) {
-                        vehicleToTripInfo.put(vehicleId, new TransitTripInfo(line.getId().toString(), line.getName().toString() , route.getId().toString(), dep.getId().toString(), routeLineInfo.get(0), routeLineInfo.get(1)));
+                        vehicleToTripInfo.put(vehicleId, new TransitTripInfo(line.getId().toString(),
+                                line.getName() == null ? line.getId().toString() : line.getName(),
+                                route.getId().toString(), dep.getId().toString(), routeLineInfo.get(0), routeLineInfo.get(1)));
                     }
                 }
             }
@@ -60,7 +62,7 @@ public class TestPassengerCounter {
 
         // --- CREATE & REGISTER HANDLER ---
         EventsManager events = EventsUtils.createEventsManager();
-        PTPassengerCountingHandler handler = new PTPassengerCountingHandler(vehicleToTripInfo);
+        PTPassengerCountingHandler handler = new PTPassengerCountingHandler(vehicleToTripInfo, schedule);
         events.addHandler(handler);
 
         // --- READ EVENTS (GZ) ---
